@@ -37,3 +37,16 @@ This does not demonstrate a protocol projection, authenticated provider request,
 fallback decision, budget enforcement, gateway or cloud deployment. Those requirements remain in
 their own stories and in [implementation status](../implementation-status.md). The Cargo packages
 are version 0.0.0 and this record is not a release attestation.
+
+## CI-discovered deadline correction
+
+[CI run 35429528719](https://github.com/beyond10x/llm/actions/runs/35429528719) at
+`b66b4256dd4e5ea37a7bed0b6dfdf73c277bf1a3` failed the keepalive/total-deadline fixture:
+the error was `Transport` instead of `Deadline`. The reqwest timeout and the transport's own
+absolute deadline raced. The correction removes the redundant reqwest timeout so one deadline
+controls the request and stream. Review also found an EOF framing error losing dispatch evidence;
+the corrected fixture asserts `Accepted`, including on subsequent reads of the failed stream.
+
+After these corrections, local `task check` passed and the exact deadline regression passed
+twelve consecutive executions. The original local result above is retained; it did not establish
+the race was absent. Remote verification of the corrected revision is tracked separately by CI.

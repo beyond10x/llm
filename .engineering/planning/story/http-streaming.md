@@ -11,7 +11,7 @@ relations:
 scope:
 - confidence: inferred
   path: crates/llm-http
-revision: 5
+revision: 6
 ---
 ## Context
 
@@ -47,3 +47,13 @@ including EOF without terminal truth, silent-stream cancellation, continuous kee
 credential-bearing redirect refusal and no duplicate request. See
 `docs/verification/core-foundation.md`. Keep active under the unfinished versioned runtime-contract
 prerequisites. Protocol-specific terminal interpretation remains with the projection stories.
+
+## CI correction
+
+CI run https://github.com/beyond10x/llm/actions/runs/35429528719 at b66b4256dd4e5ea37a7bed0b6dfdf73c277bf1a3
+found a race between reqwest and transport deadlines, reporting Transport instead of Deadline.
+Removed the redundant reqwest timeout and retained one absolute deadline. Review also corrected
+EOF framing errors to retain Accepted dispatch evidence, asserted by the truncated-stream fixture.
+Local task check passed; the exact deadline regression passed twelve consecutive executions.
+See docs/verification/core-foundation.md. This supersedes any inference that the initial local
+pass established CI success; the failed run is retained as evidence of the defect.

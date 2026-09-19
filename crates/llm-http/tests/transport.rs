@@ -86,8 +86,10 @@ async fn fragmented_response_preserves_stream_prefix_and_refuses_truncation_with
             data: json!({"text":"prefix"})
         })
     );
-    assert_eq!(stream.next().await.unwrap_err().code, ErrorCode::Protocol);
-    assert_eq!(stream.next().await.unwrap_err().code, ErrorCode::Protocol);
+    let failure = stream.next().await.unwrap_err();
+    assert_eq!(failure.code, ErrorCode::Protocol);
+    assert_eq!(failure.dispatch, Dispatch::Accepted);
+    assert_eq!(stream.next().await.unwrap_err(), failure);
     let captured = worker.await.unwrap();
     assert!(captured.starts_with(b"POST /arbitrary/prefix HTTP/1.1"));
 }

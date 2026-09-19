@@ -47,7 +47,8 @@ impl HttpClient {
         let client = Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .retry(reqwest::retry::never())
-            .timeout(limits.total)
+            // Our absolute deadline spans headers and body. A second reqwest deadline races it
+            // and can turn the same expiration into an unrelated transport error.
             .build()
             .map_err(|_| Error::new(ErrorCode::Transport, "HTTP client initialization failed"))?;
         Ok(Self { client, limits })
@@ -191,7 +192,9 @@ impl SseStream {
                 self.queued.extend(self.decoder.push(&chunk));
             } else {
                 self.response = None;
-                self.decoder.finish()?;
+                self.decoder
+                    .finish()
+                    .map_err(|error| error.with_dispatch(Dispatch::Accepted))?;
                 return Ok(None);
             }
         }

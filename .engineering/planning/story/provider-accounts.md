@@ -2,15 +2,16 @@
 format: aep.planning-md/1
 id: story:provider-accounts
 kind: story
-status: draft
+status: active
 title: Provider accounts are independent of wire selection
 relations:
 - decomposes: epic:access
 - depends_on: story:secret-resolver
+- serves: vision:portable-model-inference
 scope:
 - confidence: inferred
   path: crates/llm-providers
-revision: 3
+revision: 5
 ---
 ## Context
 
