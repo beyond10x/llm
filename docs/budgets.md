@@ -79,8 +79,11 @@ outcome of every replayed command. Missing, unsupported or inconsistent data nev
 ledger. The original journal retains reservation assumptions, extensions, charge observations,
 refusals and recovery; the inspection view shows their current effects.
 
-The owner holds `owner.lock` until its connection closes. Another handle or process must refuse;
-share one `Arc<SqliteLedger>` across threads. The lock file is never unlinked. The standard library
+The owner holds `owner.lock` until its connection closes, then explicitly unlocks it before closing
+the handle. This also releases the shared lock when a concurrent process spawn has briefly inherited
+the descriptor before exec. Another owner handle or process must refuse while the ledger is alive;
+share one `Arc<SqliteLedger>` across threads. Never use an inherited SQLite connection after fork.
+The lock file is never unlinked. The standard library
 [documents the OS lock's lifetime and advisory/platform behavior](https://doc.rust-lang.org/std/fs/struct.File.html#method.try_lock).
 Use trusted local storage and one cooperating owner. Do not delete or replace live files, share the
 directory across hosts, or treat restoring a stale backup as normal restart. This is not protection

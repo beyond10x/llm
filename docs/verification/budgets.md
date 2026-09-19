@@ -32,12 +32,20 @@ No permit escapes a failed commit. The failed owner stays closed to admission un
 reopen; known cleanup obligations remain inspectable. Concurrent callers share one cap. Existing
 policies, corrupt journals and missing storage never silently create a fresh budget.
 
-There are 12 new behavior tests and one subprocess fixture entry point, which the process test
-invokes in two modes. Together with the prior foundation, this is 74 behavior tests plus that
+There are 13 new behavior tests and one subprocess fixture entry point, which the process test
+invokes in two modes. Together with the prior foundation, this is 75 behavior tests plus that
 entry point, and two compile-fail documentation tests. The full `task check` also checks default
 and optional features, formatting, strict Clippy, ESS and AEP. Six preexisting immutable review
 records retain missing-findings warnings. CI additionally runs credential and local ledger tests
 on macOS and Windows; verify those exact jobs before claiming their remote results.
+
+The first expanded native CI run at `183a8a1` failed macOS's reopen/policy-mismatch assertion and
+cancelled Windows. Investigation reproduced an owner-release defect locally: a duplicate of the
+locked descriptor kept the OS lock alive after ledger drop, returning `OwnerBusy`. The named Unix
+regression `closing_owner_releases_lock_even_with_an_inherited_descriptor` failed before the fix.
+An RAII guard now explicitly unlocks after the database connection closes; the regression passes.
+The original assertion now reports its actual error, and the native matrix collects both platform
+results even if one fails. Fresh exact-revision CI must still verify the correction on macOS.
 
 ## Falsification
 

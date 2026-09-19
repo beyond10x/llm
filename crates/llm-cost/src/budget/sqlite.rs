@@ -38,13 +38,23 @@ struct Inner {
     sequence: i64,
     failed: bool,
 }
+struct OwnerLock(File);
+impl Drop for OwnerLock {
+    fn drop(&mut self) {
+        // A concurrent process spawn can briefly inherit this open-file
+        // description before exec closes it. Close alone leaves that lock alive.
+        // On unlock failure, closing still releases our handle; any inherited
+        // handle conservatively keeps competing owners out until it also closes.
+        let _ = self.0.unlock();
+    }
+}
 /// A single process owner, shareable by reference/Arc across concurrent callers.
 /// Local trusted storage is required. Neither filesystem permissions nor a lock
 /// protect against a privileged administrator replacing files or restoring backups.
 pub struct SqliteLedger {
     inner: Mutex<Inner>,
     // Keep the lock until after the connection/engine are dropped. Never unlink it.
-    _owner: File,
+    _owner: OwnerLock,
 }
 impl SqliteLedger {
     /// Creates a new directory and ledger. Never opens or overwrites an existing directory.
@@ -70,6 +80,7 @@ impl SqliteLedger {
             .map_err(|_| BudgetError::Storage)?;
         let owner = new_file(&directory.join("owner.lock"))?;
         lock_owner(&owner)?;
+        let owner = OwnerLock(owner);
         let database = directory.join("ledger.sqlite3");
         let created = new_file(&database)?;
         created.sync_all().map_err(|_| BudgetError::Storage)?;
@@ -131,6 +142,7 @@ impl SqliteLedger {
             .open(lock_path)
             .map_err(storage)?;
         lock_owner(&owner)?;
+        let owner = OwnerLock(owner);
         let database = directory.join("ledger.sqlite3");
         regular_file(&database)?;
         let connection = connection(&database)?;
@@ -352,6 +364,30 @@ mod tests {
         budget::{Operation, Phase, ReservationRequest},
     };
     use llm_core::Id;
+
+    #[cfg(unix)]
+    #[test]
+    fn closing_owner_releases_lock_even_with_an_inherited_descriptor() {
+        let policy = BudgetPolicy {
+            id: Id::new("scope").unwrap(),
+            currency: Currency::new("USD").unwrap(),
+            limit: Amount::from_nanos(100),
+            max_active: 2,
+        };
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("ledger");
+        let ledger = SqliteLedger::create(&path, policy.clone(), 0).unwrap();
+        // dup retains the same open-file description as a forked child between
+        // fork and exec. Closing only the parent's descriptor does not unlock it.
+        #[expect(
+            clippy::used_underscore_binding,
+            reason = "this regression deliberately duplicates the otherwise RAII-only guard"
+        )]
+        let inherited = ledger._owner.0.try_clone().unwrap();
+        drop(ledger);
+        assert_eq!(SqliteLedger::open(&path, &policy, 1).err(), None);
+        drop(inherited);
+    }
 
     #[test]
     fn failed_sqlite_commit_issues_no_permit_or_in_memory_start() {

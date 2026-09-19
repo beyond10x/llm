@@ -40,6 +40,7 @@ jobs:
           if-no-files-found: error
   native-adapter-builds:
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}

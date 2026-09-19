@@ -456,10 +456,10 @@ mod durable {
         drop(ledger);
         let mut changed = policy();
         changed.limit = amount(999);
-        assert!(matches!(
-            SqliteLedger::open(&path, &changed, 3),
-            Err(BudgetError::PolicyMismatch)
-        ));
+        assert_eq!(
+            SqliteLedger::open(&path, &changed, 3).err(),
+            Some(BudgetError::PolicyMismatch)
+        );
         let ledger = SqliteLedger::open(&path, &policy(), 3).unwrap();
         let view = ledger.view().unwrap();
         assert_eq!(

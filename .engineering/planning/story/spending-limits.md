@@ -33,7 +33,7 @@ scope:
   path: spec
 - confidence: inferred
   path: spec/domains/catalog.yaml
-revision: 8
+revision: 10
 ---
 ## Context
 
@@ -54,7 +54,7 @@ fixed-charge observations, compute renewal/stop obligations, process ownership a
 are documented in docs/budgets.md. A failed journal write freezes admission until verified reopen
 and preserves known cleanup obligations for inspection.
 
-Full task check passed: 74 behavior tests plus one subprocess fixture entry point, two compile-fail
+Full task check passed: 75 behavior tests plus one subprocess fixture entry point, two compile-fail
 documentation tests, formatting, strict Clippy, feature checks, ESS and AEP. Three consecutive
 restored-source ESS runs each passed all 145 scenarios (140 authored, five generated), zero
 failed/error/unsupported/skipped/refused. All 84 schemas and original suite bytes regenerate
@@ -65,7 +65,7 @@ byte-for-byte. See docs/verification/budgets.md, budget-report.json and budget-f
 Cross-process lock contention, abrupt exit and a real failed SQLite COMMIT are additionally tested.
 No paid call or deployment occurred. Gateway/fallback/hosting integration and live qualification
 remain outstanding; these library results do not claim actual cloud shutdown or a hard invoice
-ceiling. Remote publication/CI is tracked separately at the exact candidate commit.
+ceiling. Remote publication/CI is tracked separately at the exact candidate commit; see Native CI correction.
 
 ## Verification
 
@@ -121,3 +121,20 @@ inventing a production event transport. Add stateful authored command sequences 
 engine and SQLite adapter, inspect actual totals/phases/permits, and use mutation checks on
 admission, unknowns, one-shot start, recovery, settlement overruns and compute stop obligations.
 Preserve the current 97 scenarios. No paid calls, deployments or artifact lifecycle moves occur.
+
+## Native CI correction
+
+The initial expanded native CI run, 35439902423 at 183a8a1, failed macOS's reopen/policy-mismatch
+assertion; the original fail-fast matrix cancelled Windows. Investigation reproduced OwnerBusy
+on Linux by retaining a duplicate of the owner's lock descriptor across ledger drop, matching
+standard-library documented lock lifetime behavior. The new Unix regression failed before the
+fix. OwnerLock now explicitly unlocks after connection destruction, so a descriptor briefly
+inherited during concurrent process spawn cannot retain the cooperative owner lock after close.
+The assertion now reports the actual error, and CI collects both native platform results.
+
+The full local gate was rerun after the fix. It passes 75 behavior tests plus one subprocess
+fixture entry point and two compile-fail documentation tests. Three restored-source ESS runs
+retain 145/145 passes, zero failed/error/unsupported/skipped/refused and 84 matching schemas. All
+16 deliberate budget defects again fail named scenarios; every mutation is restored. The report
+and source identities are refreshed. A fresh exact-revision remote run must verify macOS/Windows;
+no timing allowances, skipped tests or exception lists were introduced.

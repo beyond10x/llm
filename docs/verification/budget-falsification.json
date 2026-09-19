@@ -171,7 +171,7 @@
     "source": "crates/llm-cost/src/budget/sqlite.rs",
     "before": "transaction.commit().map_err(storage)\n}",
     "after": "let _ = transaction.commit(); Ok(())\n}",
-    "source_before_sha256": "63d0f325307dbb3248a06c9e06c7e799db04a1b184302e98ed03ad0dcf65f89b",
+    "source_before_sha256": "57c3b59b120e01b7401121b87a05cc5ff89c7a2a8aeab7732aee44be4f52566b",
     "named_failure": "llm.budget/authored/failed-commit-issues-no-permit",
     "counts": {
       "error": 0,
@@ -192,7 +192,7 @@
     "source": "crates/llm-cost/src/budget/sqlite.rs",
     "before": "file.try_lock().map_err(|error| match error {",
     "after": "return Ok(());\n    file.try_lock().map_err(|error| match error {",
-    "source_before_sha256": "63d0f325307dbb3248a06c9e06c7e799db04a1b184302e98ed03ad0dcf65f89b",
+    "source_before_sha256": "57c3b59b120e01b7401121b87a05cc5ff89c7a2a8aeab7732aee44be4f52566b",
     "named_failure": "llm.budget/authored/second-owner-refuses",
     "counts": {
       "error": 0,
@@ -211,7 +211,7 @@
     "source": "crates/llm-cost/src/budget/sqlite.rs",
     "before": "if &recorded != policy {",
     "after": "if false {",
-    "source_before_sha256": "63d0f325307dbb3248a06c9e06c7e799db04a1b184302e98ed03ad0dcf65f89b",
+    "source_before_sha256": "57c3b59b120e01b7401121b87a05cc5ff89c7a2a8aeab7732aee44be4f52566b",
     "named_failure": "llm.budget/authored/reopen-refuses-policy-reset",
     "counts": {
       "error": 0,
@@ -230,7 +230,7 @@
     "source": "crates/llm-cost/src/budget/sqlite.rs",
     "before": "inner.failed = true;",
     "after": "inner.failed = false;",
-    "source_before_sha256": "63d0f325307dbb3248a06c9e06c7e799db04a1b184302e98ed03ad0dcf65f89b",
+    "source_before_sha256": "57c3b59b120e01b7401121b87a05cc5ff89c7a2a8aeab7732aee44be4f52566b",
     "named_failure": "llm.budget/authored/write-failure-freezes-owner-until-reopen",
     "counts": {
       "error": 0,
