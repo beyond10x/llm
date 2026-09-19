@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Endpoint",
+  "x-ess-name": "llm.catalog.Endpoint",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "account_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "account",
+        "kind": "references",
+        "source": "llm.catalog.Endpoint",
+        "target": "llm.catalog.Account",
+        "cardinality": "one",
+        "via": "account_id"
+      }
+    },
+    "base_url": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.catalog.Endpoint.State"
+    }
+  },
+  "required": [
+    "id",
+    "account_id",
+    "base_url",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:4d65fa9334b73a9770b18b450ee6961fe44b2f59ed823b5f56396a36c55b6c88",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.Endpoint.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.Endpoint.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

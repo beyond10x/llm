@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.catalog.RouteTarget.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:759c72290c4f2ea1daa5af6b28d8186fd0a47c7ecceb97f42fed3818f694a3c3",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.RouteTarget.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.RouteTarget.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

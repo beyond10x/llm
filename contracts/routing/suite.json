@@ -1,0 +1,2907 @@
+{
+  "coverage": {
+    "authored": [
+      "llm.routing/authored/capability-reasons-observed",
+      "llm.routing/authored/context-overflow-refused",
+      "llm.routing/authored/duplicate-target-refused",
+      "llm.routing/authored/explicit-fallback-selects-compatible-target",
+      "llm.routing/authored/fallback-default-disabled",
+      "llm.routing/authored/fallback-disabled",
+      "llm.routing/authored/fallback-preserves-first-compatible-order",
+      "llm.routing/authored/implicit-output-budget-inclusive",
+      "llm.routing/authored/implicit-output-budget-refused",
+      "llm.routing/authored/inclusive-context-boundary",
+      "llm.routing/authored/inline-secret-refused",
+      "llm.routing/authored/invalid-auth-binding-refused",
+      "llm.routing/authored/matching-opaque-binding-preserved",
+      "llm.routing/authored/missing-reference-refused",
+      "llm.routing/authored/noncontiguous-order-refused",
+      "llm.routing/authored/old-turn-version-refused",
+      "llm.routing/authored/opaque-state-refuses-cross-binding-fallback",
+      "llm.routing/authored/primary-selection-preserves-request",
+      "llm.routing/authored/protocol-messages-independent-of-provider",
+      "llm.routing/authored/protocol-responses-independent-of-provider",
+      "llm.routing/authored/repointed-endpoint-refuses-opaque-state",
+      "llm.routing/authored/repointed-model-refuses-opaque-state",
+      "llm.routing/authored/subscription-billing-independent-of-protocol",
+      "llm.routing/authored/unknown-alias-refused",
+      "llm.routing/authored/unknown-catalog-version",
+      "llm.routing/authored/unknown-input-tokens-refused",
+      "llm.routing/authored/url-credentials-refused"
+    ],
+    "authored_sources": {
+      "capability-reasons-observed.yaml": {
+        "digest": "sha256:760133e66f669488de449ad68a9a2439ea6da3cf0ade45dc9033bf50b467b491",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/capability-reasons-observed"
+      },
+      "context-overflow-refused.yaml": {
+        "digest": "sha256:a2ade065a9651df9c75cdc4117a2401d75fd565ad57f7d59765d72d28d14681b",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/context-overflow-refused"
+      },
+      "duplicate-target-refused.yaml": {
+        "digest": "sha256:8669f25c1f651249c171c1c908165e3928dcc0207c9dc2fb7ef012628e0be8d9",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/duplicate-target-refused"
+      },
+      "explicit-fallback-selects-compatible-target.yaml": {
+        "digest": "sha256:28708bbf8a9c9af57d1ea87fe3767e61d8fcf3510e26434299120d2b28588cbb",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/explicit-fallback-selects-compatible-target"
+      },
+      "fallback-default-disabled.yaml": {
+        "digest": "sha256:84dc3ff5bca9f36af3bdcea9dccf295330a8d8875574995d8ebb8f59e9383c7f",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-default-disabled"
+      },
+      "fallback-disabled.yaml": {
+        "digest": "sha256:e1820e317da2bae81392743d7e8a9174a2d8ad25d2639dd529378030a04d74e8",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-disabled"
+      },
+      "fallback-preserves-first-compatible-order.yaml": {
+        "digest": "sha256:9873fb4bb7beeae8795d1f6903cf2411642931b3084d814f49e433914018917d",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-preserves-first-compatible-order"
+      },
+      "implicit-output-budget-inclusive.yaml": {
+        "digest": "sha256:ca5357a519eb00643bac4c2321c56a2ae0f9d1f02211b66f4c210b03702a005f",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/implicit-output-budget-inclusive"
+      },
+      "implicit-output-budget-refused.yaml": {
+        "digest": "sha256:565337ba5a88a5c166c84f953d7fc635721cb60ea86bd575d53d2c196f023f57",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/implicit-output-budget-refused"
+      },
+      "inclusive-context-boundary.yaml": {
+        "digest": "sha256:6acd3fe5d9829aa07b7036cb39b10df237d08b190ac979ec78c87dcc25c45b8a",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/inclusive-context-boundary"
+      },
+      "inline-secret-refused.yaml": {
+        "digest": "sha256:6ca443880419ced905d5d8c377324f9aa4fc710daec63c92668d31919bde7e9f",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/inline-secret-refused"
+      },
+      "invalid-auth-binding-refused.yaml": {
+        "digest": "sha256:34b836cf21993aad0114e5785a807b35b1da75bc2b873fc6c59afd01ae2cadb6",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/invalid-auth-binding-refused"
+      },
+      "matching-opaque-binding-preserved.yaml": {
+        "digest": "sha256:1e7cbe1363a7007552805d231a879e91da57b6f369590fe39f31d7c44c818c38",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/matching-opaque-binding-preserved"
+      },
+      "missing-reference-refused.yaml": {
+        "digest": "sha256:db0bdf68a13dae86869282c9c77158a9a3149893b2fb3134a1c53ccdc1908673",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/missing-reference-refused"
+      },
+      "noncontiguous-order-refused.yaml": {
+        "digest": "sha256:caf7409267d16be5cd898525e67f4d3a7f61482f87934d52934934d12006d2b8",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/noncontiguous-order-refused"
+      },
+      "old-turn-version-refused.yaml": {
+        "digest": "sha256:3bcb4810eb0c9ce2f32197c5f18c221b711a58975d29d0a241dd40a8d6226c79",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/old-turn-version-refused"
+      },
+      "opaque-state-refuses-cross-binding-fallback.yaml": {
+        "digest": "sha256:28b9e8eed61613707c95f26deac7d54a2220c1113d463b704e228423bab28831",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/opaque-state-refuses-cross-binding-fallback"
+      },
+      "primary-selection-preserves-request.yaml": {
+        "digest": "sha256:6d872bb209f28b1d112259c613842d1cdd33d9d6cf9116d0a86e16a62ef90181",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/primary-selection-preserves-request"
+      },
+      "protocol-messages-independent-of-provider.yaml": {
+        "digest": "sha256:faa350c2044f8b2a057f4bb377a080d126a22d3c35076eaa6800e7bd439f82e1",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/protocol-messages-independent-of-provider"
+      },
+      "protocol-responses-independent-of-provider.yaml": {
+        "digest": "sha256:6dbf6a399c98330a6fb1357cbf7e466aaa705ac1c9b0b1cd6eb065640862dc41",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/protocol-responses-independent-of-provider"
+      },
+      "repointed-endpoint-refuses-opaque-state.yaml": {
+        "digest": "sha256:bb33b518299882030c1bc965862275616162be4005ac66979af1b977f158b327",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/repointed-endpoint-refuses-opaque-state"
+      },
+      "repointed-model-refuses-opaque-state.yaml": {
+        "digest": "sha256:71128fd7c0b2f8bbf56113648cb6a529e14a61c8b277eefcf73b4e9bc8e4f27b",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/repointed-model-refuses-opaque-state"
+      },
+      "subscription-billing-independent-of-protocol.yaml": {
+        "digest": "sha256:c367e23f3a5373251dcb99646f045f3f3f76b3e99b15877ea725b2139981391e",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/subscription-billing-independent-of-protocol"
+      },
+      "unknown-alias-refused.yaml": {
+        "digest": "sha256:f72b39cb3dfc3a78e896578ec6b3b912ea911b20f8eacaa5149c50c1323e2883",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/unknown-alias-refused"
+      },
+      "unknown-catalog-version.yaml": {
+        "digest": "sha256:95f59dfe2599f0095c6c7886d60496be61a130553d97656b08d01c2cd4203e53",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/unknown-catalog-version"
+      },
+      "unknown-input-tokens-refused.yaml": {
+        "digest": "sha256:26b63cca2131bae9740975c4e29a63fa3e9941300e410cf618872d9e2750c8b1",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/unknown-input-tokens-refused"
+      },
+      "url-credentials-refused.yaml": {
+        "digest": "sha256:c5692db515d6172e6503b73fd2a31d5be3865ca28bc009ae9a7b82f7f8580489",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/url-credentials-refused"
+      }
+    },
+    "counts": {
+      "authored": 27,
+      "generated": 1,
+      "outside": 0,
+      "refused": 0
+    },
+    "generated": [
+      "llm.routing.Evaluate/outcome/observed"
+    ],
+    "knowledge": "complete_inventory",
+    "outside": [],
+    "refused": [],
+    "selection": {
+      "filter": {
+        "kind": "all"
+      },
+      "origins": "generated_and_authored",
+      "scope": {
+        "kind": "system"
+      }
+    }
+  },
+  "provenance": {
+    "contract_digest": "2b9cf04231e2fb7d878e48db7bb10ed5d504b164ea068f45aab4f14815939d12",
+    "spec_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "specification_version": "v1",
+    "suite_version": "ess-conformance/5",
+    "system": "llm"
+  },
+  "scenarios": {
+    "llm.routing.Evaluate/outcome/observed": {
+      "purpose": "`llm.routing.Evaluate` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "turn_json"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "shape": {
+            "catalog_valid": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        }
+      ]
+    },
+    "llm.routing/authored/capability-reasons-observed": {
+      "purpose": "capability reasons observed",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 3072.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Lookup\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":2048,\"sampling\":{\"temperature\":0.5,\"top_p\":0.8,\"reasoning_effort\":\"high\"},\"tool_choice\":\"required\"}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:tools",
+                  "coding-primary:tool-choice",
+                  "coding-primary:temperature",
+                  "coding-primary:top-p",
+                  "coding-primary:reasoning-effort",
+                  "coding-primary:output-limit",
+                  "coding-primary:context-window",
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/context-overflow-refused": {
+      "purpose": "context overflow refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 3969.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:context-window",
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/duplicate-target-refused": {
+      "purpose": "duplicate target refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/explicit-fallback-selects-compatible-target": {
+      "purpose": "explicit fallback selects compatible target",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128,\"sampling\":{\"temperature\":0.5}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "bearer"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "metered"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "large"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "responses"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:temperature"
+                ]
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-secondary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "https://models.example.invalid/v1/responses"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-default-disabled": {
+      "purpose": "fallback default disabled",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\n\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128,\"sampling\":{\"temperature\":0.5}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:temperature",
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-disabled": {
+      "purpose": "fallback disabled",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128,\"sampling\":{\"temperature\":0.5}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:temperature",
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-preserves-first-compatible-order": {
+      "purpose": "fallback preserves first compatible order",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/chat/completions"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/implicit-output-budget-inclusive": {
+      "purpose": "implicit output budget inclusive",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 3072.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/chat/completions"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/implicit-output-budget-refused": {
+      "purpose": "implicit output budget refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 3073.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/inclusive-context-boundary": {
+      "purpose": "inclusive context boundary",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 3968.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/chat/completions"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/inline-secret-refused": {
+      "purpose": "inline secret refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nsecret = \"fixture-secret\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/invalid-auth-binding-refused": {
+      "purpose": "invalid auth binding refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/matching-opaque-binding-preserved": {
+      "purpose": "matching opaque binding preserved",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"},\"payload\":{\"state\":\"fixture-state\"}}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/chat/completions"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/missing-reference-refused": {
+      "purpose": "missing reference refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"missing\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"missing\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/noncontiguous-order-refused": {
+      "purpose": "noncontiguous order refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/old-turn-version-refused": {
+      "purpose": "old turn version refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/1\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/opaque-state-refuses-cross-binding-fallback": {
+      "purpose": "opaque state refuses cross binding fallback",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"},\"payload\":{\"state\":\"fixture-state\"}}],\"tools\":[],\"max_output_tokens\":128,\"sampling\":{\"temperature\":0.5}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:temperature",
+                  "coding-secondary:opaque-state"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/primary-selection-preserves-request": {
+      "purpose": "primary selection preserves request",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/chat/completions"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/protocol-messages-independent-of-provider": {
+      "purpose": "protocol messages independent of provider",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "messages"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/messages"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/protocol-responses-independent-of-provider": {
+      "purpose": "protocol responses independent of provider",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "responses"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/responses"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/repointed-endpoint-refuses-opaque-state": {
+      "purpose": "repointed endpoint refuses opaque state",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:9000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"},\"payload\":{\"state\":\"fixture-state\"}}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:opaque-state",
+                  "coding-secondary:opaque-state",
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/repointed-model-refuses-opaque-state": {
+      "purpose": "repointed model refuses opaque state",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Different-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"},\"payload\":{\"state\":\"fixture-state\"}}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/subscription-billing-independent-of-protocol": {
+      "purpose": "subscription billing independent of protocol",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"subscription\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "subscription"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/chat/completions"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/unknown-alias-refused": {
+      "purpose": "unknown alias refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"unknown\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/unknown-catalog-version": {
+      "purpose": "unknown catalog version",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/2\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/unknown-input-tokens-refused": {
+      "purpose": "unknown input tokens refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": null
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:input-tokens-unknown",
+                  "coding-secondary:input-tokens-unknown",
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/url-credentials-refused": {
+      "purpose": "url credentials refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://user:fixture-secret@127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    }
+  }
+}

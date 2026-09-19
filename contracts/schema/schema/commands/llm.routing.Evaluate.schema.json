@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evaluate input",
+  "x-ess-name": "llm.routing.Evaluate",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "turn_json": {
+      "type": "string"
+    },
+    "input_tokens": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "turn_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:5245aaf76612b39145df59a760477309f566f8312000d7b65eea1fdc650dccd4",
+    "regenerate": "ess generate"
+  }
+}

@@ -16,6 +16,7 @@ fn target() -> Provenance {
         account: Id::new("anonymous").unwrap(),
         endpoint: Id::new("development").unwrap(),
         model: Id::new("test-model").unwrap(),
+        binding_revision: Id::new("fake-model-v1").unwrap(),
     }
 }
 fn capabilities() -> Capabilities {
@@ -187,14 +188,15 @@ async fn bounded_sink_failure_preserves_prefix_and_prevents_success() {
 #[test]
 fn opaque_state_cannot_cross_any_binding_coordinate() {
     let selected = target();
-    for coordinate in 0..5 {
+    for coordinate in 0..6 {
         let mut origin = selected.clone();
         match coordinate {
             0 => origin.protocol = Protocol::Messages,
             1 => origin.provider = Id::new("another").unwrap(),
             2 => origin.account = Id::new("another").unwrap(),
             3 => origin.endpoint = Id::new("another").unwrap(),
-            _ => origin.model = Id::new("another").unwrap(),
+            4 => origin.model = Id::new("another").unwrap(),
+            _ => origin.binding_revision = Id::new("another").unwrap(),
         }
         let mut request = request();
         request.items.push(Item::Opaque {
@@ -215,14 +217,17 @@ fn opaque_state_cannot_cross_any_binding_coordinate() {
 fn persisted_version_and_unrecognized_authority_fields_refuse() {
     let document = TurnDocument::new(request());
     let mut encoded = serde_json::to_value(&document).unwrap();
-    assert_eq!(encoded["format"], "llm.turn/1");
+    assert_eq!(encoded["format"], "llm.turn/2");
     assert!(encoded["request"].get("sampling").is_none());
     assert_eq!(
         serde_json::from_value::<TurnDocument>(encoded.clone()).unwrap(),
         document
     );
-    encoded["format"] = json!("llm.turn/2");
+    encoded["format"] = json!("llm.turn/1");
     assert!(serde_json::from_value::<TurnDocument>(encoded).is_err());
+    let mut future = serde_json::to_value(&document).unwrap();
+    future["format"] = json!("llm.turn/3");
+    assert!(serde_json::from_value::<TurnDocument>(future).is_err());
     for field in ["approval", "envelope"] {
         let mut encoded = serde_json::to_value(&document).unwrap();
         encoded["request"]["tools"][0][field] = json!({});
@@ -297,13 +302,16 @@ fn output_document_versions_and_unknown_fields_are_rejected() {
         usage: None,
     });
     let mut value = serde_json::to_value(&document).unwrap();
-    assert_eq!(value["format"], "llm.outcome/1");
+    assert_eq!(value["format"], "llm.outcome/2");
     assert_eq!(
         serde_json::from_value::<llm_core::OutcomeDocument>(value.clone()).unwrap(),
         document
     );
-    value["format"] = json!("llm.outcome/2");
+    value["format"] = json!("llm.outcome/1");
     assert!(serde_json::from_value::<llm_core::OutcomeDocument>(value).is_err());
+    let mut future = serde_json::to_value(&document).unwrap();
+    future["format"] = json!("llm.outcome/3");
+    assert!(serde_json::from_value::<llm_core::OutcomeDocument>(future).is_err());
     let mut value = serde_json::to_value(&document).unwrap();
     value["outcome"]["unknown"] = json!(true);
     assert!(serde_json::from_value::<llm_core::OutcomeDocument>(value).is_err());

@@ -1,4 +1,4 @@
-# Neutral inference contract v1
+# Neutral inference contract (unreleased revision 2)
 
 This is the first LLM contract. It is independent of Harness execution authority and supports
 stateless text and tool turns. Image/audio, vendor-side tools, provider thread management and
@@ -19,11 +19,16 @@ provider item. Tool definitions contain only name, description and JSON Schema. 
 execution permission; LLM never executes a tool, carries an approval envelope or imports an agent
 loop. A caller supplies tool results in a subsequent request.
 
-Opaque items carry protocol, provider, account, endpoint identity and model provenance. Every
-adapter checks all five against the selected binding before sending, including same-protocol
+Opaque items carry protocol, provider, account, endpoint, model and binding revision. Every
+adapter checks all six against the selected binding before sending, including same-protocol
 cross-model and cross-account requests. Providers may later admit a narrower documented exception
-through a versioned contract; no implicit exception exists in v1. Unsupported opaque state never
+through a versioned contract; no implicit exception exists. Unsupported opaque state never
 disappears during translation or fallback.
+
+The binding revision hashes the complete validated single-binding declaration, including the
+endpoint URL, upstream model, auth reference and capabilities. Repointing an existing ID therefore
+invalidates old opaque state. Secret bytes and credential generations are excluded so rotation of
+the same reference does not invalidate a continuation.
 
 ## Validation and accounting
 
@@ -61,10 +66,17 @@ presentation. A rejected subscription credential never changes billing kind or a
 ## Compatibility and source provenance
 
 Published Rust APIs follow the crate release's semantic version. Persisted neutral requests carry
-an explicit `llm.turn/1` envelope and outputs carry `llm.outcome/1`; unknown versions and fields refuse. Unversioned Rust
+an explicit `llm.turn/2` envelope and outputs carry `llm.outcome/2`; old/unknown versions and fields refuse. Unversioned Rust
 values are in-process values, not a claim of a stable vendor wire format. Unsupported additions
 need a version change before they are accepted. This contract does not establish any live provider
 qualification or a released artifact.
+
+Provider declarations use `llm.binding/1`; TOML catalogs use `llm.catalog/1`. Catalog selection
+requires an input-token upper bound supplied by the caller and valid for every candidate. Unknown
+input counts refuse admission. Fallback defaults off; opt-in permits local selection of the first
+compatible named target. Retrying after an HTTP failure, charging attempts and spending limits
+remain separate planned behavior. Explain exposes safe IDs, capabilities and refusal reasons;
+it does not resolve secrets or include prompt/opaque payloads.
 
 Source port: `beyond10x/harness` commit `709a2ebadcc14602b82b6f3c240350e4ddc1c88c`,
 `crates/harness-wire/src/{id,bound,item,turn,port}.rs` and

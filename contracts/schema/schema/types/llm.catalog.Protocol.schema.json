@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.catalog.Protocol",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:398ab8b2d7df2a803ca5f605a08ea698c6f0b935ed2de397678e38f820a52351",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.Protocol": {
+      "title": "Protocol",
+      "x-ess-name": "llm.catalog.Protocol",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Responses",
+        "Messages",
+        "ChatCompletions"
+      ]
+    }
+  }
+}

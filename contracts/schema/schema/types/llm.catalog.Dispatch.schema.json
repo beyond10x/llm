@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.catalog.Dispatch",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:d40b91caf425ad22d1031c543da48bb886d03c00e2d5c651252acad54be396be",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.Dispatch": {
+      "title": "Dispatch",
+      "x-ess-name": "llm.catalog.Dispatch",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "NotSent",
+        "Rejected",
+        "Unknown",
+        "Accepted"
+      ]
+    }
+  }
+}

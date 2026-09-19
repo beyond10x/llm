@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProvisionedDeployment",
+  "x-ess-name": "llm.catalog.ProvisionedDeployment",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "deployment_spec_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "specification",
+        "kind": "references",
+        "source": "llm.catalog.ProvisionedDeployment",
+        "target": "llm.catalog.DeploymentSpec",
+        "cardinality": "one",
+        "via": "deployment_spec_id"
+      }
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "observation": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.catalog.ProvisionedDeployment.State"
+    }
+  },
+  "required": [
+    "id",
+    "deployment_spec_id",
+    "resource_id",
+    "observation",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:592bf92f25c885d740b62c61f4bda6592e877ed948e115d06228e6a9859a53dc",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.ProvisionedDeployment.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.ProvisionedDeployment.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

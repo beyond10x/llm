@@ -34,6 +34,9 @@ pub struct Provenance {
     pub account: Id,
     pub endpoint: Id,
     pub model: Id,
+    /// Identity of the concrete binding definition, including endpoint URL and upstream model.
+    /// A caller must change this when a definition is repointed, even if its display IDs persist.
+    pub binding_revision: Id,
 }
 
 /// Declared model/settings support. Context tokens require separate tokenizer/accounting evidence.

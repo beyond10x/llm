@@ -1,0 +1,79 @@
+{
+  "completed_at": 1789805944787,
+  "conformance_status": "passed",
+  "counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 28,
+    "skipped": 0,
+    "total": 28,
+    "unsupported": 0
+  },
+  "coverage": {
+    "counts": {
+      "authored": 27,
+      "generated": 1,
+      "outside": 0,
+      "refused": 0
+    },
+    "knowledge": "complete_inventory",
+    "refused": [],
+    "selection": {
+      "filter": {
+        "kind": "all"
+      },
+      "origins": "generated_and_authored",
+      "scope": {
+        "kind": "system"
+      }
+    }
+  },
+  "execution_status": "passed",
+  "format": "ess-conformance-report/2",
+  "implementation": "llm-catalog-libraries sources-sha256:c63210d8419e6180516a6c7d5e67ef2b3d6207b2942ff866b3f00bdbfde87db9",
+  "outcomes": {
+    "error": [],
+    "failed": [],
+    "passed": [
+      "llm.routing.Evaluate/outcome/observed",
+      "llm.routing/authored/capability-reasons-observed",
+      "llm.routing/authored/context-overflow-refused",
+      "llm.routing/authored/duplicate-target-refused",
+      "llm.routing/authored/explicit-fallback-selects-compatible-target",
+      "llm.routing/authored/fallback-default-disabled",
+      "llm.routing/authored/fallback-disabled",
+      "llm.routing/authored/fallback-preserves-first-compatible-order",
+      "llm.routing/authored/implicit-output-budget-inclusive",
+      "llm.routing/authored/implicit-output-budget-refused",
+      "llm.routing/authored/inclusive-context-boundary",
+      "llm.routing/authored/inline-secret-refused",
+      "llm.routing/authored/invalid-auth-binding-refused",
+      "llm.routing/authored/matching-opaque-binding-preserved",
+      "llm.routing/authored/missing-reference-refused",
+      "llm.routing/authored/noncontiguous-order-refused",
+      "llm.routing/authored/old-turn-version-refused",
+      "llm.routing/authored/opaque-state-refuses-cross-binding-fallback",
+      "llm.routing/authored/primary-selection-preserves-request",
+      "llm.routing/authored/protocol-messages-independent-of-provider",
+      "llm.routing/authored/protocol-responses-independent-of-provider",
+      "llm.routing/authored/repointed-endpoint-refuses-opaque-state",
+      "llm.routing/authored/repointed-model-refuses-opaque-state",
+      "llm.routing/authored/subscription-billing-independent-of-protocol",
+      "llm.routing/authored/unknown-alias-refused",
+      "llm.routing/authored/unknown-catalog-version",
+      "llm.routing/authored/unknown-input-tokens-refused",
+      "llm.routing/authored/url-credentials-refused"
+    ],
+    "skipped": [],
+    "unsupported": []
+  },
+  "policy": "complete-selection/1",
+  "producer_profile": "rust-scenario-status/1",
+  "spec_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+  "specification": "llm/v1",
+  "suite": {
+    "digest": "sha256:167562ebaa2cae92c0956924a845648dbe7232457b7acb4822f8646513249ee0",
+    "digest_profile": "sha256-json-bytes/1",
+    "version": "ess-conformance/5"
+  }
+}

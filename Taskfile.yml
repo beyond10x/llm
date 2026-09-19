@@ -5,7 +5,12 @@ tasks:
     cmds:
       - task: rust
       - ess specify validate --path spec
+      - task: conformance
       - aep plan artifact validate
+  conformance:
+    desc: Check ESS projection drift and run behavioral conformance three times
+    cmds:
+      - cargo run --locked -p b10x-llm-conformance -- check
   rust:
     cmds:
       - cargo test --workspace --locked

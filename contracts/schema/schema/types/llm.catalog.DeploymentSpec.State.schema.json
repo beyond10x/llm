@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.catalog.DeploymentSpec.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:1d6d3cd5ab75f5beba87481cbb26733c628323655fadfbe8816993f2fa1d1a67",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.DeploymentSpec.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.DeploymentSpec.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

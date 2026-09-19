@@ -6,32 +6,38 @@ store owns lifecycle state; this page explains what those states mean for caller
 
 ## Foundation checkpoint — 2026-09-19
 
-Three libraries now implement the shared boundary. The neutral core supports asynchronous model
+Five libraries now implement the shared boundary. The neutral core supports asynchronous model
 turns, text/tools, bounded streaming, cancellation, optional usage, typed failures, and opaque
-continuation state bound to its exact protocol/provider/account/endpoint/model. Credentials are
+continuation state bound to its exact protocol/provider/account/endpoint/model/binding revision. Credentials are
 injected and resolved on each request; concurrent renewal is coordinated without owning a login
 or persistent credential store. The HTTP transport streams bounded SSE with explicit deadlines,
 no redirects, no automatic retries, and failure after partial output preserved.
 
-The [verification record](verification/core-foundation.md) identifies the 31 passing checks and
-the local embedding example. This is fixture evidence for these libraries, not a usable remote
-model client or release qualification. All four owning implementation stories remain active
+Provider bindings validate independent protocol, provider, auth and billing choices, including
+anonymous arbitrary endpoints. Routing validates strict TOML catalogs, preserves ordered opt-in
+selection, checks capabilities and conservative input-token bounds, and explains safe refusal
+reasons without resolving secrets. Runtime fallback after an attempted request is still pending.
+
+The [initial verification record](verification/core-foundation.md) records the first foundation
+checkpoint. [Routing verification](verification/routing-conformance.md) adds executable ESS
+behavior, generated-schema drift checks and deliberate mutation evidence. This is fixture evidence
+for these libraries, not a usable remote model client or release qualification. Owning stories remain active
 while the versioned configuration surface and release prerequisites are completed.
 
 | Required story | Implementation and remaining work |
 | --- | --- |
-| `runtime-contracts` | Neutral contract v1 and ESS vocabulary implemented; configuration contract and release/common Gates setup remain. |
+| `runtime-contracts` | Unreleased turn/outcome revision 2, binding/catalog v1 and ESS verification implemented; release/common Gates setup remains. |
 | `neutral-inference` | Public async port, bounded data, tool round trip, cancellation and embedding example implemented and tested. |
 | `http-streaming` | Bounded single-attempt HTTP/SSE, terminal truth, cancellation, deadline and retry-hint fixtures pass. |
 | `secret-resolver` | Injected arbitrary secret references, redacted/zeroized material and coordinated caller-owned renewal implemented and tested. |
-| `provider-accounts` | Pending: validate independent provider/account/auth/billing/endpoint/model bindings. |
+| `provider-accounts` | Validated bindings, arbitrary endpoint URLs and selected-reference request-time auth implemented; live access qualification is separate. |
 | `local-secret-adapters` | Pending: explicit optional file and OS keychain adapters. |
 | `responses-projection` | Pending: Responses request, output and streaming projections. |
 | `messages-projection` | Pending: Messages request, output and streaming projections. |
 | `chat-projection` | Pending: Chat Completions projections and arbitrary compatible endpoints. |
 | `openai-access` | Pending: API and caller-managed subscription presentation and successful qualification. |
 | `anthropic-access` | Pending: API and caller-managed subscription presentation and successful qualification. |
-| `catalog-routing` | Pending: versioned TOML catalog, validation, explanation and capability admission. |
+| `catalog-routing` | Strict versioned TOML, deterministic identity, safe explanation, ordered selection and capability admission implemented and tested. |
 | `ordered-fallback` | Pending: explicit ordered alternatives, attempt accounting and refusal after exposed output or uncertain acceptance. |
 | `usage-pricing` | Pending: versioned price inputs and attributable known/estimated/unknown charges. |
 | `spending-limits` | Pending: model budget ownership and implement reservations, concurrency, restart and uncertain-charge policy. |
@@ -63,7 +69,8 @@ or authorize changing source-publication controls.
 
 ## Next implementation step
 
-Implement `provider-accounts` without secret resolution during validation, then the protocol
-projections using the shared transport. Preserve independent auth, billing and protocol choices;
+Implement protocol projections using the shared transport. The draft governed task names
+`story:chat-projection`; no driver run has launched while operator USD terms remain pending.
+Preserve independent auth, billing and protocol choices;
 an anonymous vLLM binding must be explicit. Continue recording acceptance evidence in each owning
 story. Model the remaining budget and hosting runtime semantics before implementing their stores.

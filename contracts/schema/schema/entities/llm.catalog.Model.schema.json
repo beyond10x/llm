@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Model",
+  "x-ess-name": "llm.catalog.Model",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "upstream_name": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.catalog.Model.State"
+    }
+  },
+  "required": [
+    "id",
+    "upstream_name",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:cdf45dd82f768f3c48fc55b3f3d4d1aa546b4140d159ac3daa7fa52d71c10a7f",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.Model.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.Model.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

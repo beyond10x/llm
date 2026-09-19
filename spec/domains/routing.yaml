@@ -1,0 +1,54 @@
+domain: llm.routing
+
+# This is the verification adapter's observation contract. An evaluation is an
+# observation of the pure Rust catalog APIs, not a durable
+# routing job or an inference attempt. The conformance adapter retains the actual
+# returned values until the next evaluation in that scenario. It neither chooses
+# expected outcomes from input predicates nor simulates provider calls.
+entities:
+  - name: llm.routing.Evaluation
+    identity: {name: evaluation_id, type: String}
+    fields: &observation
+      - {name: catalog_valid, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: selected_target, type: Optional<String>}
+      - {name: model, type: Optional<String>}
+      - {name: url, type: Optional<String>}
+      - {name: protocol, type: Optional<String>}
+      - {name: auth_kind, type: Optional<String>}
+      - {name: billing_kind, type: Optional<String>}
+      - {name: config_digest, type: Optional<String>}
+      - {name: input_tokens, type: Optional<Integer>}
+      - {name: rejections, type: List<String>}
+      - {name: request_preserved, type: Boolean}
+    lifecycle:
+      initial: Observed
+      states: [Observed]
+      terminal: [Observed]
+
+commands:
+  - name: llm.routing.Evaluate
+    # Parse, explain admission and resolve a versioned neutral turn without I/O.
+    input:
+      - {name: catalog_toml, type: String}
+      # Serialized llm.turn/2 is intentionally raw here: malformed envelopes must
+      # reach the production decoder, instead of being filtered by the test target.
+      - {name: turn_json, type: String}
+      - {name: input_tokens, type: Optional<Integer>}
+    outcomes:
+      - name: observed
+        emits: [llm.routing.Evaluated]
+        summary: Return facts from evaluation, including typed refusals; this is not success of inference.
+
+events:
+  # Local notification that the adapter finished observing a library return.
+  # No message bus, production event publication or delivery guarantee is implied.
+  - name: llm.routing.Evaluated
+    fields:
+      - {name: catalog_valid, type: Boolean}
+
+views:
+  - name: llm.routing.LastEvaluation
+    source: llm.routing.Evaluation
+    consistency: read_your_writes
+    fields: *observation

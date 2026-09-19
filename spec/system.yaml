@@ -3,3 +3,4 @@ system: llm
 version: v1
 domains:
   - llm.catalog
+  - llm.routing

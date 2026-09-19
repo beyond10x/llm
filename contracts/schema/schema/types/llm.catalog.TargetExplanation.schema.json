@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.catalog.TargetExplanation",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:50763409cdad32ef4c8a4822888e7b7aaa682887b9ef8c33e82e51a9bd6ca64c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.AuthKind": {
+      "title": "AuthKind",
+      "x-ess-name": "llm.catalog.AuthKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Anonymous",
+        "Bearer",
+        "ApiKey"
+      ]
+    },
+    "llm.catalog.BillingKind": {
+      "title": "BillingKind",
+      "x-ess-name": "llm.catalog.BillingKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Metered",
+        "Subscription",
+        "SelfHosted"
+      ]
+    },
+    "llm.catalog.Capabilities": {
+      "title": "Capabilities",
+      "x-ess-name": "llm.catalog.Capabilities",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "tools": {
+          "type": "boolean"
+        },
+        "tool_choice": {
+          "type": "boolean"
+        },
+        "temperature": {
+          "type": "boolean"
+        },
+        "top_p": {
+          "type": "boolean"
+        },
+        "reasoning_efforts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "context_window": {
+          "type": "integer"
+        },
+        "max_output_tokens": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tools",
+        "tool_choice",
+        "temperature",
+        "top_p",
+        "reasoning_efforts",
+        "context_window",
+        "max_output_tokens"
+      ],
+      "additionalProperties": false
+    },
+    "llm.catalog.Protocol": {
+      "title": "Protocol",
+      "x-ess-name": "llm.catalog.Protocol",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Responses",
+        "Messages",
+        "ChatCompletions"
+      ]
+    },
+    "llm.catalog.Provenance": {
+      "title": "Provenance",
+      "x-ess-name": "llm.catalog.Provenance",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/llm.catalog.Protocol"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "account": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "binding_revision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "protocol",
+        "provider",
+        "account",
+        "endpoint",
+        "model",
+        "binding_revision"
+      ],
+      "additionalProperties": false
+    },
+    "llm.catalog.RouteRejection": {
+      "title": "RouteRejection",
+      "x-ess-name": "llm.catalog.RouteRejection",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Tools",
+        "ToolChoice",
+        "Temperature",
+        "TopP",
+        "ReasoningEffort",
+        "OutputLimit",
+        "InputTokensUnknown",
+        "ContextWindow",
+        "OpaqueState",
+        "FallbackDisabled"
+      ]
+    },
+    "llm.catalog.TargetExplanation": {
+      "title": "TargetExplanation",
+      "x-ess-name": "llm.catalog.TargetExplanation",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "target_id": {
+          "type": "string"
+        },
+        "serving_model_id": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "provenance": {
+          "$ref": "#/$defs/llm.catalog.Provenance"
+        },
+        "auth_kind": {
+          "$ref": "#/$defs/llm.catalog.AuthKind"
+        },
+        "billing_kind": {
+          "$ref": "#/$defs/llm.catalog.BillingKind"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/llm.catalog.Capabilities"
+        },
+        "rejections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/llm.catalog.RouteRejection"
+          }
+        }
+      },
+      "required": [
+        "target_id",
+        "serving_model_id",
+        "position",
+        "provenance",
+        "auth_kind",
+        "billing_kind",
+        "capabilities",
+        "rejections"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

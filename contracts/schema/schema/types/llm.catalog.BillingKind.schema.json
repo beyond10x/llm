@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.catalog.BillingKind",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "slice-sha256/2:e98083fd2fd6db0957a8da8c4af48c326c0216220fcad158477ce4a5ca930941",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.BillingKind": {
+      "title": "BillingKind",
+      "x-ess-name": "llm.catalog.BillingKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Metered",
+        "Subscription",
+        "SelfHosted"
+      ]
+    }
+  }
+}

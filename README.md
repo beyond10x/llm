@@ -4,7 +4,9 @@ Composable model inference, provider integration, routing, provisioning and a ga
 
 **Status: foundation implementation in progress.** `llm-core` supplies the asynchronous neutral
 interface, `llm-credentials` supplies injected secret resolution and coordinated renewal, and
-`llm-http` supplies bounded single-attempt HTTP/SSE transport. The other eleven crates are planned
+`llm-http` supplies bounded single-attempt HTTP/SSE transport. `llm-providers` validates independent
+provider/account/auth/protocol bindings; `llm-routing` parses TOML and explains capability-aware
+selection without I/O. The other nine runtime crates are planned
 boundaries. There is no usable gateway, provider client, release or deployment yet.
 
 The [implementation status](docs/implementation-status.md) maps the whole milestone to its AEP
@@ -21,9 +23,16 @@ Run `task check` with Rust 1.98, AEP 0.55.0 and ESS 0.26.0. `task rust` runs the
 formatting and lint checks without requiring the planning tools. Tests use injected models,
 resolvers and local HTTP fixtures; they make no paid provider calls. See the
 [verification record](docs/verification/core-foundation.md) for tested behavior and limits.
+`task conformance` regenerates ESS schemas and the routing suite, checks drift, then runs the real
+libraries three times through the pinned ESS runner. Its report gate refuses missing coverage,
+failures, errors, unsupported observations and skips. See [routing verification](docs/verification/routing-conformance.md).
 
 Run the embedding example with `cargo run --locked -p b10x-llm-core --example embedded`.
 It completes a local model turn without a gateway or credentials.
+
+Run `cargo run --locked -p b10x-llm-routing --example explain` to inspect
+[a TOML catalog](examples/catalog.toml) containing an arbitrary vLLM endpoint and an authenticated
+alternative. This inspects configuration; protocol clients and runtime fallback are still pending.
 
 ## License
 

@@ -15,6 +15,7 @@ members = [
     "crates/llm-modal",
     "crates/llm-gateway",
     "crates/llm-cli",
+    "checks/conformance",
 ]
 
 [workspace.package]
@@ -29,6 +30,7 @@ publish = false
 llm-core = { package = "b10x-llm-core", path = "crates/llm-core" }
 llm-credentials = { package = "b10x-llm-credentials", path = "crates/llm-credentials" }
 llm-http = { package = "b10x-llm-http", path = "crates/llm-http" }
+llm-providers = { package = "b10x-llm-providers", path = "crates/llm-providers" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
@@ -37,6 +39,10 @@ tokio = { version = "1.53", features = ["rt", "macros", "time", "sync", "net", "
 tokio-util = { version = "0.7", features = ["rt"] }
 reqwest = { version = "0.12.28", default-features = false, features = ["json", "rustls-tls", "stream"] }
 httpdate = "1.0.3"
+http = "1.5"
+url = "2.5.8"
+sha2 = "0.11.0"
+toml = { version = "1", default-features = false, features = ["parse", "serde"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

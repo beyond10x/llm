@@ -1,0 +1,25 @@
+# Draft for the first governed implementation run in this repository.
+# Not a running execution, approval, budget grant, or completion record.
+id: LLM-CHAT-1
+kind: feature
+objective: chat-projection
+protocol: adp/1
+profile: development.driven
+derived_from:
+  - story:chat-projection
+constraints:
+  facts:
+    change.public_contract: true
+    change.architectural: false
+    change.code: true
+  notes:
+    - The contract is .engineering/planning/story/chat-projection.md and docs/design.md.
+    - Implement outgoing and ingress Chat Completions codecs for the supported neutral text/tool/streaming subset. This is new implementation; llm-chat is currently a scaffold.
+    - Use llm-core, llm-http and llm-providers. No dependency on Harness, Platform inference or llmgw is allowed.
+    - Preserve missing usage, finish reasons, tool-call identity and streamed arguments. Never synthesize success from EOF or replay after visible output.
+    - Unsupported fields must be refused by name. Preserve or explicitly refuse opaque continuation state; validate the binding revision as well as its named coordinates.
+    - Add pinned protocol fixtures and a vLLM-compatible local HTTP fixture. Local fixtures are not live vLLM or vendor qualification.
+    - Source scope is crates/llm-chat, contracts/chat, and the corresponding workspace dependency declarations in Cargo.toml and Cargo.lock. Read shared contracts before changing their public API.
+    - Model calls and provisioning are not part of repository tests. The governed driver itself may spend only within separately supplied operator budget and per-session reservation values.
+    - Do not weaken repository hooks, Gates, workflow guards, test requirements or approval steps. Do not publish or release from a model step.
+    - The parent session's provider/catalog changes are a pre-existing candidate baseline; do not claim that the driver produced their historical implementation or tests.

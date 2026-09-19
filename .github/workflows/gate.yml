@@ -25,4 +25,12 @@ jobs:
       - name: Specification and plan
         run: |
           ess specify validate --path spec
+          cargo run --locked -p b10x-llm-conformance -- check
           aep plan artifact validate
+      - name: Conformance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: routing-conformance
+          path: target/conformance
+          if-no-files-found: error

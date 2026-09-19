@@ -45,6 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             account: Id::new("anonymous")?,
             endpoint: Id::new("in-process")?,
             model: Id::new("example")?,
+            binding_revision: Id::new("embedded-model-v1")?,
         },
         capabilities: Capabilities::text(4096, 1024),
     });

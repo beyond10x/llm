@@ -10,3 +10,14 @@ description = "TOML catalogs, capability-aware resolution and explicit ordered f
 
 [lints]
 workspace = true
+
+[lib]
+name = "llm_routing"
+
+[dependencies]
+llm-core.workspace = true
+llm-providers.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+sha2.workspace = true

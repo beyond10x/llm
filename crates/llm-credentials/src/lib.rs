@@ -214,3 +214,20 @@ impl CoordinatedResolver {
         result
     }
 }
+
+impl SecretResolver for CoordinatedResolver {
+    fn resolve<'a>(
+        &'a self,
+        reference: &'a SecretRef,
+    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
+        Box::pin(CoordinatedResolver::resolve(self, reference))
+    }
+
+    fn refresh<'a>(
+        &'a self,
+        reference: &'a SecretRef,
+        rejected: &'a SecretVersion,
+    ) -> BoxFuture<'a, Result<(), SecretError>> {
+        Box::pin(CoordinatedResolver::refresh(self, reference, rejected))
+    }
+}

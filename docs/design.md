@@ -72,7 +72,9 @@ a normal repository gate.
 - Operator decisions: full foundation first; single owner; injected custody; caller-managed
   subscription auth; opt-in fallback; accounting/limits; subset translation; later llmgw retirement.
 
-The ESS document describes declaration/observation records only, with a single Declared state.
-It does not yet specify a runtime transition machine or executable conformance scenarios.
+The catalog ESS domain describes declaration records with a single Declared state. The routing
+verification domain describes an adapter's observations of the real pure-library calls; its
+authored scenarios assert returned selection, refusal and request-preservation facts. It does not
+promise runtime event publication, persistent routing jobs or hosting/budget state machines.
 UNMAPPED: durable budget ownership/scope and provider-specific hosting lifecycle transitions await
 their design stories. They must be modeled before those implementations are scheduled.

@@ -349,8 +349,8 @@ impl TurnOutcome {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum TurnFormat {
-    #[serde(rename = "llm.turn/1")]
-    V1,
+    #[serde(rename = "llm.turn/2")]
+    V2,
 }
 
 /// A versioned persisted request. Unknown envelope versions and fields refuse deserialization.
@@ -363,7 +363,7 @@ pub struct TurnDocument {
 impl TurnDocument {
     pub const fn new(request: TurnRequest) -> Self {
         Self {
-            format: TurnFormat::V1,
+            format: TurnFormat::V2,
             request,
         }
     }
@@ -371,8 +371,8 @@ impl TurnDocument {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum OutcomeFormat {
-    #[serde(rename = "llm.outcome/1")]
-    V1,
+    #[serde(rename = "llm.outcome/2")]
+    V2,
 }
 
 /// Versioned persisted output, distinct from the in-process result value.
@@ -385,7 +385,7 @@ pub struct OutcomeDocument {
 impl OutcomeDocument {
     pub const fn new(outcome: TurnOutcome) -> Self {
         Self {
-            format: OutcomeFormat::V1,
+            format: OutcomeFormat::V2,
             outcome,
         }
     }

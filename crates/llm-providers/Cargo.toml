@@ -8,5 +8,19 @@ repository.workspace = true
 publish.workspace = true
 description = "Provider/account and authentication bindings independent of protocol selection."
 
+[lib]
+name = "llm_providers"
+
+[dependencies]
+llm-core.workspace = true
+llm-credentials.workspace = true
+serde.workspace = true
+http.workspace = true
+url.workspace = true
+tokio.workspace = true
+zeroize.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+
 [lints]
 workspace = true
