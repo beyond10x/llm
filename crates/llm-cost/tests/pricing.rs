@@ -31,6 +31,7 @@ fn attempt(name: &str) -> AttemptUsage {
         billing: BillingKind::Metered,
         dispatch: Dispatch::Accepted,
         failed: false,
+        final_usage: true,
         usage: Usage {
             input_tokens: Some(100),
             cached_input_tokens: Some(20),
@@ -134,7 +135,7 @@ fn prices_disjoint_cache_and_counts_reasoning_once() {
     );
     assert_eq!(
         serde_json::to_value(report).unwrap()["format"],
-        "llm.cost/1"
+        "llm.cost/2"
     );
 }
 
@@ -170,6 +171,78 @@ fn unknown_partitions_rates_and_actual_model_remain_unknown() {
         .quote(&AccountingInput::new(vec![Observation::Attempt(a)]))
         .unwrap();
     assert_eq!(report.records[0].lines[1].amount, Some(Amount::ZERO));
+}
+
+#[test]
+fn partial_snapshots_keep_lower_bounds_without_completing_any_total() {
+    for failed in [false, true] {
+        for zero in [false, true] {
+            let mut a = attempt("partial");
+            a.final_usage = false;
+            a.failed = failed;
+            if zero {
+                a.usage = Usage {
+                    input_tokens: Some(0),
+                    output_tokens: Some(0),
+                    cached_input_tokens: Some(0),
+                    cache_creation_input_tokens: Some(0),
+                    reasoning_output_tokens: Some(0),
+                };
+            }
+            let report = prices()
+                .quote(&AccountingInput::new(vec![
+                    Observation::Attempt(a.clone()),
+                    Observation::Attempt(attempt("final")),
+                ]))
+                .unwrap();
+            let total = &report.records[0].total;
+            assert_eq!(
+                total.known_subtotal,
+                if zero {
+                    Amount::ZERO
+                } else {
+                    Amount::parse("0.00022").unwrap()
+                }
+            );
+            assert_eq!(total.complete_total, None);
+            assert_eq!(total.unknown_lines, 4);
+            assert!(
+                report.records[0].lines.iter().all(
+                    |v| v.amount.is_some() && v.unknown == Some(UnknownReason::UsageIncomplete)
+                )
+            );
+            assert_eq!(report.totals[&Basis::MeteredEstimate].complete_total, None);
+            assert_eq!(report.totals[&Basis::MeteredEstimate].unknown_lines, 4);
+            a.final_usage = true;
+            assert!(
+                prices()
+                    .quote(&AccountingInput::new(vec![Observation::Attempt(a)]))
+                    .unwrap()
+                    .records[0]
+                    .total
+                    .complete_total
+                    .is_some()
+            );
+        }
+    }
+    let input = AccountingInput::new(vec![Observation::Attempt(attempt("one"))]);
+    let value = serde_json::to_value(&input).unwrap();
+    assert_eq!(value["format"], "llm.usage/2");
+    assert_eq!(
+        AccountingInput::parse_json(&value.to_string()).unwrap(),
+        input
+    );
+    let mut missing = value.clone();
+    missing["observations"][0]["data"]
+        .as_object_mut()
+        .unwrap()
+        .remove("final_usage");
+    assert!(AccountingInput::parse_json(&missing.to_string()).is_err());
+    for format in ["llm.usage/1", "llm.usage/3"] {
+        let mut old = value.clone();
+        old["format"] = json!(format);
+        assert!(AccountingInput::parse_json(&old.to_string()).is_err());
+    }
 }
 
 #[test]
@@ -294,7 +367,7 @@ fn version_source_and_sorted_price_content_determine_identity() {
         CostError::DuplicatePrice
     );
     assert_eq!(
-        AccountingInput::parse_json(r#"{"format":"llm.usage/2","observations":[]}"#).unwrap_err(),
+        AccountingInput::parse_json(r#"{"format":"llm.usage/3","observations":[]}"#).unwrap_err(),
         CostError::InvalidDocument
     );
 }

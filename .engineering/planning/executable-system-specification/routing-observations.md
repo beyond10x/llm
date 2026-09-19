@@ -10,31 +10,33 @@ relations:
 - verifies: story:local-secret-adapters
 - verifies: story:usage-pricing
 - verifies: story:spending-limits
-model_digest: f84d77e1dea49c2858b17cc6e28070d6473733e85f661c753c04886ad42e19e7
-revision: 10
+- verifies: story:neutral-inference
+- verifies: story:runtime-contracts
+model_digest: 1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823
+revision: 12
 ---
 ## Scope
 
-Spec: spec/system.yaml and catalog, routing, secrets, accounting and budget domains. The stable
-artifact ID retains its original routing name. The compiled model now includes single-owner
-spending admission and verification observations over the real optional SQLite adapter. No live
-invoice accuracy, credential-custody service or cloud shutdown qualification is claimed.
+Spec: spec/system.yaml and its catalog, routing, secrets, accounting, budget and inference domains.
+The stable artifact ID retains its original routing name. Observers execute the real Rust libraries
+and optional disposable SQLite journals. No credential-custody service, invoice authentication,
+live provider/client qualification or cloud shutdown is claimed.
 
 ## Verification
 
-Complete suite/5 at contracts/suite.json contains 140 authored scenarios and five generated checks.
-All 145 pass with zero failed/error/unsupported/skipped in three consecutive restored-source local
-runs; synthesis has zero refusals. All 97 preceding pricing/routing/secret checks remain. The gate
-regenerates 84 schemas and the original suite, compares exact bytes/file sets and gates actual
-report/2 counts after readmission against that suite. See docs/verification/budgets.md and its
-paired budget-report.json. All 16 budget mutations fail named scenarios; prior mutation and
-report records remain paired to their historical revisions.
+Implemented bound TurnObservation in successful outcomes and optional boxed failure evidence.
+Actual upstream model/response IDs stay absent when unreported; partial/final usage is independent
+of success. Validation rejects foreign binding coordinates, contradictory usage and unsent evidence.
+Unreleased envelope versions are turn/2 (unchanged), outcome/3, usage/2 and cost/2. Partial prices
+retain known lower bounds and never complete a total, including fully populated/all-zero snapshots.
 
-The target exposes production quote facts, route explanations and secret results, plus budget
-policy, totals, errors, permits, phases, shutdown obligations and attribution preservation. Budget
-programs operate disposable SQLite journals through production APIs, including concurrency, reopen
-and injected storage failures. Expectations are independent fixture values; the target never reads
-scenario names or assertions. Runtime tests also exercise another process and abrupt process exit.
-No runtime crate depends on ESS. Reports identify full runtime/checker sources and real timestamps.
-CI runs the same gate and retains exact artifacts; native credential and local ledger tests run on
-macOS and Windows. No artifact lifecycle moves are performed beside the pending Chat driver.
+Verification: task check exits 0; 183/183 ESS scenarios pass three consecutive runs, 177 authored and
+six generated, zero failed/error/unsupported/skipped/refused; all 89 schemas regenerate exactly.
+Ten deliberate production mutations fail named scenarios, restored byte-for-byte. See
+ docs/verification/observations.md, observations-report.json and observations-falsification.json.
+Source identity: llm-foundation-libraries sources-sha256:372762ca11728e8cdccf7fe8fc82d04f207ecb99485d9a116a868aa4295c4f2e
+Spec digest: 1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823
+Suite: sha256:0d7fe71de43ee8f7dd9ed3b41f939da99725886e045b12f10db105b999596f6e
+
+No lifecycle moves beside the pending Chat driver. No provider/gateway/hosting integration or
+remote qualification is claimed by this checkpoint; Messages implementation follows.

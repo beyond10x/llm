@@ -36,6 +36,7 @@ pub enum UnknownReason {
     ModelUnknown,
     ModelMismatch,
     ChargeUnknown,
+    UsageIncomplete,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -55,7 +56,8 @@ impl Total {
     fn add(&mut self, line: &Line) -> Result<(), CostError> {
         if let Some(amount) = line.amount {
             self.known_subtotal = self.known_subtotal.add(amount)?;
-        } else {
+        }
+        if line.amount.is_none() || line.unknown.is_some() {
             self.unknown_lines = self
                 .unknown_lines
                 .checked_add(1)
@@ -74,8 +76,8 @@ pub struct Record {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 enum OutputFormat {
-    #[serde(rename = "llm.cost/1")]
-    V1,
+    #[serde(rename = "llm.cost/2")]
+    V2,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CostReport {
@@ -138,7 +140,7 @@ impl PriceBook {
             });
         }
         Ok(CostReport {
-            format: OutputFormat::V1,
+            format: OutputFormat::V2,
             currency: self.document.currency.clone(),
             price_revision: self.document.revision.clone(),
             price_source: self.document.source.clone(),
@@ -204,7 +206,13 @@ impl PriceBook {
             ),
         ]
         .into_iter()
-        .map(|(unit, quantity, rate)| line(unit, quantity, rate, context))
+        .map(|(unit, quantity, rate)| {
+            let mut value = line(unit, quantity, rate, context)?;
+            if !usage.final_usage && value.unknown.is_none() {
+                value.unknown = Some(UnknownReason::UsageIncomplete);
+            }
+            Ok(value)
+        })
         .collect()
     }
 

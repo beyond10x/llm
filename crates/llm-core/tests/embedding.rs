@@ -1,7 +1,7 @@
 use llm_core::{
     BoxFuture, CallId, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol,
     Provenance, StopReason, StreamEvent, StreamSink, ToolCall, ToolName, ToolSpec, TurnDocument,
-    TurnOutcome, TurnRequest, Usage, VecSink,
+    TurnObservation, TurnOutcome, TurnRequest, Usage, VecSink,
 };
 use serde_json::json;
 use std::sync::{
@@ -17,6 +17,13 @@ fn target() -> Provenance {
         endpoint: Id::new("development").unwrap(),
         model: Id::new("test-model").unwrap(),
         binding_revision: Id::new("fake-model-v1").unwrap(),
+    }
+}
+fn observation(usage: Option<Usage>) -> TurnObservation {
+    TurnObservation {
+        usage,
+        final_usage: true,
+        ..TurnObservation::new(target())
     }
 }
 fn capabilities() -> Capabilities {
@@ -63,12 +70,12 @@ impl Model for FakeModel {
                         sink.emit(StreamEvent::ToolArgumentsDelta { call_id: call.call_id.clone(), delta: "{}".into() }).await?;
                         return Ok(TurnOutcome { stop_reason: StopReason::ToolCalls, items: vec![
                             Item::Opaque { provenance: self.provenance.clone(), payload: json!({"continuation":"retain-verbatim"}) },
-                            Item::ToolCall(call)], usage: None });
+                            Item::ToolCall(call)], observation: observation(None) });
                     };
                     sink.emit(StreamEvent::TextDelta { text: "Answer: ".into() }).await?;
                     sink.emit(StreamEvent::TextDelta { text: output.to_string() }).await?;
                     Ok(TurnOutcome { stop_reason: StopReason::EndTurn, items: vec![Item::assistant(format!("Answer: {output}"))],
-                        usage: Some(Usage { output_tokens: Some(3), ..Usage::default() }) })
+                        observation: observation(Some(Usage { output_tokens: Some(3), ..Usage::default() })) })
                 } => result.map_err(|error: Error| error.with_dispatch(Dispatch::Accepted)),
             }
         })
@@ -87,7 +94,7 @@ async fn an_embedded_caller_completes_a_streamed_tool_round_trip_without_a_gatew
     let first = model.turn(&request, &mut sink, &cancel).await.unwrap();
     first.validate_for(&request, model.provenance()).unwrap();
     assert_eq!(first.stop_reason, StopReason::ToolCalls);
-    assert!(first.usage.is_none());
+    assert!(first.observation.usage.is_none());
     assert_eq!(first.tool_calls().count(), 1);
     request.items.extend(first.items);
     // Only the embedding application supplies the result; LLM has no tool execution port.
@@ -100,7 +107,7 @@ async fn an_embedded_caller_completes_a_streamed_tool_round_trip_without_a_gatew
     second.validate_for(&request, model.provenance()).unwrap();
     assert_eq!(second.stop_reason, StopReason::EndTurn);
     assert_eq!(sink.text(), "Answer: 42");
-    let usage = second.usage.unwrap();
+    let usage = second.observation.usage.unwrap();
     assert_eq!(usage.output_tokens, Some(3));
     assert_eq!(usage.input_tokens, None);
     assert_eq!(usage.cached_input_tokens, None);
@@ -273,7 +280,7 @@ fn provider_output_must_name_published_tools_and_match_its_terminal_reason() {
     let mut outcome = TurnOutcome {
         stop_reason: StopReason::ToolCalls,
         items: vec![Item::ToolCall(call)],
-        usage: None,
+        observation: observation(None),
     };
     assert_eq!(
         outcome.validate_for(&request, &target()).unwrap_err().code,
@@ -299,10 +306,10 @@ fn output_document_versions_and_unknown_fields_are_rejected() {
     let document = llm_core::OutcomeDocument::new(TurnOutcome {
         stop_reason: StopReason::EndTurn,
         items: vec![Item::assistant("text")],
-        usage: None,
+        observation: observation(None),
     });
     let mut value = serde_json::to_value(&document).unwrap();
-    assert_eq!(value["format"], "llm.outcome/2");
+    assert_eq!(value["format"], "llm.outcome/3");
     assert_eq!(
         serde_json::from_value::<llm_core::OutcomeDocument>(value.clone()).unwrap(),
         document
@@ -310,7 +317,7 @@ fn output_document_versions_and_unknown_fields_are_rejected() {
     value["format"] = json!("llm.outcome/1");
     assert!(serde_json::from_value::<llm_core::OutcomeDocument>(value).is_err());
     let mut future = serde_json::to_value(&document).unwrap();
-    future["format"] = json!("llm.outcome/3");
+    future["format"] = json!("llm.outcome/4");
     assert!(serde_json::from_value::<llm_core::OutcomeDocument>(future).is_err());
     let mut value = serde_json::to_value(&document).unwrap();
     value["outcome"]["unknown"] = json!(true);

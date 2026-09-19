@@ -7,8 +7,8 @@ These APIs perform no I/O and supply no current vendor price table. The optional
 | Document | Format | Purpose |
 | --- | --- | --- |
 | Price book | `llm.prices/1`, TOML or JSON | Explicit source, revision, as-of Unix milliseconds, currency and model/resource rates |
-| Observations | `llm.usage/1`, JSON or Rust values | Attributed attempts, resource durations and recorded charges |
-| Derived report | `llm.cost/1`, JSON or Rust values | Per-observation lines, known subtotals, unknowns and separate accounting bases |
+| Observations | `llm.usage/2`, JSON or Rust values | Attributed attempts, resource durations and recorded charges |
+| Derived report | `llm.cost/2`, JSON or Rust values | Per-observation lines, known subtotals, unknowns and separate accounting bases |
 
 Unknown versions and fields are refused. Each input is bounded to 1 MiB and 4096 entries.
 Source descriptions accept nonblank Unicode text up to 2048 bytes, without control characters.
@@ -74,10 +74,22 @@ when every contributing line is known. A zero known subtotal with unknown lines 
 whole cost is zero. An empty observation list has no totals and makes no statement about unobserved
 activity.
 
-The current neutral `TurnOutcome` carries counts but not an upstream model name. Protocol
-projections and their orchestration must preserve actual model attribution into `AttemptUsage`
-before claiming end-to-end actual-model pricing. This library accepts explicit observations; its
-fixtures do not qualify a provider or supply missing provider metadata.
+`TurnOutcome.observation` and `Error.observation` carry the selected immutable binding, optional
+actual upstream model/response IDs, optional usage and explicit `final_usage`. Consumers transfer
+that finality to `AttemptUsage`; they must not infer it from success/failure or populated counters.
+A failed attempt can have final usage, and a terminal response can still omit some counters.
+Protocol adapters own consistent snapshot normalization and may only report partial quantities
+that are valid lower bounds. Repeated cumulative snapshots replace prior snapshots; they are not
+separate billable attempts.
+
+For `final_usage = false`, calculable amounts remain in `known_subtotal`, with `usage-incomplete`
+on otherwise priced lines. Such lines also increment `unknown_lines`, so even fully populated or
+all-zero partial snapshots never produce a `complete_total`. Existing missing model, quantity and
+rate reasons remain when a line cannot be priced. `llm.usage/2` requires explicit finality and
+refuses v1; `llm.cost/2` reflects amounts and incomplete reasons coexisting on a line. The price
+book remains v1. These are unreleased contract changes, not implicit compatibility conversions.
+The library accepts caller observations; its fixtures do not qualify a provider or supply missing
+provider metadata.
 
 ## Charges and estimates stay separate
 

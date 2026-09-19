@@ -90,6 +90,8 @@ entities:
       - {name: billing, type: llm.catalog.BillingKind}
       - {name: dispatch, type: llm.catalog.Dispatch}
       - {name: failed, type: Boolean}
+      # Finality is independent of success and of which counters were reported.
+      - {name: final_usage, type: Boolean}
       - {name: usage, type: llm.accounting.Usage}
     relations:
       - {name: usage_record, kind: references, target: llm.catalog.UsageRecord, cardinality: one, via: usage_record_id}

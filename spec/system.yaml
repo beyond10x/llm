@@ -7,3 +7,4 @@ domains:
   - llm.secrets
   - llm.accounting
   - llm.budget
+  - llm.inference

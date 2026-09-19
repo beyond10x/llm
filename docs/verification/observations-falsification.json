@@ -1,0 +1,241 @@
+[
+  {
+    "mutation": "allow-foreign-observation",
+    "source": "crates/llm-core/src/turn.rs",
+    "before": "if &self.binding != target {",
+    "after": "if false {",
+    "source_before_sha256": "14d8e000a0412644dca10eb9c2060cd16b54cbde56b5dd60719b5d4743cae4aa",
+    "named_failure": "llm.inference/authored/foreign-account-refused",
+    "counts": {
+      "error": 0,
+      "failed": 12,
+      "passed": 171,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.inference/authored/failure-foreign-account-refused",
+      "llm.inference/authored/failure-foreign-binding-revision-refused",
+      "llm.inference/authored/failure-foreign-endpoint-refused",
+      "llm.inference/authored/failure-foreign-model-refused",
+      "llm.inference/authored/failure-foreign-protocol-refused",
+      "llm.inference/authored/failure-foreign-provider-refused",
+      "llm.inference/authored/foreign-account-refused",
+      "llm.inference/authored/foreign-binding-revision-refused",
+      "llm.inference/authored/foreign-endpoint-refused",
+      "llm.inference/authored/foreign-model-refused",
+      "llm.inference/authored/foreign-protocol-refused",
+      "llm.inference/authored/foreign-provider-refused"
+    ],
+    "appended": "",
+    "mutated_source_sha256": "56ef2ef51e75695ceb7ac6269e506af6c69c07b5910d5443535809eb8075eb70"
+  },
+  {
+    "mutation": "allow-partial-success",
+    "source": "crates/llm-core/src/turn.rs",
+    "before": "if !self.observation.final_usage {",
+    "after": "if false {",
+    "source_before_sha256": "14d8e000a0412644dca10eb9c2060cd16b54cbde56b5dd60719b5d4743cae4aa",
+    "named_failure": "llm.inference/authored/partial-success-refused",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 182,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.inference/authored/partial-success-refused"
+    ],
+    "appended": "",
+    "mutated_source_sha256": "f0fad4af5649a2c64220e653ccc96b07127a0e2d44accd45a6fb3783c3ac3f03"
+  },
+  {
+    "mutation": "allow-unsent-evidence",
+    "source": "crates/llm-core/src/error.rs",
+    "before": "if self.dispatch == Dispatch::NotSent {",
+    "after": "if false {",
+    "source_before_sha256": "12aadde816218a89203fd74ba1fc2dd5973349044766ac86ce8891f0798ac272",
+    "named_failure": "llm.inference/authored/unsent-observation-refused",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 182,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.inference/authored/unsent-observation-refused"
+    ],
+    "appended": "",
+    "mutated_source_sha256": "822056673122afac200b9dd5cb28b4af54a56848541ee1a400e87f66bbb62bc8"
+  },
+  {
+    "mutation": "lose-failed-observation",
+    "source": "crates/llm-core/src/error.rs",
+    "before": "#[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub observation:",
+    "after": "#[serde(default, skip_deserializing, skip_serializing_if = \"Option::is_none\")]\n    pub observation:",
+    "source_before_sha256": "12aadde816218a89203fd74ba1fc2dd5973349044766ac86ce8891f0798ac272",
+    "named_failure": "llm.inference/authored/failure-retains-partial-observations",
+    "counts": {
+      "error": 0,
+      "failed": 12,
+      "passed": 171,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.inference/authored/failure-contradictory-cache-refused",
+      "llm.inference/authored/failure-contradictory-reasoning-refused",
+      "llm.inference/authored/failure-foreign-account-refused",
+      "llm.inference/authored/failure-foreign-binding-revision-refused",
+      "llm.inference/authored/failure-foreign-endpoint-refused",
+      "llm.inference/authored/failure-foreign-model-refused",
+      "llm.inference/authored/failure-foreign-protocol-refused",
+      "llm.inference/authored/failure-foreign-provider-refused",
+      "llm.inference/authored/failure-overflowing-cache-refused",
+      "llm.inference/authored/failure-retains-final-observations",
+      "llm.inference/authored/failure-retains-partial-observations",
+      "llm.inference/authored/unsent-observation-refused"
+    ],
+    "appended": "",
+    "mutated_source_sha256": "ad5e35b45377cc7457d5062b9f21807652a0d3c62ac50959792d88b2edda84fe"
+  },
+  {
+    "mutation": "invent-upstream-model",
+    "source": "crates/llm-core/src/turn.rs",
+    "before": "#[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub upstream_model:",
+    "after": "#[serde(default = \"invented_model\", skip_serializing_if = \"Option::is_none\")]\n    pub upstream_model:",
+    "source_before_sha256": "14d8e000a0412644dca10eb9c2060cd16b54cbde56b5dd60719b5d4743cae4aa",
+    "named_failure": "llm.inference/authored/unknown-identifiers-and-usage-stay-absent",
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 181,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.inference/authored/unknown-identifiers-and-usage-stay-absent",
+      "llm.inference/authored/wide-count-and-zero-stay-exact"
+    ],
+    "appended": "\nfn invented_model() -> Option<Id> { Id::new(\"internal-model\").ok() }\n",
+    "mutated_source_sha256": "1adfa195c466be9e91605b9fb0757dcbdcaea602c8703ded7183e9b057c09112"
+  },
+  {
+    "mutation": "unknown-cache-becomes-zero",
+    "source": "crates/llm-core/src/turn.rs",
+    "before": "#[serde(default, skip_serializing_if = \"Option::is_none\")]\n    pub cached_input_tokens:",
+    "after": "#[serde(default = \"invented_zero\", skip_serializing_if = \"Option::is_none\")]\n    pub cached_input_tokens:",
+    "source_before_sha256": "14d8e000a0412644dca10eb9c2060cd16b54cbde56b5dd60719b5d4743cae4aa",
+    "named_failure": "llm.inference/authored/wide-count-and-zero-stay-exact",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 182,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.inference/authored/wide-count-and-zero-stay-exact"
+    ],
+    "appended": "\nfn invented_zero() -> Option<u64> { Some(0) }\n",
+    "mutated_source_sha256": "b7dc5447ec25dfa0970f4bcc137bcd25e515d110520271319baa12f9841e2eec"
+  },
+  {
+    "mutation": "partial-becomes-final",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "if !usage.final_usage && value.unknown.is_none() {",
+    "after": "if false {",
+    "source_before_sha256": "409de6e9c117118a990ddb67f330ba83e185f7299e27b16f5b058364408ceb16",
+    "named_failure": "llm.accounting/authored/partial-usage-is-lower-bound",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 180,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/failed-partial-usage-is-lower-bound",
+      "llm.accounting/authored/partial-usage-is-lower-bound",
+      "llm.accounting/authored/partial-zero-is-not-final"
+    ],
+    "appended": "",
+    "mutated_source_sha256": "46823572792319e311e290607816f76b4cc4055e18166c40ff14d41fd07c757c"
+  },
+  {
+    "mutation": "total-ignores-partial",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "if line.amount.is_none() || line.unknown.is_some() {",
+    "after": "if line.amount.is_none() {",
+    "source_before_sha256": "409de6e9c117118a990ddb67f330ba83e185f7299e27b16f5b058364408ceb16",
+    "named_failure": "llm.accounting/authored/partial-zero-is-not-final",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 180,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/failed-partial-usage-is-lower-bound",
+      "llm.accounting/authored/partial-usage-is-lower-bound",
+      "llm.accounting/authored/partial-zero-is-not-final"
+    ],
+    "appended": "",
+    "mutated_source_sha256": "37c498d30250a887ce6f6d495385ed16f08af712a4e09b43b791fcbd5f5b7804"
+  },
+  {
+    "mutation": "discard-partial-lower-bound",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "value.unknown = Some(UnknownReason::UsageIncomplete);",
+    "after": "value.unknown = Some(UnknownReason::UsageIncomplete);\n                value.amount = None;",
+    "source_before_sha256": "409de6e9c117118a990ddb67f330ba83e185f7299e27b16f5b058364408ceb16",
+    "named_failure": "llm.accounting/authored/partial-usage-is-lower-bound",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 180,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/failed-partial-usage-is-lower-bound",
+      "llm.accounting/authored/partial-usage-is-lower-bound",
+      "llm.accounting/authored/partial-zero-is-not-final"
+    ],
+    "appended": "",
+    "mutated_source_sha256": "430dd45acda9f22da93e49b956a6c49f6950dd662c7e634789f442df36833084"
+  },
+  {
+    "mutation": "failure-invalidates-final-usage",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "if !usage.final_usage && value.unknown.is_none() {",
+    "after": "if (!usage.final_usage || usage.failed) && value.unknown.is_none() {",
+    "source_before_sha256": "409de6e9c117118a990ddb67f330ba83e185f7299e27b16f5b058364408ceb16",
+    "named_failure": "llm.accounting/authored/failed-ambiguous-attempt-is-counted",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 182,
+      "skipped": 0,
+      "total": 183,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/failed-ambiguous-attempt-is-counted"
+    ],
+    "appended": "",
+    "mutated_source_sha256": "63936dcc947302d788ac3d0b1632edea0871a950dd7ce0cea7d38fde24480635"
+  }
+]

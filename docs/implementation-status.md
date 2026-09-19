@@ -7,7 +7,7 @@ store owns lifecycle state; this page explains what those states mean for caller
 ## Foundation checkpoint — 2026-09-19
 
 Six libraries now implement the shared boundary. The neutral core supports asynchronous model
-turns, text/tools, bounded streaming, cancellation, optional usage, typed failures, and opaque
+turns, text/tools, bounded streaming, cancellation, bound success/failure observations with usage finality, typed failures, and opaque
 continuation state bound to its exact protocol/provider/account/endpoint/model/binding revision. Credentials are
 injected and resolved on each request; concurrent renewal is coordinated without owning a login
 or persistent credential store. The HTTP transport streams bounded SSE with explicit deadlines,
@@ -42,7 +42,7 @@ while the versioned configuration surface and release prerequisites are complete
 
 | Required story | Implementation and remaining work |
 | --- | --- |
-| `runtime-contracts` | Unreleased turn/outcome revision 2, binding/catalog v1 and ESS verification implemented; release/common Gates setup remains. |
+| `runtime-contracts` | Unreleased turn v2/outcome v3, usage/cost v2, binding/catalog v1 and ESS verification implemented; release/common Gates setup remains. |
 | `neutral-inference` | Public async port, bounded data, tool round trip, cancellation and embedding example implemented and tested. |
 | `http-streaming` | Bounded single-attempt HTTP/SSE, terminal truth, cancellation, deadline and retry-hint fixtures pass. |
 | `secret-resolver` | Injected arbitrary secret references, redacted/zeroized material and coordinated caller-owned renewal implemented and tested. |

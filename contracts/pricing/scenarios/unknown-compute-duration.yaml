@@ -56,7 +56,7 @@ timeline:
       rate = { amount = "3.6", per_units = 3600000 }
 
       '
-    usage_json: '{"format":"llm.usage/1","observations":[{"kind":"compute","data":{"id":"compute","price_id":"resource-price","hosting_provider":"lab-host","account":"lab-account","resource_class":"whole-pod","resource_id":"owned-pod","duration_ms":null}}]}'
+    usage_json: '{"format":"llm.usage/2","observations":[{"kind":"compute","data":{"id":"compute","price_id":"resource-price","hosting_provider":"lab-host","account":"lab-account","resource_class":"whole-pod","resource_id":"owned-pod","duration_ms":null}}]}'
   outcome: observed
 assert:
 - view: llm.accounting.LastQuote

@@ -44,6 +44,16 @@ cache-write subsets, and output tokens include the reasoning subset. Unknown is 
 Contradictory known totals refuse rather than saturating a negative remainder. Adapters normalize
 their wire's counts before producing these values; pricing is separate.
 
+Every successful outcome has a `TurnObservation` pinned to its selected immutable binding. Its
+upstream model and response ID are independently optional provider observations; the configured
+model and caller alias cannot fill absent evidence. `final_usage` says reported counters are
+terminal, not that every count is known or an invoice authenticated. Successful outcomes require
+terminal evidence. Failures optionally retain the last valid snapshot in a boxed observation;
+that snapshot may be partial or final. Validation refuses foreign binding coordinates,
+contradictory usage, and upstream evidence attached to a `not-sent` failure. Adapters must attach
+valid evidence when reporting cancellation, transport, protocol or sink failure after dispatch.
+The core validates these values but cannot recover facts an adapter discarded.
+
 Errors distinguish invalid input, transport, protocol, authentication, rate limits, refusal,
 bounds, unsupported semantics, cancellation and deadlines. Dispatch evidence is independent:
 `not-sent`, `rejected`, `unknown`, or `accepted`. A transport failure after dispatch is unknown,
@@ -52,8 +62,8 @@ never include authorization headers, request bodies or arbitrary upstream error 
 
 ## Pricing
 
-The separate pricing library accepts versioned `llm.prices/1` JSON/TOML and `llm.usage/1`
-observations and emits `llm.cost/1`. Exact nonnegative amounts, explicit units and checked arithmetic
+The separate pricing library accepts versioned `llm.prices/1` JSON/TOML and `llm.usage/2`
+observations and emits `llm.cost/2`. Exact nonnegative amounts, explicit units and checked arithmetic
 preserve unknown quantities and failed attempts. Reference usage valuations, metered/compute
 estimates and recorded charges have separate totals. [Pricing](pricing.md) defines the complete
 current contract; live billing qualification remains separate.
@@ -85,7 +95,7 @@ presentation. A rejected subscription credential never changes billing kind or a
 ## Compatibility and source provenance
 
 Published Rust APIs follow the crate release's semantic version. Persisted neutral requests carry
-an explicit `llm.turn/2` envelope and outputs carry `llm.outcome/2`; old/unknown versions and fields refuse. Unversioned Rust
+an explicit `llm.turn/2` envelope and outputs carry `llm.outcome/3`; old/unknown versions and fields refuse. Unversioned Rust
 values are in-process values, not a claim of a stable vendor wire format. Unsupported additions
 need a version change before they are accepted. This contract does not establish any live provider
 qualification or a released artifact.

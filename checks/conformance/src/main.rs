@@ -1,5 +1,6 @@
 mod budgets;
 mod gate;
+mod inference;
 mod pricing;
 mod secrets;
 mod target;

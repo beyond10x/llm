@@ -14,8 +14,8 @@ enum PriceFormat {
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum UsageFormat {
-    #[serde(rename = "llm.usage/1")]
-    V1,
+    #[serde(rename = "llm.usage/2")]
+    V2,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -179,6 +179,8 @@ pub struct AttemptUsage {
     pub billing: BillingKind,
     pub dispatch: Dispatch,
     pub failed: bool,
+    /// False retains partial counts as a lower bound; success is independent of usage finality.
+    pub final_usage: bool,
     pub usage: Usage,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -244,7 +246,7 @@ pub struct AccountingInput {
 impl AccountingInput {
     pub fn new(observations: Vec<Observation>) -> Self {
         Self {
-            format: UsageFormat::V1,
+            format: UsageFormat::V2,
             observations,
         }
     }

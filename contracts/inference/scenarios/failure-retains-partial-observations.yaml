@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.inference
+scenario: failure-retains-partial-observations
+summary: failure retains partial observations
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.inference.InspectResult
+  input:
+    result_json: '{"code":"cancelled","message":"the caller cancelled","dispatch":"accepted","observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"wire-model-revision","response_id":"response-1","final_usage":false,"usage":{"input_tokens":100,"output_tokens":5,"cached_input_tokens":20,"cache_creation_input_tokens":10,"reasoning_output_tokens":3}}}'
+    failure: true
+  outcome: observed
+assert:
+- view: llm.inference.LastResult
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.inference.LastResult
+  contains:
+    accepted: true
+    failed: true
+    error_code: cancelled
+    dispatch: accepted
+    upstream_model: wire-model-revision
+    response_id: response-1
+    final_usage: false
+    input_tokens: '100'
+    output_tokens: '5'
+    cached_input_tokens: '20'
+    cache_creation_input_tokens: '10'
+    reasoning_output_tokens: '3'
+    roundtrip_preserved: true

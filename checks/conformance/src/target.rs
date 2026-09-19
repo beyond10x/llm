@@ -144,6 +144,12 @@ impl ConformanceTarget for CatalogTarget {
     ) -> Result<SemanticCommandResult, TargetError> {
         let input = serde_json::to_value(request.input).map_err(unavailable)?;
         let (facts, view, event, field) = match request.command.to_string().as_str() {
+            "llm.inference.InspectResult" => (
+                crate::inference::observe(&serde_json::from_value(input).map_err(unavailable)?),
+                "llm.inference.LastResult",
+                "llm.inference.Inspected",
+                "accepted",
+            ),
             "llm.routing.Evaluate" => (
                 observe(&serde_json::from_value(input).map_err(unavailable)?),
                 "llm.routing.LastEvaluation",
@@ -212,6 +218,7 @@ impl ConformanceTarget for CatalogTarget {
                 | "llm.secrets.LastProbe"
                 | "llm.accounting.LastQuote"
                 | "llm.budget.LastExecution"
+                | "llm.inference.LastResult"
         ) || !request.params.is_empty()
         {
             return Err(unsupported(&request.view.to_string()));

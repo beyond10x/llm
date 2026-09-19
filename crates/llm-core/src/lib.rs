@@ -19,7 +19,7 @@ pub use item::{Item, ToolCall};
 pub use port::{BoxFuture, Model, StreamEvent, StreamSink, VecSink};
 pub use tokio_util::sync::CancellationToken as Cancel;
 pub use turn::{
-    OutcomeDocument, Sampling, StopReason, ToolChoice, ToolSpec, TurnDocument, TurnOutcome,
-    TurnRequest, Usage,
+    OutcomeDocument, Sampling, StopReason, ToolChoice, ToolSpec, TurnDocument, TurnObservation,
+    TurnOutcome, TurnRequest, Usage,
 };
 pub use vocabulary::{AuthKind, BillingKind, Capabilities, Protocol, Provenance};

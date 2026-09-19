@@ -1,7 +1,7 @@
 //! Run with `cargo run -p b10x-llm-core --example embedded`; no gateway or credentials required.
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Error, Id, Item, Model, Protocol, Provenance, StopReason,
-    StreamEvent, StreamSink, TurnOutcome, TurnRequest, VecSink,
+    StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest, VecSink,
 };
 
 struct LocalModel {
@@ -29,7 +29,8 @@ impl Model for LocalModel {
                 result = async {
                     sink.emit(StreamEvent::TextDelta { text: "An embedded model turn.".into() }).await?;
                     Ok(TurnOutcome { stop_reason: StopReason::EndTurn,
-                        items: vec![Item::assistant("An embedded model turn.")], usage: None })
+                        items: vec![Item::assistant("An embedded model turn.")],
+                        observation: TurnObservation { final_usage: true, ..TurnObservation::new(self.target.clone()) } })
                 } => result,
             }
         })
@@ -56,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "{} ({:?}; usage {:?})",
         sink.text(),
         outcome.stop_reason,
-        outcome.usage
+        outcome.observation.usage
     );
     Ok(())
 }

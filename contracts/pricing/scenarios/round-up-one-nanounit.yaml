@@ -56,7 +56,7 @@ timeline:
       rate = { amount = "3.6", per_units = 3600000 }
 
       '
-    usage_json: '{"format":"llm.usage/1","observations":[{"kind":"attempt","data":{"id":"one","usage_record_id":"usage","request_id":"request","route_target_id":"target","serving_model_id":"lab-serving","price_id":"model-price","binding":{"protocol":"responses","provider":"lab","account":"lab-account","endpoint":"endpoint","model":"model","binding_revision":"fixture-binding-r1"},"upstream_model":"lab/model-v1","billing":"metered","dispatch":"accepted","failed":false,"usage":{"input_tokens":100,"output_tokens":1,"cached_input_tokens":20,"cache_creation_input_tokens":10,"reasoning_output_tokens":0}}}]}'
+    usage_json: '{"format":"llm.usage/2","observations":[{"kind":"attempt","data":{"id":"one","usage_record_id":"usage","request_id":"request","route_target_id":"target","serving_model_id":"lab-serving","price_id":"model-price","binding":{"protocol":"responses","provider":"lab","account":"lab-account","endpoint":"endpoint","model":"model","binding_revision":"fixture-binding-r1"},"upstream_model":"lab/model-v1","billing":"metered","dispatch":"accepted","failed":false,"final_usage":true,"usage":{"input_tokens":100,"output_tokens":1,"cached_input_tokens":20,"cache_creation_input_tokens":10,"reasoning_output_tokens":0}}}]}'
   outcome: observed
 assert:
 - view: llm.accounting.LastQuote

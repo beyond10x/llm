@@ -56,7 +56,7 @@ timeline:
       rate = { amount = "3.6", per_units = 3600000 }
 
       '
-    usage_json: '{"format":"llm.usage/1","observations":[{"kind":"recorded","data":{"id":"subscription","source":"fixture
+    usage_json: '{"format":"llm.usage/2","observations":[{"kind":"recorded","data":{"id":"subscription","source":"fixture
       invoice","provider":"lab","account":"lab-account","subject":"period","period_start_unix_ms":1,"period_end_unix_ms":1,"currency":"USD","amount":"20","charge_kind":"subscription"}}]}'
   outcome: observed
 assert:

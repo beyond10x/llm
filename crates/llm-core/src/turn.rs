@@ -1,6 +1,6 @@
 //! Turn and tool projection values adapted from Harness, without execution authority.
 use crate::{
-    Capabilities, Error, Item, MAX_INSTRUCTION_BYTES, MAX_ITEMS, MAX_REQUEST_BYTES,
+    Capabilities, Error, Id, Item, MAX_INSTRUCTION_BYTES, MAX_ITEMS, MAX_REQUEST_BYTES,
     MAX_TOOL_ARGUMENT_BYTES, MAX_TOOL_DESCRIPTION_BYTES, MAX_TOOL_RESULT_BYTES, MAX_TOOLS,
     Provenance, ToolCall, ToolName, exceeds,
 };
@@ -280,13 +280,53 @@ impl Usage {
     }
 }
 
+/// Evidence reported by one bound upstream attempt, retained even when that attempt fails.
+/// Missing identifiers and counters stay unknown; a requested alias is not an observation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TurnObservation {
+    pub binding: Provenance,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub upstream_model: Option<Id>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub response_id: Option<Id>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub usage: Option<Usage>,
+    /// The reported counters are terminal, not necessarily complete or invoiced.
+    /// False makes known counters a partial snapshot, never a final cost.
+    pub final_usage: bool,
+}
+
+impl TurnObservation {
+    pub const fn new(binding: Provenance) -> Self {
+        Self {
+            binding,
+            upstream_model: None,
+            response_id: None,
+            usage: None,
+            final_usage: false,
+        }
+    }
+
+    /// # Errors
+    /// Refuses evidence from a different binding and contradictory known counters.
+    pub fn validate_for(&self, target: &Provenance) -> Result<(), Error> {
+        if &self.binding != target {
+            return Err(Error::protocol("observation carries a different binding"));
+        }
+        if let Some(usage) = &self.usage {
+            usage.validate()?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TurnOutcome {
     pub stop_reason: StopReason,
     pub items: Vec<Item>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub usage: Option<Usage>,
+    pub observation: TurnObservation,
 }
 impl TurnOutcome {
     pub fn tool_calls(&self) -> impl Iterator<Item = &ToolCall> {
@@ -296,8 +336,11 @@ impl TurnOutcome {
     /// # Errors
     /// Refuses invalid model output, foreign opaque state, unknown tools and contradictory usage.
     pub fn validate_for(&self, request: &TurnRequest, target: &Provenance) -> Result<(), Error> {
-        if let Some(usage) = &self.usage {
-            usage.validate()?;
+        self.observation.validate_for(target)?;
+        if !self.observation.final_usage {
+            return Err(Error::protocol(
+                "successful outcome lacks terminal evidence",
+            ));
         }
         if self.items.len() > MAX_ITEMS || exceeds(self, MAX_REQUEST_BYTES) {
             return Err(Error::too_large("model output exceeds its bound"));
@@ -371,8 +414,8 @@ impl TurnDocument {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum OutcomeFormat {
-    #[serde(rename = "llm.outcome/2")]
-    V2,
+    #[serde(rename = "llm.outcome/3")]
+    V3,
 }
 
 /// Versioned persisted output, distinct from the in-process result value.
@@ -385,7 +428,7 @@ pub struct OutcomeDocument {
 impl OutcomeDocument {
     pub const fn new(outcome: TurnOutcome) -> Self {
         Self {
-            format: OutcomeFormat::V2,
+            format: OutcomeFormat::V3,
             outcome,
         }
     }

@@ -1,3 +1,4 @@
+use crate::{Provenance, TurnObservation};
 use serde::{Deserialize, Serialize};
 
 /// What is known about dispatch, independently of the error category.
@@ -37,6 +38,9 @@ pub struct Error {
     pub dispatch: Dispatch,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub retry_after_ms: Option<u64>,
+    /// Last valid bound evidence, including partial usage from an interrupted stream.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub observation: Option<Box<TurnObservation>>,
 }
 
 impl Error {
@@ -47,6 +51,7 @@ impl Error {
             message: message.into(),
             dispatch: Dispatch::NotSent,
             retry_after_ms: None,
+            observation: None,
         }
     }
 
@@ -54,6 +59,26 @@ impl Error {
     pub const fn with_dispatch(mut self, dispatch: Dispatch) -> Self {
         self.dispatch = dispatch;
         self
+    }
+
+    #[must_use]
+    pub fn with_observation(mut self, observation: TurnObservation) -> Self {
+        self.observation = Some(Box::new(observation));
+        self
+    }
+
+    /// # Errors
+    /// Refuses foreign or contradictory observations and upstream evidence on an unsent attempt.
+    pub fn validate_for(&self, target: &Provenance) -> Result<(), Self> {
+        if let Some(observation) = &self.observation {
+            if self.dispatch == Dispatch::NotSent {
+                return Err(Self::protocol(
+                    "unsent failure carries upstream observations",
+                ));
+            }
+            observation.validate_for(target)?;
+        }
+        Ok(())
     }
 
     pub fn invalid(message: impl Into<String>) -> Self {
