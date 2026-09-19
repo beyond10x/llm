@@ -1,0 +1,12 @@
+[package]
+name = "b10x-llm-routing"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "TOML catalogs, capability-aware resolution and explicit ordered fallback."
+
+[lints]
+workspace = true

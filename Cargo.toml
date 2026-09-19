@@ -1,0 +1,33 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/llm-core",
+    "crates/llm-http",
+    "crates/llm-responses",
+    "crates/llm-messages",
+    "crates/llm-chat",
+    "crates/llm-credentials",
+    "crates/llm-providers",
+    "crates/llm-routing",
+    "crates/llm-cost",
+    "crates/llm-provision",
+    "crates/llm-runpod",
+    "crates/llm-modal",
+    "crates/llm-gateway",
+    "crates/llm-cli",
+]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.98"
+license = "LicenseRef-B10x-Proprietary"
+repository = "https://github.com/beyond10x/llm"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "deny"
+pedantic = "deny"

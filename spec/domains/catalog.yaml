@@ -1,0 +1,139 @@
+# Draft declaration model; see docs/design.md for sources and UNMAPPED semantics.
+domain: llm.catalog
+entities:
+  - name: llm.catalog.Provider
+    identity: { name: id, type: String }
+    fields:
+      - { name: category, type: String }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.SecretReference
+    identity: { name: id, type: String }
+    fields:
+      - { name: resolver, type: String }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.Account
+    identity: { name: id, type: String }
+    fields:
+      - { name: provider_id, type: String }
+      # Absent only for explicitly anonymous accounts; authenticated modes require a reference.
+      # The runtime-contracts story must encode and test this conditional invariant.
+      - { name: secret_reference_id, type: 'Optional<String>' }
+      - { name: auth_kind, type: String }
+    relations:
+      - { name: provider, kind: references, target: llm.catalog.Provider, cardinality: one, via: provider_id }
+      - { name: credential, kind: references, target: llm.catalog.SecretReference, cardinality: one, via: secret_reference_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.Endpoint
+    identity: { name: id, type: String }
+    fields:
+      - { name: account_id, type: String }
+      - { name: base_url, type: String }
+    relations:
+      - { name: account, kind: references, target: llm.catalog.Account, cardinality: one, via: account_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.Model
+    identity: { name: id, type: String }
+    fields:
+      - { name: upstream_name, type: String }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.ServingModel
+    identity: { name: id, type: String }
+    fields:
+      - { name: endpoint_id, type: String }
+      - { name: model_id, type: String }
+      - { name: protocol, type: String }
+      - { name: context_window, type: Integer }
+    relations:
+      - { name: endpoint, kind: references, target: llm.catalog.Endpoint, cardinality: one, via: endpoint_id }
+      - { name: model, kind: references, target: llm.catalog.Model, cardinality: one, via: model_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.Route
+    identity: { name: id, type: String }
+    fields:
+      - { name: alias, type: String }
+      - { name: fallback_enabled, type: Boolean }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.RouteTarget
+    identity: { name: id, type: String }
+    fields:
+      - { name: route_id, type: String }
+      - { name: serving_model_id, type: String }
+      - { name: position, type: Integer }
+    relations:
+      - { name: route, kind: references, target: llm.catalog.Route, cardinality: one, via: route_id }
+      - { name: target, kind: references, target: llm.catalog.ServingModel, cardinality: one, via: serving_model_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.Price
+    identity: { name: id, type: String }
+    fields:
+      - { name: serving_model_id, type: String }
+      - { name: currency, type: String }
+      - { name: revision, type: String }
+      - { name: source, type: String }
+    relations:
+      - { name: serving_model, kind: references, target: llm.catalog.ServingModel, cardinality: one, via: serving_model_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.UsageRecord
+    identity: { name: id, type: String }
+    fields:
+      - { name: route_target_id, type: String }
+      - { name: attempt_id, type: String }
+      - { name: certainty, type: String }
+    relations:
+      - { name: target, kind: references, target: llm.catalog.RouteTarget, cardinality: one, via: route_target_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.DeploymentSpec
+    identity: { name: id, type: String }
+    fields:
+      - { name: account_id, type: String }
+      - { name: model_id, type: String }
+      - { name: image, type: String }
+    relations:
+      - { name: account, kind: references, target: llm.catalog.Account, cardinality: one, via: account_id }
+      - { name: model, kind: references, target: llm.catalog.Model, cardinality: one, via: model_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.ProvisionedDeployment
+    identity: { name: id, type: String }
+    fields:
+      - { name: deployment_spec_id, type: String }
+      - { name: resource_id, type: String }
+      - { name: observation, type: String }
+    relations:
+      - { name: specification, kind: references, target: llm.catalog.DeploymentSpec, cardinality: one, via: deployment_spec_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]

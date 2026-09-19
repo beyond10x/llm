@@ -1,0 +1,12 @@
+[package]
+name = "b10x-llm-http"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition."
+
+[lints]
+workspace = true

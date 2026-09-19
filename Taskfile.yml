@@ -1,0 +1,13 @@
+version: '3'
+tasks:
+  check:
+    desc: Validate the scaffold, specification and governed plan
+    cmds:
+      - task: rust
+      - ess specify validate --path spec
+      - aep plan artifact validate
+  rust:
+    cmds:
+      - cargo test --workspace --locked
+      - cargo fmt --all --check
+      - cargo clippy --workspace --all-targets --locked -- -D warnings
