@@ -2,24 +2,35 @@
 format: aep.planning-md/1
 id: story:runtime-contracts
 kind: story
-status: draft
+status: active
 title: Publish the neutral contract and compatibility policy
 relations:
 - decomposes: epic:contracts
+- serves: vision:portable-model-inference
 scope:
 - confidence: inferred
   path: .github/workflows
+- confidence: cited
+  path: AGENTS.md
 - confidence: inferred
   path: Cargo.lock
 - confidence: inferred
   path: Cargo.toml
+- confidence: cited
+  path: README.md
 - confidence: inferred
   path: Taskfile.yml
+- confidence: cited
+  path: docs/contract-v1.md
 - confidence: inferred
   path: docs/design.md
+- confidence: cited
+  path: docs/implementation-status.md
+- confidence: cited
+  path: docs/verification/core-foundation.md
 - confidence: inferred
   path: spec
-revision: 2
+revision: 6
 ---
 ## Context
 
@@ -47,3 +58,18 @@ Retain commands and exact fixture/contract identities demonstrating the acceptan
 - inferred: `Taskfile.yml` — planned implementation surface.
 
 Shared specification and workspace manifests are integration surfaces: coordinate changes through their owning story; do not infer parallel safety from different crate names.
+
+## Implementation progress
+
+Implemented `docs/contract-v1.md`, typed protocol/auth/billing/capability vocabularies in
+`spec/domains/catalog.yaml`, and dependency-boundary checks. The turn and outcome envelopes
+reject unknown versions and fields. `task check` passed on 2026-09-19; exact fixture identities
+and limits are in `docs/verification/core-foundation.md`.
+
+Remaining: versioned provider/routing configuration and source release/common Gates setup.
+Keep this story active; a compiling workspace or local library tests do not qualify a release.
+Current complete-milestone tracking is `docs/implementation-status.md`.
+
+Additional cited scope: `README.md`, `AGENTS.md`, `docs/contract-v1.md`,
+`docs/implementation-status.md`, and `docs/verification/core-foundation.md` describe the
+implemented contract and its verification without claiming planned capabilities.

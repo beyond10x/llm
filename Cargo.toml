@@ -25,9 +25,24 @@ license = "LicenseRef-B10x-Proprietary"
 repository = "https://github.com/beyond10x/llm"
 publish = false
 
+[workspace.dependencies]
+llm-core = { package = "b10x-llm-core", path = "crates/llm-core" }
+llm-credentials = { package = "b10x-llm-credentials", path = "crates/llm-credentials" }
+llm-http = { package = "b10x-llm-http", path = "crates/llm-http" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+zeroize = "1.8"
+tokio = { version = "1.53", features = ["rt", "macros", "time", "sync", "net", "io-util"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+reqwest = { version = "0.12.28", default-features = false, features = ["json", "rustls-tls", "stream"] }
+httpdate = "1.0.3"
+
 [workspace.lints.rust]
 unsafe_code = "forbid"
 
 [workspace.lints.clippy]
-all = "deny"
-pedantic = "deny"
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"

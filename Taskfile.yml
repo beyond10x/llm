@@ -1,7 +1,7 @@
 version: '3'
 tasks:
   check:
-    desc: Validate the scaffold, specification and governed plan
+    desc: Check the implementation, specification and governed plan
     cmds:
       - task: rust
       - ess specify validate --path spec

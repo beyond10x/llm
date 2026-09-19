@@ -10,3 +10,13 @@ description = "Shared bounded HTTP and SSE transport; no vendor fields or creden
 
 [lints]
 workspace = true
+
+[lib]
+name = "llm_http"
+
+[dependencies]
+llm-core.workspace = true
+serde_json.workspace = true
+reqwest.workspace = true
+tokio.workspace = true
+httpdate.workspace = true

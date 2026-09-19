@@ -2,15 +2,16 @@
 format: aep.planning-md/1
 id: story:secret-resolver
 kind: story
-status: draft
+status: active
 title: Inference accepts caller-injected secret custody
 relations:
 - decomposes: epic:access
 - depends_on: story:neutral-inference
+- serves: vision:portable-model-inference
 scope:
 - confidence: inferred
   path: crates/llm-credentials
-revision: 2
+revision: 5
 ---
 ## Context
 
@@ -33,3 +34,16 @@ Retain commands and exact fixture/contract identities demonstrating the acceptan
 - inferred: `crates/llm-credentials` — planned implementation surface.
 
 Shared specification and workspace manifests are integration surfaces: coordinate changes through their owning story; do not infer parallel safety from different crate names.
+
+## Implementation progress
+
+Implemented caller-injected SecretResolver, opaque SecretRef, zeroized/redacted arbitrary bytes,
+nonserializable secret material and generation identities, and bounded per-reference coordination.
+Resolution observes rotation between requests. Concurrent rejection refreshes one generation
+once. A cancelled refresh remains uncertain and cannot be blindly repeated until caller-owned
+state changes. No login, ambient lookup, persistent writes or fallback source was added.
+
+`task check` passed on 2026-09-19: five injected-resolver fixtures and two compile-fail tests.
+See `docs/verification/core-foundation.md`. Authenticated resend limits will be exercised by the
+provider clients; the resolver never sends a request. Keep active under the unfinished versioned
+runtime-contract prerequisites. Local keychain/file adapters belong to their separate story.

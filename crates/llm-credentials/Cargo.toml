@@ -10,3 +10,16 @@ description = "Injected secret resolution and caller-managed credential refresh;
 
 [lints]
 workspace = true
+
+[lib]
+name = "llm_credentials"
+
+[dependencies]
+llm-core.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+zeroize.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

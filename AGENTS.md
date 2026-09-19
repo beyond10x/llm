@@ -21,6 +21,7 @@ Use managed worktrees. Commits and publication use the organization bot and exis
 controls. No private policy or credentials belong in this repository. Run `task check` before
 publication. Runtime code and checkers are Rust; no paid provider call belongs in the default gate.
 
-The current crates are an intentional planning scaffold, not implemented capability. Do not mark
-implementation stories complete merely because this scaffold builds. Published contracts are
-versioned; later consumer adoption pins a released or explicitly qualified exact revision.
+Read docs/implementation-status.md for the implemented libraries and remaining planned boundaries.
+Do not mark implementation stories complete merely because the workspace builds. Published
+contracts are versioned; later consumer adoption pins a released or explicitly qualified exact
+revision. Local fixture evidence does not establish live provider or hosting qualification.

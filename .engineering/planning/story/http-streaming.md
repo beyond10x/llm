@@ -2,15 +2,16 @@
 format: aep.planning-md/1
 id: story:http-streaming
 kind: story
-status: draft
+status: active
 title: Bounded streaming transport handles termination and cancellation
 relations:
 - decomposes: epic:inference
 - depends_on: story:neutral-inference
+- serves: vision:portable-model-inference
 scope:
 - confidence: inferred
   path: crates/llm-http
-revision: 2
+revision: 5
 ---
 ## Context
 
@@ -33,3 +34,16 @@ Retain commands and exact fixture/contract identities demonstrating the acceptan
 - inferred: `crates/llm-http` — planned implementation surface.
 
 Shared specification and workspace manifests are integration surfaces: coordinate changes through their owning story; do not infer parallel safety from different crate names.
+
+## Implementation progress
+
+Implemented bounded SSE decoding and asynchronous single-attempt HTTP transport. It refuses
+redirects, never retries, tracks dispatch certainty, preserves valid output before malformed
+frames, and bounds response headers, idle time and total duration. Cancellation or failure drops
+the HTTP response even when the stream object remains retained. Retry-After is a hint only.
+
+`task check` passed on 2026-09-19: four framing fixtures and seven real loopback-socket fixtures,
+including EOF without terminal truth, silent-stream cancellation, continuous keepalive deadlines,
+credential-bearing redirect refusal and no duplicate request. See
+`docs/verification/core-foundation.md`. Keep active under the unfinished versioned runtime-contract
+prerequisites. Protocol-specific terminal interpretation remains with the projection stories.
