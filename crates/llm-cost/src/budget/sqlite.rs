@@ -103,9 +103,12 @@ impl SqliteLedger {
             )
             .map_err(storage)?;
         transaction.commit().map_err(storage)?;
-        sync_directory(directory)?;
-        if let Some(parent) = directory.parent() {
-            sync_directory(parent)?;
+        #[cfg(unix)]
+        {
+            sync_directory(directory)?;
+            if let Some(parent) = directory.parent() {
+                sync_directory(parent)?;
+            }
         }
         let ledger = Self {
             inner: Mutex::new(Inner {
@@ -333,18 +336,9 @@ fn regular_file(path: &Path) -> Result<(), BudgetError> {
     }
     Ok(())
 }
+#[cfg(unix)]
 fn sync_directory(path: &Path) -> Result<(), BudgetError> {
-    #[cfg(unix)]
-    {
-        File::open(path)
-            .and_then(|f| f.sync_all())
-            .map_err(storage)?;
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = path;
-    }
-    Ok(())
+    File::open(path).and_then(|f| f.sync_all()).map_err(storage)
 }
 fn storage(_: impl std::fmt::Display) -> BudgetError {
     BudgetError::Storage

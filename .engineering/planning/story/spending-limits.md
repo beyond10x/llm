@@ -33,7 +33,7 @@ scope:
   path: spec
 - confidence: inferred
   path: spec/domains/catalog.yaml
-revision: 10
+revision: 11
 ---
 ## Context
 
@@ -136,5 +136,8 @@ The full local gate was rerun after the fix. It passes 75 behavior tests plus on
 fixture entry point and two compile-fail documentation tests. Three restored-source ESS runs
 retain 145/145 passes, zero failed/error/unsupported/skipped/refused and 84 matching schemas. All
 16 deliberate budget defects again fail named scenarios; every mutation is restored. The report
-and source identities are refreshed. A fresh exact-revision remote run must verify macOS/Windows;
+and source identities are refreshed. Run 35440347352 at d28dfc6 passed macOS and all Windows runtime tests, but Windows Clippy
+refused the always-successful non-Unix directory-sync helper. The helper and its calls now
+compile only on Unix, leaving Windows on SQLite native persistence. A fresh exact-revision
+remote run must verify the complete macOS/Windows gate;
 no timing allowances, skipped tests or exception lists were introduced.

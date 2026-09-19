@@ -45,7 +45,10 @@ locked descriptor kept the OS lock alive after ledger drop, returning `OwnerBusy
 regression `closing_owner_releases_lock_even_with_an_inherited_descriptor` failed before the fix.
 An RAII guard now explicitly unlocks after the database connection closes; the regression passes.
 The original assertion now reports its actual error, and the native matrix collects both platform
-results even if one fails. Fresh exact-revision CI must still verify the correction on macOS.
+results even if one fails. The next run at `d28dfc6` passed macOS and all Windows runtime tests;
+Windows Clippy then rejected the Unix directory-sync helper's always-successful Windows branch.
+The helper and its calls now compile only on Unix; Windows retains SQLite's native persistence
+path. Fresh exact-revision CI must verify the complete corrected gate on both platforms.
 
 ## Falsification
 
