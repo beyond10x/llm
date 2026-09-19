@@ -266,6 +266,16 @@ dependencies = [
 [[package]]
 name = "b10x-llm-messages"
 version = "0.0.0"
+dependencies = [
+ "b10x-llm-core",
+ "b10x-llm-credentials",
+ "b10x-llm-http",
+ "b10x-llm-providers",
+ "http",
+ "serde",
+ "serde_json",
+ "tokio",
+]
 
 [[package]]
 name = "b10x-llm-modal"

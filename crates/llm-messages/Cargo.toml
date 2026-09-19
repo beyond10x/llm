@@ -8,5 +8,18 @@ repository.workspace = true
 publish.workspace = true
 description = "Messages protocol projection and gateway ingress for the declared supported subset."
 
+[lib]
+name = "llm_messages"
+
+[dependencies]
+llm-core.workspace = true
+llm-credentials.workspace = true
+llm-http.workspace = true
+llm-providers.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+http.workspace = true
+tokio.workspace = true
+
 [lints]
 workspace = true

@@ -8,3 +8,4 @@ domains:
   - llm.accounting
   - llm.budget
   - llm.inference
+  - llm.messages
