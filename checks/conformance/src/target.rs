@@ -21,6 +21,7 @@ pub struct CatalogTarget {
     observation: RefCell<Option<BTreeMap<String, Node>>>,
     token: RefCell<Option<ConsistencyToken>>,
     sequence: Cell<u64>,
+    observed_view: RefCell<Option<String>>,
 }
 impl CatalogTarget {
     pub const fn new(version: String) -> Self {
@@ -29,6 +30,7 @@ impl CatalogTarget {
             observation: RefCell::new(None),
             token: RefCell::new(None),
             sequence: Cell::new(0),
+            observed_view: RefCell::new(None),
         }
     }
 }
@@ -113,41 +115,59 @@ fn unavailable(error: impl std::fmt::Display) -> TargetError {
 fn unsupported(operation: &str) -> TargetError {
     TargetError::unsupported(
         operation,
-        "pure catalog evaluation exposes no such operation",
+        "library observation adapter exposes no such operation",
     )
 }
 
 impl ConformanceTarget for CatalogTarget {
     fn identity(&self) -> Result<ImplementationIdentity, TargetError> {
         Ok(ImplementationIdentity::new(
-            "llm-catalog-libraries",
+            "llm-foundation-libraries",
             &self.version,
         ))
     }
     fn begin_scenario(&self, _: &ScenarioContext) -> Result<(), TargetError> {
         self.observation.replace(None);
         self.token.replace(None);
+        self.observed_view.replace(None);
         Ok(())
     }
     fn end_scenario(&self, _: &ScenarioContext) -> Result<(), TargetError> {
         self.observation.replace(None);
         self.token.replace(None);
+        self.observed_view.replace(None);
         Ok(())
     }
     fn execute_command(
         &self,
         request: SemanticCommandRequest,
     ) -> Result<SemanticCommandResult, TargetError> {
-        if request.command.to_string() != "llm.routing.Evaluate" {
-            return Err(unsupported(&request.command.to_string()));
-        }
-        let input: EvaluationRequest =
-            serde_json::from_value(serde_json::to_value(request.input).map_err(unavailable)?)
-                .map_err(unavailable)?;
-        let facts = observe(&input);
-        let valid = facts["catalog_valid"]
+        let input = serde_json::to_value(request.input).map_err(unavailable)?;
+        let (facts, view, event, field) = match request.command.to_string().as_str() {
+            "llm.routing.Evaluate" => (
+                observe(&serde_json::from_value(input).map_err(unavailable)?),
+                "llm.routing.LastEvaluation",
+                "llm.routing.Evaluated",
+                "catalog_valid",
+            ),
+            "llm.secrets.ProbeFile" => (
+                crate::secrets::file(input).map_err(unavailable)?,
+                "llm.secrets.LastProbe",
+                "llm.secrets.Probed",
+                "diagnostics_safe",
+            ),
+            "llm.secrets.ProbeKeychain" => (
+                crate::secrets::keychain(input).map_err(unavailable)?,
+                "llm.secrets.LastProbe",
+                "llm.secrets.Probed",
+                "diagnostics_safe",
+            ),
+            _ => return Err(unsupported(&request.command.to_string())),
+        };
+        let notification = facts[field]
             .as_bool()
-            .ok_or_else(|| unavailable("missing validity fact"))?;
+            .ok_or_else(|| unavailable("missing notification fact"))?;
+        self.observed_view.replace(Some(view.to_owned()));
         self.observation
             .replace(Some(serde_json::from_value(facts).map_err(unavailable)?));
         // This local adapter notification says observation finished. The actual
@@ -167,14 +187,21 @@ impl ConformanceTarget for CatalogTarget {
         self.token.replace(Some(token.clone()));
         result.consistency = Some(token);
         result.direct_events.push(
-            ObservedEvent::new("llm.routing.Evaluated".parse().map_err(unavailable)?)
-                .with("catalog_valid", Node::Bool(valid)),
+            ObservedEvent::new(event.parse().map_err(unavailable)?)
+                .with(field, Node::Bool(notification)),
         );
         Ok(result)
     }
     fn query_view(&self, request: SemanticViewRequest) -> Result<SemanticViewResult, TargetError> {
-        if request.view.to_string() != "llm.routing.LastEvaluation" || !request.params.is_empty() {
+        if !matches!(
+            request.view.to_string().as_str(),
+            "llm.routing.LastEvaluation" | "llm.secrets.LastProbe"
+        ) || !request.params.is_empty()
+        {
             return Err(unsupported(&request.view.to_string()));
+        }
+        if self.observed_view.borrow().as_ref() != Some(&request.view.to_string()) {
+            return Ok(SemanticViewResult::of(std::iter::empty()));
         }
         if request
             .consistency

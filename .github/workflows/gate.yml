@@ -16,8 +16,10 @@ jobs:
       - name: Rust libraries
         run: |
           cargo test --workspace --locked
+          cargo test -p b10x-llm-credentials --all-features --locked
+          cargo check -p b10x-llm-credentials --no-default-features --locked
           cargo fmt --all --check
-          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Install pinned planning tools
         run: |
           cargo install --locked --git https://github.com/beyond10x/aep.git --rev 28abe09bb6e5b0a6b4db839f6bf5693957d39324 aep-cli --bin aep
@@ -31,6 +33,20 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: routing-conformance
+          name: foundation-conformance
           path: target/conformance
           if-no-files-found: error
+  native-adapter-builds:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.98.0
+        with:
+          components: clippy
+      - name: Native backends compile; tests use injected stores
+        run: |
+          cargo test -p b10x-llm-credentials --all-features --locked
+          cargo clippy -p b10x-llm-credentials --all-targets --all-features --locked -- -D warnings

@@ -4,6 +4,16 @@
 //!
 //! Secret references and caller-injected custody. No login, ambient lookup or persistent writes.
 
+#[cfg(feature = "file")]
+pub mod file;
+#[cfg(feature = "keychain")]
+pub mod keychain;
+#[cfg(any(feature = "file", feature = "keychain"))]
+mod local;
+
+/// Maximum secret material accepted from an injected or local source.
+pub const MAX_SECRET_BYTES: usize = 1024 * 1024;
+
 use llm_core::{BoxFuture, Id};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -52,6 +62,10 @@ pub enum SecretError {
     TooLarge,
     #[error("too many secret references are coordinated")]
     TooManyReferences,
+    #[error("secret source does not satisfy the required access protections")]
+    UnsafeSource,
+    #[error("secret adapter is unsupported on this platform")]
+    UnsupportedPlatform,
 }
 
 /// Arbitrary short-lived bytes; Debug is redacted and storage is zeroized on drop.
@@ -72,7 +86,7 @@ impl Secret {
     /// the consuming provider validates its own authentication presentation.
     pub fn new(value: Vec<u8>) -> Result<Self, SecretError> {
         let value = Zeroizing::new(value);
-        if value.len() > 1024 * 1024 {
+        if value.len() > MAX_SECRET_BYTES {
             return Err(SecretError::TooLarge);
         }
         Ok(Self(value))
@@ -87,7 +101,9 @@ impl fmt::Debug for Secret {
     }
 }
 
-/// Caller-owned generation identity. Stable for one value and changed on every rotation.
+/// Opaque credential identity used to detect replacement of a rejected value.
+/// Injected refreshable sources use issuer generations. Read-only local adapters
+/// use content identity: restoring earlier bytes restores their earlier identity.
 /// This also has redacted Debug; neither a version nor the credential can be serialized.
 #[derive(Clone, PartialEq, Eq)]
 pub struct SecretVersion(Zeroizing<String>);

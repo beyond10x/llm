@@ -38,9 +38,9 @@ scope:
   path: docs/verification/routing-falsification.json
 - confidence: cited
   path: docs/verification/routing-report.json
-- confidence: inferred
+- confidence: cited
   path: spec
-revision: 11
+revision: 12
 ---
 ## Context
 

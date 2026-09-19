@@ -3,30 +3,33 @@ format: aep.planning-md/1
 id: executable-system-specification:routing-observations
 kind: executable-system-specification
 status: draft
-title: Executable catalog routing observations
+title: Executable foundation library observations
 relations:
 - verifies: story:catalog-routing
 - verifies: story:provider-accounts
-model_digest: 4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f
-revision: 2
+- verifies: story:local-secret-adapters
+model_digest: d00f31c65974df610b7dc83ea0c1a053210dcadb13525334747b478f3bf6b3cc
+revision: 4
 ---
 ## Scope
 
-Spec: spec/system.yaml, spec/domains/catalog.yaml and spec/domains/routing.yaml.
-Runtime declarations plus the explicit verification adapter observation contract; no claim of
-live inference, durable budgets or hosting lifecycle qualification.
+Spec: spec/system.yaml and spec/domains/{catalog,routing,secrets}.yaml. The stable artifact ID
+retains its original routing name; the compiled model now also contains local-secret declarations
+and verification observations. It makes no claim of live inference, persistent credential storage,
+durable budgets or hosting lifecycle qualification.
 
 ## Verification
 
-The declaration baseline generated zero scenarios. Complete suite/5 now includes 27 authored
-behavior checks and one generated adapter check. The real libraries answer all 28, with zero
-failures/errors/unsupported/skips/refusals in three consecutive local runs. See
-contracts/routing/suite.json, docs/verification/routing-report.json and
- docs/verification/routing-conformance.md. Eight restored production mutations fail named scenarios.
+The complete suite/5 at contracts/suite.json contains 49 authored scenarios and three generated
+observation checks. All 52 pass with zero failed/error/unsupported/skipped in three consecutive
+restored-source runs, and synthesis has zero refusals. This retains every previous routing check
+and adds real protected-file and injected mock-keychain observations. The gate regenerates 47
+schemas and the suite and compares exact bytes/file sets. See docs/verification/local-secrets.md
+and its report and falsification records. Nine new production mutations fail named scenarios;
+the original eight routing mutation observations remain retained at their historical revision.
 
-The report source identity hashes runtime/checker Rust, manifests and Cargo.lock. CI uses the same
-pinned ESS library and CLI, regenerates schemas/suite and checks the report rather than only an
-exit code. Runtime provider and hosting qualification remains separate and outstanding.
-
-No artifact lifecycle transition is performed beside the requested governed driver. This record
-retains executable evidence without claiming the entire foundation or its release is complete.
+Reports are produced by the pinned ESS 0.26.0 runner and carry an exact source digest and real
+observation time. CI runs the same report gate, separately compiles native backends on macOS and
+Windows, and retains the original suite and detailed runs. No runtime crate depends on ESS.
+Mock/native compile evidence does not qualify a live OS service. No artifact lifecycle transition
+is performed beside the requested governed Chat driver, which has not launched.

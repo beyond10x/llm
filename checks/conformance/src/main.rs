@@ -1,4 +1,5 @@
 mod gate;
+mod secrets;
 mod target;
 
 use ess_conformance::{

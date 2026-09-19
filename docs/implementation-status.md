@@ -13,6 +13,11 @@ injected and resolved on each request; concurrent renewal is coordinated without
 or persistent credential store. The HTTP transport streams bounded SSE with explicit deadlines,
 no redirects, no automatic retries, and failure after partial output preserved.
 
+Optional local secret adapters now read explicitly mapped protected files on Linux or an injected
+keychain store. Native constructors select Linux Secret Service, macOS Keychain or Windows
+Credential Manager. [Adapter documentation](local-secrets.md) records the platform and trust
+boundaries; tests use disposable files and mock stores, never existing user credentials.
+
 Provider bindings validate independent protocol, provider, auth and billing choices, including
 anonymous arbitrary endpoints. Routing validates strict TOML catalogs, preserves ordered opt-in
 selection, checks capabilities and conservative input-token bounds, and explains safe refusal
@@ -31,7 +36,7 @@ while the versioned configuration surface and release prerequisites are complete
 | `http-streaming` | Bounded single-attempt HTTP/SSE, terminal truth, cancellation, deadline and retry-hint fixtures pass. |
 | `secret-resolver` | Injected arbitrary secret references, redacted/zeroized material and coordinated caller-owned renewal implemented and tested. |
 | `provider-accounts` | Validated bindings, arbitrary endpoint URLs and selected-reference request-time auth implemented; live access qualification is separate. |
-| `local-secret-adapters` | Pending: explicit optional file and OS keychain adapters. |
+| `local-secret-adapters` | Explicit file/keychain adapters implemented; Linux file protections, exact mock-store lookup, rotation and fixed errors tested. Native OS-service availability is not established by mock tests or compilation. |
 | `responses-projection` | Pending: Responses request, output and streaming projections. |
 | `messages-projection` | Pending: Messages request, output and streaming projections. |
 | `chat-projection` | Pending: Chat Completions projections and arbitrary compatible endpoints. |
@@ -70,7 +75,7 @@ or authorize changing source-publication controls.
 ## Next implementation step
 
 Implement protocol projections using the shared transport. The draft governed task names
-`story:chat-projection`; no driver run has launched while operator USD terms remain pending.
+`story:chat-projection`; no driver run has launched while operator map selection and USD terms remain pending.
 Preserve independent auth, billing and protocol choices;
 an anonymous vLLM binding must be explicit. Continue recording acceptance evidence in each owning
 story. Model the remaining budget and hosting runtime semantics before implementing their stores.

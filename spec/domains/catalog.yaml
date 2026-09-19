@@ -72,6 +72,29 @@ entities:
       initial: Declared
       states: [Declared]
       terminal: [Declared]
+  - name: llm.catalog.MountedSecretFile
+    identity: { name: id, type: String }
+    fields:
+      - { name: reference_id, type: String }
+      - { name: absolute_path, type: String }
+    relations:
+      - { name: reference, kind: references, target: llm.catalog.SecretReference, cardinality: one, via: reference_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
+  - name: llm.catalog.KeychainSecret
+    identity: { name: id, type: String }
+    fields:
+      - { name: reference_id, type: String }
+      - { name: service, type: String }
+      - { name: entry, type: String }
+    relations:
+      - { name: reference, kind: references, target: llm.catalog.SecretReference, cardinality: one, via: reference_id }
+    lifecycle:
+      initial: Declared
+      states: [Declared]
+      terminal: [Declared]
   - name: llm.catalog.Account
     identity: { name: id, type: String }
     fields:

@@ -87,12 +87,12 @@ pub fn check() -> Result<(), Box<dyn Error>> {
         "--target",
         "ir",
         "--scenarios",
-        "contracts/routing/scenarios",
+        "contracts",
         "--out",
         &suite,
     ])?;
-    if fs::read(&suite)? != fs::read("contracts/routing/suite.json")? {
-        return Err("routing suite drift: regenerate contracts/routing/suite.json with ESS".into());
+    if fs::read(&suite)? != fs::read("contracts/suite.json")? {
+        return Err("suite drift: regenerate contracts/suite.json with ESS".into());
     }
     let schemas = format!("{projection}/schema");
     ess(&[
@@ -106,12 +106,7 @@ pub fn check() -> Result<(), Box<dyn Error>> {
     let mut previous = None;
     for iteration in 1..=3 {
         let output = PathBuf::from(format!("target/conformance/run-{iteration}"));
-        crate::execute(
-            &suite,
-            "contracts/routing/baseline.json",
-            &output,
-            &identity,
-        )?;
+        crate::execute(&suite, "contracts/baseline.json", &output, &identity)?;
         let report: serde_json::Value =
             serde_json::from_slice(&fs::read(output.join("report.json"))?)?;
         let counts = report["counts"].clone();
@@ -120,6 +115,6 @@ pub fn check() -> Result<(), Box<dyn Error>> {
         }
         previous = Some(counts);
     }
-    println!("routing conformance and deterministic ESS projections passed ({identity})");
+    println!("foundation conformance and deterministic ESS projections passed ({identity})");
     Ok(())
 }

@@ -1,5 +1,9 @@
 # Provider and routing verification — 2026-09-19
 
+Historical checkpoint at `d36e4e16dafc55fef6acc54b7119d9a569de53d7`. The measurements below
+belong to that exact revision. The combined suite and current evidence are in
+[local-secret verification](local-secrets.md); its 52 scenarios retain all 28 routing checks.
+
 The production libraries now validate independent provider/account/auth/billing/endpoint/model
 bindings and resolve strict `llm.catalog/1` TOML catalogs without credential or network I/O. This
 record extends the earlier core/credentials/HTTP checkpoint; it does not qualify a protocol client,
@@ -45,7 +49,7 @@ of an unexecutable fiction may lower total only with answered unchanged and an e
 edit; none was removed here. Three consecutive runs must have identical counts.
 
 The retained [report](routing-report.json) is paired with
-[`contracts/routing/suite.json`](../../contracts/routing/suite.json). Detailed runs are written to
+the [original suite](https://github.com/beyond10x/llm/blob/d36e4e16dafc55fef6acc54b7119d9a569de53d7/contracts/routing/suite.json). Detailed runs were written to
 `target/conformance/run-{1,2,3}`; CI runs the same command and uploads `routing-conformance`.
 The ordinary gate also passes 50 Rust runtime tests and 2 compile-fail documentation tests,
 formatting, strict Clippy, ESS validation and AEP validation. AEP still reports the six existing

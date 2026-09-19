@@ -73,8 +73,8 @@ a normal repository gate.
   subscription auth; opt-in fallback; accounting/limits; subset translation; later llmgw retirement.
 
 The catalog ESS domain describes declaration records with a single Declared state. The routing
-verification domain describes an adapter's observations of the real pure-library calls; its
-authored scenarios assert returned selection, refusal and request-preservation facts. It does not
+and secrets verification domains describe adapter observations of real library calls; their
+authored scenarios assert returned selection, refusal, request preservation and secret-resolution facts. They do not
 promise runtime event publication, persistent routing jobs or hosting/budget state machines.
 UNMAPPED: durable budget ownership/scope and provider-specific hosting lifecycle transitions await
 their design stories. They must be modeled before those implementations are scheduled.

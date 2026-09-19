@@ -59,6 +59,12 @@ ambient vendor directories, runs a login flow or writes credential files. A coor
 serializes resolution/refresh per reference and refreshes only the credential generation actually
 rejected, preventing concurrent callers from refreshing the same generation repeatedly.
 
+Optional [local adapters](local-secrets.md) implement the same reference contract. File protection
+checks currently support Linux; native-keychain constructors also support macOS and Windows.
+These read-only sources identify exact content rather than issuer generations and return
+`RefreshUnsupported`; independently replaced bytes are visible on the next resolve. Returned
+material and content identity remain redacted and nonserializable.
+
 Anonymous accounts require an absent reference; authenticated modes require a present reference.
 Billing kind (metered, subscription, self-hosted) is independent of protocol and authentication
 presentation. A rejected subscription credential never changes billing kind or account.

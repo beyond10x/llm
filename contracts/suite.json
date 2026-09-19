@@ -27,153 +27,287 @@
       "llm.routing/authored/unknown-alias-refused",
       "llm.routing/authored/unknown-catalog-version",
       "llm.routing/authored/unknown-input-tokens-refused",
-      "llm.routing/authored/url-credentials-refused"
+      "llm.routing/authored/url-credentials-refused",
+      "llm.secrets/authored/file-directory-refused",
+      "llm.secrets/authored/file-empty",
+      "llm.secrets/authored/file-exact-bytes",
+      "llm.secrets/authored/file-fifo-refused",
+      "llm.secrets/authored/file-hardlink-refused",
+      "llm.secrets/authored/file-missing",
+      "llm.secrets/authored/file-parent-symlink-refused",
+      "llm.secrets/authored/file-public-readable-refused",
+      "llm.secrets/authored/file-rereads-rotation",
+      "llm.secrets/authored/file-same-value-retains-version",
+      "llm.secrets/authored/file-size-bound",
+      "llm.secrets/authored/file-symlink-refused",
+      "llm.secrets/authored/file-unbound-reference",
+      "llm.secrets/authored/file-writable-parent-refused",
+      "llm.secrets/authored/keychain-backend-error-redacted",
+      "llm.secrets/authored/keychain-empty",
+      "llm.secrets/authored/keychain-exact-store-and-entry",
+      "llm.secrets/authored/keychain-missing",
+      "llm.secrets/authored/keychain-rereads-rotation",
+      "llm.secrets/authored/keychain-same-value-retains-version",
+      "llm.secrets/authored/keychain-size-bound",
+      "llm.secrets/authored/keychain-unbound-reference"
     ],
     "authored_sources": {
-      "capability-reasons-observed.yaml": {
+      "routing/scenarios/capability-reasons-observed.yaml": {
         "digest": "sha256:760133e66f669488de449ad68a9a2439ea6da3cf0ade45dc9033bf50b467b491",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/capability-reasons-observed"
       },
-      "context-overflow-refused.yaml": {
+      "routing/scenarios/context-overflow-refused.yaml": {
         "digest": "sha256:a2ade065a9651df9c75cdc4117a2401d75fd565ad57f7d59765d72d28d14681b",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/context-overflow-refused"
       },
-      "duplicate-target-refused.yaml": {
+      "routing/scenarios/duplicate-target-refused.yaml": {
         "digest": "sha256:8669f25c1f651249c171c1c908165e3928dcc0207c9dc2fb7ef012628e0be8d9",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/duplicate-target-refused"
       },
-      "explicit-fallback-selects-compatible-target.yaml": {
+      "routing/scenarios/explicit-fallback-selects-compatible-target.yaml": {
         "digest": "sha256:28708bbf8a9c9af57d1ea87fe3767e61d8fcf3510e26434299120d2b28588cbb",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/explicit-fallback-selects-compatible-target"
       },
-      "fallback-default-disabled.yaml": {
+      "routing/scenarios/fallback-default-disabled.yaml": {
         "digest": "sha256:84dc3ff5bca9f36af3bdcea9dccf295330a8d8875574995d8ebb8f59e9383c7f",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/fallback-default-disabled"
       },
-      "fallback-disabled.yaml": {
+      "routing/scenarios/fallback-disabled.yaml": {
         "digest": "sha256:e1820e317da2bae81392743d7e8a9174a2d8ad25d2639dd529378030a04d74e8",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/fallback-disabled"
       },
-      "fallback-preserves-first-compatible-order.yaml": {
+      "routing/scenarios/fallback-preserves-first-compatible-order.yaml": {
         "digest": "sha256:9873fb4bb7beeae8795d1f6903cf2411642931b3084d814f49e433914018917d",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/fallback-preserves-first-compatible-order"
       },
-      "implicit-output-budget-inclusive.yaml": {
+      "routing/scenarios/implicit-output-budget-inclusive.yaml": {
         "digest": "sha256:ca5357a519eb00643bac4c2321c56a2ae0f9d1f02211b66f4c210b03702a005f",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/implicit-output-budget-inclusive"
       },
-      "implicit-output-budget-refused.yaml": {
+      "routing/scenarios/implicit-output-budget-refused.yaml": {
         "digest": "sha256:565337ba5a88a5c166c84f953d7fc635721cb60ea86bd575d53d2c196f023f57",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/implicit-output-budget-refused"
       },
-      "inclusive-context-boundary.yaml": {
+      "routing/scenarios/inclusive-context-boundary.yaml": {
         "digest": "sha256:6acd3fe5d9829aa07b7036cb39b10df237d08b190ac979ec78c87dcc25c45b8a",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/inclusive-context-boundary"
       },
-      "inline-secret-refused.yaml": {
+      "routing/scenarios/inline-secret-refused.yaml": {
         "digest": "sha256:6ca443880419ced905d5d8c377324f9aa4fc710daec63c92668d31919bde7e9f",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/inline-secret-refused"
       },
-      "invalid-auth-binding-refused.yaml": {
+      "routing/scenarios/invalid-auth-binding-refused.yaml": {
         "digest": "sha256:34b836cf21993aad0114e5785a807b35b1da75bc2b873fc6c59afd01ae2cadb6",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/invalid-auth-binding-refused"
       },
-      "matching-opaque-binding-preserved.yaml": {
+      "routing/scenarios/matching-opaque-binding-preserved.yaml": {
         "digest": "sha256:1e7cbe1363a7007552805d231a879e91da57b6f369590fe39f31d7c44c818c38",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/matching-opaque-binding-preserved"
       },
-      "missing-reference-refused.yaml": {
+      "routing/scenarios/missing-reference-refused.yaml": {
         "digest": "sha256:db0bdf68a13dae86869282c9c77158a9a3149893b2fb3134a1c53ccdc1908673",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/missing-reference-refused"
       },
-      "noncontiguous-order-refused.yaml": {
+      "routing/scenarios/noncontiguous-order-refused.yaml": {
         "digest": "sha256:caf7409267d16be5cd898525e67f4d3a7f61482f87934d52934934d12006d2b8",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/noncontiguous-order-refused"
       },
-      "old-turn-version-refused.yaml": {
+      "routing/scenarios/old-turn-version-refused.yaml": {
         "digest": "sha256:3bcb4810eb0c9ce2f32197c5f18c221b711a58975d29d0a241dd40a8d6226c79",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/old-turn-version-refused"
       },
-      "opaque-state-refuses-cross-binding-fallback.yaml": {
+      "routing/scenarios/opaque-state-refuses-cross-binding-fallback.yaml": {
         "digest": "sha256:28b9e8eed61613707c95f26deac7d54a2220c1113d463b704e228423bab28831",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/opaque-state-refuses-cross-binding-fallback"
       },
-      "primary-selection-preserves-request.yaml": {
+      "routing/scenarios/primary-selection-preserves-request.yaml": {
         "digest": "sha256:6d872bb209f28b1d112259c613842d1cdd33d9d6cf9116d0a86e16a62ef90181",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/primary-selection-preserves-request"
       },
-      "protocol-messages-independent-of-provider.yaml": {
+      "routing/scenarios/protocol-messages-independent-of-provider.yaml": {
         "digest": "sha256:faa350c2044f8b2a057f4bb377a080d126a22d3c35076eaa6800e7bd439f82e1",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/protocol-messages-independent-of-provider"
       },
-      "protocol-responses-independent-of-provider.yaml": {
+      "routing/scenarios/protocol-responses-independent-of-provider.yaml": {
         "digest": "sha256:6dbf6a399c98330a6fb1357cbf7e466aaa705ac1c9b0b1cd6eb065640862dc41",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/protocol-responses-independent-of-provider"
       },
-      "repointed-endpoint-refuses-opaque-state.yaml": {
+      "routing/scenarios/repointed-endpoint-refuses-opaque-state.yaml": {
         "digest": "sha256:bb33b518299882030c1bc965862275616162be4005ac66979af1b977f158b327",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/repointed-endpoint-refuses-opaque-state"
       },
-      "repointed-model-refuses-opaque-state.yaml": {
+      "routing/scenarios/repointed-model-refuses-opaque-state.yaml": {
         "digest": "sha256:71128fd7c0b2f8bbf56113648cb6a529e14a61c8b277eefcf73b4e9bc8e4f27b",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/repointed-model-refuses-opaque-state"
       },
-      "subscription-billing-independent-of-protocol.yaml": {
+      "routing/scenarios/subscription-billing-independent-of-protocol.yaml": {
         "digest": "sha256:c367e23f3a5373251dcb99646f045f3f3f76b3e99b15877ea725b2139981391e",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/subscription-billing-independent-of-protocol"
       },
-      "unknown-alias-refused.yaml": {
+      "routing/scenarios/unknown-alias-refused.yaml": {
         "digest": "sha256:f72b39cb3dfc3a78e896578ec6b3b912ea911b20f8eacaa5149c50c1323e2883",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/unknown-alias-refused"
       },
-      "unknown-catalog-version.yaml": {
+      "routing/scenarios/unknown-catalog-version.yaml": {
         "digest": "sha256:95f59dfe2599f0095c6c7886d60496be61a130553d97656b08d01c2cd4203e53",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/unknown-catalog-version"
       },
-      "unknown-input-tokens-refused.yaml": {
+      "routing/scenarios/unknown-input-tokens-refused.yaml": {
         "digest": "sha256:26b63cca2131bae9740975c4e29a63fa3e9941300e410cf618872d9e2750c8b1",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/unknown-input-tokens-refused"
       },
-      "url-credentials-refused.yaml": {
+      "routing/scenarios/url-credentials-refused.yaml": {
         "digest": "sha256:c5692db515d6172e6503b73fd2a31d5be3865ca28bc009ae9a7b82f7f8580489",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/url-credentials-refused"
+      },
+      "secrets/scenarios/file-directory-refused.yaml": {
+        "digest": "sha256:150ba774b541174d6946af3b78dcffeaa9bb054302eec338044afb0a5aaf5794",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-directory-refused"
+      },
+      "secrets/scenarios/file-empty.yaml": {
+        "digest": "sha256:7ea0591e17e1f5495f6abbbb712bbafe1c059789022dc2266c8737cba5a139be",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-empty"
+      },
+      "secrets/scenarios/file-exact-bytes.yaml": {
+        "digest": "sha256:e555d50d2be31954762157d265eefb2e79f54d80baa93ecad44b41c16d52fb51",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-exact-bytes"
+      },
+      "secrets/scenarios/file-fifo-refused.yaml": {
+        "digest": "sha256:d372108eea1b421025a544596de901b7ba7af69207aa0b72aafc46dc8dc14ac6",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-fifo-refused"
+      },
+      "secrets/scenarios/file-hardlink-refused.yaml": {
+        "digest": "sha256:58b5e8e508e062cc099e1db94493aefbe396cb047469a65a62e86f4b4fa7bafd",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-hardlink-refused"
+      },
+      "secrets/scenarios/file-missing.yaml": {
+        "digest": "sha256:bc4e7076c2ab99f92f96b99a164b334b1e4cb75db06fd3eab98a3aa7669890a9",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-missing"
+      },
+      "secrets/scenarios/file-parent-symlink-refused.yaml": {
+        "digest": "sha256:1684fc14e476f03fe3f3689411c69849d8153e0ac82d8f50092dcf1dcaaec04f",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-parent-symlink-refused"
+      },
+      "secrets/scenarios/file-public-readable-refused.yaml": {
+        "digest": "sha256:666943059ea3f03f24cda10574f2b56672032300db5e4a53d5849d72de962cde",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-public-readable-refused"
+      },
+      "secrets/scenarios/file-rereads-rotation.yaml": {
+        "digest": "sha256:6f25203982f0fbf37d6d92696294167c26119ad6ead947032523591d92201c92",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-rereads-rotation"
+      },
+      "secrets/scenarios/file-same-value-retains-version.yaml": {
+        "digest": "sha256:f65d0935a105cad7578b8f27c17a286071d4f1ca4c67ade9cb1cc454c96c7260",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-same-value-retains-version"
+      },
+      "secrets/scenarios/file-size-bound.yaml": {
+        "digest": "sha256:89016536891f63a989438857271eb2b2a233e0aab25da1de6c8504dc3d99021a",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-size-bound"
+      },
+      "secrets/scenarios/file-symlink-refused.yaml": {
+        "digest": "sha256:624608f00f2cdcb9385bfc740269565e62739aef6a8b231f0b6c61ae5bf0366b",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-symlink-refused"
+      },
+      "secrets/scenarios/file-unbound-reference.yaml": {
+        "digest": "sha256:b28fb38b6a8f2bea732d06090b7f200444d7d0f7bc351f452b9f2908f42a4904",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-unbound-reference"
+      },
+      "secrets/scenarios/file-writable-parent-refused.yaml": {
+        "digest": "sha256:b021de9903591c8cab4c8b95fa1ea4166ff7e590403b2c38dafee2e9bd7862cc",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-writable-parent-refused"
+      },
+      "secrets/scenarios/keychain-backend-error-redacted.yaml": {
+        "digest": "sha256:5f4f89540a45405e96ebd875d1b610f4677701224c31d769f59359bdec35880e",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/keychain-backend-error-redacted"
+      },
+      "secrets/scenarios/keychain-empty.yaml": {
+        "digest": "sha256:e4ee4e81505abdde5bc257d2eae0ad581b98022ceeea5cc69b644db2f6409c9b",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/keychain-empty"
+      },
+      "secrets/scenarios/keychain-exact-store-and-entry.yaml": {
+        "digest": "sha256:a99be6b0195ef4a4fb79228e602c4bf8f4ab9d5b1223c82cdb9a17ef55861b1b",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/keychain-exact-store-and-entry"
+      },
+      "secrets/scenarios/keychain-missing.yaml": {
+        "digest": "sha256:ff8a367063f56e824beae0faf64180f70424362ff8cc79fa2674563dae022d84",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/keychain-missing"
+      },
+      "secrets/scenarios/keychain-rereads-rotation.yaml": {
+        "digest": "sha256:150b4a5fd1e4350395ff2350fb563513fa2c541be9b445689bd3e06e03d3825e",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/keychain-rereads-rotation"
+      },
+      "secrets/scenarios/keychain-same-value-retains-version.yaml": {
+        "digest": "sha256:67b1ff668374d5f624f2023af9e978fead2fa891a5ccddee4e8d717766ba969b",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/keychain-same-value-retains-version"
+      },
+      "secrets/scenarios/keychain-size-bound.yaml": {
+        "digest": "sha256:339644ddfef0e44c4d5880eec5e53fd975e95f90466bdb856acaf3e8467b8756",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/keychain-size-bound"
+      },
+      "secrets/scenarios/keychain-unbound-reference.yaml": {
+        "digest": "sha256:2df55b35e3b3dbec6f1785cf3cac20dc8bb607eab1d00e90a68fadd9ac824bcc",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/keychain-unbound-reference"
       }
     },
     "counts": {
-      "authored": 27,
-      "generated": 1,
+      "authored": 49,
+      "generated": 3,
       "outside": 0,
       "refused": 0
     },
     "generated": [
-      "llm.routing.Evaluate/outcome/observed"
+      "llm.routing.Evaluate/outcome/observed",
+      "llm.secrets.ProbeFile/outcome/observed",
+      "llm.secrets.ProbeKeychain/outcome/observed"
     ],
     "knowledge": "complete_inventory",
     "outside": [],
@@ -189,8 +323,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "2b9cf04231e2fb7d878e48db7bb10ed5d504b164ea068f45aab4f14815939d12",
-    "spec_digest": "4e44a980c955cfdd58c4e198cd2de07dbbd9b3cf3ee289f6652a38cadbc88e2f",
+    "contract_digest": "a313a87c82d595963af01eada38b21e76789b9a27fc99796272d0f807a95e460",
+    "spec_digest": "d00f31c65974df610b7dc83ea0c1a053210dcadb13525334747b478f3bf6b3cc",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -213,6 +347,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
         }
       ],
       "steps": [
@@ -250,6 +388,10 @@
             }
           },
           "step": "expect_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
         }
       ]
     },
@@ -2900,6 +3042,2854 @@
           },
           "step": "expect_view",
           "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.secrets.ProbeFile/outcome/observed": {
+      "purpose": "`llm.secrets.ProbeFile` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "content"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": true
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": true
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": true
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "replacement"
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "shape": {
+            "diagnostics_safe": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.secrets.ProbeKeychain/outcome/observed": {
+      "purpose": "`llm.secrets.ProbeKeychain` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": true
+            },
+            "content": {
+              "kind": "literal",
+              "value": "content"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": true
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "replacement"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "shape": {
+            "diagnostics_safe": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-directory-refused": {
+      "purpose": "file directory refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Directory"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-empty": {
+      "purpose": "file empty",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": ""
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-exact-bytes": {
+      "purpose": "file exact bytes",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-fifo-refused": {
+      "purpose": "file fifo refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Fifo"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-hardlink-refused": {
+      "purpose": "file hardlink refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Hardlink"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-missing": {
+      "purpose": "file missing",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Missing"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-parent-symlink-refused": {
+      "purpose": "file parent symlink refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "ParentSymlink"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-public-readable-refused": {
+      "purpose": "file public readable refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": true
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-rereads-rotation": {
+      "purpose": "file rereads rotation",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "rotated"
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-same-value-retains-version": {
+      "purpose": "file same value retains version",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-size-bound": {
+      "purpose": "file size bound",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": true
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "too-large"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-symlink-refused": {
+      "purpose": "file symlink refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Symlink"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-unbound-reference": {
+      "purpose": "file unbound reference",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": false
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-writable-parent-refused": {
+      "purpose": "file writable parent refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": true
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Regular"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/keychain-backend-error-redacted": {
+      "purpose": "keychain backend error redacted",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": true
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/keychain-empty": {
+      "purpose": "keychain empty",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": ""
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/keychain-exact-store-and-entry": {
+      "purpose": "keychain exact store and entry",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/keychain-missing": {
+      "purpose": "keychain missing",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": false
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/keychain-rereads-rotation": {
+      "purpose": "keychain rereads rotation",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "rotated"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/keychain-same-value-retains-version": {
+      "purpose": "keychain same value retains version",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/keychain-size-bound": {
+      "purpose": "keychain size bound",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": true
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "too-large"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/keychain-unbound-reference": {
+      "purpose": "keychain unbound reference",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeKeychain"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeKeychain",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": false
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeKeychain",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
         }
       ]
     }
