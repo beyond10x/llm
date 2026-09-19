@@ -27,7 +27,12 @@ Pricing now validates explicit versioned JSON/TOML rates and prices attributed t
 resource-millisecond observations. Exact decimal arithmetic preserves unknown quantities and
 separates metered/compute estimates, reference usage valuations and recorded charges. Failed and
 uncertain attempts are retained. [Pricing](pricing.md) documents the caller-observation contract;
-durable spending admission and end-to-end provider attribution remain separate work.
+end-to-end provider attribution remains separate work.
+
+The optional SQLite budget ledger now persists reservations before dispatch, serializes concurrent
+callers, excludes another process owner, retains uncertain charges after restart and exposes compute
+shutdown obligations. [Budgets](budgets.md) defines the declared-estimate policy and trusted-storage
+boundary. Gateway/fallback/hosting integration and actual cloud shutdown remain separate work.
 
 The [initial verification record](verification/core-foundation.md) records the first foundation
 checkpoint. [Routing verification](verification/routing-conformance.md) adds executable ESS
@@ -51,7 +56,7 @@ while the versioned configuration surface and release prerequisites are complete
 | `catalog-routing` | Strict versioned TOML, deterministic identity, safe explanation, ordered selection and capability admission implemented and tested. |
 | `ordered-fallback` | Pending: explicit ordered alternatives, attempt accounting and refusal after exposed output or uncertain acceptance. |
 | `usage-pricing` | Versioned price books, exact amounts, cache/compute pricing, attributed unknowns, failed attempts and separate recorded/subscription charges implemented with fixtures and ESS; live provider observations remain unqualified. |
-| `spending-limits` | Pending: model budget ownership and implement reservations, concurrency, restart and uncertain-charge policy. |
+| `spending-limits` | Single-owner policy, pure engine, SQLite journal, concurrent admission, one-shot starts, restart uncertainty, overrun retention and compute stop obligations implemented with real local storage fixtures and ESS. Effectful consumers still need to use the ledger. |
 | `hosting-contract` | Pending: model owned-resource lifecycle, leases, reconciliation and cleanup before adapter implementation. |
 | `runpod-hosting` | Pending: port and qualify Runpod vLLM deployment mechanics against the hosting contract. |
 | `modal-hosting` | Pending: implement and qualify supported Modal lifecycle operations. |
@@ -84,4 +89,5 @@ Implement protocol projections using the shared transport. The draft governed ta
 `story:chat-projection`; no driver run has launched while operator map selection and USD terms remain pending.
 Preserve independent auth, billing and protocol choices;
 an anonymous vLLM binding must be explicit. Continue recording acceptance evidence in each owning
-story. Model the remaining budget and hosting runtime semantics before implementing their stores.
+story. Model the remaining hosting runtime semantics before implementing its controllers; consume
+the budget ledger's permits and shutdown obligations in the later effectful integrations.

@@ -1,3 +1,4 @@
+mod budgets;
 mod gate;
 mod pricing;
 mod secrets;

@@ -1,0 +1,43 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: explicit-stop-retains-spend
+summary: explicit stop retains spend
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":{"id":"scope","currency":"USD","limit":"0.0000001","max_active":4},"steps":[{"step":"apply","at_ms":1,"command":{"command":"reserve","request":{"id":"pod","operation":{"kind":"compute","deployment":"pod","provider":"hosting","account":"owner"},"reserved":"0.00000008","assumption":"price-v1","expires_at_ms":100}}},{"step":"apply","at_ms":2,"command":{"command":"begin","id":"pod"}},{"step":"apply","at_ms":3,"command":{"command":"require-stop","id":"pod","evidence":"owner-cancelled"}}]}'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: true
+    error_code: null
+    storage_failed: false
+    attribution_preserved: true
+    results:
+    - ok
+    - ok
+    - ok
+    totals:
+      settled_nanos: '0'
+      held_nanos: '80'
+      exposure_nanos: '80'
+      uncertain_count: 1
+      active_count: 1
+      above_limit: false
+      stop_required:
+      - pod
+    reservations:
+    - id: pod
+      phase: stop-required
+      reserved: '0.00000008'
+      assumption: price-v1
+      expires_at_ms: '100'
+      known: null
+      complete: null
+      settlement_evidence: null
+      evidence: owner-cancelled

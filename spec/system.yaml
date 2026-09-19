@@ -6,3 +6,4 @@ domains:
   - llm.routing
   - llm.secrets
   - llm.accounting
+  - llm.budget

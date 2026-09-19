@@ -1,0 +1,44 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: restart-preserves-unstarted-reservation
+summary: restart preserves unstarted reservation
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":{"id":"scope","currency":"USD","limit":"0.0000001","max_active":4},"steps":[{"step":"apply","at_ms":1,"command":{"command":"reserve","request":{"id":"a","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000006","assumption":"price-v1","expires_at_ms":100}}},{"step":"reopen","at_ms":3,"policy":null},{"step":"apply","at_ms":3,"command":{"command":"begin","id":"a"}}]}'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: true
+    error_code: null
+    storage_failed: false
+    attribution_preserved: true
+    results:
+    - ok
+    - ok
+    - ok
+    permits:
+    - a
+    totals:
+      settled_nanos: '0'
+      held_nanos: '60'
+      exposure_nanos: '60'
+      uncertain_count: 0
+      active_count: 1
+      above_limit: false
+      stop_required: []
+    reservations:
+    - id: a
+      phase: started
+      reserved: '0.00000006'
+      assumption: price-v1
+      expires_at_ms: '100'
+      known: null
+      complete: null
+      settlement_evidence: null
+      evidence: null

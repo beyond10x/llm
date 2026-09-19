@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ledger",
+  "x-ess-name": "llm.budget.Ledger",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "string"
+    },
+    "max_active": {
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.budget.Ledger.State"
+    }
+  },
+  "required": [
+    "id",
+    "currency",
+    "limit",
+    "max_active",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "f84d77e1dea49c2858b17cc6e28070d6473733e85f661c753c04886ad42e19e7",
+    "contract_digest": "slice-sha256/2:1195c847c5ec37e58b9a4b3ebd5b460b0cfd90b62e05cbdd0f09eea9a4fbdf5c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.budget.Ledger.State": {
+      "title": "State",
+      "x-ess-name": "llm.budget.Ledger.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

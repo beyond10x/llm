@@ -1,7 +1,8 @@
 # Attributed usage and prices
 
-`llm-cost` is a pure library for pricing caller-observed usage and retaining recorded charges.
-It performs no I/O and supplies no current vendor price table. Its inputs and outputs are:
+The pricing APIs in `llm-cost` value caller-observed usage and retain recorded charges.
+These APIs perform no I/O and supply no current vendor price table. The optional
+[budget ledger](budgets.md) owns separate admission and storage behavior. Pricing inputs and outputs are:
 
 | Document | Format | Purpose |
 | --- | --- | --- |

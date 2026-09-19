@@ -1,0 +1,117 @@
+domain: llm.budget
+
+# One explicitly configured, trusted deployment owns a ledger. These entities are
+# declaration/inspection records. Phase is the observed runtime obligation state;
+# it is not a promise of a separate production event bus or entity-runtime store.
+types:
+  - name: llm.budget.Phase
+    kind: enum
+    variants: [Reserved, Started, Uncertain, StopRequired, Stopped, Settled, Cancelled]
+  - name: llm.budget.OperationKind
+    kind: enum
+    variants: [Inference, Compute]
+  - name: llm.budget.Settlement
+    kind: struct
+    fields:
+      - {name: currency, type: String}
+      - {name: known, type: String}
+      - {name: complete, type: Boolean}
+      - {name: evidence, type: String}
+  - name: llm.budget.Totals
+    kind: struct
+    fields:
+      # Exact nanounit strings: aggregate charges may exceed the admission cap
+      # and the per-observation u64 money range. Never discard an overrun.
+      - {name: settled_nanos, type: String}
+      - {name: held_nanos, type: String}
+      - {name: exposure_nanos, type: String}
+      - {name: uncertain_count, type: Integer}
+      - {name: active_count, type: Integer}
+      - {name: above_limit, type: Boolean}
+      - {name: stop_required, type: List<String>}
+  - name: llm.budget.ReservationFact
+    kind: struct
+    fields:
+      - {name: id, type: String}
+      - {name: phase, type: String}
+      - {name: reserved, type: String}
+      - {name: assumption, type: String}
+      - {name: expires_at_ms, type: String}
+      - {name: known, type: Optional<String>}
+      - {name: complete, type: Optional<Boolean>}
+      - {name: settlement_evidence, type: Optional<String>}
+      - {name: evidence, type: Optional<String>}
+entities:
+  - name: llm.budget.Ledger
+    identity: {name: id, type: String}
+    fields:
+      - {name: currency, type: String}
+      - {name: limit, type: String}
+      - {name: max_active, type: Integer}
+    relations:
+      # Reservations and posted charges have no meaning without this owner.
+      # No deletion/reset operation is exposed while historical obligations exist.
+      - {name: reservations, kind: owns, target: llm.budget.Reservation, cardinality: many, via: ledger_id}
+      - {name: charges, kind: owns, target: llm.budget.PostedCharge, cardinality: many, via: ledger_id}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.budget.Reservation
+    identity: {name: id, type: String}
+    fields:
+      - {name: ledger_id, type: String}
+      - {name: kind, type: llm.budget.OperationKind}
+      - {name: phase, type: llm.budget.Phase}
+      - {name: reserved, type: String}
+      - {name: assumption, type: String}
+      - {name: expires_at_ms, type: String}
+      - {name: settlement, type: Optional<llm.budget.Settlement>}
+      - {name: evidence, type: Optional<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.budget.PostedCharge
+    identity: {name: id, type: String}
+    fields:
+      - {name: ledger_id, type: String}
+      - {name: observation_id, type: String}
+      - {name: reconciliation, type: Optional<String>}
+    relations:
+      - {name: observation, kind: references, target: llm.accounting.RecordedCharge, cardinality: one, via: observation_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.budget.ExecutionObservation
+    identity: {name: observation_id, type: String}
+    fields: &execution_facts
+      - {name: valid_program, type: Boolean}
+      - {name: storage_failed, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: results, type: List<String>}
+      - {name: permits, type: List<String>}
+      - {name: concurrent_admitted, type: List<Integer>}
+      - {name: concurrent_errors, type: List<String>}
+      - {name: policy_id, type: Optional<String>}
+      - {name: currency, type: Optional<String>}
+      - {name: limit, type: Optional<String>}
+      - {name: max_active, type: Optional<Integer>}
+      - {name: now_ms, type: Optional<String>}
+      - {name: totals, type: Optional<llm.budget.Totals>}
+      - {name: reservations, type: List<llm.budget.ReservationFact>}
+      - {name: charge_ids, type: List<String>}
+      - {name: attribution_preserved, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.budget.Exercise
+    input:
+      # A bounded fixture program drives the real SQLite adapter, including actual
+      # reopens, concurrent callers and explicitly injected storage faults.
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.budget.Exercised]
+        summary: Observe actual admission, permits, errors, phases and durable obligations.
+events:
+  # Test-adapter notification only; there is no production notification transport.
+  - name: llm.budget.Exercised
+    fields:
+      - {name: valid_program, type: Boolean}
+views:
+  - name: llm.budget.LastExecution
+    source: llm.budget.ExecutionObservation
+    consistency: read_your_writes
+    fields: *execution_facts

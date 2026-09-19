@@ -18,6 +18,8 @@ jobs:
           cargo test --workspace --locked
           cargo test -p b10x-llm-credentials --all-features --locked
           cargo check -p b10x-llm-credentials --no-default-features --locked
+          cargo test -p b10x-llm-cost --all-features --locked
+          cargo check -p b10x-llm-cost --no-default-features --locked
           cargo fmt --all --check
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Install pinned planning tools
@@ -46,7 +48,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.98.0
         with:
           components: clippy
-      - name: Native backends compile; tests use injected stores
+      - name: Native credentials and local ledger fixtures
         run: |
           cargo test -p b10x-llm-credentials --all-features --locked
           cargo clippy -p b10x-llm-credentials --all-targets --all-features --locked -- -D warnings
+          cargo test -p b10x-llm-cost --all-features --locked
+          cargo clippy -p b10x-llm-cost --all-targets --all-features --locked -- -D warnings

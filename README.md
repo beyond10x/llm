@@ -8,7 +8,8 @@ interface, `llm-credentials` supplies injected secret resolution, coordinated re
 `llm-http` supplies bounded single-attempt HTTP/SSE transport. `llm-providers` validates independent
 provider/account/auth/protocol bindings; `llm-routing` parses TOML and explains capability-aware
 selection without I/O. `llm-cost` prices attributed usage with exact arithmetic and explicit
-unknowns, keeping estimates and recorded charges separate. The other eight runtime crates are planned
+unknowns, keeping estimates and recorded charges separate. Its optional SQLite budget ledger
+adds durable reservations, concurrency admission and explicit shutdown obligations. The other eight runtime crates are planned
 boundaries. There is no usable gateway, provider client, release or deployment yet.
 
 The [implementation status](docs/implementation-status.md) maps the whole milestone to its AEP
@@ -32,7 +33,8 @@ and the earlier [routing verification](docs/verification/routing-conformance.md)
 
 Run `cargo run --locked -p b10x-llm-cost --example quote` for a local price/usage fixture.
 [Pricing](docs/pricing.md) explains exact amounts, cache partitions, compute units and separate
-subscription charges. [Pricing verification](docs/verification/pricing.md) records the current suite.
+subscription charges. [Budgets](docs/budgets.md) explains durable spending admission and its limits;
+[budget verification](docs/verification/budgets.md) records the current suite.
 
 Run the embedding example with `cargo run --locked -p b10x-llm-core --example embedded`.
 It completes a local model turn without a gateway or credentials.

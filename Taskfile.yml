@@ -16,5 +16,7 @@ tasks:
       - cargo test --workspace --locked
       - cargo test -p b10x-llm-credentials --all-features --locked
       - cargo check -p b10x-llm-credentials --no-default-features --locked
+      - cargo test -p b10x-llm-cost --all-features --locked
+      - cargo check -p b10x-llm-cost --no-default-features --locked
       - cargo fmt --all --check
       - cargo clippy --workspace --all-targets --all-features --locked -- -D warnings

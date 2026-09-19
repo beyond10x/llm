@@ -56,7 +56,13 @@ The separate pricing library accepts versioned `llm.prices/1` JSON/TOML and `llm
 observations and emits `llm.cost/1`. Exact nonnegative amounts, explicit units and checked arithmetic
 preserve unknown quantities and failed attempts. Reference usage valuations, metered/compute
 estimates and recorded charges have separate totals. [Pricing](pricing.md) defines the complete
-current contract; budget persistence and live billing qualification remain separate.
+current contract; live billing qualification remains separate.
+
+The optional SQLite budget journal uses `llm.budget/1` with immutable policy and replay-checked
+commands/results. It commits before a one-shot dispatch receipt, preserves uncertain charges and
+compute stop obligations, and refuses unsupported or inconsistent persisted data without reset.
+[Budgets](budgets.md) defines scope, settlement, concurrency, ownership and storage boundaries.
+Derived inspection views and in-process commands are not independently versioned vendor wires.
 
 ## Credentials
 `SecretRef` is a validated opaque name, not a value or backend selection. `SecretResolver`
@@ -87,8 +93,8 @@ qualification or a released artifact.
 Provider declarations use `llm.binding/1`; TOML catalogs use `llm.catalog/1`. Catalog selection
 requires an input-token upper bound supplied by the caller and valid for every candidate. Unknown
 input counts refuse admission. Fallback defaults off; opt-in permits local selection of the first
-compatible named target. Retrying after an HTTP failure, charging attempts and spending limits
-remain separate planned behavior. Explain exposes safe IDs, capabilities and refusal reasons;
+compatible named target. Retrying after an HTTP failure and integrating pricing/budget admission
+with those attempts remain separate planned behavior. Explain exposes safe IDs, capabilities and refusal reasons;
 it does not resolve secrets or include prompt/opaque payloads.
 
 Source port: `beyond10x/harness` commit `709a2ebadcc14602b82b6f3c240350e4ddc1c88c`,

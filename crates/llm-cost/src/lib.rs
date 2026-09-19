@@ -1,10 +1,13 @@
 #![forbid(unsafe_code)]
 
 //! Attributed usage estimates and recorded charges from explicit versioned prices.
-//! No I/O, provider price lookup, currency conversion or budget enforcement.
+//! Default features provide pure pricing and a deterministic budget engine.
+//! The optional `sqlite` feature adds a durable, exclusively owned budget journal.
+//! No provider price lookup or currency conversion is performed.
 //! Adapted from beyond10x/harness 709a2eb: harness-loop/src/price.rs, with exact
 //! decimal inputs and the neutral contract's unknown quantities preserved.
 
+pub mod budget;
 mod document;
 mod money;
 mod pricing;

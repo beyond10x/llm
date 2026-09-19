@@ -76,5 +76,8 @@ The catalog ESS domain describes declaration records with a single Declared stat
 and secrets verification domains describe adapter observations of real library calls; their
 authored scenarios assert returned selection, refusal, request preservation and secret-resolution facts. They do not
 promise runtime event publication, persistent routing jobs or hosting/budget state machines.
-UNMAPPED: durable budget ownership/scope and provider-specific hosting lifecycle transitions await
-their design stories. They must be modeled before those implementations are scheduled.
+Budget ownership/scope is now resolved by [the single-owner ledger contract](budgets.md). Its ESS
+domain declares the policy, owned obligations and inspection records with closed runtime phase
+values; authored programs observe the real durable engine's transitions and refusals.
+UNMAPPED: provider-specific hosting lifecycle transitions await their design story. They must be
+modeled before those controllers are implemented, including consumption of budget stop obligations.

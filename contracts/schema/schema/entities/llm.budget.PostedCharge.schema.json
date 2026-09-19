@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PostedCharge",
+  "x-ess-name": "llm.budget.PostedCharge",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "ledger_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "charges",
+        "kind": "owns",
+        "source": "llm.budget.Ledger",
+        "target": "llm.budget.PostedCharge",
+        "cardinality": "many",
+        "via": "ledger_id"
+      }
+    },
+    "observation_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "observation",
+        "kind": "references",
+        "source": "llm.budget.PostedCharge",
+        "target": "llm.accounting.RecordedCharge",
+        "cardinality": "one",
+        "via": "observation_id"
+      }
+    },
+    "reconciliation": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.budget.PostedCharge.State"
+    }
+  },
+  "required": [
+    "id",
+    "ledger_id",
+    "observation_id",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "f84d77e1dea49c2858b17cc6e28070d6473733e85f661c753c04886ad42e19e7",
+    "contract_digest": "slice-sha256/2:1195c847c5ec37e58b9a4b3ebd5b460b0cfd90b62e05cbdd0f09eea9a4fbdf5c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.budget.PostedCharge.State": {
+      "title": "State",
+      "x-ess-name": "llm.budget.PostedCharge.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

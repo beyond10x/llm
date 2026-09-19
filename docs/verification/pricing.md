@@ -5,6 +5,9 @@ resource-millisecond pricing, attribution and separate recorded charges. The [co
 states the units, rounding, unknowns and caller-observation limits. It implements the fixtures in
 `story:usage-pricing`; it does not implement durable spending admission or live provider billing.
 
+This checkpoint was published at `15a61675339d7d2e1c2fb6aa1dc3fcd4c7e38912`.
+The later [budget verification](budgets.md) extends its suite without changing this historical report.
+
 ## Counted behavior
 
 The suite increased from **52 to 97 scenarios**, retaining every existing routing and secret
@@ -14,7 +17,7 @@ The suite has 93 authored scenarios, four generated checks and zero synthesis re
 became a failure and no fictional branch was deleted.
 
 The retained [report](pricing-report.json) is paired with
-[`contracts/suite.json`](../../contracts/suite.json). The pinned ESS 0.26.0 runner admits original
+[the exact published suite](https://github.com/beyond10x/llm/blob/15a61675339d7d2e1c2fb6aa1dc3fcd4c7e38912/contracts/suite.json). The pinned ESS 0.26.0 runner admits original
 suite bytes, executes the real libraries and re-admits its report. The committed baseline holds
 answered/total floors of 97 and a skipped ceiling of zero. The gate also requires complete declared
 coverage and zero failures/errors/unsupported observations. It compares three consecutive counts

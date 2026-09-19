@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.budget.PostedCharge.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "f84d77e1dea49c2858b17cc6e28070d6473733e85f661c753c04886ad42e19e7",
+    "contract_digest": "slice-sha256/2:9f4ab8fdb01374674344255ffa66de4196bd0005f6f32802ecf5e29ca168db85",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.budget.PostedCharge.State": {
+      "title": "State",
+      "x-ess-name": "llm.budget.PostedCharge.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}
