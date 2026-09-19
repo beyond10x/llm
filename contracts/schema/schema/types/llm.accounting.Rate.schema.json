@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.accounting.Rate",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf",
+    "contract_digest": "slice-sha256/2:83fe8eb33746afd9a1296a0869e167ce00fa55de03b040da94c4f253a20d9128",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.Rate": {
+      "title": "Rate",
+      "x-ess-name": "llm.accounting.Rate",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "per_units": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "amount",
+        "per_units"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

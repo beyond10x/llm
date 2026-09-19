@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.accounting.AttemptUsage.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf",
+    "contract_digest": "slice-sha256/2:90333a159ccd42756a7ad6a8d96d0d33b4d1b94c89fc19d37c2fbec4f3e7ff09",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.AttemptUsage.State": {
+      "title": "State",
+      "x-ess-name": "llm.accounting.AttemptUsage.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

@@ -189,6 +189,7 @@ name = "b10x-llm-conformance"
 version = "0.0.0"
 dependencies = [
  "b10x-llm-core",
+ "b10x-llm-cost",
  "b10x-llm-credentials",
  "b10x-llm-routing",
  "ess-conformance",
@@ -216,6 +217,14 @@ dependencies = [
 [[package]]
 name = "b10x-llm-cost"
 version = "0.0.0"
+dependencies = [
+ "b10x-llm-core",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "toml",
+]
 
 [[package]]
 name = "b10x-llm-credentials"

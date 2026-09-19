@@ -11,7 +11,7 @@ relations:
 scope:
 - confidence: inferred
   path: crates/llm-core
-revision: 5
+revision: 6
 ---
 ## Context
 
@@ -47,3 +47,13 @@ check within that count. The eight embedding fixtures exercise acceptance and fa
 `cargo run --locked -p b10x-llm-core --example embedded` also passed. See
 `docs/verification/core-foundation.md` for exact sources. Keep active while the parent runtime
 contract's configuration and release prerequisites are completed; no provider is qualified here.
+
+## Required pricing integration
+
+The implemented pricing story accepts caller-observed upstream model attribution separately from
+the selected binding. Current TurnOutcome carries usage counts but no actual model attribution.
+Before qualifying provider-to-price integration, the neutral/protocol contract must preserve the
+model observed on the wire and make it available to accounting. Never substitute a requested route
+alias or selected internal model ID as evidence of the model actually served. Coordinate any
+versioned envelope change through runtime-contracts before protocol implementation; the pending
+Chat task is not silently widened by this note. See story:usage-pricing and docs/pricing.md.

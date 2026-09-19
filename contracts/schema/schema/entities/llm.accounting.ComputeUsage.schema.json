@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ComputeUsage",
+  "x-ess-name": "llm.accounting.ComputeUsage",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "price_id": {
+      "type": "string"
+    },
+    "hosting_provider": {
+      "type": "string"
+    },
+    "account": {
+      "type": "string"
+    },
+    "resource_class": {
+      "type": "string"
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "duration_ms": {
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.accounting.ComputeUsage.State"
+    }
+  },
+  "required": [
+    "id",
+    "price_id",
+    "hosting_provider",
+    "account",
+    "resource_class",
+    "resource_id",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf",
+    "contract_digest": "slice-sha256/2:dbb32c8f34550b7ea0a0eac68cba79981e5c97a5313707b5b5f175759a481609",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.ComputeUsage.State": {
+      "title": "State",
+      "x-ess-name": "llm.accounting.ComputeUsage.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

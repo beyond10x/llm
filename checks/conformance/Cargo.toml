@@ -11,6 +11,7 @@ workspace = true
 
 [dependencies]
 llm-core.workspace = true
+llm-cost = { package = "b10x-llm-cost", path = "../../crates/llm-cost" }
 llm-credentials = { workspace = true, features = ["file", "keychain"] }
 keyring-core = "1.0.0"
 tempfile = "3.27"

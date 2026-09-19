@@ -1,5 +1,9 @@
 # Local secret adapter verification — 2026-09-19
 
+Historical checkpoint at `21be0093813283038db6aa28ac4b940b78faa7e4`. The counts and report below
+belong to that exact revision. [Pricing verification](pricing.md) retains all 52 checks and extends
+the current combined suite. Linux, macOS and Windows [CI passed for this checkpoint](https://github.com/beyond10x/llm/actions/runs/35434173402), and its downloaded suite, schemas and reports were verified.
+
 The optional file and keychain adapters now resolve the injected `SecretRef` contract. The file
 backend enforces Linux descriptor, ownership, mode, link, size and metadata checks. Keychain uses
 an explicitly injected store and exact service/entry lookup; an optional constructor selects the
@@ -16,7 +20,7 @@ removed. All three consecutive restored-source local runs report **52 passed, 0 
 not a runner exit code. No skips became failures and no fictional branch was removed.
 
 `contracts/ess-inputs.yaml` explicitly selects the routing and secret scenario files.
-[`contracts/suite.json`](../../contracts/suite.json) is paired with the retained
+The [original suite](https://github.com/beyond10x/llm/blob/21be0093813283038db6aa28ac4b940b78faa7e4/contracts/suite.json) is paired with the retained
 [report](local-secrets-report.json). The same pinned ESS 0.26.0 runner admits original suite bytes,
 executes the actual libraries and re-admits the persisted report. The gate checks an answered floor
 of 52, total floor of 52, skipped ceiling zero, complete declared coverage and zero failures,

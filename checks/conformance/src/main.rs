@@ -1,4 +1,5 @@
 mod gate;
+mod pricing;
 mod secrets;
 mod target;
 

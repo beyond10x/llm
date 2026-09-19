@@ -50,8 +50,15 @@ bounds, unsupported semantics, cancellation and deadlines. Dispatch evidence is 
 not proof of a free retry. A server delay is a hint, not permission to retry. Error diagnostics
 never include authorization headers, request bodies or arbitrary upstream error text.
 
-## Credentials
+## Pricing
 
+The separate pricing library accepts versioned `llm.prices/1` JSON/TOML and `llm.usage/1`
+observations and emits `llm.cost/1`. Exact nonnegative amounts, explicit units and checked arithmetic
+preserve unknown quantities and failed attempts. Reference usage valuations, metered/compute
+estimates and recorded charges have separate totals. [Pricing](pricing.md) defines the complete
+current contract; budget persistence and live billing qualification remain separate.
+
+## Credentials
 `SecretRef` is a validated opaque name, not a value or backend selection. `SecretResolver`
 resolves at request time and may implement caller-owned renewal. Secret values are zeroized on
 drop, redacted in Debug, and have no serialization or Display implementation. LLM never searches

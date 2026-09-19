@@ -5,3 +5,4 @@ domains:
   - llm.catalog
   - llm.routing
   - llm.secrets
+  - llm.accounting

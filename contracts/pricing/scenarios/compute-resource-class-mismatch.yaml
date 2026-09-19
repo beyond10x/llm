@@ -1,0 +1,89 @@
+type: ess-scenario/1
+domain: llm.accounting
+scenario: compute-resource-class-mismatch
+summary: compute resource class mismatch
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.accounting.Quote
+  input:
+    prices_toml: '# Fictional fixture prices. No vendor, model or resource is qualified
+      by this example.
+
+      format = "llm.prices/1"
+
+      revision = "lab-fixture-r1"
+
+      source = "Operator supplied test fixture"
+
+      as_of_unix_ms = 1789776000000
+
+      currency = "USD"
+
+
+      [[models]]
+
+      id = "model-price"
+
+      serving_model_id = "lab-serving"
+
+      # Supply the actual immutable binding revision from the catalog for real observations.
+
+      binding_revision = "fixture-binding-r1"
+
+      upstream_model = "lab/model-v1"
+
+      input = { amount = "2", per_units = 1000000 }
+
+      cached_input = { amount = "0.5", per_units = 1000000 }
+
+      cache_creation_input = { amount = "3", per_units = 1000000 }
+
+      output = { amount = "8", per_units = 1000000 }
+
+
+      [[compute]]
+
+      id = "resource-price"
+
+      hosting_provider = "lab-host"
+
+      account = "lab-account"
+
+      resource_class = "whole-pod"
+
+      # One whole resource-hour, expressed as milliseconds. Not a per-GPU inference.
+
+      rate = { amount = "3.6", per_units = 3600000 }
+
+      '
+    usage_json: '{"format":"llm.usage/1","observations":[{"kind":"compute","data":{"id":"compute","price_id":"resource-price","hosting_provider":"lab-host","account":"lab-account","resource_class":"other","resource_id":"owned-pod","duration_ms":1000}}]}'
+  outcome: observed
+assert:
+- view: llm.accounting.LastQuote
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.accounting.LastQuote
+  contains:
+    accepted: true
+    error_code: null
+    currency: USD
+    price_revision: lab-fixture-r1
+    price_source: Operator supplied test fixture
+    price_as_of_unix_ms: 1789776000000
+    price_digest: prices-sha256:e467fbf5d3c5d6fbddb8ca0a356668238806340b75bcdc120f46bdc3384abd70
+    record_ids:
+    - compute
+    lines:
+    - record_id: compute
+      basis: compute-estimate
+      unit: resource-millisecond
+      quantity: '1000'
+      amount: null
+      unknown: binding-mismatch
+    totals:
+    - basis: compute-estimate
+      known_subtotal: '0'
+      unknown_lines: 1
+      complete_total: null
+    observations_preserved: true

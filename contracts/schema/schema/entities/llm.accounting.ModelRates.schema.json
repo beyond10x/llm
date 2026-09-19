@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ModelRates",
+  "x-ess-name": "llm.accounting.ModelRates",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "price_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "price",
+        "kind": "references",
+        "source": "llm.accounting.ModelRates",
+        "target": "llm.catalog.Price",
+        "cardinality": "one",
+        "via": "price_id"
+      }
+    },
+    "book_revision": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "book",
+        "kind": "references",
+        "source": "llm.accounting.ModelRates",
+        "target": "llm.accounting.PriceBook",
+        "cardinality": "one",
+        "via": "book_revision"
+      }
+    },
+    "binding_revision": {
+      "type": "string"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "input": {
+      "$ref": "#/$defs/llm.accounting.Rate"
+    },
+    "cached_input": {
+      "$ref": "#/$defs/llm.accounting.Rate"
+    },
+    "cache_creation_input": {
+      "$ref": "#/$defs/llm.accounting.Rate"
+    },
+    "output": {
+      "$ref": "#/$defs/llm.accounting.Rate"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.accounting.ModelRates.State"
+    }
+  },
+  "required": [
+    "id",
+    "price_id",
+    "book_revision",
+    "binding_revision",
+    "upstream_model",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf",
+    "contract_digest": "slice-sha256/2:797219565feed3b6e355a9c2d858655b4b7a264c19ea92d1cb725ecb0c729a1e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.ModelRates.State": {
+      "title": "State",
+      "x-ess-name": "llm.accounting.ModelRates.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    },
+    "llm.accounting.Rate": {
+      "title": "Rate",
+      "x-ess-name": "llm.accounting.Rate",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "per_units": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "amount",
+        "per_units"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

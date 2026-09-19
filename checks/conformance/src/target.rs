@@ -162,6 +162,12 @@ impl ConformanceTarget for CatalogTarget {
                 "llm.secrets.Probed",
                 "diagnostics_safe",
             ),
+            "llm.accounting.Quote" => (
+                crate::pricing::observe(&serde_json::from_value(input).map_err(unavailable)?),
+                "llm.accounting.LastQuote",
+                "llm.accounting.Quoted",
+                "accepted",
+            ),
             _ => return Err(unsupported(&request.command.to_string())),
         };
         let notification = facts[field]
@@ -195,7 +201,7 @@ impl ConformanceTarget for CatalogTarget {
     fn query_view(&self, request: SemanticViewRequest) -> Result<SemanticViewResult, TargetError> {
         if !matches!(
             request.view.to_string().as_str(),
-            "llm.routing.LastEvaluation" | "llm.secrets.LastProbe"
+            "llm.routing.LastEvaluation" | "llm.secrets.LastProbe" | "llm.accounting.LastQuote"
         ) || !request.params.is_empty()
         {
             return Err(unsupported(&request.view.to_string()));

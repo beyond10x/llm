@@ -8,28 +8,30 @@ relations:
 - verifies: story:catalog-routing
 - verifies: story:provider-accounts
 - verifies: story:local-secret-adapters
-model_digest: d00f31c65974df610b7dc83ea0c1a053210dcadb13525334747b478f3bf6b3cc
-revision: 4
+- verifies: story:usage-pricing
+model_digest: cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf
+revision: 8
 ---
 ## Scope
 
-Spec: spec/system.yaml and spec/domains/{catalog,routing,secrets}.yaml. The stable artifact ID
-retains its original routing name; the compiled model now also contains local-secret declarations
-and verification observations. It makes no claim of live inference, persistent credential storage,
-durable budgets or hosting lifecycle qualification.
+Spec: spec/system.yaml and catalog, routing, secrets and accounting domains. The stable artifact ID
+retains its original routing name; the compiled model now includes pure usage/pricing concepts and
+verification observations as well as routing and local secret resolution. No live invoice accuracy,
+persistent credential store, durable budget or hosting qualification is claimed.
 
 ## Verification
 
-The complete suite/5 at contracts/suite.json contains 49 authored scenarios and three generated
-observation checks. All 52 pass with zero failed/error/unsupported/skipped in three consecutive
-restored-source runs, and synthesis has zero refusals. This retains every previous routing check
-and adds real protected-file and injected mock-keychain observations. The gate regenerates 47
-schemas and the suite and compares exact bytes/file sets. See docs/verification/local-secrets.md
-and its report and falsification records. Nine new production mutations fail named scenarios;
-the original eight routing mutation observations remain retained at their historical revision.
+Complete suite/5 at contracts/suite.json contains 93 authored scenarios and four generated checks.
+All 97 pass with zero failed/error/unsupported/skipped in three consecutive restored-source local
+runs; synthesis has zero refusals. All 52 preceding routing/secret checks remain. The gate
+regenerates 69 schemas and the original suite, compares exact bytes/file sets and gates real
+report/2 counts after readmission against that suite. See docs/verification/pricing.md and the
+paired pricing-report.json. Eleven pricing mutations fail named scenarios; earlier mutation and
+report records remain paired to their historical revisions.
 
-Reports are produced by the pinned ESS 0.26.0 runner and carry an exact source digest and real
-observation time. CI runs the same report gate, separately compiles native backends on macOS and
-Windows, and retains the original suite and detailed runs. No runtime crate depends on ESS.
-Mock/native compile evidence does not qualify a live OS service. No artifact lifecycle transition
-is performed beside the requested governed Chat driver, which has not launched.
+The target exposes production quote quantities, amounts, unknown reasons, attribution preservation,
+price source/revision/identity and separate totals. It never reads scenario names or assertions.
+Actual amounts and canonical price identities are independently expected by the authored fixtures.
+No runtime crate depends on ESS. Reports identify the full runtime/checker source and real time.
+CI runs the same gate and retains exact artifacts; native credentials compile separately on
+macOS and Windows. No artifact lifecycle moves are performed beside the pending Chat driver.

@@ -6,7 +6,7 @@ store owns lifecycle state; this page explains what those states mean for caller
 
 ## Foundation checkpoint — 2026-09-19
 
-Five libraries now implement the shared boundary. The neutral core supports asynchronous model
+Six libraries now implement the shared boundary. The neutral core supports asynchronous model
 turns, text/tools, bounded streaming, cancellation, optional usage, typed failures, and opaque
 continuation state bound to its exact protocol/provider/account/endpoint/model/binding revision. Credentials are
 injected and resolved on each request; concurrent renewal is coordinated without owning a login
@@ -22,6 +22,12 @@ Provider bindings validate independent protocol, provider, auth and billing choi
 anonymous arbitrary endpoints. Routing validates strict TOML catalogs, preserves ordered opt-in
 selection, checks capabilities and conservative input-token bounds, and explains safe refusal
 reasons without resolving secrets. Runtime fallback after an attempted request is still pending.
+
+Pricing now validates explicit versioned JSON/TOML rates and prices attributed token/cache and
+resource-millisecond observations. Exact decimal arithmetic preserves unknown quantities and
+separates metered/compute estimates, reference usage valuations and recorded charges. Failed and
+uncertain attempts are retained. [Pricing](pricing.md) documents the caller-observation contract;
+durable spending admission and end-to-end provider attribution remain separate work.
 
 The [initial verification record](verification/core-foundation.md) records the first foundation
 checkpoint. [Routing verification](verification/routing-conformance.md) adds executable ESS
@@ -44,7 +50,7 @@ while the versioned configuration surface and release prerequisites are complete
 | `anthropic-access` | Pending: API and caller-managed subscription presentation and successful qualification. |
 | `catalog-routing` | Strict versioned TOML, deterministic identity, safe explanation, ordered selection and capability admission implemented and tested. |
 | `ordered-fallback` | Pending: explicit ordered alternatives, attempt accounting and refusal after exposed output or uncertain acceptance. |
-| `usage-pricing` | Pending: versioned price inputs and attributable known/estimated/unknown charges. |
+| `usage-pricing` | Versioned price books, exact amounts, cache/compute pricing, attributed unknowns, failed attempts and separate recorded/subscription charges implemented with fixtures and ESS; live provider observations remain unqualified. |
 | `spending-limits` | Pending: model budget ownership and implement reservations, concurrency, restart and uncertain-charge policy. |
 | `hosting-contract` | Pending: model owned-resource lifecycle, leases, reconciliation and cleanup before adapter implementation. |
 | `runpod-hosting` | Pending: port and qualify Runpod vLLM deployment mechanics against the hosting contract. |

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.accounting.ComputeUsage.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf",
+    "contract_digest": "slice-sha256/2:8373e11a1cc4931993d9d6dc5dcf6f8431803fed9bb457b537c37a2cafec2430",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.ComputeUsage.State": {
+      "title": "State",
+      "x-ess-name": "llm.accounting.ComputeUsage.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

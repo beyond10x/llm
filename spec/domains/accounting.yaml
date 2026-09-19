@@ -1,0 +1,154 @@
+domain: llm.accounting
+
+# Pure accounting declarations and value observations. No durable budget ledger,
+# provider invoice guarantee or production accounting event bus is implied.
+types:
+  - name: llm.accounting.Rate
+    kind: struct
+    fields:
+      # Exact nonnegative decimal currency units, at most nine fractional digits.
+      - {name: amount, type: String}
+      - {name: per_units, type: Integer}
+  - name: llm.accounting.Usage
+    kind: struct
+    fields:
+      - {name: input_tokens, type: Optional<Integer>}
+      - {name: output_tokens, type: Optional<Integer>}
+      - {name: cached_input_tokens, type: Optional<Integer>}
+      - {name: cache_creation_input_tokens, type: Optional<Integer>}
+      - {name: reasoning_output_tokens, type: Optional<Integer>}
+  - name: llm.accounting.Basis
+    kind: enum
+    variants: [MeteredEstimate, ComputeEstimate, ReferenceUsage, RecordedMetered, RecordedCompute, SubscriptionCharge]
+  - name: llm.accounting.ChargeKind
+    kind: enum
+    variants: [Metered, Compute, Subscription]
+  - name: llm.accounting.QuotedLine
+    kind: struct
+    fields:
+      - {name: record_id, type: String}
+      - {name: basis, type: String}
+      - {name: unit, type: String}
+      # Preserve the runtime's full u64 range beyond ESS's signed Integer witnesses.
+      - {name: quantity, type: Optional<String>}
+      - {name: amount, type: Optional<String>}
+      - {name: unknown, type: Optional<String>}
+  - name: llm.accounting.QuotedTotal
+    kind: struct
+    fields:
+      - {name: basis, type: String}
+      - {name: known_subtotal, type: String}
+      - {name: unknown_lines, type: Integer}
+      - {name: complete_total, type: Optional<String>}
+entities:
+  - name: llm.accounting.PriceBook
+    identity: {name: revision, type: String}
+    fields:
+      - {name: source, type: String}
+      - {name: as_of_unix_ms, type: Integer}
+      - {name: currency, type: String}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.accounting.ModelRates
+    identity: {name: id, type: String}
+    fields:
+      - {name: price_id, type: String}
+      - {name: book_revision, type: String}
+      - {name: binding_revision, type: String}
+      - {name: upstream_model, type: String}
+      - {name: input, type: Optional<llm.accounting.Rate>}
+      - {name: cached_input, type: Optional<llm.accounting.Rate>}
+      - {name: cache_creation_input, type: Optional<llm.accounting.Rate>}
+      - {name: output, type: Optional<llm.accounting.Rate>}
+    relations:
+      - {name: price, kind: references, target: llm.catalog.Price, cardinality: one, via: price_id}
+      - {name: book, kind: references, target: llm.accounting.PriceBook, cardinality: one, via: book_revision}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.accounting.ComputePrice
+    identity: {name: id, type: String}
+    fields:
+      - {name: book_revision, type: String}
+      # Hosting provider/account names are explicit external attribution, not a
+      # relation to the catalog's inference Provider. Hosting owns its later model.
+      - {name: hosting_provider, type: String}
+      - {name: account, type: String}
+      - {name: resource_class, type: String}
+      # Quantity is milliseconds of one explicitly priced resource (e.g. whole pod).
+      - {name: rate, type: Optional<llm.accounting.Rate>}
+    relations:
+      - {name: book, kind: references, target: llm.accounting.PriceBook, cardinality: one, via: book_revision}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.accounting.AttemptUsage
+    identity: {name: id, type: String}
+    fields:
+      - {name: usage_record_id, type: String}
+      - {name: request_id, type: String}
+      - {name: route_target_id, type: String}
+      - {name: serving_model_id, type: String}
+      - {name: price_id, type: String}
+      - {name: binding, type: llm.catalog.Provenance}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: billing, type: llm.catalog.BillingKind}
+      - {name: dispatch, type: llm.catalog.Dispatch}
+      - {name: failed, type: Boolean}
+      - {name: usage, type: llm.accounting.Usage}
+    relations:
+      - {name: usage_record, kind: references, target: llm.catalog.UsageRecord, cardinality: one, via: usage_record_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.accounting.ComputeUsage
+    identity: {name: id, type: String}
+    fields:
+      - {name: price_id, type: String}
+      - {name: hosting_provider, type: String}
+      - {name: account, type: String}
+      - {name: resource_class, type: String}
+      - {name: resource_id, type: String}
+      - {name: duration_ms, type: Optional<Integer>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.accounting.RecordedCharge
+    identity: {name: id, type: String}
+    fields:
+      - {name: source, type: String}
+      - {name: provider, type: String}
+      - {name: account, type: String}
+      - {name: subject, type: String}
+      - {name: period_start_unix_ms, type: Integer}
+      - {name: period_end_unix_ms, type: Integer}
+      - {name: currency, type: String}
+      - {name: amount, type: Optional<String>}
+      - {name: charge_kind, type: llm.accounting.ChargeKind}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.accounting.QuoteObservation
+    identity: {name: observation_id, type: String}
+    fields: &quote_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: currency, type: Optional<String>}
+      - {name: price_revision, type: Optional<String>}
+      - {name: price_source, type: Optional<String>}
+      - {name: price_as_of_unix_ms, type: Optional<Integer>}
+      - {name: price_digest, type: Optional<String>}
+      - {name: record_ids, type: List<String>}
+      - {name: lines, type: List<llm.accounting.QuotedLine>}
+      - {name: totals, type: List<llm.accounting.QuotedTotal>}
+      - {name: observations_preserved, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.accounting.Quote
+    input:
+      # Raw versioned documents reach the production parsers, including invalid input.
+      - {name: prices_toml, type: String}
+      - {name: usage_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.accounting.Quoted]
+        summary: Observe actual price/quote API returns, including typed refusals and unknown lines.
+events:
+  # Verification-only notification; the runtime is a pure library with no event transport.
+  - name: llm.accounting.Quoted
+    fields:
+      - {name: accepted, type: Boolean}
+views:
+  - name: llm.accounting.LastQuote
+    source: llm.accounting.QuoteObservation
+    consistency: read_your_writes
+    fields: *quote_facts

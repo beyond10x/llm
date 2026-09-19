@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ComputePrice",
+  "x-ess-name": "llm.accounting.ComputePrice",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "book_revision": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "book",
+        "kind": "references",
+        "source": "llm.accounting.ComputePrice",
+        "target": "llm.accounting.PriceBook",
+        "cardinality": "one",
+        "via": "book_revision"
+      }
+    },
+    "hosting_provider": {
+      "type": "string"
+    },
+    "account": {
+      "type": "string"
+    },
+    "resource_class": {
+      "type": "string"
+    },
+    "rate": {
+      "$ref": "#/$defs/llm.accounting.Rate"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.accounting.ComputePrice.State"
+    }
+  },
+  "required": [
+    "id",
+    "book_revision",
+    "hosting_provider",
+    "account",
+    "resource_class",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf",
+    "contract_digest": "slice-sha256/2:923c76275e93805a344af1d1d35745ecdc31e04d08c72a61a45d2f88d8afdf1a",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.ComputePrice.State": {
+      "title": "State",
+      "x-ess-name": "llm.accounting.ComputePrice.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    },
+    "llm.accounting.Rate": {
+      "title": "Rate",
+      "x-ess-name": "llm.accounting.Rate",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "per_units": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "amount",
+        "per_units"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

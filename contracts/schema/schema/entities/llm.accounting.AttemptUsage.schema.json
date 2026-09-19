@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AttemptUsage",
+  "x-ess-name": "llm.accounting.AttemptUsage",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "usage_record_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "usage_record",
+        "kind": "references",
+        "source": "llm.accounting.AttemptUsage",
+        "target": "llm.catalog.UsageRecord",
+        "cardinality": "one",
+        "via": "usage_record_id"
+      }
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "route_target_id": {
+      "type": "string"
+    },
+    "serving_model_id": {
+      "type": "string"
+    },
+    "price_id": {
+      "type": "string"
+    },
+    "binding": {
+      "$ref": "#/$defs/llm.catalog.Provenance"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "billing": {
+      "$ref": "#/$defs/llm.catalog.BillingKind"
+    },
+    "dispatch": {
+      "$ref": "#/$defs/llm.catalog.Dispatch"
+    },
+    "failed": {
+      "type": "boolean"
+    },
+    "usage": {
+      "$ref": "#/$defs/llm.accounting.Usage"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.accounting.AttemptUsage.State"
+    }
+  },
+  "required": [
+    "id",
+    "usage_record_id",
+    "request_id",
+    "route_target_id",
+    "serving_model_id",
+    "price_id",
+    "binding",
+    "billing",
+    "dispatch",
+    "failed",
+    "usage",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf",
+    "contract_digest": "slice-sha256/2:0e2dd408ff52daf0437017da2101c0c7b9566879bd3271bdb1fad87570662918",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.AttemptUsage.State": {
+      "title": "State",
+      "x-ess-name": "llm.accounting.AttemptUsage.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.accounting.Usage": {
+      "title": "Usage",
+      "x-ess-name": "llm.accounting.Usage",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "input_tokens": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "cached_input_tokens": {
+          "type": "integer"
+        },
+        "cache_creation_input_tokens": {
+          "type": "integer"
+        },
+        "reasoning_output_tokens": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "llm.catalog.BillingKind": {
+      "title": "BillingKind",
+      "x-ess-name": "llm.catalog.BillingKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Metered",
+        "Subscription",
+        "SelfHosted"
+      ]
+    },
+    "llm.catalog.Dispatch": {
+      "title": "Dispatch",
+      "x-ess-name": "llm.catalog.Dispatch",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "NotSent",
+        "Rejected",
+        "Unknown",
+        "Accepted"
+      ]
+    },
+    "llm.catalog.Protocol": {
+      "title": "Protocol",
+      "x-ess-name": "llm.catalog.Protocol",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Responses",
+        "Messages",
+        "ChatCompletions"
+      ]
+    },
+    "llm.catalog.Provenance": {
+      "title": "Provenance",
+      "x-ess-name": "llm.catalog.Provenance",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/llm.catalog.Protocol"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "account": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "binding_revision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "protocol",
+        "provider",
+        "account",
+        "endpoint",
+        "model",
+        "binding_revision"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

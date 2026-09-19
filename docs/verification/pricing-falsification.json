@@ -1,0 +1,277 @@
+[
+  {
+    "mutation": "unknown-is-zero",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "(_, None, _) => (None, Some(UnknownReason::QuantityUnknown))",
+    "after": "(_, None, _) => (Some(Amount::ZERO), None)",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/unknown-cached-input-tokens",
+    "counts": {
+      "error": 0,
+      "failed": 6,
+      "passed": 91,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/unknown-cache-creation-input-tokens",
+      "llm.accounting/authored/unknown-cached-input-tokens",
+      "llm.accounting/authored/unknown-compute-duration",
+      "llm.accounting/authored/unknown-input-tokens",
+      "llm.accounting/authored/unknown-output-tokens",
+      "llm.accounting/authored/unknown-quantity-at-zero-rate"
+    ]
+  },
+  {
+    "mutation": "bill-cache-twice",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "total\n                    .checked_sub(read)\n                    .and_then(|n| n.checked_sub(created))",
+    "after": "total.checked_sub(0)",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/reported-disjoint-partitions-and-reasoning",
+    "counts": {
+      "error": 0,
+      "failed": 14,
+      "passed": 83,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/failed-ambiguous-attempt-is-counted",
+      "llm.accounting/authored/known-zero-with-missing-rate",
+      "llm.accounting/authored/missing-actual-model",
+      "llm.accounting/authored/missing-cache-creation-rate",
+      "llm.accounting/authored/missing-price",
+      "llm.accounting/authored/price-revision-is-attributed",
+      "llm.accounting/authored/repointed-binding",
+      "llm.accounting/authored/reported-disjoint-partitions-and-reasoning",
+      "llm.accounting/authored/round-up-one-nanounit",
+      "llm.accounting/authored/self-hosted-reference-and-compute",
+      "llm.accounting/authored/subscription-fee-is-separate",
+      "llm.accounting/authored/unknown-output-tokens",
+      "llm.accounting/authored/wrong-actual-model",
+      "llm.accounting/authored/wrong-serving-model"
+    ]
+  },
+  {
+    "mutation": "bill-reasoning-twice",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "counts.output_tokens,",
+    "after": "counts.output_tokens.and_then(|n| n.checked_add(counts.reasoning_output_tokens.unwrap_or(0))),",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/reported-disjoint-partitions-and-reasoning",
+    "counts": {
+      "error": 0,
+      "failed": 16,
+      "passed": 81,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/failed-ambiguous-attempt-is-counted",
+      "llm.accounting/authored/known-zero-with-missing-rate",
+      "llm.accounting/authored/missing-actual-model",
+      "llm.accounting/authored/missing-cache-creation-rate",
+      "llm.accounting/authored/missing-price",
+      "llm.accounting/authored/price-revision-is-attributed",
+      "llm.accounting/authored/repointed-binding",
+      "llm.accounting/authored/reported-disjoint-partitions-and-reasoning",
+      "llm.accounting/authored/self-hosted-reference-and-compute",
+      "llm.accounting/authored/subscription-fee-is-separate",
+      "llm.accounting/authored/unknown-cache-creation-input-tokens",
+      "llm.accounting/authored/unknown-cached-input-tokens",
+      "llm.accounting/authored/unknown-input-tokens",
+      "llm.accounting/authored/unknown-quantity-at-zero-rate",
+      "llm.accounting/authored/wrong-actual-model",
+      "llm.accounting/authored/wrong-serving-model"
+    ]
+  },
+  {
+    "mutation": "drop-failed-attempt",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "for observation in &input.observations {",
+    "after": "for observation in &input.observations {\n            if matches!(observation, Observation::Attempt(v) if v.failed) { continue; }",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/failed-ambiguous-attempt-is-counted",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 96,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/failed-ambiguous-attempt-is-counted"
+    ]
+  },
+  {
+    "mutation": "ignore-binding-revision",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "p.binding_revision != usage.binding.binding_revision",
+    "after": "false",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/repointed-binding",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 96,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/repointed-binding"
+    ]
+  },
+  {
+    "mutation": "charge-subscription-token-value",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "Basis::ReferenceUsage",
+    "after": "Basis::MeteredEstimate",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/subscription-fee-is-separate",
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 95,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/self-hosted-reference-and-compute",
+      "llm.accounting/authored/subscription-fee-is-separate"
+    ]
+  },
+  {
+    "mutation": "omit-recorded-charges",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "for observation in &input.observations {",
+    "after": "for observation in &input.observations {\n            if matches!(observation, Observation::Recorded(_)) { continue; }",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/recorded-charge-kinds-stay-separate",
+    "counts": {
+      "error": 0,
+      "failed": 4,
+      "passed": 93,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/aggregate-overflow-refused",
+      "llm.accounting/authored/recorded-charge-kinds-stay-separate",
+      "llm.accounting/authored/subscription-fee-is-separate",
+      "llm.accounting/authored/unknown-recorded-charge"
+    ]
+  },
+  {
+    "mutation": "compute-seconds-as-milliseconds",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "usage.duration_ms,",
+    "after": "usage.duration_ms.map(|ms| ms / 1000),",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/compute-millisecond-time-basis",
+    "counts": {
+      "error": 0,
+      "failed": 5,
+      "passed": 92,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/compute-account-mismatch",
+      "llm.accounting/authored/compute-hosting-provider-mismatch",
+      "llm.accounting/authored/compute-millisecond-time-basis",
+      "llm.accounting/authored/compute-resource-class-mismatch",
+      "llm.accounting/authored/self-hosted-reference-and-compute"
+    ]
+  },
+  {
+    "mutation": "round-down",
+    "source": "crates/llm-cost/src/money.rs",
+    "before": "numerator.div_ceil(u128::from(self.per_units))",
+    "after": "numerator / u128::from(self.per_units)",
+    "source_before_sha256": "b6aa9bd4dd2fa0b513b3a0aed80f39d7d636248aa37e9d5c83258748dd6ccce5",
+    "named_failure": "llm.accounting/authored/round-up-one-nanounit",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 96,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/round-up-one-nanounit"
+    ]
+  },
+  {
+    "mutation": "wrong-price-revision",
+    "source": "crates/llm-cost/src/pricing.rs",
+    "before": "price_revision: self.document.revision.clone()",
+    "after": "price_revision: self.digest.clone()",
+    "source_before_sha256": "15098fad28b9c343144403c0a9300149c75ab433018bb87d6fde2909c811c7bc",
+    "named_failure": "llm.accounting/authored/price-revision-is-attributed",
+    "counts": {
+      "error": 0,
+      "failed": 26,
+      "passed": 71,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/compute-account-mismatch",
+      "llm.accounting/authored/compute-hosting-provider-mismatch",
+      "llm.accounting/authored/compute-millisecond-time-basis",
+      "llm.accounting/authored/compute-resource-class-mismatch",
+      "llm.accounting/authored/failed-ambiguous-attempt-is-counted",
+      "llm.accounting/authored/known-zero-with-missing-rate",
+      "llm.accounting/authored/large-quantity-is-not-rounded",
+      "llm.accounting/authored/missing-actual-model",
+      "llm.accounting/authored/missing-cache-creation-rate",
+      "llm.accounting/authored/missing-price",
+      "llm.accounting/authored/price-revision-is-attributed",
+      "llm.accounting/authored/recorded-charge-kinds-stay-separate",
+      "llm.accounting/authored/repointed-binding",
+      "llm.accounting/authored/reported-disjoint-partitions-and-reasoning",
+      "llm.accounting/authored/round-up-one-nanounit",
+      "llm.accounting/authored/self-hosted-reference-and-compute",
+      "llm.accounting/authored/subscription-fee-is-separate",
+      "llm.accounting/authored/unknown-cache-creation-input-tokens",
+      "llm.accounting/authored/unknown-cached-input-tokens",
+      "llm.accounting/authored/unknown-compute-duration",
+      "llm.accounting/authored/unknown-input-tokens",
+      "llm.accounting/authored/unknown-output-tokens",
+      "llm.accounting/authored/unknown-quantity-at-zero-rate",
+      "llm.accounting/authored/unknown-recorded-charge",
+      "llm.accounting/authored/wrong-actual-model",
+      "llm.accounting/authored/wrong-serving-model"
+    ]
+  },
+  {
+    "mutation": "saturate-aggregate-overflow",
+    "source": "crates/llm-cost/src/money.rs",
+    "before": "self.0\n            .checked_add(other.0)\n            .map(Self)\n            .ok_or(CostError::Overflow)",
+    "after": "Ok(Self(self.0.saturating_add(other.0)))",
+    "source_before_sha256": "b6aa9bd4dd2fa0b513b3a0aed80f39d7d636248aa37e9d5c83258748dd6ccce5",
+    "named_failure": "llm.accounting/authored/aggregate-overflow-refused",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 96,
+      "skipped": 0,
+      "total": 97,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.accounting/authored/aggregate-overflow-refused"
+    ]
+  }
+]

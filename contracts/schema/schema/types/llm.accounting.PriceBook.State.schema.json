@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.accounting.PriceBook.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cbb0c09cdeb2d984d37bf4f39eea107cd24d7ab1ff10a7fcc4598c7570a592cf",
+    "contract_digest": "slice-sha256/2:56c9bc60547a86d1143fc95d7645f027c26548b26754bfc1617341a10be1c25b",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.PriceBook.State": {
+      "title": "State",
+      "x-ess-name": "llm.accounting.PriceBook.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}
