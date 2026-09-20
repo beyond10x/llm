@@ -19,6 +19,20 @@ now a fact about the dependency graph rather than a property somebody has to kee
 convenience. The adapter from a catalog to a route inventory belongs in the binary that composes
 them, which is `story:operator-cli`'s crate, not here.
 
+### Correction, after the adversary read the check
+
+The paragraph above was written before anyone tested the assertion, and its last sentence was
+wrong as implemented. The check splits the metadata output at the first bracket, which closes the
+first dependency's own features array: measured on a real workspace package it examined one of
+eighteen dependencies. The other half suppresses dependencies entirely, so no transitive edge is
+examined at all — and the crate this document names as the natural next dependency reaches a
+credential crate and an async runtime in two hops.
+
+So "a fact about the dependency graph rather than a discipline" was a claim about an assertion
+nobody had exercised, and the coordinator recorded it. The decision to keep the crate free of that
+dependency still stands; the reason it is safe today is that the crate declares nothing, not that
+the check would notice if it did. The check is being repaired in correction round 1.
+
 ### The gateway gets no specification domain in wave 1
 
 Its scope inferred one; its brief excluded one. The exclusion stands and the evidence is in the
