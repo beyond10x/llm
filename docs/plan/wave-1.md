@@ -51,7 +51,7 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 |---|---|---|---|---|
 | `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | green, under attack |
 | `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | green after correction, awaiting pass 2 |
-| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | green, under attack |
+| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | red after pass 1, correcting |
 | `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | green after correction, awaiting pass 2; site on port 3011 |
 | `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | green, under attack |
 | `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | dispatched |
@@ -89,6 +89,29 @@ What each had reached, read from `git status` in its worktree rather than from i
 Each was resumed in place, with its own context, told what its tree already held and to check it
 before writing. None was re-dispatched from scratch: a re-dispatched unit pays twice for work that
 is already on disk, and may write a second copy of it.
+
+
+## The pattern across three units: a record that claims more than it checks
+
+Three units have now been attacked, and the same defect beat all three. It is worth naming once
+here rather than three times in three review records.
+
+**A suite whose fixtures are all the complete, in-subset case cannot reach a guard that fires
+outside it.** Each unit wrote fixtures that report every counter and stay inside the pinned
+subset, so every guard for a missing counter or an out-of-subset field was unreachable — and a
+mutation removing that guard passed the whole suite. One unit had six such mutations survive. One
+declared in its verification record that it had closed the class when a targeted variant still
+survived 89 of its own cases.
+
+The falsification record is what makes this dangerous rather than merely incomplete. A record
+listing eleven or twelve killed mutations reads as a suite that falsifies. It says nothing about
+the guards no mutation was ever aimed at, and that is where all three units' real defects were.
+
+Two answers are in the tree rather than in prose. The responses unit's harness now drives both the
+scenario and the Rust lane and **fails outright** if any mutation is killed by neither, so its
+record cannot overstate again. And the rule-driving case — each counter absent in turn while the
+others are present — replaces a fixture per instance with one case that closes the class. Both are
+worth copying into the next wave's briefs rather than rediscovering.
 
 
 ## A whole domain's evidence could go missing and the gate would still pass
