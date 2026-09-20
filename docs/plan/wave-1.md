@@ -53,7 +53,7 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 | `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | green, verified by the coordinator, ready to merge |
 | `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | green, verified by the coordinator, ready to merge |
 | `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | green, under pass 2; site on port 3011 |
-| `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | red after pass 2, final correction |
+| `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | green, verified by the coordinator, ready to merge |
 | `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | green after correction, awaiting pass 2 |
 
 Every worktree is under `/home/timo/.local/state/worktree/trees/b10x/llm/`. Each unit's scratch
