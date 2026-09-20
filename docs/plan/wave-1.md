@@ -53,8 +53,8 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 | `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | green after correction, under pass 2 |
 | `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | green after correction, awaiting pass 2 |
 | `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | green after correction, awaiting pass 2; site on port 3011 |
-| `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | red after pass 1, correcting |
-| `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | green, under attack |
+| `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | green after correction, awaiting pass 2 |
+| `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | red after pass 1, correcting |
 
 Every worktree is under `/home/timo/.local/state/worktree/trees/b10x/llm/`. Each unit's scratch
 directory is `~/.cache/llm-wave-1/<unit>/` and holds its brief. The briefs share
