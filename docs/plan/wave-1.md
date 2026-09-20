@@ -51,9 +51,9 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 |---|---|---|---|---|
 | `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | resumed after interruption |
 | `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | green, under attack |
-| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | resumed after interruption |
-| `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | resumed after interruption |
-| `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | waiting for a slot |
+| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | green, awaiting attack |
+| `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | green, under attack; site on port 3011 |
+| `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | dispatched |
 | `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | waiting for a slot |
 
 Every worktree is under `/home/timo/.local/state/worktree/trees/b10x/llm/`. Each unit's scratch
@@ -90,6 +90,30 @@ Each was resumed in place, with its own context, told what its tree already held
 before writing. None was re-dispatched from scratch: a re-dispatched unit pays twice for work that
 is already on disk, and may write a second copy of it.
 
+
+## A whole domain's evidence could go missing and the gate would still pass
+
+`story:chat-projection` found this and it is the most useful thing the wave has produced.
+
+`ess verify conform synthesize --scenarios contracts` selects the scenarios that
+`contracts/ess-inputs.yaml` **lists**, not the ones the tree holds. The manifest is a hand-kept list
+of 177 paths. A scenario file that exists and is unlisted is never selected, the run does not
+mention it, and the suite exits 0.
+
+Measured on the chat unit's tree: 36 authored scenarios on disk, 0 of them in the manifest, whole
+repository lane 183 → **187**. The four are its generated adapter scenarios. Not one of its 36
+authored scenarios ran, and the gate was green.
+
+Both sibling projection units are in the same state, so three domains' evidence would have merged
+unread. The unit's own lane uses `--scenarios contracts/<domain>/scenarios` directly, which is why
+each unit measured real coverage while the repository gate did not.
+
+The instance is fixed per unit by adding the entries at merge. **The class is fixed on this
+branch:** `checks/conformance/src/gate.rs` now refuses when any `contracts/*/scenarios/*.yaml` is
+absent from the manifest, so a future domain cannot repeat it. The chat unit wrote that check,
+compiled and linted it, confirmed it names all 36 missing files, then restored `gate.rs` to a
+byte-identical hash rather than leaving a change in a file it did not own. The coordinator applied
+it, and the wave branch still passes 183 in three runs.
 
 ## One gate lane is empty, in every unit and in both states
 

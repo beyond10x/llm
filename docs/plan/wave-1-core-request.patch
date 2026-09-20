@@ -1,0 +1,21 @@
+--- a/crates/llm-core/src/port.rs
++++ b/crates/llm-core/src/port.rs
+@@ -1,5 +1,6 @@
+ use crate::{
+-    CallId, Cancel, Capabilities, Error, Provenance, TurnOutcome, TurnRequest, encoded_len,
++    CallId, Cancel, Capabilities, Error, Provenance, ToolName, TurnOutcome, TurnRequest,
++    encoded_len,
+ };
+ use serde::{Deserialize, Serialize};
+ use std::{future::Future, pin::Pin};
+@@ -10,6 +11,10 @@
+ #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+ pub enum StreamEvent {
+     TextDelta { text: String },
++    /// A proposed call becomes visible before its arguments do. Every protocol in scope
++    /// announces the tool name once, in the fragment that opens the call, and a consumer
++    /// re-emitting the stream cannot name the call without it.
++    ToolCallStarted { call_id: CallId, name: ToolName },
+     ToolArgumentsDelta { call_id: CallId, delta: String },
+     ReasoningDelta { text: String },
+     Warning { code: String, message: String },
