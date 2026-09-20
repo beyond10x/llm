@@ -49,10 +49,10 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 
 | Unit | Branch | Worktree (managed id `wave1-*`) | Build directory | Stage |
 |---|---|---|---|---|
-| `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | dispatched |
-| `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | dispatched |
-| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | dispatched |
-| `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | dispatched |
+| `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | resumed after interruption |
+| `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | resumed after interruption |
+| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | resumed after interruption |
+| `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | resumed after interruption |
 | `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | waiting for a slot |
 | `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | waiting for a slot |
 
@@ -70,6 +70,26 @@ detached checkouts of the commit each unit forks from.
 `impl/messages-projection` already carries one commit made before the wave opened: the previous
 session's in-flight Messages work, moved onto that branch rather than left uncommitted in the tree
 every other unit forks from.
+
+## The interruption
+
+All four dispatched units were killed part-way through by an account rate limit, within seconds of
+each other. None had committed anything, because units in this wave do not commit: each one's work
+was sitting in its own worktree, and all of it survived.
+
+What each had reached, read from `git status` in its worktree rather than from its report:
+
+| Unit | Work in the tree when it was killed |
+|---|---|
+| messages | `crates/llm-messages/tests/`, its first test files |
+| responses | `crates/llm-responses/{Cargo.toml,src/lib.rs,src/binding.rs,tests/}` and the lock file |
+| chat | `crates/llm-chat/{Cargo.toml,fixtures/,tests/}` and the lock file |
+| public-surface | `website/`, part-written |
+
+Each was resumed in place, with its own context, told what its tree already held and to check it
+before writing. None was re-dispatched from scratch: a re-dispatched unit pays twice for work that
+is already on disk, and may write a second copy of it.
+
 
 ## What each unit owns
 
