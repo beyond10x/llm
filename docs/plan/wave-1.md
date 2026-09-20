@@ -50,7 +50,7 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 | Unit | Branch | Worktree (managed id `wave1-*`) | Build directory | Stage |
 |---|---|---|---|---|
 | `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | resumed after interruption |
-| `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | resumed after interruption |
+| `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | green, under attack |
 | `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | resumed after interruption |
 | `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | resumed after interruption |
 | `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | waiting for a slot |
@@ -90,6 +90,17 @@ Each was resumed in place, with its own context, told what its tree already held
 before writing. None was re-dispatched from scratch: a re-dispatched unit pays twice for work that
 is already on disk, and may write a second copy of it.
 
+
+## One gate lane is empty, in every unit and in both states
+
+`cargo test -p b10x-llm-conformance --locked` reports `0 passed` before a unit's work and `0 passed`
+after it. That is not a filter dropping cases: `checks/conformance` holds no `#[test]` at all, so the
+lane is a compile-and-link check and nothing more. Its value is that an adapter which stops
+compiling is caught early; its executed count is not evidence about anything and must not be read as
+a unit whose cases did not move.
+
+The lane that carries a projection unit's real coverage is the executable-specification run, and the
+Rust lane is its own crate's `#[test]` count. Both move.
 
 ## What each unit owns
 
