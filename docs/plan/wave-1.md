@@ -47,14 +47,25 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 
 ## The units
 
-| Unit | Branch | Worktree | Build directory | Scratch | Stage |
-|---|---|---|---|---|---|
-| `story:messages-projection` | `impl/messages-projection` | _pending_ | `~/.cache/b10x-target/llm-wave1/messages` | `~/.cache/llm-wave-1/messages` | not started |
-| `story:responses-projection` | `impl/responses-projection` | _pending_ | `~/.cache/b10x-target/llm-wave1/responses` | `~/.cache/llm-wave-1/responses` | not started |
-| `story:chat-projection` | `impl/chat-projection` | _pending_ | `~/.cache/b10x-target/llm-wave1/chat` | `~/.cache/llm-wave-1/chat` | not started |
-| `story:gateway-auth` | `impl/gateway-auth` | _pending_ | `~/.cache/b10x-target/llm-wave1/gateway` | `~/.cache/llm-wave-1/gateway` | not started |
-| `story:hosting-contract` | `impl/hosting-contract` | _pending_ | `~/.cache/b10x-target/llm-wave1/hosting` | `~/.cache/llm-wave-1/hosting` | not started |
-| `story:public-surface` | `impl/public-surface` | _pending_ | not a Rust unit | `~/.cache/llm-wave-1/public-surface` | not started |
+| Unit | Branch | Worktree (managed id `wave1-*`) | Build directory | Stage |
+|---|---|---|---|---|
+| `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | dispatched |
+| `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | dispatched |
+| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | dispatched |
+| `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | dispatched |
+| `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | waiting for a slot |
+| `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | waiting for a slot |
+
+Every worktree is under `/home/timo/.local/state/worktree/trees/b10x/llm/`. Each unit's scratch
+directory is `~/.cache/llm-wave-1/<unit>/` and holds its brief. The briefs share
+`~/.cache/llm-wave-1/invariants.md`, which is written once and referenced rather than retyped.
+
+Four units run at once. The limit is the operator's answer, not a measurement: one unit's build was
+measured at 659 MB, and the disk had 19 GB free when the wave opened, against a floor of 10 GB.
+Re-read `df -h /` as each unit returns.
+
+The unit branches do not exist until the coordinator commits each unit's work; the worktrees are
+detached checkouts of the commit each unit forks from.
 
 `impl/messages-projection` already carries one commit made before the wave opened: the previous
 session's in-flight Messages work, moved onto that branch rather than left uncommitted in the tree
