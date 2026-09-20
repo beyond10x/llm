@@ -109,6 +109,18 @@ fn evaluate(input: &EvaluationRequest, facts: &mut Value) -> Result<(), Error> {
     Ok(())
 }
 
+/// What a domain module observed: the facts its public library returned, the view that
+/// answers for them, the event the command emits, and the fact whose truth that event carries.
+///
+/// A domain module owns its own file and returns this; `execute_command` below is shared and
+/// stays out of every unit's assignment.
+pub struct Observed {
+    pub facts: Value,
+    pub view: &'static str,
+    pub event: &'static str,
+    pub field: &'static str,
+}
+
 fn unavailable(error: impl std::fmt::Display) -> TargetError {
     TargetError::unavailable("catalog observation", error.to_string())
 }
@@ -143,45 +155,62 @@ impl ConformanceTarget for CatalogTarget {
         request: SemanticCommandRequest,
     ) -> Result<SemanticCommandResult, TargetError> {
         let input = serde_json::to_value(request.input).map_err(unavailable)?;
-        let (facts, view, event, field) = match request.command.to_string().as_str() {
-            "llm.inference.InspectResult" => (
-                crate::inference::observe(&serde_json::from_value(input).map_err(unavailable)?),
-                "llm.inference.LastResult",
-                "llm.inference.Inspected",
-                "accepted",
-            ),
-            "llm.routing.Evaluate" => (
-                observe(&serde_json::from_value(input).map_err(unavailable)?),
-                "llm.routing.LastEvaluation",
-                "llm.routing.Evaluated",
-                "catalog_valid",
-            ),
-            "llm.secrets.ProbeFile" => (
-                crate::secrets::file(input).map_err(unavailable)?,
-                "llm.secrets.LastProbe",
-                "llm.secrets.Probed",
-                "diagnostics_safe",
-            ),
-            "llm.secrets.ProbeKeychain" => (
-                crate::secrets::keychain(input).map_err(unavailable)?,
-                "llm.secrets.LastProbe",
-                "llm.secrets.Probed",
-                "diagnostics_safe",
-            ),
-            "llm.accounting.Quote" => (
-                crate::pricing::observe(&serde_json::from_value(input).map_err(unavailable)?),
-                "llm.accounting.LastQuote",
-                "llm.accounting.Quoted",
-                "accepted",
-            ),
-            "llm.budget.Exercise" => (
-                crate::budgets::observe(&serde_json::from_value(input).map_err(unavailable)?)
-                    .map_err(unavailable)?,
-                "llm.budget.LastExecution",
-                "llm.budget.Exercised",
-                "valid_program",
-            ),
-            _ => return Err(unsupported(&request.command.to_string())),
+        let command = request.command.to_string();
+        // Each domain module answers only its own commands and returns `None` otherwise,
+        // so a new domain is a new file rather than an edit to this shared one.
+        let owned = crate::messages::observe(&command, &input)
+            .or_else(|| crate::responses::observe(&command, &input))
+            .or_else(|| crate::chat::observe(&command, &input))
+            .or_else(|| crate::hosting::observe(&command, &input));
+        let (facts, view, event, field) = if let Some(observed) = owned {
+            let observed = observed?;
+            (
+                observed.facts,
+                observed.view,
+                observed.event,
+                observed.field,
+            )
+        } else {
+            match command.as_str() {
+                "llm.inference.InspectResult" => (
+                    crate::inference::observe(&serde_json::from_value(input).map_err(unavailable)?),
+                    "llm.inference.LastResult",
+                    "llm.inference.Inspected",
+                    "accepted",
+                ),
+                "llm.routing.Evaluate" => (
+                    observe(&serde_json::from_value(input).map_err(unavailable)?),
+                    "llm.routing.LastEvaluation",
+                    "llm.routing.Evaluated",
+                    "catalog_valid",
+                ),
+                "llm.secrets.ProbeFile" => (
+                    crate::secrets::file(input).map_err(unavailable)?,
+                    "llm.secrets.LastProbe",
+                    "llm.secrets.Probed",
+                    "diagnostics_safe",
+                ),
+                "llm.secrets.ProbeKeychain" => (
+                    crate::secrets::keychain(input).map_err(unavailable)?,
+                    "llm.secrets.LastProbe",
+                    "llm.secrets.Probed",
+                    "diagnostics_safe",
+                ),
+                "llm.accounting.Quote" => (
+                    crate::pricing::observe(&serde_json::from_value(input).map_err(unavailable)?),
+                    "llm.accounting.LastQuote",
+                    "llm.accounting.Quoted",
+                    "accepted",
+                ),
+                "llm.budget.Exercise" => (
+                    crate::budgets::observe(&serde_json::from_value(input).map_err(unavailable)?)
+                        .map_err(unavailable)?,
+                    "llm.budget.LastExecution",
+                    "llm.budget.Exercised",
+                    "valid_program",
+                ),
+                _ => return Err(unsupported(&command)),
+            }
         };
         let notification = facts[field]
             .as_bool()
@@ -212,18 +241,26 @@ impl ConformanceTarget for CatalogTarget {
         Ok(result)
     }
     fn query_view(&self, request: SemanticViewRequest) -> Result<SemanticViewResult, TargetError> {
-        if !matches!(
-            request.view.to_string().as_str(),
+        let view = request.view.to_string();
+        let known = matches!(
+            view.as_str(),
             "llm.routing.LastEvaluation"
                 | "llm.secrets.LastProbe"
                 | "llm.accounting.LastQuote"
                 | "llm.budget.LastExecution"
                 | "llm.inference.LastResult"
-        ) || !request.params.is_empty()
-        {
-            return Err(unsupported(&request.view.to_string()));
+        ) || [
+            crate::messages::VIEWS,
+            crate::responses::VIEWS,
+            crate::chat::VIEWS,
+            crate::hosting::VIEWS,
+        ]
+        .iter()
+        .any(|views| views.contains(&view.as_str()));
+        if !known || !request.params.is_empty() {
+            return Err(unsupported(&view));
         }
-        if self.observed_view.borrow().as_ref() != Some(&request.view.to_string()) {
+        if self.observed_view.borrow().as_ref() != Some(&view) {
             return Ok(SemanticViewResult::of(std::iter::empty()));
         }
         if request

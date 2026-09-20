@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:neutral-inference
 kind: story
-status: active
+status: implemented
 title: A caller runs a neutral model turn
 relations:
 - decomposes: epic:inference
@@ -19,7 +19,7 @@ scope:
   path: docs
 - confidence: cited
   path: spec
-revision: 9
+revision: 10
 ---
 ## Context
 
