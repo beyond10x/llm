@@ -2,11 +2,12 @@
 format: aep.planning-md/1
 id: story:usage-pricing
 kind: story
-status: draft
+status: implemented
 title: Usage and versioned prices produce attributable estimates
 relations:
 - decomposes: epic:routing
 - depends_on: story:neutral-inference
+- serves: vision:portable-model-inference
 scope:
 - confidence: cited
   path: Cargo.lock
@@ -26,7 +27,7 @@ scope:
   path: spec
 - confidence: cited
   path: spec/domains/inference.yaml
-revision: 11
+revision: 14
 ---
 ## Context
 

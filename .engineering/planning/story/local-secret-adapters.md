@@ -2,11 +2,12 @@
 format: aep.planning-md/1
 id: story:local-secret-adapters
 kind: story
-status: draft
+status: implemented
 title: Optional local secret adapters resolve explicit references
 relations:
 - decomposes: epic:access
 - depends_on: story:secret-resolver
+- serves: vision:portable-model-inference
 scope:
 - confidence: cited
   path: .github/workflows/gate.yml
@@ -26,7 +27,7 @@ scope:
   path: docs/local-secrets.md
 - confidence: cited
   path: spec
-revision: 8
+revision: 11
 ---
 ## Context
 

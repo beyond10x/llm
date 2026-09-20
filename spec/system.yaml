@@ -8,3 +8,6 @@ domains:
   - llm.accounting
   - llm.budget
   - llm.inference
+  - llm.responses
+  - llm.chat
+  - llm.hosting

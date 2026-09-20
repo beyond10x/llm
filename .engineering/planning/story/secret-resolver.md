@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:secret-resolver
 kind: story
-status: active
+status: implemented
 title: Inference accepts caller-injected secret custody
 relations:
 - decomposes: epic:access
@@ -11,7 +11,7 @@ relations:
 scope:
 - confidence: inferred
   path: crates/llm-credentials
-revision: 5
+revision: 6
 ---
 ## Context
 

@@ -2,12 +2,13 @@
 format: aep.planning-md/1
 id: story:spending-limits
 kind: story
-status: draft
+status: implemented
 title: Spending admission accounts for concurrency and uncertainty
 relations:
 - decomposes: epic:routing
 - depends_on: story:usage-pricing
 - depends_on: story:catalog-routing
+- serves: vision:portable-model-inference
 scope:
 - confidence: cited
   path: .github/workflows
@@ -33,7 +34,7 @@ scope:
   path: spec
 - confidence: inferred
   path: spec/domains/catalog.yaml
-revision: 11
+revision: 14
 ---
 ## Context
 

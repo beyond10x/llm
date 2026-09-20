@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:http-streaming
 kind: story
-status: active
+status: implemented
 title: Bounded streaming transport handles termination and cancellation
 relations:
 - decomposes: epic:inference
@@ -11,7 +11,7 @@ relations:
 scope:
 - confidence: inferred
   path: crates/llm-http
-revision: 6
+revision: 7
 ---
 ## Context
 

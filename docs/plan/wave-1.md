@@ -1,0 +1,106 @@
+# Wave 1 — protocol projections, gateway authentication, hosting lifecycle, public surface
+
+Six stories implemented at once, each on its own branch in its own worktree, merged into
+`wave/1` and closed on one run of the whole gate. Coordinator: an interactive session running the
+`aep-drive:wave` skill, version 0.9.3.
+
+## Why these six
+
+The store computed the set. `aep plan artifact waves --kind story --status active` returns one wave
+holding all six, with zero collisions and zero unassessed stories. Every one is implementable in this
+checkout: no credential, no paid call, no third party. Each lands on its own crate and its own
+specification domain.
+
+Three stories were left out on purpose:
+
+- `story:connectors-secret-resolver` is blocked by `dependency-blocker:connectors-arbitrary-secrets`.
+  A blocked story leaves the set. Its exclusion is also what admits `story:hosting-contract` here: the
+  two share `spec/domains/catalog.yaml`.
+- `story:openai-access` and `story:anthropic-access` are blocked by
+  `decision-blocker:subscription-access-contract`, and each needs a live credential and a paid call,
+  so neither could be finished in this tree even unblocked.
+
+`story:runtime-contracts` appears in the computed wave and is not dispatched. It is the umbrella
+contract story and stays active until this wave's evidence is recorded against it. Before this wave it
+also claimed `AGENTS.md`, `README.md` and `.github/workflows`; those moved to `story:public-surface`,
+which is what removed the three collisions the verb reported.
+
+## How the surfaces were established
+
+Six `aep-drive:story-scoper` agents were dispatched, one per unit, read-only. The run was
+interrupted by an account usage limit and resumed after it reset; all six returned. Their sections
+are now the `## Scope` section of each artifact, and their typed entries are what
+`aep plan artifact waves` reads.
+
+The scopers reached the same partition the coordinator had, and independently named the reason it
+would not hold as written: `spec/system.yaml`, `checks/conformance/src/main.rs`,
+`checks/conformance/src/target.rs` and `checks/conformance/Cargo.toml` are structurally required by
+every new specification domain, so four of the six units would have met in them. Their own
+recommendation was that the coordinator take those four up front. The opening commit does exactly
+that, which is why the wave computes with zero collisions.
+
+Three findings from that pass are carried into the unit briefs rather than left in a report:
+`README.md` and `AGENTS.md` belong to `story:public-surface` and are off limits to the other five,
+which four of them have a reason to edit; `.github/workflows/gate.yml` is the same case for a unit
+that adds a feature-gated test; and the licence file is a decision rather than a copy, because the
+workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories ship Apache-2.0.
+
+## The units
+
+| Unit | Branch | Worktree | Build directory | Scratch | Stage |
+|---|---|---|---|---|---|
+| `story:messages-projection` | `impl/messages-projection` | _pending_ | `~/.cache/b10x-target/llm-wave1/messages` | `~/.cache/llm-wave-1/messages` | not started |
+| `story:responses-projection` | `impl/responses-projection` | _pending_ | `~/.cache/b10x-target/llm-wave1/responses` | `~/.cache/llm-wave-1/responses` | not started |
+| `story:chat-projection` | `impl/chat-projection` | _pending_ | `~/.cache/b10x-target/llm-wave1/chat` | `~/.cache/llm-wave-1/chat` | not started |
+| `story:gateway-auth` | `impl/gateway-auth` | _pending_ | `~/.cache/b10x-target/llm-wave1/gateway` | `~/.cache/llm-wave-1/gateway` | not started |
+| `story:hosting-contract` | `impl/hosting-contract` | _pending_ | `~/.cache/b10x-target/llm-wave1/hosting` | `~/.cache/llm-wave-1/hosting` | not started |
+| `story:public-surface` | `impl/public-surface` | _pending_ | not a Rust unit | `~/.cache/llm-wave-1/public-surface` | not started |
+
+`impl/messages-projection` already carries one commit made before the wave opened: the previous
+session's in-flight Messages work, moved onto that branch rather than left uncommitted in the tree
+every other unit forks from.
+
+## What each unit owns
+
+Everything not listed for a unit is another unit's or the coordinator's.
+
+| Unit | Owns |
+|---|---|
+| messages | `crates/llm-messages`, `spec/domains/messages.yaml`, `contracts/messages/scenarios`, `checks/conformance/src/messages.rs`, `docs/messages.md`, `docs/verification/messages*` |
+| responses | the same shape, for `responses` |
+| chat | the same shape, for `chat` |
+| gateway | `crates/llm-gateway`, `docs/gateway.md`, `docs/verification/gateway*`. Authentication and read-only route inspection only; translation is `story:gateway-translation` and is not in this wave |
+| hosting | `crates/llm-provision`, `spec/domains/hosting.yaml`, `spec/domains/catalog.yaml`, `contracts/hosting/scenarios`, `checks/conformance/src/hosting.rs`, `docs/hosting.md`, `docs/verification/hosting*` |
+| public-surface | `CHANGELOG.md`, `LICENSE`, `README.md`, `AGENTS.md`, `website`, `b10x.docs.yaml`, `.github/workflows`, `changes`; and in the Atlas worktree, the catalog subjects, the independent-source roster and the objective map |
+
+Coordinator-owned, and no unit's to edit: the workspace `Cargo.toml`, `Cargo.lock`,
+`contracts/ess-inputs.yaml`, `contracts/suite.json`, `contracts/baseline.json`, `contracts/schema`,
+`checks/conformance/src/target.rs` and `main.rs`, `docs/implementation-status.md`, `Taskfile.yml`,
+and everything under `.engineering`.
+
+## What the opening commit pre-wired
+
+So that no two units need the same file:
+
+- `spec/system.yaml` lists `llm.responses`, `llm.chat` and `llm.hosting`, and
+  `spec/domains/{responses,chat,hosting}.yaml` each declare their domain and nothing else. A
+  header-only domain generates no scenarios, so the suite count is unchanged at 183.
+- `checks/conformance/src/{messages,responses,chat,hosting}.rs` are stub modules, each exposing
+  `VIEWS` and an `observe` that returns `None`. Each unit replaces its own file.
+- `checks/conformance/src/target.rs` tries those four hooks before its existing command arms, and
+  builds its view allowlist from their `VIEWS`. A new domain is now a new file, not an edit here.
+- `checks/conformance/Cargo.toml` depends on the four crates.
+
+## The gate
+
+Each unit runs a package-scoped gate in its own worktree and quotes it. The whole gate runs once,
+later, on `wave/1`, step by step with one exit status captured per step. One test result recorded
+against that merge commit closes every story in the wave.
+
+## The commits this wave is authorised to make
+
+The opening commit on `wave/1`; the carry commit already on `impl/messages-projection`; one commit
+per unit; six merges into `wave/1`; the closing commit; the merge of `wave/1` into
+`plan/llm-foundation`; the push of `plan/llm-foundation` to origin; and one commit in the Atlas
+worktree. No tag, no release, no merge into `main`, and no push of Atlas or Harness, whose existing
+history a source gate still refuses for reasons that predate this work.

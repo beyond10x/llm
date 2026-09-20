@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:catalog-routing
 kind: story
-status: active
+status: implemented
 title: TOML resolves and explains capability-compatible routes
 relations:
 - decomposes: epic:routing
@@ -19,7 +19,7 @@ scope:
   path: spec/domains/catalog.yaml
 - confidence: cited
   path: spec/domains/routing.yaml
-revision: 7
+revision: 8
 ---
 ## Context
 
