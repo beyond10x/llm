@@ -50,8 +50,8 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 | Unit | Branch | Worktree (managed id `wave1-*`) | Build directory | Stage |
 |---|---|---|---|---|
 | `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | red after pass 1, correcting |
-| `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | green after correction, awaiting pass 2 |
-| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | red after pass 1, correcting |
+| `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | green after correction, under pass 2 |
+| `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | green after correction, awaiting pass 2 |
 | `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | green after correction, awaiting pass 2; site on port 3011 |
 | `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | red after pass 1, correcting |
 | `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | green, under attack |
