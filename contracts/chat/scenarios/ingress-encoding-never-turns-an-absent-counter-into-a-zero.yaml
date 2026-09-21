@@ -1,0 +1,20 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: ingress-encoding-never-turns-an-absent-counter-into-a-zero
+summary: ingress encoding never turns an absent counter into a zero
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.EncodeIngress
+  input:
+    outcome_json: '{"format":"llm.outcome/3","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hi"}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"usage":{"output_tokens":9},"final_usage":true}}}'
+    streamed: false
+    include_usage: false
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressResponse
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressResponse
+  contains:
+    accepted: true
+    # Exactly the one counter that was reported, and nothing standing in for the rest.
+    usage_json: '{"completion_tokens":9}'

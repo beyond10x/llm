@@ -31,6 +31,9 @@ libraries three times through the pinned ESS runner. Its report gate refuses mis
 failures, errors, unsupported observations and skips. See [local-secret verification](docs/verification/local-secrets.md)
 and the earlier [routing verification](docs/verification/routing-conformance.md).
 
+The [public-surface verification](docs/verification/public-surface.md) records the documentation manifest, site and catalog declaration, and names the three steps outside
+this repository that the Atlas change is blocked on.
+
 Run `cargo run --locked -p b10x-llm-cost --example quote` for a local price/usage fixture.
 [Pricing](docs/pricing.md) explains exact amounts, cache partitions, compute units and separate
 subscription charges. [Budgets](docs/budgets.md) explains durable spending admission and its limits;
@@ -46,3 +49,9 @@ alternative. This inspects configuration; protocol clients and runtime fallback 
 ## License
 
 LicenseRef-B10x-Proprietary. Source publication does not grant an open-source license.
+
+<!-- b10x-docs:start -->
+## Documentation
+
+[LLM documentation](https://beyond10x.github.io/docs/llm/) · [Start](https://beyond10x.github.io/) · [Ecosystem](https://beyond10x.github.io/ecosystem/) · [Impact](https://beyond10x.github.io/changes/) · [Releases](https://beyond10x.github.io/releases/)
+<!-- b10x-docs:end -->

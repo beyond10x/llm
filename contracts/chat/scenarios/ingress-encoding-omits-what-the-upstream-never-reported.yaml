@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: ingress-encoding-omits-what-the-upstream-never-reported
+summary: ingress encoding omits what the upstream never reported
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.EncodeIngress
+  input:
+    outcome_json: '{"format":"llm.outcome/3","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hello, world"}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"final_usage":true}}}'
+    streamed: false
+    include_usage: false
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressResponse
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressResponse
+  contains:
+    accepted: true
+    error_code: null
+    content: Hello, world
+    finish_reason: stop
+    # No reported model and no reported counters: neither field is invented, and the
+    # configured alias is never substituted for an observation nobody made.
+    model_reported: null
+    usage_json: null
+    tool_calls: []

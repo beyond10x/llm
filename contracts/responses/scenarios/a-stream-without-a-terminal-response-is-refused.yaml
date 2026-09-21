@@ -1,0 +1,30 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: a-stream-without-a-terminal-response-is-refused
+summary: a stream without a terminal response is refused
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.output_text.delta","delta":"Hel"}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: false
+    error_code: protocol
+    error_message: the stream ended before the response reached a terminal state
+    dispatch: unknown
+    stream_events:
+    - text-delta:Hel
+    items_json: null
+    stop_reason: null
+    final_usage: false
+    input_tokens: null
+    upstream_model: null

@@ -1,0 +1,781 @@
+[
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        observation.upstream_model = identifier(response.get(\"model\"));",
+        "        observation.upstream_model = identifier(response.get(\"model\"))\n            .or_else(|| Some(self.binding.upstream_model().clone()));"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "configured-model-substituted-for-missing-one",
+    "named_rust_case": "an_unreported_model_stays_unknown_rather_than_the_configured_one",
+    "named_scenario": "llm.responses/authored/an-unreported-model-is-not-the-configured-one",
+    "rust_failed": [
+      "an_unreported_model_stays_unknown_rather_than_the_configured_one"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/an-unreported-model-is-not-the-configured-one"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 63,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        cached_input_tokens: count(\n            reported\n                .get(\"input_tokens_details\")\n                .and_then(|details| details.get(\"cached_tokens\")),\n        ),",
+        "        cached_input_tokens: count(\n            reported\n                .get(\"input_tokens_details\")\n                .and_then(|details| details.get(\"cached_tokens\")),\n        )\n        .or(Some(0)),"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "absent-cache-count-becomes-zero",
+    "named_rust_case": "every_reported_counter_is_independently_optional",
+    "named_scenario": "llm.responses/authored/an-absent-cached-input-tokens-stays-unknown",
+    "rust_failed": [
+      "an_unreported_counter_stays_unknown_and_is_never_zero",
+      "every_reported_counter_is_independently_optional"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-wide-count-and-a-known-zero-stay-exact",
+      "llm.responses/authored/an-absent-cached-input-tokens-stays-unknown",
+      "llm.responses/authored/an-unreported-counter-stays-unknown"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        input_tokens: count(reported.get(\"input_tokens\")),",
+        "        input_tokens: count(reported.get(\"input_tokens\")).or(Some(0)),"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "absent-input-count-becomes-zero",
+    "named_rust_case": "an_unreported_input_count_stays_unknown_and_is_never_zero",
+    "named_scenario": "llm.responses/authored/an-absent-input-tokens-stays-unknown",
+    "rust_failed": [
+      "an_unreported_input_count_stays_unknown_and_is_never_zero",
+      "every_reported_counter_is_independently_optional"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/an-absent-input-tokens-stays-unknown"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 64,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        output_tokens: count(reported.get(\"output_tokens\")),",
+        "        output_tokens: count(reported.get(\"output_tokens\")).or(Some(0)),"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "absent-output-count-becomes-zero",
+    "named_rust_case": "every_reported_counter_is_independently_optional",
+    "named_scenario": "llm.responses/authored/an-absent-output-tokens-stays-unknown",
+    "rust_failed": [
+      "an_unreported_counter_stays_unknown_and_is_never_zero",
+      "every_reported_counter_is_independently_optional"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/an-absent-output-tokens-stays-unknown",
+      "llm.responses/authored/an-unreported-counter-stays-unknown"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 64,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        reasoning_output_tokens: count(\n            reported\n                .get(\"output_tokens_details\")\n                .and_then(|details| details.get(\"reasoning_tokens\")),\n        ),",
+        "        reasoning_output_tokens: count(\n            reported\n                .get(\"output_tokens_details\")\n                .and_then(|details| details.get(\"reasoning_tokens\")),\n        )\n        .or(Some(0)),"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "absent-reasoning-count-becomes-zero",
+    "named_rust_case": "every_reported_counter_is_independently_optional",
+    "named_scenario": "llm.responses/authored/an-absent-reasoning-output-tokens-stays-unknown",
+    "rust_failed": [
+      "an_unreported_counter_stays_unknown_and_is_never_zero",
+      "every_reported_counter_is_independently_optional"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/an-absent-reasoning-output-tokens-stays-unknown",
+      "llm.responses/authored/an-unreported-counter-stays-unknown"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        let Some(terminal) = self.terminal.take() else {",
+        "        let Some(terminal) = self.terminal.take().or(Some(Terminal {\n            incomplete: false,\n            response: Value::Null,\n        })) else {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "end-of-stream-treated-as-terminal",
+    "named_rust_case": "a_stream_that_never_reaches_a_terminal_response_refuses_and_keeps_its_output",
+    "named_scenario": "llm.responses/authored/a-stream-without-a-terminal-response-is-refused",
+    "rust_failed": [
+      "a_stream_that_never_reaches_a_terminal_response_refuses_and_keeps_its_output",
+      "every_stream_refusal_the_contract_promises_is_reachable"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-stream-without-a-terminal-response-is-refused"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 64,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                    decoded.push(self.output_item(value).map_err(&retain)?);",
+        "                    decoded.push(self.output_item(value)?);"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "terminal-refusal-drops-its-counters",
+    "named_rust_case": "a_terminal_object_the_decoder_refuses_still_reports_the_counters_it_carried",
+    "named_scenario": "llm.responses/authored/a-refused-terminal-object-still-reports-its-counters",
+    "rust_failed": [
+      "a_refusal_reports_the_same_evidence_whichever_event_order_produced_it",
+      "a_terminal_object_the_decoder_refuses_still_reports_the_counters_it_carried",
+      "every_stream_refusal_the_contract_promises_is_reachable"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-refused-terminal-object-still-reports-its-counters",
+      "llm.responses/authored/message-content-outside-the-subset-is-refused-not-emptied"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                        Err(error) => self.defer(error),",
+        "                        Err(error) => return Err(self.bound(error)),"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "streamed-item-refusal-returned-before-the-terminal-object",
+    "named_rust_case": "a_refusal_reports_the_same_evidence_whichever_event_order_produced_it",
+    "named_scenario": "llm.responses/authored/an-announced-item-refusal-still-reports-the-terminal-counters",
+    "rust_failed": [
+      "a_refusal_reports_the_same_evidence_whichever_event_order_produced_it",
+      "an_unreadable_tool_call_keeps_the_terminal_counters_when_the_server_announces_the_item"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/an-announced-item-refusal-still-reports-the-terminal-counters"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    if terminal.incomplete || string(response.get(\"status\")) == Some(\"incomplete\") {",
+        "    if string(response.get(\"status\")) == Some(\"incomplete\") {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "terminal-event-name-ignored",
+    "named_rust_case": "the_terminal_event_that_says_incomplete_is_not_read_as_a_completed_turn",
+    "named_scenario": "llm.responses/authored/the-terminal-event-name-decides-incompleteness",
+    "rust_failed": [
+      "the_terminal_event_that_says_incomplete_is_not_read_as_a_completed_turn"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/the-terminal-event-name-decides-incompleteness"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        && value.len() <= 64",
+        "        && value.len() <= 4096"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "incomplete-reason-length-bound-widened",
+    "named_rust_case": "an_over_long_incomplete_reason_is_named_rather_than_relayed",
+    "named_scenario": "llm.responses/authored/an-over-long-incomplete-reason-is-named-rather-than-relayed",
+    "rust_failed": [
+      "an_over_long_incomplete_reason_is_named_rather_than_relayed"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/an-over-long-incomplete-reason-is-named-rather-than-relayed"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                let item = self.opaque(event);\n                self.unmodelled.push(item.clone());\n                if let Err(error) = self.push_streamed(item) {\n                    self.defer(error);\n                }",
+        "                // deliberately drop the unmodelled event"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "unknown-stream-event-dropped",
+    "named_rust_case": "an_event_outside_the_pinned_subset_is_preserved_and_reported",
+    "named_scenario": "llm.responses/authored/an-event-outside-the-pinned-subset-is-preserved",
+    "rust_failed": [
+      "an_event_outside_the_pinned_subset_is_preserved_and_reported"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/an-event-outside-the-pinned-subset-is-preserved"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "            Some(\"output_text\" | \"text\") => text.push_str(\n                string(part.get(\"text\")).ok_or_else(|| protocol(\"a content part has no text\"))?,\n            ),\n            _ => {\n                return Err(\n                    Error::unsupported(\"message content is outside the pinned subset\")\n                        .with_dispatch(Dispatch::Accepted),\n                );\n            }",
+        "            Some(\"output_text\" | \"text\") => text.push_str(\n                string(part.get(\"text\")).ok_or_else(|| protocol(\"a content part has no text\"))?,\n            ),\n            _ => {}"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "output-message-content-filter-restored",
+    "named_rust_case": "a_content_part_outside_the_pinned_subset_is_not_dropped_without_a_word",
+    "named_scenario": "llm.responses/authored/message-content-outside-the-subset-is-refused-not-emptied",
+    "rust_failed": [
+      "a_content_part_outside_the_pinned_subset_is_not_dropped_without_a_word",
+      "every_stream_refusal_the_contract_promises_is_reachable"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/message-content-outside-the-subset-is-refused-not-emptied"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 4,
+      "passed": 62,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        let error = Error::new(class, message).with_dispatch(Dispatch::Accepted);",
+        "        let relayed = string(source.get(\"error\").and_then(|error| error.get(\"message\")))\n            .or_else(|| string(source.get(\"message\")))\n            .unwrap_or(message);\n        let error = Error::new(class, relayed).with_dispatch(Dispatch::Accepted);"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "upstream-text-relayed-into-diagnostics",
+    "named_rust_case": "a_failed_response_keeps_its_reported_usage_and_carries_no_upstream_text",
+    "named_scenario": "llm.responses/authored/a-failed-response-retains-its-terminal-usage",
+    "rust_failed": [
+      "a_failed_response_keeps_its_reported_usage_and_carries_no_upstream_text"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-failed-response-retains-its-terminal-usage",
+      "llm.responses/authored/a-rate-limited-failure-keeps-its-class-when-its-counters-disagree",
+      "llm.responses/authored/a-rate-limited-response-is-its-own-class",
+      "llm.responses/authored/a-refused-request-is-not-widened-to-a-retriable-class"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        let mut observation = self.evidence(source, response.is_some());",
+        "        if let Err(refusal) = self.observation(source, response.is_some()) {\n            return refusal;\n        }\n        let mut observation = self.evidence(source, response.is_some());"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "provider-failure-class-replaced-by-its-counter-refusal",
+    "named_rust_case": "a_provider_failure_keeps_its_class_when_its_counters_disagree",
+    "named_scenario": "llm.responses/authored/a-rate-limited-failure-keeps-its-class-when-its-counters-disagree",
+    "rust_failed": [
+      "a_provider_failure_keeps_its_class_when_its_counters_disagree",
+      "a_rate_limited_failure_keeps_its_class_when_its_counters_disagree"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-rate-limited-failure-keeps-its-class-when-its-counters-disagree"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "ae93d6063b197fe93d66716cdefda20b9945e4dc02ce3341e16abb23f09314ec"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 63,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "            if provenance != binding.provenance() {\n                return Err(Error::unsupported(\n                    \"opaque state belongs to a different serving binding\",\n                ));\n            }",
+        "            if false {\n                return Err(Error::unsupported(\n                    \"opaque state belongs to a different serving binding\",\n                ));\n            }\n            let _ = provenance;"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "opaque-state-not-bound-to-its-binding",
+    "named_rust_case": "opaque_state_from_any_other_binding_coordinate_is_refused",
+    "named_scenario": "llm.responses/authored/a-repointed-binding-revision-refuses-opaque-state",
+    "rust_failed": [
+      "every_egress_refusal_the_contract_promises_is_reachable",
+      "ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses",
+      "opaque_state_from_any_other_binding_coordinate_is_refused"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-repointed-binding-revision-refuses-opaque-state",
+      "llm.responses/authored/a-repointed-endpoint-refuses-opaque-state",
+      "llm.responses/authored/a-repointed-model-refuses-opaque-state"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 64,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "fn input_to_item(entry: &Value) -> Result<Item, Error> {",
+        "fn input_to_item(binding: &Binding, entry: &Value) -> Result<Item, Error> {"
+      ],
+      [
+        "            items.push(input_to_item(entry)?);",
+        "            items.push(input_to_item(binding, entry)?);"
+      ],
+      [
+        "        _ => Err(Error::unsupported(\n            \"opaque continuation state cannot be attributed to a binding on ingress\",\n        )),",
+        "        _ => Ok(Item::Opaque {\n            provenance: binding.provenance().clone(),\n            payload: entry.clone(),\n        }),"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "ingress-mints-provenance-it-never-observed",
+    "named_rust_case": "ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses",
+    "named_scenario": "llm.responses/authored/ingress-refuses-an-unmodelled-entry-it-cannot-attribute",
+    "rust_failed": [
+      "every_ingress_content_refusal_the_contract_promises_is_reachable",
+      "ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses",
+      "opaque_state_is_carried_out_verbatim_and_refused_on_the_way_back_in"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-an-unmodelled-entry-it-cannot-attribute",
+      "llm.responses/authored/matching-opaque-state-is-carried-out-verbatim"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    check_tool_names(&request.tools)?;\n    Ok(request)",
+        "    Ok(request)"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "ingress-skips-the-tool-name-class",
+    "named_rust_case": "ingress_refuses_a_tool_name_egress_cannot_publish",
+    "named_scenario": "llm.responses/authored/ingress-refuses-a-tool-name-egress-cannot-publish",
+    "rust_failed": [
+      "ingress_refuses_a_tool_name_egress_cannot_publish"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-a-tool-name-egress-cannot-publish"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    check_tool_names(&request.tools)?;\n\n    let mut input",
+        "    let _ = check_tool_names(&request.tools);\n\n    let mut input"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "egress-skips-the-tool-name-class",
+    "named_rust_case": "a_tool_name_this_wire_cannot_publish_is_refused_before_it_is_sent",
+    "named_scenario": "llm.responses/authored/an-unpublishable-tool-name-is-refused",
+    "rust_failed": [
+      "a_tool_name_this_wire_cannot_publish_is_refused_before_it_is_sent",
+      "every_egress_refusal_the_contract_promises_is_reachable"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/an-unpublishable-tool-name-is-refused"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 63,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    if object.get(field) == Some(pinned) {\n        return Ok(());\n    }",
+        "    if object.get(field).is_none_or(|value| value == pinned) {\n        return Ok(());\n    }"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "fixed-field-absence-read-as-agreement",
+    "named_rust_case": "every_fixed_field_is_refused_unless_it_carries_exactly_the_pinned_value",
+    "named_scenario": "llm.responses/authored/ingress-refuses-a-body-that-omits-a-fixed-field",
+    "rust_failed": [
+      "a_fixed_field_the_body_omits_is_refused_rather_than_answered_with_this_crates_own_value",
+      "every_fixed_field_is_refused_unless_it_carries_exactly_the_pinned_value"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-a-body-that-omits-a-fixed-field",
+      "llm.responses/authored/ingress-refuses-a-body-that-omits-provider-side-storage",
+      "llm.responses/authored/ingress-refuses-a-published-tool-that-omits-strict"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    check_fixed(object, \"include\", &json!(INCLUDE))?;",
+        "    if let Some(values) = object.get(\"include\").and_then(Value::as_array)\n        && !values\n            .iter()\n            .all(|value| string(Some(value)).is_some_and(|name| INCLUDE.contains(&name)))\n    {\n        return Err(Error::unsupported(\n            \"request body includes a field outside the pinned subset\",\n        ));\n    }"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "include-membership-instead-of-equality",
+    "named_rust_case": "every_fixed_field_is_refused_unless_it_carries_exactly_the_pinned_value",
+    "named_scenario": "llm.responses/authored/ingress-refuses-an-empty-include",
+    "rust_failed": [
+      "an_include_carrying_a_different_value_is_refused_rather_than_rewritten",
+      "every_fixed_field_is_refused_unless_it_carries_exactly_the_pinned_value"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-an-empty-include"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    let [only] = parts.as_slice() else {\n        return Err(Error::unsupported(\n            \"a message carries content this version cannot represent part for part\",\n        ));\n    };\n    if string(only.get(\"type\")) != Some(part) {\n        return Err(Error::unsupported(\n            \"message content is outside the pinned subset\",\n        ));\n    }\n    Ok(string(only.get(\"text\"))\n        .ok_or_else(|| Error::invalid(\"a content part has no text\"))?\n        .to_owned())",
+        "    let mut text = String::new();\n    for value in parts {\n        if string(value.get(\"type\")) != Some(part) {\n            return Err(Error::unsupported(\n                \"message content is outside the pinned subset\",\n            ));\n        }\n        text.push_str(\n            string(value.get(\"text\"))\n                .ok_or_else(|| Error::invalid(\"a content part has no text\"))?,\n        );\n    }\n    Ok(text)"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "content-parts-joined-rather-than-refused",
+    "named_rust_case": "a_message_this_version_cannot_represent_part_for_part_is_refused",
+    "named_scenario": "llm.responses/authored/ingress-refuses-a-message-of-two-content-parts",
+    "rust_failed": [
+      "a_message_this_version_cannot_represent_part_for_part_is_refused"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-a-message-of-two-content-parts"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    if object.keys().any(|key| {\n        !matches!(\n            key.as_str(),\n            \"type\" | \"name\" | \"description\" | \"parameters\" | \"strict\"\n        )\n    }) {",
+        "    if false {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "published-tool-field-guard-removed",
+    "named_rust_case": "every_ingress_content_refusal_the_contract_promises_is_reachable",
+    "named_scenario": "llm.responses/authored/ingress-refuses-a-published-tool-field-outside-the-subset",
+    "rust_failed": [
+      "every_ingress_content_refusal_the_contract_promises_is_reachable"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-a-published-tool-field-outside-the-subset"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        if !ACCEPTED_BODY_FIELDS.contains(&field.as_str()) {",
+        "        if false && !ACCEPTED_BODY_FIELDS.contains(&field.as_str()) {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "ingress-accepts-a-field-outside-the-subset",
+    "named_rust_case": "a_body_field_outside_the_pinned_subset_is_refused_on_ingress",
+    "named_scenario": "llm.responses/authored/ingress-refuses-a-field-outside-the-subset",
+    "rust_failed": [
+      "a_body_field_outside_the_pinned_subset_is_refused_on_ingress",
+      "every_ingress_body_refusal_the_contract_promises_is_reachable"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-a-field-outside-the-subset"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 8,
+      "passed": 58,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    body.insert(\"model\".to_owned(), json!(binding.upstream_model().as_str()));",
+        "    body.insert(\"model\".to_owned(), json!(request.model.as_str()));"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "caller-alias-substituted-for-the-wire-model",
+    "named_rust_case": "the_wire_model_is_the_upstream_name_and_the_alias_never_substitutes_for_it",
+    "named_scenario": "llm.responses/authored/text-turn-projects-the-pinned-body",
+    "rust_failed": [
+      "a_failed_tool_result_keeps_its_failure_through_the_round_trip",
+      "a_text_turn_projects_the_pinned_body",
+      "an_empty_instruction_projects_no_developer_entry_and_round_trips",
+      "every_body_field_the_pin_declares_accepted_survives_ingress",
+      "every_body_ingress_accepts_reprojects_unchanged",
+      "ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses",
+      "opaque_state_is_carried_out_verbatim_and_refused_on_the_way_back_in",
+      "the_text_and_tool_subset_round_trips_through_the_wire_body",
+      "the_wire_model_is_the_upstream_name_and_the_alias_never_substitutes_for_it"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-failed-tool-result-keeps-its-failure",
+      "llm.responses/authored/a-foreign-text-body-reads-into-a-neutral-turn",
+      "llm.responses/authored/a-named-tool-choice-names-the-published-tool",
+      "llm.responses/authored/absent-sampling-and-instruction-stay-absent",
+      "llm.responses/authored/an-accepted-body-reprojects-unchanged",
+      "llm.responses/authored/present-sampling-reaches-the-wire",
+      "llm.responses/authored/text-turn-projects-the-pinned-body",
+      "llm.responses/authored/the-text-and-tool-subset-round-trips"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 65,
+      "skipped": 0,
+      "total": 66,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    serde_json::to_string(&json!({\"ok\": !failed, \"output\": output}))",
+        "    serde_json::to_string(&json!({\"ok\": true, \"output\": output}))\n        .map(|encoded| {\n            let _ = failed;\n            encoded\n        })"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "tool-result-failure-flag-dropped",
+    "named_rust_case": "a_failed_tool_result_keeps_its_failure_through_the_round_trip",
+    "named_scenario": "llm.responses/authored/a-failed-tool-result-keeps-its-failure",
+    "rust_failed": [
+      "a_failed_tool_result_keeps_its_failure_through_the_round_trip"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-failed-tool-result-keeps-its-failure"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  }
+]

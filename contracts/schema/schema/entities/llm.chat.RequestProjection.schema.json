@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RequestProjection",
+  "x-ess-name": "llm.chat.RequestProjection",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "projection_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "wire_model": {
+      "type": "string"
+    },
+    "body_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "message_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "message_contents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tool_arguments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tool_choice": {
+      "type": "string"
+    },
+    "output_limit_field": {
+      "type": "string"
+    },
+    "output_limit": {
+      "type": "string"
+    },
+    "stream": {
+      "type": "boolean"
+    },
+    "include_usage": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.chat.RequestProjection.State"
+    }
+  },
+  "required": [
+    "projection_id",
+    "accepted",
+    "body_fields",
+    "message_roles",
+    "message_contents",
+    "tool_arguments",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:9da45472e007efff9cfafca64acb2f84d24afe9ede92de288eb962ce1ffa9c19",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.chat.RequestProjection.State": {
+      "title": "State",
+      "x-ess-name": "llm.chat.RequestProjection.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

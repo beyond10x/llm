@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.responses.StreamDecoding.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:99297d0a5aea8d70195d46e8dbd4eb5118e2571cb688484714920397e153c7a3",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.responses.StreamDecoding.State": {
+      "title": "State",
+      "x-ess-name": "llm.responses.StreamDecoding.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

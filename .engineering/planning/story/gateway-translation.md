@@ -10,6 +10,7 @@ relations:
 - depends_on: story:ordered-fallback
 - depends_on: story:runpod-hosting
 - depends_on: story:modal-hosting
+- depends_on: story:unattributed-opaque-state
 scope:
 - confidence: inferred
   path: contracts/gateway

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DecodeStream input",
+  "x-ess-name": "llm.responses.DecodeStream",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "binding_json": {
+      "type": "string"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "stream_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "binding_json",
+    "upstream_model",
+    "stream_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:62e9a54f43ad8f5f1fd6c36da5b1fae8db0f4252728ba8b0e88c14017af41738",
+    "regenerate": "ess generate"
+  }
+}

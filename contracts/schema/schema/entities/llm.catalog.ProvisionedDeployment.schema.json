@@ -22,7 +22,22 @@
     "resource_id": {
       "type": "string"
     },
+    "resource_incarnation": {
+      "type": "string"
+    },
     "observation": {
+      "type": "string"
+    },
+    "observed_state": {
+      "type": "string"
+    },
+    "observed_ready": {
+      "type": "boolean"
+    },
+    "observed_endpoint": {
+      "type": "string"
+    },
+    "observed_served_model_id": {
       "type": "string"
     },
     "state": {
@@ -33,6 +48,7 @@
     "id",
     "deployment_spec_id",
     "resource_id",
+    "resource_incarnation",
     "observation",
     "state"
   ],
@@ -40,8 +56,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
-    "contract_digest": "slice-sha256/2:355678d034a8e10bfad29c28b26766c771835de9e8fff317e20465938caa8993",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:0c71420229ae9e87ed338948a7ac6538c7eec011f1b4e6805e4e299cf55658de",
     "regenerate": "ess generate"
   },
   "$defs": {

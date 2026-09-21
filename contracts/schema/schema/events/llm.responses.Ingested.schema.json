@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ingested payload",
+  "x-ess-name": "llm.responses.Ingested",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "accepted": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "accepted"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:24dcf1bfbad657e09e98d7cccea818c252ef5989f56bd77d91690b9bbe8907b2",
+    "regenerate": "ess generate"
+  }
+}

@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: a-failed-response-retains-its-terminal-usage
+summary: a failed response retains its terminal usage
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.failed","response":{"id":"resp_1","model":"example/Small-Model","status":"failed","error":{"code":"server_error","message":"SECRET-UPSTREAM-TEXT"},"usage":{"input_tokens":10,"output_tokens":3}}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: false
+    error_code: unavailable
+    error_message: the provider failed this response on its own account
+    dispatch: accepted
+    final_usage: true
+    input_tokens: '10'
+    output_tokens: '3'
+    upstream_model: example/Small-Model
+    response_id: resp_1

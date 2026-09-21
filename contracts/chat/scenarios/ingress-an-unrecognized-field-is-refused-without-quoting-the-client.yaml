@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: ingress-an-unrecognized-field-is-refused-without-quoting-the-client
+summary: ingress an unrecognized field is refused without quoting the client
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.DecodeIngress
+  input:
+    request_json: '{"model":"code","messages":[{"role":"user","content":"hi"}],"surprise_setting":"a-client-supplied-value"}'
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressRequest
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressRequest
+  contains:
+    accepted: false
+    dispatch: not-sent
+    error_code: unsupported
+    # A field this subset has never heard of is refused too, and the diagnostic quotes
+    # nothing the client sent.
+    error_message: chat request carries a field outside the published subset

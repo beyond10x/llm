@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: an-event-outside-the-pinned-subset-is-preserved
+summary: an event outside the pinned subset is preserved
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.something_new","data":1},{"type":"response.completed","response":{"status":"completed"}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stream_events:
+    - warning:unknown-stream-event
+    items_json: '[{"kind":"opaque","payload":{"data":1,"type":"response.something_new"},"provenance":{"account":"local","binding_revision":"rev-1","endpoint":"local-vllm","model":"small","protocol":"responses","provider":"my-lab"}}]'
+    stop_reason: end-turn

@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:provider-accounts
 kind: story
-status: active
+status: implemented
 title: Provider accounts are independent of wire selection
 relations:
 - decomposes: epic:access
@@ -11,7 +11,7 @@ relations:
 scope:
 - confidence: inferred
   path: crates/llm-providers
-revision: 7
+revision: 8
 ---
 ## Context
 

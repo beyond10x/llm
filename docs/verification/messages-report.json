@@ -1,0 +1,92 @@
+{
+  "completed_at": 1789979838303,
+  "conformance_status": "passed",
+  "counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+  },
+  "coverage": {
+    "counts": {
+      "authored": 32,
+      "generated": 9,
+      "outside": 0,
+      "refused": 0
+    },
+    "knowledge": "complete_inventory",
+    "refused": [],
+    "selection": {
+      "filter": {
+        "kind": "all"
+      },
+      "origins": "generated_and_authored",
+      "scope": {
+        "kind": "system"
+      }
+    }
+  },
+  "execution_status": "passed",
+  "format": "ess-conformance-report/2",
+  "implementation": "llm-foundation-libraries local",
+  "outcomes": {
+    "error": [],
+    "failed": [],
+    "passed": [
+      "llm.accounting.Quote/outcome/observed",
+      "llm.budget.Exercise/outcome/observed",
+      "llm.inference.InspectResult/outcome/observed",
+      "llm.messages.DecodeMessage/outcome/observed",
+      "llm.messages.DecodeStream/outcome/observed",
+      "llm.messages.Project/outcome/observed",
+      "llm.messages/authored/absent-output-bound-takes-the-binding-maximum",
+      "llm.messages/authored/accepted-stop-sequence-in-an-undocumented-shape-refused",
+      "llm.messages/authored/accepted-usage-metadata-in-an-undocumented-shape-refused",
+      "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name",
+      "llm.messages/authored/charged-server-tool-use-refused",
+      "llm.messages/authored/complete-response-decodes-through-the-shared-codec",
+      "llm.messages/authored/complete-response-metadata-outside-the-subset-refused",
+      "llm.messages/authored/cumulative-usage-replaces-reported-counters",
+      "llm.messages/authored/duplicate-message-start-refused",
+      "llm.messages/authored/event-name-contradicting-its-payload-refused",
+      "llm.messages/authored/foreign-opaque-state-refused",
+      "llm.messages/authored/ingress-preserves-the-declared-subset",
+      "llm.messages/authored/ingress-reads-an-explicit-null-as-absent",
+      "llm.messages/authored/ingress-refuses-a-request-field-outside-the-subset",
+      "llm.messages/authored/ingress-refuses-content-outside-the-subset",
+      "llm.messages/authored/ingress-refuses-thinking-it-cannot-attribute",
+      "llm.messages/authored/ingress-refuses-unsigned-thinking",
+      "llm.messages/authored/interleaved-blocks-assemble-in-index-order",
+      "llm.messages/authored/one-hour-cache-creation-refused",
+      "llm.messages/authored/provider-error-event-retains-its-snapshot",
+      "llm.messages/authored/request-preserves-roles-tools-and-thinking",
+      "llm.messages/authored/stream-preserves-text-thinking-tools-and-terminal-usage",
+      "llm.messages/authored/stream-start-that-is-not-an-assistant-message-refused",
+      "llm.messages/authored/temperature-above-the-route-maximum-refused",
+      "llm.messages/authored/terminal-message-without-a-reason-refused",
+      "llm.messages/authored/terminal-reason-contradicting-its-content-refused",
+      "llm.messages/authored/truncated-stream-retains-its-partial-usage",
+      "llm.messages/authored/unknown-stream-event-refused",
+      "llm.messages/authored/unreported-counter-stays-unknown",
+      "llm.messages/authored/unreported-upstream-model-stays-unknown",
+      "llm.messages/authored/unstarted-content-block-delta-refused",
+      "llm.messages/authored/usage-regression-refused",
+      "llm.routing.Evaluate/outcome/observed",
+      "llm.secrets.ProbeFile/outcome/observed",
+      "llm.secrets.ProbeKeychain/outcome/observed"
+    ],
+    "skipped": [],
+    "unsupported": []
+  },
+  "policy": "complete-selection/1",
+  "producer_profile": "rust-scenario-status/1",
+  "spec_digest": "eb902c6e56ea37abcdc5854e51e3eaee7fc416cd38464cfd3e44386937312dfa",
+  "specification": "llm/v1",
+  "suite": {
+    "digest": "sha256:67836db7e942ae25cebdbec96317e04679085b5ad960d80db3bc839be5801a95",
+    "digest_profile": "sha256-json-bytes/1",
+    "version": "ess-conformance/5"
+  }
+}

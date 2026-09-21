@@ -19,6 +19,10 @@ tempfile = "3.27"
 tokio.workspace = true
 rustix = { version = "1.1.5", default-features = false, features = ["std", "fs"] }
 llm-routing = { package = "b10x-llm-routing", path = "../../crates/llm-routing" }
+llm-messages = { package = "b10x-llm-messages", path = "../../crates/llm-messages" }
+llm-responses = { package = "b10x-llm-responses", path = "../../crates/llm-responses" }
+llm-chat = { package = "b10x-llm-chat", path = "../../crates/llm-chat" }
+llm-provision = { package = "b10x-llm-provision", path = "../../crates/llm-provision" }
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true

@@ -10,3 +10,19 @@ description = "Chat Completions protocol projection and gateway ingress for the 
 
 [lints]
 workspace = true
+
+[lib]
+name = "llm_chat"
+
+[dependencies]
+llm-core.workspace = true
+llm-credentials.workspace = true
+llm-http.workspace = true
+llm-providers.workspace = true
+http.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread"] }

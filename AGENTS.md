@@ -25,3 +25,44 @@ Read docs/implementation-status.md for the implemented libraries and remaining p
 Do not mark implementation stories complete merely because the workspace builds. Published
 contracts are versioned; later consumer adoption pins a released or explicitly qualified exact
 revision. Local fixture evidence does not establish live provider or hosting qualification.
+
+<!-- b10x-docs-operations:start -->
+## Public documentation operations
+
+This repository owns the public source and presentation allowlist in `b10x.docs.yaml`. The generated credential-free `.github/workflows/b10x-docs-bundle.yml` passively packages only those declared files for the exact successful `main` commit; it must never run repository code. Atlas selects the latest successful bundle with every other catalog source, and Website plus Docs System own rendering, shared components, search, and feeds. Do not add a standalone docs deployer or put App credentials in this public repository. If Atlas catalogs a former Pages workflow, that file remains repository-owned validation: preserve its bespoke checks while keeping exact read-only permissions, an unconditional pull-request trigger, and no deployment primitives. Project Pages at `/llm/` is only the generated stable redirect façade in `.github/workflows/b10x-docs-pages.yml`; content-only publication never rebuilds it.
+
+From the complete organization workspace, verify the contract with a clean Atlas checkout at the current remote `main`. Set `B10X_ATLAS_CHECKOUT` to a managed Atlas worktree when the primary checkout is dirty or stale; never infer command availability from the primary alone.
+
+```bash
+atlas_checkout="${B10X_ATLAS_CHECKOUT:-atlas}"
+atlas_head="$(git -C "$atlas_checkout" rev-parse HEAD)"
+atlas_main="$(git -C "$atlas_checkout" ls-remote origin refs/heads/main | awk '{print $1}')"
+test -z "$(git -C "$atlas_checkout" status --porcelain)"
+test "$atlas_head" = "$atlas_main"
+cargo run --manifest-path "$atlas_checkout/Cargo.toml" --locked -q -- \
+  --store "$atlas_checkout/catalog/store" docs reconcile --workspace . --check
+```
+
+Keep internal plans, stories, ADRs, decisions, worklogs, security material, and research out of the public allowlist unless a repository authority explicitly declares them public.
+<!-- b10x-docs-operations:end -->
+
+<!-- b10x-release-operations:start -->
+## Release completion
+
+An ordinary release completes after this repository's exact tag, required source checks,
+published release and required artifacts are verified. A pushed tag with unfinished checks or
+uploads is queued; report it as released only after those requirements succeed.
+
+Atlas reconciliation and public documentation publication run asynchronously. Do not wait for
+Atlas or Website, update Website source locks or bootstrap snapshots, promote consumer pins,
+release shared docs tooling, or redeploy documentation façades as part of an ordinary source
+release. Report documentation as pending unless its publication was actually verified. A background
+documentation failure does not invalidate a successful source release.
+
+Keep this repository's provenance, correctness, security, compatibility and artifact verification
+requirements. Shared rendering, routing or delivery-control changes still require their relevant
+integration gates. A release request does not authorize deployment or downstream releases.
+Repositories without a release unit retain their existing publication policy. This completion
+boundary supersedes older instructions that attach synchronous documentation ceremony to each
+source release.
+<!-- b10x-release-operations:end -->

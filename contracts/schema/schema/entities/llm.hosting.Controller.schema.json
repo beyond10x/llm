@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Controller",
+  "x-ess-name": "llm.hosting.Controller",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "provider_id": {
+      "type": "string"
+    },
+    "account_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "account",
+        "kind": "references",
+        "source": "llm.hosting.Controller",
+        "target": "llm.catalog.Account",
+        "cardinality": "one",
+        "via": "account_id"
+      }
+    },
+    "ledger_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "ledger",
+        "kind": "references",
+        "source": "llm.hosting.Controller",
+        "target": "llm.budget.Ledger",
+        "cardinality": "one",
+        "via": "ledger_id"
+      }
+    },
+    "max_active": {
+      "type": "integer"
+    },
+    "max_lifetime_ms": {
+      "type": "string"
+    },
+    "lease_ms": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.hosting.Controller.State"
+    }
+  },
+  "required": [
+    "id",
+    "provider_id",
+    "account_id",
+    "ledger_id",
+    "max_active",
+    "max_lifetime_ms",
+    "lease_ms",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:4647a2049f83e85417de8c92e3fea7e26594e92a44e7addb8b44ad2ea8d67c7e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.Controller.State": {
+      "title": "State",
+      "x-ess-name": "llm.hosting.Controller.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

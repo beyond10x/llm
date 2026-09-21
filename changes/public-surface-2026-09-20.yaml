@@ -1,0 +1,12 @@
+schema: b10x-change/v1
+id: llm/public-surface-2026-09-20
+repository: llm
+publishedAt: 2026-09-20T12:00:00Z
+title: LLM joins the public ecosystem surface
+summary: LLM now publishes its neutral inference boundary, implemented library set, accounting contract and honest implementation status through the shared b10x documentation contract.
+kind: capability
+impact: notable
+source:
+  url: https://github.com/beyond10x/llm
+journeys: [build-agents, operate-services]
+affectedSurfaces: [llm/docs]
