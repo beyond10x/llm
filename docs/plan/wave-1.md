@@ -49,7 +49,7 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 
 | Unit | Branch | Worktree (managed id `wave1-*`) | Build directory | Stage |
 |---|---|---|---|---|
-| `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | adversary pass 2 red, correction round running |
+| `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | merged into `wave/1` at `f9b4ba5`, after its correction round |
 | `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | merged into `wave/1` at `d10a2a8` |
 | `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | merged into `wave/1` at `f9ec6dd` |
 | `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | merged into `wave/1` at `4f8be99` |
@@ -165,6 +165,69 @@ carrying to the next wave. A hand-maintained table whose completeness nothing ch
 derived from `Phase::ALL` crossed with the three unconditional writers, so a phase added to the
 vocabulary fails until its rows exist. And the vacuous-`all()` class was swept: the adversary named
 one site, the round found and fixed three.
+
+### Messages' correction round, and the shared crate it needed
+
+Unit commit `f4be1db`, merged at `f9b4ba5`. 70 Rust cases in the projection, 13 in `llm-http`, and
+41 scenarios in three identical runs. The falsification record holds 39 mutations with no survivors,
+11 of them killed by a Rust case that no scenario reaches.
+
+The blocker needed a change in `crates/llm-http`, which belongs to no unit. The coordinator gave that
+crate to the messages implementor for the round rather than taking a patch: the patch route was tried
+in the previous round and half of it silently did not apply. The result is one additive method —
+`post_sse_until` takes a caller's absolute instant and takes the minimum of it and the client's own
+total — with `post_sse` left as a one-line delegate, so no existing caller changed. Both properties
+that make it general are cases in that crate's own tests.
+
+Coordinator verification: no case ignored; the adversary's three files carry their pass-2 mtimes
+untouched; every pre-existing test file byte-identical; and the only removed lines are the two
+narrowing predicates in the wire-name scan and a duplicate type check replaced by a stricter one
+covering three fields across every accept list. The provenance the wire-name classification cites was
+read back from `beyond10x/harness` at `709a2ebadcc14602b82b6f3c240350e4ddc1c88c`:
+`ANTHROPIC_VERSION` and `VERSION_HEADER` are literals there.
+
+One limit the round stated rather than hid: the falsification checker bounds a mutation's claim to
+the file it mutated and no further, so a mutation could still claim a different refusal in that same
+file. Falsifying the checker kills three of four probes; the fourth is that hole.
+
+### The coordinator's own four files
+
+| File | Before | After |
+|---|---|---|
+| `contracts/ess-inputs.yaml` | 177 scenarios | 374, rebuilt from the tree with no removals |
+| `contracts/suite.json` | 183 selected | 391 selected, 374 authored, 0 refusals |
+| `contracts/schema` | — | 137 artifacts regenerated; the only change to an untouched domain's file is `source_digest`, which covers the whole specification |
+| `contracts/baseline.json` | floors 183 | floors 391, ceiling 0 |
+
+### The gate
+
+Run once on `wave/1`, step by step, one exit status captured per step
+(`~/.cache/llm-wave-1/wave-gate.log`). **Ten steps, all exit 0. No step was skipped.**
+
+| Step | Result |
+|---|---|
+| `cargo test --workspace --locked` | 452 passed, 0 failed, 0 ignored, across 77 lanes |
+| `cargo test -p b10x-llm-credentials --all-features` | exit 0 |
+| `cargo check -p b10x-llm-credentials --no-default-features` | exit 0 |
+| `cargo test -p b10x-llm-cost --all-features` | exit 0 |
+| `cargo check -p b10x-llm-cost --no-default-features` | exit 0 |
+| `cargo fmt --all --check` | exit 0 |
+| `cargo clippy --workspace --all-targets --all-features -- -D warnings` | exit 0 |
+| `ess specify validate --path spec` | `llm v1 — 11 file(s), valid` |
+| `cargo run -p b10x-llm-conformance -- check` | 391 of 391 passed three times, identical counts, `sources-sha256:ee6f05fe…` |
+| `aep plan artifact validate` | `valid`, 61 artifacts |
+
+`aep plan artifact validate` also reports six plan-time reviews that recorded no findings block. All
+six are the pre-wave critic rounds, not this wave's adversary passes, and none of them blocks.
+
+### The stub claims, closed against the merged tree
+
+`story:public-surface` pass 2 found that the pages described the sibling units as unimplemented
+five-line stubs, true in its own worktree and false once the wave merged. Checked here, on the merged
+branch: exactly three crates still have a five-line `lib.rs` — `llm-cli`, `llm-modal`, `llm-runpod` —
+and every remaining stub claim in the site, the README and the changelog names those three and no
+others. The crate page's own count agrees: eleven implemented, which is fourteen minus those three,
+and its implemented table lists all six of this wave's crates.
 
 ## The interruption
 

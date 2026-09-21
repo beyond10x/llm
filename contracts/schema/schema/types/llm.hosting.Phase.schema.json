@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.hosting.Phase",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:44e3e7aa38c78d3b6714f1686fc3f80da6fac2e6bdca9e36f1c350d3b99a951e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.Phase": {
+      "title": "Phase",
+      "x-ess-name": "llm.hosting.Phase",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared",
+        "Requested",
+        "Active",
+        "Uncertain",
+        "StopRequired",
+        "Stopped",
+        "Cancelled",
+        "Disowned"
+      ]
+    }
+  }
+}

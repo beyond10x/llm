@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EncodeIngress input",
+  "x-ess-name": "llm.chat.EncodeIngress",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "outcome_json": {
+      "type": "string"
+    },
+    "streamed": {
+      "type": "boolean"
+    },
+    "include_usage": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "outcome_json",
+    "streamed",
+    "include_usage"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:67da3dc5ff563e0a9383e4253cc0ba8ea272d984fc6602c8ef8558c97c1fa6e9",
+    "regenerate": "ess generate"
+  }
+}

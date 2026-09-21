@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.hosting.OwnedResource.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "slice-sha256/2:a2b14b994518e7956f6769f49ea282b4e739bd44ec8334dda6c94cba5b5a0108",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.OwnedResource.State": {
+      "title": "State",
+      "x-ess-name": "llm.hosting.OwnedResource.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}
