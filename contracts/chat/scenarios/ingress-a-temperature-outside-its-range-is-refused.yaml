@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: ingress-a-temperature-outside-its-range-is-refused
+summary: ingress a temperature outside its range is refused
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.chat.DecodeIngress
+  input:
+    request_json: '{"model":"code","messages":[{"role":"user","content":"hi"}],"temperature":5}'
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressRequest
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressRequest
+  contains:
+    accepted: false
+    dispatch: not-sent
+    error_code: invalid-request
+    # The gateway serves the neutral subset, so it refuses at the door what the outgoing
+    # projection would refuse later.
+    error_message: temperature must be finite and within 0..=2
+    turn_valid: null

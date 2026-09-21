@@ -1,0 +1,42 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: incoming-vllm-stream-without-include-usage-reports-no-counter
+summary: incoming vllm stream without include usage reports no counter
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.ProjectResponse
+  input:
+    response: |+
+      data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning_content":null},"logprobs":null,"finish_reason":null}],"usage":null}
+
+      data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"reasoning_content":"The user greets me."},"logprobs":null,"finish_reason":null}],"usage":null}
+
+      data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"content":"Guten "},"logprobs":null,"finish_reason":null}],"usage":null}
+
+      data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"content":"Tag"},"logprobs":null,"finish_reason":null}],"usage":null}
+
+      data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"content":""},"logprobs":null,"finish_reason":"stop","stop_reason":null}],"usage":null}
+
+      data: [DONE]
+
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.chat.LastResponseProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastResponseProjection
+  contains:
+    accepted: true
+    error_code: null
+    stream_text: 'Guten Tag'
+    reasoning_text: The user greets me.
+    assistant_text: 'Guten Tag'
+    stop_reason: '{"kind":"end-turn"}'
+    upstream_model: Qwen/Qwen3-8B
+    final_usage: true
+    # Every chunk carried `usage: null`. That is an absent report, never a zero one.
+    usage_reported: false
+    input_tokens: null
+    output_tokens: null
+    cached_input_tokens: null
+    reasoning_output_tokens: null

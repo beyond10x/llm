@@ -1,0 +1,111 @@
+{
+  "completed_at": 1789947247405,
+  "conformance_status": "passed",
+  "counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 60,
+    "skipped": 0,
+    "total": 60,
+    "unsupported": 0
+  },
+  "coverage": {
+    "counts": {
+      "authored": 50,
+      "generated": 10,
+      "outside": 0,
+      "refused": 0
+    },
+    "knowledge": "complete_inventory",
+    "refused": [],
+    "selection": {
+      "filter": {
+        "kind": "all"
+      },
+      "origins": "generated_and_authored",
+      "scope": {
+        "kind": "system"
+      }
+    }
+  },
+  "execution_status": "passed",
+  "format": "ess-conformance-report/2",
+  "implementation": "llm-foundation-libraries local",
+  "outcomes": {
+    "error": [],
+    "failed": [],
+    "passed": [
+      "llm.accounting.Quote/outcome/observed",
+      "llm.budget.Exercise/outcome/observed",
+      "llm.chat.DecodeIngress/outcome/observed",
+      "llm.chat.EncodeIngress/outcome/observed",
+      "llm.chat.ProjectRequest/outcome/observed",
+      "llm.chat.ProjectResponse/outcome/observed",
+      "llm.chat/authored/incoming-a-completion-without-a-finish-reason-is-refused",
+      "llm.chat/authored/incoming-a-counter-a-present-report-omits-stays-absent",
+      "llm.chat/authored/incoming-a-framed-counter-that-is-not-a-count-is-refused-as-served",
+      "llm.chat/authored/incoming-a-framed-index-that-is-not-a-count-is-refused",
+      "llm.chat/authored/incoming-a-framed-second-choice-is-refused-as-served",
+      "llm.chat/authored/incoming-a-non-streamed-completion-carries-the-same-facts",
+      "llm.chat/authored/incoming-a-report-without-cache-creation-input-tokens-leaves-only-that-unknown",
+      "llm.chat/authored/incoming-a-report-without-cached-input-tokens-leaves-only-that-unknown",
+      "llm.chat/authored/incoming-a-report-without-input-tokens-leaves-only-that-unknown",
+      "llm.chat/authored/incoming-a-report-without-output-tokens-leaves-only-that-unknown",
+      "llm.chat/authored/incoming-a-report-without-reasoning-output-tokens-leaves-only-that-unknown",
+      "llm.chat/authored/incoming-a-reported-zero-is-a-report-and-not-an-absence",
+      "llm.chat/authored/incoming-a-second-choice-is-refused",
+      "llm.chat/authored/incoming-a-stream-without-a-finish-reason-is-refused",
+      "llm.chat/authored/incoming-a-truncated-stream-is-refused",
+      "llm.chat/authored/incoming-an-unknown-finish-reason-is-refused",
+      "llm.chat/authored/incoming-an-unreported-model-is-not-replaced-by-the-binding",
+      "llm.chat/authored/incoming-contradictory-counters-are-refused",
+      "llm.chat/authored/incoming-framed-payloads-project-the-same-text-as-bytes-do",
+      "llm.chat/authored/incoming-openai-stream-preserves-text-usage-and-finish-reason",
+      "llm.chat/authored/incoming-the-cache-write-extension-survives-being-read-back",
+      "llm.chat/authored/incoming-tool-arguments-survive-the-split-that-delivered-them",
+      "llm.chat/authored/incoming-two-framed-choices-in-one-chunk-are-refused",
+      "llm.chat/authored/incoming-vllm-stream-without-include-usage-reports-no-counter",
+      "llm.chat/authored/incoming-vllm-tool-stream-preserves-its-call-and-counters",
+      "llm.chat/authored/ingress-a-client-request-decodes-onto-the-neutral-subset",
+      "llm.chat/authored/ingress-a-named-tool-choice-needs-published-tools",
+      "llm.chat/authored/ingress-a-named-unsupported-field-is-refused-by-its-own-name",
+      "llm.chat/authored/ingress-a-non-text-content-part-is-refused",
+      "llm.chat/authored/ingress-a-response-format-request-is-refused-by-name",
+      "llm.chat/authored/ingress-a-stream-without-include-usage-reports-no-counters",
+      "llm.chat/authored/ingress-a-temperature-outside-its-range-is-refused",
+      "llm.chat/authored/ingress-a-tool-choice-of-none-is-refused",
+      "llm.chat/authored/ingress-a-tool-message-answering-no-call-is-refused",
+      "llm.chat/authored/ingress-an-unrecognized-field-is-refused-without-quoting-the-client",
+      "llm.chat/authored/ingress-contradictory-output-limits-are-refused",
+      "llm.chat/authored/ingress-encoding-names-a-cache-write-counter-rather-than-dropping-it",
+      "llm.chat/authored/ingress-encoding-never-turns-an-absent-counter-into-a-zero",
+      "llm.chat/authored/ingress-encoding-omits-what-the-upstream-never-reported",
+      "llm.chat/authored/ingress-encoding-refuses-opaque-state-it-cannot-carry",
+      "llm.chat/authored/ingress-encoding-reports-exactly-the-counters-it-was-given",
+      "llm.chat/authored/ingress-instructions-must-precede-the-conversation",
+      "llm.chat/authored/ingress-streamed-closing-chunks-carry-calls-then-the-finish-reason",
+      "llm.chat/authored/outgoing-absent-settings-stay-absent",
+      "llm.chat/authored/outgoing-an-undeclared-setting-is-refused",
+      "llm.chat/authored/outgoing-another-protocols-binding-is-refused",
+      "llm.chat/authored/outgoing-failed-tool-result-keeps-its-failure",
+      "llm.chat/authored/outgoing-foreign-opaque-state-is-refused",
+      "llm.chat/authored/outgoing-text-turn-names-the-upstream-model",
+      "llm.chat/authored/outgoing-tool-calls-share-one-assistant-message",
+      "llm.inference.InspectResult/outcome/observed",
+      "llm.routing.Evaluate/outcome/observed",
+      "llm.secrets.ProbeFile/outcome/observed",
+      "llm.secrets.ProbeKeychain/outcome/observed"
+    ],
+    "skipped": [],
+    "unsupported": []
+  },
+  "policy": "complete-selection/1",
+  "producer_profile": "rust-scenario-status/1",
+  "spec_digest": "f1ec0d563e52ff0ea46a4301a15d1d9a1d07e8da56bd366986526087f05b5658",
+  "specification": "llm/v1",
+  "suite": {
+    "digest": "sha256:7ea9eea8531f57b37eb0f75bc22a16aa30e3cdc78c766cd6b36ba05a3da90838",
+    "digest_profile": "sha256-json-bytes/1",
+    "version": "ess-conformance/5"
+  }
+}

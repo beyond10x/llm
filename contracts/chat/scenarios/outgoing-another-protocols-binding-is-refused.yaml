@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: outgoing-another-protocols-binding-is-refused
+summary: outgoing another protocols binding is refused
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.ProjectRequest
+  input:
+    turn_json: '{"format":"llm.turn/2","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hello"}],"tools":[]}}'
+    protocol: responses
+    upstream_model: Qwen/Qwen3-8B
+    capabilities_json: '{"tools":true,"tool_choice":true,"temperature":true,"top_p":true,"reasoning_efforts":["low","high"],"context_window":32768,"max_output_tokens":4096}'
+    streaming: true
+  outcome: observed
+assert:
+- view: llm.chat.LastRequestProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastRequestProjection
+  contains:
+    accepted: false
+    dispatch: not-sent
+    error_code: invalid-request
+    error_message: selected binding does not serve Chat Completions

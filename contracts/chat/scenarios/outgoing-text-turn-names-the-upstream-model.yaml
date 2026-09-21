@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: outgoing-text-turn-names-the-upstream-model
+summary: outgoing text turn names the upstream model
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.ProjectRequest
+  input:
+    turn_json: '{"format":"llm.turn/2","request":{"model":"small","instructions":"Be
+      brief","items":[{"kind":"user-text","text":"Hello"}],"tools":[],"max_output_tokens":256,"sampling":{"temperature":0.5,"reasoning_effort":"high"}}}'
+    protocol: chat-completions
+    upstream_model: Qwen/Qwen3-8B
+    capabilities_json: '{"tools":true,"tool_choice":true,"temperature":true,"top_p":true,"reasoning_efforts":["low","high"],"context_window":32768,"max_output_tokens":4096}'
+    streaming: true
+  outcome: observed
+assert:
+- view: llm.chat.LastRequestProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastRequestProjection
+  contains:
+    accepted: true
+    error_code: null
+    # The binding's upstream name, never the caller's route alias "small".
+    wire_model: Qwen/Qwen3-8B
+    body_fields: [max_completion_tokens, messages, model, reasoning_effort, stream, stream_options, temperature]
+    message_roles: [system, user]
+    message_contents: [Be brief, Hello]
+    # The deprecated max_tokens is never the field this projection sends.
+    output_limit_field: max_completion_tokens
+    output_limit: '256'
+    stream: true
+    include_usage: true
+    tool_choice: null
