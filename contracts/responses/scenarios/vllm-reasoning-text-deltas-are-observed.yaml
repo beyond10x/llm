@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: vllm-reasoning-text-deltas-are-observed
+summary: vllm reasoning text deltas are observed
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.reasoning_part.added","summary_index":0},{"type":"response.reasoning_text.delta","delta":"Weighing the options."},{"type":"response.reasoning_text.done","text":"Weighing the options."},{"type":"response.reasoning_part.done","summary_index":0},{"type":"response.completed","response":{"status":"completed","output":[]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stream_events:
+    - reasoning-delta:Weighing the options.
+    items_json: '[]'

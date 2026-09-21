@@ -10,3 +10,10 @@ description = "Responses protocol projection and gateway ingress for the declare
 
 [lints]
 workspace = true
+
+[lib]
+name = "llm_responses"
+
+[dependencies]
+llm-core.workspace = true
+serde_json.workspace = true

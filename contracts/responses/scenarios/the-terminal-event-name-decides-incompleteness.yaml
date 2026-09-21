@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: the-terminal-event-name-decides-incompleteness
+summary: the terminal event name decides incompleteness
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.incomplete","response":{"id":"resp_1","model":"example/Small-Model","incomplete_details":{"reason":"max_output_tokens"},"output":[]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stop_reason: max-output-tokens
+    incomplete_reason: null
