@@ -1,0 +1,103 @@
+/* The 404 panel: the homepage's panel language, at the width of a single column of prose. */
+
+.wrapper {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+}
+
+.panel {
+  background: var(--ep-panel);
+  border: 1px solid var(--ep-line);
+  border-radius: 10px;
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.15rem;
+  border-bottom: 1px solid var(--ep-line);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ep-muted);
+}
+
+.status {
+  color: var(--ep-amber-text);
+}
+
+.title {
+  font-size: clamp(1.35rem, 3.4vw, 1.75rem);
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.body {
+  max-width: 60ch;
+  color: var(--ep-text-soft);
+}
+
+.links {
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--ep-line);
+}
+
+.links li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--ep-line);
+}
+
+.links a {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.links a::after {
+  content: ' →';
+}
+
+.links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.links span {
+  font-size: 0.85rem;
+  color: var(--ep-muted);
+  text-align: right;
+}
+
+@media screen and (max-width: 700px) {
+  .wrapper {
+    padding: 2.25rem 1rem 4rem;
+  }
+
+  .panel {
+    padding: 1.15rem 1.15rem 1.4rem;
+  }
+
+  .links li {
+    flex-direction: column;
+    gap: 0.15rem;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .links span {
+    text-align: left;
+  }
+}
