@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: accepted-stop-sequence-in-an-undocumented-shape-refused
+summary: the terminal sequence this subset accepts and never reads is refused when it is not a name
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.DecodeMessage
+  input:
+    request_json: "{\"format\":\"llm.turn/2\",\"request\":{\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"model\":\"internal-model\",\"tools\":[{\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"},\"name\":\"lookup\"}]}}"
+    message_json: "{\"content\":[{\"text\":\"Hello\",\"type\":\"text\"}],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"stop_sequence\":5,\"type\":\"message\",\"usage\":{\"input_tokens\":11,\"output_tokens\":8}}"
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "protocol"
+    dispatch: "accepted"
+    wire_request: null
+    neutral_request: null
+    stream: null
+    items: []
+    text: ""
+    reasoning: ""
+    tool_arguments: []
+    upstream_model: null
+    response_id: null
+    final_usage: false
+    usage_json: null
+    stop_reason: null

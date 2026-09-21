@@ -8,9 +8,13 @@ entities:
     fields: &codec_facts
       - {name: accepted, type: Boolean}
       - {name: error_code, type: Optional<String>}
+      # The diagnostic itself, so a scenario pins that it is fixed and carries no upstream text.
+      - {name: error_message, type: Optional<String>}
       - {name: dispatch, type: Optional<String>}
       - {name: wire_request, type: Optional<String>}
       - {name: neutral_request, type: Optional<String>}
+      # The ingress streaming choice, which the neutral request does not carry.
+      - {name: stream, type: Optional<Boolean>}
       - {name: items, type: List<String>}
       - {name: text, type: String}
       - {name: reasoning, type: String}
@@ -18,6 +22,7 @@ entities:
       - {name: upstream_model, type: Optional<String>}
       - {name: response_id, type: Optional<String>}
       - {name: final_usage, type: Optional<Boolean>}
+      # Absent counters are absent from this encoding; unknown is never reported as zero.
       - {name: usage_json, type: Optional<String>}
       - {name: stop_reason, type: Optional<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
@@ -38,6 +43,14 @@ commands:
       - name: observed
         emits: [llm.messages.Inspected]
         summary: Observe the production SSE framing and Messages decoder, including failures and partial usage.
+  - name: llm.messages.DecodeMessage
+    input:
+      - {name: request_json, type: String}
+      - {name: message_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.messages.Inspected]
+        summary: Observe the shared complete-response decoder that the stream decoder also finishes through.
 events:
   - name: llm.messages.Inspected
     fields:

@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: foreign-opaque-state-refused
+summary: opaque state from another binding revision is refused rather than replayed
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"payload\":{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}}],\"tools\":[]}}"
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "unsupported"
+    dispatch: "not-sent"
+    wire_request: null
+    neutral_request: null
+    stream: null
+    items: []
+    text: ""
+    reasoning: ""
+    tool_arguments: []
+    upstream_model: null
+    response_id: null
+    final_usage: null
+    usage_json: null
+    stop_reason: null

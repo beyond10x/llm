@@ -67,18 +67,19 @@ impl Snapshot {
                 }
             }
         }
-        for field in ["service_tier", "inference_geo"] {
-            if value
-                .get(field)
-                .is_some_and(|v| !v.is_null() && !v.is_string())
-            {
-                return Err(Error::protocol(
-                    "Messages usage metadata has an invalid type",
-                ));
-            }
-        }
+        // `service_tier` and `inference_geo` are accepted here and read nowhere; the shape they
+        // have to arrive in is enforced by `fields` above, with the rest of that class.
         next.normalized()?.validate()?;
         Ok(next)
+    }
+
+    /// Whether the route reported any counter at all. Nothing reported stays unknown, not zero.
+    pub const fn is_known(&self) -> bool {
+        self.input.is_some()
+            || self.read.is_some()
+            || self.created.is_some()
+            || self.output.is_some()
+            || self.reasoning.is_some()
     }
 
     pub fn normalized(&self) -> Result<Usage, Error> {

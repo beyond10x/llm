@@ -1,4 +1,4 @@
-use crate::{absent, fields, string};
+use crate::{absent, fields, optional, string};
 use llm_core::{
     CallId, Error, Item, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, Protocol, Provenance,
     Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, exceeds,
@@ -6,6 +6,7 @@ use llm_core::{
 use llm_providers::Binding;
 use serde_json::{Value, json};
 
+#[derive(Debug)]
 pub struct IngressRequest {
     pub request: TurnRequest,
     pub stream: bool,
@@ -117,7 +118,13 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
 }
 
 /// Decode only the declared neutral subset. The wire's model remains the caller's routing name.
-/// `origin` is an explicit assertion for opaque native state; the embedding application owns it.
+///
+/// `origin` states which protocol this gateway is reading, and nothing more. It is deliberately
+/// **not** used to attribute arriving opaque state: a request carries no evidence of what served
+/// the reasoning inside it, so this decoder refuses that state rather than binding it to the
+/// reader. See `docs/messages.md`; the cost is that reasoning continuity does not survive a
+/// gateway round trip until `story:unattributed-opaque-state` supplies a way to carry it.
+///
 /// # Errors
 /// Refuses unsupported fields/content rather than silently dropping provider semantics.
 pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressRequest, Error> {
@@ -154,22 +161,38 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
             .filter(|n| *n != 0)
             .ok_or_else(|| Error::invalid("Messages max_tokens must be positive"))?,
     );
-    request.instructions = match value.get("system") {
-        None => String::new(),
-        Some(Value::String(s)) => s.clone(),
+    request.instructions = instructions(&value)?;
+    decode_messages(&value, &mut request)?;
+    decode_tools(&value, &mut request)?;
+    decode_sampling(&value, &mut request)?;
+    decode_tool_choice(&value, &mut request)?;
+    let stream = match optional(&value, "stream") {
+        None => false,
+        Some(Value::Bool(b)) => *b,
+        _ => return Err(Error::invalid("Messages stream must be boolean")),
+    };
+    request.validate()?;
+    Ok(IngressRequest { request, stream })
+}
+/// The system prompt, which this route carries either as text or as one text block.
+fn instructions(value: &Value) -> Result<String, Error> {
+    match optional(value, "system") {
+        None => Ok(String::new()),
+        Some(Value::String(text)) => Ok(text.clone()),
         Some(Value::Array(blocks)) if blocks.len() == 1 => {
             fields(&blocks[0], &["type", "text"])?;
             if string(&blocks[0], "type")? != "text" {
                 return Err(Error::unsupported("Messages system block is not text"));
             }
-            string(&blocks[0], "text")?.to_owned()
+            Ok(string(&blocks[0], "text")?.to_owned())
         }
-        _ => {
-            return Err(Error::unsupported(
-                "Messages system shape is outside the declared subset",
-            ));
-        }
-    };
+        _ => Err(Error::unsupported(
+            "Messages system shape is outside the declared subset",
+        )),
+    }
+}
+
+fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
     let messages = value
         .get("messages")
         .and_then(Value::as_array)
@@ -192,83 +215,91 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
                 Item::assistant(text)
             });
         } else {
-            for content in content
+            for block in content
                 .as_array()
                 .ok_or_else(|| Error::invalid("Messages content must be text or blocks"))?
             {
                 request
                     .items
-                    .push(decode_block(content, role == "user", origin)?);
+                    .push(decode_block(block, role == "user", None)?);
             }
         }
     }
     if request.items.first().is_none_or(|item| !user(item)) {
         return Err(Error::invalid("Messages requires initial user content"));
     }
-    if let Some(tools) = value.get("tools") {
-        for tool in tools
-            .as_array()
-            .ok_or_else(|| Error::invalid("Messages tools must be an array"))?
-        {
-            fields(tool, &["name", "description", "input_schema"])?;
-            let schema = tool
-                .get("input_schema")
-                .filter(|s| s.is_object())
-                .ok_or_else(|| Error::unsupported("Messages tool schema must be an object"))?;
-            let description = match tool.get("description") {
-                None => String::new(),
-                Some(Value::String(s)) => s.clone(),
-                _ => return Err(Error::invalid("Messages tool description must be text")),
-            };
-            request.tools.push(ToolSpec {
-                name: name(string(tool, "name")?)?,
-                description,
-                input_schema: schema.clone(),
-            });
-        }
+    Ok(())
+}
+
+fn decode_tools(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
+    let Some(tools) = optional(value, "tools") else {
+        return Ok(());
+    };
+    for tool in tools
+        .as_array()
+        .ok_or_else(|| Error::invalid("Messages tools must be an array"))?
+    {
+        fields(tool, &["name", "description", "input_schema"])?;
+        let schema = tool
+            .get("input_schema")
+            .filter(|schema| schema.is_object())
+            .ok_or_else(|| Error::unsupported("Messages tool schema must be an object"))?;
+        let description = match optional(tool, "description") {
+            None => String::new(),
+            Some(Value::String(text)) => text.clone(),
+            _ => return Err(Error::invalid("Messages tool description must be text")),
+        };
+        request.tools.push(ToolSpec {
+            name: name(string(tool, "name")?)?,
+            description,
+            input_schema: schema.clone(),
+        });
     }
+    Ok(())
+}
+
+fn decode_sampling(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
     request.sampling = Sampling {
-        temperature: number(&value, "temperature")?,
-        top_p: number(&value, "top_p")?,
+        temperature: number(value, "temperature")?,
+        top_p: number(value, "top_p")?,
         reasoning_effort: None,
     };
     if request.sampling.temperature.is_some_and(|n| n > 1.0) {
         return Err(Error::unsupported("Messages temperature exceeds one"));
     }
-    if let Some(config) = value.get("output_config") {
+    if let Some(config) = optional(value, "output_config") {
         fields(config, &["effort"])?;
         request.sampling.reasoning_effort = Some(string(config, "effort")?.to_owned());
     }
-    if let Some(choice) = value.get("tool_choice") {
-        fields(choice, &["type", "name"])?;
-        request.tool_choice = match string(choice, "type")? {
-            "auto" => {
-                absent(choice, "name")?;
-                ToolChoice::Auto
-            }
-            "any" => {
-                absent(choice, "name")?;
-                ToolChoice::Required
-            }
-            "tool" => ToolChoice::Named(name(string(choice, "name")?)?),
-            _ => {
-                return Err(Error::unsupported(
-                    "Messages tool choice is outside the declared subset",
-                ));
-            }
-        };
-    }
-    let stream = match value.get("stream") {
-        None => false,
-        Some(Value::Bool(b)) => *b,
-        _ => return Err(Error::invalid("Messages stream must be boolean")),
-    };
-    request.validate()?;
-    Ok(IngressRequest { request, stream })
+    Ok(())
 }
+
+fn decode_tool_choice(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
+    let Some(choice) = optional(value, "tool_choice") else {
+        return Ok(());
+    };
+    fields(choice, &["type", "name"])?;
+    request.tool_choice = match string(choice, "type")? {
+        "auto" => {
+            absent(choice, "name")?;
+            ToolChoice::Auto
+        }
+        "any" => {
+            absent(choice, "name")?;
+            ToolChoice::Required
+        }
+        "tool" => ToolChoice::Named(name(string(choice, "name")?)?),
+        _ => {
+            return Err(Error::unsupported(
+                "Messages tool choice is outside the declared subset",
+            ));
+        }
+    };
+    Ok(())
+}
+
 fn number(value: &Value, field: &str) -> Result<Option<f64>, Error> {
-    value
-        .get(field)
+    optional(value, field)
         .map(|v| {
             v.as_f64()
                 .ok_or_else(|| Error::invalid("Messages sampling must be numeric"))
@@ -300,7 +331,17 @@ pub(crate) fn opaque(value: &Value) -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn decode_block(value: &Value, user: bool, origin: &Provenance) -> Result<Item, Error> {
+/// Decode one content block.
+///
+/// `attribution` is the binding that **served** this block, and is `Some` only where that is a
+/// fact: a response this client read from its own bound endpoint. An arriving request carries no
+/// binding, so ingress passes `None` and unattributable opaque state is refused there. Stamping
+/// the reading binding onto it would launder state that egress refuses from any other binding.
+pub(crate) fn decode_block(
+    value: &Value,
+    user: bool,
+    attribution: Option<&Provenance>,
+) -> Result<Item, Error> {
     match string(value, "type")? {
         "text" => {
             fields(value, &["type", "text", "citations"])?;
@@ -338,7 +379,7 @@ pub(crate) fn decode_block(value: &Value, user: bool, origin: &Provenance) -> Re
         }
         "tool_result" if user => {
             fields(value, &["type", "tool_use_id", "content", "is_error"])?;
-            let failed = match value.get("is_error") {
+            let failed = match optional(value, "is_error") {
                 None => false,
                 Some(Value::Bool(b)) => *b,
                 _ => {
@@ -356,8 +397,13 @@ pub(crate) fn decode_block(value: &Value, user: bool, origin: &Provenance) -> Re
         }
         "thinking" | "redacted_thinking" if !user => {
             opaque(value)?;
+            let provenance = attribution.ok_or_else(|| {
+                Error::unsupported(
+                    "Messages thinking cannot be attributed to a serving binding on arrival",
+                )
+            })?;
             Ok(Item::Opaque {
-                provenance: origin.clone(),
+                provenance: provenance.clone(),
                 payload: value.clone(),
             })
         }
