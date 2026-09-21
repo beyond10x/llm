@@ -193,12 +193,19 @@ entities:
       initial: Declared
       states: [Declared]
       terminal: [Declared]
+  # Requested. Every field is what an operator asked for; none of them is evidence about a
+  # resource. The observed counterpart is llm.catalog.ProvisionedDeployment, and no field of
+  # that one is ever filled in from this one. See docs/hosting.md.
   - name: llm.catalog.DeploymentSpec
     identity: { name: id, type: String }
     fields:
       - { name: account_id, type: String }
       - { name: model_id, type: String }
       - { name: image, type: String }
+      # The name to ask the provider for. Not an identity: a provider may hand the same name to
+      # a later resource once this one is gone.
+      - { name: requested_resource_name, type: String }
+      - { name: requested_lifetime_ms, type: String }
     relations:
       - { name: account, kind: references, target: llm.catalog.Account, cardinality: one, via: account_id }
       - { name: model, kind: references, target: llm.catalog.Model, cardinality: one, via: model_id }
@@ -206,12 +213,21 @@ entities:
       initial: Declared
       states: [Declared]
       terminal: [Declared]
+  # Observed. `resource_incarnation` is the provider-assigned value that makes two resources
+  # sharing one name distinguishable across epochs; identity is the pair, never the name alone.
+  # Every liveness field is optional because a provider that does not report one leaves it
+  # unknown, and unknown is never the requested value substituted in.
   - name: llm.catalog.ProvisionedDeployment
     identity: { name: id, type: String }
     fields:
       - { name: deployment_spec_id, type: String }
       - { name: resource_id, type: String }
+      - { name: resource_incarnation, type: String }
       - { name: observation, type: String }
+      - { name: observed_state, type: 'Optional<String>' }
+      - { name: observed_ready, type: 'Optional<Boolean>' }
+      - { name: observed_endpoint, type: 'Optional<String>' }
+      - { name: observed_served_model_id, type: 'Optional<String>' }
     relations:
       - { name: specification, kind: references, target: llm.catalog.DeploymentSpec, cardinality: one, via: deployment_spec_id }
     lifecycle:
