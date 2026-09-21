@@ -49,12 +49,12 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 
 | Unit | Branch | Worktree (managed id `wave1-*`) | Build directory | Stage |
 |---|---|---|---|---|
-| `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | green after correction, adversary pass 2 running |
+| `story:messages-projection` | `impl/messages-projection` | `wave1-messages` | `~/.cache/b10x-target/llm-wave1/messages` | adversary pass 2 red, correction round running |
 | `story:responses-projection` | `impl/responses-projection` | `wave1-responses` | `~/.cache/b10x-target/llm-wave1/responses` | merged into `wave/1` at `d10a2a8` |
 | `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | merged into `wave/1` at `f9ec6dd` |
 | `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | merged into `wave/1` at `4f8be99` |
 | `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | merged into `wave/1` at `1ffba7b` |
-| `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | green after correction, adversary pass 2 running |
+| `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | adversary pass 2 red, correction round running |
 
 Every worktree is under `/home/timo/.local/state/worktree/trees/b10x/llm/`. Each unit's scratch
 directory is `~/.cache/llm-wave-1/<unit>/` and holds its brief. The briefs share
@@ -109,6 +109,42 @@ interruption:
    last merge.
 
 Disk at the four merges: 27 GB free, against a floor of 10 GB.
+
+### Both second passes came back red, and what that changed
+
+| Unit | Pass 2 | Findings | Cases |
+|---|---|---|---|
+| `story:hosting-contract` | needs-change | 11, all introduced: 1 blocker, 6 warnings, 4 notes | 146 → 151, red 5 |
+| `story:messages-projection` | needs-change | 7, all introduced: 1 blocker, 4 warnings, 2 notes | 52 → 63, red 3 |
+
+Recorded as `review-result:adversary-hosting-pass-2` and `review-result:adversary-messages-pass-2`.
+Both are the wave's recurring class in a harder form: not fixtures that cannot reach a guard, but
+guards no mutation was ever aimed at. Six such guards in hosting, nine surviving mutations of twelve
+in messages.
+
+Hosting's blocker is pass 1's blocker reached through a second slot, which is the case the wave rules
+send to a fresh implementor rather than back to the same one. Both units' sessions are gone in any
+case, so both correction rounds went to fresh implementors, each handed its brief file, both review
+records and what had already been tried.
+
+**The attack budget is spent for both.** The coordinator verifies each correction by reading the diff.
+There is no third pass.
+
+Three decisions the coordinator took rather than handing back:
+
+1. Messages' blocker is fixed in code, not by writing the gap into three documents. The contract
+   promises a bounded turn and `with_turn_limit` is public, so the documents are not the thing that is
+   wrong.
+2. For that round only, `crates/llm-http/` is the messages implementor's to edit directly. It is
+   coordinator-owned and no other unit in this wave touches it, and the patch route was tried in the
+   previous round with half of it silently not applying.
+3. The hosting adversary's two test files and the messages adversary's three are the specification for
+   their correction rounds. Neither implementor may delete, ignore or weaken one; a case believed wrong
+   stays red and is argued.
+
+`contracts/ess-inputs.yaml` lists 177 scenarios and **zero** for any of the four new domains —
+responses, chat, messages and hosting — so the coordinator's manifest step is load-bearing for the
+whole gate rather than tidying.
 
 ## The interruption
 
