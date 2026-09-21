@@ -1,0 +1,25 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: incoming-a-report-without-output-tokens-leaves-only-that-unknown
+summary: incoming a report without output tokens leaves only that unknown
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.chat.ProjectResponse
+  input:
+    response: '{"choices":[{"index":0,"message":{"role":"assistant","content":"x"},"finish_reason":"stop"}],"usage":{"prompt_tokens":11,"prompt_tokens_details":{"cached_tokens":3,"cache_creation_input_tokens":2},"completion_tokens_details":{"reasoning_tokens":5}}}'
+    streamed: false
+  outcome: observed
+assert:
+- view: llm.chat.LastResponseProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastResponseProjection
+  contains:
+    accepted: true
+    usage_reported: true
+    # The rule, one counter at a time: a report naming every counter this wire carries,
+    # with exactly `completion_tokens` removed. Only that one becomes unknown.
+    output_tokens: null
+    input_tokens: '11'
+    cached_input_tokens: '3'
+    cache_creation_input_tokens: '2'
+    reasoning_output_tokens: '5'

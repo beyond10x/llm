@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: outgoing-failed-tool-result-keeps-its-failure
+summary: outgoing failed tool result keeps its failure
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.ProjectRequest
+  input:
+    turn_json: '{"format":"llm.turn/2","request":{"model":"small","instructions":"","items":[{"kind":"tool-call","call_id":"call-1","name":"lookup","arguments":{}},{"kind":"tool-result","call_id":"call-1","output":"","failed":true}],"tools":[{"name":"lookup","description":"Look
+      a city up","input_schema":{"type":"object"}}]}}'
+    protocol: chat-completions
+    upstream_model: Qwen/Qwen3-8B
+    capabilities_json: '{"tools":true,"tool_choice":true,"temperature":true,"top_p":true,"reasoning_efforts":["low","high"],"context_window":32768,"max_output_tokens":4096}'
+    streaming: true
+  outcome: observed
+assert:
+- view: llm.chat.LastRequestProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastRequestProjection
+  contains:
+    accepted: true
+    message_roles: [assistant, tool]
+    # An empty failed result must not reach the model as an empty success.
+    message_contents: ['', '{"error":"","ok":false}']

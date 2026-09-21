@@ -1,0 +1,12 @@
+data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning_content":null},"logprobs":null,"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"reasoning_content":"The user greets me."},"logprobs":null,"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"content":"Guten "},"logprobs":null,"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"content":"Tag"},"logprobs":null,"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-8f0c2a1d4b6e4f5a9c3d7e2b1a0f6c8d","object":"chat.completion.chunk","created":1772000200,"model":"Qwen/Qwen3-8B","choices":[{"index":0,"delta":{"content":""},"logprobs":null,"finish_reason":"stop","stop_reason":null}],"usage":null}
+
+data: [DONE]
+

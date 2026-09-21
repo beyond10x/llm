@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: incoming-a-truncated-stream-is-refused
+summary: incoming a truncated stream is refused
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.ProjectResponse
+  input:
+    response: |+
+      data: {"choices":[{"index":0,"delta":{"content":"all of it"},"finish_reason":"stop"}]}
+
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.chat.LastResponseProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastResponseProjection
+  contains:
+    accepted: false
+    dispatch: accepted
+    # A finish reason is not a terminated stream; the sentinel is the wire's own proof.
+    error_code: protocol
+    error_message: chat completion stream ended before its terminal sentinel
+    stream_text: all of it
