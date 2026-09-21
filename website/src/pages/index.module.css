@@ -1,0 +1,337 @@
+/**
+ * The landing page, styled as the social card is drawn.
+ *
+ * The hero is the card: the same field colour, the same green-to-blue accent rule across the top,
+ * the same hairline closing it off. It stays dark under the light theme too — it is the one place
+ * on the site that *is* the brand image rather than a page rendered in the brand's colours, so its
+ * colours are literals here rather than theme variables.
+ *
+ * Below the hero the page is four panels in a column, one per step of the argument, all held to
+ * one width (`--ep-page`) and one internal rhythm. The only motion is the accent rule drawing
+ * itself once, in 1.15s, and not at all under `prefers-reduced-motion`.
+ */
+
+.heroBanner {
+  --ep-page: 64rem;
+  position: relative;
+  overflow: hidden;
+  padding: 5rem 0 4.25rem;
+  text-align: left;
+  color: #e8eef4;
+  background-color: #0f1418;
+  /* A panel grid at the threshold of visibility, and one cool wash off the top edge. */
+  background-image: linear-gradient(
+      180deg,
+      rgba(88, 166, 255, 0.05) 0%,
+      rgba(15, 20, 24, 0) 60%
+    ),
+    linear-gradient(to right, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 100% 100%, 34px 34px, 34px 34px;
+  border-bottom: 1px solid #2b3540;
+}
+
+/* The accent rule from the top of `static/img/social-card.svg`, drawn left to right once on load.
+   `both` holds the end state, so under `prefers-reduced-motion` — where the global rule collapses
+   every duration to a millisecond — the rule is simply there, full width, unanimated. */
+.heroBanner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff9070 0%, #58a6ff 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: heroRule 1150ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes heroRule {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* The mark's verdict tick, enlarged to a watermark off the right edge. Inlined rather than
+   referenced from `static/`, because a stylesheet URL cannot see the site's `baseUrl`. */
+.heroBanner::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 2vw;
+  width: 21rem;
+  height: 21rem;
+  transform: translateY(-50%);
+  opacity: 0.06;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9.4 17 L13.9 21.5 L22.8 12' fill='none' stroke='%233fb950' stroke-width='2.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* `.hero` is a flex container in Infima, so without a width this box would shrink to its longest
+   line and centre on that — the title would not sit above the panels below it. */
+.heroInner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--ep-page);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.heroBanner :global(.hero__title) {
+  font-size: clamp(1.85rem, 4.2vw, 2.85rem);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #e8eef4;
+  margin-bottom: 1.1rem;
+}
+
+.heroBanner :global(.hero__subtitle) {
+  max-width: 44rem;
+  margin: 0 0 2rem;
+  font-size: clamp(1rem, 2.4vw, 1.08rem);
+  line-height: 1.65;
+  font-weight: 400;
+  color: #a8b4c0;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.buttons :global(.button--secondary) {
+  background-color: transparent;
+  border-color: #2b3540;
+  color: #d7dde3;
+}
+
+.buttons :global(.button--secondary:hover) {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: #58a6ff;
+  color: #ffffff;
+}
+
+/* ------------------------------------------------------------------ *
+ * Section rhythm — one width, one panel, alternating field only
+ * ------------------------------------------------------------------ */
+
+.section {
+  --ep-page: 64rem;
+  padding: 3.25rem 0;
+  border-top: 1px solid var(--ep-line);
+}
+
+.sectionAlt {
+  background-color: var(--ep-panel);
+}
+
+/* On the alternating band the panel would be a panel on a panel; it drops to the field colour
+   instead, so exactly one surface changes per section rather than two. */
+.sectionAlt .panel {
+  background-color: var(--ep-field);
+}
+
+.sectionInner {
+  max-width: var(--ep-page);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.panel {
+  background-color: var(--ep-panel);
+  border: 1px solid var(--ep-line);
+  border-radius: 10px;
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+
+/* The panel header strip: ordinal, label, and an optional chip pushed to the right. */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -0.35rem -0.35rem 1.15rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--ep-line);
+}
+
+.panelEyebrow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ep-muted);
+}
+
+.panelOrdinal {
+  color: var(--ifm-color-primary);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--ep-line-strong);
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+  background: var(--ep-panel-raised);
+  white-space: nowrap;
+}
+
+.chip code {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--ep-muted);
+}
+
+.panelTitle {
+  position: relative;
+  margin-bottom: 1.1rem;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  letter-spacing: -0.02em;
+  scroll-margin-top: 5rem;
+}
+
+.panelBody :global(p) {
+  max-width: 72ch;
+  color: var(--ep-text-soft);
+}
+
+.panelBody :global(.theme-code-block) {
+  margin: 1.4rem 0;
+}
+
+.panelMore {
+  margin-top: 1.4rem;
+  margin-bottom: 0 !important;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------------ *
+ * The specification/contract pairing
+ * ------------------------------------------------------------------ */
+
+.compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.9rem;
+  margin: 1.6rem 0;
+}
+
+.compareSide {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.compareSide :global(.theme-code-block) {
+  margin: 0 !important;
+  flex: 1;
+}
+
+.compareSide :global(pre) {
+  font-size: 0.78rem;
+}
+
+/* The derivation, drawn rather than claimed: the accent gradient, as one arrow. */
+.compareArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 1.35rem;
+  line-height: 1;
+  background: linear-gradient(90deg, var(--ifm-color-primary) 0%, var(--ep-blue-text) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ------------------------------------------------------------------ *
+ * The status ledger — built on the green side, not built on the amber
+ * ------------------------------------------------------------------ */
+
+.ledger {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.ledgerBuilt,
+.ledgerNot {
+  margin-bottom: 0 !important;
+  padding-left: 1.1rem;
+  border-left: 2px solid var(--ifm-color-primary);
+}
+
+.ledgerNot {
+  border-left-color: var(--ep-amber-text);
+}
+
+/* ------------------------------------------------------------------ *
+ * Narrow screens
+ * ------------------------------------------------------------------ */
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 3.25rem 0 2.75rem;
+  }
+
+  .heroInner {
+    padding: 0 1rem;
+  }
+
+  .heroBanner::after {
+    display: none;
+  }
+
+  .section {
+    padding: 2.25rem 0;
+  }
+
+  .sectionInner {
+    padding: 0 1rem;
+  }
+
+  .panel {
+    padding: 1.15rem 1.15rem 1.4rem;
+    border-radius: 8px;
+  }
+
+  .compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compareArrow {
+    transform: rotate(90deg);
+    padding: 0.15rem 0;
+  }
+}
+
+/* Buttons and inline "more" links are tap targets before they are type. */
+@media (pointer: coarse) {
+  .buttons :global(.button--lg) {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .panelMore a {
+    display: inline-block;
+    padding: 0.35rem 0;
+  }
+}

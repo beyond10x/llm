@@ -1,0 +1,1405 @@
+/**
+ * The site's theme, in one file.
+ *
+ * The palette is not invented here: it is read off `static/img/social-card.svg` and
+ * `static/img/trace-evidence-gate.svg`, so a diagram dropped into a page sits on the same
+ * background it was drawn against. Dark is the brand's home — the diagrams are dark, the terminal
+ * output quoted throughout is dark — and light is the same palette inverted, not a second brand.
+ *
+ *   #0f1418  the field            #d7dde3  text
+ *   #161d24  a panel              #8b98a5  secondary text (6.4:1 on the field, 5.8:1 on a panel)
+ *   #2b3540  a hairline           #ffd166  a verdict, a link, the accent
+ *   #58a6ff  motion, a token      #d29922  advisory, "soon"
+ *
+ * Type is system-only: no webfont is downloaded, and the mono stack carries headings, tables
+ * headers, labels and the navbar so the chrome reads like the diagrams rather than like a
+ * marketing page. Everything that moves does so in 200ms or less, and not at all under
+ * `prefers-reduced-motion`.
+ */
+
+/* ------------------------------------------------------------------ *
+ * Tokens shared by both themes
+ * ------------------------------------------------------------------ */
+
+:root {
+  --ifm-font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --ifm-font-family-monospace: ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
+    Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+  --ifm-heading-font-family: var(--ifm-font-family-monospace);
+
+  --ifm-font-size-base: 16px;
+  --ifm-line-height-base: 1.7;
+  --ifm-heading-font-weight: 600;
+  --ifm-heading-line-height: 1.3;
+  --ifm-h1-font-size: 2rem;
+  --ifm-h2-font-size: 1.45rem;
+  --ifm-h3-font-size: 1.15rem;
+  --ifm-h4-font-size: 1rem;
+  --ifm-h5-font-size: 0.9rem;
+  --ifm-h6-font-size: 0.8rem;
+  --ifm-paragraph-margin-bottom: 1.15rem;
+
+  --ifm-code-font-size: 88%;
+  --ifm-code-border-radius: 4px;
+  --ifm-code-padding-horizontal: 0.34rem;
+  --ifm-code-padding-vertical: 0.14rem;
+  --ifm-pre-padding: 1rem;
+  --ifm-pre-line-height: 1.6;
+
+  --ifm-global-radius: 6px;
+  --ifm-button-border-radius: 6px;
+  --ifm-global-shadow-lw: none;
+  --ifm-navbar-height: 3.5rem;
+  --ifm-navbar-padding-vertical: 0.5rem;
+  --ifm-navbar-item-padding-horizontal: 0.85rem;
+  --ifm-navbar-link-hover-color: var(--ifm-color-primary);
+  --ifm-footer-padding-vertical: 2.5rem;
+  --ifm-alert-border-radius: 8px;
+  --ifm-alert-border-left-width: 3px;
+  --ifm-alert-padding-vertical: 1rem;
+  --ifm-alert-shadow: none;
+  --ifm-blockquote-font-size: 1rem;
+  --ifm-blockquote-padding-horizontal: 1rem;
+  --ifm-blockquote-border-left-width: 2px;
+  --ifm-table-cell-padding: 0.6rem 0.85rem;
+  --ifm-table-head-font-weight: 600;
+  --ifm-toc-padding-vertical: 0.6rem;
+  --ifm-menu-link-padding-vertical: 0.32rem;
+  --ifm-menu-link-padding-horizontal: 0.65rem;
+  --ifm-transition-fast: 140ms;
+  --ifm-transition-slow: 200ms;
+
+  /* The brand's own names, used everywhere below and by the page modules. The gold-to-blue accent
+     rule is declared where it is drawn (the hero, the section headings), not as a token. */
+  --ep-accent-gold: #ffd166;
+  --ep-accent-blue: #58a6ff;
+  --ep-accent-amber: #d29922;
+
+  /* Prose is set to a measure, not to the column: past roughly 75 characters the eye loses the
+     start of the next line. Tables, code blocks and diagrams keep the full column. */
+  --ep-measure: 74ch;
+  /* Every anchor jump lands the heading clear of the sticky navbar rather than under it. */
+  --ep-anchor-offset: calc(var(--ifm-navbar-height) + 1.25rem);
+
+  /* The GitHub mark, as a mask rather than an image: it is filled with `currentColor`, so one
+     declaration serves both themes and every hover state. */
+  --ep-github-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------------ *
+ * Dark — the brand's home
+ * ------------------------------------------------------------------ */
+
+[data-theme='dark'] {
+  --ifm-color-primary: #ffd166;
+  --ifm-color-primary-dark: #e6b94a;
+  --ifm-color-primary-darker: #dbae3f;
+  --ifm-color-primary-darkest: #c49a2f;
+  --ifm-color-primary-light: #ffdb85;
+  --ifm-color-primary-lighter: #ffe094;
+  --ifm-color-primary-lightest: #ffe7ad;
+
+  --ifm-background-color: #0f1418;
+  --ifm-background-surface-color: #161d24;
+  --ifm-font-color-base: #d7dde3;
+  --ifm-heading-color: #e8eef4;
+  --ifm-link-hover-color: var(--ifm-color-primary-lighter);
+
+  --ep-field: #0f1418;
+  --ep-panel: #161d24;
+  --ep-panel-raised: #1b232b;
+  --ep-line: #2b3540;
+  --ep-line-strong: #3a4653;
+  --ep-text: #d7dde3;
+  --ep-text-soft: #c2ccd6;
+  --ep-muted: #8b98a5;
+  --ep-row-hover: rgba(88, 166, 255, 0.05);
+  --ep-underline: rgba(255, 209, 102, 0.42);
+  --ep-accent-soft: rgba(255, 209, 102, 0.45);
+  --ep-stripe: rgba(255, 255, 255, 0.018);
+  --ep-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  --ep-edge-shadow: rgba(0, 0, 0, 0.42);
+  --ep-selection: rgba(88, 166, 255, 0.3);
+  /* The brand's amber and blue are drawn for a dark field; on a dark field they are also the
+     text-safe pair, so these are the same colours here and different ones under light. */
+  --ep-amber-text: #d29922;
+  --ep-blue-text: #58a6ff;
+
+  --ifm-color-emphasis-0: #0b0f13;
+  --ifm-color-emphasis-100: #161d24;
+  --ifm-color-emphasis-200: #1b232b;
+  --ifm-color-emphasis-300: #2b3540;
+  --ifm-color-emphasis-400: #3a4653;
+  --ifm-color-emphasis-500: #55636f;
+  --ifm-color-emphasis-600: #6f7d8a;
+  --ifm-color-emphasis-700: #8b98a5;
+  --ifm-color-emphasis-800: #b3bec9;
+
+  --ifm-hr-border-color: #2b3540;
+  --ifm-toc-border-color: #2b3540;
+  --ifm-table-border-color: #2b3540;
+  --ifm-table-stripe-background-color: var(--ep-stripe);
+  --ifm-table-head-background: transparent;
+  --ifm-blockquote-color: #b6c1cc;
+  --ifm-blockquote-border-color: #3a4653;
+  --ifm-code-background: rgba(88, 166, 255, 0.07);
+  --ifm-navbar-background-color: rgba(15, 20, 24, 0.86);
+  --ifm-navbar-search-input-background-color: #161d24;
+  --ifm-footer-background-color: #0b0f13;
+  --ifm-menu-color: #a9b5c1;
+  --ifm-menu-color-active: var(--ifm-color-primary);
+  --ifm-menu-color-background-active: transparent;
+  --ifm-menu-color-background-hover: rgba(255, 255, 255, 0.04);
+  --ifm-breadcrumb-color-active: var(--ifm-color-primary);
+  --ifm-breadcrumb-item-background-active: rgba(255, 209, 102, 0.1);
+  --ifm-dropdown-background-color: #161d24;
+  --ifm-scrollbar-track-background-color: #0f1418;
+  --ifm-scrollbar-thumb-background-color: #2b3540;
+  --ifm-scrollbar-thumb-hover-background-color: #3a4653;
+
+  --docusaurus-highlighted-code-line-bg: rgba(88, 166, 255, 0.12);
+
+  /* Admonitions: a tinted panel, not a coloured slab. */
+  --ifm-color-info-contrast-background: rgba(88, 166, 255, 0.08);
+  --ifm-color-info-contrast-foreground: #d7dde3;
+  --ifm-color-info-dark: var(--ep-accent-blue);
+  --ifm-color-success-contrast-background: rgba(255, 209, 102, 0.08);
+  --ifm-color-success-contrast-foreground: #d7dde3;
+  --ifm-color-success-dark: var(--ep-accent-gold);
+  --ifm-color-warning-contrast-background: rgba(210, 153, 34, 0.1);
+  --ifm-color-warning-contrast-foreground: #d7dde3;
+  --ifm-color-warning-dark: var(--ep-accent-amber);
+  --ifm-color-danger-contrast-background: rgba(248, 81, 73, 0.09);
+  --ifm-color-danger-contrast-foreground: #d7dde3;
+  --ifm-color-danger-dark: #f85149;
+  --ifm-color-secondary-contrast-background: #161d24;
+  --ifm-color-secondary-contrast-foreground: #d7dde3;
+}
+
+/* ------------------------------------------------------------------ *
+ * Light — the same palette, inverted
+ * ------------------------------------------------------------------ */
+
+[data-theme='light'],
+:root:not([data-theme='dark']) {
+  /* #ffd166 on white is 1.4:1, so light gets the darkened gold: 6.4:1 on white. */
+  --ifm-color-primary: #8a5a00;
+  --ifm-color-primary-dark: #7d5200;
+  --ifm-color-primary-darker: #744d00;
+  --ifm-color-primary-darkest: #634100;
+  --ifm-color-primary-light: #976300;
+  --ifm-color-primary-lighter: #a36b00;
+  --ifm-color-primary-lightest: #b57700;
+
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #f6f8fa;
+  --ifm-font-color-base: #1f2830;
+  --ifm-heading-color: #0f1720;
+
+  --ep-field: #ffffff;
+  --ep-panel: #f6f8fa;
+  --ep-panel-raised: #eef2f5;
+  --ep-line: #dde4ea;
+  --ep-line-strong: #c3ced8;
+  --ep-text: #1f2830;
+  --ep-text-soft: #303b45;
+  --ep-muted: #57636f;
+  --ep-row-hover: rgba(15, 23, 32, 0.028);
+  --ep-underline: rgba(138, 90, 0, 0.4);
+  --ep-accent-soft: rgba(138, 90, 0, 0.45);
+  --ep-stripe: rgba(15, 23, 32, 0.018);
+  --ep-shadow: 0 8px 24px rgba(15, 23, 32, 0.08);
+  --ep-edge-shadow: rgba(15, 23, 32, 0.13);
+  --ep-selection: rgba(138, 90, 0, 0.16);
+  /* #d29922 is 2.4:1 on the light panel and #58a6ff is 2.6:1 — neither may carry text here. */
+  --ep-amber-text: #9a6700;
+  --ep-blue-text: #0550ae;
+
+  --ifm-color-emphasis-100: #f6f8fa;
+  --ifm-color-emphasis-200: #eef2f5;
+  --ifm-color-emphasis-300: #dde4ea;
+  --ifm-color-emphasis-400: #c3ced8;
+
+  --ifm-hr-border-color: #dde4ea;
+  --ifm-toc-border-color: #dde4ea;
+  --ifm-table-border-color: #dde4ea;
+  --ifm-table-stripe-background-color: var(--ep-stripe);
+  --ifm-table-head-background: transparent;
+  --ifm-blockquote-color: #45525e;
+  --ifm-blockquote-border-color: #c3ced8;
+  --ifm-code-background: rgba(15, 23, 32, 0.045);
+  --ifm-navbar-background-color: rgba(255, 255, 255, 0.86);
+  --ifm-footer-background-color: #0b0f13;
+  --ifm-menu-color: #46525e;
+  --ifm-menu-color-active: var(--ifm-color-primary);
+  --ifm-menu-color-background-active: transparent;
+  --ifm-menu-color-background-hover: rgba(15, 23, 32, 0.045);
+  --ifm-breadcrumb-item-background-active: rgba(138, 90, 0, 0.08);
+
+  --docusaurus-highlighted-code-line-bg: rgba(138, 90, 0, 0.1);
+
+  --ifm-color-info-contrast-background: #eef5ff;
+  --ifm-color-success-contrast-background: #eef8f0;
+  --ifm-color-warning-contrast-background: #fdf6e3;
+  --ifm-color-danger-contrast-background: #fdf0ef;
+  --ifm-color-secondary-contrast-background: #f6f8fa;
+}
+
+/* ------------------------------------------------------------------ *
+ * Typography
+ * ------------------------------------------------------------------ */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'kern' 1, 'liga' 1;
+}
+
+body {
+  background-color: var(--ifm-background-color);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--ifm-heading-font-family);
+  letter-spacing: -0.015em;
+  color: var(--ifm-heading-color);
+}
+
+h5,
+h6 {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ep-muted);
+}
+
+.markdown h1:first-child {
+  /* Infima declares these on the element itself, so the :root scale never reaches them. */
+  --ifm-h1-font-size: 2.05rem;
+  margin-bottom: 1.35rem;
+}
+
+.markdown > h2 {
+  --ifm-h2-font-size: 1.5rem;
+  --ifm-h2-vertical-rhythm-top: 2.75;
+  padding-top: 0.95rem;
+  border-top: 1px solid var(--ep-line);
+}
+
+.markdown > h3 {
+  --ifm-h3-font-size: 1.18rem;
+  --ifm-h3-vertical-rhythm-top: 1.75;
+}
+
+.markdown li {
+  margin-top: 0.3rem;
+}
+
+.markdown a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  text-decoration-color: var(--ep-underline);
+}
+
+.markdown a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* The measure. Only running prose is held to it — a table, a code block, a diagram and an
+   admonition are figures, and a figure may use the whole column. */
+.markdown > p,
+.markdown > ul,
+.markdown > ol,
+.markdown > blockquote,
+.markdown > .theme-admonition > p {
+  max-width: var(--ep-measure);
+}
+
+/* Anchor jumps: the heading stops below the sticky navbar, not behind it. */
+.markdown :is(h1, h2, h3, h4, h5, h6),
+:target {
+  scroll-margin-top: var(--ep-anchor-offset);
+}
+
+.markdown :is(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+}
+
+.hash-link {
+  color: var(--ep-muted);
+  opacity: 0;
+  transition: opacity var(--ifm-transition-fast) ease, color var(--ifm-transition-fast) ease;
+}
+
+:is(h1, h2, h3, h4, h5, h6):hover .hash-link,
+.hash-link:focus,
+.hash-link:focus-visible {
+  opacity: 1;
+}
+
+.hash-link:hover {
+  color: var(--ifm-color-primary);
+}
+
+/* Where there is room, the anchor hangs in the left margin: revealing it then costs no reflow of
+   the heading it belongs to. Below that width it stays inline, where Infima puts it. */
+@media screen and (min-width: 997px) {
+  .markdown :is(h1, h2, h3, h4, h5, h6) > .hash-link {
+    position: absolute;
+    left: -1rem;
+    top: 0;
+    padding-left: 0;
+    font-weight: 400;
+  }
+
+  .markdown > h2 > .hash-link {
+    top: 0.95rem;
+  }
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--ep-line);
+  margin: 2.5rem 0;
+}
+
+kbd {
+  border: 1px solid var(--ep-line);
+  border-bottom-width: 2px;
+  background: var(--ep-panel-raised);
+  color: var(--ep-text);
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------ *
+ * Code — inline and block, both themes on the diagrams' panel
+ * ------------------------------------------------------------------ */
+
+:not(pre) > code {
+  border: 1px solid var(--ep-line);
+  color: var(--ep-text);
+  font-variant-ligatures: none;
+  white-space: nowrap;
+  /* A wrapped chip gets a whole border per fragment rather than one sliced open at the line end. */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+a > code,
+a code {
+  color: inherit;
+  border-color: var(--ep-accent-soft);
+}
+
+.theme-code-block {
+  border: 1px solid var(--ep-line);
+  border-radius: var(--ifm-global-radius);
+  box-shadow: none;
+}
+
+.theme-code-block pre {
+  font-variant-ligatures: none;
+}
+
+/* The title strip reads as a panel header: mono, quiet, hairline beneath. */
+div[class*='codeBlockTitle_'] {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ep-muted);
+  background: var(--ep-panel-raised);
+  border-bottom: 1px solid var(--ep-line);
+  padding: 0.5rem var(--ifm-pre-padding);
+}
+
+.theme-code-block .clean-btn {
+  color: var(--ep-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: color var(--ifm-transition-fast) ease,
+    border-color var(--ifm-transition-fast) ease;
+}
+
+.theme-code-block:hover .clean-btn:hover {
+  color: var(--ep-text);
+  border-color: var(--ep-line);
+}
+
+.theme-code-block-highlighted-line {
+  box-shadow: inset 2px 0 0 var(--ep-accent-blue);
+}
+
+/* The language, as a chip in the corner the copy button will occupy. It is declared per language
+   rather than read from the class, and it steps aside the moment the buttons appear — two labels
+   in one corner is worse than either. `none` is the fallback, so an unlabelled fence gets no chip
+   rather than an empty one. */
+.theme-code-block.language-yaml {
+  --ep-lang: 'yaml';
+}
+.theme-code-block.language-json {
+  --ep-lang: 'json';
+}
+.theme-code-block.language-rust {
+  --ep-lang: 'rust';
+}
+.theme-code-block.language-go {
+  --ep-lang: 'go';
+}
+.theme-code-block.language-bash {
+  --ep-lang: 'bash';
+}
+.theme-code-block.language-console {
+  --ep-lang: 'shell';
+}
+
+.theme-code-block [class*='codeBlockContent_']::before {
+  content: var(--ep-lang, none);
+  position: absolute;
+  top: calc(var(--ifm-pre-padding) / 2);
+  right: calc(var(--ifm-pre-padding) / 2);
+  z-index: 1;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--ep-line);
+  border-radius: 4px;
+  background: var(--ep-panel-raised);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ep-muted);
+  pointer-events: none;
+  transition: opacity var(--ifm-transition-fast) ease;
+}
+
+.theme-code-block:hover [class*='codeBlockContent_']::before,
+.theme-code-block:focus-within [class*='codeBlockContent_']::before {
+  opacity: 0;
+}
+
+/* The copy/wrap buttons: the panel's own chrome, and legible before they are hovered. */
+.theme-code-block [class*='buttonGroup_'] button {
+  background: var(--ep-panel-raised);
+  border-color: var(--ep-line);
+  border-radius: 4px;
+  color: var(--ep-muted);
+}
+
+.theme-code-block:hover [class*='buttonGroup_'] button {
+  opacity: 0.85;
+}
+
+.theme-code-block [class*='buttonGroup_'] button:hover,
+.theme-code-block [class*='buttonGroup_'] button:focus-visible {
+  color: var(--ifm-color-primary);
+  border-color: var(--ep-accent-soft);
+}
+
+/* ------------------------------------------------------------------ *
+ * Tables — the docs are mostly tables, so this is load-bearing
+ * ------------------------------------------------------------------ */
+
+.markdown table,
+.markdown table.table {
+  display: table;
+  width: 100%;
+  margin: 1.5rem 0;
+  border: 0;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.markdown table thead {
+  background: transparent;
+}
+
+.markdown table thead tr {
+  border-bottom: 1px solid var(--ep-line-strong);
+}
+
+/* The reference pages are long tables; the header follows the reader down them. `border-collapse`
+   drops borders on a sticky cell, so the rule under the header is an inset shadow instead. */
+.markdown table th {
+  position: sticky;
+  top: var(--ifm-navbar-height);
+  z-index: 2;
+  background: var(--ifm-background-color);
+  box-shadow: inset 0 -1px 0 var(--ep-line-strong);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ep-muted);
+  text-align: left;
+  border: 0;
+  padding: 0.55rem 0.85rem;
+  white-space: nowrap;
+}
+
+.markdown table td {
+  border: 0;
+  border-bottom: 1px solid var(--ep-line);
+  padding: 0.65rem 0.85rem;
+  vertical-align: top;
+}
+
+.markdown table tbody tr {
+  background: transparent;
+  border: 0;
+  transition: background-color var(--ifm-transition-fast) ease;
+}
+
+.markdown table tbody tr:nth-child(even) {
+  background: var(--ep-stripe);
+}
+
+.markdown table tbody tr:hover {
+  background: var(--ep-row-hover);
+}
+
+/* Inline code keeps its line in prose; inside a cell it must wrap, or the auto table layout
+   hands the command column its full max-content width and starves the column beside it. */
+.markdown table code {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* Narrow screens keep the scrolling table rather than a squeezed one, and say so: the two `local`
+   layers are the field colour parked over each edge, the two `scroll` layers are the shadow they
+   uncover as content passes underneath. Row fills would paint over the effect, so the zebra comes
+   off here — on a phone it was doing less work than the fade does. */
+@media screen and (max-width: 996px) {
+  .markdown table,
+  .markdown table.table {
+    display: block;
+    overflow-x: auto;
+    white-space: normal;
+    background-image: linear-gradient(to right, var(--ep-field), rgba(0, 0, 0, 0)),
+      linear-gradient(to left, var(--ep-field), rgba(0, 0, 0, 0)),
+      linear-gradient(to right, var(--ep-edge-shadow), rgba(0, 0, 0, 0)),
+      linear-gradient(to left, var(--ep-edge-shadow), rgba(0, 0, 0, 0));
+    background-position: 0 0, 100% 0, 0 0, 100% 0;
+    background-repeat: no-repeat;
+    background-size: 28px 100%, 28px 100%, 12px 100%, 12px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+
+  .markdown table tbody tr:nth-child(even),
+  .markdown table tbody tr:hover {
+    background: transparent;
+  }
+
+  .markdown table th {
+    position: static;
+    background: transparent;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Blockquotes, admonitions, details
+ * ------------------------------------------------------------------ */
+
+blockquote {
+  background: transparent;
+  border-left: 2px solid var(--ep-line-strong);
+  color: var(--ifm-blockquote-color);
+  padding: 0.1rem 0 0.1rem var(--ifm-blockquote-padding-horizontal);
+  margin-left: 0;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.theme-admonition,
+.alert {
+  border: 1px solid var(--ep-line);
+  border-left-width: var(--ifm-alert-border-left-width);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.theme-admonition .admonitionHeading_Gvgb,
+.theme-admonition [class*='admonitionHeading_'] {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ep-muted);
+}
+
+/* The type is carried by the left rule and the icon; the fill stays a tint, so a page of
+   admonitions still reads as a page rather than as a set of coloured slabs. */
+.theme-admonition-note,
+.theme-admonition-secondary {
+  border-left-color: var(--ep-line-strong);
+}
+.theme-admonition-tip,
+.theme-admonition-success {
+  border-left-color: var(--ep-accent-gold);
+}
+.theme-admonition-info {
+  border-left-color: var(--ep-blue-text);
+}
+.theme-admonition-warning,
+.theme-admonition-caution {
+  border-left-color: var(--ep-amber-text);
+}
+.theme-admonition-danger {
+  border-left-color: #f85149;
+}
+
+.theme-admonition [class*='admonitionIcon_'] svg {
+  fill: currentColor;
+}
+.theme-admonition-tip [class*='admonitionIcon_'],
+.theme-admonition-success [class*='admonitionIcon_'] {
+  color: var(--ifm-color-primary);
+}
+.theme-admonition-info [class*='admonitionIcon_'] {
+  color: var(--ep-blue-text);
+}
+.theme-admonition-warning [class*='admonitionIcon_'],
+.theme-admonition-caution [class*='admonitionIcon_'] {
+  color: var(--ep-amber-text);
+}
+.theme-admonition-danger [class*='admonitionIcon_'] {
+  color: #f85149;
+}
+
+details {
+  border: 1px solid var(--ep-line) !important;
+  background: var(--ep-panel) !important;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+details > summary {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.9rem;
+}
+
+/* ------------------------------------------------------------------ *
+ * Navbar
+ * ------------------------------------------------------------------ */
+
+.navbar {
+  border-bottom: 1px solid var(--ep-line);
+  box-shadow: none;
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+}
+
+.navbar__inner {
+  max-width: var(--ifm-container-width-xl);
+  margin: 0 auto;
+}
+
+.navbar__brand {
+  margin-right: 1.25rem;
+}
+
+.navbar__logo {
+  height: 1.6rem;
+  width: 1.6rem;
+  margin-right: 0.6rem;
+}
+
+.navbar__title {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ifm-heading-color);
+}
+
+.navbar__link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ep-muted);
+  transition: color var(--ifm-transition-fast) ease;
+}
+
+.navbar__link:hover,
+.navbar__link--active {
+  color: var(--ifm-color-primary);
+}
+
+/* The active item is underlined with the accent rule rather than only recoloured: colour alone is
+   the one signal a reader may not have. */
+.navbar__link {
+  position: relative;
+}
+
+.navbar__link--active {
+  font-weight: 600;
+}
+
+.navbar__link--active::after {
+  content: '';
+  position: absolute;
+  left: var(--ifm-navbar-item-padding-horizontal);
+  right: var(--ifm-navbar-item-padding-horizontal);
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, var(--ifm-color-primary) 0%, var(--ep-blue-text) 100%);
+}
+
+/* GitHub gets its mark as well as its word. The glyph is a mask filled with `currentColor`, so it
+   follows the link's hover state and needs no second file and no light/dark variant. */
+.navbar-github-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.navbar-github-link::before {
+  content: '';
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.42rem;
+  background-color: currentColor;
+  -webkit-mask: var(--ep-github-mask) center / contain no-repeat;
+  mask: var(--ep-github-mask) center / contain no-repeat;
+}
+
+/* Docusaurus appends its external-link arrow to any navbar item with an `href`; next to the mark
+   it is one glyph too many. */
+.navbar-github-link svg {
+  display: none;
+}
+
+.navbar-sidebar {
+  background: var(--ep-field);
+}
+
+.navbar-sidebar__brand {
+  border-bottom: 1px solid var(--ep-line);
+  box-shadow: none;
+}
+
+/* The drawer is a panel, not a page: its own field, a hairline down the edge, and items sized to
+   be hit with a thumb. */
+.navbar-sidebar__items {
+  padding: 0.5rem 0;
+}
+
+.navbar-sidebar__item {
+  padding: 0.5rem 0.75rem;
+}
+
+.navbar-sidebar__back {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ep-muted);
+  background: var(--ep-panel);
+  border: 1px solid var(--ep-line);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  margin: 0 0 0.75rem;
+  width: 100%;
+}
+
+.navbar-sidebar .menu__link,
+.navbar-sidebar .navbar__link {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-sidebar .navbar__link--active::after {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ *
+ * Sidebar
+ * ------------------------------------------------------------------ */
+
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--ep-line) !important;
+}
+
+.menu {
+  font-size: 0.875rem;
+  padding: 1rem 0.75rem !important;
+}
+
+.menu__list .menu__list {
+  margin-top: 0.1rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid var(--ep-line);
+  margin-left: 0.65rem;
+}
+
+.menu__link {
+  border-radius: 4px;
+  line-height: 1.45;
+  transition: color var(--ifm-transition-fast) ease,
+    background-color var(--ifm-transition-fast) ease;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--ifm-color-primary);
+  background: var(--ifm-menu-color-background-hover);
+}
+
+/* Top-level categories become the diagrams' panel labels. */
+.theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible > .menu__link {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ep-muted);
+  cursor: default;
+}
+
+.theme-doc-sidebar-item-category-level-1:not(:first-child) {
+  margin-top: 1.15rem;
+}
+
+.menu__list-item-collapsible {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 4px;
+}
+
+.menu__list-item-collapsible:hover {
+  background: transparent;
+}
+
+/* The chevrons line up in one column on the right edge of the rail, whichever depth they are at,
+   and the label beside them stops short of them rather than running underneath. */
+.menu__caret {
+  flex: 0 0 auto;
+  padding: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.15rem;
+  border-radius: 4px;
+}
+
+.menu__caret:before,
+.menu__link--sublist-caret:after {
+  opacity: 0.55;
+  transition: opacity var(--ifm-transition-fast) ease;
+}
+
+.menu__list-item-collapsible:hover .menu__caret:before,
+.menu__list-item-collapsible:hover .menu__link--sublist-caret:after {
+  opacity: 0.9;
+}
+
+.menu__list-item-collapsible > .menu__link {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * Table of contents, breadcrumbs, pagination
+ * ------------------------------------------------------------------ */
+
+.table-of-contents {
+  font-size: 0.8rem;
+  border-left: 1px solid var(--ep-line);
+}
+
+/* The rail says what it is. Infima renders no title for the desktop table of contents, and an
+   unlabelled column of fragments is a puzzle before it is a map. */
+.theme-doc-toc-desktop::before {
+  content: 'On this page';
+  display: block;
+  padding: 0 var(--ifm-toc-padding-horizontal, 0.5rem) 0.5rem;
+  margin-left: var(--ifm-toc-padding-horizontal, 0.5rem);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ep-muted);
+}
+
+.table-of-contents__link {
+  position: relative;
+  color: var(--ep-muted);
+  transition: color var(--ifm-transition-fast) ease;
+}
+
+.table-of-contents__link:hover {
+  color: var(--ifm-color-primary);
+}
+
+/* The active heading is marked on the rail itself: the hairline becomes the accent for exactly the
+   height of the item the reader is inside. */
+.table-of-contents__link--active {
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+}
+
+.table-of-contents__link--active::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--ifm-toc-padding-horizontal, 0.5rem) - 1px);
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--ifm-color-primary);
+}
+
+.table-of-contents__left-border {
+  border-left-color: var(--ep-line);
+}
+
+.breadcrumbs {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.breadcrumbs__link {
+  background: transparent;
+  color: var(--ep-muted);
+  padding: 0.2rem 0.4rem;
+  transition: color var(--ifm-transition-fast) ease;
+}
+
+.breadcrumbs__item:not(.breadcrumbs__item--active) .breadcrumbs__link:hover {
+  background: transparent;
+  color: var(--ifm-color-primary);
+}
+
+/* The trail is orientation, not navigation: no chip, no accent, no weight — the page's own title
+   is directly beneath it and should be the only thing being announced. */
+.breadcrumbs__item--active .breadcrumbs__link {
+  background: transparent;
+  color: var(--ep-muted);
+  font-weight: 500;
+}
+
+.breadcrumbs__item:not(:last-child)::after {
+  opacity: 0.5;
+}
+
+.breadcrumbs__link svg {
+  opacity: 0.75;
+}
+
+.pagination-nav__link {
+  border: 1px solid var(--ep-line);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ep-panel);
+  padding: 1rem 1.1rem;
+  transition: border-color var(--ifm-transition-slow) ease,
+    background-color var(--ifm-transition-slow) ease;
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--ep-accent-soft);
+  background: var(--ep-panel-raised);
+}
+
+.pagination-nav__sublabel {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ep-muted);
+  margin-bottom: 0.35rem;
+}
+
+.pagination-nav__label {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: color var(--ifm-transition-fast) ease;
+}
+
+.pagination-nav__link {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.pagination-nav__link:hover .pagination-nav__label {
+  color: var(--ifm-color-primary);
+}
+
+/* Infima already sets the chevron on the title line; the sublabel above it says the direction in
+   words. All that is missing is that the chevron move the way the link goes. */
+.pagination-nav__label::before,
+.pagination-nav__label::after {
+  display: inline-block;
+  color: var(--ep-muted);
+  transition: transform var(--ifm-transition-fast) ease;
+}
+
+/* `inline-block` eats the space Infima put inside the chevron's `content`, so it is a margin. */
+.pagination-nav__link--prev .pagination-nav__label::before {
+  margin-right: 0.35rem;
+}
+
+.pagination-nav__link--next .pagination-nav__label::after {
+  margin-left: 0.35rem;
+}
+
+.pagination-nav__link--prev:hover .pagination-nav__label::before {
+  transform: translateX(-3px);
+}
+
+.pagination-nav__link--next:hover .pagination-nav__label::after {
+  transform: translateX(3px);
+}
+
+/* ------------------------------------------------------------------ *
+ * Buttons
+ * ------------------------------------------------------------------ */
+
+.button {
+  font-family: var(--ifm-font-family-monospace);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-width: 1px;
+  box-shadow: none;
+  transition: background-color var(--ifm-transition-slow) ease,
+    border-color var(--ifm-transition-slow) ease,
+    color var(--ifm-transition-slow) ease;
+}
+
+.button--lg {
+  font-size: 0.95rem;
+  padding: 0.7rem 1.35rem;
+}
+
+.button--primary {
+  --ifm-button-background-color: var(--ep-accent-gold);
+  --ifm-button-border-color: var(--ep-accent-gold);
+  color: #0b1014;
+}
+
+.button--primary:hover {
+  --ifm-button-background-color: #ffdb85;
+  --ifm-button-border-color: #ffdb85;
+  color: #0b1014;
+}
+
+/* ------------------------------------------------------------------ *
+ * Footer — dense and quiet, dark under both themes so the brand holds
+ * ------------------------------------------------------------------ */
+
+.footer {
+  border-top: 1px solid var(--ep-line);
+  font-size: 0.86rem;
+}
+
+.footer--dark {
+  --ifm-footer-background-color: #0b0f13;
+  --ifm-footer-color: #8b98a5;
+  --ifm-footer-link-color: #a9b5c1;
+  --ifm-footer-title-color: #8b98a5;
+  --ifm-footer-link-hover-color: var(--ep-accent-gold);
+  border-top-color: #2b3540;
+}
+
+.footer__title {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  margin-bottom: 0.75rem;
+}
+
+.footer__item {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-top: 0.3rem;
+}
+
+.footer__link-item {
+  transition: color var(--ifm-transition-fast) ease;
+}
+
+.footer__col {
+  margin-bottom: 1.5rem;
+}
+
+/* Three short columns read better held together than spread across a 1320px band. */
+.footer__links {
+  max-width: var(--ifm-container-width);
+  margin: 0 auto 0.5rem;
+}
+
+/* The mark, the claim and the small print on one line: a signature, not a third navigation. */
+.footer__bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: var(--ifm-container-width);
+  margin: 1.5rem auto 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid #1a232b;
+  text-align: left;
+}
+
+.footer__bottom > div:first-child {
+  margin-bottom: 0 !important;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.footer__logo {
+  margin: 0;
+  width: 22px;
+  height: 22px;
+}
+
+.footer__copyright {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.75rem;
+  color: #75828f;
+  text-align: left;
+}
+
+.footer__claim {
+  display: block;
+  font-family: var(--ifm-font-family-base);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #a9b5c1;
+  margin-bottom: 0.2rem;
+}
+
+@media screen and (max-width: 996px) {
+  .footer__bottom {
+    align-items: flex-start;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Blog (the release record)
+ * ------------------------------------------------------------------ */
+
+.blog-wrapper article + article {
+  border-top: 1px solid var(--ep-line);
+  padding-top: 2.5rem;
+}
+
+/* Release titles are long sentences; at Infima's 3rem they set two lines of display type per post. */
+.blog-wrapper h1[class*='title_'] {
+  font-size: clamp(1.7rem, 3.2vw, 2.15rem);
+  line-height: 1.2;
+}
+
+.blog-wrapper h2[class*='title_'] {
+  font-size: 1.55rem;
+  line-height: 1.25;
+}
+
+.blog-wrapper h2[class*='title_'] a {
+  color: var(--ifm-heading-color);
+  text-decoration: none;
+}
+
+.blog-wrapper h2[class*='title_'] a:hover {
+  color: var(--ifm-color-primary);
+}
+
+/* Date and reading time, and the "All releases" rail: the same quiet label as everywhere else. */
+.blog-wrapper header time,
+.blog-wrapper header time + * {
+  color: var(--ep-muted);
+}
+
+.blog-wrapper header div[class*='container_'] {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.76rem;
+  color: var(--ep-muted);
+}
+
+.blog-wrapper div[class*='sidebarItemTitle_'] {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ep-muted);
+}
+
+.blog-wrapper a[class*='sidebarItemLink_'] {
+  font-size: 0.83rem;
+  line-height: 1.45;
+  color: var(--ep-text-soft);
+}
+
+.blog-wrapper a[class*='sidebarItemLink_']:hover,
+.blog-wrapper a[class*='sidebarItemLinkActive_'] {
+  color: var(--ifm-color-primary);
+}
+
+/* ------------------------------------------------------------------ *
+ * Mermaid — the generated diagrams sit on a panel like the drawn ones
+ * ------------------------------------------------------------------ */
+
+.docusaurus-mermaid-container {
+  background: var(--ep-panel);
+  border: 1px solid var(--ep-line);
+  border-radius: var(--ifm-global-radius);
+  padding: 1.25rem 1rem;
+  margin-bottom: var(--ifm-leading);
+}
+
+/* ------------------------------------------------------------------ *
+ * Micro-UX — selection, scrollbars, outbound links, the skip link
+ * ------------------------------------------------------------------ */
+
+::selection {
+  background: var(--ep-selection);
+}
+
+/* Subtle, and the same object in both themes: a hairline-coloured thumb on the field, inset far
+   enough that it reads as part of the chrome rather than a bar stuck to the edge. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ep-line-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ep-line-strong);
+  border-radius: 999px;
+  border: 3px solid var(--ifm-background-color);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ep-muted);
+}
+
+/* A link that leaves the site says so before it is clicked. Internal links are relative, so the
+   protocol test is enough to tell them apart. */
+.markdown a[href^='http']:not([href*='beyond10x.github.io'])::after {
+  content: '↗';
+  display: inline-block;
+  margin-left: 0.18em;
+  font-size: 0.82em;
+  line-height: 1;
+  color: var(--ep-muted);
+  text-decoration: none;
+}
+
+.markdown a[href^='http']:hover::after {
+  color: inherit;
+}
+
+/* Docusaurus draws its own arrow in the navbar and footer; it only needs quietening. */
+svg[class*='iconExternalLink_'] {
+  opacity: 0.6;
+}
+
+/* The skip link is the first thing a keyboard reaches; when it arrives it should look like the
+   rest of the site rather than like a browser default. */
+[class*='skipToContent_'] {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ifm-heading-color);
+  background: var(--ep-panel);
+  border: 1px solid var(--ifm-color-primary);
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  box-shadow: var(--ep-shadow);
+}
+
+/* ------------------------------------------------------------------ *
+ * Touch — nothing interactive smaller than a fingertip
+ * ------------------------------------------------------------------ */
+
+@media (pointer: coarse) {
+  .menu__link,
+  .navbar__link,
+  .footer__link-item,
+  .table-of-contents__link,
+  .breadcrumbs__link,
+  .pagination-nav__link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .breadcrumbs__link {
+    display: inline-flex;
+  }
+}
+
+/* Without hover there is no way to summon the copy button, so on touch it is simply present, and
+   the language chip — which shares that corner — stands down. */
+@media (hover: none) {
+  .theme-code-block [class*='buttonGroup_'] button {
+    opacity: 0.75;
+  }
+
+  .theme-code-block [class*='codeBlockContent_']::before {
+    content: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Accessibility and motion
+ * ------------------------------------------------------------------ */
+
+:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Elements that sit flush against a container edge take the ring inside them, where it is not
+   clipped by the thing they are inside. */
+.menu__link:focus-visible,
+.navbar__link:focus-visible,
+.table-of-contents__link:focus-visible,
+.footer__link-item:focus-visible,
+.breadcrumbs__link:focus-visible {
+  outline-offset: -1px;
+}
+
+.pagination-nav__link:focus-visible,
+.button:focus-visible,
+[class*='codeBlockContent_'] button:focus-visible {
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,189 @@
+/**
+ * "How it fits": the two halves and the join, as three panels drawn the way
+ * `static/img/social-card.svg` draws a panel — a fill, a hairline edge, a small tracked label along
+ * the top, and a rule under the question. The whole panel is the link target (the title's anchor is
+ * stretched over it), so on a phone the tap target is the card rather than a word.
+ *
+ * The section header matches `index.module.css` exactly: same width, same ordinal, same hairline.
+ */
+
+.features {
+  --ep-page: 64rem;
+  padding: 3.25rem 0;
+  border-top: 1px solid var(--ep-line);
+}
+
+.inner {
+  max-width: var(--ep-page);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.15rem;
+  border-bottom: 1px solid var(--ep-line);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ep-muted);
+}
+
+.ordinal {
+  color: var(--ifm-color-primary);
+}
+
+.title {
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  letter-spacing: -0.02em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.15rem 1.3rem 1.4rem;
+  background-color: var(--ep-panel);
+  border: 1px solid var(--ep-line);
+  border-radius: 10px;
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.card:hover {
+  border-color: var(--ep-accent-soft);
+  transform: translateY(-2px);
+  box-shadow: var(--ep-shadow);
+}
+
+/* The card's own focus ring, since the thing being focused is a stretched, invisible anchor. */
+.card:focus-within {
+  border-color: var(--ifm-color-primary);
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ep-line);
+}
+
+/* The panel label: "1 · THE TRANSCRIPT" in the card, "how work is performed" here. Two lines of
+   room whether or not it needs them: the three headers are one strip across the row, and the
+   titles under them start on one line. */
+.cardGoverns {
+  min-height: 3em;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  color: var(--ep-muted);
+}
+
+.cardArrow {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.9rem;
+  line-height: 1.2;
+  color: var(--ep-muted);
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+.card:hover .cardArrow,
+.card:focus-within .cardArrow {
+  color: var(--ifm-color-primary);
+  transform: translateX(3px);
+}
+
+.cardTitle {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.cardLink {
+  color: var(--ifm-heading-color);
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+.cardLink:hover {
+  color: var(--ifm-color-primary);
+}
+
+.cardLink:focus-visible {
+  outline: none;
+}
+
+.cardLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+}
+
+.cardQuestion {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--ep-line);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ep-text);
+}
+
+.cardBody {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--ep-text-soft);
+}
+
+@media screen and (max-width: 996px) {
+  .features {
+    padding: 2.25rem 0;
+  }
+
+  .inner {
+    padding: 0 1rem;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card {
+    padding: 1rem 1.1rem 1.2rem;
+    border-radius: 8px;
+  }
+
+  /* One card per row: there is no neighbouring header to line up with. */
+  .cardGoverns {
+    min-height: 0;
+  }
+}
