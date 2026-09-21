@@ -54,7 +54,7 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 | `story:chat-projection` | `impl/chat-projection` | `wave1-chat` | `~/.cache/b10x-target/llm-wave1/chat` | merged into `wave/1` at `f9ec6dd` |
 | `story:public-surface` | `impl/public-surface` | `wave1-public-surface` | none — not a Rust unit | merged into `wave/1` at `4f8be99` |
 | `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | merged into `wave/1` at `1ffba7b` |
-| `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | adversary pass 2 red, correction round running |
+| `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | merged into `wave/1` at `d937f9b`, after its correction round |
 
 Every worktree is under `/home/timo/.local/state/worktree/trees/b10x/llm/`. Each unit's scratch
 directory is `~/.cache/llm-wave-1/<unit>/` and holds its brief. The briefs share
@@ -145,6 +145,26 @@ Three decisions the coordinator took rather than handing back:
 `contracts/ess-inputs.yaml` lists 177 scenarios and **zero** for any of the four new domains —
 responses, chat, messages and hosting — so the coordinator's manifest step is load-bearing for the
 whole gate rather than tidying.
+
+### Hosting's correction round, and what the coordinator checked
+
+Unit commit `9b5f844`, merged at `d937f9b`. 93 Rust cases and 65 scenarios pass, three runs with
+identical counts; the falsification record holds 55 entries, 13 of them added this round, each aimed
+at a named guard rather than counted as a kill.
+
+The attack budget was spent, so the coordinator verified the correction instead of opening a third
+pass. Checked, in order: no `#[ignore]` anywhere in the crate; both of the adversary's artifacts —
+`tests/adversary_pass2.rs` and its scenario — byte-identical to how the pass left them; and every
+assertion the round removed replaced by a stronger one. Those removals were three `all()` calls over
+a collection the fixture leaves empty, which is an assertion that passes whether or not the behaviour
+exists. Two are now `Err(ForeignResource)` with `stopped_keys` asserted empty, and the third pins the
+refusal count at seven before checking what each refusal is.
+
+The round answered two findings as classes rather than at their sites, which is the part worth
+carrying to the next wave. A hand-maintained table whose completeness nothing checks became a grid
+derived from `Phase::ALL` crossed with the three unconditional writers, so a phase added to the
+vocabulary fails until its rows exist. And the vacuous-`all()` class was swept: the adversary named
+one site, the round found and fixed three.
 
 ## The interruption
 
