@@ -1,0 +1,1406 @@
+{
+ "format": "llm.messages.falsification/2",
+ "lanes": {
+  "case": "cargo test -p b10x-llm-messages --locked --no-fail-fast (and cargo test -p b10x-llm-http --locked --no-fail-fast for a mutation in that crate)",
+  "scenario": "ess verify conform synthesize --path spec --suite-format 5 --target ir --scenarios contracts/messages/scenarios --out target/messages-suite.json, then cargo run --locked -p b10x-llm-conformance -- target/messages-suite.json target/messages-baseline.json target/messages-run local"
+ },
+ "measured": "2026-09-21",
+ "mutations": [
+  {
+   "edits": [
+    {
+     "after": "        *target = Some(target.unwrap_or(0).saturating_add(next));",
+     "before": "        *target = Some(next);"
+    }
+   ],
+   "failed_cases": [
+    "a_counter_the_route_never_reported_stays_unknown",
+    "a_stream_that_ends_without_its_terminal_event_keeps_the_last_usage_snapshot",
+    "a_streamed_turn_preserves_text_thinking_tools_and_terminal_usage",
+    "a_turn_presents_its_credential_at_request_time_and_streams_the_declared_subset",
+    "cumulative_usage_replaces_reported_counters_instead_of_summing_deltas"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name",
+    "llm.messages/authored/cumulative-usage-replaces-reported-counters",
+    "llm.messages/authored/event-name-contradicting-its-payload-refused",
+    "llm.messages/authored/interleaved-blocks-assemble-in-index-order",
+    "llm.messages/authored/stream-preserves-text-thinking-tools-and-terminal-usage",
+    "llm.messages/authored/terminal-message-without-a-reason-refused",
+    "llm.messages/authored/terminal-reason-contradicting-its-content-refused",
+    "llm.messages/authored/truncated-stream-retains-its-partial-usage",
+    "llm.messages/authored/unreported-counter-stays-unknown",
+    "llm.messages/authored/unreported-upstream-model-stays-unknown"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "sum-successive-usage-deltas",
+   "restored": true,
+   "restored_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 10,
+    "passed": 31,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/usage.rs",
+   "source_before_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
+  },
+  {
+   "edits": [
+    {
+     "after": "            (Some(input), read, created) => Some(\n                input\n                    .checked_add(read.unwrap_or(0))\n                    .and_then(|n| n.checked_add(created.unwrap_or(0)))",
+     "before": "            (Some(input), Some(read), Some(created)) => Some(\n                input\n                    .checked_add(read)\n                    .and_then(|n| n.checked_add(created))"
+    }
+   ],
+   "failed_cases": [
+    "a_counter_the_route_never_reported_stays_unknown",
+    "each_component_of_the_inclusive_input_absent_in_turn_leaves_it_unknown"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/unreported-counter-stays-unknown"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unknown-cache-component-is-zero",
+   "restored": true,
+   "restored_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/usage.rs",
+   "source_before_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if false {",
+     "before": "        if target.is_some_and(|previous| next < previous) {"
+    }
+   ],
+   "failed_cases": [
+    "a_usage_counter_that_regresses_is_refused"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/usage-regression-refused"
+   ],
+   "guards": [
+    "Messages cumulative usage regressed"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "usage-regression-accepted",
+   "restored": true,
+   "restored_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/usage.rs",
+   "source_before_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
+  },
+  {
+   "edits": [
+    {
+     "after": "            if false {",
+     "before": "            if hour.is_some_and(|n| n != 0) {"
+    }
+   ],
+   "failed_cases": [
+    "one_hour_cache_creation_is_refused_rather_than_priced_as_five_minute"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/one-hour-cache-creation-refused"
+   ],
+   "guards": [
+    "Messages one-hour cache pricing is outside the declared subset"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "one-hour-cache-priced-as-five-minute",
+   "restored": true,
+   "restored_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/usage.rs",
+   "source_before_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
+  },
+  {
+   "edits": [
+    {
+     "after": "                if false {",
+     "before": "                if count(tools, key)?.is_none_or(|n| n != 0) {"
+    }
+   ],
+   "failed_cases": [
+    "a_charged_server_tool_use_is_refused_and_an_unused_one_is_not"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/charged-server-tool-use-refused"
+   ],
+   "guards": [
+    "Messages server-tool charges are outside the declared subset"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "server-tool-charge-ignored",
+   "restored": true,
+   "restored_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/usage.rs",
+   "source_before_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
+  },
+  {
+   "edits": [
+    {
+     "after": "            upstream_model: self.upstream_model.clone().or_else(|| Some(target.model.clone())),",
+     "before": "            upstream_model: self.upstream_model.clone(),"
+    }
+   ],
+   "failed_cases": [],
+   "failed_scenarios": [
+    "llm.messages/authored/accepted-stop-sequence-in-an-undocumented-shape-refused",
+    "llm.messages/authored/complete-response-metadata-outside-the-subset-refused",
+    "llm.messages/authored/stream-start-that-is-not-an-assistant-message-refused",
+    "llm.messages/authored/unreported-upstream-model-stays-unknown"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario"
+   ],
+   "mutation": "configured-model-substituted-for-an-unreported-one",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 4,
+    "passed": 37,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "            if false {",
+     "before": "            if !complete {"
+    }
+   ],
+   "failed_cases": [
+    "a_stream_that_ends_without_its_terminal_event_keeps_the_last_usage_snapshot"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/truncated-stream-retains-its-partial-usage"
+   ],
+   "guards": [
+    "the Messages stream ended before its terminal event"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "eof-manufactures-success",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        let _ = target;\n        error.with_dispatch(dispatch)",
+     "before": "        error\n            .with_dispatch(dispatch)\n            .with_observation(self.observation(target, false))"
+    }
+   ],
+   "failed_cases": [
+    "a_complete_message_field_outside_the_declared_subset_is_refused",
+    "a_provider_error_event_refuses_without_copying_upstream_text",
+    "a_stream_that_ends_without_its_terminal_event_keeps_the_last_usage_snapshot",
+    "a_truncated_stream_keeps_its_partial_usage_and_is_not_sent_again",
+    "cancellation_reaches_a_caller_whose_sink_never_accepts",
+    "the_turn_deadline_bounds_a_sink_that_never_accepts"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/accepted-stop-sequence-in-an-undocumented-shape-refused",
+    "llm.messages/authored/accepted-usage-metadata-in-an-undocumented-shape-refused",
+    "llm.messages/authored/charged-server-tool-use-refused",
+    "llm.messages/authored/complete-response-metadata-outside-the-subset-refused",
+    "llm.messages/authored/duplicate-message-start-refused",
+    "llm.messages/authored/event-name-contradicting-its-payload-refused",
+    "llm.messages/authored/one-hour-cache-creation-refused",
+    "llm.messages/authored/provider-error-event-retains-its-snapshot",
+    "llm.messages/authored/stream-start-that-is-not-an-assistant-message-refused",
+    "llm.messages/authored/terminal-message-without-a-reason-refused",
+    "llm.messages/authored/terminal-reason-contradicting-its-content-refused",
+    "llm.messages/authored/truncated-stream-retains-its-partial-usage",
+    "llm.messages/authored/unknown-stream-event-refused",
+    "llm.messages/authored/unstarted-content-block-delta-refused",
+    "llm.messages/authored/usage-regression-refused"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "snapshot-dropped-on-failure",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 15,
+    "passed": 26,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if false {",
+     "before": "        if name.as_ref().is_some_and(|name| name != kind) {"
+    }
+   ],
+   "failed_cases": [],
+   "failed_scenarios": [
+    "llm.messages/authored/event-name-contradicting-its-payload-refused"
+   ],
+   "guards": [
+    "Messages event name contradicts its payload type"
+   ],
+   "killed_by": [
+    "scenario"
+   ],
+   "mutation": "event-name-mismatch-ignored",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "            _ => Ok(()),",
+     "before": "            _ => Err(Error::unsupported(\n                \"Messages stream event is outside the declared subset\",\n            )),"
+    }
+   ],
+   "failed_cases": [
+    "an_unknown_stream_event_or_delta_is_refused_rather_than_interpreted"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/unknown-stream-event-refused"
+   ],
+   "guards": [
+    "Messages stream event is outside the declared subset"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unknown-stream-event-ignored",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if false {\n            return Err(Error::protocol(\"Messages stream started twice\"));\n        }",
+     "before": "        if self.started {\n            return Err(Error::protocol(\"Messages stream started twice\"));\n        }"
+    }
+   ],
+   "failed_cases": [],
+   "failed_scenarios": [
+    "llm.messages/authored/duplicate-message-start-refused"
+   ],
+   "guards": [
+    "Messages stream started twice"
+   ],
+   "killed_by": [
+    "scenario"
+   ],
+   "mutation": "duplicate-message-start-accepted",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        let Some(block) = self.blocks.get_mut(&index) else {\n            return Ok(());\n        };",
+     "before": "        let block = self.blocks.get_mut(&index).ok_or_else(|| {\n            Error::protocol(\"Messages delta names a content block that never started\")\n        })?;"
+    }
+   ],
+   "failed_cases": [],
+   "failed_scenarios": [
+    "llm.messages/authored/unstarted-content-block-delta-refused"
+   ],
+   "guards": [
+    "Messages delta names a content block that never started"
+   ],
+   "killed_by": [
+    "scenario"
+   ],
+   "mutation": "delta-for-an-unstarted-block-ignored",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        None => Ok(StopReason::EndTurn),",
+     "before": "        None => Err(Error::protocol(\"Messages terminal message names no reason\")),"
+    }
+   ],
+   "failed_cases": [
+    "a_terminal_message_without_a_stop_reason_is_refused"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/terminal-message-without-a-reason-refused"
+   ],
+   "guards": [
+    "Messages terminal message names no reason"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "absent-stop-reason-becomes-end-turn",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        let _ = request;",
+     "before": "        outcome.validate_for(request, target)?;"
+    }
+   ],
+   "failed_cases": [
+    "a_terminal_reason_that_contradicts_the_content_is_refused",
+    "a_tool_call_the_request_never_published_is_refused"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/terminal-reason-contradicting-its-content-refused"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "outcome-not-validated-against-its-request",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        \"overloaded_error\" => (\n            ErrorCode::Unavailable,\n            error\n                .and_then(|error| error.get(\"message\"))\n                .and_then(Value::as_str)\n                .unwrap_or(\"the Messages route reported that it is overloaded\"),\n        ),",
+     "before": "        \"overloaded_error\" => (\n            ErrorCode::Unavailable,\n            \"the Messages route reported that it is overloaded\",\n        ),"
+    }
+   ],
+   "failed_cases": [
+    "a_provider_error_event_refuses_without_copying_upstream_text"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/provider-error-event-retains-its-snapshot"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "upstream-error-text-copied-into-the-diagnostic",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "    request.validate()?;",
+     "before": "    request.validate_for(binding.provenance(), binding.capabilities())?;"
+    }
+   ],
+   "failed_cases": [
+    "ingress_does_not_bind_unattributable_thinking_to_the_reading_binding",
+    "opaque_state_from_another_binding_is_refused_rather_than_projected"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/foreign-opaque-state-refused"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "request-not-validated-against-its-binding",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if true {",
+     "before": "        if messages.last().is_none_or(|m| m[\"role\"] != role) {"
+    }
+   ],
+   "failed_cases": [
+    "ordered_roles_tools_and_thinking_project_onto_one_wire_request"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/request-preserves-roles-tools-and-thinking"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "role-grouping-dropped",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "    let stream = match optional(&value, \"stream\") {\n        None => false,\n        Some(Value::Bool(_)) => false,",
+     "before": "    let stream = match optional(&value, \"stream\") {\n        None => false,\n        Some(Value::Bool(b)) => *b,"
+    }
+   ],
+   "failed_cases": [
+    "ingress_decodes_the_declared_subset_and_preserves_the_stream_flag"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/ingress-preserves-the-declared-subset"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "ingress-drops-the-streaming-choice",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "    let mut messages: Vec<Value> = Vec::new();",
+     "before": "    if request.sampling.temperature.is_some_and(|n| n > 1.0) {\n        return Err(Error::unsupported(\"Messages temperature exceeds one\"));\n    }\n    let mut messages: Vec<Value> = Vec::new();"
+    }
+   ],
+   "failed_cases": [
+    "a_temperature_above_the_routes_maximum_is_refused_before_any_projection"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/temperature-above-the-route-maximum-refused"
+   ],
+   "guards": [
+    "Messages temperature exceeds one"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "temperature-above-the-route-maximum-sent-anyway",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "    let _ = allowed;",
+     "before": "    if object.keys().any(|key| !allowed.contains(&key.as_str())) {\n        return Err(Error::unsupported(\n            \"Messages field is outside the declared subset\",\n        ));\n    }"
+    }
+   ],
+   "failed_cases": [
+    "a_complete_message_field_outside_the_declared_subset_is_refused",
+    "ingress_refuses_a_request_field_outside_the_declared_subset",
+    "ingress_refuses_content_outside_the_declared_subset"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/complete-response-metadata-outside-the-subset-refused",
+    "llm.messages/authored/ingress-refuses-a-request-field-outside-the-subset"
+   ],
+   "guards": [
+    "Messages field is outside the declared subset"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unknown-request-field-accepted",
+   "restored": true,
+   "restored_sha256": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 2,
+    "passed": 39,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/lib.rs",
+   "source_before_sha256": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3"
+  },
+  {
+   "edits": [
+    {
+     "after": "        _ => Ok(Item::assistant(String::new())),",
+     "before": "        _ => Err(Error::unsupported(\n            \"Messages content is outside the declared subset\",\n        )),"
+    }
+   ],
+   "failed_cases": [
+    "a_complete_message_field_outside_the_declared_subset_is_refused",
+    "ingress_refuses_content_outside_the_declared_subset"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/ingress-refuses-content-outside-the-subset"
+   ],
+   "guards": [
+    "Messages content is outside the declared subset"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unsupported-content-flattened-into-text",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "            string(value, \"signature\")?;",
+     "before": "            if string(value, \"signature\")?.is_empty() {\n                return Err(Error::protocol(\"Messages thinking signature is empty\"));\n            }"
+    }
+   ],
+   "failed_cases": [
+    "ingress_refuses_thinking_that_carries_no_signature"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/ingress-refuses-unsigned-thinking"
+   ],
+   "guards": [
+    "Messages thinking signature is empty"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unsigned-thinking-accepted",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "        Some(_) => Ok(StopReason::EndTurn),",
+     "before": "        Some(other) => Ok(StopReason::Incomplete {\n            reason: other.to_owned(),\n        }),"
+    }
+   ],
+   "failed_cases": [
+    "an_accepted_field_in_its_documented_shape_is_carried_without_complaint",
+    "an_unfinished_stop_reason_is_carried_under_its_own_name"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "refusal-flattened-into-a-completed-turn",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "fn decode_messages(\n    value: &Value,\n    origin: &Provenance,\n    request: &mut TurnRequest,\n) -> Result<(), Error> {",
+     "before": "fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {"
+    },
+    {
+     "after": "    decode_messages(&value, origin, &mut request)?;",
+     "before": "    decode_messages(&value, &mut request)?;"
+    },
+    {
+     "after": "                request\n                    .items\n                    .push(decode_block(block, role == \"user\", Some(origin))?);",
+     "before": "                request\n                    .items\n                    .push(decode_block(block, role == \"user\", None)?);"
+    }
+   ],
+   "failed_cases": [
+    "ingress_does_not_bind_unattributable_thinking_to_the_reading_binding",
+    "thinking_does_not_survive_a_gateway_round_trip_and_is_not_laundered"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/ingress-refuses-thinking-it-cannot-attribute"
+   ],
+   "guards": [
+    "Messages thinking cannot be attributed to a serving binding on arrival"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "ingress-stamps-the-reading-binding-onto-thinking",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "        fields(message, &MESSAGE_FIELDS)?;",
+     "before": "        assistant_message(message)?;"
+    }
+   ],
+   "failed_cases": [
+    "a_message_start_that_is_not_an_assistant_message_is_refused"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/stream-start-that-is-not-an-assistant-message-refused"
+   ],
+   "guards": [
+    "Messages response is not an assistant message"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "stream-start-not-checked-as-an-assistant-message",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        self.items.insert(\n            self.items.len() as u64,\n            decode_block(&block.value, false, Some(&self.target))?,\n        );",
+     "before": "        self.items.insert(\n            index,\n            decode_block(&block.value, false, Some(&self.target))?,\n        );"
+    }
+   ],
+   "failed_cases": [
+    "interleaved_content_blocks_keep_the_order_the_caller_was_streamed"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/interleaved-blocks-assemble-in-index-order"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "content-assembled-in-block-stop-order",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "    value.get(field)",
+     "before": "    value.get(field).filter(|found| !found.is_null())"
+    }
+   ],
+   "failed_cases": [
+    "ingress_reads_an_explicit_null_optional_field_as_absent"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/ingress-reads-an-explicit-null-as-absent"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "explicit-null-optional-refused-as-a-value",
+   "restored": true,
+   "restored_sha256": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 40,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/lib.rs",
+   "source_before_sha256": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if false {",
+     "before": "        if reported.is_empty()\n            || reported.len() > MAX_STOP_REASON_BYTES\n            || !reported.bytes().all(|byte| byte.is_ascii_graphic())\n        {"
+    }
+   ],
+   "failed_cases": [
+    "a_terminal_reason_that_is_not_a_bounded_name_is_refused"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages terminal reason is not a bounded name"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "terminal-reason-bounded-name-check-deleted",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if false {",
+     "before": "        if !matches!(role, \"user\" | \"assistant\") {"
+    }
+   ],
+   "failed_cases": [
+    "ingress_refuses_a_role_outside_user_and_assistant"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages role is outside the declared subset"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "ingress-role-check-deleted",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "        Some(Value::Array(blocks)) if !blocks.is_empty() => {",
+     "before": "        Some(Value::Array(blocks)) if blocks.len() == 1 => {"
+    }
+   ],
+   "failed_cases": [
+    "ingress_refuses_a_system_prompt_of_more_than_one_block"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages system shape is outside the declared subset"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "system-prompt-of-one-block-relaxed",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "        _ => ToolChoice::Auto,",
+     "before": "        _ => {\n            return Err(Error::unsupported(\n                \"Messages tool choice is outside the declared subset\",\n            ));\n        }"
+    }
+   ],
+   "failed_cases": [
+    "ingress_refuses_a_tool_choice_outside_the_declared_subset"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages tool choice is outside the declared subset"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "unknown-tool-choice-read-as-auto",
+   "restored": true,
+   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+  },
+  {
+   "edits": [
+    {
+     "after": "    let existing = block.get(field).and_then(Value::as_str).unwrap_or(\"\");",
+     "before": "    let existing = block\n        .get(field)\n        .and_then(Value::as_str)\n        .ok_or_else(|| Error::protocol(\"Messages delta does not extend its block\"))?;"
+    }
+   ],
+   "failed_cases": [
+    "a_delta_that_does_not_extend_its_block_is_refused"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages delta does not extend its block"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "delta-that-does-not-extend-its-block-emptied",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "            let arguments: Value =\n                serde_json::from_str(&block.arguments).unwrap_or_else(|_| json!({}));",
+     "before": "            let arguments: Value = serde_json::from_str(&block.arguments)\n                .map_err(|_| Error::protocol(\"Messages streamed tool arguments are not JSON\"))?;"
+    }
+   ],
+   "failed_cases": [
+    "streamed_tool_arguments_that_never_completed_are_refused_not_emptied"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages streamed tool arguments are not JSON"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "half-an-argument-object-emptied",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "        Some(n) => Ok(n.as_u64()),",
+     "before": "        Some(n) => n\n            .as_u64()\n            .map(Some)\n            .ok_or_else(|| Error::protocol(\"Messages usage counter is not an unsigned integer\")),"
+    }
+   ],
+   "failed_cases": [
+    "a_usage_counter_that_is_not_an_unsigned_integer_is_refused"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages usage counter is not an unsigned integer"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "non-integer-usage-counter-read-as-unknown",
+   "restored": true,
+   "restored_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/usage.rs",
+   "source_before_sha256": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if false {",
+     "before": "        if self.items.len() + self.blocks.len() >= MAX_ITEMS {"
+    }
+   ],
+   "failed_cases": [
+    "content_blocks_are_bounded_while_the_stream_is_still_arriving"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages content exceeds its bound"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "in-flight-content-block-bound-deleted",
+   "restored": true,
+   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+  },
+  {
+   "edits": [
+    {
+     "after": "    if false {",
+     "before": "    if object.iter().any(|(key, found)| {\n        UNCONSUMED.contains(&key.as_str()) && !found.is_null() && !found.is_string()\n    }) {"
+    }
+   ],
+   "failed_cases": [
+    "an_accepted_field_this_subset_never_consumes_keeps_its_documented_shape"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/accepted-stop-sequence-in-an-undocumented-shape-refused",
+    "llm.messages/authored/accepted-usage-metadata-in-an-undocumented-shape-refused"
+   ],
+   "guards": [
+    "Messages accepted field has a type this route does not report"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unconsumed-field-shape-check-deleted",
+   "restored": true,
+   "restored_sha256": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 2,
+    "passed": 39,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/lib.rs",
+   "source_before_sha256": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3"
+  },
+  {
+   "edits": [
+    {
+     "after": "            Some(_) => started + self.limits.total,",
+     "before": "            Some(until) => (started + self.limits.total).min(Instant::from_std(until)),"
+    }
+   ],
+   "failed_cases": [
+    "a_caller_supplied_instant_bounds_the_response_headers_and_the_stream",
+    "the_turn_deadline_bounds_a_response_that_never_arrives",
+    "the_turn_deadline_bounds_a_stream_that_stops_arriving"
+   ],
+   "failed_scenarios": [],
+   "guards": [],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "transport-ignores-the-callers-instant",
+   "restored": true,
+   "restored_sha256": "2d488d03ef7c914c2c75dc41e32fc217701dbf73f07623013ca87e67408d48be",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-http/src/transport.rs",
+   "source_before_sha256": "2d488d03ef7c914c2c75dc41e32fc217701dbf73f07623013ca87e67408d48be"
+  },
+  {
+   "edits": [
+    {
+     "after": "                cancel,\n                None,\n            )",
+     "before": "                cancel,\n                deadline,\n            )"
+    }
+   ],
+   "failed_cases": [
+    "the_turn_deadline_bounds_a_response_that_never_arrives",
+    "the_turn_deadline_bounds_a_stream_that_stops_arriving"
+   ],
+   "failed_scenarios": [],
+   "guards": [],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "client-does-not-hand-the-turn-instant-to-the-transport",
+   "restored": true,
+   "restored_sha256": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/client.rs",
+   "source_before_sha256": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec"
+  },
+  {
+   "edits": [
+    {
+     "after": "pub const VERSION_HEADER: &str = \"anthropic-version-x\";",
+     "before": "pub const VERSION_HEADER: &str = \"anthropic-version\";"
+    }
+   ],
+   "failed_cases": [
+    "every_producer_name_on_every_request_carries_its_evidence",
+    "every_wire_name_the_projection_speaks_carries_its_evidence"
+   ],
+   "failed_scenarios": [],
+   "guards": [],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "version-header-respelled",
+   "restored": true,
+   "restored_sha256": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 41,
+    "skipped": 0,
+    "total": 41,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/client.rs",
+   "source_before_sha256": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec"
+  }
+ ],
+ "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not.",
+ "sources": {
+  "crates/llm-http/src/transport.rs": "2d488d03ef7c914c2c75dc41e32fc217701dbf73f07623013ca87e67408d48be",
+  "crates/llm-messages/src/client.rs": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec",
+  "crates/llm-messages/src/codec.rs": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+  "crates/llm-messages/src/decode.rs": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+  "crates/llm-messages/src/lib.rs": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3",
+  "crates/llm-messages/src/usage.rs": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
+ },
+ "summary": {
+  "diagnostics_claimed_by_a_mutation": 24,
+  "diagnostics_in_source": 91,
+  "diagnostics_nothing_is_aimed_at": 67,
+  "killed_by_a_case_only": 11,
+  "killed_by_a_scenario_only": 4,
+  "killed_by_both_lanes": 24,
+  "mutations": 39,
+  "survivors": 0
+ },
+ "unaimed": [
+  "Messages block start carries no block",
+  "Messages block stop names a block that never started",
+  "Messages cache breakdown contradicts its total",
+  "Messages citations are outside the declared subset",
+  "Messages content block index is missing or invalid",
+  "Messages content block is out of order",
+  "Messages content delta is outside the declared subset",
+  "Messages content is missing",
+  "Messages content must be an array",
+  "Messages content must be text or blocks",
+  "Messages delta carries no delta",
+  "Messages encoded request exceeds bound",
+  "Messages event precedes its message start",
+  "Messages field is not a string",
+  "Messages framing has no terminal sentinel",
+  "Messages grouping failed",
+  "Messages ingress exceeds bound",
+  "Messages ingress is not JSON",
+  "Messages ingress requires Messages origin",
+  "Messages input usage overflows",
+  "Messages max_tokens must be positive",
+  "Messages message delta carries no delta",
+  "Messages messages must be an array",
+  "Messages opaque block is outside the declared subset",
+  "Messages optional feature is outside the declared subset",
+  "Messages payload follows the terminal event",
+  "Messages redacted thinking is empty",
+  "Messages reported two terminal reasons",
+  "Messages request encoding failed",
+  "Messages requires a Messages binding",
+  "Messages requires an initial user message",
+  "Messages requires initial user content",
+  "Messages sampling must be numeric",
+  "Messages start carries content",
+  "Messages start carries no message",
+  "Messages stream must be boolean",
+  "Messages streamed tool arguments exceed their bound",
+  "Messages string field is missing or invalid",
+  "Messages system block is not text",
+  "Messages terminal event leaves a content block open",
+  "Messages tool arguments exceed bound",
+  "Messages tool description must be text",
+  "Messages tool input must be an object",
+  "Messages tool name is outside the supported character or length bound",
+  "Messages tool result is_error must be boolean",
+  "Messages tool schema must be an object",
+  "Messages tools must be an array",
+  "Messages value must be an object",
+  "a Messages client requires a Messages binding",
+  "a turn limit must be positive and at most one day",
+  "invalid Messages model name",
+  "invalid Messages response id",
+  "invalid Messages tool call ID",
+  "invalid Messages tool call id",
+  "invalid Messages tool name",
+  "invalid Messages tool result ID",
+  "the Messages route did not find the requested resource",
+  "the Messages route failed the message",
+  "the Messages route refused the presented credential",
+  "the Messages route refused the request as invalid",
+  "the Messages route refused the request as too large",
+  "the Messages route refused this account's access",
+  "the Messages route reported a rate limit",
+  "the Messages route reported a timeout",
+  "the Messages route reported an internal failure",
+  "the Messages route reported that it is overloaded",
+  "the Messages turn deadline expired"
+ ]
+}
