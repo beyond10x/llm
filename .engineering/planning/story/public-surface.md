@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:public-surface
 kind: story
-status: active
+status: implemented
 title: The repository carries its public documentation, changelog and gating surface
 relations:
 - decomposes: epic:contracts
@@ -24,7 +24,7 @@ scope:
   path: changes
 - confidence: cited
   path: website
-revision: 12
+revision: 13
 ---
 ## Context
 

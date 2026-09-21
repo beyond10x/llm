@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:chat-projection
 kind: story
-status: active
+status: implemented
 title: Chat Completions projects the supported neutral subset
 relations:
 - decomposes: epic:inference
@@ -25,7 +25,7 @@ scope:
   path: docs/verification/chat.md
 - confidence: cited
   path: spec/domains/chat.yaml
-revision: 8
+revision: 9
 ---
 ## Context
 

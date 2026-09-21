@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:gateway-auth
 kind: story
-status: active
+status: implemented
 title: The gateway admits one authenticated owner
 relations:
 - decomposes: epic:gateway
@@ -15,7 +15,7 @@ scope:
   path: docs/gateway.md
 - confidence: inferred
   path: docs/verification/gateway.md
-revision: 8
+revision: 9
 ---
 ## Context
 

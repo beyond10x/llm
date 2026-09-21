@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:messages-projection
 kind: story
-status: active
+status: implemented
 title: Messages projects the supported neutral subset
 relations:
 - decomposes: epic:inference
@@ -27,7 +27,7 @@ scope:
   path: docs/verification/messages.md
 - confidence: cited
   path: spec/domains/messages.yaml
-revision: 10
+revision: 11
 ---
 ## Context
 

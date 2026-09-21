@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:hosting-contract
 kind: story
-status: active
+status: implemented
 title: Hosting has explicit owned-resource lifecycle semantics
 relations:
 - decomposes: epic:hosting
@@ -28,7 +28,7 @@ scope:
   path: spec/domains/catalog.yaml
 - confidence: cited
   path: spec/domains/hosting.yaml
-revision: 8
+revision: 9
 ---
 ## Context
 
