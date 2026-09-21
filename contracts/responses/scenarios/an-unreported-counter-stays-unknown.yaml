@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: an-unreported-counter-stays-unknown
+summary: an unreported counter stays unknown
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.completed","response":{"status":"completed","output":[],"usage":{"input_tokens":10}}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    final_usage: true
+    input_tokens: '10'
+    output_tokens: null
+    cached_input_tokens: null
+    cache_creation_input_tokens: null
+    reasoning_output_tokens: null

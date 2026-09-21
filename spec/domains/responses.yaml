@@ -1,1 +1,145 @@
 domain: llm.responses
+
+# This is the verification adapter's observation contract for the OpenAI Responses projection.
+# A projection or a stream decoding is an observation of the pure Rust functions in
+# `crates/llm-responses`, not a request that was sent, a response that was received or a
+# provider that was reached. The conformance adapter retains the actual returned values until
+# the next observation in that scenario. It neither chooses expected outcomes from input
+# predicates nor simulates a provider.
+entities:
+  - name: llm.responses.RequestProjection
+    identity: {name: projection_id, type: String}
+    fields: &projection_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # The endpoint path this wire serves, appended to a binding's base URL.
+      - {name: path, type: Optional<String>}
+      # What the body addresses. The upstream name, never the caller's alias.
+      - {name: wire_model, type: Optional<String>}
+      - {name: stream, type: Optional<Boolean>}
+      - {name: store, type: Optional<Boolean>}
+      - {name: include, type: List<String>}
+      # The whole projected `input` array, compactly encoded, so a fixture pins it exactly.
+      - {name: input_json, type: Optional<String>}
+      - {name: tool_names, type: List<String>}
+      - {name: tool_choice, type: Optional<String>}
+      - {name: max_output_tokens, type: Optional<String>}
+      # Which sampling fields reached the wire. An absent one is absent from this list.
+      - {name: sampling, type: List<String>}
+      # Whether reading the projected body back through the same contract returns the turn
+      # that produced it, field for field.
+      - {name: request_preserved, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+  - name: llm.responses.StreamDecoding
+    identity: {name: decoding_id, type: String}
+    fields: &stream_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # The diagnostic this crate wrote. Never text the provider wrote.
+      - {name: error_message, type: Optional<String>}
+      - {name: dispatch, type: Optional<String>}
+      - {name: stop_reason, type: Optional<String>}
+      - {name: incomplete_reason, type: Optional<String>}
+      # The decoded neutral items, compactly encoded.
+      - {name: items_json, type: Optional<String>}
+      # What a caller watching the stream would have been shown, in order.
+      - {name: stream_events, type: List<String>}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: response_id, type: Optional<String>}
+      # True means the reported counters are terminal, not that every count is known.
+      - {name: final_usage, type: Optional<Boolean>}
+      # Counters are carried as decimal text so an exact u64 crosses without a float.
+      - {name: input_tokens, type: Optional<String>}
+      - {name: output_tokens, type: Optional<String>}
+      - {name: cached_input_tokens, type: Optional<String>}
+      - {name: cache_creation_input_tokens, type: Optional<String>}
+      - {name: reasoning_output_tokens, type: Optional<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+  - name: llm.responses.RequestIngestion
+    identity: {name: ingestion_id, type: String}
+    fields: &ingestion_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # The whole neutral llm.turn/2 document the wire body was read into.
+      - {name: turn_json, type: Optional<String>}
+      # The operator's own model identifier, never the upstream name the body addressed.
+      - {name: model, type: Optional<String>}
+      - {name: instructions, type: Optional<String>}
+      - {name: item_kinds, type: List<String>}
+      - {name: tool_names, type: List<String>}
+      # Whether the turn read out of the body projects again without refusal. False means a
+      # gateway accepted a request its own outgoing side cannot forward.
+      - {name: reprojected, type: Boolean}
+      # Whether that re-projection reproduces the body that was read. False means a field was
+      # accepted, never read, and silently rewritten on the way back out.
+      - {name: body_preserved, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+commands:
+  - name: llm.responses.Project
+    # Project a versioned neutral turn onto the wire body, then read that body back through the
+    # same contract. No I/O, no credential and no endpoint is involved.
+    input:
+      # Serialized llm.catalog Provenance, raw on purpose: a malformed binding must reach the
+      # production decoder instead of being filtered by the test target.
+      - {name: binding_json, type: String}
+      - {name: upstream_model, type: String}
+      # Serialized llm.turn/2, raw for the same reason.
+      - {name: turn_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.responses.Projected]
+        summary: Return facts from projecting and re-reading a turn, including typed refusals.
+
+  - name: llm.responses.DecodeStream
+    # Decode one pinned sequence of server-sent-event payloads into a neutral outcome.
+    input:
+      - {name: binding_json, type: String}
+      - {name: upstream_model, type: String}
+      # A JSON array of the decoded SSE payloads, in wire order. Framing belongs to llm-http.
+      - {name: stream_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.responses.StreamDecoded]
+        summary: Return facts from decoding a stream, including refusals and partial evidence.
+
+  - name: llm.responses.Ingest
+    # Read one wire request body a gateway received into a neutral turn. The body is raw: a
+    # foreign or malformed one must reach the production reader, not a filter in the target.
+    input:
+      - {name: binding_json, type: String}
+      - {name: upstream_model, type: String}
+      - {name: body_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.responses.Ingested]
+        summary: Return facts from reading a wire body, including typed refusals.
+
+events:
+  # Local notification that the adapter finished observing a library return.
+  # No message bus, production event publication or delivery guarantee is implied.
+  - name: llm.responses.Projected
+    fields:
+      - {name: accepted, type: Boolean}
+  - name: llm.responses.StreamDecoded
+    fields:
+      - {name: accepted, type: Boolean}
+  - name: llm.responses.Ingested
+    fields:
+      - {name: accepted, type: Boolean}
+
+views:
+  - name: llm.responses.LastProjection
+    source: llm.responses.RequestProjection
+    consistency: read_your_writes
+    fields: *projection_facts
+  - name: llm.responses.LastStream
+    source: llm.responses.StreamDecoding
+    consistency: read_your_writes
+    fields: *stream_facts
+  - name: llm.responses.LastIngestion
+    source: llm.responses.RequestIngestion
+    consistency: read_your_writes
+    fields: *ingestion_facts

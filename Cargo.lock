@@ -297,6 +297,10 @@ version = "0.0.0"
 [[package]]
 name = "b10x-llm-responses"
 version = "0.0.0"
+dependencies = [
+ "b10x-llm-core",
+ "serde_json",
+]
 
 [[package]]
 name = "b10x-llm-routing"
