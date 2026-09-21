@@ -229,6 +229,58 @@ and every remaining stub claim in the site, the README and the changelog names t
 others. The crate page's own count agrees: eleven implemented, which is fourteen minus those three,
 and its implemented table lists all six of this wave's crates.
 
+### The close, and the one thing that is not done
+
+`wave/1` is merged into `plan/llm-foundation` at `a7861d5`. That is integration, not release: no tag,
+no version bump, nothing pushed.
+
+Cleanup, in the order the wave rules give it:
+
+| Step | Result |
+|---|---|
+| records read out | every unit's verification record and falsification record is committed; the scratch roots under `~/.cache/llm-wave-1/` are untouched and hold each unit's logs, probes and mutation batteries |
+| build directories | seven deleted by exact path — the six units' and the integration one — 10.8 GB. Disk went 26 GB to 45 GB free |
+| in-tree build output | `target/` in four unit trees, and `website/{node_modules,build,.docusaurus}` in the public-surface tree |
+| `worktree finish` | all six unit trees finished |
+| `worktree gc --dry-run` | **all six retained**, each with the same reason: `no-remote-recovery-proof` — its unit commit is not reachable from an advertised remote ref |
+
+**The six trees stay until `plan/llm-foundation` is pushed, and the push is not the wave's to make.**
+A wave's approval covers its commits and its merges; a push is a separate decision and it is the
+operator's. So the trees are retained rather than forced, the branches `impl/*` are kept rather than
+deleted, and this is the record of why.
+
+Next owner: the operator. Next action: push `plan/llm-foundation`, then
+`worktree gc --repo <primary> --apply --id wave1-<unit>` for the six ids, then
+`git branch -d impl/<unit>` for the six branches, each of which is already an ancestor of
+`plan/llm-foundation`.
+
+### What the second half of this wave cost
+
+Four sub-agent runs, from the harness's own completion reports:
+
+| Agent | Tokens | Tool uses | Wall |
+|---|---|---|---|
+| adversary, hosting pass 2 | 208,551 | 59 | 14m57s |
+| adversary, messages pass 2 | 226,254 | 93 | 24m27s |
+| implementor, hosting correction | 283,791 | 11 | 2m50s |
+| implementor, messages correction | 278,768 | 57 | 14m43s |
+
+997,364 tokens across the four. Both correction rounds were killed mid-flight by an account rate
+limit and resumed in place rather than re-dispatched; the figures above are what the harness reported
+on completion, and the usage of the killed segments was not reported separately. The four units that
+ran in the earlier session are not counted here, because that session's numbers did not survive it —
+which is the argument for writing them down at the time.
+
+### Still outside this repository
+
+The Atlas catalog change that declares this repository public is not part of this wave's merge and
+cannot pass its own gate until three operations are done, none of them the coordinator's. They are
+stated in full in `docs/verification/public-surface.md`:
+
+1. the GitHub repository is made public and its description and homepage filled to match the catalog
+2. GitHub Pages is enabled for it
+3. the website roster stops naming it as drift
+
 ## The interruption
 
 All four dispatched units were killed part-way through by an account rate limit, within seconds of
