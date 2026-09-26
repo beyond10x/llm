@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ResponseProjection",
+  "x-ess-name": "llm.chat.ResponseProjection",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "projection_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "binding_model": {
+      "type": "string"
+    },
+    "stream_text": {
+      "type": "string"
+    },
+    "reasoning_text": {
+      "type": "string"
+    },
+    "argument_deltas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tool_stream": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "assistant_text": {
+      "type": "string"
+    },
+    "stop_reason": {
+      "type": "string"
+    },
+    "tool_calls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "response_id": {
+      "type": "string"
+    },
+    "final_usage": {
+      "type": "boolean"
+    },
+    "usage_reported": {
+      "type": "boolean"
+    },
+    "input_tokens": {
+      "type": "string"
+    },
+    "output_tokens": {
+      "type": "string"
+    },
+    "cached_input_tokens": {
+      "type": "string"
+    },
+    "cache_creation_input_tokens": {
+      "type": "string"
+    },
+    "reasoning_output_tokens": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.chat.ResponseProjection.State"
+    }
+  },
+  "required": [
+    "projection_id",
+    "accepted",
+    "binding_model",
+    "stream_text",
+    "reasoning_text",
+    "argument_deltas",
+    "tool_stream",
+    "tool_calls",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:78b5be86eac6bf3a7be2f1b550d03ea1ea55f7b67dbeeba68ccc3b04e0217086",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.chat.ResponseProjection.State": {
+      "title": "State",
+      "x-ess-name": "llm.chat.ResponseProjection.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

@@ -1,7 +1,12 @@
 mod budgets;
+mod chat;
+mod fallback;
 mod gate;
+mod hosting;
 mod inference;
+mod messages;
 mod pricing;
+mod responses;
 mod secrets;
 mod target;
 

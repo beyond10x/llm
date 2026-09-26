@@ -1,0 +1,34 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: absent-output-bound-takes-the-binding-maximum
+summary: the route's mandatory output bound comes from the binding, never from a guess
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[]}}"
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: "{\"max_tokens\":2048,\"messages\":[{\"content\":[{\"text\":\"hello\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true}"
+    neutral_request: null
+    stream: null
+    items:
+      - "user-text:hello"
+    text: ""
+    reasoning: ""
+    tool_arguments: []
+    upstream_model: null
+    response_id: null
+    final_usage: null
+    usage_json: null
+    stop_reason: null

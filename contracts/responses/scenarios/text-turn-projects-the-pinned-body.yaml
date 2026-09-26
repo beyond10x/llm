@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: text-turn-projects-the-pinned-body
+summary: a text turn projects the pinned body
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/3","request":{"model":"small","instructions":"Keep instructions","items":[{"kind":"user-text","text":"Keep message"}],"tools":[],"max_output_tokens":128}}'
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: true
+    error_code: null
+    path: /responses
+    wire_model: example/Small-Model
+    stream: true
+    store: false
+    include:
+    - reasoning.encrypted_content
+    input_json: '[{"content":[{"text":"Keep instructions","type":"input_text"}],"role":"developer","type":"message"},{"content":[{"text":"Keep message","type":"input_text"}],"role":"user","type":"message"}]'
+    tool_names: []
+    tool_choice: null
+    max_output_tokens: '128'
+    sampling: []
+    request_preserved: true

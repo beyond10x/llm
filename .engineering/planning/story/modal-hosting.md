@@ -7,6 +7,7 @@ title: Modal supplies the hosting contract without simulated capabilities
 relations:
 - decomposes: epic:hosting
 - depends_on: story:hosting-contract
+- serves: vision:portable-model-inference
 scope:
 - confidence: inferred
   path: contracts/modal

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OwnershipLease",
+  "x-ess-name": "llm.hosting.OwnershipLease",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "controller_id": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string"
+    },
+    "epoch": {
+      "type": "integer"
+    },
+    "expires_at_ms": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.hosting.OwnershipLease.State"
+    }
+  },
+  "required": [
+    "id",
+    "controller_id",
+    "owner_id",
+    "epoch",
+    "expires_at_ms",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:f43130bd34346b58fc0ea03cd8ea48697b44c6b0c2018f856e86460eb29446fa",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.OwnershipLease.State": {
+      "title": "State",
+      "x-ess-name": "llm.hosting.OwnershipLease.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

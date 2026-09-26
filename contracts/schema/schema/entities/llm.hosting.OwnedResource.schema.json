@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OwnedResource",
+  "x-ess-name": "llm.hosting.OwnedResource",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "controller_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "resources",
+        "kind": "owns",
+        "source": "llm.hosting.Controller",
+        "target": "llm.hosting.OwnedResource",
+        "cardinality": "many",
+        "via": "controller_id"
+      }
+    },
+    "deployment_spec_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "specification",
+        "kind": "references",
+        "source": "llm.hosting.OwnedResource",
+        "target": "llm.catalog.DeploymentSpec",
+        "cardinality": "one",
+        "via": "deployment_spec_id"
+      }
+    },
+    "reservation_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "reservation",
+        "kind": "references",
+        "source": "llm.hosting.OwnedResource",
+        "target": "llm.budget.Reservation",
+        "cardinality": "one",
+        "via": "reservation_id"
+      }
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "phase": {
+      "$ref": "#/$defs/llm.hosting.Phase"
+    },
+    "stop_reason": {
+      "$ref": "#/$defs/llm.hosting.StopReason"
+    },
+    "stop_evidence": {
+      "type": "string"
+    },
+    "resource_name": {
+      "type": "string"
+    },
+    "resource_incarnation": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.hosting.OwnedResource.State"
+    }
+  },
+  "required": [
+    "id",
+    "controller_id",
+    "deployment_spec_id",
+    "reservation_id",
+    "request_id",
+    "phase",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:4647a2049f83e85417de8c92e3fea7e26594e92a44e7addb8b44ad2ea8d67c7e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.OwnedResource.State": {
+      "title": "State",
+      "x-ess-name": "llm.hosting.OwnedResource.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.hosting.Phase": {
+      "title": "Phase",
+      "x-ess-name": "llm.hosting.Phase",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared",
+        "Requested",
+        "Active",
+        "Uncertain",
+        "StopRequired",
+        "Stopped",
+        "Cancelled",
+        "Disowned"
+      ]
+    },
+    "llm.hosting.StopReason": {
+      "title": "StopReason",
+      "x-ess-name": "llm.hosting.StopReason",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "AmbiguousMutation",
+        "LifetimeExceeded",
+        "LeaseExpired",
+        "OperatorRequest",
+        "OwnershipLost"
+      ]
+    }
+  }
+}

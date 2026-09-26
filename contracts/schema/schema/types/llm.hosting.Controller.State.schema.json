@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.hosting.Controller.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:8adc4ac8603f5c5d922bb1f45ed894a7846a108ae90a197fc16e8abad9eb5f96",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.Controller.State": {
+      "title": "State",
+      "x-ess-name": "llm.hosting.Controller.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

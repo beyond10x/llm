@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StreamDecoding",
+  "x-ess-name": "llm.responses.StreamDecoding",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "decoding_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "stop_reason": {
+      "type": "string"
+    },
+    "incomplete_reason": {
+      "type": "string"
+    },
+    "items_json": {
+      "type": "string"
+    },
+    "stream_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "response_id": {
+      "type": "string"
+    },
+    "final_usage": {
+      "type": "boolean"
+    },
+    "input_tokens": {
+      "type": "string"
+    },
+    "output_tokens": {
+      "type": "string"
+    },
+    "cached_input_tokens": {
+      "type": "string"
+    },
+    "cache_creation_input_tokens": {
+      "type": "string"
+    },
+    "reasoning_output_tokens": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.responses.StreamDecoding.State"
+    }
+  },
+  "required": [
+    "decoding_id",
+    "accepted",
+    "stream_events",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:6106c606351fd12dde35844b8b62a1a61e81944db852e01a1ec9b81981eb3bf2",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.responses.StreamDecoding.State": {
+      "title": "State",
+      "x-ess-name": "llm.responses.StreamDecoding.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

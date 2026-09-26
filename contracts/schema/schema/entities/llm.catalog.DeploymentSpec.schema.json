@@ -33,6 +33,12 @@
     "image": {
       "type": "string"
     },
+    "requested_resource_name": {
+      "type": "string"
+    },
+    "requested_lifetime_ms": {
+      "type": "string"
+    },
     "state": {
       "$ref": "#/$defs/llm.catalog.DeploymentSpec.State"
     }
@@ -42,14 +48,16 @@
     "account_id",
     "model_id",
     "image",
+    "requested_resource_name",
+    "requested_lifetime_ms",
     "state"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
-    "contract_digest": "slice-sha256/2:533850a3a200755e8dbf83514e1ba2e0ba70231554760faeffb5951ebd9f6488",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:96f8f256181e13d914215ee77bbee6761430054285fe0e2e9e37615b6b66f29f",
     "regenerate": "ess generate"
   },
   "$defs": {

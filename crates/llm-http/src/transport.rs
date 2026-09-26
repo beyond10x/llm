@@ -57,16 +57,45 @@ impl HttpClient {
         Ok(Self { client, limits })
     }
 
+    /// The limits this client enforces, so a caller can bound the rest of its turn on the same
+    /// instant rather than restating the value and letting the two drift apart.
+    pub const fn limits(&self) -> &Limits {
+        &self.limits
+    }
+
     /// Sends exactly once, with a request-time header list supplied by the caller.
     /// # Errors
     /// Refuses invalid URLs/body bounds, cancellation, timeout, transport failure and non-SSE replies.
     pub async fn post_sse(
         &self,
         url: &str,
+        headers: HeaderMap,
+        body: Vec<u8>,
+        framing: Framing,
+        cancel: &Cancel,
+    ) -> Result<SseStream, Error> {
+        self.post_sse_until(url, headers, body, framing, cancel, None)
+            .await
+    }
+
+    /// The same single attempt, bounded additionally by an absolute instant the caller already
+    /// holds: the start of a turn, a parent deadline, a budget expiry.
+    ///
+    /// The exchange ends at whichever comes first, that instant or this client's own `total`, and
+    /// the bound covers the response headers and every read of the returned [`SseStream`] — so a
+    /// caller whose own limit is the shorter of the two does not have to restate it here and let
+    /// the two drift apart. A caller holding no such instant passes `None`.
+    ///
+    /// # Errors
+    /// As [`HttpClient::post_sse`]; the caller's instant expiring reports `Deadline`.
+    pub async fn post_sse_until(
+        &self,
+        url: &str,
         mut headers: HeaderMap,
         body: Vec<u8>,
         framing: Framing,
         cancel: &Cancel,
+        until: Option<std::time::Instant>,
     ) -> Result<SseStream, Error> {
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
@@ -91,7 +120,12 @@ impl HttpClient {
             value.set_sensitive(true);
         }
         let started = Instant::now();
-        let deadline = started + self.limits.total;
+        // The shorter of the two ends the exchange: a caller cannot lengthen this client's own
+        // bound by naming a later instant, and a caller's shorter one is not ignored.
+        let deadline = match until {
+            None => started + self.limits.total,
+            Some(until) => (started + self.limits.total).min(Instant::from_std(until)),
+        };
         let request = self
             .client
             .post(url)

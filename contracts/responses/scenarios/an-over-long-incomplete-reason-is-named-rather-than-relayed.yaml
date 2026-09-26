@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: an-over-long-incomplete-reason-is-named-rather-than-relayed
+summary: an over long incomplete reason is named rather than relayed
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.incomplete","response":{"status":"incomplete","incomplete_details":{"reason":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},"output":[]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stop_reason: incomplete
+    incomplete_reason: unrecognized

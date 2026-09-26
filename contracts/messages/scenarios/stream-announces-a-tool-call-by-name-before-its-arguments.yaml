@@ -1,0 +1,58 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: stream-announces-a-tool-call-by-name-before-its-arguments
+summary: a tool_use block is announced by name when it opens, before any of its argument fragments
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.DecodeStream
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+    events_sse: |+
+      event: message_start
+      data: {"message":{"content":[],"id":"msg_015b","model":"example-model-20260201","role":"assistant","stop_reason":null,"stop_sequence":null,"type":"message","usage":{"input_tokens":11,"output_tokens":1}},"type":"message_start"}
+
+      event: content_block_start
+      data: {"content_block":{"id":"call-1","input":{},"name":"lookup","type":"tool_use"},"index":0,"type":"content_block_start"}
+
+      event: content_block_delta
+      data: {"delta":{"partial_json":"{\"query\":","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+      event: content_block_delta
+      data: {"delta":{"partial_json":"\"errors\"}","type":"input_json_delta"},"index":0,"type":"content_block_delta"}
+
+      event: content_block_stop
+      data: {"index":0,"type":"content_block_stop"}
+
+      event: content_block_start
+      data: {"content_block":{"id":"call-2","input":{},"name":"lookup","type":"tool_use"},"index":1,"type":"content_block_start"}
+
+      event: content_block_stop
+      data: {"index":1,"type":"content_block_stop"}
+
+      event: message_delta
+      data: {"delta":{"stop_reason":"tool_use","stop_sequence":null},"type":"message_delta","usage":{"input_tokens":11,"output_tokens":9}}
+
+      event: message_stop
+      data: {"type":"message_stop"}
+
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    # Each call is named once, when its block opens; a call with no argument fragment is
+    # still announced.
+    tool_stream:
+      - "started:call-1:lookup"
+      - "arguments:call-1:{\"query\":"
+      - "arguments:call-1:\"errors\"}"
+      - "started:call-2:lookup"
+    items:
+      - "tool-call:lookup:call-1:{\"query\":\"errors\"}"
+      - "tool-call:lookup:call-2:{}"
+    stop_reason: "tool-calls"

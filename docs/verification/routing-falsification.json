@@ -170,5 +170,342 @@
       "llm.routing/authored/repointed-endpoint-refuses-opaque-state",
       "llm.routing/authored/repointed-model-refuses-opaque-state"
     ]
+  },
+  {
+    "mutation": "visible-output-ignored",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "visible_events > 0",
+    "after": "visible_events > 1",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-refused-after-visible-output",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-refused-after-visible-output"
+    ],
+    "crate_tests_failed": [
+      "refuses_fallback_after_partial_output_became_visible"
+    ]
+  },
+  {
+    "mutation": "ambiguous-dispatch-replayed",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "} else if error.dispatch == Dispatch::Unknown {\n                Some(Halt::AmbiguousDispatch)",
+    "after": "} else if error.dispatch == Dispatch::Unknown {\n                None",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-refused-after-ambiguous-dispatch",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-refused-after-ambiguous-dispatch"
+    ],
+    "crate_tests_failed": [
+      "refuses_to_replay_an_ambiguously_dispatched_request"
+    ]
+  },
+  {
+    "mutation": "incompatible-targets-attempted",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "if !target.rejections.is_empty() {",
+    "after": "if target.rejections.contains(&crate::Rejection::FallbackDisabled) {",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-refused-for-bound-opaque-state",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 52,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-attempts-only-declared-compatible-order",
+      "llm.routing/authored/fallback-refused-by-exhausted-limit",
+      "llm.routing/authored/fallback-refused-for-bound-opaque-state"
+    ],
+    "crate_tests_failed": [
+      "a_target_the_run_could_attempt_still_needs_its_model_before_any_attempt",
+      "eligible_failure_before_output_attempts_only_the_declared_compatible_order",
+      "every_eligible_class_falls_back",
+      "refuses_an_alternative_whose_limits_are_exhausted",
+      "refuses_fallback_when_opaque_state_is_bound_to_the_failed_target"
+    ]
+  },
+  {
+    "mutation": "admission-ignored",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "admit(&selection) {",
+    "after": "admit(&selection).or::<Error>(Ok(())) {",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-refused-by-exhausted-limit",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-refused-by-exhausted-limit"
+    ],
+    "crate_tests_failed": [
+      "a_refused_primary_admission_makes_no_attempt_at_all",
+      "refuses_an_alternative_whose_limits_are_exhausted"
+    ]
+  },
+  {
+    "mutation": "unauthorized-made-eligible",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "ErrorCode::Transport | ErrorCode::RateLimited | ErrorCode::Unavailable",
+    "after": "ErrorCode::Transport | ErrorCode::RateLimited | ErrorCode::Unavailable | ErrorCode::Unauthorized",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-refused-for-ineligible-failure",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-refused-for-ineligible-failure"
+    ],
+    "crate_tests_failed": [
+      "ineligible_failure_classes_never_fall_back"
+    ]
+  },
+  {
+    "mutation": "attempt-bound-off-by-one",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "candidates.len() >= policy.max_attempts",
+    "after": "candidates.len() > policy.max_attempts",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-disabled-by-caller",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-disabled-by-caller"
+    ],
+    "crate_tests_failed": [
+      "a_target_the_run_can_never_attempt_needs_no_model",
+      "the_route_and_the_caller_can_each_disable_fallback"
+    ]
+  },
+  {
+    "mutation": "deadline-ignored",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "Instant::now() >= deadline",
+    "after": "Instant::now() < deadline",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-passed-deadline-starts-no-attempt",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-passed-deadline-starts-no-attempt"
+    ],
+    "crate_tests_failed": [
+      "a_passed_deadline_starts_no_attempt"
+    ]
+  },
+  {
+    "mutation": "failed-attempt-evidence-dropped",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "observation: error.observation.as_deref().cloned(),",
+    "after": "observation: None,",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-refused-by-exhausted-limit",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-refused-by-exhausted-limit"
+    ],
+    "crate_tests_failed": [
+      "adversary_refused_outcome_keeps_the_attempts_valid_usage_evidence",
+      "bound_evidence_on_a_contradictory_dispatch_claim_is_kept_and_never_replayed",
+      "eligible_failure_before_output_attempts_only_the_declared_compatible_order",
+      "refuses_an_alternative_whose_limits_are_exhausted"
+    ]
+  },
+  {
+    "mutation": "successful-attempt-evidence-dropped",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "observation: outcome.observation.clone(),",
+    "after": "observation: TurnObservation::new(provenance.clone()),",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-attempts-only-declared-compatible-order",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-attempts-only-declared-compatible-order"
+    ],
+    "crate_tests_failed": [
+      "eligible_failure_before_output_attempts_only_the_declared_compatible_order"
+    ]
+  },
+  {
+    "mutation": "cancellation-ignored",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "let refused = if cancel.is_cancelled() {",
+    "after": "let refused = if false && cancel.is_cancelled() {",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "crates/llm-routing/tests/fallback_adversary.rs::adversary_a_cancelled_caller_starts_no_attempt",
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 55,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [],
+    "crate_tests_failed": [
+      "adversary_a_cancelled_caller_starts_no_attempt",
+      "adversary_cancellation_during_an_attempt_stops_fallback"
+    ]
+  },
+  {
+    "mutation": "too-large-made-eligible",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "ErrorCode::Transport | ErrorCode::RateLimited | ErrorCode::Unavailable",
+    "after": "ErrorCode::Transport | ErrorCode::RateLimited | ErrorCode::Unavailable | ErrorCode::TooLarge",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-refused-for-too-large-failure",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-refused-for-too-large-failure"
+    ],
+    "crate_tests_failed": [
+      "adversary_too_large_and_unsupported_never_fall_back"
+    ]
+  },
+  {
+    "mutation": "refused-outcome-evidence-dropped",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "if outcome.observation.validate_for(provenance).is_ok() {",
+    "after": "if false && outcome.observation.validate_for(provenance).is_ok() {",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "crates/llm-routing/tests/fallback_adversary.rs::adversary_refused_outcome_keeps_the_attempts_valid_usage_evidence",
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 55,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [],
+    "crate_tests_failed": [
+      "adversary_refused_outcome_keeps_the_attempts_valid_usage_evidence"
+    ]
+  },
+  {
+    "mutation": "contradictory-claim-evidence-dropped",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": ".is_some_and(|observation| observation.validate_for(provenance).is_err())",
+    "after": ".is_some()",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "crates/llm-routing/tests/fallback.rs::bound_evidence_on_a_contradictory_dispatch_claim_is_kept_and_never_replayed",
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 55,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [],
+    "crate_tests_failed": [
+      "bound_evidence_on_a_contradictory_dispatch_claim_is_kept_and_never_replayed"
+    ]
+  },
+  {
+    "mutation": "unattemptable-targets-need-a-model",
+    "source": "crates/llm-routing/src/fallback.rs",
+    "before": "if candidates.len() >= policy.max_attempts {",
+    "after": "if candidates.len() >= MAX_ROUTE_TARGETS {",
+    "source_before_sha256": "fc3a052db424d00f82b02308305d4d2b436ff5b294326cbfb1d0e482a53429f5",
+    "named_failure": "llm.routing/authored/fallback-disabled-by-caller",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 54,
+      "skipped": 0,
+      "total": 55,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-disabled-by-caller"
+    ],
+    "crate_tests_failed": [
+      "a_target_the_run_can_never_attempt_needs_no_model",
+      "the_route_and_the_caller_can_each_disable_fallback"
+    ]
+  },
+  {
+    "mutation": "routing-selects-a-target-for-unbound-state",
+    "source": "crates/llm-routing/src/selection.rs",
+    "before": "        Item::UnattributedOpaque { .. } => true,",
+    "after": "        Item::UnattributedOpaque { .. } => false,",
+    "source_before_sha256": "eadc28a94fe4b918c406d9ca8bd71803c395d9728acab0de7c3b043a7f0cc948",
+    "named_failure": "llm.routing/authored/unattributed-opaque-state-selects-no-target",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 55,
+      "skipped": 0,
+      "unsupported": 0,
+      "total": 56
+    },
+    "failed": [
+      "llm.routing/authored/unattributed-opaque-state-selects-no-target"
+    ],
+    "crate_tests_failed": [
+      "unattributed_opaque_state_is_refused_by_every_target_until_the_caller_binds_it"
+    ]
   }
 ]

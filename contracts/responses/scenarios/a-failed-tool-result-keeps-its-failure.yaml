@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: a-failed-tool-result-keeps-its-failure
+summary: a failed tool result keeps its failure
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/3","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Read it"},{"kind":"assistant-text","text":"Reading."},{"kind":"tool-call","call_id":"call-1","name":"file_read","arguments":{"path":"README.md"}},{"kind":"tool-result","call_id":"call-1","output":{"ok":true,"output":"not a success flag"},"failed":true}],"tools":[{"name":"file_read","description":"Read one file","input_schema":{"type":"object"}}]}}'
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: true
+    input_json: '[{"content":[{"text":"Read it","type":"input_text"}],"role":"user","type":"message"},{"content":[{"text":"Reading.","type":"output_text"}],"role":"assistant","type":"message"},{"arguments":"{\"path\":\"README.md\"}","call_id":"call-1","name":"file_read","type":"function_call"},{"call_id":"call-1","output":"{\"ok\":false,\"output\":{\"ok\":true,\"output\":\"not a success flag\"}}","type":"function_call_output"}]'
+    request_preserved: true

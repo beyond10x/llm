@@ -9,15 +9,9 @@ relations:
 - serves: vision:portable-model-inference
 scope:
 - confidence: inferred
-  path: .github/workflows
-- confidence: cited
-  path: AGENTS.md
-- confidence: inferred
   path: Cargo.lock
 - confidence: inferred
   path: Cargo.toml
-- confidence: cited
-  path: README.md
 - confidence: inferred
   path: Taskfile.yml
 - confidence: cited
@@ -44,7 +38,7 @@ scope:
   path: spec
 - confidence: cited
   path: spec/domains/inference.yaml
-revision: 15
+revision: 16
 ---
 ## Context
 

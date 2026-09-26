@@ -1,0 +1,38 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: stream-preserves-text-thinking-tools-and-terminal-usage
+summary: one stream preserves streamed text, reasoning, tool arguments and the terminal counters
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.DecodeStream
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+    events_sse: "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":6,\"cache_read_input_tokens\":4,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"signature\":\"\",\"thinking\":\"\",\"type\":\"thinking\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"thinking\":\"weighing\",\"type\":\"thinking_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"signature\":\"sig-1\",\"type\":\"signature_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":1,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"text\":\"Looking\",\"type\":\"text_delta\"},\"index\":1,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":1,\"type\":\"content_block_stop\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"id\":\"call-1\",\"input\":{},\"name\":\"lookup\",\"type\":\"tool_use\"},\"index\":2,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"partial_json\":\"{\\\"query\\\":\",\"type\":\"input_json_delta\"},\"index\":2,\"type\":\"content_block_delta\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"partial_json\":\"\\\"errors\\\"}\",\"type\":\"input_json_delta\"},\"index\":2,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":2,\"type\":\"content_block_stop\"}\n\nevent: ping\ndata: {\"type\":\"ping\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"cache_creation_input_tokens\":6,\"cache_read_input_tokens\":4,\"input_tokens\":11,\"output_tokens\":9,\"output_tokens_details\":{\"thinking_tokens\":3}}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: null
+    neutral_request: null
+    stream: null
+    items:
+      - "opaque:{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260\"}:{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}"
+      - "assistant-text:Looking"
+      - "tool-call:lookup:call-1:{\"query\":\"errors\"}"
+    text: "Looking"
+    reasoning: "weighing"
+    tool_arguments:
+      - "call-1:{\"query\":"
+      - "call-1:\"errors\"}"
+    upstream_model: "example-model-20260201"
+    response_id: "msg_014a"
+    final_usage: true
+    usage_json: "{\"input_tokens\":21,\"output_tokens\":9,\"cached_input_tokens\":4,\"cache_creation_input_tokens\":6,\"reasoning_output_tokens\":3}"
+    stop_reason: "tool-calls"

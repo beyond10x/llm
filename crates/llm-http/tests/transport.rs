@@ -1,7 +1,7 @@
 use llm_core::{Cancel, Dispatch, ErrorCode};
 use llm_http::{Framing, HeaderMap, HeaderValue, HttpClient, Limits, SseEvent, retry_after};
 use serde_json::json;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
@@ -313,4 +313,116 @@ async fn idle_and_total_deadlines_bound_silence_and_continuous_keepalives() {
             .unwrap()
             .unwrap();
     }
+}
+
+/// A caller that already holds an absolute instant — the start of a turn, a parent deadline —
+/// bounds the whole exchange on it, headers and body alike, without restating the client's own
+/// limits and letting the two drift apart.
+///
+/// Both halves are measured against a client whose own `total` is far longer than the instant, so
+/// only the caller's instant can be what ends either wait.
+#[tokio::test]
+async fn a_caller_supplied_instant_bounds_the_response_headers_and_the_stream() {
+    let patient = || {
+        HttpClient::new(Limits {
+            response_headers: Duration::from_secs(10),
+            idle: Duration::from_secs(10),
+            total: Duration::from_secs(10),
+        })
+        .unwrap()
+    };
+    let (headers_listener, headers_url) = listener().await;
+    let headers_worker = tokio::spawn(async move {
+        let (mut socket, _) = headers_listener.accept().await.unwrap();
+        request(&mut socket).await;
+        tokio::time::sleep(Duration::from_secs(30)).await;
+    });
+    let error = tokio::time::timeout(
+        Duration::from_secs(3),
+        patient().post_sse_until(
+            &headers_url,
+            HeaderMap::new(),
+            b"{}".to_vec(),
+            Framing::PayloadsOnly,
+            &Cancel::new(),
+            Some(Instant::now() + Duration::from_millis(300)),
+        ),
+    )
+    .await
+    .expect("the caller's instant did not end a request whose headers never arrived")
+    .err()
+    .unwrap();
+    assert_eq!(error.code, ErrorCode::Deadline);
+    headers_worker.abort();
+
+    let (stream_listener, stream_url) = listener().await;
+    let stream_worker = tokio::spawn(async move {
+        let (mut socket, _) = stream_listener.accept().await.unwrap();
+        request(&mut socket).await;
+        socket
+            .write_all(
+                b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n",
+            )
+            .await
+            .unwrap();
+        socket
+            .write_all(b"data: {\"text\":\"prefix\"}\n\n")
+            .await
+            .unwrap();
+        tokio::time::sleep(Duration::from_secs(30)).await;
+    });
+    let mut stream = patient()
+        .post_sse_until(
+            &stream_url,
+            HeaderMap::new(),
+            b"{}".to_vec(),
+            Framing::PayloadsOnly,
+            &Cancel::new(),
+            Some(Instant::now() + Duration::from_millis(300)),
+        )
+        .await
+        .unwrap();
+    assert!(stream.next().await.unwrap().is_some());
+    let error = tokio::time::timeout(Duration::from_secs(3), stream.next())
+        .await
+        .expect("the caller's instant did not end a stream that stopped arriving")
+        .err()
+        .unwrap();
+    assert_eq!(error.code, ErrorCode::Deadline);
+    assert_eq!(error.dispatch, Dispatch::Accepted);
+    stream_worker.abort();
+}
+
+/// The client's own `total` still ends the exchange when it is the shorter of the two, so a
+/// caller cannot lengthen a bound by naming a later instant.
+#[tokio::test]
+async fn the_clients_own_total_still_ends_an_exchange_a_later_instant_would_not() {
+    let (listener, url) = listener().await;
+    let worker = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        request(&mut socket).await;
+        tokio::time::sleep(Duration::from_secs(30)).await;
+    });
+    let client = HttpClient::new(Limits {
+        response_headers: Duration::from_millis(50),
+        ..Limits::default()
+    })
+    .unwrap();
+    let error = tokio::time::timeout(
+        Duration::from_secs(3),
+        client.post_sse_until(
+            &url,
+            HeaderMap::new(),
+            b"{}".to_vec(),
+            Framing::PayloadsOnly,
+            &Cancel::new(),
+            Some(Instant::now() + Duration::from_secs(600)),
+        ),
+    )
+    .await
+    .expect("a later caller instant lengthened the client's own bound")
+    .err()
+    .unwrap();
+    assert_eq!(error.code, ErrorCode::Deadline);
+    worker.abort();
 }

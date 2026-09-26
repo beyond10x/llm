@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ingest input",
+  "x-ess-name": "llm.responses.Ingest",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "binding_json": {
+      "type": "string"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "body_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "binding_json",
+    "upstream_model",
+    "body_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:21d5d3492b52f3448b225e6e600accb36d8ea1e922f0e28d78e36bfa0bbfbfda",
+    "regenerate": "ess generate"
+  }
+}

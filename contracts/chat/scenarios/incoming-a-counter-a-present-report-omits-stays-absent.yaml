@@ -1,0 +1,35 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: incoming-a-counter-a-present-report-omits-stays-absent
+summary: incoming a counter a present report omits stays absent
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.ProjectResponse
+  input:
+    response: |+
+      data: {"id":"chatcmpl-BpPART","object":"chat.completion.chunk","created":1772000500,"model":"gpt-4o-mini-2024-07-18","choices":[{"index":0,"delta":{"role":"assistant","content":"ok"},"logprobs":null,"finish_reason":null}]}
+
+      data: {"id":"chatcmpl-BpPART","object":"chat.completion.chunk","created":1772000500,"model":"gpt-4o-mini-2024-07-18","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}]}
+
+      data: {"id":"chatcmpl-BpPART","object":"chat.completion.chunk","created":1772000500,"model":"gpt-4o-mini-2024-07-18","choices":[],"usage":{"prompt_tokens":5,"prompt_tokens_details":{"audio_tokens":0},"completion_tokens_details":{"audio_tokens":0}}}
+
+      data: [DONE]
+
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.chat.LastResponseProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastResponseProjection
+  contains:
+    accepted: true
+    usage_reported: true
+    input_tokens: '5'
+    # The report exists and names one counter. Every counter it does not name is still
+    # unknown; a zero here would claim the model produced nothing. Both detail objects are
+    # present and neither carries the counter read from it.
+    output_tokens: null
+    cached_input_tokens: null
+    cache_creation_input_tokens: null
+    reasoning_output_tokens: null
+    final_usage: true

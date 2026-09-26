@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: a-gateway-round-trip-preserves-the-payload-once-the-caller-binds-it
+summary: forwarding unbound state is refused by name, and after the caller's explicit binding the payload reprojects JSON-equal (not byte-equal; keys re-serialize sorted)
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.responses.Ingest
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Hi"}]},{"type":"reasoning","id":"rs_1","encrypted_content":"gAAAAA-rev-1","summary":[{"type":"summary_text","text":"weighing"}]}],"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
+  outcome: observed
+assert:
+- view: llm.responses.LastIngestion
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastIngestion
+  contains:
+    accepted: true
+    reprojected: false
+    forward_refusal: unattributed opaque state is not sendable until a caller binds it to a target
+    bound_input_json: '[{"content":[{"text":"Hi","type":"input_text"}],"role":"user","type":"message"},{"encrypted_content":"gAAAAA-rev-1","id":"rs_1","summary":[{"text":"weighing","type":"summary_text"}],"type":"reasoning"}]'
+    bound_body_preserved: true

@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: incoming-two-framed-choices-in-one-chunk-are-refused
+summary: incoming two framed choices in one chunk are refused
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.chat.ProjectResponse
+  input:
+    response: '[{"choices":[{"delta":{"content":"a"}},{"delta":{"content":"b"}}]}]'
+    streamed: true
+    # Observes StreamProjection::accept directly, with no byte framing and no composing
+    # wrapper in front of it. A refusal it raises is still a refusal after the endpoint
+    # served the bytes that carried it.
+    framed: true
+  outcome: observed
+assert:
+- view: llm.chat.LastResponseProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastResponseProjection
+  contains:
+    accepted: false
+    dispatch: accepted
+    error_code: unsupported
+    # Neither choice numbers itself, so nothing distinguishes them and joining their text
+    # would hand the caller one assistant turn assembled out of two completions.
+    error_message: chat completion returned more than one choice
+    stream_text: ''

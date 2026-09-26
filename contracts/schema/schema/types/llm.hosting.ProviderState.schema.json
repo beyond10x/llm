@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.hosting.ProviderState",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:5024d195c40ed300db827ff432d53a9936c0143b4e7ab755857f0d919dab4426",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.ProviderState": {
+      "title": "ProviderState",
+      "x-ess-name": "llm.hosting.ProviderState",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Running",
+        "Terminated"
+      ]
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProjectRequest input",
+  "x-ess-name": "llm.chat.ProjectRequest",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "turn_json": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "capabilities_json": {
+      "type": "string"
+    },
+    "streaming": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "turn_json",
+    "protocol",
+    "upstream_model",
+    "capabilities_json",
+    "streaming"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:2b3cf45a4960773cc5657fb1ea4844191352dbc782db642fb495f1cae00530d2",
+    "regenerate": "ess generate"
+  }
+}

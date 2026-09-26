@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.messages.CodecInspection.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:2165c333f5d464a1e8372611412e2d3ba36f42f63b7d5dcfbc28482ff4180649",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.messages.CodecInspection.State": {
+      "title": "State",
+      "x-ess-name": "llm.messages.CodecInspection.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

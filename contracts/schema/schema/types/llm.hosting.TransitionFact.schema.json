@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.hosting.TransitionFact",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:98d3d49cf4745c7de160e8a5439f4000210a90045d0f66fef4a7d01e67a853c4",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.TransitionFact": {
+      "title": "TransitionFact",
+      "x-ess-name": "llm.hosting.TransitionFact",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

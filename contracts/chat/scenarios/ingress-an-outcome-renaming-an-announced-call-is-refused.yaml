@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: ingress-an-outcome-renaming-an-announced-call-is-refused
+summary: ingress an outcome that renames an announced call is refused
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.EncodeIngress
+  input:
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":{}}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"Qwen/Qwen3-8B","final_usage":true}}}'
+    events_json: '[{"kind":"tool-call-started","call_id":"call-1","name":"lookup"},{"kind":"tool-arguments-delta","call_id":"call-1","delta":"{}"}]'
+    streamed: true
+    include_usage: false
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressResponse
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressResponse
+  contains:
+    # The client already assembled the announced call; the terminal chunks cannot take it back.
+    accepted: false
+    error_code: protocol
+    error_message: model outcome contradicts the tool calls already streamed
+    streamed_tool_calls:
+    - '{"function":{"arguments":"","name":"lookup"},"id":"call-1","index":0,"type":"function"}'
+    - '{"function":{"arguments":"{}"},"index":0}'
+    chunk_count: null

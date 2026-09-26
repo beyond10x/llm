@@ -1,0 +1,34 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-reads-an-explicit-null-as-absent
+summary: an optional field spelled as an explicit null means absent, as it does in the response half
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"max_tokens\":512,\"messages\":[{\"content\":\"hi\",\"role\":\"user\"}],\"model\":\"caller-alias\",\"output_config\":null,\"stream\":null,\"system\":null,\"temperature\":null,\"tool_choice\":null,\"tools\":null,\"top_p\":null}"
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: null
+    neutral_request: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hi\"}],\"tools\":[],\"max_output_tokens\":512}}"
+    stream: false
+    items:
+      - "user-text:hi"
+    text: ""
+    reasoning: ""
+    tool_arguments: []
+    upstream_model: null
+    response_id: null
+    final_usage: null
+    usage_json: null
+    stop_reason: null

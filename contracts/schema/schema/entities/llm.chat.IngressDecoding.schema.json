@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IngressDecoding",
+  "x-ess-name": "llm.chat.IngressDecoding",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "projection_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tool_choice": {
+      "type": "string"
+    },
+    "output_limit": {
+      "type": "string"
+    },
+    "stream": {
+      "type": "boolean"
+    },
+    "include_usage": {
+      "type": "boolean"
+    },
+    "turn_valid": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.chat.IngressDecoding.State"
+    }
+  },
+  "required": [
+    "projection_id",
+    "accepted",
+    "items",
+    "tools",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:6093a40810cf21139898604c5534017163f69adbdb3161abc9b8c69b0eabb652",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.chat.IngressDecoding.State": {
+      "title": "State",
+      "x-ess-name": "llm.chat.IngressDecoding.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

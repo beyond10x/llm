@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.hosting.Totals",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:b9eb31991545242684d226e3cd8d6a53d03476848ec86dc704d24ac2420230ed",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.hosting.Totals": {
+      "title": "Totals",
+      "x-ess-name": "llm.hosting.Totals",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "active_count": {
+          "type": "integer"
+        },
+        "unknown_count": {
+          "type": "integer"
+        },
+        "stop_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "transferred": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "at_capacity": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "active_count",
+        "unknown_count",
+        "stop_required",
+        "transferred",
+        "at_capacity"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

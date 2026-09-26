@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.chat.RequestProjection.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:8f841bcab4aee8bc055ef523622152a4db091209085f5a5f3694a2fcbe030a1d",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.chat.RequestProjection.State": {
+      "title": "State",
+      "x-ess-name": "llm.chat.RequestProjection.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

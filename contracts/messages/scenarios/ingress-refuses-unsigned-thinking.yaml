@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-refuses-unsigned-thinking
+summary: thinking without its signature cannot be replayed and is refused on arrival
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"max_tokens\":512,\"messages\":[{\"content\":\"hi\",\"role\":\"user\"},{\"content\":[{\"signature\":\"\",\"thinking\":\"weighing\",\"type\":\"thinking\"}],\"role\":\"assistant\"}],\"model\":\"caller-alias\"}"
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "protocol"
+    dispatch: "not-sent"
+    wire_request: null
+    neutral_request: null
+    stream: null
+    items: []
+    text: ""
+    reasoning: ""
+    tool_arguments: []
+    upstream_model: null
+    response_id: null
+    final_usage: null
+    usage_json: null
+    stop_reason: null

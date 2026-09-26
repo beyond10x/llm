@@ -67,6 +67,7 @@ impl Model for FakeModel {
                 result = async {
                     let Some(Item::ToolResult { output, .. }) = request.items.last() else {
                         let call = ToolCall { call_id: CallId::new("call-1").unwrap(), name: ToolName::new("lookup.answer").unwrap(), arguments: json!({}) };
+                        sink.emit(StreamEvent::ToolCallStarted { call_id: call.call_id.clone(), name: call.name.clone() }).await?;
                         sink.emit(StreamEvent::ToolArgumentsDelta { call_id: call.call_id.clone(), delta: "{}".into() }).await?;
                         return Ok(TurnOutcome { stop_reason: StopReason::ToolCalls, items: vec![
                             Item::Opaque { provenance: self.provenance.clone(), payload: json!({"continuation":"retain-verbatim"}) },
@@ -224,16 +225,21 @@ fn opaque_state_cannot_cross_any_binding_coordinate() {
 fn persisted_version_and_unrecognized_authority_fields_refuse() {
     let document = TurnDocument::new(request());
     let mut encoded = serde_json::to_value(&document).unwrap();
-    assert_eq!(encoded["format"], "llm.turn/2");
+    assert_eq!(encoded["format"], "llm.turn/3");
     assert!(encoded["request"].get("sampling").is_none());
     assert_eq!(
         serde_json::from_value::<TurnDocument>(encoded.clone()).unwrap(),
         document
     );
-    encoded["format"] = json!("llm.turn/1");
-    assert!(serde_json::from_value::<TurnDocument>(encoded).is_err());
+    // `llm.turn/2` predates the unattributed variant: a reader of that version must not be
+    // handed one silently, so the older envelope is refused by name rather than read.
+    for old in ["llm.turn/1", "llm.turn/2"] {
+        encoded["format"] = json!(old);
+        let error = serde_json::from_value::<TurnDocument>(encoded.clone()).unwrap_err();
+        assert!(error.to_string().contains(old), "{error}");
+    }
     let mut future = serde_json::to_value(&document).unwrap();
-    future["format"] = json!("llm.turn/3");
+    future["format"] = json!("llm.turn/4");
     assert!(serde_json::from_value::<TurnDocument>(future).is_err());
     for field in ["approval", "envelope"] {
         let mut encoded = serde_json::to_value(&document).unwrap();
@@ -309,17 +315,110 @@ fn output_document_versions_and_unknown_fields_are_rejected() {
         observation: observation(None),
     });
     let mut value = serde_json::to_value(&document).unwrap();
-    assert_eq!(value["format"], "llm.outcome/3");
+    assert_eq!(value["format"], "llm.outcome/4");
     assert_eq!(
         serde_json::from_value::<llm_core::OutcomeDocument>(value.clone()).unwrap(),
         document
     );
-    value["format"] = json!("llm.outcome/1");
-    assert!(serde_json::from_value::<llm_core::OutcomeDocument>(value).is_err());
+    for old in ["llm.outcome/1", "llm.outcome/3"] {
+        value["format"] = json!(old);
+        let error = serde_json::from_value::<llm_core::OutcomeDocument>(value.clone()).unwrap_err();
+        assert!(error.to_string().contains(old), "{error}");
+    }
     let mut future = serde_json::to_value(&document).unwrap();
-    future["format"] = json!("llm.outcome/4");
+    future["format"] = json!("llm.outcome/5");
     assert!(serde_json::from_value::<llm_core::OutcomeDocument>(future).is_err());
     let mut value = serde_json::to_value(&document).unwrap();
     value["outcome"]["unknown"] = json!(true);
     assert!(serde_json::from_value::<llm_core::OutcomeDocument>(value).is_err());
+}
+
+fn unattributed() -> Item {
+    Item::UnattributedOpaque {
+        protocol: Protocol::Responses,
+        payload: json!({"type":"reasoning","id":"rs_1","encrypted_content":"AAAA","summary":[]}),
+    }
+}
+
+/// An ingress surface may carry state it could not attribute; carrying it is not sending it.
+#[test]
+fn unattributed_opaque_state_is_carried_but_refused_by_name_until_a_caller_binds_it() {
+    let mut request = request();
+    request.items.push(unattributed());
+    // Structurally valid: it is a well-formed request a gateway may hold.
+    request.validate().unwrap();
+    let error = request
+        .validate_for(&target(), &capabilities())
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.message, Item::UNATTRIBUTED_REFUSAL);
+
+    // The explicit caller decision, and nothing else, makes it native state for one target.
+    let bound = request.bind_unattributed(&target()).unwrap();
+    assert_eq!(bound, 1);
+    assert_eq!(
+        request.items.last(),
+        Some(&Item::Opaque {
+            provenance: target(),
+            payload: json!({"type":"reasoning","id":"rs_1","encrypted_content":"AAAA","summary":[]}),
+        })
+    );
+    request.validate_for(&target(), &capabilities()).unwrap();
+}
+
+/// Binding is a decision about one protocol's bytes; it cannot move them to another wire.
+#[test]
+fn binding_refuses_a_target_of_another_protocol_and_leaves_the_request_unchanged() {
+    let mut request = request();
+    request.items.push(unattributed());
+    let before = request.clone();
+    let mut other = target();
+    other.protocol = Protocol::Messages;
+    let error = request.bind_unattributed(&other).unwrap_err();
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(request, before);
+    assert_eq!(
+        unattributed().bind_unattributed(&other).unwrap_err().code,
+        ErrorCode::Unsupported
+    );
+    // Every other item is already what it is; binding leaves it alone.
+    assert_eq!(
+        Item::user("hi").bind_unattributed(&target()).unwrap(),
+        Item::user("hi")
+    );
+}
+
+#[test]
+fn unattributed_state_round_trips_through_the_versioned_envelope() {
+    let mut request = request();
+    request.items.push(unattributed());
+    let encoded = serde_json::to_value(TurnDocument::new(request.clone())).unwrap();
+    assert_eq!(encoded["format"], "llm.turn/3");
+    assert_eq!(
+        serde_json::to_string(&request.items[1]).unwrap(),
+        r#"{"kind":"unattributed-opaque","protocol":"responses","payload":{"encrypted_content":"AAAA","id":"rs_1","summary":[],"type":"reasoning"}}"#
+    );
+    assert_eq!(
+        serde_json::from_value::<TurnDocument>(encoded)
+            .unwrap()
+            .request,
+        request
+    );
+}
+
+/// A decoder watched its own binding produce what it decoded, so model output is always bound.
+#[test]
+fn model_output_carrying_unattributed_state_is_refused() {
+    let outcome = TurnOutcome {
+        stop_reason: StopReason::EndTurn,
+        items: vec![unattributed(), Item::assistant("done")],
+        observation: observation(None),
+    };
+    assert_eq!(
+        outcome
+            .validate_for(&request(), &target())
+            .unwrap_err()
+            .code,
+        ErrorCode::Protocol
+    );
 }

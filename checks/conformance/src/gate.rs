@@ -1,7 +1,7 @@
 use sha2::{Digest, Sha256};
 use std::fmt::Write;
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     error::Error,
     fs,
     path::{Path, PathBuf},
@@ -65,6 +65,42 @@ fn identity() -> Result<String, Box<dyn Error>> {
     Ok(identity)
 }
 
+/// Every authored scenario on disk must be named in the inputs manifest ESS reads.
+///
+/// `--scenarios contracts` selects what `contracts/ess-inputs.yaml` lists, not what the tree
+/// holds. A scenario file that exists but is unlisted is never selected, and the suite that
+/// skipped it still exits 0 — so a whole domain's evidence can be absent and indistinguishable
+/// from green. This refuses that state instead of leaving it to be noticed.
+fn every_authored_scenario_is_declared() -> Result<(), Box<dyn Error>> {
+    let manifest = fs::read_to_string("contracts/ess-inputs.yaml")?;
+    let declared: BTreeSet<&str> = manifest
+        .lines()
+        .filter_map(|line| line.strip_prefix("- "))
+        .map(str::trim)
+        .collect();
+    let mut missing = Vec::new();
+    for path in files(Path::new("contracts"))?.keys() {
+        if path
+            .extension()
+            .is_some_and(|extension| extension == "yaml")
+            && path
+                .components()
+                .any(|part| part.as_os_str() == "scenarios")
+            && !path.to_str().is_some_and(|name| declared.contains(name))
+        {
+            missing.push(path.display().to_string());
+        }
+    }
+    if !missing.is_empty() {
+        return Err(format!(
+            "authored scenarios absent from contracts/ess-inputs.yaml: {}",
+            missing.join(", ")
+        )
+        .into());
+    }
+    Ok(())
+}
+
 pub fn check() -> Result<(), Box<dyn Error>> {
     // Require the repository root; never infer success from a suite beside another checkout.
     if fs::canonicalize(".")?
@@ -72,6 +108,7 @@ pub fn check() -> Result<(), Box<dyn Error>> {
     {
         return Err("run conformance from this build's repository root".into());
     }
+    every_authored_scenario_is_declared()?;
     // Unique projection directory prevents stale generated files from masking drift.
     let projection = format!("target/conformance/projection-{}", std::process::id());
     fs::create_dir_all(&projection)?;

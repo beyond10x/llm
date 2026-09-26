@@ -10,12 +10,13 @@ relations:
 - depends_on: story:ordered-fallback
 - depends_on: story:runpod-hosting
 - depends_on: story:modal-hosting
+- depends_on: story:unattributed-opaque-state
 scope:
 - confidence: inferred
   path: contracts/gateway
 - confidence: inferred
   path: crates/llm-gateway
-revision: 2
+revision: 3
 ---
 ## Context
 
@@ -39,3 +40,13 @@ Retain commands and exact fixture/contract identities demonstrating the acceptan
 - inferred: `contracts/gateway` — planned implementation surface.
 
 Shared specification and workspace manifests are integration surfaces: coordinate changes through their owning story; do not infer parallel safety from different crate names.
+
+## Opaque state carried from ingress
+
+Carried from wave 3, `review-result:adversary-opaque-pass-2` finding 2. Ingress now carries opaque
+state it cannot attribute as `Item::UnattributedOpaque`, and binding it is the caller's explicit
+decision (`TurnRequest::bind_unattributed`). A gateway that binds every carried entry to the binding
+that read the request reinstates the laundering `story:unattributed-opaque-state` closed: a payload
+minted under an earlier binding revision becomes sendable to the current one. The conformance
+adapter does exactly that for its round-trip scenario (`checks/conformance/src/responses.rs:186-192`).
+This story must decide which binding a gateway may bind carried state to, and refuse the rest.

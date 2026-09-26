@@ -26,12 +26,34 @@ entities:
       states: [Observed]
       terminal: [Observed]
 
+  - name: llm.routing.FallbackRun
+    identity: {name: run_id, type: String}
+    fields: &fallback_facts
+      - {name: valid_program, type: Boolean}
+      # Code of the refusal before any attempt, or of the run's final failure.
+      - {name: error_code, type: Optional<String>}
+      - {name: halt, type: Optional<String>}
+      # Started attempts in the order the library made them.
+      - {name: attempted, type: List<String>}
+      # Per attempt: target:succeeded, or target:code:dispatch for a failure.
+      - {name: attempt_results, type: List<String>}
+      # Per attempt: target:events offered to the caller's sink.
+      - {name: visible_events, type: List<String>}
+      # Per attempt: target:input=n or target:input=unknown, from that attempt's own evidence.
+      - {name: attempt_usage, type: List<String>}
+      - {name: rejections, type: List<String>}
+      - {name: delivered_text, type: Optional<String>}
+    lifecycle:
+      initial: Observed
+      states: [Observed]
+      terminal: [Observed]
+
 commands:
   - name: llm.routing.Evaluate
     # Parse, explain admission and resolve a versioned neutral turn without I/O.
     input:
       - {name: catalog_toml, type: String}
-      # Serialized llm.turn/2 is intentionally raw here: malformed envelopes must
+      # Serialized llm.turn/3 is intentionally raw here: malformed envelopes must
       # reach the production decoder, instead of being filtered by the test target.
       - {name: turn_json, type: String}
       - {name: input_tokens, type: Optional<Integer>}
@@ -40,6 +62,21 @@ commands:
         emits: [llm.routing.Evaluated]
         summary: Return facts from evaluation, including typed refusals; this is not success of inference.
 
+  - name: llm.routing.Fallback
+    # Run the real ordered fallback over in-process scripted models; no projection, no network.
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: turn_json, type: String}
+      - {name: input_tokens, type: Optional<Integer>}
+      # Per serving model: events to emit, then success or a typed failure with dispatch
+      # evidence; also the targets the caller's limit decision refuses, the caller's attempt
+      # bound and whether the caller's deadline has already passed.
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.routing.FallbackObserved]
+        summary: Return the attempts, halt and final result the library reported; not inference success.
+
 events:
   # Local notification that the adapter finished observing a library return.
   # No message bus, production event publication or delivery guarantee is implied.
@@ -47,8 +84,16 @@ events:
     fields:
       - {name: catalog_valid, type: Boolean}
 
+  - name: llm.routing.FallbackObserved
+    fields:
+      - {name: valid_program, type: Boolean}
+
 views:
   - name: llm.routing.LastEvaluation
     source: llm.routing.Evaluation
     consistency: read_your_writes
     fields: *observation
+  - name: llm.routing.LastFallback
+    source: llm.routing.FallbackRun
+    consistency: read_your_writes
+    fields: *fallback_facts

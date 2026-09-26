@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CodecInspection",
+  "x-ess-name": "llm.messages.CodecInspection",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "wire_request": {
+      "type": "string"
+    },
+    "neutral_request": {
+      "type": "string"
+    },
+    "stream": {
+      "type": "boolean"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "text": {
+      "type": "string"
+    },
+    "reasoning": {
+      "type": "string"
+    },
+    "tool_arguments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tool_stream": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "response_id": {
+      "type": "string"
+    },
+    "final_usage": {
+      "type": "boolean"
+    },
+    "usage_json": {
+      "type": "string"
+    },
+    "stop_reason": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.messages.CodecInspection.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "items",
+    "text",
+    "reasoning",
+    "tool_arguments",
+    "tool_stream",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:578f5e478ef15f04fffab932356bbcbd852f113d9e7205325550b77174f87b86",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.messages.CodecInspection.State": {
+      "title": "State",
+      "x-ess-name": "llm.messages.CodecInspection.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

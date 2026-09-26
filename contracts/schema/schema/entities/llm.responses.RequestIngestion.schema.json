@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RequestIngestion",
+  "x-ess-name": "llm.responses.RequestIngestion",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "ingestion_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "turn_json": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string"
+    },
+    "item_kinds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tool_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reprojected": {
+      "type": "boolean"
+    },
+    "body_preserved": {
+      "type": "boolean"
+    },
+    "forward_refusal": {
+      "type": "string"
+    },
+    "bound_input_json": {
+      "type": "string"
+    },
+    "bound_body_preserved": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.responses.RequestIngestion.State"
+    }
+  },
+  "required": [
+    "ingestion_id",
+    "accepted",
+    "item_kinds",
+    "tool_names",
+    "reprojected",
+    "body_preserved",
+    "bound_body_preserved",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:73f0be86fd5f7ec792dfa6bc02b13abae20b9c0029652ac690716e17aee27907",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.responses.RequestIngestion.State": {
+      "title": "State",
+      "x-ess-name": "llm.responses.RequestIngestion.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

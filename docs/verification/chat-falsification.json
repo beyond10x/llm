@@ -1,0 +1,984 @@
+[
+  {
+    "after": "        None | Some(Value::Null) => Ok(Some(0)),\n        Some(found) => found.as_u64().map(Some).ok_or_else(|| {",
+    "before": "        None | Some(Value::Null) => Ok(None),\n        Some(found) => found.as_u64().map(Some).ok_or_else(|| {",
+    "mutation": "absent-counter-becomes-zero",
+    "named_failure": "cargo test: a_usage_report_that_omits_the_input_counter_leaves_it_unknown",
+    "rust_failed": [
+      "a_usage_report_that_omits_the_input_counter_leaves_it_unknown"
+    ],
+    "rust_passed": 4,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 8,
+      "passed": 52,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-counter-a-present-report-omits-stays-absent",
+      "incoming-a-report-without-cache-creation-input-tokens-leaves-only-that-unknown",
+      "incoming-a-report-without-cached-input-tokens-leaves-only-that-unknown",
+      "incoming-a-report-without-input-tokens-leaves-only-that-unknown",
+      "incoming-a-report-without-output-tokens-leaves-only-that-unknown",
+      "incoming-a-report-without-reasoning-output-tokens-leaves-only-that-unknown",
+      "incoming-openai-stream-preserves-text-usage-and-finish-reason",
+      "incoming-the-cache-write-extension-survives-being-read-back"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        input_tokens: Some(count(value, \"prompt_tokens\")?.unwrap_or(0)),",
+    "before": "        input_tokens: count(value, \"prompt_tokens\")?,",
+    "mutation": "input-counter-defaulted-to-zero",
+    "named_failure": "cargo test: a_usage_report_that_omits_the_input_counter_leaves_it_unknown",
+    "rust_failed": [
+      "a_usage_report_that_omits_the_input_counter_leaves_it_unknown"
+    ],
+    "rust_passed": 4,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-report-without-input-tokens-leaves-only-that-unknown"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        reasoning_output_tokens: Some(\n            detail(value, \"completion_tokens_details\", \"reasoning_tokens\")?.unwrap_or(0),\n        ),",
+    "before": "        reasoning_output_tokens: detail(value, \"completion_tokens_details\", \"reasoning_tokens\")?,",
+    "mutation": "reasoning-counter-defaulted-to-zero",
+    "named_failure": "cargo test: a_protocol_failure_after_dispatch_keeps_the_counters_the_endpoint_reported",
+    "rust_failed": [
+      "a_protocol_failure_after_dispatch_keeps_the_counters_the_endpoint_reported",
+      "a_usage_report_that_omits_the_input_counter_leaves_it_unknown"
+    ],
+    "rust_passed": 3,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 4,
+      "passed": 56,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-counter-a-present-report-omits-stays-absent",
+      "incoming-a-non-streamed-completion-carries-the-same-facts",
+      "incoming-a-report-without-reasoning-output-tokens-leaves-only-that-unknown",
+      "incoming-tool-arguments-survive-the-split-that-delivered-them"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        cache_creation_input_tokens: None,",
+    "before": "        cache_creation_input_tokens: detail(\n            value,\n            \"prompt_tokens_details\",\n            \"cache_creation_input_tokens\",\n        )?,",
+    "mutation": "cache-write-counter-deleted-on-read-back",
+    "named_failure": "cargo test: the_cache_write_counter_this_wire_names_survives_being_read_back",
+    "rust_failed": [
+      "the_cache_write_counter_this_wire_names_survives_being_read_back"
+    ],
+    "rust_passed": 4,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 5,
+      "passed": 55,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-report-without-cached-input-tokens-leaves-only-that-unknown",
+      "incoming-a-report-without-input-tokens-leaves-only-that-unknown",
+      "incoming-a-report-without-output-tokens-leaves-only-that-unknown",
+      "incoming-a-report-without-reasoning-output-tokens-leaves-only-that-unknown",
+      "incoming-the-cache-write-extension-survives-being-read-back"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        self.outcome()",
+    "before": "        self.outcome().map_err(after_dispatch)",
+    "mutation": "streamed-refusal-says-nothing-was-sent",
+    "named_failure": "cargo test: a_contradictory_counter_refusal_is_not_evidence_that_nothing_was_sent",
+    "rust_failed": [
+      "a_contradictory_counter_refusal_is_not_evidence_that_nothing_was_sent",
+      "an_incomplete_tool_call_refusal_is_not_evidence_that_nothing_was_sent"
+    ],
+    "rust_passed": 3,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 4,
+      "passed": 56,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-stream-without-a-finish-reason-is-refused",
+      "incoming-a-truncated-stream-is-refused",
+      "incoming-contradictory-counters-are-refused",
+      "incoming-framed-payloads-project-the-same-text-as-bytes-do"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "    completion(body, target)",
+    "before": "    completion(body, target).map_err(after_dispatch)",
+    "mutation": "non-streamed-refusal-says-nothing-was-sent",
+    "named_failure": "cargo test: every_exported_decode_entry_point_applies_the_dispatch_correction",
+    "rust_failed": [
+      "every_exported_decode_entry_point_applies_the_dispatch_correction",
+      "no_refusal_in_the_decode_direction_reports_that_nothing_was_sent"
+    ],
+    "rust_passed": 31,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-completion-without-a-finish-reason-is-refused"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "            Err(error) => return (events, Err(error)),",
+    "before": "            Err(error) => return (events, Err(after_dispatch(error))),",
+    "mutation": "framing-refusal-says-nothing-was-sent",
+    "named_failure": "cargo test: every_exported_decode_entry_point_applies_the_dispatch_correction",
+    "rust_failed": [
+      "every_exported_decode_entry_point_applies_the_dispatch_correction",
+      "no_refusal_in_the_decode_direction_reports_that_nothing_was_sent"
+    ],
+    "rust_passed": 31,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 60,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        observation.upstream_model = self\n            .reported\n            .upstream_model\n            .clone()\n            .or_else(|| Some(self.target.model.clone()));",
+    "before": "        observation\n            .upstream_model\n            .clone_from(&self.reported.upstream_model);",
+    "mutation": "unreported-model-replaced-by-the-binding",
+    "named_failure": "cargo test: an_unreported_upstream_model_is_never_replaced_by_the_configured_one",
+    "rust_failed": [
+      "an_unreported_upstream_model_is_never_replaced_by_the_configured_one"
+    ],
+    "rust_passed": 32,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-an-unreported-model-is-not-replaced-by-the-binding"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        if false {\n            return Err(Error::protocol(",
+    "before": "        if !self.terminated {\n            return Err(Error::protocol(",
+    "mutation": "truncated-stream-accepted",
+    "named_failure": "cargo test: a_stream_truncated_before_its_terminal_sentinel_is_refused",
+    "rust_failed": [
+      "a_stream_truncated_before_its_terminal_sentinel_is_refused",
+      "no_refusal_in_the_decode_direction_reports_that_nothing_was_sent"
+    ],
+    "rust_passed": 31,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 58,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-truncated-stream-is-refused",
+      "incoming-framed-payloads-project-the-same-text-as-bytes-do"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        let Some(stop_reason) = self.stop_reason.clone().or(Some(StopReason::EndTurn)) else {\n            return Err(",
+    "before": "        let Some(stop_reason) = self.stop_reason.clone() else {\n            return Err(",
+    "mutation": "missing-finish-reason-invented",
+    "named_failure": "cargo test: a_stream_that_ends_without_a_finish_reason_is_refused_and_keeps_its_prefix",
+    "rust_failed": [
+      "a_stream_that_ends_without_a_finish_reason_is_refused_and_keeps_its_prefix",
+      "no_refusal_in_the_decode_direction_reports_that_nothing_was_sent"
+    ],
+    "rust_passed": 31,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-stream-without-a-finish-reason-is-refused"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "            pending.arguments = fragment.to_owned();",
+    "before": "            pending.arguments.push_str(fragment);",
+    "mutation": "tool-argument-fragments-dropped",
+    "named_failure": "cargo test: a_no_argument_tool_call_reaches_the_caller_as_an_empty_object",
+    "rust_failed": [
+      "a_no_argument_tool_call_reaches_the_caller_as_an_empty_object",
+      "a_pinned_tool_stream_preserves_identifiers_names_and_split_arguments"
+    ],
+    "rust_passed": 31,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 58,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-tool-arguments-survive-the-split-that-delivered-them",
+      "incoming-vllm-tool-stream-preserves-its-call-and-counters"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "    body.insert(\"model\".to_owned(), json!(request.model));",
+    "before": "    body.insert(\"model\".to_owned(), json!(binding.upstream_model()));",
+    "mutation": "route-alias-sent-as-the-model",
+    "named_failure": "cargo test: a_local_vllm_compatible_endpoint_streams_through_the_neutral_port",
+    "rust_failed": [
+      "a_local_vllm_compatible_endpoint_streams_through_the_neutral_port"
+    ],
+    "rust_passed": 50,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "outgoing-text-turn-names-the-upstream-model"
+    ],
+    "source": "crates/llm-chat/src/outgoing.rs",
+    "source_before_sha256": "934d5084a7db3b362eaffbd62c4b761811642a414d236925807b24a126df5421"
+  },
+  {
+    "after": "        body.insert(\"max_tokens\".to_owned(), json!(limit));",
+    "before": "        body.insert(\"max_completion_tokens\".to_owned(), json!(limit));",
+    "mutation": "deprecated-output-limit-field",
+    "named_failure": "cargo test: a_text_turn_projects_the_upstream_model_messages_and_usage_options",
+    "rust_failed": [
+      "a_text_turn_projects_the_upstream_model_messages_and_usage_options"
+    ],
+    "rust_passed": 59,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "outgoing-text-turn-names-the-upstream-model"
+    ],
+    "source": "crates/llm-chat/src/outgoing.rs",
+    "source_before_sha256": "934d5084a7db3b362eaffbd62c4b761811642a414d236925807b24a126df5421"
+  },
+  {
+    "after": "    if false {\n        return json!({\"ok\": false, \"error\": output}).to_string();",
+    "before": "    if failed {\n        return json!({\"ok\": false, \"error\": output}).to_string();",
+    "mutation": "failed-tool-result-flattened",
+    "named_failure": "cargo test: a_failed_tool_result_is_never_projected_as_a_successful_one",
+    "rust_failed": [
+      "a_failed_tool_result_is_never_projected_as_a_successful_one"
+    ],
+    "rust_passed": 59,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "outgoing-failed-tool-result-keeps-its-failure"
+    ],
+    "source": "crates/llm-chat/src/outgoing.rs",
+    "source_before_sha256": "934d5084a7db3b362eaffbd62c4b761811642a414d236925807b24a126df5421"
+  },
+  {
+    "after": "            Item::Opaque { .. } => {}",
+    "before": "            Item::Opaque { .. } => {\n                // Preserved or refused, never dropped to make a translation look successful.\n                return Err(Error::unsupported(\n                    \"chat completions carries no opaque continuation state\",\n                ));\n            }",
+    "mutation": "opaque-state-dropped-on-the-way-out",
+    "named_failure": "cargo test: opaque_state_is_refused_rather_than_dropped",
+    "rust_failed": [
+      "opaque_state_is_refused_rather_than_dropped"
+    ],
+    "rust_passed": 59,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 60,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/outgoing.rs",
+    "source_before_sha256": "934d5084a7db3b362eaffbd62c4b761811642a414d236925807b24a126df5421"
+  },
+  {
+    "after": "        if false && object.contains_key(*field) {",
+    "before": "        if object.contains_key(*field) {",
+    "mutation": "unsupported-request-field-accepted",
+    "named_failure": "cargo test: every_field_outside_the_published_subset_is_refused_by_its_own_name",
+    "rust_failed": [
+      "every_field_outside_the_published_subset_is_refused_by_its_own_name"
+    ],
+    "rust_passed": 48,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 58,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-a-named-unsupported-field-is-refused-by-its-own-name",
+      "ingress-a-response-format-request-is-refused-by-name"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "62844430dc97f027bd82c4c5a1247338a2e332edcfbce06cf9f7a44e55df63dc"
+  },
+  {
+    "after": "    if false {",
+    "before": "    if object\n        .keys()\n        .any(|key| !SUPPORTED_REQUEST_FIELDS.contains(&key.as_str()))\n    {",
+    "mutation": "unknown-request-field-accepted",
+    "named_failure": "cargo test: an_unrecognized_field_is_refused_without_echoing_the_clients_bytes",
+    "rust_failed": [
+      "an_unrecognized_field_is_refused_without_echoing_the_clients_bytes"
+    ],
+    "rust_passed": 48,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-an-unrecognized-field-is-refused-without-quoting-the-client"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "62844430dc97f027bd82c4c5a1247338a2e332edcfbce06cf9f7a44e55df63dc"
+  },
+  {
+    "after": "    Ok(IngressRequest {",
+    "before": "    request.validate()?;\n    Ok(IngressRequest {",
+    "mutation": "ingress-accepts-what-the-neutral-subset-refuses",
+    "named_failure": "cargo test: a_request_the_neutral_subset_refuses_is_refused_at_ingress",
+    "rust_failed": [
+      "a_request_the_neutral_subset_refuses_is_refused_at_ingress"
+    ],
+    "rust_passed": 48,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 57,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-a-named-tool-choice-needs-published-tools",
+      "ingress-a-temperature-outside-its-range-is-refused",
+      "ingress-a-tool-message-answering-no-call-is-refused"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "62844430dc97f027bd82c4c5a1247338a2e332edcfbce06cf9f7a44e55df63dc"
+  },
+  {
+    "after": "    body.insert(\n        \"model\".to_owned(),\n        json!(\n            outcome\n                .observation\n                .upstream_model\n                .as_ref()\n                .map_or(\"configured-model\", |model| model.as_str())\n        ),\n    );",
+    "before": "    if let Some(model) = &outcome.observation.upstream_model {\n        body.insert(\"model\".to_owned(), json!(model.as_str()));\n    }",
+    "mutation": "configured-model-substituted-on-egress",
+    "named_failure": "cargo test: an_encoded_response_omits_a_model_the_upstream_never_reported",
+    "rust_failed": [
+      "an_encoded_response_omits_a_model_the_upstream_never_reported"
+    ],
+    "rust_passed": 48,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-encoding-omits-what-the-upstream-never-reported"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "62844430dc97f027bd82c4c5a1247338a2e332edcfbce06cf9f7a44e55df63dc"
+  },
+  {
+    "after": "    out.insert(\n        \"prompt_tokens\".to_owned(),\n        json!(usage.input_tokens.unwrap_or(0)),\n    );\n    out.insert(\n        \"completion_tokens\".to_owned(),\n        json!(usage.output_tokens.unwrap_or(0)),\n    );",
+    "before": "    if let Some(value) = usage.input_tokens {\n        out.insert(\"prompt_tokens\".to_owned(), json!(value));\n    }\n    if let Some(value) = usage.output_tokens {\n        out.insert(\"completion_tokens\".to_owned(), json!(value));\n    }",
+    "mutation": "absent-counter-reported-as-zero-on-egress",
+    "named_failure": "cargo test: a_reported_cache_write_counter_is_named_rather_than_dropped",
+    "rust_failed": [
+      "a_reported_cache_write_counter_is_named_rather_than_dropped",
+      "an_encoded_response_never_turns_an_absent_counter_into_a_reported_zero",
+      "encoding_places_every_counter_the_neutral_value_carries_and_only_those"
+    ],
+    "rust_passed": 46,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 58,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-encoding-names-a-cache-write-counter-rather-than-dropping-it",
+      "ingress-encoding-never-turns-an-absent-counter-into-a-zero"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "62844430dc97f027bd82c4c5a1247338a2e332edcfbce06cf9f7a44e55df63dc"
+  },
+  {
+    "after": "    if false {\n        prompt_details.insert(\"cache_creation_input_tokens\".to_owned(), json!(0));\n    }",
+    "before": "    if let Some(value) = usage.cache_creation_input_tokens {\n        // This wire has no cache-write counter. A named extension keeps the reported count\n        // readable; dropping it would delete an observation the upstream actually made.\n        prompt_details.insert(\"cache_creation_input_tokens\".to_owned(), json!(value));\n    }",
+    "mutation": "cache-write-counter-dropped-on-egress",
+    "named_failure": "cargo test: the_cache_write_counter_this_wire_names_survives_being_read_back",
+    "rust_failed": [
+      "the_cache_write_counter_this_wire_names_survives_being_read_back"
+    ],
+    "rust_passed": 4,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-encoding-names-a-cache-write-counter-rather-than-dropping-it"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "62844430dc97f027bd82c4c5a1247338a2e332edcfbce06cf9f7a44e55df63dc"
+  },
+  {
+    "after": "    error",
+    "before": "    let observation = projection.observation();\n    if observation.validate_for(target).is_err() {\n        return error;\n    }\n    error.with_observation(observation)",
+    "mutation": "client-discards-evidence-after-dispatch",
+    "named_failure": "cargo test: a_protocol_failure_after_dispatch_keeps_the_counters_the_endpoint_reported",
+    "rust_failed": [
+      "a_protocol_failure_after_dispatch_keeps_the_counters_the_endpoint_reported"
+    ],
+    "rust_passed": 4,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 60,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/client.rs",
+    "source_before_sha256": "a9055054409eeb596edc1e5fd32248fc277ad0a2b8ac484cdeaeec05b24968d7"
+  },
+  {
+    "after": "    error.with_observation(projection.observation())",
+    "before": "    let observation = projection.observation();\n    if observation.validate_for(target).is_err() {\n        return error;\n    }\n    error.with_observation(observation)",
+    "mutation": "client-attaches-an-invalid-snapshot",
+    "named_failure": "cargo test: a_snapshot_that_cannot_validate_does_not_travel_with_its_failure",
+    "rust_failed": [
+      "a_snapshot_that_cannot_validate_does_not_travel_with_its_failure"
+    ],
+    "rust_passed": 50,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 60,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/client.rs",
+    "source_before_sha256": "a9055054409eeb596edc1e5fd32248fc277ad0a2b8ac484cdeaeec05b24968d7"
+  },
+  {
+    "after": "            let body = project_request(request, &self.binding, false)?;",
+    "before": "            let body = project_request(request, &self.binding, true)?;",
+    "mutation": "client-sends-a-non-streamed-request",
+    "named_failure": "cargo test: a_local_vllm_compatible_endpoint_streams_through_the_neutral_port",
+    "rust_failed": [
+      "a_local_vllm_compatible_endpoint_streams_through_the_neutral_port"
+    ],
+    "rust_passed": 50,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 60,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/client.rs",
+    "source_before_sha256": "a9055054409eeb596edc1e5fd32248fc277ad0a2b8ac484cdeaeec05b24968d7"
+  },
+  {
+    "after": "                        for event in produced.into_iter().take(0) {\n                            sink.emit(event)",
+    "before": "                        for event in produced {\n                            sink.emit(event)",
+    "mutation": "client-never-reaches-the-callers-sink",
+    "named_failure": "cargo test: a_refusal_raised_while_reading_the_stream_is_not_evidence_that_nothing_was_sent",
+    "rust_failed": [
+      "a_refusal_raised_while_reading_the_stream_is_not_evidence_that_nothing_was_sent",
+      "a_sink_failure_after_dispatch_reports_that_the_request_was_served"
+    ],
+    "rust_passed": 9,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 60,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/client.rs",
+    "source_before_sha256": "a9055054409eeb596edc1e5fd32248fc277ad0a2b8ac484cdeaeec05b24968d7"
+  },
+  {
+    "after": "        self.framed(event)",
+    "before": "        self.framed(event).map_err(after_dispatch)",
+    "mutation": "accept-refusal-says-nothing-was-sent",
+    "named_failure": "cargo test: the_third_public_entry_point_also_refuses_without_claiming_nothing_was_sent",
+    "rust_failed": [
+      "the_third_public_entry_point_also_refuses_without_claiming_nothing_was_sent"
+    ],
+    "rust_passed": 10,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 4,
+      "passed": 56,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-framed-counter-that-is-not-a-count-is-refused-as-served",
+      "incoming-a-framed-index-that-is-not-a-count-is-refused",
+      "incoming-a-framed-second-choice-is-refused-as-served",
+      "incoming-two-framed-choices-in-one-chunk-are-refused"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        if false {\n            return Err(too_many_choices());\n        }",
+    "before": "        if choices.len() > 1 {\n            return Err(too_many_choices());\n        }",
+    "mutation": "two-choices-in-one-chunk-joined",
+    "named_failure": "cargo test: a_second_choice_is_refused_however_the_chunk_numbers_it",
+    "rust_failed": [
+      "a_second_choice_is_refused_however_the_chunk_numbers_it"
+    ],
+    "rust_passed": 10,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-two-framed-choices-in-one-chunk-are-refused"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "        Some(_) => Ok(()),",
+    "before": "        Some(_) => Err(Error::protocol(\n            \"chat completion choice index is not a whole count\",\n        )),",
+    "mutation": "a-non-integer-choice-index-is-choice-zero",
+    "named_failure": "cargo test: no_refusal_in_the_decode_direction_reports_that_nothing_was_sent",
+    "rust_failed": [
+      "no_refusal_in_the_decode_direction_reports_that_nothing_was_sent"
+    ],
+    "rust_passed": 32,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-framed-index-that-is-not-a-count-is-refused"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "c3762ef55f3994eef5f2c48a19aea9ee24d3934b8ee58f18189003b19bb62388"
+  },
+  {
+    "after": "    if error.dispatch == Dispatch::NotSent {\n        return error;\n    }",
+    "before": "    let error = if error.dispatch == Dispatch::NotSent {\n        error.with_dispatch(Dispatch::Accepted)\n    } else {\n        error\n    };",
+    "mutation": "client-reads-its-own-not-sent-as-proof",
+    "named_failure": "cargo test: a_refusal_of_the_finished_outcome_is_not_evidence_that_nothing_was_sent",
+    "rust_failed": [
+      "a_refusal_of_the_finished_outcome_is_not_evidence_that_nothing_was_sent",
+      "a_sink_failure_after_dispatch_reports_that_the_request_was_served"
+    ],
+    "rust_passed": 9,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 60,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/client.rs",
+    "source_before_sha256": "a9055054409eeb596edc1e5fd32248fc277ad0a2b8ac484cdeaeec05b24968d7"
+  },
+  {
+    "after": "    if false {\n        out.insert(\"completion_tokens_details\".to_owned(), json!({}));\n    }",
+    "before": "    if let Some(value) = usage.reasoning_output_tokens {\n        out.insert(\n            \"completion_tokens_details\".to_owned(),\n            json!({\"reasoning_tokens\": value}),\n        );\n    }",
+    "mutation": "encode-drops-the-reasoning-counter",
+    "named_failure": "cargo test: an_encoded_response_carries_reported_counters_and_the_reported_model",
+    "rust_failed": [
+      "an_encoded_response_carries_reported_counters_and_the_reported_model",
+      "encoding_places_every_counter_the_neutral_value_carries_and_only_those"
+    ],
+    "rust_passed": 47,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 59,
+      "skipped": 0,
+      "total": 60,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-encoding-reports-exactly-the-counters-it-was-given"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "62844430dc97f027bd82c4c5a1247338a2e332edcfbce06cf9f7a44e55df63dc"
+  },
+  {
+    "after": "                let _ = (&call_id, name);",
+    "before": "                events.push(StreamEvent::ToolCallStarted {\n                    call_id: call_id.clone(),\n                    name,\n                });",
+    "mutation": "chat-announcement-dropped",
+    "named_failure": "scenario: incoming-a-streamed-call-is-announced-by-name-before-its-arguments",
+    "rust_failed": [
+      "a_call_is_announced_even_when_its_opening_fragment_carries_no_arguments_at_all",
+      "a_fragment_that_renames_an_announced_call_is_refused_only_at_the_end",
+      "a_streamed_call_is_announced_by_name_before_its_first_argument_fragment",
+      "arguments_that_arrive_before_the_name_are_relayed_right_behind_the_announcement"
+    ],
+    "rust_passed": 66,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 68,
+      "skipped": 0,
+      "total": 69,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-streamed-call-is-announced-by-name-before-its-arguments"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "275643e5028dd6fc53d8497f69295d207d939711ad617e1b561bd686c81cf28e"
+  },
+  {
+    "after": "                if !pending.arguments.is_empty() {\n                    events.push(StreamEvent::ToolArgumentsDelta {\n                        call_id: call_id.clone(),\n                        delta: pending.arguments.clone(),\n                    });\n                }\n                events.push(StreamEvent::ToolCallStarted { call_id, name });",
+    "before": "                events.push(StreamEvent::ToolCallStarted {\n                    call_id: call_id.clone(),\n                    name,\n                });\n                if !pending.arguments.is_empty() {\n                    events.push(StreamEvent::ToolArgumentsDelta {\n                        call_id,\n                        delta: pending.arguments.clone(),\n                    });\n                }",
+    "mutation": "chat-announcement-after-its-arguments",
+    "named_failure": "scenario: incoming-a-streamed-call-is-announced-by-name-before-its-arguments",
+    "rust_failed": [
+      "a_streamed_call_is_announced_by_name_before_its_first_argument_fragment",
+      "arguments_that_arrive_before_the_name_are_relayed_right_behind_the_announcement"
+    ],
+    "rust_passed": 68,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 68,
+      "skipped": 0,
+      "total": 69,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-streamed-call-is-announced-by-name-before-its-arguments"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "275643e5028dd6fc53d8497f69295d207d939711ad617e1b561bd686c81cf28e"
+  },
+  {
+    "after": "            StreamEvent::ToolCallStarted { call_id, name } => {\n                if true || self.position(call_id).is_some() || self.unannounced.contains(call_id) {",
+    "before": "            StreamEvent::ToolCallStarted { call_id, name } => {\n                if self.position(call_id).is_some() || self.unannounced.contains(call_id) {",
+    "mutation": "ingress-announcement-not-relayed",
+    "named_failure": "scenario: ingress-a-streamed-call-is-named-where-it-was-announced",
+    "rust_failed": [
+      "a_streamed_call_is_named_where_it_was_announced_and_not_again_at_the_end",
+      "an_announced_call_whose_arguments_never_streamed_is_completed_at_the_end",
+      "streamed_arguments_that_contradict_the_outcome_are_refused",
+      "two_announced_calls_keep_their_own_wire_indices"
+    ],
+    "rust_passed": 66,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 68,
+      "skipped": 0,
+      "total": 69,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-a-streamed-call-is-named-where-it-was-announced"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "6eb87ae19c42df62ec16f1651c2dba4ee37c08f6268e0845b0cca6f769c74cae"
+  },
+  {
+    "after": "            let Some(index) = self.position(&call.call_id).filter(|_| false) else {",
+    "before": "            let Some(index) = self.position(&call.call_id) else {",
+    "mutation": "ingress-terminal-chunk-stands-in-for-announced-calls",
+    "named_failure": "scenario: ingress-a-streamed-call-is-named-where-it-was-announced",
+    "rust_failed": [
+      "a_streamed_call_is_named_where_it_was_announced_and_not_again_at_the_end",
+      "an_announced_call_whose_arguments_never_streamed_is_completed_at_the_end"
+    ],
+    "rust_passed": 68,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 68,
+      "skipped": 0,
+      "total": 69,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-a-streamed-call-is-named-where-it-was-announced"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "6eb87ae19c42df62ec16f1651c2dba4ee37c08f6268e0845b0cca6f769c74cae"
+  },
+  {
+    "after": "    serde_json::from_str(text).ok()",
+    "before": "    crate::incoming::parse_arguments(text).ok()",
+    "mutation": "ingress-blank-arguments-read-as-strict-json",
+    "named_failure": "scenario: ingress-blank-streamed-arguments-close-as-the-empty-object",
+    "rust_failed": [
+      "a_chat_stream_relayed_through_the_chat_reemitter_closes_when_its_arguments_are_blank"
+    ],
+    "rust_passed": 71,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 70,
+      "skipped": 0,
+      "total": 71,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-blank-streamed-arguments-close-as-the-empty-object"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
+  },
+  {
+    "after": "                    \"index\": self.announced.len() + remaining.len(),",
+    "before": "                    \"index\": next_index,",
+    "mutation": "ingress-unannounced-index-counts-completed-calls",
+    "named_failure": "scenario: ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices",
+    "rust_failed": [
+      "a_call_completed_at_close_and_an_unannounced_call_take_consecutive_wire_indices"
+    ],
+    "rust_passed": 71,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 70,
+      "skipped": 0,
+      "total": 71,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
+  },
+  {
+    "after": "                && (true || !self.announced.contains(&call_id))",
+    "before": "                && !self.announced.contains(&call_id)",
+    "mutation": "chat-call-id-announced-at-every-index",
+    "named_failure": "cargo test: a_call_identifier_opened_at_two_indices_is_announced_once",
+    "rust_failed": [
+      "a_call_identifier_opened_at_two_indices_is_announced_once"
+    ],
+    "rust_passed": 74,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 73,
+      "skipped": 0,
+      "total": 73,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "b2a759de8fe39393d6a8f2a0467ca26d218c2f91df5b26e526261be96482f38e"
+  },
+  {
+    "after": "            if false && announced.name != call.name {",
+    "before": "            if announced.name != call.name {",
+    "mutation": "ingress-renamed-outcome-accepted",
+    "named_failure": "scenario: ingress-an-outcome-renaming-an-announced-call-is-refused",
+    "rust_failed": [
+      "close_refuses_an_outcome_that_renames_an_announced_call"
+    ],
+    "rust_passed": 74,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 72,
+      "skipped": 0,
+      "total": 73,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-an-outcome-renaming-an-announced-call-is-refused"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
+  },
+  {
+    "after": "        if false && seen.contains(&false) {",
+    "before": "        if seen.contains(&false) {",
+    "mutation": "ingress-omitted-announced-call-accepted",
+    "named_failure": "scenario: ingress-an-outcome-leaving-out-an-announced-call-is-refused",
+    "rust_failed": [
+      "close_refuses_an_outcome_that_leaves_an_announced_call_out"
+    ],
+    "rust_passed": 74,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 72,
+      "skipped": 0,
+      "total": 73,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-an-outcome-leaving-out-an-announced-call-is-refused"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
+  },
+  {
+    "after": "            Item::UnattributedOpaque { .. } => {}",
+    "before": "            Item::UnattributedOpaque { .. } => {\n                return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n            }",
+    "mutation": "chat-ingress-encoding-drops-unbound-state",
+    "named_failure": "scenario: llm.chat/authored/ingress-encoding-refuses-unattributed-state-by-name",
+    "rust_failed": [
+      "an_outcome_carrying_unattributed_state_cannot_be_encoded_onto_this_wire"
+    ],
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 76,
+      "skipped": 0,
+      "total": 77,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-encoding-refuses-unattributed-state-by-name"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "186895f0e4fad439ec3595b9b369da7c9941d744cc3d73493e40fb60258c6b69"
+  },
+  {
+    "after": "            Item::UnattributedOpaque { .. } => {}",
+    "also": [
+      {
+        "edits": [
+          [
+            "                Item::UnattributedOpaque { .. } => {\n                    return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n                }",
+            "                Item::UnattributedOpaque { .. } => {}"
+          ]
+        ],
+        "source": "crates/llm-core/src/turn.rs"
+      }
+    ],
+    "before": "            Item::UnattributedOpaque { .. } => {\n                return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n            }",
+    "mutation": "validate-for-and-chat-outgoing-both-admit-unbound-state",
+    "named_failure": "scenario: llm.chat/authored/outgoing-unattributed-opaque-state-is-refused-by-name",
+    "rust_failed": [
+      "unattributed_opaque_state_is_refused_by_name_rather_than_dropped"
+    ],
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 76,
+      "skipped": 0,
+      "total": 77,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "outgoing-unattributed-opaque-state-is-refused-by-name"
+    ],
+    "source": "crates/llm-chat/src/outgoing.rs",
+    "source_before_sha256": "993c10aa8ba83cceeb589459fc4032235e93306e1511151ac3ce7e7325cdcdbb"
+  }
+]

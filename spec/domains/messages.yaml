@@ -1,0 +1,65 @@
+domain: llm.messages
+
+# Producer wire types remain owned by the pinned Messages schema. This entity
+# contains only facts observed by the conformance adapter through public codecs.
+entities:
+  - name: llm.messages.CodecInspection
+    identity: {name: observation_id, type: String}
+    fields: &codec_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # The diagnostic itself, so a scenario pins that it is fixed and carries no upstream text.
+      - {name: error_message, type: Optional<String>}
+      - {name: dispatch, type: Optional<String>}
+      - {name: wire_request, type: Optional<String>}
+      - {name: neutral_request, type: Optional<String>}
+      # The ingress streaming choice, which the neutral request does not carry.
+      - {name: stream, type: Optional<Boolean>}
+      - {name: items, type: List<String>}
+      - {name: text, type: String}
+      - {name: reasoning, type: String}
+      - {name: tool_arguments, type: List<String>}
+      # The tool events in the order a caller saw them: `started:<call>:<name>` where the
+      # route opened a tool_use block, then `arguments:<call>:<fragment>` for each fragment.
+      - {name: tool_stream, type: List<String>}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: response_id, type: Optional<String>}
+      - {name: final_usage, type: Optional<Boolean>}
+      # Absent counters are absent from this encoding; unknown is never reported as zero.
+      - {name: usage_json, type: Optional<String>}
+      - {name: stop_reason, type: Optional<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.messages.Project
+    input:
+      - {name: request_json, type: String}
+      - {name: ingress, type: Boolean}
+    outcomes:
+      - name: observed
+        emits: [llm.messages.Inspected]
+        summary: Observe actual shared request projection or ingress under the fixture Messages binding.
+  - name: llm.messages.DecodeStream
+    input:
+      - {name: request_json, type: String}
+      - {name: events_sse, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.messages.Inspected]
+        summary: Observe the production SSE framing and Messages decoder, including failures and partial usage.
+  - name: llm.messages.DecodeMessage
+    input:
+      - {name: request_json, type: String}
+      - {name: message_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.messages.Inspected]
+        summary: Observe the shared complete-response decoder that the stream decoder also finishes through.
+events:
+  - name: llm.messages.Inspected
+    fields:
+      - {name: accepted, type: Boolean}
+views:
+  - name: llm.messages.LastInspection
+    source: llm.messages.CodecInspection
+    consistency: read_your_writes
+    fields: *codec_facts

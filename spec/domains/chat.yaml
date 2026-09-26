@@ -1,0 +1,186 @@
+domain: llm.chat
+
+# This is the verification adapter's observation contract for the Chat Completions
+# projection. An observation is one call into the public `llm-chat` functions: the outgoing
+# request they build, the pinned response bytes they read, and the gateway ingress they
+# decode and encode. Nothing here is a durable record, a production event bus or a live
+# provider call. The adapter retains only what those functions returned; it neither chooses
+# an outcome from the inputs nor simulates an endpoint.
+entities:
+  - name: llm.chat.RequestProjection
+    identity: {name: projection_id, type: String}
+    fields: &request_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # Dispatch is the retry signal. A refusal reached before anything was sent says
+      # not-sent; one reached after the endpoint served a response must not.
+      - {name: dispatch, type: Optional<String>}
+      # The model name actually placed on the wire, which is the binding's upstream name
+      # and never the caller's route alias.
+      - {name: wire_model, type: Optional<String>}
+      - {name: body_fields, type: List<String>}
+      - {name: message_roles, type: List<String>}
+      - {name: message_contents, type: List<String>}
+      - {name: tool_arguments, type: List<String>}
+      - {name: tool_choice, type: Optional<String>}
+      - {name: output_limit_field, type: Optional<String>}
+      - {name: output_limit, type: Optional<String>}
+      - {name: stream, type: Optional<Boolean>}
+      - {name: include_usage, type: Optional<Boolean>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+  - name: llm.chat.ResponseProjection
+    identity: {name: projection_id, type: String}
+    fields: &response_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # Dispatch is the retry signal. A refusal reached before anything was sent says
+      # not-sent; one reached after the endpoint served a response must not.
+      - {name: dispatch, type: Optional<String>}
+      # The selected binding's own model identity, retained so a scenario can show that an
+      # unreported upstream model is not quietly replaced by it.
+      - {name: binding_model, type: String}
+      - {name: stream_text, type: String}
+      - {name: reasoning_text, type: String}
+      - {name: argument_deltas, type: List<String>}
+      # The tool events in the order a caller saw them: `started:<call>:<name>` where the
+      # provider announced a call, then `arguments:<call>:<fragment>` for each fragment.
+      - {name: tool_stream, type: List<String>}
+      - {name: assistant_text, type: Optional<String>}
+      - {name: stop_reason, type: Optional<String>}
+      - {name: tool_calls, type: List<String>}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: response_id, type: Optional<String>}
+      - {name: final_usage, type: Optional<Boolean>}
+      # Counters are carried as text so an exactly integral witness cannot be observed
+      # through a lossy floating-point encoding. Absent stays absent; it is never zero.
+      - {name: usage_reported, type: Optional<Boolean>}
+      - {name: input_tokens, type: Optional<String>}
+      - {name: output_tokens, type: Optional<String>}
+      - {name: cached_input_tokens, type: Optional<String>}
+      - {name: cache_creation_input_tokens, type: Optional<String>}
+      - {name: reasoning_output_tokens, type: Optional<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+  - name: llm.chat.IngressDecoding
+    identity: {name: projection_id, type: String}
+    fields: &ingress_request_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # Dispatch is the retry signal. A refusal reached before anything was sent says
+      # not-sent; one reached after the endpoint served a response must not.
+      - {name: dispatch, type: Optional<String>}
+      - {name: model, type: Optional<String>}
+      - {name: instructions, type: Optional<String>}
+      - {name: items, type: List<String>}
+      - {name: tools, type: List<String>}
+      - {name: tool_choice, type: Optional<String>}
+      - {name: output_limit, type: Optional<String>}
+      - {name: stream, type: Optional<Boolean>}
+      - {name: include_usage, type: Optional<Boolean>}
+      - {name: turn_valid, type: Optional<Boolean>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+  - name: llm.chat.IngressEncoding
+    identity: {name: projection_id, type: String}
+    fields: &ingress_response_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # Dispatch is the retry signal. A refusal reached before anything was sent says
+      # not-sent; one reached after the endpoint served a response must not.
+      - {name: dispatch, type: Optional<String>}
+      - {name: model_reported, type: Optional<String>}
+      - {name: content, type: Optional<String>}
+      - {name: finish_reason, type: Optional<String>}
+      - {name: tool_calls, type: List<String>}
+      - {name: usage_json, type: Optional<String>}
+      - {name: chunk_count, type: Optional<String>}
+      # The `tool_calls` entries of the chunks re-emitted from the neutral events, in order,
+      # before the terminal chunks. `tool_calls` above is what the terminal chunks carried.
+      - {name: streamed_tool_calls, type: List<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+commands:
+  - name: llm.chat.ProjectRequest
+    # Build one outgoing Chat Completions body from a serialized neutral turn and a binding
+    # declared by these inputs. No I/O, no credential resolution and no endpoint contact.
+    input:
+      # Serialized llm.turn/3 is intentionally raw: a malformed envelope must reach the
+      # production decoder rather than being filtered out by the test target.
+      - {name: turn_json, type: String}
+      - {name: protocol, type: String}
+      - {name: upstream_model, type: String}
+      - {name: capabilities_json, type: String}
+      - {name: streaming, type: Boolean}
+    outcomes:
+      - name: observed
+        emits: [llm.chat.Observed]
+        summary: Return the projected body's facts, including typed refusals; not proof of a sent request.
+
+  - name: llm.chat.ProjectResponse
+    # Read pinned Chat Completions response bytes back onto the neutral vocabulary.
+    input:
+      # Raw server-sent-event bytes, or a non-streamed JSON body when streamed is false.
+      - {name: response, type: String}
+      - {name: streamed, type: Boolean}
+      # True observes the third public entry point directly: the response is a JSON array
+      # of already-framed payloads, fed one at a time to StreamProjection::accept, which is
+      # what a caller doing its own framing reaches.
+      - {name: framed, type: Optional<Boolean>}
+    outcomes:
+      - name: observed
+        emits: [llm.chat.Observed]
+        summary: Return the neutral deltas, outcome and reported evidence a pinned response yields.
+
+  - name: llm.chat.DecodeIngress
+    # Decode one Chat Completions client request onto the neutral subset.
+    input:
+      - {name: request_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.chat.Observed]
+        summary: Return the neutral turn a gateway client request decodes to, or its named refusal.
+
+  - name: llm.chat.EncodeIngress
+    # Encode one neutral outcome back onto this wire, streamed or not.
+    input:
+      # Serialized llm.outcome/4, raw for the same reason the turn envelope is raw.
+      - {name: outcome_json, type: String}
+      - {name: streamed, type: Boolean}
+      - {name: include_usage, type: Boolean}
+      # A JSON array of neutral stream events, each re-emitted through one IngressStream
+      # before it closes on the outcome. Absent means the stream carried no events.
+      - {name: events_json, type: Optional<String>}
+    outcomes:
+      - name: observed
+        emits: [llm.chat.Observed]
+        summary: Return what a gateway would answer, including omitted unreported facts.
+
+events:
+  # Local notification that the adapter finished observing a library return. No message bus,
+  # production event publication or delivery guarantee is implied.
+  - name: llm.chat.Observed
+    fields:
+      - {name: accepted, type: Boolean}
+
+views:
+  - name: llm.chat.LastRequestProjection
+    source: llm.chat.RequestProjection
+    consistency: read_your_writes
+    fields: *request_facts
+  - name: llm.chat.LastResponseProjection
+    source: llm.chat.ResponseProjection
+    consistency: read_your_writes
+    fields: *response_facts
+  - name: llm.chat.LastIngressRequest
+    source: llm.chat.IngressDecoding
+    consistency: read_your_writes
+    fields: *ingress_request_facts
+  - name: llm.chat.LastIngressResponse
+    source: llm.chat.IngressEncoding
+    consistency: read_your_writes
+    fields: *ingress_response_facts

@@ -1,0 +1,37 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: request-preserves-roles-tools-and-thinking
+summary: one projection preserves ordered roles, published tools, a failed tool result and signed thinking
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260\"},\"payload\":{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"lookup\",\"arguments\":{\"query\":\"errors\"}},{\"kind\":\"tool-result\",\"call_id\":\"call-1\",\"output\":\"not found\",\"failed\":true}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":1024,\"sampling\":{\"temperature\":0.5,\"top_p\":0.8,\"reasoning_effort\":\"high\"},\"tool_choice\":{\"named\":\"lookup\"}}}"
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: "{\"max_tokens\":1024,\"messages\":[{\"content\":[{\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"},{\"content\":[{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"},{\"id\":\"call-1\",\"input\":{\"query\":\"errors\"},\"name\":\"lookup\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"not found\",\"is_error\":true,\"tool_use_id\":\"call-1\",\"type\":\"tool_result\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"output_config\":{\"effort\":\"high\"},\"stream\":true,\"system\":\"Stay terse\",\"temperature\":0.5,\"tool_choice\":{\"name\":\"lookup\",\"type\":\"tool\"},\"tools\":[{\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"},\"name\":\"lookup\"}],\"top_p\":0.8}"
+    neutral_request: null
+    stream: null
+    items:
+      - "user-text:Summarise the log"
+      - "opaque:{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260\"}:{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}"
+      - "tool-call:lookup:call-1:{\"query\":\"errors\"}"
+      - "tool-result:call-1:true:\"not found\""
+    text: ""
+    reasoning: ""
+    tool_arguments: []
+    upstream_model: null
+    response_id: null
+    final_usage: null
+    usage_json: null
+    stop_reason: null

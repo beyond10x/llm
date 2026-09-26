@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fallback input",
+  "x-ess-name": "llm.routing.Fallback",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "turn_json": {
+      "type": "string"
+    },
+    "input_tokens": {
+      "type": "integer"
+    },
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "turn_json",
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:1efcf3a0fd83f48e0edf895bdfffd380a2721735a269309f5eed91649d6253ee",
+    "regenerate": "ess generate"
+  }
+}

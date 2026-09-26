@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices
+summary: ingress a call completed at close and an unannounced call take consecutive wire indices
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.chat.EncodeIngress
+  input:
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"tool-call","call_id":"call-1","name":"lookup","arguments":{}},{"kind":"tool-call","call_id":"call-2","name":"clock","arguments":{}}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"Qwen/Qwen3-8B","final_usage":true}}}'
+    events_json: '[{"kind":"tool-call-started","call_id":"call-1","name":"lookup"}]'
+    streamed: true
+    include_usage: false
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressResponse
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressResponse
+  contains:
+    accepted: true
+    streamed_tool_calls:
+    - '{"function":{"arguments":"","name":"lookup"},"id":"call-1","index":0,"type":"function"}'
+    # The announced call gets its arguments under its own index; the call never announced
+    # takes the next one, not one past a gap.
+    tool_calls:
+    - '{"function":{"arguments":"{}"},"index":0}'
+    - '{"function":{"arguments":"{}","name":"clock"},"id":"call-2","index":1,"type":"function"}'
+    chunk_count: '2'
+    finish_reason: tool_calls
