@@ -156,6 +156,7 @@ dropped event is a hole in the conversation the next turn cannot see.
 | `response.output_text.delta` | `StreamEvent::TextDelta` |
 | `response.reasoning_summary_text.delta` | `StreamEvent::ReasoningDelta` |
 | `response.reasoning_text.delta` | `StreamEvent::ReasoningDelta` |
+| `response.output_item.added` of a `function_call` | `StreamEvent::ToolCallStarted` with its `call_id` and `name`; one without a usable name is not announced, and its argument deltas are not relayed. A repeated opening item, or a second item under a `call_id` already announced, announces nothing. An outcome that does not carry each announced call under the same `call_id` and `name` is refused, with the terminal counters |
 | `response.function_call_arguments.delta` | `StreamEvent::ToolArgumentsDelta`, named from `response.output_item.added` |
 | `response.output_item.done` | one decoded item |
 | `response.completed`, `response.incomplete` | terminal truth, decided by the **event name** as well as the object's own `status` |

@@ -62,6 +62,10 @@ reverse the turn against the deltas the caller was already shown. A `ping` is
 accepted and changes nothing: its irrelevance is the route's own documentation. Any other event type
 is refused rather than preserved as unknown state. Streamed tool arguments are bounded while they
 accumulate and parsed once when the block closes, so half an argument object never reaches a caller.
+A `tool_use` block is announced as `StreamEvent::ToolCallStarted` when it opens, with the `id` and
+`name` of its `content_block_start` and before any of its argument fragments; a name the codec
+would refuse at the end is refused there, before anything about the call is shown. A second block
+under an `id` already announced is not announced again, and its fragments are not relayed.
 
 `decode_stream` reads every byte it is given, which is why a payload after the terminal event is
 refused there. `MessagesClient` stops reading at the terminal event, because the alternative is

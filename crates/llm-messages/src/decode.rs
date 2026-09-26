@@ -208,6 +208,9 @@ pub struct StreamDecoder {
     /// caller was streamed it, and a stop that arrives early does not reorder the turn.
     items: BTreeMap<u64, Item>,
     next_index: u64,
+    /// Every `tool_use` id already announced. A second block under one of them is not
+    /// announced again and its fragments are not relayed; the finish refuses the duplicate.
+    announced: Vec<CallId>,
     started: bool,
     complete: bool,
 }
@@ -221,6 +224,7 @@ impl StreamDecoder {
             blocks: BTreeMap::new(),
             items: BTreeMap::new(),
             next_index: 0,
+            announced: Vec::new(),
             started: false,
             complete: false,
         }
@@ -271,7 +275,7 @@ impl StreamDecoder {
             // A keep-alive. Its irrelevance to this subset is the route's own documentation.
             "ping" => fields(data, &["type"]),
             "message_start" => self.start_message(data),
-            "content_block_start" => self.start_block(data),
+            "content_block_start" => self.start_block(data, sink, cancel).await,
             "content_block_delta" => self.apply_delta(data, sink, cancel).await,
             "content_block_stop" => self.stop_block(data),
             "message_delta" => self.apply_message_delta(data),
@@ -310,7 +314,12 @@ impl StreamDecoder {
         Ok(())
     }
 
-    fn start_block(&mut self, data: &Value) -> Result<(), Error> {
+    async fn start_block(
+        &mut self,
+        data: &Value,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<(), Error> {
         self.started()?;
         fields(data, &["type", "index", "content_block"])?;
         let index = index(data)?;
@@ -324,17 +333,43 @@ impl StreamDecoder {
             .get("content_block")
             .ok_or_else(|| Error::protocol("Messages block start carries no block"))?
             .clone();
-        let call = match string(&value, "type")? {
+        let announcement = match string(&value, "type")? {
             "text" | "thinking" | "redacted_thinking" => None,
-            "tool_use" => Some(
-                CallId::new(string(&value, "id")?)
-                    .map_err(|_| Error::protocol("invalid Messages tool call id"))?,
-            ),
+            "tool_use" => {
+                let call_id = CallId::new(string(&value, "id")?)
+                    .map_err(|_| Error::protocol("invalid Messages tool call id"))?;
+                // Named by the rule the finished block is decoded by, so a name the route could
+                // not be answered under is refused here, before anyone is told about the call,
+                // rather than after its arguments were already relayed.
+                let opening = json!({"type": "tool_use", "id": call_id.as_str(),
+                    "name": string(&value, "name")?, "input": {}});
+                let Item::ToolCall(call) = decode_block(&opening, false, Some(&self.target))?
+                else {
+                    return Err(Error::unsupported(
+                        "Messages content is outside the declared subset",
+                    ));
+                };
+                Some(StreamEvent::ToolCallStarted {
+                    call_id,
+                    name: call.name,
+                })
+            }
             _ => {
                 return Err(Error::unsupported(
                     "Messages content is outside the declared subset",
                 ));
             }
+        };
+        let announcement = announcement.filter(|event| match event {
+            StreamEvent::ToolCallStarted { call_id, .. } => !self.announced.contains(call_id),
+            _ => true,
+        });
+        let call = match &announcement {
+            Some(StreamEvent::ToolCallStarted { call_id, .. }) => {
+                self.announced.push(call_id.clone());
+                Some(call_id.clone())
+            }
+            _ => None,
         };
         self.next_index = index.saturating_add(1);
         self.blocks.insert(
@@ -345,7 +380,10 @@ impl StreamDecoder {
                 call,
             },
         );
-        Ok(())
+        match announcement {
+            Some(event) => emit(sink, event, cancel, self.deadline).await,
+            None => Ok(()),
+        }
     }
 
     async fn apply_delta(
