@@ -8,19 +8,49 @@ relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
 scope:
+- confidence: cited
+  path: checks/conformance/src/chat.rs
+- confidence: cited
+  path: checks/conformance/src/messages.rs
+- confidence: cited
+  path: checks/conformance/src/responses.rs
+- confidence: cited
+  path: contracts/chat/scenarios
+- confidence: cited
+  path: contracts/messages/scenarios
+- confidence: cited
+  path: contracts/responses/scenarios
+- confidence: cited
+  path: contracts/routing/scenarios
+- confidence: cited
+  path: crates/llm-chat/src/ingress.rs
+- confidence: cited
+  path: crates/llm-chat/src/outgoing.rs
+- confidence: cited
+  path: crates/llm-core/src/item.rs
+- confidence: cited
+  path: crates/llm-core/src/turn.rs
+- confidence: cited
+  path: crates/llm-core/tests/embedding.rs
+- confidence: cited
+  path: crates/llm-messages/src/codec.rs
+- confidence: cited
+  path: crates/llm-responses/src/request.rs
 - confidence: inferred
-  path: contracts
-- confidence: inferred
-  path: crates/llm-chat
-- confidence: inferred
-  path: crates/llm-core
-- confidence: inferred
-  path: crates/llm-messages
-- confidence: inferred
-  path: crates/llm-responses
-- confidence: inferred
+  path: crates/llm-responses/src/stream.rs
+- confidence: cited
+  path: crates/llm-routing/src/selection.rs
+- confidence: cited
   path: docs/contract-v1.md
-revision: 2
+- confidence: inferred
+  path: spec/domains/catalog.yaml
+- confidence: inferred
+  path: spec/domains/chat.yaml
+- confidence: inferred
+  path: spec/domains/responses.yaml
+- confidence: inferred
+  path: spec/domains/routing.yaml
+revision: 5
 ---
 ## Context
 

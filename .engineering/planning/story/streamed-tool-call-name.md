@@ -2,23 +2,45 @@
 format: aep.planning-md/1
 id: story:streamed-tool-call-name
 kind: story
-status: draft
+status: active
 title: A streamed tool call carries the name the provider announced
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
 scope:
+- confidence: cited
+  path: checks/conformance/src/chat.rs
+- confidence: cited
+  path: checks/conformance/src/messages.rs
+- confidence: cited
+  path: checks/conformance/src/responses.rs
+- confidence: cited
+  path: contracts/chat/scenarios
+- confidence: cited
+  path: contracts/messages/scenarios
+- confidence: cited
+  path: contracts/responses/scenarios
+- confidence: cited
+  path: crates/llm-chat/src/incoming.rs
+- confidence: cited
+  path: crates/llm-chat/src/ingress.rs
+- confidence: cited
+  path: crates/llm-core/src/port.rs
+- confidence: cited
+  path: crates/llm-messages/src/decode.rs
+- confidence: cited
+  path: crates/llm-responses/src/stream.rs
 - confidence: inferred
-  path: contracts
+  path: docs/chat.md
 - confidence: inferred
-  path: crates/llm-chat
+  path: docs/responses.md
 - confidence: inferred
-  path: crates/llm-core
+  path: spec/domains/chat.yaml
 - confidence: inferred
-  path: crates/llm-messages
+  path: spec/domains/messages.yaml
 - confidence: inferred
-  path: crates/llm-responses
-revision: 2
+  path: spec/domains/responses.yaml
+revision: 7
 ---
 ## Context
 
