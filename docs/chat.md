@@ -57,7 +57,7 @@ time. Every field it does read is refused when it contradicts the wire:
 | --- | --- |
 | `delta.content` | `StreamEvent::TextDelta`, accumulated into one `AssistantText` |
 | `delta.reasoning_content` (`vLLM` reasoning parsers) | `StreamEvent::ReasoningDelta`, never joined to the assistant text |
-| `delta.tool_calls[]`, correlated by `index` | `StreamEvent::ToolArgumentsDelta` and one `ToolCall` |
+| `delta.tool_calls[]`, correlated by `index` | `StreamEvent::ToolCallStarted` once, then `StreamEvent::ToolArgumentsDelta`, and one `ToolCall` |
 | `finish_reason` `stop` / `length` / `tool_calls` / `content_filter` | `EndTurn` / `MaxOutputTokens` / `ToolCalls` / `Incomplete{content-filter}` |
 | `id`, `model` | `response_id`, `upstream_model` — absent stays absent |
 | `usage` | `Usage`, counter by counter |
@@ -65,7 +65,7 @@ time. Every field it does read is refused when it contradicts the wire:
 Refused, each with a fixed diagnostic that carries no byte of the upstream response: a second
 choice, any other finish reason, a stream that ends before its `[DONE]` sentinel, a stream that
 carries no finish reason, a tool call whose identifier or name never arrived, arguments that
-are not valid JSON, and counters that contradict each other.
+are not valid JSON, a fragment renaming a call already announced, and counters that contradict each other.
 
 A chunk carrying more than one choice is refused however it numbers them. An index that is
 not a whole count numbers nothing, and joining two completions would hand the caller one
@@ -90,6 +90,16 @@ outcome refusing a model's unpublished tool call are all raised locally and defa
 
 A tool call whose accumulated arguments are empty reaches the caller as `{}`, which is what
 this wire's empty argument string means: a call the model made with no arguments.
+
+**A streamed call is announced where the provider named it.** The fragment that opens a call
+carries its identifier and its name, and `StreamEvent::ToolCallStarted` is emitted from it, once,
+before any `ToolArgumentsDelta` for that call. No argument fragment is relayed under a call the
+caller has not been told about: fragments that arrive after the identifier but before the name
+are held and relayed in one delta right behind the announcement. A call whose name never arrives,
+or is not usable, is never announced, and like a fragment that renames a call already announced
+it is refused by `finish` — after the counters the endpoint reports last — not mid-stream. A
+second index opened under an identifier already announced is not announced again, and its
+fragments are not relayed.
 
 ### Counters
 
@@ -142,11 +152,16 @@ its field out of `usage` — a total is derived only from two known parts. A rep
 cache-write counter, which this wire has no field for, travels under
 `prompt_tokens_details.cache_creation_input_tokens` rather than being deleted.
 
-`IngressStream::chunk` returns no chunk for a tool-arguments delta. A chunk announcing a call
-must name it, and the neutral stream vocabulary carries the call identifier without the tool
-name, so the proposed calls are emitted once, complete, by `IngressStream::close` rather than
-streamed under an invented name. Fixing that needs a neutral stream event that carries the
-name, which is a change to `llm-core` and not to this crate.
+`IngressStream::chunk` re-emits a `ToolCallStarted` as the chunk that opens the call — its
+identifier, `type` and the announced name, under the next wire index — and each following
+`ToolArgumentsDelta` under that index. `IngressStream::close` does not repeat a call it already
+announced; it sends the arguments of one only when none were streamed, so the client never
+assembles an empty one, and refuses an outcome that contradicts what the client was already sent:
+an announced call the outcome does not carry, another name, or other arguments — the relayed text
+read by the projection's own rule, so blank text is `{}`. A call the stream
+never announced — a model that returns its calls only in the outcome — is still emitted once,
+complete, in the terminal chunks under the next wire index, rather than dropped or streamed under
+an invented name.
 
 ## A compatible local endpoint
 

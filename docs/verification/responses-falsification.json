@@ -777,5 +777,203 @@
     ],
     "source": "crates/llm-responses/src/request.rs",
     "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 72,
+      "skipped": 0,
+      "total": 74,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        self.events\n            .push(StreamEvent::ToolCallStarted { call_id, name });",
+        "        let _ = name;"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-announcement-dropped",
+    "named_rust_case": "a_tool_call_stream_names_the_call_its_arguments_belong_to",
+    "named_scenario": "llm.responses/authored/a-tool-call-stream-names-the-call-its-arguments-belong-to",
+    "rust_failed": [
+      "a_tool_call_stream_names_the_call_its_arguments_belong_to",
+      "each_interleaved_call_is_announced_before_any_of_its_arguments"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-tool-call-stream-names-the-call-its-arguments-belong-to",
+      "llm.responses/authored/an-announced-item-refusal-still-reports-the-terminal-counters"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "8fa24bb5b89cebe3cdc613230e5be2f241f40f905265b444e2347464628ccdb5"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 74,
+      "skipped": 0,
+      "total": 74,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        let (Ok(call_id), Ok(name)) = (CallId::new(call_id), ToolName::new(name)) else {",
+        "        let (Ok(call_id), Ok(name)) = (CallId::new(call_id), ToolName::new(name).or_else(|_| ToolName::new(\"unnamed\"))) else {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "rust",
+    "mutation": "responses-name-invented-for-an-unusable-one",
+    "named_rust_case": "an_opening_item_without_a_usable_name_announces_nothing_and_streams_nothing",
+    "named_scenario": null,
+    "rust_failed": [
+      "an_opening_item_without_a_usable_name_announces_nothing_and_streams_nothing"
+    ],
+    "scenarios_failed": [],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "8fa24bb5b89cebe3cdc613230e5be2f241f40f905265b444e2347464628ccdb5"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 74,
+      "skipped": 0,
+      "total": 75,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        if contradicted {",
+        "        if false && contradicted {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-announcement-contradiction-accepted",
+    "named_rust_case": "a_finished_call_that_renames_its_announcement_is_not_silently_accepted",
+    "named_scenario": "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters",
+    "rust_failed": [
+      "a_finished_call_that_renames_its_announcement_is_not_silently_accepted",
+      "a_finished_call_under_another_identifier_than_its_announcement_is_not_silently_accepted"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "753136d2617dde7f5d0e01b62299ea8f76a108a66a8fc887e8be0a4d6b0184b5"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 74,
+      "skipped": 0,
+      "total": 75,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                .any(|call| &call.call_id == call_id && &call.name == name)",
+        "                .any(|call| &call.call_id == call_id && (true || &call.name == name))"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-renamed-call-accepted",
+    "named_rust_case": "a_finished_call_that_renames_its_announcement_is_not_silently_accepted",
+    "named_scenario": "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters",
+    "rust_failed": [
+      "a_finished_call_that_renames_its_announcement_is_not_silently_accepted"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters"
+    ],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "753136d2617dde7f5d0e01b62299ea8f76a108a66a8fc887e8be0a4d6b0184b5"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 75,
+      "skipped": 0,
+      "total": 75,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                .any(|call| &call.call_id == call_id && &call.name == name)",
+        "                .any(|call| (true || &call.call_id == call_id) && &call.name == name)"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "rust",
+    "mutation": "responses-reidentified-call-accepted",
+    "named_rust_case": "a_finished_call_under_another_identifier_than_its_announcement_is_not_silently_accepted",
+    "named_scenario": null,
+    "rust_failed": [
+      "a_finished_call_under_another_identifier_than_its_announcement_is_not_silently_accepted"
+    ],
+    "scenarios_failed": [],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "753136d2617dde7f5d0e01b62299ea8f76a108a66a8fc887e8be0a4d6b0184b5"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 75,
+      "skipped": 0,
+      "total": 75,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                .any(|(announced, _)| announced == &call_id)",
+        "                .any(|(announced, _)| false && announced == &call_id)"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "rust",
+    "mutation": "responses-call-id-announced-by-every-item",
+    "named_rust_case": "one_call_identifier_opened_by_two_items_is_announced_once",
+    "named_scenario": null,
+    "rust_failed": [
+      "one_call_identifier_opened_by_two_items_is_announced_once"
+    ],
+    "scenarios_failed": [],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "9f139b29023a28f6187246c4bd525e36a38c2f4e08a28129c2005a50a9b39217"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 75,
+      "skipped": 0,
+      "total": 75,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        if self.calls.contains_key(item_id)",
+        "        if false && self.calls.contains_key(item_id)"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "rust",
+    "mutation": "responses-repeated-opening-item-reannounced",
+    "named_rust_case": "an_item_reopened_under_another_call_id_keeps_the_call_it_announced",
+    "named_scenario": null,
+    "rust_failed": [
+      "an_item_reopened_under_another_call_id_keeps_the_call_it_announced"
+    ],
+    "scenarios_failed": [],
+    "source": "crates/llm-responses/src/stream.rs",
+    "source_before_sha256": "9f139b29023a28f6187246c4bd525e36a38c2f4e08a28129c2005a50a9b39217"
   }
 ]

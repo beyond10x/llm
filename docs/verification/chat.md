@@ -154,9 +154,10 @@ regenerated centrally and are not this crate's to edit.
   the Rust suite only. An authored scenario cannot carry it: the binding revision is a hash of
   the whole validated declaration, so a matching one cannot be written by hand. The ESS
   scenario covers the cross-binding refusal, which `llm-core` owns.
-- Streamed gateway egress emits proposed calls complete in the terminal chunk rather than
-  incrementally. That is a documented limitation of the neutral stream vocabulary, not a
-  defect of this projection, and it is recorded as a request against `llm-core`.
+- Streamed gateway egress names a call where the neutral stream announced it
+  (`StreamEvent::ToolCallStarted`, added by `story:streamed-tool-call-name`) and streams its
+  arguments under that index. Only a call the stream never announced is still emitted complete
+  in the terminal chunks; that is the case of a model that returns calls only in its outcome.
 - A failure whose earned snapshot cannot pass `Error::validate_for` — contradictory reported
   counters are how that happens — travels with no observation at all. The counters are lost
   to the caller in that one case; attaching them would make the failure itself unreportable.

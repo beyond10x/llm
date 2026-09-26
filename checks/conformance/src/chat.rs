@@ -245,7 +245,8 @@ fn response_projection(input: &Value) -> Result<Observed, TargetError> {
     let mut facts = json!({
         "accepted": false, "error_code": null, "error_message": null, "dispatch": null,
         "binding_model": "internal-model", "stream_text": "", "reasoning_text": "",
-        "argument_deltas": [], "assistant_text": null, "stop_reason": null, "tool_calls": [],
+        "argument_deltas": [], "tool_stream": [], "assistant_text": null, "stop_reason": null,
+        "tool_calls": [],
         "upstream_model": null, "response_id": null, "final_usage": null,
         "usage_reported": null, "input_tokens": null, "output_tokens": null,
         "cached_input_tokens": null, "cache_creation_input_tokens": null,
@@ -303,12 +304,17 @@ fn report_events(events: &[StreamEvent], facts: &mut Value) {
     let mut stream_text = String::new();
     let mut reasoning_text = String::new();
     let mut deltas = Vec::new();
+    let mut tool_stream = Vec::new();
     for event in events {
         match event {
             StreamEvent::TextDelta { text } => stream_text.push_str(text),
             StreamEvent::ReasoningDelta { text } => reasoning_text.push_str(text),
+            StreamEvent::ToolCallStarted { call_id, name } => {
+                tool_stream.push(format!("started:{call_id}:{name}"));
+            }
             StreamEvent::ToolArgumentsDelta { call_id, delta } => {
                 deltas.push(format!("{call_id}:{delta}"));
+                tool_stream.push(format!("arguments:{call_id}:{delta}"));
             }
             StreamEvent::Warning { code, message } => deltas.push(format!("{code}:{message}")),
         }
@@ -316,6 +322,7 @@ fn report_events(events: &[StreamEvent], facts: &mut Value) {
     facts["stream_text"] = json!(stream_text);
     facts["reasoning_text"] = json!(reasoning_text);
     facts["argument_deltas"] = json!(deltas);
+    facts["tool_stream"] = json!(tool_stream);
 }
 
 fn report_outcome(outcome: &TurnOutcome, facts: &mut Value) {
@@ -421,6 +428,8 @@ struct EncodeInput {
     outcome_json: String,
     streamed: bool,
     include_usage: bool,
+    #[serde(default)]
+    events_json: Option<String>,
 }
 
 fn ingress_encoding(input: &Value) -> Result<Observed, TargetError> {
@@ -429,7 +438,7 @@ fn ingress_encoding(input: &Value) -> Result<Observed, TargetError> {
         "accepted": false, "error_code": null, "error_message": null, "dispatch": null,
         "model_reported": null,
         "content": null, "finish_reason": null, "tool_calls": [], "usage_json": null,
-        "chunk_count": null
+        "chunk_count": null, "streamed_tool_calls": []
     });
     if let Err(error) = encode_ingress(&input, &mut facts) {
         fault(&mut facts, &error);
@@ -442,8 +451,28 @@ fn encode_ingress(input: &EncodeInput, facts: &mut Value) -> Result<(), Error> {
         .map_err(|_| Error::invalid("invalid outcome envelope"))?;
     let outcome = document.outcome;
     if input.streamed {
-        let chunks = IngressStream::new("chatcmpl-fixture", 1_772_000_000)
-            .close(&outcome, input.include_usage)?;
+        // Raw for the same reason the outcome is: a malformed event must reach the
+        // production decoder rather than being filtered out by the test target.
+        let events: Vec<StreamEvent> = match &input.events_json {
+            Some(events) => {
+                serde_json::from_str(events).map_err(|_| Error::invalid("invalid stream events"))?
+            }
+            None => Vec::new(),
+        };
+        let mut stream = IngressStream::new("chatcmpl-fixture", 1_772_000_000);
+        let mut streamed = Vec::new();
+        for event in &events {
+            if let Some(calls) = stream
+                .chunk(event)
+                .as_ref()
+                .and_then(|chunk| chunk.pointer("/choices/0/delta/tool_calls"))
+                .and_then(Value::as_array)
+            {
+                streamed.extend(calls.iter().map(ToString::to_string));
+            }
+        }
+        facts["streamed_tool_calls"] = json!(streamed);
+        let chunks = stream.close(&outcome, input.include_usage)?;
         facts["accepted"] = json!(true);
         facts["chunk_count"] = json!(chunks.len().to_string());
         for chunk in &chunks {

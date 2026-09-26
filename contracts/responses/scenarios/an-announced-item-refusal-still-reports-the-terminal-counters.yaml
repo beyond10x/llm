@@ -26,4 +26,5 @@ assert:
     upstream_model: example/Small-Model
     response_id: resp_1
     stream_events:
+    - tool-call-started:call-1:file_read
     - 'tool-arguments-delta:call-1:{"path": "READ'

@@ -45,6 +45,9 @@ entities:
       - {name: stream_text, type: String}
       - {name: reasoning_text, type: String}
       - {name: argument_deltas, type: List<String>}
+      # The tool events in the order a caller saw them: `started:<call>:<name>` where the
+      # provider announced a call, then `arguments:<call>:<fragment>` for each fragment.
+      - {name: tool_stream, type: List<String>}
       - {name: assistant_text, type: Optional<String>}
       - {name: stop_reason, type: Optional<String>}
       - {name: tool_calls, type: List<String>}
@@ -96,6 +99,9 @@ entities:
       - {name: tool_calls, type: List<String>}
       - {name: usage_json, type: Optional<String>}
       - {name: chunk_count, type: Optional<String>}
+      # The `tool_calls` entries of the chunks re-emitted from the neutral events, in order,
+      # before the terminal chunks. `tool_calls` above is what the terminal chunks carried.
+      - {name: streamed_tool_calls, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 
 commands:
@@ -146,6 +152,9 @@ commands:
       - {name: outcome_json, type: String}
       - {name: streamed, type: Boolean}
       - {name: include_usage, type: Boolean}
+      # A JSON array of neutral stream events, each re-emitted through one IngressStream
+      # before it closes on the outcome. Absent means the stream carried no events.
+      - {name: events_json, type: Optional<String>}
     outcomes:
       - name: observed
         emits: [llm.chat.Observed]

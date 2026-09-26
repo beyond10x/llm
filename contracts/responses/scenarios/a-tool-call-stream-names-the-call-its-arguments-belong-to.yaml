@@ -20,6 +20,7 @@ assert:
     accepted: true
     stop_reason: tool-calls
     stream_events:
+    - tool-call-started:call-1:file_read
     - 'tool-arguments-delta:call-1:{"path":'
     - tool-arguments-delta:call-1:"README.md"}
     items_json: '[{"arguments":{"path":"README.md"},"call_id":"call-1","kind":"tool-call","name":"file_read"}]'

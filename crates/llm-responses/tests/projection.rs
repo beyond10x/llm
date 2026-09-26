@@ -403,6 +403,10 @@ fn a_tool_call_stream_names_the_call_its_arguments_belong_to() {
     assert_eq!(
         decoding.events,
         vec![
+            StreamEvent::ToolCallStarted {
+                call_id: CallId::new("call-1").expect("id"),
+                name: ToolName::new("file_read").expect("name"),
+            },
             StreamEvent::ToolArgumentsDelta {
                 call_id: CallId::new("call-1").expect("id"),
                 delta: "{\"path\":".to_owned()
@@ -421,6 +425,88 @@ fn a_tool_call_stream_names_the_call_its_arguments_belong_to() {
             .map(|call| call.name.to_string())
             .collect::<Vec<_>>(),
         vec!["file_read".to_owned()]
+    );
+}
+
+#[test]
+fn each_interleaved_call_is_announced_before_any_of_its_arguments() {
+    let payloads = vec![
+        json!({"type": "response.output_item.added", "item": {
+            "type": "function_call", "id": "fc_1", "call_id": "call-1", "name": "file_read"}}),
+        json!({"type": "response.function_call_arguments.delta", "item_id": "fc_1", "delta": "{}"}),
+        json!({"type": "response.output_item.added", "item": {
+            "type": "function_call", "id": "fc_2", "call_id": "call-2", "name": "clock"}}),
+        json!({"type": "response.function_call_arguments.delta", "item_id": "fc_2", "delta": "{}"}),
+        json!({"type": "response.completed", "response": {"status": "completed", "output": [
+            {"type": "function_call", "call_id": "call-1", "name": "file_read", "arguments": "{}"},
+            {"type": "function_call", "call_id": "call-2", "name": "clock", "arguments": "{}"}]}}),
+    ];
+    let decoding = decode_stream(&binding(), &payloads);
+    let started = |id: &str, name: &str| StreamEvent::ToolCallStarted {
+        call_id: CallId::new(id).expect("id"),
+        name: ToolName::new(name).expect("name"),
+    };
+    let arguments = |id: &str| StreamEvent::ToolArgumentsDelta {
+        call_id: CallId::new(id).expect("id"),
+        delta: "{}".to_owned(),
+    };
+    assert_eq!(
+        decoding.events,
+        vec![
+            started("call-1", "file_read"),
+            arguments("call-1"),
+            started("call-2", "clock"),
+            arguments("call-2"),
+        ]
+    );
+    decoding.result.expect("terminal");
+}
+
+#[test]
+fn an_item_reopened_under_another_call_id_keeps_the_call_it_announced() {
+    let payloads = vec![
+        json!({"type": "response.output_item.added", "item": {
+            "type": "function_call", "id": "fc_1", "call_id": "call-1", "name": "file_read"}}),
+        json!({"type": "response.output_item.added", "item": {
+            "type": "function_call", "id": "fc_1", "call_id": "call-2", "name": "file_read"}}),
+        json!({"type": "response.function_call_arguments.delta", "item_id": "fc_1", "delta": "{}"}),
+        json!({"type": "response.completed", "response": {"status": "completed", "output": [
+            {"type": "function_call", "call_id": "call-1", "name": "file_read", "arguments": "{}"}]}}),
+    ];
+    let decoding = decode_stream(&binding(), &payloads);
+    // The item was announced once; its arguments stay under the call the caller was shown.
+    assert_eq!(
+        decoding.events,
+        vec![
+            StreamEvent::ToolCallStarted {
+                call_id: CallId::new("call-1").expect("id"),
+                name: ToolName::new("file_read").expect("name"),
+            },
+            StreamEvent::ToolArgumentsDelta {
+                call_id: CallId::new("call-1").expect("id"),
+                delta: "{}".to_owned(),
+            },
+        ]
+    );
+    decoding.result.expect("terminal");
+}
+
+#[test]
+fn an_opening_item_without_a_usable_name_announces_nothing_and_streams_nothing() {
+    let payloads = vec![
+        json!({"type": "response.output_item.added", "item": {
+            "type": "function_call", "id": "fc_1", "call_id": "call-1", "name": "has space"}}),
+        json!({"type": "response.function_call_arguments.delta", "item_id": "fc_1", "delta": "{}"}),
+        json!({"type": "response.completed", "response": {"status": "completed", "output": [
+            {"type": "function_call", "call_id": "call-1", "name": "has space", "arguments": "{}"}]}}),
+    ];
+    let decoding = decode_stream(&binding(), &payloads);
+    // Arguments of a call nobody was told about would be deltas for a call the caller cannot
+    // name; the terminal object then refuses the name itself.
+    assert!(decoding.events.is_empty(), "{:?}", decoding.events);
+    assert_eq!(
+        decoding.result.expect_err("refused").code,
+        ErrorCode::Protocol
     );
 }
 

@@ -276,6 +276,9 @@ fn stream_event(event: &StreamEvent) -> String {
     match event {
         StreamEvent::TextDelta { text } => format!("text-delta:{text}"),
         StreamEvent::ReasoningDelta { text } => format!("reasoning-delta:{text}"),
+        StreamEvent::ToolCallStarted { call_id, name } => {
+            format!("tool-call-started:{call_id}:{name}")
+        }
         StreamEvent::ToolArgumentsDelta { call_id, delta } => {
             format!("tool-arguments-delta:{call_id}:{delta}")
         }
