@@ -182,6 +182,9 @@ impl PriceBook {
             ),
             _ => None,
         };
+        // A difference of lower bounds is not a lower bound: a later snapshot may move input
+        // into a cache class. Only a final cache split yields a known uncached quantity.
+        let uncached = uncached.filter(|_| usage.final_usage);
         [
             (
                 Unit::InputToken,

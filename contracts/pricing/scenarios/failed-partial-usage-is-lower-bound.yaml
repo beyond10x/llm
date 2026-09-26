@@ -78,9 +78,9 @@ assert:
     - record_id: one
       basis: metered-estimate
       unit: input-token
-      quantity: '70'
-      amount: '0.00014'
-      unknown: usage-incomplete
+      quantity: null
+      amount: null
+      unknown: quantity-unknown
     - record_id: one
       basis: metered-estimate
       unit: cached-input-token
@@ -101,7 +101,7 @@ assert:
       unknown: usage-incomplete
     totals:
     - basis: metered-estimate
-      known_subtotal: '0.00022'
+      known_subtotal: '0.00008'
       unknown_lines: 4
       complete_total: null
     observations_preserved: true

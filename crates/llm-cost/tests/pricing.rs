@@ -1,7 +1,7 @@
 use llm_core::{BillingKind, Dispatch, Id, Protocol, Provenance, Usage};
 use llm_cost::{
     AccountingInput, Amount, AttemptUsage, Basis, ChargeKind, ComputeUsage, CostError, Currency,
-    Observation, PriceBook, Rate, RecordedCharge, UnknownReason,
+    Observation, PriceBook, Rate, RecordedCharge, Unit, UnknownReason,
 };
 use serde_json::json;
 
@@ -201,13 +201,19 @@ fn partial_snapshots_keep_lower_bounds_without_completing_any_total() {
                 if zero {
                     Amount::ZERO
                 } else {
-                    Amount::parse("0.00022").unwrap()
+                    Amount::parse("0.00008").unwrap()
                 }
             );
             assert_eq!(total.complete_total, None);
             assert_eq!(total.unknown_lines, 4);
+            let (uncached, rest) = report.records[0].lines.split_first().unwrap();
+            assert_eq!(uncached.unit, Unit::InputToken);
+            assert_eq!(
+                (uncached.quantity, uncached.amount, uncached.unknown),
+                (None, None, Some(UnknownReason::QuantityUnknown))
+            );
             assert!(
-                report.records[0].lines.iter().all(
+                rest.iter().all(
                     |v| v.amount.is_some() && v.unknown == Some(UnknownReason::UsageIncomplete)
                 )
             );

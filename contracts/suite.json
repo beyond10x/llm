@@ -646,7 +646,7 @@
         "scenario": "llm.accounting/authored/failed-ambiguous-attempt-is-counted"
       },
       "pricing/scenarios/failed-partial-usage-is-lower-bound.yaml": {
-        "digest": "sha256:63404123dcade30b6d256976e35c4b8910198df3c067f295c25f68f365784777",
+        "digest": "sha256:f304e52be4dbf41e68e4a8e08d9fa55e7018439e375a52f979c530fe9bfe3745",
         "disposition": "accepted",
         "scenario": "llm.accounting/authored/failed-partial-usage-is-lower-bound"
       },
@@ -716,12 +716,12 @@
         "scenario": "llm.accounting/authored/old-usage-format-refused"
       },
       "pricing/scenarios/partial-usage-is-lower-bound.yaml": {
-        "digest": "sha256:c68a59f74b9e1117fc8f3498b670647e9f7d1ee98f016c51e0f7ff432d10b9e7",
+        "digest": "sha256:ff453074a785b8a9ec862313c17e152ed43ce4d057ee894150e00a2fc04f90c6",
         "disposition": "accepted",
         "scenario": "llm.accounting/authored/partial-usage-is-lower-bound"
       },
       "pricing/scenarios/partial-zero-is-not-final.yaml": {
-        "digest": "sha256:0da9c3e72b4f766c47211b882ad906e8f2a9c4292445de76f62800ccdffe75eb",
+        "digest": "sha256:ad53b0dc9aacd755b289aebd741b6a6964631d5688380992451c395f03e2a182",
         "disposition": "accepted",
         "scenario": "llm.accounting/authored/partial-zero-is-not-final"
       },
@@ -2993,12 +2993,12 @@
                 "kind": "literal",
                 "value": [
                   {
-                    "amount": "0.00014",
+                    "amount": null,
                     "basis": "metered-estimate",
-                    "quantity": "70",
+                    "quantity": null,
                     "record_id": "one",
                     "unit": "input-token",
-                    "unknown": "usage-incomplete"
+                    "unknown": "quantity-unknown"
                   },
                   {
                     "amount": "0.00001",
@@ -3058,7 +3058,7 @@
                   {
                     "basis": "metered-estimate",
                     "complete_total": null,
-                    "known_subtotal": "0.00022",
+                    "known_subtotal": "0.00008",
                     "unknown_lines": 4.0
                   }
                 ]
@@ -4835,12 +4835,12 @@
                 "kind": "literal",
                 "value": [
                   {
-                    "amount": "0.00014",
+                    "amount": null,
                     "basis": "metered-estimate",
-                    "quantity": "70",
+                    "quantity": null,
                     "record_id": "one",
                     "unit": "input-token",
-                    "unknown": "usage-incomplete"
+                    "unknown": "quantity-unknown"
                   },
                   {
                     "amount": "0.00001",
@@ -4900,7 +4900,7 @@
                   {
                     "basis": "metered-estimate",
                     "complete_total": null,
-                    "known_subtotal": "0.00022",
+                    "known_subtotal": "0.00008",
                     "unknown_lines": 4.0
                   }
                 ]
@@ -5002,12 +5002,12 @@
                 "kind": "literal",
                 "value": [
                   {
-                    "amount": "0",
+                    "amount": null,
                     "basis": "metered-estimate",
-                    "quantity": "0",
+                    "quantity": null,
                     "record_id": "one",
                     "unit": "input-token",
-                    "unknown": "usage-incomplete"
+                    "unknown": "quantity-unknown"
                   },
                   {
                     "amount": "0",
