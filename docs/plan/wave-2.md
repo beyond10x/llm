@@ -1,6 +1,6 @@
 # Wave 2 — proposal
 
-Status: **approved by the operator 2026-09-26; running.** Skill `aep:implementing` 0.14.2; `aep` 0.60.0.
+Status: **closed 2026-09-26: three stories implemented on one gate run.** Skill `aep:implementing` 0.14.2; `aep` 0.60.0.
 Base: `plan/llm-foundation` at `c01143c` on origin.
 
 `c01143c` merges the wave 1 close (`be36e1f`) with `f27b836`. Another session had reset the local
@@ -122,10 +122,10 @@ everything under `.engineering`, and for this wave `spec/domains/catalog.yaml`.
 
 | Unit | Branch | Worktree id | Build dir | Scratch root | Stage |
 |---|---|---|---|---|---|
-| integration | `wave/2` | `wave2-integration` | `~/.cache/b10x-target/llm-wave2-integration` | `~/.cache/llm-wave-2/integrate` | opening commit |
-| fallback | `impl/ordered-fallback` | `wave2-fallback` | `~/.cache/b10x-target/llm-wave2-fallback` | `~/.cache/llm-wave-2/fallback` | dispatching |
-| runpod | `impl/runpod-hosting` | `wave2-runpod` | `~/.cache/b10x-target/llm-wave2-runpod` | `~/.cache/llm-wave-2/runpod` | dispatching |
-| toolname | `impl/streamed-tool-call-name` | `wave2-toolname` | `~/.cache/b10x-target/llm-wave2-toolname` | `~/.cache/llm-wave-2/toolname` | dispatching |
+| integration | `wave/2` | `wave2-integration` | `~/.cache/b10x-target/llm-wave2-integration` | `~/.cache/llm-wave-2/integrate` | closed |
+| fallback | `impl/ordered-fallback` | `wave2-fallback` | `~/.cache/b10x-target/llm-wave2-fallback` | `~/.cache/llm-wave-2/fallback` | merged `af5730a` |
+| runpod | `impl/runpod-hosting` | `wave2-runpod` | `~/.cache/b10x-target/llm-wave2-runpod` | `~/.cache/llm-wave-2/runpod` | merged `2359133` |
+| toolname | `impl/streamed-tool-call-name` | `wave2-toolname` | `~/.cache/b10x-target/llm-wave2-toolname` | `~/.cache/llm-wave-2/toolname` | merged `5b789df` |
 
 Worktree paths are `~/.local/state/worktree/trees/b10x/llm/<worktree id>`. Briefs are
 `~/.cache/llm-wave-2/<unit>/brief.md`, invariants `~/.cache/llm-wave-2/invariants.md`.
@@ -139,11 +139,49 @@ The opening store commit on `wave/2`; one commit per unit (3); three merges into
 closing store commit; the merge of `wave/2` into `plan/llm-foundation`. No push, no tag, no
 release, no merge into `main`.
 
+Deviation: `827d574` regenerates the coordinator-owned contract files. The list above did not
+name it; wave 1 made the same commit (`14e8691`) for the same reason, and the gate cannot pass
+without it.
+
+## The close
+
+| Unit | Adversary passes | Findings per pass | Corrections | Merged |
+|---|---|---|---|---|
+| fallback | 2 | 4, then 4 (0 carried) | 1 | `af5730a` |
+| toolname | 2 | 4, then 6 (0 carried) | 2; the second reviewed by the coordinator | `5b789df` |
+| runpod | 2 | 10, then 5 (0 carried) | 2; the second reviewed by the coordinator | `2359133` |
+
+Gate on `wave/2` at `827d574`, one exit status per step: `cargo test --workspace`, the credentials
+and cost feature lanes, `fmt`, `clippy`, `ess specify validate`, `conformance -- check` and
+`aep plan artifact validate` all exit 0. Conformance 410/410 in three runs. One `test_result`
+recorded against `827d574` moved all three stories to `implemented`.
+
+### Findings nobody acted on
+
+| Story | Finding | Why it is open |
+|---|---|---|
+| `story:ordered-fallback` | `review-result:adversary-fallback-pass-2` D: foreign evidence on a refused `Ok` outcome is recorded `Dispatch::Accepted`, on an `Err` path `Dispatch::Unknown` | only a third-party `Model` reaches it; both paths halt |
+| `story:runpod-hosting` | `review-result:adversary-runpod-pass-1` J2: orphan and inherited pod terminations never reach the budget ledger as stop obligations | needs a change in `crates/llm-provision`; documented in `docs/hosting.md` |
+
+### What it cost
+
+From the harness's completion reports. A resumed agent's figure is its report for that round.
+
+| Agent | Tokens | Tool uses | Wall |
+|---|---|---|---|
+| scopers (4) | 223,830 | 58 | 8m05s |
+| implementor fallback, rounds 0–1 | 164,606 + 189,493 | 88 + 31 | 13m41s + 4m20s |
+| implementor toolname, rounds 0–2 | 246,941 + 249,429 + 276,887 | 171 + 21 + 23 | 18m38s + 3m36s + 3m39s |
+| implementor runpod, rounds 0–2 | 225,434 + 282,722 + 333,216 | 62 + 45 + 26 | 26m18s + 7m00s + 6m23s |
+| adversary fallback, passes 1–2 | 101,906 + 117,238 | 39 + 39 | 5m30s + 6m22s |
+| adversary toolname, passes 1–2 | 88,684 + 150,832 | 26 + 58 | 4m55s + 9m28s |
+| adversary runpod, passes 1–2 | 171,180 + 140,864 | 36 + 37 | 8m30s + 9m14s |
+
 ## Later waves
 
 | Wave | Stories | Held by |
 |---|---|---|
-| 3 | `story:unattributed-opaque-state` | wave 2 (selection.rs, projection observers) |
+| 3 | `story:unattributed-opaque-state` | nothing; wave 2 is merged |
 | 4 | `story:gateway-translation` | `credential-blocker:modal-live-deployment` via `story:modal-hosting` |
 | 5 | `story:operator-cli` | wave 4 |
 | 6 | `story:foundation-qualified` | the access decision blocker, wave 5 |

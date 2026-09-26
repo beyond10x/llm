@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:ordered-fallback
 kind: story
-status: active
+status: implemented
 title: Fallback tries only explicitly compatible alternatives
 relations:
 - decomposes: epic:routing
@@ -13,23 +13,31 @@ relations:
 - depends_on: story:chat-projection
 - serves: vision:portable-model-inference
 scope:
-- confidence: inferred
+- confidence: cited
+  path: checks/conformance/src/fallback.rs
+- confidence: cited
+  path: checks/conformance/src/main.rs
+- confidence: cited
+  path: checks/conformance/src/target.rs
+- confidence: cited
   path: contracts/routing/scenarios
-- confidence: inferred
-  path: crates/llm-routing/Cargo.toml
-- confidence: inferred
+- confidence: cited
+  path: crates/llm-routing/src/fallback.rs
+- confidence: cited
   path: crates/llm-routing/src/lib.rs
 - confidence: cited
   path: crates/llm-routing/src/selection.rs
-- confidence: inferred
+- confidence: cited
   path: crates/llm-routing/tests
 - confidence: inferred
   path: docs/verification/routing
-- confidence: inferred
-  path: spec/domains/catalog.yaml
-- confidence: inferred
+- confidence: cited
+  path: docs/verification/routing-fallback.md
+- confidence: cited
+  path: docs/verification/routing-falsification.json
+- confidence: cited
   path: spec/domains/routing.yaml
-revision: 7
+revision: 10
 ---
 ## Context
 

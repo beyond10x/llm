@@ -2,30 +2,30 @@
 format: aep.planning-md/1
 id: story:runpod-hosting
 kind: story
-status: active
+status: implemented
 title: Runpod provides recoverable vLLM deployments
 relations:
 - decomposes: epic:hosting
 - depends_on: story:hosting-contract
 - serves: vision:portable-model-inference
 scope:
-- confidence: inferred
-  path: contracts/runpod
-- confidence: inferred
-  path: crates/llm-provision/src/port.rs
-- confidence: inferred
-  path: crates/llm-provision/src/spec.rs
+- confidence: cited
+  path: Cargo.lock
 - confidence: cited
   path: crates/llm-runpod/Cargo.toml
 - confidence: cited
+  path: crates/llm-runpod/src
+- confidence: cited
   path: crates/llm-runpod/src/lib.rs
-- confidence: inferred
+- confidence: cited
+  path: crates/llm-runpod/tests
+- confidence: cited
   path: docs/hosting.md
-- confidence: inferred
-  path: docs/verification/runpod
-- confidence: inferred
-  path: spec/domains/catalog.yaml
-revision: 7
+- confidence: cited
+  path: docs/verification/runpod-falsification.json
+- confidence: cited
+  path: docs/verification/runpod.md
+revision: 10
 ---
 ## Context
 
