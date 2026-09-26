@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-19T12:00:00Z'
   command: llm.inference.InspectResult
   input:
-    result_json: '{"format":"llm.outcome/3","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"hello"}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"wire-model-revision","response_id":"response-1","final_usage":true,"usage":{"cached_input_tokens":18446744073709551615,"cache_creation_input_tokens":1}}}}'
+    result_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"hello"}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"wire-model-revision","response_id":"response-1","final_usage":true,"usage":{"cached_input_tokens":18446744073709551615,"cache_creation_input_tokens":1}}}}'
     failure: false
   outcome: observed
 assert:

@@ -20,7 +20,7 @@ assert:
     error_code: null
     dispatch: null
     wire_request: null
-    neutral_request: "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hi\"}],\"tools\":[],\"max_output_tokens\":512}}"
+    neutral_request: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hi\"}],\"tools\":[],\"max_output_tokens\":512}}"
     stream: false
     items:
       - "user-text:hi"

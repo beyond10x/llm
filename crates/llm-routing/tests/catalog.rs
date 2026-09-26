@@ -333,3 +333,42 @@ fn invalid_requests_and_unknown_aliases_never_select_a_target() {
     turn.sampling.temperature = Some(f64::NAN);
     assert!(catalog.explain(&turn, Some(0)).is_err());
 }
+
+/// State an ingress surface carried without attribution selects no target: routing is not the
+/// caller, and choosing a binding for it would be the decision only the caller may make.
+#[test]
+fn unattributed_opaque_state_is_refused_by_every_target_until_the_caller_binds_it() {
+    let mut doc = document();
+    doc.routes[0].fallback_enabled = true;
+    let catalog = doc.validate().unwrap();
+    let mut turn = request();
+    turn.items.push(Item::UnattributedOpaque {
+        protocol: llm_core::Protocol::ChatCompletions,
+        payload: json!({"private_state":"do-not-explain"}),
+    });
+    let explanation = catalog.explain(&turn, Some(100)).unwrap();
+    assert!(explanation.selected_target_id.is_none());
+    for target in &explanation.targets {
+        assert!(
+            target.rejections.contains(&Rejection::OpaqueState),
+            "{:?}",
+            target.rejections
+        );
+    }
+    assert!(
+        !serde_json::to_string(&explanation)
+            .unwrap()
+            .contains("do-not-explain")
+    );
+    let primary = catalog
+        .binding(&id("local-small"))
+        .unwrap()
+        .provenance()
+        .clone();
+    turn.bind_unattributed(&primary).unwrap();
+    assert!(
+        !catalog.explain(&turn, Some(100)).unwrap().targets[0]
+            .rejections
+            .contains(&Rejection::OpaqueState)
+    );
+}

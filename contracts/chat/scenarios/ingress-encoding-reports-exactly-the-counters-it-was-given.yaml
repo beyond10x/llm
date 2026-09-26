@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-20T12:00:00Z'
   command: llm.chat.EncodeIngress
   input:
-    outcome_json: '{"format":"llm.outcome/3","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hello, world"}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"Qwen/Qwen3-8B","usage":{"input_tokens":31,"output_tokens":9,"cached_input_tokens":16,"reasoning_output_tokens":4},"final_usage":true}}}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hello, world"}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"Qwen/Qwen3-8B","usage":{"input_tokens":31,"output_tokens":9,"cached_input_tokens":16,"reasoning_output_tokens":4},"final_usage":true}}}'
     streamed: false
     include_usage: false
   outcome: observed

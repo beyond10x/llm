@@ -485,5 +485,27 @@
       "a_target_the_run_can_never_attempt_needs_no_model",
       "the_route_and_the_caller_can_each_disable_fallback"
     ]
+  },
+  {
+    "mutation": "routing-selects-a-target-for-unbound-state",
+    "source": "crates/llm-routing/src/selection.rs",
+    "before": "        Item::UnattributedOpaque { .. } => true,",
+    "after": "        Item::UnattributedOpaque { .. } => false,",
+    "source_before_sha256": "eadc28a94fe4b918c406d9ca8bd71803c395d9728acab0de7c3b043a7f0cc948",
+    "named_failure": "llm.routing/authored/unattributed-opaque-state-selects-no-target",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 55,
+      "skipped": 0,
+      "unsupported": 0,
+      "total": 56
+    },
+    "failed": [
+      "llm.routing/authored/unattributed-opaque-state-selects-no-target"
+    ],
+    "crate_tests_failed": [
+      "unattributed_opaque_state_is_refused_by_every_target_until_the_caller_binds_it"
+    ]
   }
 ]

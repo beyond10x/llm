@@ -100,7 +100,7 @@ defect rather than any one missing entry. So the record now carries both halves,
 checked rather than maintained: `tests/falsification.rs` recomputes every fixed diagnostic this
 projection can emit from the projection's own source — a string literal with a space in it, the
 crate's other literals being producer wire names that `tests/wire_names.rs` owns — and fails when
-one is in neither half. Today that is **91 diagnostics: 24 claimed by a mutation and 67 that nothing
+one is in neither half. Today that is **90 diagnostics: 23 claimed by a mutation and 67 that nothing
 is aimed at**, enumerated by name under `unaimed`. A refusal added to the codec is in neither until
 somebody puts it in one.
 

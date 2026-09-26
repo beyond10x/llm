@@ -600,6 +600,9 @@ fn split_items(items: &[Item]) -> Result<(Option<String>, Vec<Value>), Error> {
                     "chat completions carries no opaque continuation state",
                 ));
             }
+            Item::UnattributedOpaque { .. } => {
+                return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
+            }
             Item::UserText { .. } | Item::ToolResult { .. } => {
                 return Err(Error::protocol(
                     "model outcome contains caller-owned content",

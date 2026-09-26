@@ -76,8 +76,18 @@ fn ingress_does_not_bind_unattributable_thinking_to_the_reading_binding() {
         // Refusing what it cannot attribute is a correct answer to this case.
         return;
     };
-    let Some(Item::Opaque { provenance, .. }) = decoded.request.items.get(1) else {
-        panic!("ingress kept the thinking block as something other than opaque state");
+    let provenance = match decoded.request.items.get(1) {
+        Some(Item::Opaque { provenance, .. }) => provenance,
+        // Carrying it unattributed is the third correct answer: it names no binding, so egress
+        // refuses it until a caller binds it.
+        Some(Item::UnattributedOpaque { .. }) => {
+            let error = encode_request(&decoded.request, &binding())
+                .expect_err("unbound state is not sendable");
+            assert_eq!(error.code, ErrorCode::Unsupported);
+            assert_eq!(error.message, Item::UNATTRIBUTED_REFUSAL);
+            return;
+        }
+        _ => panic!("ingress kept the thinking block as something other than opaque state"),
     };
 
     // (c) The demonstration: the round trip made (a) sendable.

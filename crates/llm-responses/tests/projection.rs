@@ -233,17 +233,16 @@ fn opaque(mut provenance: Provenance, edit: impl FnOnce(&mut Provenance)) -> Ite
     }
 }
 
-/// Opaque state goes out verbatim and does not come back in. The asymmetry is the contract.
+/// Opaque state goes out verbatim, and comes back in carried but unattributed.
 ///
 /// Egress can attribute it: the caller holds an item this binding minted and the six coordinates
 /// are checked against the binding before a byte is sent. Ingress cannot — the wire body carries
-/// no provenance, so reading one back would mean this crate asserting an origin it never
-/// observed, and a payload minted under `rev-1` and replayed after a repoint would be reinstated
-/// as native state for `rev-2`. The round trip is therefore total for the text and tool subset
-/// and deliberately partial here, which is the choice `docs/design.md` sanctions: preserved or
-/// refused, never quietly translated.
+/// no provenance — so it reads the entry back as `Item::UnattributedOpaque`, never as state bound
+/// to the reader. A payload minted under `rev-1` and replayed after a repoint is therefore not
+/// reinstated as native state for `rev-2`; it is held, and it cannot be sent until a caller binds
+/// it.
 #[test]
-fn opaque_state_is_carried_out_verbatim_and_refused_on_the_way_back_in() {
+fn opaque_state_is_carried_out_verbatim_and_read_back_unattributed() {
     let mut request = text_request();
     request.items.push(opaque(provenance(), |_| {}));
     let body = project_request(&binding(), &request).expect("projects");
@@ -251,11 +250,15 @@ fn opaque_state_is_carried_out_verbatim_and_refused_on_the_way_back_in() {
         body["input"][2],
         json!({"type": "reasoning", "id": "rs_1", "summary": []})
     );
-    let error = ingest_request(&binding(), &body)
-        .map(|returned| returned.items)
-        .expect_err("ingress cannot attribute what it did not watch this binding produce");
-    assert_eq!(error.code, ErrorCode::Unsupported);
-    assert_eq!(error.dispatch, Dispatch::NotSent);
+    let returned =
+        ingest_request(&binding(), &body).expect("ingress carries what it cannot attribute");
+    assert_eq!(
+        returned.items[1],
+        Item::UnattributedOpaque {
+            protocol: Protocol::Responses,
+            payload: json!({"type": "reasoning", "id": "rs_1", "summary": []}),
+        }
+    );
 
     // And the text and tool subset is unaffected: drop the opaque item and it round trips.
     request.items.pop();
@@ -264,6 +267,70 @@ fn opaque_state_is_carried_out_verbatim_and_refused_on_the_way_back_in() {
         ingest_request(&binding(), &body).expect("reads back"),
         request
     );
+}
+
+fn reasoning_body() -> Value {
+    json!({
+        "model": "example/Small-Model",
+        "input": [
+            {"type": "message", "role": "user",
+             "content": [{"type": "input_text", "text": "Hi"}]},
+            {"type": "reasoning", "id": "rs_1", "encrypted_content": "gAAAAA-rev-1",
+             "summary": [{"type": "summary_text", "text": "weighing"}]}
+        ],
+        "tools": [], "stream": true, "store": false,
+        "include": ["reasoning.encrypted_content"]
+    })
+}
+
+/// Forwarding what ingress carried, without the caller's decision, is refused by name.
+#[test]
+fn an_unattributed_entry_is_refused_by_name_on_egress_until_a_caller_binds_it() {
+    let request = ingest_request(&binding(), &reasoning_body()).expect("carried");
+    let error = project_request(&binding(), &request).expect_err("not sendable");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.message, Item::UNATTRIBUTED_REFUSAL);
+    assert_eq!(error.dispatch, Dispatch::NotSent);
+}
+
+/// The gateway round trip: ingress, the caller's explicit binding, egress — JSON-equal. The
+/// contract is JSON equality, not byte equality (coordinator decision, correction round 1): the
+/// payload is a `serde_json::Value`, so both sides are compared as re-serialized values.
+#[test]
+fn a_bound_unattributed_entry_reprojects_its_payload_json_equal() {
+    let body = reasoning_body();
+    let mut request = ingest_request(&binding(), &body).expect("carried");
+    assert_eq!(
+        request
+            .bind_unattributed(binding().provenance())
+            .expect("bound"),
+        1
+    );
+    let reprojected = project_request(&binding(), &request).expect("sendable once bound");
+    assert_eq!(
+        serde_json::to_string(&reprojected["input"]).unwrap(),
+        serde_json::to_string(&body["input"]).unwrap()
+    );
+}
+
+/// The caller's decision is the only way in: an entry bound to a repointed binding by nobody is
+/// not sendable there either, and one the caller bound to `rev-1` stays refused by `rev-2`.
+#[test]
+fn a_repointed_binding_still_refuses_what_the_caller_bound_elsewhere() {
+    let mut request = ingest_request(&repointed_binding(), &reasoning_body()).expect("carried");
+    project_request(&repointed_binding(), &request).expect_err("unbound is not sendable");
+    request
+        .bind_unattributed(binding().provenance())
+        .expect("bound to rev-1");
+    let error = project_request(&repointed_binding(), &request).expect_err("rev-2 refuses rev-1");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    project_request(&binding(), &request).expect("rev-1 accepts what was bound to it");
+}
+
+fn repointed_binding() -> Binding {
+    let mut provenance = provenance();
+    provenance.binding_revision = id("rev-2");
+    Binding::new(provenance, id("example/Small-Model"))
 }
 
 #[test]
@@ -926,11 +993,11 @@ fn every_ingress_content_refusal_the_contract_promises_is_reachable() {
             ErrorCode::Unsupported,
         ),
         (
-            "an unmodelled entry this side cannot attribute",
+            "an entry that names no type, which is not even opaque state",
             wire_body(&[(
                 "input",
                 json!([
-            {"type": "reasoning", "id": "rs_1", "summary": []}]),
+            {"id": "rs_1", "summary": []}]),
             )]),
             ErrorCode::Unsupported,
         ),
@@ -1384,5 +1451,67 @@ fn a_provider_failure_keeps_its_class_when_its_counters_disagree() {
         error
             .validate_for(&provenance())
             .unwrap_or_else(|_| panic!("`{code}`: bound evidence"));
+    }
+}
+
+/// Only what the model mints as continuation state is carried unattributed. The class is the
+/// published constant, so a type added to it is carried by this case without editing it.
+#[test]
+fn every_model_minted_entry_type_is_carried_unattributed() {
+    assert_eq!(llm_responses::CARRIED_ENTRY_TYPES, ["reasoning"]);
+    for kind in llm_responses::CARRIED_ENTRY_TYPES {
+        let entry = json!({"type": kind, "id": "rs_1", "summary": []});
+        let request = ingest_request(&binding(), &wire_body(&[("input", json!([entry]))]))
+            .unwrap_or_else(|error| panic!("`{kind}` is carried: {error:?}"));
+        assert_eq!(
+            request.items,
+            [Item::UnattributedOpaque {
+                protocol: Protocol::Responses,
+                payload: entry
+            }]
+        );
+    }
+}
+
+/// A client-authored entry this version does not model is the client's content, not the model's
+/// continuation state; carrying it would let a bound copy skip every check a modelled one gets.
+#[test]
+fn a_client_authored_entry_this_version_does_not_model_is_refused_by_name() {
+    for entry in [
+        json!({"type": "computer_call_output", "call_id": "c1", "output": {"type": "input_image"}}),
+        json!({"type": "custom_tool_call_output", "call_id": "c1", "output": "x"}),
+    ] {
+        let error = ingest_request(&binding(), &wire_body(&[("input", json!([entry]))]))
+            .map(|request| request.items)
+            .expect_err("client-authored and unmodelled");
+        assert_eq!(error.code, ErrorCode::Unsupported);
+        assert_eq!(
+            error.message,
+            "an input entry is neither modelled nor continuation state the model mints"
+        );
+    }
+}
+
+/// A pointer to provider-stored state is refused by its own name: this projection replays the
+/// conversation whole under `store: false`.
+#[test]
+fn a_reference_to_provider_stored_state_is_refused_by_name() {
+    let entry = json!({"type": "item_reference", "id": "msg_1"});
+    let error = ingest_request(&binding(), &wire_body(&[("input", json!([entry]))]))
+        .map(|request| request.items)
+        .expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(
+        error.message,
+        "an input entry refers to state the provider stored, which this projection never keeps"
+    );
+    for entry in [json!({"type": "", "id": "rs_1"}), json!({"id": "rs_1"})] {
+        assert_eq!(
+            ingest_request(&binding(), &wire_body(&[("input", json!([entry]))]))
+                .map(|request| request.items)
+                .expect_err("names no type")
+                .message,
+            "an input entry names no type this version can carry"
+        );
     }
 }

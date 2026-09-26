@@ -25,6 +25,18 @@ cross-model and cross-account requests. Providers may later admit a narrower doc
 through a versioned contract; no implicit exception exists. Unsupported opaque state never
 disappears during translation or fallback.
 
+An ingress surface may carry opaque state it cannot attribute. A request body names no binding,
+so a gateway reading one holds such state as an unattributed opaque item: the payload as a JSON value
+(JSON-equal to what arrived, not byte-equal) and the protocol it was read from, never a binding. That item is not sendable: every egress
+path and `TurnRequest::validate_for` refuse it by name (`Item::UNATTRIBUTED_REFUSAL`) until a
+caller binds it. Route selection refuses it as `opaque-state`, the same rejection as state bound to
+another binding, and does not tell the two apart; a caller does that before routing, with
+`TurnRequest::validate_for` or by binding it with `TurnRequest::bind_unattributed`.
+Binding it to a target is an explicit caller decision (`TurnRequest::bind_unattributed`), refused
+for a target of another protocol; no adapter makes it, and ingress never stamps the reading binding
+onto what it read. Provenance is not widened with a sentinel revision and the six-coordinate
+comparison is never partial.
+
 The binding revision hashes the complete validated single-binding declaration, including the
 endpoint URL, upstream model, auth reference and capabilities. Repointing an existing ID therefore
 invalidates old opaque state. Secret bytes and credential generations are excluded so rotation of
@@ -95,7 +107,8 @@ presentation. A rejected subscription credential never changes billing kind or a
 ## Compatibility and source provenance
 
 Published Rust APIs follow the crate release's semantic version. Persisted neutral requests carry
-an explicit `llm.turn/2` envelope and outputs carry `llm.outcome/3`; old/unknown versions and fields refuse. Unversioned Rust
+an explicit `llm.turn/3` envelope and outputs carry `llm.outcome/4`; old/unknown versions and fields refuse. Both moved when `Item` gained the
+unattributed opaque variant, so a `llm.turn/2` or `llm.outcome/3` reader is never handed one. Unversioned Rust
 values are in-process values, not a claim of a stable vendor wire format. Unsupported additions
 need a version change before they are accepted. This contract does not establish any live provider
 qualification or a released artifact.

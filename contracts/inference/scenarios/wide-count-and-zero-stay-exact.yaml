@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-19T12:00:00Z'
   command: llm.inference.InspectResult
   input:
-    result_json: '{"format":"llm.outcome/3","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"hello"}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"final_usage":true,"usage":{"input_tokens":18446744073709551615,"output_tokens":0}}}}'
+    result_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"hello"}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"final_usage":true,"usage":{"input_tokens":18446744073709551615,"output_tokens":0}}}}'
     failure: false
   outcome: observed
 assert:

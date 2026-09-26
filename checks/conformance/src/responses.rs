@@ -140,7 +140,8 @@ fn ingest(input: &Value) -> Result<Observed, TargetError> {
     let mut facts = json!({
         "accepted": false, "error_code": null, "turn_json": null, "model": null,
         "instructions": null, "item_kinds": [], "tool_names": [],
-        "reprojected": false, "body_preserved": false
+        "reprojected": false, "body_preserved": false, "forward_refusal": null,
+        "bound_input_json": null, "bound_body_preserved": false
     });
     if let Err(error) = ingestion(&input, &mut facts) {
         facts["error_code"] = json!(error.code);
@@ -172,18 +173,35 @@ fn ingestion(input: &IngestInput, facts: &mut Value) -> Result<(), Error> {
     // The same contract read back out. A gateway that accepts a request its own egress refuses,
     // or that rewrites a field it accepted and never read, disagrees with itself; both are
     // visible here and in neither of the other two views.
-    if let Ok(reprojected) = project_request(&binding, &request) {
-        facts["reprojected"] = json!(true);
-        // Every field the body carried must come back identically. A body may legitimately omit
-        // a field the projection always writes, so the comparison is over what was sent, not
-        // over what was produced.
-        facts["body_preserved"] = json!(body.as_object().is_some_and(|sent| {
-            sent.iter()
-                .all(|(field, value)| reprojected.get(field) == Some(value))
-        }));
+    match project_request(&binding, &request) {
+        Ok(reprojected) => {
+            facts["reprojected"] = json!(true);
+            facts["body_preserved"] = json!(preserved(&body, &reprojected));
+        }
+        // The forward attempt without the caller's binding decision. The diagnostic is fixed by
+        // construction, so the scenario can pin which refusal it was.
+        Err(error) => facts["forward_refusal"] = json!(error.message),
+    }
+    // The caller's explicit decision, made here because this adapter stands in for the caller:
+    // bind whatever ingress carried unattributed to the binding that read it, then forward it.
+    let mut bound = request.clone();
+    if bound.bind_unattributed(binding.provenance()).is_ok()
+        && let Ok(reprojected) = project_request(&binding, &bound)
+    {
+        facts["bound_input_json"] = json!(compact(&reprojected["input"]));
+        facts["bound_body_preserved"] = json!(preserved(&body, &reprojected));
     }
     facts["turn_json"] = json!(compact(&serialize(&TurnDocument::new(request))?));
     Ok(())
+}
+
+/// Every field the body carried comes back identically. A body may legitimately omit a field the
+/// projection always writes, so the comparison is over what was sent, not over what was produced.
+fn preserved(sent: &Value, reprojected: &Value) -> bool {
+    sent.as_object().is_some_and(|sent| {
+        sent.iter()
+            .all(|(field, value)| reprojected.get(field) == Some(value))
+    })
 }
 
 fn stream(input: &Value) -> Result<Observed, TargetError> {
@@ -269,6 +287,7 @@ fn item_kind(item: &Item) -> &'static str {
         Item::ToolCall(_) => "tool-call",
         Item::ToolResult { .. } => "tool-result",
         Item::Opaque { .. } => "opaque",
+        Item::UnattributedOpaque { .. } => "unattributed-opaque",
     }
 }
 

@@ -1,14 +1,14 @@
 type: ess-scenario/1
 domain: llm.responses
-scenario: ingress-refuses-an-unmodelled-entry-it-cannot-attribute
-summary: ingress refuses an unmodelled entry it cannot attribute
+scenario: ingress-refuses-an-entry-whose-type-is-empty
+summary: an entry whose type is the empty string names no type and is refused
 timeline:
-- at: '2026-09-20T12:00:00Z'
+- at: '2026-09-26T12:00:00Z'
   command: llm.responses.Ingest
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Hi"}]},{"type":"reasoning","id":"rs_1","summary":[]}],"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
+    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Hi"}]},{"type":"","id":"rs_1"}],"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
   outcome: observed
 assert:
 - view: llm.responses.LastIngestion
@@ -21,5 +21,5 @@ assert:
     error_code: unsupported
     turn_json: null
     item_kinds: []
-    reprojected: false
-    body_preserved: false
+    forward_refusal: null
+    bound_input_json: null

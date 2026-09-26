@@ -53,7 +53,7 @@ commands:
     # Parse, explain admission and resolve a versioned neutral turn without I/O.
     input:
       - {name: catalog_toml, type: String}
-      # Serialized llm.turn/2 is intentionally raw here: malformed envelopes must
+      # Serialized llm.turn/3 is intentionally raw here: malformed envelopes must
       # reach the production decoder, instead of being filtered by the test target.
       - {name: turn_json, type: String}
       - {name: input_tokens, type: Optional<Integer>}

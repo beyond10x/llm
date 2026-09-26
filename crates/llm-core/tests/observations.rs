@@ -31,7 +31,7 @@ fn success_requires_terminal_bound_evidence_but_does_not_invent_unknown_fields()
     outcome.validate_for(&request, &binding()).unwrap();
     let document = OutcomeDocument::new(outcome);
     let value = serde_json::to_value(&document).unwrap();
-    assert_eq!(value["format"], "llm.outcome/3");
+    assert_eq!(value["format"], "llm.outcome/4");
     for missing in ["upstream_model", "response_id", "usage"] {
         assert!(value["outcome"]["observation"].get(missing).is_none());
     }
@@ -39,7 +39,12 @@ fn success_requires_terminal_bound_evidence_but_does_not_invent_unknown_fields()
         serde_json::from_value::<OutcomeDocument>(value.clone()).unwrap(),
         document
     );
-    for version in ["llm.outcome/1", "llm.outcome/2", "llm.outcome/4"] {
+    for version in [
+        "llm.outcome/1",
+        "llm.outcome/2",
+        "llm.outcome/3",
+        "llm.outcome/5",
+    ] {
         let mut old = value.clone();
         old["format"] = json!(version);
         assert!(serde_json::from_value::<OutcomeDocument>(old).is_err());

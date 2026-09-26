@@ -20,7 +20,7 @@ assert:
     error_code: null
     dispatch: null
     wire_request: null
-    neutral_request: "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"lookup\",\"arguments\":{\"query\":\"errors\"}},{\"kind\":\"tool-result\",\"call_id\":\"call-1\",\"output\":\"not found\",\"failed\":true}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":512,\"sampling\":{\"temperature\":0.5,\"top_p\":0.8,\"reasoning_effort\":\"high\"},\"tool_choice\":\"required\"}}"
+    neutral_request: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"lookup\",\"arguments\":{\"query\":\"errors\"}},{\"kind\":\"tool-result\",\"call_id\":\"call-1\",\"output\":\"not found\",\"failed\":true}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":512,\"sampling\":{\"temperature\":0.5,\"top_p\":0.8,\"reasoning_effort\":\"high\"},\"tool_choice\":\"required\"}}"
     stream: true
     items:
       - "user-text:Summarise the log"

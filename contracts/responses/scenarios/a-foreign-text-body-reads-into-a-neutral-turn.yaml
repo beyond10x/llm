@@ -26,4 +26,4 @@ assert:
     tool_names: []
     reprojected: true
     body_preserved: true
-    turn_json: '{"format":"llm.turn/2","request":{"instructions":"Be brief","items":[{"kind":"user-text","text":"Hello"}],"model":"small","tools":[]}}'
+    turn_json: '{"format":"llm.turn/3","request":{"instructions":"Be brief","items":[{"kind":"user-text","text":"Hello"}],"model":"small","tools":[]}}'

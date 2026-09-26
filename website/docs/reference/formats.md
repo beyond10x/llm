@@ -10,8 +10,8 @@ explicit envelope, and an old or unknown version refuses rather than being coerc
 
 | Format | Carried by | Status |
 | --- | --- | --- |
-| `llm.turn/2` | Persisted neutral requests | Unreleased |
-| `llm.outcome/3` | Persisted neutral outputs | Unreleased |
+| `llm.turn/3` | Persisted neutral requests | Unreleased |
+| `llm.outcome/4` | Persisted neutral outputs | Unreleased |
 | `llm.binding/1` | Provider/account/endpoint/model declarations | Unreleased |
 | `llm.catalog/1` | TOML routing catalogs | Unreleased |
 | `llm.prices/1` | Price books, TOML or JSON | Unreleased |

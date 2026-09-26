@@ -82,7 +82,14 @@ case the machine record did not list as failing.
 | Relay the provider's own text into a diagnostic | `a-failed-response-retains-its-terminal-usage` | 4 / 62 | `a_failed_response_keeps_its_reported_usage_and_carries_no_upstream_text` |
 | Let a counter refusal overwrite the provider's own failure class | `a-rate-limited-failure-keeps-its-class-when-its-counters-disagree` | 1 / 65 | `a_provider_failure_keeps_its_class_when_its_counters_disagree` |
 | Stop binding outgoing opaque state to its binding | `a-repointed-binding-revision-refuses-opaque-state` | 3 / 63 | `opaque_state_from_any_other_binding_coordinate_is_refused` |
-| Mint provenance on ingress that was never observed | `ingress-refuses-an-unmodelled-entry-it-cannot-attribute` | 2 / 64 | `ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses` |
+| Stamp the reading binding onto an unmodelled entry on ingress | `ingress-carries-an-unmodelled-entry-it-cannot-attribute` | 3 / 76 | `ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses` |
+| Send an unbound unattributed entry on egress | `unbound-unattributed-state-is-refused-on-egress` | 3 / 76 | `an_unattributed_entry_is_refused_by_name_on_egress_until_a_caller_binds_it` |
+| Carry an `item_reference` as continuation state | `ingress-refuses-a-reference-to-provider-stored-state` | 1 / 82 | `a_reference_to_provider_stored_state_is_refused_by_name` |
+| Carry an entry whose `type` is empty | `ingress-refuses-an-entry-whose-type-is-empty` | 1 / 82 | `an_entry_whose_type_is_empty_names_no_type_and_is_refused` |
+| Carry every typed entry, client-authored ones included | `ingress-refuses-a-client-authored-entry-it-does-not-model` | 3 / 80 | `a_client_authored_entry_this_version_does_not_model_is_refused_by_name` |
+| List a client-authored type as model-minted | `ingress-refuses-a-client-authored-entry-it-does-not-model` | 1 / 82 | `every_model_minted_entry_type_is_carried_unattributed` |
+| Stop carrying `reasoning` | `ingress-carries-an-unmodelled-entry-it-cannot-attribute` | 3 / 80 | `every_model_minted_entry_type_is_carried_unattributed` |
+| Read a `llm.turn/2` envelope | `the-previous-turn-version-is-refused` | 1 / 78 | `persisted_version_and_unrecognized_authority_fields_refuse` |
 | Skip the tool-name class on ingress | `ingress-refuses-a-tool-name-egress-cannot-publish` | 1 / 65 | `ingress_refuses_a_tool_name_egress_cannot_publish` |
 | Skip the tool-name class on egress | `an-unpublishable-tool-name-is-refused` | 1 / 65 | `a_tool_name_this_wire_cannot_publish_is_refused_before_it_is_sent` |
 | Read an omitted fixed field as agreement | `ingress-refuses-a-body-that-omits-a-fixed-field` | 3 / 63 | `every_fixed_field_is_refused_unless_it_carries_exactly_the_pinned_value` |

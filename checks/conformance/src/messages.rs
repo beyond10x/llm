@@ -305,6 +305,12 @@ fn label(item: &Item) -> String {
             "opaque:{}:{payload}",
             serde_json::to_string(provenance).unwrap_or_default()
         ),
+        // No binding to show, which is the point: a label that invented one would hide a
+        // projection that stamped the reader onto state it could not attribute.
+        Item::UnattributedOpaque { protocol, payload } => format!(
+            "unattributed-opaque:{}:{payload}",
+            serde_json::to_string(protocol).unwrap_or_default()
+        ),
     }
 }
 

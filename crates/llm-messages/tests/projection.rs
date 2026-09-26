@@ -189,25 +189,54 @@ fn ingress_preserves_the_neutral_request_across_a_round_trip() {
     assert_eq!(restored, request);
 }
 
-/// The cost of refusing to attribute what arrived: reasoning does not survive a gateway hop.
+/// Thinking survives a gateway hop carried, never laundered.
 ///
 /// Egress refuses opaque state bound to any other binding, so stamping the reading binding onto
 /// an arriving `thinking` block would make exactly that state sendable after one round trip.
-/// Refusing it keeps the two directions honest; `story:unattributed-opaque-state` owns carrying
-/// it properly.
+/// Ingress therefore carries it as `Item::UnattributedOpaque`: held JSON-equal, refused by name
+/// on egress, and sendable only after the caller binds it.
 #[test]
-fn thinking_does_not_survive_a_gateway_round_trip_and_is_not_laundered() {
+fn thinking_survives_a_gateway_round_trip_only_through_the_callers_binding() {
     let projected = encode_request(&full_request(), &binding()).expect("egress carries thinking");
-    let error = decode_request(&projected, binding().provenance())
-        .expect_err("ingress cannot attribute what arrived");
+    let mut decoded = decode_request(&projected, binding().provenance())
+        .expect("ingress carries what it cannot attribute")
+        .request;
+    assert_eq!(
+        decoded.items[1],
+        Item::UnattributedOpaque {
+            protocol: Protocol::Messages,
+            payload: json!({"type":"thinking","thinking":"weighing","signature":"sig-1"}),
+        }
+    );
+    decoded.model = "internal-model".to_owned();
+    let error = encode_request(&decoded, &binding()).expect_err("not sendable unbound");
     assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.message, Item::UNATTRIBUTED_REFUSAL);
+
+    assert_eq!(
+        decoded
+            .bind_unattributed(binding().provenance())
+            .expect("bound"),
+        1
+    );
+    let replayed: Value =
+        serde_json::from_slice(&encode_request(&decoded, &binding()).expect("sendable once bound"))
+            .expect("JSON");
+    let sent: Value = serde_json::from_slice(&projected).expect("JSON");
+    assert_eq!(
+        serde_json::to_string(&replayed["messages"][1]["content"][0]).unwrap(),
+        serde_json::to_string(&sent["messages"][1]["content"][0]).unwrap()
+    );
 
     let redacted = json!({"model":"m","max_tokens":8,"messages":[
         {"role":"user","content":"hi"},
         {"role":"assistant","content":[{"type":"redacted_thinking","data":"AAAA"}]}]});
     assert_eq!(
-        ingress(&redacted).expect_err("refused").code,
-        ErrorCode::Unsupported
+        ingress(&redacted).expect("carried").request.items[1],
+        Item::UnattributedOpaque {
+            protocol: Protocol::Messages,
+            payload: json!({"type":"redacted_thinking","data":"AAAA"}),
+        }
     );
 }
 

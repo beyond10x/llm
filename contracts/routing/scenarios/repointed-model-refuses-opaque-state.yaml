@@ -91,7 +91,7 @@ timeline:
       route_id = "coding"
       serving_model_id = "remote-large"
       position = 1
-    turn_json: '{"format":"llm.turn/2","request":{"model":"code","instructions":"Keep instructions","items":[{"kind":"user-text","text":"Keep
+    turn_json: '{"format":"llm.turn/3","request":{"model":"code","instructions":"Keep instructions","items":[{"kind":"user-text","text":"Keep
       message"},{"kind":"opaque","provenance":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1"},"payload":{"state":"fixture-state"}}],"tools":[],"max_output_tokens":128}}'
     input_tokens: 100
   outcome: observed

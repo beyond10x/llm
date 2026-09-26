@@ -218,7 +218,13 @@ fn capability_rejections(
             }
         }
     }
-    if request.items.iter().any(|item| matches!(item, Item::Opaque { provenance, .. } if provenance != binding.provenance())) {
+    // Unattributed state names no binding, so no target is compatible with it: choosing one
+    // would be the binding decision only the caller may make.
+    if request.items.iter().any(|item| match item {
+        Item::Opaque { provenance, .. } => provenance != binding.provenance(),
+        Item::UnattributedOpaque { .. } => true,
+        _ => false,
+    }) {
         reasons.push(Rejection::OpaqueState);
     }
     reasons
