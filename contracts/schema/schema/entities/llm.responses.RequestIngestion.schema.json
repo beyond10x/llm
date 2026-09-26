@@ -41,6 +41,15 @@
     "body_preserved": {
       "type": "boolean"
     },
+    "forward_refusal": {
+      "type": "string"
+    },
+    "bound_input_json": {
+      "type": "string"
+    },
+    "bound_body_preserved": {
+      "type": "boolean"
+    },
     "state": {
       "$ref": "#/$defs/llm.responses.RequestIngestion.State"
     }
@@ -52,14 +61,15 @@
     "tool_names",
     "reprojected",
     "body_preserved",
+    "bound_body_preserved",
     "state"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "fece87265a557ac1dc08be93d3a2893cde091c2355b48235c285cb6541f186a5",
-    "contract_digest": "slice-sha256/2:8fa575fc181aae30f84a13b6bfcbbad4f2ff1fa9023438a43ef96597f697a47e",
+    "source_digest": "26b9631400576e734fae90a9c107f979ed278857b1952dc0570277c01da342e5",
+    "contract_digest": "slice-sha256/2:73f0be86fd5f7ec792dfa6bc02b13abae20b9c0029652ac690716e17aee27907",
     "regenerate": "ess generate"
   },
   "$defs": {
