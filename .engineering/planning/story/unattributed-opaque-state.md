@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:unattributed-opaque-state
 kind: story
-status: draft
+status: active
 title: A gateway carries opaque state it cannot attribute, and cannot send it
 relations:
 - decomposes: epic:inference
@@ -50,7 +50,7 @@ scope:
   path: spec/domains/responses.yaml
 - confidence: inferred
   path: spec/domains/routing.yaml
-revision: 5
+revision: 7
 ---
 ## Context
 
