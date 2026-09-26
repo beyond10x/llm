@@ -20,15 +20,17 @@ their failure flag, signed thinking and redacted thinking. Thinking crosses as a
 to all six binding coordinates: protocol, provider, account, endpoint, model and binding revision.
 Opaque state from any other binding is refused rather than replayed.
 
-**Ingress refuses thinking, and this costs something.** A request arriving at a gateway carries no
-evidence of what served the reasoning inside it, so there is no binding to bind it to. Stamping the
-*reading* binding onto it would be worse than refusing: egress refuses that same payload when it is
-bound to any other binding, so one `decode_request` / `encode_request` round trip would launder
-state the projection otherwise rejects. The cost is that reasoning continuity does not survive a
-gateway hop in this version — a caller behind a gateway loses signed thinking between turns.
-`story:unattributed-opaque-state` owns carrying it properly; it needs a change to a frozen crate.
-The response half is unaffected: a stream or response this client read from its own bound endpoint
-is attributable, and is attributed.
+**Ingress carries thinking unattributed, and never sends it on its own.** A request arriving at a
+gateway carries no evidence of what served the reasoning inside it, so there is no binding to bind
+it to. Stamping the *reading* binding onto it would launder: egress refuses that same payload when
+it is bound to any other binding, so one `decode_request` / `encode_request` round trip would make
+sendable state the projection otherwise rejects. So `decode_request` carries a signed or redacted
+thinking block as `Item::UnattributedOpaque` — the block as a JSON value, protocol `messages`, no
+binding — and `encode_request` refuses it with `Item::UNATTRIBUTED_REFUSAL` until the caller binds
+it with `TurnRequest::bind_unattributed`. After that decision the block goes out JSON-equal to how it came
+in — the same JSON value, not the same bytes: it is held as a `serde_json::Value`, so its keys
+re-serialize sorted. The response half is unaffected: a stream or response this client read from its own bound
+endpoint is attributable, and is attributed.
 
 The route requires `max_tokens`. The neutral `max_output_tokens` stays optional, and an absent one
 resolves to the binding's declared maximum — the only value in the system that is an operator's

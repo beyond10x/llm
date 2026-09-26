@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-20T12:00:00Z'
   command: llm.chat.EncodeIngress
   input:
-    outcome_json: '{"format":"llm.outcome/3","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"opaque","provenance":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"payload":{"state":"x"}}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"final_usage":true}}}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"opaque","provenance":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"payload":{"state":"x"}}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"final_usage":true}}}'
     streamed: false
     include_usage: false
   outcome: observed

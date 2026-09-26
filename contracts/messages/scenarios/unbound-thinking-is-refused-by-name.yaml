@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: unbound-thinking-is-refused-by-name
+summary: a forward attempt carrying thinking no caller has bound is refused by name before any byte is projected
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"},{\"kind\":\"unattributed-opaque\",\"protocol\":\"messages\",\"payload\":{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}}],\"tools\":[]}}"
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "unsupported"
+    error_message: "unattributed opaque state is not sendable until a caller binds it to a target"
+    dispatch: "not-sent"
+    wire_request: null
+    items: []

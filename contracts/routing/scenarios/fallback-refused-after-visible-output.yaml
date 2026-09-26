@@ -111,7 +111,7 @@ timeline:
       route_id = "coding"
       serving_model_id = "local-tiny"
       position = 1
-    turn_json: '{"format":"llm.turn/2","request":{"model":"code","instructions":"","items":[{"kind":"user-text","text":"hello"}],"tools":[],"max_output_tokens":128}}'
+    turn_json: '{"format":"llm.turn/3","request":{"model":"code","instructions":"","items":[{"kind":"user-text","text":"hello"}],"tools":[],"max_output_tokens":128}}'
     input_tokens: 100
     program_json: '{"models":{"local-small":{"emits":1,"fail":{"code":"transport","dispatch":"not-sent"}},"local-tiny":{"emits":1},"remote-large":{"emits":1,"input_tokens":7}}}'
   outcome: observed

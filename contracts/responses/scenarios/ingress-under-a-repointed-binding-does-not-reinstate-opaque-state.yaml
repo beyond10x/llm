@@ -1,0 +1,30 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: ingress-under-a-repointed-binding-does-not-reinstate-opaque-state
+summary: ingress under a repointed binding carries rev-1 state unattributed and does not stamp it with rev-2
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.responses.Ingest
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-2"}'
+    upstream_model: example/Small-Model
+    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Hi"}]},{"type":"reasoning","id":"rs_1","encrypted_content":"gAAAAA-rev-1","summary":[{"type":"summary_text","text":"weighing"}]}],"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
+  outcome: observed
+assert:
+- view: llm.responses.LastIngestion
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastIngestion
+  contains:
+    accepted: true
+    item_kinds:
+    - user-text
+    - unattributed-opaque
+    turn_json: '{"format":"llm.turn/3","request":{"instructions":"","items":[{"kind":"user-text","text":"Hi"},{"kind":"unattributed-opaque","payload":{"encrypted_content":"gAAAAA-rev-1","id":"rs_1","summary":[{"text":"weighing","type":"summary_text"}],"type":"reasoning"},"protocol":"responses"}],"model":"small","tools":[]}}'
+    reprojected: false
+    forward_refusal: unattributed opaque state is not sendable until a caller binds it to a target
+    # Not a guarantee against laundering: the adapter, standing in for the caller, binds to the
+    # reading binding, and that succeeds. Choosing the right binding is the caller's decision.
+    bound_input_json: '[{"content":[{"text":"Hi","type":"input_text"}],"role":"user","type":"message"},{"encrypted_content":"gAAAAA-rev-1","id":"rs_1","summary":[{"text":"weighing","type":"summary_text"}],"type":"reasoning"}]'
+    bound_body_preserved: true

@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: the-previous-turn-version-is-refused
+summary: a llm.turn/2 envelope predates the unattributed variant and is refused rather than read
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[]}}"
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "invalid-request"
+    error_message: "invalid turn envelope"
+    wire_request: null

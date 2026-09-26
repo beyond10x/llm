@@ -91,7 +91,7 @@ timeline:
       route_id = "coding"
       serving_model_id = "remote-large"
       position = 2
-    turn_json: '{"format":"llm.turn/2","request":{"model":"code","instructions":"Keep instructions","items":[{"kind":"user-text","text":"Keep
+    turn_json: '{"format":"llm.turn/3","request":{"model":"code","instructions":"Keep instructions","items":[{"kind":"user-text","text":"Keep
       message"}],"tools":[],"max_output_tokens":128}}'
     input_tokens: 100
   outcome: observed

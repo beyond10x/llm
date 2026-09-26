@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: outgoing-the-previous-turn-version-is-refused
+summary: a llm.turn/2 envelope predates the unattributed variant and is refused rather than read
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.chat.ProjectRequest
+  input:
+    turn_json: '{"format":"llm.turn/2","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"}],"tools":[]}}'
+    protocol: chat-completions
+    upstream_model: Qwen/Qwen3-8B
+    capabilities_json: '{"tools":true,"tool_choice":true,"temperature":true,"top_p":true,"reasoning_efforts":["low","high"],"context_window":32768,"max_output_tokens":4096}'
+    streaming: true
+  outcome: observed
+assert:
+- view: llm.chat.LastRequestProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastRequestProjection
+  contains:
+    accepted: false
+    error_code: invalid-request
+    wire_model: null

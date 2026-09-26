@@ -145,6 +145,10 @@ fn messages(request: &TurnRequest) -> Result<Vec<Value>, Error> {
                     "chat completions carries no opaque continuation state",
                 ));
             }
+            // Not sendable anywhere until a caller binds it, and not sendable here even then.
+            Item::UnattributedOpaque { .. } => {
+                return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
+            }
         }
     }
     OpenAssistant::close(&mut open, &mut out);

@@ -228,3 +228,20 @@ fn the_request_model_must_be_the_selected_binding_alias() {
     .expect_err("refused");
     assert_eq!(error.code, ErrorCode::InvalidRequest);
 }
+
+#[test]
+fn unattributed_opaque_state_is_refused_by_name_rather_than_dropped() {
+    let request = TurnRequest::new(
+        "small",
+        vec![
+            Item::user("Hello"),
+            Item::UnattributedOpaque {
+                protocol: Protocol::ChatCompletions,
+                payload: json!({"encrypted": "x"}),
+            },
+        ],
+    );
+    let error = project_request(&request, &binding(), true).expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.message, Item::UNATTRIBUTED_REFUSAL);
+}

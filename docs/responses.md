@@ -60,7 +60,8 @@ a top-level `instructions` is outside the subset and refused.
 | `AssistantText` | `message` / `assistant` / `output_text`, exactly one part |
 | `ToolCall` | `function_call` with `arguments` as a JSON **string** |
 | `ToolResult` | `function_call_output` with the envelope below |
-| `Opaque` | outgoing only: the payload, verbatim, after all six coordinates match |
+| `Opaque` | outgoing: the payload, verbatim, after all six coordinates match |
+| `UnattributedOpaque` | ingress: an entry of a type in `CARRIED_ENTRY_TYPES` (today `reasoning`), carried JSON-equal; refused outgoing until a caller binds it |
 
 **Tool results are always enveloped**, as `{"ok": <bool>, "output": <value>}` serialized into the
 single string this wire's `function_call_output` carries. The wire has no failure channel, so the
@@ -69,7 +70,7 @@ envelope used only for failures cannot be told apart from a successful result th
 shaped like one, and a round trip that can flip `failed` corrupts the conversation rather than
 translating it. A body whose `function_call_output` is not in this envelope is refused on ingress.
 
-### Opaque state goes out and does not come back in
+### Opaque state goes out bound and comes back in unattributed
 
 This is the one deliberate asymmetry in the contract, and it is not an oversight.
 
@@ -82,19 +83,24 @@ after the endpoint was repointed, would be stamped with the new revision and bec
 state `project_request` refuses turned by one pass through `ingest_request` into state
 `project_request` sends. The invariant is that a mismatch is refused and never silently reused.
 
-So ingress **refuses** an entry outside the four modelled shapes, with `Unsupported`. That is the
-answer `docs/design.md` sanctions — "preserved or refused, never dropped to make translation
-appear successful" — and it costs reasoning continuity through a gateway, which is real.
+So ingress **carries** continuation state the model mints — an entry whose type is in
+`CARRIED_ENTRY_TYPES`, today only `reasoning`, the one type the stream decoder models as
+continuation state — as `Item::UnattributedOpaque`: the entry as a JSON value, protocol
+`responses`, and no binding. It is JSON-equal to what arrived, not byte-equal: it is held as a
+`serde_json::Value`, so its keys re-serialize sorted. `project_request` refuses it with
+`Item::UNATTRIBUTED_REFUSAL` until the caller binds it with `TurnRequest::bind_unattributed`;
+after that decision the entry goes out JSON-equal to how it came in, and a binding other than the
+one the caller chose still refuses it. This crate never makes that decision.
+
+Everything else outside the four modelled shapes is refused by name with `Unsupported`, as it was
+before unattributed state existed: an `item_reference` (a pointer to provider-stored state, which
+`store: false` never creates), an entry whose `type` is absent or empty, and any client-authored
+entry this version does not model, such as a hosted-tool `*_call_output`. Carrying the last would
+let a bound copy skip the tool pairing and size checks a modelled entry gets.
 
 **The stream decoder still binds what it decodes, and that is a different act.** It watched this
-binding produce the response it is reading; the attribution is observed, not minted. Those are the
-only two places in this crate that construct an `Item::Opaque`.
-
-Closing the gap properly needs something the neutral contract does not have: a state meaning
-*carried, attribution unverified*, which a gateway could hold and a client could not spend.
-`Item::Opaque` has exactly two possibilities today — bound to a binding, or absent. Adding a third
-is a change to `llm-core` and to `docs/contract-v1.md`, which is a versioned contract; it is
-recorded as a request rather than made here.
+binding produce the response it is reading; the attribution is observed, not minted. It is the
+only place in this crate that constructs an `Item::Opaque`.
 
 One further asymmetry, smaller: an opaque payload that is itself one of the four modelled shapes
 is read back as that shape rather than as opaque.
@@ -107,7 +113,10 @@ is read back as that shape rather than as opaque.
 | a tool name outside `^[a-zA-Z0-9_-]+$`, **on either side** | `Unsupported` |
 | a fixed field absent, or carrying any other value, on ingress | `Unsupported` |
 | a message whose content is not exactly one part of the expected type | `Unsupported` |
-| an unmodelled `input` entry, on ingress | `Unsupported` |
+| unattributed opaque state no caller has bound, outgoing (`Item::UNATTRIBUTED_REFUSAL`) | `Unsupported` |
+| an `input` entry whose `type` is absent or empty, on ingress | `Unsupported` |
+| an `item_reference` entry, on ingress | `Unsupported` |
+| an `input` entry of a type neither modelled nor in `CARRIED_ENTRY_TYPES`, on ingress | `Unsupported` |
 | a binding not declaring the Responses protocol | `Unsupported` |
 | image or audio content, on either side | `Unsupported` |
 | a request model that is not the binding's | `InvalidRequest` |

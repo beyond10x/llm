@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-20T12:00:00Z'
   command: llm.chat.ProjectRequest
   input:
-    turn_json: '{"format":"llm.turn/2","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hello"}],"tools":[]}}'
+    turn_json: '{"format":"llm.turn/3","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hello"}],"tools":[]}}'
     protocol: chat-completions
     upstream_model: Qwen/Qwen3-8B
     capabilities_json: '{"tools":true,"tool_choice":true,"temperature":true,"top_p":true,"reasoning_efforts":["low","high"],"context_window":32768,"max_output_tokens":4096}'

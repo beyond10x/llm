@@ -30,6 +30,7 @@ mod stream;
 
 pub use binding::{Binding, PATH, PROTOCOL};
 pub use request::{
-    ACCEPTED_BODY_FIELDS, INCLUDE, TOOL_NAME_PATTERN, ingest_request, project_request,
+    ACCEPTED_BODY_FIELDS, CARRIED_ENTRY_TYPES, INCLUDE, TOOL_NAME_PATTERN, ingest_request,
+    project_request,
 };
 pub use stream::{ACCEPTED_STREAM_EVENTS, REASONING_DELTA_EVENTS, StreamDecoding, decode_stream};

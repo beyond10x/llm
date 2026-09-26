@@ -415,6 +415,7 @@ fn decode_ingress(input: &IngressInput, facts: &mut Value) -> Result<(), Error> 
                     failed,
                 } => format!("tool-result:{call_id}:{output}:{failed}"),
                 Item::Opaque { .. } => "opaque".to_owned(),
+                Item::UnattributedOpaque { .. } => "unattributed-opaque".to_owned(),
             })
             .collect::<Vec<_>>()
     );

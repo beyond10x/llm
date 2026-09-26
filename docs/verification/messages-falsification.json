@@ -816,31 +816,29 @@
    ],
    "failed_cases": [
     "ingress_does_not_bind_unattributable_thinking_to_the_reading_binding",
-    "thinking_does_not_survive_a_gateway_round_trip_and_is_not_laundered"
+    "thinking_survives_a_gateway_round_trip_only_through_the_callers_binding"
    ],
    "failed_scenarios": [
-    "llm.messages/authored/ingress-refuses-thinking-it-cannot-attribute"
+    "llm.messages/authored/ingress-carries-thinking-it-cannot-attribute"
    ],
-   "guards": [
-    "Messages thinking cannot be attributed to a serving binding on arrival"
-   ],
+   "guards": [],
    "killed_by": [
     "scenario",
     "case"
    ],
    "mutation": "ingress-stamps-the-reading-binding-onto-thinking",
    "restored": true,
-   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "restored_sha256": "4e166a50e7eb2ccf21b93bda42788ab51487d744348fc73a5da9f20ac27c8e13",
    "scenario_counts": {
     "error": 0,
     "failed": 1,
-    "passed": 40,
+    "passed": 52,
     "skipped": 0,
-    "total": 41,
+    "total": 53,
     "unsupported": 0
    },
    "source": "crates/llm-messages/src/codec.rs",
-   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+   "source_before_sha256": "4e166a50e7eb2ccf21b93bda42788ab51487d744348fc73a5da9f20ac27c8e13"
   },
   {
    "edits": [
@@ -1375,6 +1373,50 @@
    },
    "source": "crates/llm-messages/src/decode.rs",
    "source_before_sha256": "5a1ccfeb8476b74be506b1caf5d865ff99fe65d249458032adf4093135f18b32"
+  },
+  {
+   "also": [
+    {
+     "edits": [
+      {
+       "after": "                Item::UnattributedOpaque { .. } => {}",
+       "before": "                Item::UnattributedOpaque { .. } => {\n                    return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n                }"
+      }
+     ],
+     "source": "crates/llm-core/src/turn.rs"
+    }
+   ],
+   "edits": [
+    {
+     "after": "        Item::UnattributedOpaque { payload, .. } => payload.clone(),",
+     "before": "        Item::UnattributedOpaque { .. } => {\n            return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n        }"
+    }
+   ],
+   "failed_cases": [
+    "ingress_does_not_bind_unattributable_thinking_to_the_reading_binding",
+    "thinking_survives_a_gateway_round_trip_only_through_the_callers_binding"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/unbound-thinking-is-refused-by-name"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "validate-for-and-the-messages-block-both-admit-unbound-state",
+   "restored": true,
+   "restored_sha256": "4e166a50e7eb2ccf21b93bda42788ab51487d744348fc73a5da9f20ac27c8e13",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 52,
+    "skipped": 0,
+    "total": 53,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "4e166a50e7eb2ccf21b93bda42788ab51487d744348fc73a5da9f20ac27c8e13"
   }
  ],
  "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not.",
@@ -1387,13 +1429,13 @@
   "crates/llm-messages/src/usage.rs": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
  },
  "summary": {
-  "diagnostics_claimed_by_a_mutation": 24,
-  "diagnostics_in_source": 91,
+  "diagnostics_claimed_by_a_mutation": 23,
+  "diagnostics_in_source": 90,
   "diagnostics_nothing_is_aimed_at": 67,
   "killed_by_a_case_only": 12,
   "killed_by_a_scenario_only": 4,
-  "killed_by_both_lanes": 25,
-  "mutations": 41,
+  "killed_by_both_lanes": 26,
+  "mutations": 42,
   "survivors": 0
  },
  "unaimed": [

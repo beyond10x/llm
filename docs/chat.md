@@ -25,6 +25,7 @@ any network I/O.
 | `Item::AssistantText` and `Item::ToolCall` | one `assistant` message carrying `content` and `tool_calls` |
 | `Item::ToolResult` | a `tool` message keyed by `tool_call_id` |
 | `Item::Opaque` | refused: this wire carries no continuation state |
+| `Item::UnattributedOpaque` | refused by name (`Item::UNATTRIBUTED_REFUSAL`), in both directions: never sendable unbound, and not here even bound |
 | `tools` | `tools[].function` with `name`, `description` and `parameters` |
 | `ToolChoice::Required` / `Named` | `"required"` / `{"type":"function",...}`; `Auto` is omitted |
 | `max_output_tokens` | `max_completion_tokens`, never the deprecated `max_tokens` |
