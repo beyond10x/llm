@@ -69,7 +69,7 @@ fn blank() -> Value {
     json!({"accepted":false,"error_code":null,"error_message":null,
         "dispatch":null,"wire_request":null,
         "neutral_request":null,"stream":null,"items":[],"text":"","reasoning":"",
-        "tool_arguments":[],"upstream_model":null,"response_id":null,"final_usage":null,
+        "tool_arguments":[],"tool_stream":[],"upstream_model":null,"response_id":null,"final_usage":null,
         "usage_json":null,"stop_reason":null})
 }
 
@@ -224,12 +224,17 @@ fn report_sink(sink: &VecSink, facts: &mut Value) {
     let mut text = String::new();
     let mut reasoning = String::new();
     let mut arguments = Vec::new();
+    let mut tool_stream = Vec::new();
     for event in sink.events() {
         match event {
             StreamEvent::TextDelta { text: delta } => text.push_str(delta),
             StreamEvent::ReasoningDelta { text: delta } => reasoning.push_str(delta),
+            StreamEvent::ToolCallStarted { call_id, name } => {
+                tool_stream.push(format!("started:{call_id}:{name}"));
+            }
             StreamEvent::ToolArgumentsDelta { call_id, delta } => {
                 arguments.push(format!("{call_id}:{delta}"));
+                tool_stream.push(format!("arguments:{call_id}:{delta}"));
             }
             StreamEvent::Warning { code, message } => arguments.push(format!("{code}:{message}")),
         }
@@ -237,6 +242,7 @@ fn report_sink(sink: &VecSink, facts: &mut Value) {
     facts["text"] = json!(text);
     facts["reasoning"] = json!(reasoning);
     facts["tool_arguments"] = json!(arguments);
+    facts["tool_stream"] = json!(tool_stream);
 }
 
 fn report_outcome(outcome: &TurnOutcome, facts: &mut Value) {

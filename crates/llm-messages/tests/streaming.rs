@@ -159,6 +159,10 @@ async fn a_streamed_turn_preserves_text_thinking_tools_and_terminal_usage() {
             StreamEvent::TextDelta {
                 text: "Looking".to_owned()
             },
+            StreamEvent::ToolCallStarted {
+                call_id: llm_core::CallId::new("call-1").unwrap(),
+                name: ToolName::new("lookup").unwrap(),
+            },
             StreamEvent::ToolArgumentsDelta {
                 call_id: llm_core::CallId::new("call-1").unwrap(),
                 delta: "{\"query\":".to_owned()
@@ -169,6 +173,44 @@ async fn a_streamed_turn_preserves_text_thinking_tools_and_terminal_usage() {
             },
         ]
     );
+}
+
+#[tokio::test]
+async fn a_tool_call_is_announced_when_its_block_opens_even_before_any_argument() {
+    let events = vec![
+        message_start(json!({"input_tokens":11,"output_tokens":1})),
+        json!({"type":"content_block_start","index":0,
+            "content_block":{"type":"tool_use","id":"call-1","name":"lookup","input":{}}}),
+        json!({"type":"content_block_stop","index":0}),
+        message_delta(json!("tool_use"), json!({"output_tokens":3})),
+        json!({"type":"message_stop"}),
+    ];
+    let (outcome, sink) = decode(&events).await;
+    outcome.expect("decoded");
+    assert_eq!(
+        sink.events(),
+        [StreamEvent::ToolCallStarted {
+            call_id: llm_core::CallId::new("call-1").unwrap(),
+            name: ToolName::new("lookup").unwrap(),
+        }]
+    );
+}
+
+#[tokio::test]
+async fn an_opening_block_with_an_unpublishable_name_is_refused_before_it_is_announced() {
+    let events = vec![
+        message_start(json!({"input_tokens":11,"output_tokens":1})),
+        json!({"type":"content_block_start","index":0,
+            "content_block":{"type":"tool_use","id":"call-1","name":"look.up","input":{}}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"input_json_delta","partial_json":"{}"}}),
+        json!({"type":"content_block_stop","index":0}),
+        message_delta(json!("tool_use"), json!({"output_tokens":3})),
+        json!({"type":"message_stop"}),
+    ];
+    let (outcome, sink) = decode(&events).await;
+    assert_eq!(outcome.expect_err("refused").code, ErrorCode::Unsupported);
+    assert!(sink.events().is_empty(), "{:?}", sink.events());
 }
 
 #[tokio::test]

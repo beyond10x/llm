@@ -110,6 +110,143 @@ fn a_pinned_tool_stream_preserves_identifiers_names_and_split_arguments() {
     }
 }
 
+/// The tool events of one stream, in order, as `started:<id>:<name>` and `arguments:<id>:<delta>`.
+fn tool_stream(events: &[StreamEvent]) -> Vec<String> {
+    events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::ToolCallStarted { call_id, name } => {
+                Some(format!("started:{call_id}:{name}"))
+            }
+            StreamEvent::ToolArgumentsDelta { call_id, delta } => {
+                Some(format!("arguments:{call_id}:{delta}"))
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn a_streamed_call_is_announced_by_name_before_its_first_argument_fragment() {
+    let binding = binding();
+    let (events, outcome) = project_response_bytes(OPENAI_TOOLS, binding.provenance());
+    outcome.expect("projected");
+    assert_eq!(
+        tool_stream(&events),
+        vec![
+            "started:call_7Yq:lookup",
+            "arguments:call_7Yq:{\"cit",
+            "arguments:call_7Yq:y\": \"Ber",
+            "arguments:call_7Yq:lin\"}",
+            "started:call_9Zb:clock",
+            "arguments:call_9Zb:{}",
+        ]
+    );
+
+    let (events, outcome) = project_response_bytes(VLLM_TOOLS, binding.provenance());
+    outcome.expect("projected");
+    assert_eq!(
+        tool_stream(&events),
+        vec![
+            "started:chatcmpl-tool-0a1b2c:lookup",
+            "arguments:chatcmpl-tool-0a1b2c:{\"city\":",
+            "arguments:chatcmpl-tool-0a1b2c: \"Kyoto\"}",
+        ]
+    );
+}
+
+#[test]
+fn a_call_is_announced_even_when_its_opening_fragment_carries_no_arguments_at_all() {
+    let binding = binding();
+    let bytes = concat!(
+        "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call-1\",\"type\":\"function\",\"function\":{\"name\":\"clock\"}}]}}]}\n\n",
+        "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    let (events, outcome) = project_response_bytes(bytes.as_bytes(), binding.provenance());
+    outcome.expect("projected");
+    assert_eq!(tool_stream(&events), vec!["started:call-1:clock"]);
+}
+
+#[test]
+fn arguments_that_arrive_before_the_name_are_relayed_right_behind_the_announcement() {
+    let binding = binding();
+    let bytes = concat!(
+        "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call-1\",\"function\":{\"arguments\":\"{\\\"a\\\":\"}}]}}]}\n\n",
+        "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"name\":\"clock\",\"arguments\":\"1}\"}}]}}]}\n\n",
+        "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    let (events, outcome) = project_response_bytes(bytes.as_bytes(), binding.provenance());
+    outcome.expect("projected");
+    // Nothing is relayed under a call the caller cannot name, and nothing is lost: every
+    // fragment held back until the name arrived follows the announcement, in one delta.
+    assert_eq!(
+        tool_stream(&events),
+        vec!["started:call-1:clock", "arguments:call-1:{\"a\":1}",]
+    );
+}
+
+/// Feeds framed payloads one at a time, as a caller doing its own framing does, and requires
+/// that none of them is refused: the refusals below belong to `finish`, which runs after the
+/// counters the endpoint reports last have been read.
+fn drive_to_finish(
+    payloads: &[serde_json::Value],
+) -> (Vec<StreamEvent>, llm_core::Error, Option<llm_core::Usage>) {
+    let binding = binding();
+    let mut projection = llm_chat::StreamProjection::new(binding.provenance().clone());
+    let mut events = Vec::new();
+    for data in payloads {
+        events.extend(
+            projection
+                .accept(&llm_http::SseEvent::Payload {
+                    event: None,
+                    data: data.clone(),
+                })
+                .expect("no refusal before the stream finishes"),
+        );
+    }
+    projection
+        .accept(&llm_http::SseEvent::Done)
+        .expect("terminated");
+    let error = projection.finish().expect_err("refused");
+    (events, error, projection.observation().usage)
+}
+
+#[test]
+fn a_call_that_is_never_named_is_never_announced_and_refused_only_at_the_end() {
+    let (events, error, usage) = drive_to_finish(&[
+        json!({"choices": [{"index": 0, "delta": {"tool_calls": [
+            {"index": 0, "id": "call-1", "function": {"arguments": "{}"}}]},
+            "finish_reason": "tool_calls"}]}),
+        json!({"choices": [], "usage": {"prompt_tokens": 40, "completion_tokens": 12}}),
+    ]);
+    assert_eq!(error.message, "chat tool call carries no name");
+    assert_eq!(usage.and_then(|usage| usage.input_tokens), Some(40));
+    assert!(tool_stream(&events).is_empty());
+}
+
+#[test]
+fn a_fragment_that_renames_an_announced_call_is_refused_only_at_the_end() {
+    let (events, error, usage) = drive_to_finish(&[
+        json!({"choices": [{"index": 0, "delta": {"tool_calls": [
+            {"index": 0, "id": "call-1", "function": {"name": "clock", "arguments": ""}}]}}]}),
+        json!({"choices": [{"index": 0, "delta": {"tool_calls": [
+            {"index": 0, "function": {"name": "lookup", "arguments": "{}"}}]}}]}),
+        json!({"choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls"}]}),
+        json!({"choices": [], "usage": {"prompt_tokens": 40, "completion_tokens": 12}}),
+    ]);
+    assert_eq!(
+        error.message,
+        "chat tool call fragment renames a call already announced"
+    );
+    assert_eq!(usage.and_then(|usage| usage.input_tokens), Some(40));
+    assert_eq!(
+        tool_stream(&events),
+        vec!["started:call-1:clock", "arguments:call-1:{}"]
+    );
+}
+
 #[test]
 fn a_no_argument_tool_call_reaches_the_caller_as_an_empty_object() {
     let binding = binding();
@@ -387,8 +524,9 @@ fn no_refusal_in_the_decode_direction_reports_that_nothing_was_sent() {
         ("an unknown finish reason", "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"who-knows\"}]}\n\ndata: [DONE]\n\n".to_owned()),
         ("a tool call delta with no index", "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"id\":\"c1\"}]}}]}\n\ndata: [DONE]\n\n".to_owned()),
         ("arguments before their identifier", "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{}\"}}]}}]}\n\ndata: [DONE]\n\n".to_owned()),
+        ("a fragment renaming an announced call", "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"c1\",\"function\":{\"name\":\"f\"}}]}}]}\n\ndata: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"name\":\"g\",\"arguments\":\"{}\"}}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n".to_owned()),
         ("an unusable response identifier", "data: {\"id\":\"has space\",\"choices\":[]}\n\ndata: [DONE]\n\n".to_owned()),
-        ("an unusable tool call identifier", "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"has space\",\"function\":{\"name\":\"f\",\"arguments\":\"{}\"}}]}}]}\n\ndata: [DONE]\n\n".to_owned()),
+        ("an unusable tool call identifier", "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"has space\",\"function\":{\"name\":\"f\",\"arguments\":\"{}\"}}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n".to_owned()),
         ("a counter that is not a count", format!("{STOP}data: {{\"choices\":[],\"usage\":{{\"prompt_tokens\":\"many\"}}}}\n\ndata: [DONE]\n\n")),
         ("a frame that is not JSON", "data: not-json\n\n".to_owned()),
         ("a stream that never terminated", STOP.to_owned()),
@@ -472,6 +610,7 @@ fn no_refusal_in_the_decode_direction_reports_that_nothing_was_sent() {
             "chat tool call carries no identifier",
             "chat tool call carries no name",
             "chat tool call delta carries no index",
+            "chat tool call fragment renames a call already announced",
             "reported cache tokens overflow",
             "reported usage subsets exceed totals",
         ]

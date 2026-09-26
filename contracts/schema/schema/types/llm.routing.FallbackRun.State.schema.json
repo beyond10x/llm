@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.routing.FallbackRun.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "fece87265a557ac1dc08be93d3a2893cde091c2355b48235c285cb6541f186a5",
+    "contract_digest": "slice-sha256/2:c1a3cee1145d4c49faff6137566490a6279afd42bee31f3f6e934d3170ba9dc8",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.routing.FallbackRun.State": {
+      "title": "State",
+      "x-ess-name": "llm.routing.FallbackRun.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

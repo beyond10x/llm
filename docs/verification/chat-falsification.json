@@ -712,5 +712,218 @@
     ],
     "source": "crates/llm-chat/src/ingress.rs",
     "source_before_sha256": "62844430dc97f027bd82c4c5a1247338a2e332edcfbce06cf9f7a44e55df63dc"
+  },
+  {
+    "after": "                let _ = (&call_id, name);",
+    "before": "                events.push(StreamEvent::ToolCallStarted {\n                    call_id: call_id.clone(),\n                    name,\n                });",
+    "mutation": "chat-announcement-dropped",
+    "named_failure": "scenario: incoming-a-streamed-call-is-announced-by-name-before-its-arguments",
+    "rust_failed": [
+      "a_call_is_announced_even_when_its_opening_fragment_carries_no_arguments_at_all",
+      "a_fragment_that_renames_an_announced_call_is_refused_only_at_the_end",
+      "a_streamed_call_is_announced_by_name_before_its_first_argument_fragment",
+      "arguments_that_arrive_before_the_name_are_relayed_right_behind_the_announcement"
+    ],
+    "rust_passed": 66,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 68,
+      "skipped": 0,
+      "total": 69,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-streamed-call-is-announced-by-name-before-its-arguments"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "275643e5028dd6fc53d8497f69295d207d939711ad617e1b561bd686c81cf28e"
+  },
+  {
+    "after": "                if !pending.arguments.is_empty() {\n                    events.push(StreamEvent::ToolArgumentsDelta {\n                        call_id: call_id.clone(),\n                        delta: pending.arguments.clone(),\n                    });\n                }\n                events.push(StreamEvent::ToolCallStarted { call_id, name });",
+    "before": "                events.push(StreamEvent::ToolCallStarted {\n                    call_id: call_id.clone(),\n                    name,\n                });\n                if !pending.arguments.is_empty() {\n                    events.push(StreamEvent::ToolArgumentsDelta {\n                        call_id,\n                        delta: pending.arguments.clone(),\n                    });\n                }",
+    "mutation": "chat-announcement-after-its-arguments",
+    "named_failure": "scenario: incoming-a-streamed-call-is-announced-by-name-before-its-arguments",
+    "rust_failed": [
+      "a_streamed_call_is_announced_by_name_before_its_first_argument_fragment",
+      "arguments_that_arrive_before_the_name_are_relayed_right_behind_the_announcement"
+    ],
+    "rust_passed": 68,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 68,
+      "skipped": 0,
+      "total": 69,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "incoming-a-streamed-call-is-announced-by-name-before-its-arguments"
+    ],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "275643e5028dd6fc53d8497f69295d207d939711ad617e1b561bd686c81cf28e"
+  },
+  {
+    "after": "            StreamEvent::ToolCallStarted { call_id, name } => {\n                if true || self.position(call_id).is_some() || self.unannounced.contains(call_id) {",
+    "before": "            StreamEvent::ToolCallStarted { call_id, name } => {\n                if self.position(call_id).is_some() || self.unannounced.contains(call_id) {",
+    "mutation": "ingress-announcement-not-relayed",
+    "named_failure": "scenario: ingress-a-streamed-call-is-named-where-it-was-announced",
+    "rust_failed": [
+      "a_streamed_call_is_named_where_it_was_announced_and_not_again_at_the_end",
+      "an_announced_call_whose_arguments_never_streamed_is_completed_at_the_end",
+      "streamed_arguments_that_contradict_the_outcome_are_refused",
+      "two_announced_calls_keep_their_own_wire_indices"
+    ],
+    "rust_passed": 66,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 68,
+      "skipped": 0,
+      "total": 69,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-a-streamed-call-is-named-where-it-was-announced"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "6eb87ae19c42df62ec16f1651c2dba4ee37c08f6268e0845b0cca6f769c74cae"
+  },
+  {
+    "after": "            let Some(index) = self.position(&call.call_id).filter(|_| false) else {",
+    "before": "            let Some(index) = self.position(&call.call_id) else {",
+    "mutation": "ingress-terminal-chunk-stands-in-for-announced-calls",
+    "named_failure": "scenario: ingress-a-streamed-call-is-named-where-it-was-announced",
+    "rust_failed": [
+      "a_streamed_call_is_named_where_it_was_announced_and_not_again_at_the_end",
+      "an_announced_call_whose_arguments_never_streamed_is_completed_at_the_end"
+    ],
+    "rust_passed": 68,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 68,
+      "skipped": 0,
+      "total": 69,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-a-streamed-call-is-named-where-it-was-announced"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "6eb87ae19c42df62ec16f1651c2dba4ee37c08f6268e0845b0cca6f769c74cae"
+  },
+  {
+    "after": "    serde_json::from_str(text).ok()",
+    "before": "    crate::incoming::parse_arguments(text).ok()",
+    "mutation": "ingress-blank-arguments-read-as-strict-json",
+    "named_failure": "scenario: ingress-blank-streamed-arguments-close-as-the-empty-object",
+    "rust_failed": [
+      "a_chat_stream_relayed_through_the_chat_reemitter_closes_when_its_arguments_are_blank"
+    ],
+    "rust_passed": 71,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 70,
+      "skipped": 0,
+      "total": 71,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-blank-streamed-arguments-close-as-the-empty-object"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
+  },
+  {
+    "after": "                    \"index\": self.announced.len() + remaining.len(),",
+    "before": "                    \"index\": next_index,",
+    "mutation": "ingress-unannounced-index-counts-completed-calls",
+    "named_failure": "scenario: ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices",
+    "rust_failed": [
+      "a_call_completed_at_close_and_an_unannounced_call_take_consecutive_wire_indices"
+    ],
+    "rust_passed": 71,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 70,
+      "skipped": 0,
+      "total": 71,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
+  },
+  {
+    "after": "                && (true || !self.announced.contains(&call_id))",
+    "before": "                && !self.announced.contains(&call_id)",
+    "mutation": "chat-call-id-announced-at-every-index",
+    "named_failure": "cargo test: a_call_identifier_opened_at_two_indices_is_announced_once",
+    "rust_failed": [
+      "a_call_identifier_opened_at_two_indices_is_announced_once"
+    ],
+    "rust_passed": 74,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 73,
+      "skipped": 0,
+      "total": 73,
+      "unsupported": 0
+    },
+    "scenarios_failed": [],
+    "source": "crates/llm-chat/src/incoming.rs",
+    "source_before_sha256": "b2a759de8fe39393d6a8f2a0467ca26d218c2f91df5b26e526261be96482f38e"
+  },
+  {
+    "after": "            if false && announced.name != call.name {",
+    "before": "            if announced.name != call.name {",
+    "mutation": "ingress-renamed-outcome-accepted",
+    "named_failure": "scenario: ingress-an-outcome-renaming-an-announced-call-is-refused",
+    "rust_failed": [
+      "close_refuses_an_outcome_that_renames_an_announced_call"
+    ],
+    "rust_passed": 74,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 72,
+      "skipped": 0,
+      "total": 73,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-an-outcome-renaming-an-announced-call-is-refused"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
+  },
+  {
+    "after": "        if false && seen.contains(&false) {",
+    "before": "        if seen.contains(&false) {",
+    "mutation": "ingress-omitted-announced-call-accepted",
+    "named_failure": "scenario: ingress-an-outcome-leaving-out-an-announced-call-is-refused",
+    "rust_failed": [
+      "close_refuses_an_outcome_that_leaves_an_announced_call_out"
+    ],
+    "rust_passed": 74,
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 72,
+      "skipped": 0,
+      "total": 73,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-an-outcome-leaving-out-an-announced-call-is-refused"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
   }
 ]

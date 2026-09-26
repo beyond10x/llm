@@ -9,7 +9,7 @@ use llm_core::{
 };
 use llm_http::{Framing, SseDecoder, SseEvent};
 use serde_json::{Value, json};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// One tool call under construction from the deltas that carry it.
 #[derive(Debug, Default)]
@@ -17,6 +17,21 @@ struct PendingCall {
     call_id: Option<String>,
     name: Option<String>,
     arguments: String,
+    /// The caller has been sent this call's [`StreamEvent::ToolCallStarted`].
+    announced: bool,
+    /// A fragment after the announcement named the call differently.
+    renamed: bool,
+}
+
+impl PendingCall {
+    /// The identity to announce, once both halves have arrived and both are usable. One that
+    /// is not usable is never announced and is refused, with its evidence, when the stream
+    /// finishes.
+    fn announcement(&self) -> Option<(CallId, ToolName)> {
+        let call_id = CallId::new(self.call_id.as_deref()?).ok()?;
+        let name = ToolName::new(self.name.as_deref()?).ok()?;
+        Some((call_id, name))
+    }
 }
 
 /// What one response reported about itself, independently of its content.
@@ -36,6 +51,10 @@ pub struct StreamProjection {
     target: Provenance,
     text: String,
     calls: BTreeMap<u64, PendingCall>,
+    /// Every call identifier already announced, whichever index opened it. A second index
+    /// opened under one of them is not announced again and its fragments are not relayed:
+    /// they would join another call's arguments. `finish` refuses the duplicate.
+    announced: BTreeSet<CallId>,
     stop_reason: Option<StopReason>,
     reported: Reported,
     terminated: bool,
@@ -47,6 +66,7 @@ impl StreamProjection {
             target,
             text: String::new(),
             calls: BTreeMap::new(),
+            announced: BTreeSet::new(),
             stop_reason: None,
             reported: Reported::default(),
             terminated: false,
@@ -128,24 +148,58 @@ impl StreamProjection {
                 .and_then(Value::as_u64)
                 .ok_or_else(|| Error::protocol("chat tool call delta carries no index"))?;
             let pending = self.calls.entry(index).or_default();
-            if let Some(value) = nonempty(call.get("id")) {
-                pending.call_id = Some(value.to_owned());
-            }
             let function = call.get("function");
-            if let Some(value) = nonempty(function.and_then(|value| value.get("name"))) {
-                pending.name = Some(value.to_owned());
+            for (slot, value) in [
+                (&mut pending.call_id, nonempty(call.get("id"))),
+                (
+                    &mut pending.name,
+                    nonempty(function.and_then(|value| value.get("name"))),
+                ),
+            ] {
+                let Some(value) = value else { continue };
+                // Announced once. A later fragment naming the call differently is refused
+                // when the stream finishes, so the refusal still carries the counters the
+                // endpoint reports after it.
+                if pending.announced {
+                    pending.renamed |= slot.as_deref() != Some(value);
+                } else {
+                    *slot = Some(value.to_owned());
+                }
             }
-            let Some(fragment) = nonempty(function.and_then(|value| value.get("arguments"))) else {
-                continue;
-            };
-            pending.arguments.push_str(fragment);
-            let call_id = pending.call_id.as_deref().ok_or_else(|| {
-                Error::protocol("chat tool call arguments arrived before their identifier")
-            })?;
-            events.push(StreamEvent::ToolArgumentsDelta {
-                call_id: call_identifier(call_id)?,
-                delta: fragment.to_owned(),
-            });
+            let fragment = nonempty(function.and_then(|value| value.get("arguments")));
+            if let Some(fragment) = fragment {
+                if pending.call_id.is_none() {
+                    return Err(Error::protocol(
+                        "chat tool call arguments arrived before their identifier",
+                    ));
+                }
+                pending.arguments.push_str(fragment);
+            }
+            if pending.announced {
+                if let (Some(fragment), Some(call_id)) = (fragment, &pending.call_id) {
+                    events.push(StreamEvent::ToolArgumentsDelta {
+                        call_id: call_identifier(call_id)?,
+                        delta: fragment.to_owned(),
+                    });
+                }
+            } else if let Some((call_id, name)) = pending.announcement()
+                && !self.announced.contains(&call_id)
+            {
+                // A fragment is relayed only under a call the caller has been told about. Any
+                // that arrived before the name are relayed here, once, right behind it.
+                pending.announced = true;
+                self.announced.insert(call_id.clone());
+                events.push(StreamEvent::ToolCallStarted {
+                    call_id: call_id.clone(),
+                    name,
+                });
+                if !pending.arguments.is_empty() {
+                    events.push(StreamEvent::ToolArgumentsDelta {
+                        call_id,
+                        delta: pending.arguments.clone(),
+                    });
+                }
+            }
         }
         Ok(events)
     }
@@ -191,6 +245,11 @@ impl StreamProjection {
             items.push(Item::assistant(self.text.clone()));
         }
         for pending in self.calls.values() {
+            if pending.renamed {
+                return Err(Error::protocol(
+                    "chat tool call fragment renames a call already announced",
+                ));
+            }
             let call_id = pending
                 .call_id
                 .as_deref()
@@ -415,7 +474,7 @@ fn stop_reason(value: &Value) -> Result<StopReason, Error> {
 
 /// The accumulated arguments of one proposed call. A call the model made with no arguments
 /// reaches the caller as an empty object, which is what the wire's empty string means.
-fn parse_arguments(raw: &str) -> Result<Value, Error> {
+pub(crate) fn parse_arguments(raw: &str) -> Result<Value, Error> {
     if raw.trim().is_empty() {
         return Ok(json!({}));
     }

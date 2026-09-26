@@ -67,6 +67,7 @@ impl Model for FakeModel {
                 result = async {
                     let Some(Item::ToolResult { output, .. }) = request.items.last() else {
                         let call = ToolCall { call_id: CallId::new("call-1").unwrap(), name: ToolName::new("lookup.answer").unwrap(), arguments: json!({}) };
+                        sink.emit(StreamEvent::ToolCallStarted { call_id: call.call_id.clone(), name: call.name.clone() }).await?;
                         sink.emit(StreamEvent::ToolArgumentsDelta { call_id: call.call_id.clone(), delta: "{}".into() }).await?;
                         return Ok(TurnOutcome { stop_reason: StopReason::ToolCalls, items: vec![
                             Item::Opaque { provenance: self.provenance.clone(), payload: json!({"continuation":"retain-verbatim"}) },

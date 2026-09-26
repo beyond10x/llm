@@ -240,32 +240,11 @@ fn an_encoded_response_carries_proposed_tool_calls_and_their_finish_reason() {
     );
 }
 
-#[test]
-fn streamed_chunks_carry_text_and_the_terminal_chunks_carry_calls_and_usage() {
-    let stream = IngressStream::new("chatcmpl-gw-4", 1_772_000_800);
-    let chunks: Vec<Value> = [
-        StreamEvent::TextDelta {
-            text: "Hel".to_owned(),
-        },
-        StreamEvent::ReasoningDelta {
-            text: "thinking".to_owned(),
-        },
-        StreamEvent::ToolArgumentsDelta {
-            call_id: CallId::new("call-1").expect("fixture call"),
-            delta: "{\"ci".to_owned(),
-        },
-    ]
-    .iter()
-    .filter_map(|event| stream.chunk(event))
-    .collect();
+fn call_id(value: &str) -> CallId {
+    CallId::new(value).expect("fixture call")
+}
 
-    assert_eq!(chunks.len(), 2);
-    assert_eq!(chunks[0]["choices"][0]["delta"]["content"], json!("Hel"));
-    assert_eq!(
-        chunks[1]["choices"][0]["delta"]["reasoning_content"],
-        json!("thinking")
-    );
-
+fn tool_call_outcome(arguments: Value) -> TurnOutcome {
     let mut outcome = outcome_with(
         Some(Usage {
             input_tokens: Some(3),
@@ -278,15 +257,165 @@ fn streamed_chunks_carry_text_and_the_terminal_chunks_carry_calls_and_usage() {
     );
     outcome.stop_reason = StopReason::ToolCalls;
     outcome.items.push(Item::ToolCall(ToolCall {
-        call_id: CallId::new("call-1").expect("fixture call"),
+        call_id: call_id("call-1"),
         name: ToolName::new("lookup").expect("fixture tool"),
-        arguments: json!({"city":"Oslo"}),
+        arguments,
     }));
+    outcome
+}
 
-    let closing = stream.close(&outcome, true).expect("closed");
+fn started(id: &str, name: &str) -> StreamEvent {
+    StreamEvent::ToolCallStarted {
+        call_id: call_id(id),
+        name: ToolName::new(name).expect("fixture tool"),
+    }
+}
+
+fn arguments(id: &str, delta: &str) -> StreamEvent {
+    StreamEvent::ToolArgumentsDelta {
+        call_id: call_id(id),
+        delta: delta.to_owned(),
+    }
+}
+
+fn tool_calls_of(chunk: &Value) -> &Value {
+    &chunk["choices"][0]["delta"]["tool_calls"]
+}
+
+#[test]
+fn streamed_chunks_carry_text_and_reasoning_as_they_arrive() {
+    let mut stream = IngressStream::new("chatcmpl-gw-4", 1_772_000_800);
+    let chunks: Vec<Value> = [
+        StreamEvent::TextDelta {
+            text: "Hel".to_owned(),
+        },
+        StreamEvent::ReasoningDelta {
+            text: "thinking".to_owned(),
+        },
+        StreamEvent::Warning {
+            code: "unknown-stream-event".to_owned(),
+            message: "preserved".to_owned(),
+        },
+    ]
+    .iter()
+    .filter_map(|event| stream.chunk(event))
+    .collect();
+
+    assert_eq!(chunks.len(), 2);
+    assert_eq!(chunks[0]["choices"][0]["delta"]["content"], json!("Hel"));
     assert_eq!(
-        closing[0]["choices"][0]["delta"]["tool_calls"],
-        json!([{
+        chunks[1]["choices"][0]["delta"]["reasoning_content"],
+        json!("thinking")
+    );
+}
+
+#[test]
+fn a_streamed_call_is_named_where_it_was_announced_and_not_again_at_the_end() {
+    let mut stream = IngressStream::new("chatcmpl-gw-4", 1_772_000_800);
+    let chunks: Vec<Value> = [
+        started("call-1", "lookup"),
+        arguments("call-1", "{\"city\":"),
+        arguments("call-1", "\"Oslo\"}"),
+    ]
+    .iter()
+    .filter_map(|event| stream.chunk(event))
+    .collect();
+
+    assert_eq!(chunks.len(), 3);
+    assert_eq!(
+        tool_calls_of(&chunks[0]),
+        &json!([{
+            "index": 0, "id": "call-1", "type": "function",
+            "function": {"name": "lookup", "arguments": ""}
+        }])
+    );
+    assert_eq!(
+        tool_calls_of(&chunks[1]),
+        &json!([{"index": 0, "function": {"arguments": "{\"city\":"}}])
+    );
+    assert_eq!(
+        tool_calls_of(&chunks[2]),
+        &json!([{"index": 0, "function": {"arguments": "\"Oslo\"}"}}])
+    );
+
+    // The terminal chunks no longer stand in for the announcement: the finish reason and the
+    // counters, and no second copy of a call the client already assembled.
+    let closing = stream
+        .close(&tool_call_outcome(json!({"city":"Oslo"})), true)
+        .expect("closed");
+    assert_eq!(closing.len(), 2);
+    assert!(closing.iter().all(|chunk| tool_calls_of(chunk).is_null()));
+    assert_eq!(
+        closing[0]["choices"][0]["finish_reason"],
+        json!("tool_calls")
+    );
+    assert_eq!(closing[1]["usage"]["prompt_tokens"], json!(3));
+    assert_eq!(closing[1]["choices"], json!([]));
+}
+
+#[test]
+fn two_announced_calls_keep_their_own_wire_indices() {
+    let mut stream = IngressStream::new("chatcmpl-gw-7", 1_772_000_800);
+    let chunks: Vec<Value> = [
+        started("call-1", "lookup"),
+        started("call-2", "clock"),
+        arguments("call-2", "{}"),
+        arguments("call-1", "{}"),
+    ]
+    .iter()
+    .filter_map(|event| stream.chunk(event))
+    .collect();
+    let indices: Vec<&Value> = chunks
+        .iter()
+        .map(|chunk| &tool_calls_of(chunk)[0]["index"])
+        .collect();
+    assert_eq!(indices, [&json!(0), &json!(1), &json!(1), &json!(0)]);
+}
+
+#[test]
+fn an_announced_call_whose_arguments_never_streamed_is_completed_at_the_end() {
+    let mut stream = IngressStream::new("chatcmpl-gw-8", 1_772_000_800);
+    assert!(stream.chunk(&started("call-1", "lookup")).is_some());
+    let closing = stream
+        .close(&tool_call_outcome(json!({})), false)
+        .expect("closed");
+    assert_eq!(closing.len(), 2);
+    assert_eq!(
+        tool_calls_of(&closing[0]),
+        &json!([{"index": 0, "function": {"arguments": "{}"}}])
+    );
+    assert_eq!(
+        closing[1]["choices"][0]["finish_reason"],
+        json!("tool_calls")
+    );
+}
+
+#[test]
+fn streamed_arguments_that_contradict_the_outcome_are_refused() {
+    let mut stream = IngressStream::new("chatcmpl-gw-9", 1_772_000_800);
+    stream.chunk(&started("call-1", "lookup"));
+    stream.chunk(&arguments("call-1", "{\"city\":\"Bergen\"}"));
+    assert_eq!(
+        stream
+            .close(&tool_call_outcome(json!({"city":"Oslo"})), false)
+            .expect_err("refused")
+            .code,
+        ErrorCode::Protocol
+    );
+}
+
+#[test]
+fn a_call_the_stream_never_announced_is_emitted_complete_in_the_terminal_chunks() {
+    // A model that returns its calls only in the outcome, as an embedded one may, still
+    // reaches the client: once, complete, before the finish reason.
+    let mut stream = IngressStream::new("chatcmpl-gw-5", 1_772_000_900);
+    assert_eq!(stream.chunk(&arguments("call-1", "{\"ci")), None);
+    let closing = stream
+        .close(&tool_call_outcome(json!({"city":"Oslo"})), true)
+        .expect("closed");
+    assert_eq!(
+        tool_calls_of(&closing[0]),
+        &json!([{
             "index": 0, "id": "call-1", "type": "function",
             "function": {"name": "lookup", "arguments": "{\"city\":\"Oslo\"}"}
         }])
@@ -296,11 +425,16 @@ fn streamed_chunks_carry_text_and_the_terminal_chunks_carry_calls_and_usage() {
         json!("tool_calls")
     );
     assert_eq!(closing[2]["usage"]["prompt_tokens"], json!(3));
-    assert_eq!(closing[2]["choices"], json!([]));
 
     // Without include_usage no usage chunk is produced at all.
-    let stream = IngressStream::new("chatcmpl-gw-5", 1_772_000_900);
-    assert_eq!(stream.close(&outcome, false).expect("closed").len(), 2);
+    let stream = IngressStream::new("chatcmpl-gw-6", 1_772_000_900);
+    assert_eq!(
+        stream
+            .close(&tool_call_outcome(json!({"city":"Oslo"})), false)
+            .expect("closed")
+            .len(),
+        2
+    );
 }
 
 #[test]

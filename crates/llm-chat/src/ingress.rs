@@ -405,11 +405,24 @@ pub fn encode_ingress_completion(
     Ok(Value::Object(body))
 }
 
+/// One call this encoder has announced on the wire, and the argument text it relayed for it.
+#[derive(Debug, Clone)]
+struct Announced {
+    call_id: CallId,
+    name: ToolName,
+    arguments: String,
+}
+
 /// Encoder for one streamed answer. It holds the wire indices of the calls it has announced.
 #[derive(Debug, Clone)]
 pub struct IngressStream {
     id: String,
     created: u64,
+    /// In announcement order; a call's position here is its wire index.
+    announced: Vec<Announced>,
+    /// Calls whose arguments arrived before any announcement. Their fragments were not relayed,
+    /// so a later announcement cannot be honoured and they are emitted complete at close.
+    unannounced: Vec<CallId>,
 }
 
 impl IngressStream {
@@ -417,20 +430,50 @@ impl IngressStream {
         Self {
             id: id.to_owned(),
             created,
+            announced: Vec::new(),
+            unannounced: Vec::new(),
         }
     }
 
     /// One chunk for one neutral delta, or `None` when this wire carries no such chunk.
     ///
-    /// Tool arguments return `None`: a chunk announcing a call must name it, and the neutral
-    /// stream vocabulary carries the call identifier without the tool name. The proposed calls
-    /// are emitted once, complete, by [`IngressStream::close`], rather than streamed under an
-    /// invented name.
-    pub fn chunk(&self, event: &StreamEvent) -> Option<Value> {
+    /// A call is named in the chunk that announces it, under the next wire index, exactly as
+    /// the provider named it; its argument fragments follow under that index. A fragment for a
+    /// call that was never announced returns `None`: a chunk opening a call must name it, and
+    /// inventing a name is not an option. Such a call is emitted once, complete, by
+    /// [`IngressStream::close`].
+    pub fn chunk(&mut self, event: &StreamEvent) -> Option<Value> {
         let delta = match event {
             StreamEvent::TextDelta { text } => json!({"content": text}),
             StreamEvent::ReasoningDelta { text } => json!({"reasoning_content": text}),
-            StreamEvent::ToolArgumentsDelta { .. } | StreamEvent::Warning { .. } => return None,
+            StreamEvent::ToolCallStarted { call_id, name } => {
+                if self.position(call_id).is_some() || self.unannounced.contains(call_id) {
+                    return None;
+                }
+                let index = self.announced.len();
+                self.announced.push(Announced {
+                    call_id: call_id.clone(),
+                    name: name.clone(),
+                    arguments: String::new(),
+                });
+                json!({"tool_calls": [{
+                    "index": index,
+                    "id": call_id.as_str(),
+                    "type": "function",
+                    "function": {"name": name.as_str(), "arguments": ""},
+                }]})
+            }
+            StreamEvent::ToolArgumentsDelta { call_id, delta } => {
+                let Some(index) = self.position(call_id) else {
+                    if !self.unannounced.contains(call_id) {
+                        self.unannounced.push(call_id.clone());
+                    }
+                    return None;
+                };
+                self.announced[index].arguments.push_str(delta);
+                json!({"tool_calls": [{"index": index, "function": {"arguments": delta}}]})
+            }
+            StreamEvent::Warning { .. } => return None,
         };
         Some(self.envelope(
             json!([{"index": 0, "delta": delta, "finish_reason": null}]),
@@ -438,32 +481,59 @@ impl IngressStream {
         ))
     }
 
-    /// The terminal chunks: the proposed calls, the finish reason, and the reported counters
-    /// when the client asked for them.
+    /// The terminal chunks: the calls the stream never announced, the finish reason, and the
+    /// reported counters when the client asked for them.
+    ///
+    /// A call already announced is not repeated. When none of its arguments were relayed, its
+    /// arguments are sent here under its own index, so the client never assembles an empty one.
     ///
     /// # Errors
-    /// Refuses an outcome this wire cannot express, exactly as the non-streamed encoder does.
+    /// Refuses an outcome this wire cannot express, exactly as the non-streamed encoder does,
+    /// and an outcome that contradicts what was already streamed: an announced call it does
+    /// not carry, a different name, or arguments other than the relayed ones.
     pub fn close(&self, outcome: &TurnOutcome, include_usage: bool) -> Result<Vec<Value>, Error> {
-        let (_, calls) = split_items(&outcome.items)?;
+        split_items(&outcome.items)?;
         let model = outcome
             .observation
             .upstream_model
             .as_ref()
             .map(|model| model.as_str().to_owned());
+        let mut remaining = Vec::new();
+        // Wire indices continue after the announced calls, one per call never announced.
+        let mut next_index = self.announced.len();
+        let mut seen = vec![false; self.announced.len()];
+        for call in outcome.tool_calls() {
+            let Some(index) = self.position(&call.call_id) else {
+                remaining.push(json!({
+                    "index": next_index,
+                    "id": call.call_id.as_str(),
+                    "type": "function",
+                    "function": {"name": call.name.as_str(), "arguments": call.arguments.to_string()},
+                }));
+                next_index += 1;
+                continue;
+            };
+            seen[index] = true;
+            let announced = &self.announced[index];
+            if announced.name != call.name {
+                return Err(streamed_contradiction());
+            }
+            if announced.arguments.is_empty() {
+                remaining.push(json!({
+                    "index": index,
+                    "function": {"arguments": call.arguments.to_string()},
+                }));
+            } else if relayed_arguments(&announced.arguments).as_ref() != Some(&call.arguments) {
+                return Err(streamed_contradiction());
+            }
+        }
+        if seen.contains(&false) {
+            return Err(streamed_contradiction());
+        }
         let mut chunks = Vec::new();
-        if !calls.is_empty() {
-            let announced: Vec<Value> = calls
-                .into_iter()
-                .enumerate()
-                .map(|(index, mut call)| {
-                    if let Some(object) = call.as_object_mut() {
-                        object.insert("index".to_owned(), json!(index));
-                    }
-                    call
-                })
-                .collect();
+        if !remaining.is_empty() {
             chunks.push(self.envelope(
-                json!([{"index": 0, "delta": {"tool_calls": announced}, "finish_reason": null}]),
+                json!([{"index": 0, "delta": {"tool_calls": remaining}, "finish_reason": null}]),
                 model.clone(),
             ));
         }
@@ -485,6 +555,12 @@ impl IngressStream {
             chunks.push(chunk);
         }
         Ok(chunks)
+    }
+
+    fn position(&self, call_id: &CallId) -> Option<usize> {
+        self.announced
+            .iter()
+            .position(|announced| &announced.call_id == call_id)
     }
 
     fn envelope(&self, choices: Value, model: Option<String>) -> Value {
@@ -532,6 +608,18 @@ fn split_items(items: &[Item]) -> Result<(Option<String>, Vec<Value>), Error> {
         }
     }
     Ok((content, calls))
+}
+
+/// The arguments a Chat client assembles from the relayed text, read by the one rule the
+/// projection reads them by (`incoming::parse_arguments`): blank text is `{}`.
+fn relayed_arguments(text: &str) -> Option<Value> {
+    crate::incoming::parse_arguments(text).ok()
+}
+
+/// The client already assembled what was streamed; an outcome that disagrees with it cannot be
+/// reconciled by a terminal chunk.
+fn streamed_contradiction() -> Error {
+    Error::protocol("model outcome contradicts the tool calls already streamed")
 }
 
 fn finish_reason(stop_reason: &StopReason) -> Result<Value, Error> {

@@ -1313,6 +1313,68 @@
    },
    "source": "crates/llm-messages/src/client.rs",
    "source_before_sha256": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec"
+  },
+  {
+   "edits": [
+    {
+     "after": "        match announcement.filter(|_| false) {",
+     "before": "        match announcement {"
+    }
+   ],
+   "failed_cases": [
+    "a_streamed_turn_preserves_text_thinking_tools_and_terminal_usage",
+    "a_tool_call_is_announced_when_its_block_opens_even_before_any_argument"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/stream-announces-a-tool-call-by-name-before-its-arguments"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "messages-announcement-dropped",
+   "restored": true,
+   "restored_sha256": "19da311e0c9f08ff6387233a7cb7656fb888ab6017fd0c02a1049036f6264d11",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 49,
+    "skipped": 0,
+    "total": 50,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "19da311e0c9f08ff6387233a7cb7656fb888ab6017fd0c02a1049036f6264d11"
+  },
+  {
+   "edits": [
+    {
+     "after": "            StreamEvent::ToolCallStarted { call_id, .. } => true || !self.announced.contains(call_id),",
+     "before": "            StreamEvent::ToolCallStarted { call_id, .. } => !self.announced.contains(call_id),"
+    }
+   ],
+   "failed_cases": [
+    "one_tool_use_id_opened_by_two_blocks_is_announced_once"
+   ],
+   "failed_scenarios": [],
+   "guards": [],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "messages-tool-use-id-announced-by-every-block",
+   "restored": true,
+   "restored_sha256": "5a1ccfeb8476b74be506b1caf5d865ff99fe65d249458032adf4093135f18b32",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 50,
+    "skipped": 0,
+    "total": 50,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "5a1ccfeb8476b74be506b1caf5d865ff99fe65d249458032adf4093135f18b32"
   }
  ],
  "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not.",
@@ -1328,10 +1390,10 @@
   "diagnostics_claimed_by_a_mutation": 24,
   "diagnostics_in_source": 91,
   "diagnostics_nothing_is_aimed_at": 67,
-  "killed_by_a_case_only": 11,
+  "killed_by_a_case_only": 12,
   "killed_by_a_scenario_only": 4,
-  "killed_by_both_lanes": 24,
-  "mutations": 39,
+  "killed_by_both_lanes": 25,
+  "mutations": 41,
   "survivors": 0
  },
  "unaimed": [

@@ -88,6 +88,9 @@ struct Decoder<'a> {
     events: Vec<StreamEvent>,
     /// `item_id` -> `call_id`, so an arguments delta can name the call a reader is watching.
     calls: BTreeMap<String, CallId>,
+    /// Every call the caller was told about, in announcement order. The outcome must carry each
+    /// under the identifier and the name it was announced with.
+    announced: Vec<(CallId, ToolName)>,
     streamed: Vec<Item>,
     /// Opaque state that must survive even when the terminal object replaces streamed output.
     unmodelled: Vec<Item>,
@@ -119,6 +122,7 @@ impl<'a> Decoder<'a> {
             binding,
             events: Vec::new(),
             calls: BTreeMap::new(),
+            announced: Vec::new(),
             streamed: Vec::new(),
             unmodelled: Vec::new(),
             terminal: None,
@@ -263,6 +267,20 @@ impl<'a> Decoder<'a> {
                 Error::too_large("model output exceeds its bound")
                     .with_dispatch(Dispatch::Accepted),
             ));
+        }
+        // The caller already saw each announcement. An outcome that carries the call under
+        // another name, or under another identifier than the one its arguments streamed under,
+        // would hand it a call it was never shown; the refusal keeps the terminal counters.
+        let contradicted = self.announced.iter().any(|(call_id, name)| {
+            !items
+                .iter()
+                .filter_map(Item::as_tool_call)
+                .any(|call| &call.call_id == call_id && &call.name == name)
+        });
+        if contradicted {
+            return Err(retain(protocol(
+                "a finished function call contradicts its announcement",
+            )));
         }
         let has_tool_calls = items.iter().any(|item| item.as_tool_call().is_some());
         Ok(TurnOutcome {
@@ -421,13 +439,34 @@ impl<'a> Decoder<'a> {
         if string(item.get("type")) != Some("function_call") {
             return;
         }
-        let (Some(item_id), Some(call_id)) = (string(item.get("id")), string(item.get("call_id")))
-        else {
+        let (Some(item_id), Some(call_id), Some(name)) = (
+            string(item.get("id")),
+            string(item.get("call_id")),
+            string(item.get("name")),
+        ) else {
             return;
         };
-        if let Ok(call_id) = CallId::new(call_id) {
-            self.calls.insert(item_id.to_owned(), call_id);
+        // The opening item is where this wire names the call. One it cannot name is not
+        // announced, and its argument deltas are then not relayed either: a fragment for a
+        // call the caller was never told about has no call to belong to. The finished item
+        // or the terminal object still decides, and refuses, the call itself.
+        let (Ok(call_id), Ok(name)) = (CallId::new(call_id), ToolName::new(name)) else {
+            return;
+        };
+        // Once per call: a repeated opening item, or a second item under a call id already
+        // announced, announces nothing and relays nothing. The terminal check still decides.
+        if self.calls.contains_key(item_id)
+            || self
+                .announced
+                .iter()
+                .any(|(announced, _)| announced == &call_id)
+        {
+            return;
         }
+        self.calls.insert(item_id.to_owned(), call_id.clone());
+        self.announced.push((call_id.clone(), name.clone()));
+        self.events
+            .push(StreamEvent::ToolCallStarted { call_id, name });
     }
 
     fn call_for(&self, event: &Value) -> Option<CallId> {

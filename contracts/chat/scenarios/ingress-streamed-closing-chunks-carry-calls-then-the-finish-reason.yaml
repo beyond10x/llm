@@ -16,7 +16,8 @@ assert:
 - view: llm.chat.LastIngressResponse
   contains:
     accepted: true
-    # Three chunks: the proposed calls, the finish reason, and the counters the client
+    # No events were streamed, so the call was never announced. Three chunks: that call,
+    # complete, the finish reason, and the counters the client
     # asked for with stream_options.
     chunk_count: '3'
     finish_reason: tool_calls

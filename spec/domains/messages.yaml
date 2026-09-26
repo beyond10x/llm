@@ -19,6 +19,9 @@ entities:
       - {name: text, type: String}
       - {name: reasoning, type: String}
       - {name: tool_arguments, type: List<String>}
+      # The tool events in the order a caller saw them: `started:<call>:<name>` where the
+      # route opened a tool_use block, then `arguments:<call>:<fragment>` for each fragment.
+      - {name: tool_stream, type: List<String>}
       - {name: upstream_model, type: Optional<String>}
       - {name: response_id, type: Optional<String>}
       - {name: final_usage, type: Optional<Boolean>}

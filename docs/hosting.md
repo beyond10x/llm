@@ -281,3 +281,50 @@ stopped, or that any cloud account was ever contacted. Runpod and Modal adapters
 documented control-plane evidence, and live paid qualification are separate stories. The gateway
 must still route hosting effects through the budget ledger and consume the stop obligations this
 contract reports.
+
+## Runpod
+
+`b10x-llm-runpod` is the first adapter behind this seam. It ports llmgw's pod lifecycle
+(`src/runpod.rs`, the Runpod part of `src/config.rs`, and the mock lifecycle tests in
+`src/lib.rs`) onto the contract above. Every Runpod call goes through the `RunpodTransport` trait;
+the only transport in the crate is `EmulatedRunpod`, an in-process control plane. Nothing in the
+crate opens a connection or reads a credential.
+
+| Mechanism | llmgw | here |
+| --- | --- | --- |
+| identity | the pod name `llmgw-<alias>` | a `ResourceKey` whose incarnation is the Runpod pod id; owner, epoch and request id are written into the pod environment (`B10X_LLM_OWNER`, `B10X_LLM_EPOCH`, `B10X_LLM_REQUEST`) and read back from the listing |
+| namespace | `llmgw-` | `b10x-llm-`; a name starting with `llmgw-` is never listed, adopted, swept or terminated |
+| adoption after restart | any pod with the matching name | only the durable record's exact key, or its request id; a pod labelled for another owner is not adopted, and one taken over at a newer epoch is reported as transferred. After a takeover — the snapshot's previous lease holder gone and its claim expired — the new owner finds its inherited pods still labelled for that holder, because Runpod cannot relabel a pod; the contract parks such a record in `ownership-lost`, and the pool terminates the pod itself, but only when its label still names exactly the holder the snapshot records. A pod labelled for any other controller is never terminated |
+| single-flight start | an atomic phase flip on a watch channel | one mutex across a whole pool step: the first caller declares and submits, every later caller sees the live deployment and is told `starting` |
+| GPU choice | ordered; each refusal tries the next | the same, except that a **lost** create answer ends the attempt — Runpod takes no idempotency key, so trying the next GPU could pay twice, and `honours_idempotency_key` is `false` |
+| crash recovery | two decreasing uptimes during startup terminate the pod | the same count, at any time, but only restarts inside the model's declared `crash_window_ms` count (window end inclusive), so sparse restarts over a long life are not a loop; a pod refusing its vLLM key is terminated too; the next request starts a new deployment |
+| startup deadline | the caller's hold budget; the pod keeps starting | a pod that has not served within its declared deadline is terminated, because it is a billed resource serving nobody. A pod that served and then answers a definite "not ready" gets the same bound, counted from the last time it was seen ready (`stopped-serving`); unknown readiness neither starts nor ends that clock |
+| idle reaper | idle past the timeout, never below the measured cold start, never with a request in flight | the same rules, on the explicit clock; a `StreamLease` holds the pod until the stream ends, and in-flight accounting is per deployment, so a lease still open on a retired pod does not hold its replacement |
+| orphan sweep | `llmgw-*` pods whose alias left the registry | pods in `b10x-llm-` carrying **this controller's** owner tag that no live record holds, by exact key, or by request id for a record that holds no key yet; records whose model left the registry are stopped through the controller |
+| request id | none | a readable prefix of at most 64 bytes (`request-<controller>-<alias>-<generation>-`, cut short when long) followed by a 128-bit digest of a length-prefixed encoding of controller, alias, generation, instant and a per-process nonce: at most 96 bytes, so it always fits the identifier limit. Two different tuples never share an encoding — `c-qwen`/`x` and `c`/`qwen-x` do not — so two request ids agree only if the digest collides. The digest is the standard library's hasher run twice, not a cryptographic hash; it has to avoid accidents, not an adversary |
+| pod status | — | only `TERMINATED` ends a resource. `EXITED` is a stopped pod that still exists and is billed: it is reported present-but-not-running, terminated, and replaced (`pod-exited`). An endpoint is reported only for a `RUNNING` pod; otherwise it is `None` |
+| vLLM key | derived from the Runpod API key and passed as `--api-key` | a Runpod secret reference in `VLLM_API_KEY` (`{{ RUNPOD_SECRET_<name> }}`); no value passes through this process |
+
+Runpod settings — ordered GPU types, cloud type, disk, the mounted network volume and its
+`HF_HOME`, data-center pinning, startup deadline, idle timeout, crash-restart limit and every
+vLLM argument — are `RunpodModel`, not `DeploymentSpec`. A create whose image differs from the
+declared one, or names an undeclared model, is not sent.
+
+The pool must be stepped (`ensure` or `reap`) more often than the policy's `lease_ms`: an expired
+lease is a stop obligation under this contract, and the pool carries it out.
+
+**Open: orphan and inherited terminations bypass the controller.** An inherited pod whose record
+is parked in `ownership-lost` is terminated through the provider too, because the controller
+refuses to stop a resource labelled for another owner; its record is then discharged by the next
+complete listing, with absence as the evidence. An orphan has no deployment record, so the
+sweep calls `RunpodProvider::stop` directly, with the epoch read from the pod's own tag. No stop
+obligation is opened or discharged for it and no receipt reaches the budget ledger: the ledger
+never learns that the resource existed or that it was stopped. Closing that needs a change to
+`llm-provision` — a way to record and discharge an obligation for a resource that has no
+deployment — and is recorded as an open finding for the operator.
+
+What this does **not** establish: that Runpod's REST listing returns the `env` a pod was created
+with, that `{{ RUNPOD_SECRET_<name> }}` is substituted into `VLLM_API_KEY`, that a `DELETE` stops
+billing, or that the proxy URL `https://<pod>-8000.proxy.runpod.net` is the one to serve from.
+Those are properties of the live control plane; no production transport exists yet and no paid
+call has been made. [Runpod verification](verification/runpod.md) records the emulated evidence.

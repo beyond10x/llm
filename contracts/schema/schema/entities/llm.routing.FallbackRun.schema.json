@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FallbackRun",
+  "x-ess-name": "llm.routing.FallbackRun",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "valid_program": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "halt": {
+      "type": "string"
+    },
+    "attempted": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "attempt_results": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "visible_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "attempt_usage": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rejections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "delivered_text": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.routing.FallbackRun.State"
+    }
+  },
+  "required": [
+    "run_id",
+    "valid_program",
+    "attempted",
+    "attempt_results",
+    "visible_events",
+    "attempt_usage",
+    "rejections",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "fece87265a557ac1dc08be93d3a2893cde091c2355b48235c285cb6541f186a5",
+    "contract_digest": "slice-sha256/2:1a3ce299c83bdf294d88c350b8560da516c9b39a8c4462bcba8df4ba80df8edd",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.routing.FallbackRun.State": {
+      "title": "State",
+      "x-ess-name": "llm.routing.FallbackRun.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

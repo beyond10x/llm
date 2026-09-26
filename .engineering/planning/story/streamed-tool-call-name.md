@@ -2,23 +2,53 @@
 format: aep.planning-md/1
 id: story:streamed-tool-call-name
 kind: story
-status: draft
+status: implemented
 title: A streamed tool call carries the name the provider announced
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
 scope:
-- confidence: inferred
-  path: contracts
-- confidence: inferred
-  path: crates/llm-chat
-- confidence: inferred
-  path: crates/llm-core
-- confidence: inferred
-  path: crates/llm-messages
-- confidence: inferred
-  path: crates/llm-responses
-revision: 2
+- confidence: cited
+  path: checks/conformance/src/chat.rs
+- confidence: cited
+  path: checks/conformance/src/messages.rs
+- confidence: cited
+  path: checks/conformance/src/responses.rs
+- confidence: cited
+  path: contracts/chat/scenarios
+- confidence: cited
+  path: contracts/messages/scenarios
+- confidence: cited
+  path: contracts/responses/scenarios
+- confidence: cited
+  path: crates/llm-chat/src/incoming.rs
+- confidence: cited
+  path: crates/llm-chat/src/ingress.rs
+- confidence: cited
+  path: crates/llm-chat/tests
+- confidence: cited
+  path: crates/llm-core/src/port.rs
+- confidence: cited
+  path: crates/llm-core/tests
+- confidence: cited
+  path: crates/llm-messages/src/decode.rs
+- confidence: cited
+  path: crates/llm-messages/tests
+- confidence: cited
+  path: crates/llm-responses/src/stream.rs
+- confidence: cited
+  path: crates/llm-responses/tests
+- confidence: cited
+  path: docs/chat.md
+- confidence: cited
+  path: docs/messages.md
+- confidence: cited
+  path: docs/responses.md
+- confidence: cited
+  path: spec/domains/chat.yaml
+- confidence: cited
+  path: spec/domains/messages.yaml
+revision: 10
 ---
 ## Context
 
