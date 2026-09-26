@@ -111,6 +111,7 @@
       "llm.chat/authored/incoming-a-reported-zero-is-a-report-and-not-an-absence",
       "llm.chat/authored/incoming-a-second-choice-is-refused",
       "llm.chat/authored/incoming-a-stream-without-a-finish-reason-is-refused",
+      "llm.chat/authored/incoming-a-streamed-call-is-announced-by-name-before-its-arguments",
       "llm.chat/authored/incoming-a-truncated-stream-is-refused",
       "llm.chat/authored/incoming-an-unknown-finish-reason-is-refused",
       "llm.chat/authored/incoming-an-unreported-model-is-not-replaced-by-the-binding",
@@ -122,16 +123,21 @@
       "llm.chat/authored/incoming-two-framed-choices-in-one-chunk-are-refused",
       "llm.chat/authored/incoming-vllm-stream-without-include-usage-reports-no-counter",
       "llm.chat/authored/incoming-vllm-tool-stream-preserves-its-call-and-counters",
+      "llm.chat/authored/ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices",
       "llm.chat/authored/ingress-a-client-request-decodes-onto-the-neutral-subset",
       "llm.chat/authored/ingress-a-named-tool-choice-needs-published-tools",
       "llm.chat/authored/ingress-a-named-unsupported-field-is-refused-by-its-own-name",
       "llm.chat/authored/ingress-a-non-text-content-part-is-refused",
       "llm.chat/authored/ingress-a-response-format-request-is-refused-by-name",
       "llm.chat/authored/ingress-a-stream-without-include-usage-reports-no-counters",
+      "llm.chat/authored/ingress-a-streamed-call-is-named-where-it-was-announced",
       "llm.chat/authored/ingress-a-temperature-outside-its-range-is-refused",
       "llm.chat/authored/ingress-a-tool-choice-of-none-is-refused",
       "llm.chat/authored/ingress-a-tool-message-answering-no-call-is-refused",
+      "llm.chat/authored/ingress-an-outcome-leaving-out-an-announced-call-is-refused",
+      "llm.chat/authored/ingress-an-outcome-renaming-an-announced-call-is-refused",
       "llm.chat/authored/ingress-an-unrecognized-field-is-refused-without-quoting-the-client",
+      "llm.chat/authored/ingress-blank-streamed-arguments-close-as-the-empty-object",
       "llm.chat/authored/ingress-contradictory-output-limits-are-refused",
       "llm.chat/authored/ingress-encoding-names-a-cache-write-counter-rather-than-dropping-it",
       "llm.chat/authored/ingress-encoding-never-turns-an-absent-counter-into-a-zero",
@@ -258,6 +264,7 @@
       "llm.messages/authored/one-hour-cache-creation-refused",
       "llm.messages/authored/provider-error-event-retains-its-snapshot",
       "llm.messages/authored/request-preserves-roles-tools-and-thinking",
+      "llm.messages/authored/stream-announces-a-tool-call-by-name-before-its-arguments",
       "llm.messages/authored/stream-preserves-text-thinking-tools-and-terminal-usage",
       "llm.messages/authored/stream-start-that-is-not-an-assistant-message-refused",
       "llm.messages/authored/temperature-above-the-route-maximum-refused",
@@ -272,6 +279,7 @@
       "llm.responses/authored/a-binding-of-another-protocol-is-refused",
       "llm.responses/authored/a-failed-response-retains-its-terminal-usage",
       "llm.responses/authored/a-failed-tool-result-keeps-its-failure",
+      "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters",
       "llm.responses/authored/a-foreign-text-body-reads-into-a-neutral-turn",
       "llm.responses/authored/a-named-tool-choice-names-the-published-tool",
       "llm.responses/authored/a-rate-limited-failure-keeps-its-class-when-its-counters-disagree",
@@ -330,9 +338,19 @@
       "llm.routing/authored/context-overflow-refused",
       "llm.routing/authored/duplicate-target-refused",
       "llm.routing/authored/explicit-fallback-selects-compatible-target",
+      "llm.routing/authored/fallback-attempts-only-declared-compatible-order",
       "llm.routing/authored/fallback-default-disabled",
       "llm.routing/authored/fallback-disabled",
+      "llm.routing/authored/fallback-disabled-by-caller",
+      "llm.routing/authored/fallback-disabled-route-attempts-only-primary",
+      "llm.routing/authored/fallback-passed-deadline-starts-no-attempt",
       "llm.routing/authored/fallback-preserves-first-compatible-order",
+      "llm.routing/authored/fallback-refused-after-ambiguous-dispatch",
+      "llm.routing/authored/fallback-refused-after-visible-output",
+      "llm.routing/authored/fallback-refused-by-exhausted-limit",
+      "llm.routing/authored/fallback-refused-for-bound-opaque-state",
+      "llm.routing/authored/fallback-refused-for-ineligible-failure",
+      "llm.routing/authored/fallback-refused-for-too-large-failure",
       "llm.routing/authored/implicit-output-budget-inclusive",
       "llm.routing/authored/implicit-output-budget-refused",
       "llm.routing/authored/inclusive-context-boundary",
@@ -682,6 +700,11 @@
         "disposition": "accepted",
         "scenario": "llm.chat/authored/incoming-a-stream-without-a-finish-reason-is-refused"
       },
+      "chat/scenarios/incoming-a-streamed-call-is-announced-by-name-before-its-arguments.yaml": {
+        "digest": "sha256:60867fdd5a448eda413d78bfd79af5bbd3828a4c59e59fa9dc18bbe3c49d44cf",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/incoming-a-streamed-call-is-announced-by-name-before-its-arguments"
+      },
       "chat/scenarios/incoming-a-truncated-stream-is-refused.yaml": {
         "digest": "sha256:89c3534cf50537b19538e0417b265f623e2ab9d2f9aa992a2fd754473a845dc6",
         "disposition": "accepted",
@@ -737,6 +760,11 @@
         "disposition": "accepted",
         "scenario": "llm.chat/authored/incoming-vllm-tool-stream-preserves-its-call-and-counters"
       },
+      "chat/scenarios/ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices.yaml": {
+        "digest": "sha256:e53c5197d7b38a65ce64aa5862895bcfa80cb9917ffb4f789f6202cbd36584b7",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices"
+      },
       "chat/scenarios/ingress-a-client-request-decodes-onto-the-neutral-subset.yaml": {
         "digest": "sha256:6c6377a929f8677614787448af01d71009bb0ef5a0a337a434f4b1939fb4ffc5",
         "disposition": "accepted",
@@ -767,6 +795,11 @@
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-stream-without-include-usage-reports-no-counters"
       },
+      "chat/scenarios/ingress-a-streamed-call-is-named-where-it-was-announced.yaml": {
+        "digest": "sha256:bbc7aba2df6b62775b0378a1428fc82665eb2ef5e587ad1080ad70ef43e6e9a2",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-a-streamed-call-is-named-where-it-was-announced"
+      },
       "chat/scenarios/ingress-a-temperature-outside-its-range-is-refused.yaml": {
         "digest": "sha256:187d4bcdefa4263f27ce84138387db7e3a2c43f0388f742c2edd7d4c3205514b",
         "disposition": "accepted",
@@ -782,10 +815,25 @@
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-tool-message-answering-no-call-is-refused"
       },
+      "chat/scenarios/ingress-an-outcome-leaving-out-an-announced-call-is-refused.yaml": {
+        "digest": "sha256:4094b17884d794b521448b00755a39be66b26bf25259087bb4455eabfd24c3e7",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-an-outcome-leaving-out-an-announced-call-is-refused"
+      },
+      "chat/scenarios/ingress-an-outcome-renaming-an-announced-call-is-refused.yaml": {
+        "digest": "sha256:57946032f3a7cc371353f596352814beb27ccc0bfcc47e6879dd85f7a8a75e96",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-an-outcome-renaming-an-announced-call-is-refused"
+      },
       "chat/scenarios/ingress-an-unrecognized-field-is-refused-without-quoting-the-client.yaml": {
         "digest": "sha256:893daf04c2ec89cb1746ead12373206582afd647eb980a87232da3cb3ad1bf5c",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-an-unrecognized-field-is-refused-without-quoting-the-client"
+      },
+      "chat/scenarios/ingress-blank-streamed-arguments-close-as-the-empty-object.yaml": {
+        "digest": "sha256:70733c9d1cad1350d3953253519951574094fa80988123167cdd8d8f245a82a7",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-blank-streamed-arguments-close-as-the-empty-object"
       },
       "chat/scenarios/ingress-contradictory-output-limits-are-refused.yaml": {
         "digest": "sha256:b7354442f934c45040bea9ba3ad098306aff7ad4be8cb65f07693288a3034c91",
@@ -823,7 +871,7 @@
         "scenario": "llm.chat/authored/ingress-instructions-must-precede-the-conversation"
       },
       "chat/scenarios/ingress-streamed-closing-chunks-carry-calls-then-the-finish-reason.yaml": {
-        "digest": "sha256:75be93eea4dda7ab754bd91e252cacb9535154d44f6abac60600802ab26afc3a",
+        "digest": "sha256:55abc291e9c883362dbc81fc32dd2060979127694611ff0748a836b6edefd0a0",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-streamed-closing-chunks-carry-calls-then-the-finish-reason"
       },
@@ -1417,6 +1465,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/request-preserves-roles-tools-and-thinking"
       },
+      "messages/scenarios/stream-announces-a-tool-call-by-name-before-its-arguments.yaml": {
+        "digest": "sha256:fe2ecaa28ab86c461f26e4beb99b2c103bc790197918c5199560c362a35e0c6d",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/stream-announces-a-tool-call-by-name-before-its-arguments"
+      },
       "messages/scenarios/stream-preserves-text-thinking-tools-and-terminal-usage.yaml": {
         "digest": "sha256:e70bebf1266ac2a01414868a5707c38dccf61b0d1892cb5ec653ddfbaacc0dcd",
         "disposition": "accepted",
@@ -1732,6 +1785,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/a-failed-tool-result-keeps-its-failure"
       },
+      "responses/scenarios/a-finished-call-renaming-its-announcement-is-refused-with-its-counters.yaml": {
+        "digest": "sha256:f2741dd8c6312df5f3493dbaa317bd490016a0a3f991cd7fb10a673ca5ec128b",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters"
+      },
       "responses/scenarios/a-foreign-text-body-reads-into-a-neutral-turn.yaml": {
         "digest": "sha256:990a4e15fcc4f5ac94c05047d06a800432dfb493d79354d3c5362094de7f3443",
         "disposition": "accepted",
@@ -1788,7 +1846,7 @@
         "scenario": "llm.responses/authored/a-text-stream-decodes-to-terminal-truth"
       },
       "responses/scenarios/a-tool-call-stream-names-the-call-its-arguments-belong-to.yaml": {
-        "digest": "sha256:586413ae86828e1dede648f387a3499cc00af658dd5f2e420071fb138e6cb01f",
+        "digest": "sha256:ef6d714af64833a5d86cd7f5e62f096a28f5b3daa6284990ca437e3d92bf0f08",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/a-tool-call-stream-names-the-call-its-arguments-belong-to"
       },
@@ -1828,7 +1886,7 @@
         "scenario": "llm.responses/authored/an-accepted-body-reprojects-unchanged"
       },
       "responses/scenarios/an-announced-item-refusal-still-reports-the-terminal-counters.yaml": {
-        "digest": "sha256:c3142eb2dd44c9fb62eead41ff77b32ec94024bf81d4325450fd826812c71223",
+        "digest": "sha256:ae5e983e88e12e32b8573cb341df2de95df4289b0bd6aae0851d4347168fa50e",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/an-announced-item-refusal-still-reports-the-terminal-counters"
       },
@@ -2022,20 +2080,70 @@
         "disposition": "accepted",
         "scenario": "llm.routing/authored/explicit-fallback-selects-compatible-target"
       },
+      "routing/scenarios/fallback-attempts-only-declared-compatible-order.yaml": {
+        "digest": "sha256:adca476327bb6e5fdb8e7603b839430f7e8d57dac5ace6f6555ad8cd4f861621",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-attempts-only-declared-compatible-order"
+      },
       "routing/scenarios/fallback-default-disabled.yaml": {
         "digest": "sha256:84dc3ff5bca9f36af3bdcea9dccf295330a8d8875574995d8ebb8f59e9383c7f",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/fallback-default-disabled"
+      },
+      "routing/scenarios/fallback-disabled-by-caller.yaml": {
+        "digest": "sha256:c94934ac56964133168191c8a4e67a42bf930a7c0d1e3da8bce29aa173b1dc84",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-disabled-by-caller"
+      },
+      "routing/scenarios/fallback-disabled-route-attempts-only-primary.yaml": {
+        "digest": "sha256:f475cf4c926dd9dbfc6dd7670c03ca60e18998c3c30e05b9c074d9a0a9ff2db6",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-disabled-route-attempts-only-primary"
       },
       "routing/scenarios/fallback-disabled.yaml": {
         "digest": "sha256:e1820e317da2bae81392743d7e8a9174a2d8ad25d2639dd529378030a04d74e8",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/fallback-disabled"
       },
+      "routing/scenarios/fallback-passed-deadline-starts-no-attempt.yaml": {
+        "digest": "sha256:a61dd669a2fb776e239e683972fa9cc47c06be592fdaf05c4c9e4208018b19fe",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-passed-deadline-starts-no-attempt"
+      },
       "routing/scenarios/fallback-preserves-first-compatible-order.yaml": {
         "digest": "sha256:9873fb4bb7beeae8795d1f6903cf2411642931b3084d814f49e433914018917d",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/fallback-preserves-first-compatible-order"
+      },
+      "routing/scenarios/fallback-refused-after-ambiguous-dispatch.yaml": {
+        "digest": "sha256:21135e9dd9af20fcb6cdf276c8e2643d80e3970a67320f1d1c9f4c7b0112ee1d",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-refused-after-ambiguous-dispatch"
+      },
+      "routing/scenarios/fallback-refused-after-visible-output.yaml": {
+        "digest": "sha256:1a52354fca7d8102d9fdc4d6a29b3ca21c5428b47eb23371c8dfd04883b9fc41",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-refused-after-visible-output"
+      },
+      "routing/scenarios/fallback-refused-by-exhausted-limit.yaml": {
+        "digest": "sha256:d637b39352504c1f20840878a88b7203283b966d832ca4a4e7f18feb8ffdc37c",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-refused-by-exhausted-limit"
+      },
+      "routing/scenarios/fallback-refused-for-bound-opaque-state.yaml": {
+        "digest": "sha256:d04ce1197b37cf35a7f228ee110b23a6f5114f13e30717d380f7b1cde8560f10",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-refused-for-bound-opaque-state"
+      },
+      "routing/scenarios/fallback-refused-for-ineligible-failure.yaml": {
+        "digest": "sha256:95be01527485024e4acd4b93c51f30bc5bb1b68083520a6be587a6f4a1200aa3",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-refused-for-ineligible-failure"
+      },
+      "routing/scenarios/fallback-refused-for-too-large-failure.yaml": {
+        "digest": "sha256:5c2d0de5334a3d8ffe9dd1ccfb11bc63ed93299f84eead5389c0c58321565ca7",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-refused-for-too-large-failure"
       },
       "routing/scenarios/implicit-output-budget-inclusive.yaml": {
         "digest": "sha256:ca5357a519eb00643bac4c2321c56a2ae0f9d1f02211b66f4c210b03702a005f",
@@ -2249,8 +2357,8 @@
       }
     },
     "counts": {
-      "authored": 374,
-      "generated": 17,
+      "authored": 392,
+      "generated": 18,
       "outside": 0,
       "refused": 0
     },
@@ -2270,6 +2378,7 @@
       "llm.responses.Ingest/outcome/observed",
       "llm.responses.Project/outcome/observed",
       "llm.routing.Evaluate/outcome/observed",
+      "llm.routing.Fallback/outcome/observed",
       "llm.secrets.ProbeFile/outcome/observed",
       "llm.secrets.ProbeKeychain/outcome/observed"
     ],
@@ -2287,8 +2396,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "aeb2933855b1389dc37f6d5c27240487d80e1b7f54e7c00ac42a0782e4005250",
-    "spec_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
+    "contract_digest": "d7058f9fd28c11a9ffa59ff229078abf5bf4d979e13093c73d23709d03e51073",
+    "spec_digest": "fece87265a557ac1dc08be93d3a2893cde091c2355b48235c285cb6541f186a5",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -2347,6 +2456,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
         },
         {
           "kind": "event",
@@ -2419,6 +2532,10 @@
         },
         {
           "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         },
         {
@@ -9351,6 +9468,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -9416,6 +9537,10 @@
         },
         {
           "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         },
         {
@@ -14691,6 +14816,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -14759,6 +14888,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.secrets.Probed",
           "step": "expect_no_event"
         }
@@ -14820,6 +14953,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -14827,6 +14964,10 @@
         {
           "command": "llm.chat.EncodeIngress",
           "input": {
+            "events_json": {
+              "kind": "literal",
+              "value": "events_json"
+            },
             "include_usage": {
               "kind": "literal",
               "value": true
@@ -14896,6 +15037,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.secrets.Probed",
           "step": "expect_no_event"
         }
@@ -14954,6 +15099,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
         },
         {
           "kind": "event",
@@ -15041,6 +15190,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.secrets.Probed",
           "step": "expect_no_event"
         }
@@ -15099,6 +15252,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
         },
         {
           "kind": "event",
@@ -15175,6 +15332,10 @@
         },
         {
           "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         },
         {
@@ -16567,6 +16728,98 @@
         }
       ]
     },
+    "llm.chat/authored/incoming-a-streamed-call-is-announced-by-name-before-its-arguments": {
+      "purpose": "incoming a streamed call is announced by name before its arguments",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectResponse"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastResponseProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectResponse",
+          "input": {
+            "response": {
+              "kind": "literal",
+              "value": "data: {\"id\":\"chatcmpl-Bp3TOOL\",\"object\":\"chat.completion.chunk\",\"created\":1772000100,\"model\":\"gpt-4o-2024-11-20\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-Bp3TOOL\",\"object\":\"chat.completion.chunk\",\"created\":1772000100,\"model\":\"gpt-4o-2024-11-20\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_7Yq\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"\"}}]},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-Bp3TOOL\",\"object\":\"chat.completion.chunk\",\"created\":1772000100,\"model\":\"gpt-4o-2024-11-20\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"cit\"}}]},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-Bp3TOOL\",\"object\":\"chat.completion.chunk\",\"created\":1772000100,\"model\":\"gpt-4o-2024-11-20\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"y\\\": \\\"Ber\"}}]},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-Bp3TOOL\",\"object\":\"chat.completion.chunk\",\"created\":1772000100,\"model\":\"gpt-4o-2024-11-20\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"lin\\\"}\"}}]},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-Bp3TOOL\",\"object\":\"chat.completion.chunk\",\"created\":1772000100,\"model\":\"gpt-4o-2024-11-20\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":1,\"id\":\"call_9Zb\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-Bp3TOOL\",\"object\":\"chat.completion.chunk\",\"created\":1772000100,\"model\":\"gpt-4o-2024-11-20\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"tool_calls\"}]}\n\ndata: {\"id\":\"chatcmpl-Bp3TOOL\",\"object\":\"chat.completion.chunk\",\"created\":1772000100,\"model\":\"gpt-4o-2024-11-20\",\"choices\":[],\"usage\":{\"prompt_tokens\":88,\"completion_tokens\":24,\"total_tokens\":112}}\n\ndata: [DONE]\n\n"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "tool_stream": {
+                "kind": "literal",
+                "value": [
+                  "started:call_7Yq:lookup",
+                  "arguments:call_7Yq:{\"cit",
+                  "arguments:call_7Yq:y\": \"Ber",
+                  "arguments:call_7Yq:lin\"}",
+                  "started:call_9Zb:clock",
+                  "arguments:call_9Zb:{}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        }
+      ]
+    },
     "llm.chat/authored/incoming-a-truncated-stream-is-refused": {
       "purpose": "incoming a truncated stream is refused",
       "source": [
@@ -17716,6 +17969,112 @@
         }
       ]
     },
+    "llm.chat/authored/ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices": {
+      "purpose": "ingress a call completed at close and an unannounced call take consecutive wire indices",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressResponse"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.EncodeIngress",
+          "input": {
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"lookup\"}]"
+            },
+            "include_usage": {
+              "kind": "literal",
+              "value": false
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/3\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"lookup\",\"arguments\":{}},{\"kind\":\"tool-call\",\"call_id\":\"call-2\",\"name\":\"clock\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"Qwen/Qwen3-8B\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "chunk_count": {
+                "kind": "literal",
+                "value": "2"
+              },
+              "finish_reason": {
+                "kind": "literal",
+                "value": "tool_calls"
+              },
+              "streamed_tool_calls": {
+                "kind": "literal",
+                "value": [
+                  "{\"function\":{\"arguments\":\"\",\"name\":\"lookup\"},\"id\":\"call-1\",\"index\":0,\"type\":\"function\"}"
+                ]
+              },
+              "tool_calls": {
+                "kind": "literal",
+                "value": [
+                  "{\"function\":{\"arguments\":\"{}\"},\"index\":0}",
+                  "{\"function\":{\"arguments\":\"{}\",\"name\":\"clock\"},\"id\":\"call-2\",\"index\":1,\"type\":\"function\"}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        }
+      ]
+    },
     "llm.chat/authored/ingress-a-client-request-decodes-onto-the-neutral-subset": {
       "purpose": "ingress a client request decodes onto the neutral subset",
       "source": [
@@ -18277,6 +18636,115 @@
         }
       ]
     },
+    "llm.chat/authored/ingress-a-streamed-call-is-named-where-it-was-announced": {
+      "purpose": "ingress a streamed call is named where it was announced and not again at the end",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressResponse"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.EncodeIngress",
+          "input": {
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"lookup\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{\\\"city\\\":\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"\\\"Oslo\\\"}\"}]"
+            },
+            "include_usage": {
+              "kind": "literal",
+              "value": true
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/3\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"lookup\",\"arguments\":{\"city\":\"Oslo\"}}],\"observation\":{\"binding\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"Qwen/Qwen3-8B\",\"usage\":{\"input_tokens\":3,\"output_tokens\":4},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "chunk_count": {
+                "kind": "literal",
+                "value": "2"
+              },
+              "finish_reason": {
+                "kind": "literal",
+                "value": "tool_calls"
+              },
+              "streamed_tool_calls": {
+                "kind": "literal",
+                "value": [
+                  "{\"function\":{\"arguments\":\"\",\"name\":\"lookup\"},\"id\":\"call-1\",\"index\":0,\"type\":\"function\"}",
+                  "{\"function\":{\"arguments\":\"{\\\"city\\\":\"},\"index\":0}",
+                  "{\"function\":{\"arguments\":\"\\\"Oslo\\\"}\"},\"index\":0}"
+                ]
+              },
+              "tool_calls": {
+                "kind": "literal",
+                "value": []
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"completion_tokens\":4,\"prompt_tokens\":3,\"total_tokens\":7}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        }
+      ]
+    },
     "llm.chat/authored/ingress-a-temperature-outside-its-range-is-refused": {
       "purpose": "ingress a temperature outside its range is refused",
       "source": [
@@ -18540,6 +19008,214 @@
         }
       ]
     },
+    "llm.chat/authored/ingress-an-outcome-leaving-out-an-announced-call-is-refused": {
+      "purpose": "ingress an outcome that leaves out an announced call is refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressResponse"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.EncodeIngress",
+          "input": {
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"lookup\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{}\"}]"
+            },
+            "include_usage": {
+              "kind": "literal",
+              "value": false
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/3\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Done\"}],\"observation\":{\"binding\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"Qwen/Qwen3-8B\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "chunk_count": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "model outcome contradicts the tool calls already streamed"
+              },
+              "streamed_tool_calls": {
+                "kind": "literal",
+                "value": [
+                  "{\"function\":{\"arguments\":\"\",\"name\":\"lookup\"},\"id\":\"call-1\",\"index\":0,\"type\":\"function\"}",
+                  "{\"function\":{\"arguments\":\"{}\"},\"index\":0}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        }
+      ]
+    },
+    "llm.chat/authored/ingress-an-outcome-renaming-an-announced-call-is-refused": {
+      "purpose": "ingress an outcome that renames an announced call is refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressResponse"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.EncodeIngress",
+          "input": {
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"lookup\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{}\"}]"
+            },
+            "include_usage": {
+              "kind": "literal",
+              "value": false
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/3\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"Qwen/Qwen3-8B\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "chunk_count": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "model outcome contradicts the tool calls already streamed"
+              },
+              "streamed_tool_calls": {
+                "kind": "literal",
+                "value": [
+                  "{\"function\":{\"arguments\":\"\",\"name\":\"lookup\"},\"id\":\"call-1\",\"index\":0,\"type\":\"function\"}",
+                  "{\"function\":{\"arguments\":\"{}\"},\"index\":0}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        }
+      ]
+    },
     "llm.chat/authored/ingress-an-unrecognized-field-is-refused-without-quoting-the-client": {
       "purpose": "ingress an unrecognized field is refused without quoting the client",
       "source": [
@@ -18622,6 +19298,107 @@
           },
           "step": "expect_view",
           "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
+    "llm.chat/authored/ingress-blank-streamed-arguments-close-as-the-empty-object": {
+      "purpose": "ingress blank streamed arguments close as the empty object this wire reads them as",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressResponse"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.EncodeIngress",
+          "input": {
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"clock\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\" \"}]"
+            },
+            "include_usage": {
+              "kind": "literal",
+              "value": false
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/3\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"Qwen/Qwen3-8B\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressResponse"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "chunk_count": {
+                "kind": "literal",
+                "value": "1"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "finish_reason": {
+                "kind": "literal",
+                "value": "tool_calls"
+              },
+              "tool_calls": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressResponse"
         }
       ]
     },
@@ -20194,6 +20971,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -20259,6 +21040,10 @@
         },
         {
           "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         },
         {
@@ -26631,6 +27416,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -26700,6 +27489,10 @@
         },
         {
           "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         },
         {
@@ -30764,6 +31557,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -30836,6 +31633,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.secrets.Probed",
           "step": "expect_no_event"
         }
@@ -30894,6 +31695,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
         },
         {
           "kind": "event",
@@ -30969,6 +31774,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.secrets.Probed",
           "step": "expect_no_event"
         }
@@ -31027,6 +31836,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
         },
         {
           "kind": "event",
@@ -31099,6 +31912,10 @@
         },
         {
           "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         },
         {
@@ -33934,6 +34751,107 @@
         }
       ]
     },
+    "llm.messages/authored/stream-announces-a-tool-call-by-name-before-its-arguments": {
+      "purpose": "a tool_use block is announced by name when it opens, before any of its argument fragments",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_015b\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"id\":\"call-1\",\"input\":{},\"name\":\"lookup\",\"type\":\"tool_use\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"partial_json\":\"{\\\"query\\\":\",\"type\":\"input_json_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"partial_json\":\"\\\"errors\\\"}\",\"type\":\"input_json_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"id\":\"call-2\",\"input\":{},\"name\":\"lookup\",\"type\":\"tool_use\"},\"index\":1,\"type\":\"content_block_start\"}\n\nevent: content_block_stop\ndata: {\"index\":1,\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"input_tokens\":11,\"output_tokens\":9}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "tool-call:lookup:call-1:{\"query\":\"errors\"}",
+                  "tool-call:lookup:call-2:{}"
+                ]
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "tool-calls"
+              },
+              "tool_stream": {
+                "kind": "literal",
+                "value": [
+                  "started:call-1:lookup",
+                  "arguments:call-1:{\"query\":",
+                  "arguments:call-1:\"errors\"}",
+                  "started:call-2:lookup"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/stream-preserves-text-thinking-tools-and-terminal-usage": {
       "purpose": "one stream preserves streamed text, reasoning, tool arguments and the terminal counters",
       "source": [
@@ -35470,6 +36388,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -35546,6 +36468,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.secrets.Probed",
           "step": "expect_no_event"
         }
@@ -35604,6 +36530,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
         },
         {
           "kind": "event",
@@ -35683,6 +36613,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.secrets.Probed",
           "step": "expect_no_event"
         }
@@ -35741,6 +36675,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
         },
         {
           "kind": "event",
@@ -35817,6 +36755,10 @@
         },
         {
           "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         },
         {
@@ -36113,6 +37055,114 @@
           },
           "step": "expect_view",
           "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
+    "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters": {
+      "purpose": "a finished call that renames its announcement is refused and keeps the terminal counters",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_item.added\",\"item\":{\"type\":\"function_call\",\"id\":\"fc_1\",\"call_id\":\"call-1\",\"name\":\"file_read\"}},{\"type\":\"response.function_call_arguments.delta\",\"item_id\":\"fc_1\",\"delta\":\"{}\"},{\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"model\":\"example/Small-Model\",\"status\":\"completed\",\"output\":[{\"type\":\"function_call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":\"{}\"}],\"usage\":{\"input_tokens\":40,\"output_tokens\":12}}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": "40"
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": "12"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "tool-call-started:call-1:file_read",
+                  "tool-arguments-delta:call-1:{}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
         }
       ]
     },
@@ -37365,6 +38415,7 @@
               "stream_events": {
                 "kind": "literal",
                 "value": [
+                  "tool-call-started:call-1:file_read",
                   "tool-arguments-delta:call-1:{\"path\":",
                   "tool-arguments-delta:call-1:\"README.md\"}"
                 ]
@@ -38200,6 +39251,7 @@
               "stream_events": {
                 "kind": "literal",
                 "value": [
+                  "tool-call-started:call-1:file_read",
                   "tool-arguments-delta:call-1:{\"path\": \"READ"
                 ]
               },
@@ -41588,6 +42640,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -41661,6 +42717,159 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.routing.Fallback/outcome/observed": {
+      "purpose": "`llm.routing.Fallback` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.hosting.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "program_json"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "turn_json"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "shape": {
+            "valid_program": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.hosting.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
         {
@@ -42063,6 +43272,137 @@
         }
       ]
     },
+    "llm.routing/authored/fallback-attempts-only-declared-compatible-order": {
+      "purpose": "an eligible unsent failure falls back past an incompatible target to the next declared one",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\"}},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:rate-limited:rejected",
+                  "coding-secondary:succeeded"
+                ]
+              },
+              "attempt_usage": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:input=unknown",
+                  "coding-secondary:input=7"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-secondary"
+                ]
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "from remote-models;"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-middle:context-window"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "visible_events": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:0",
+                  "coding-secondary:1"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
     "llm.routing/authored/fallback-default-disabled": {
       "purpose": "fallback default disabled",
       "source": [
@@ -42247,6 +43587,301 @@
         }
       ]
     },
+    "llm.routing/authored/fallback-disabled-by-caller": {
+      "purpose": "a caller attempt bound of one disables fallback on an enabled route",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"not-sent\"}},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}},\"max_attempts\":1}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "attempt-bound"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-disabled-route-attempts-only-primary": {
+      "purpose": "a route without fallback enabled attempts only its primary target",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"not-sent\"}},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "exhausted"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-middle:context-window",
+                  "coding-middle:fallback-disabled",
+                  "coding-secondary:fallback-disabled"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-passed-deadline-starts-no-attempt": {
+      "purpose": "no attempt starts once the caller's deadline has passed",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":1},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}},\"deadline_passed\":true}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "deadline"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "deadline"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
     "llm.routing/authored/fallback-preserves-first-compatible-order": {
       "purpose": "fallback preserves first compatible order",
       "source": [
@@ -42361,6 +43996,616 @@
           },
           "step": "expect_view",
           "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-refused-after-ambiguous-dispatch": {
+      "purpose": "a request that may have been accepted is never replayed on another target",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"unknown\"}},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:transport:unknown"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "ambiguous-dispatch"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-refused-after-visible-output": {
+      "purpose": "a failure after output reached the caller is never retried elsewhere",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":1,\"fail\":{\"code\":\"transport\",\"dispatch\":\"not-sent\"}},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "from local-vllm;"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "visible-output"
+              },
+              "visible_events": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:1"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-refused-by-exhausted-limit": {
+      "purpose": "the caller's limit decision refuses the alternative before it is attempted",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"rejected\"},\"input_tokens\":5},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}},\"refuse_admission\":[\"coding-secondary\"]}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:unavailable:rejected"
+                ]
+              },
+              "attempt_usage": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:input=5"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "limit-refused"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-refused-for-bound-opaque-state": {
+      "purpose": "opaque state bound to the failed target makes every alternative incompatible",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"not-sent\"}},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"},\"payload\":{\"state\":\"fixture\"}}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "exhausted"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-middle:context-window",
+                  "coding-middle:opaque-state",
+                  "coding-secondary:opaque-state"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-refused-for-ineligible-failure": {
+      "purpose": "an authorization failure is not a fallback class and never switches accounts",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"unauthorized\",\"dispatch\":\"rejected\"}},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "ineligible-failure"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-refused-for-too-large-failure": {
+      "purpose": "a request the target refused as too large is not retried on another target",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"too-large\",\"dispatch\":\"rejected\"}},\"local-tiny\":{\"emits\":1},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "too-large"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "ineligible-failure"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
         }
       ]
     },
@@ -44379,6 +46624,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
           "name": "llm.secrets.Probed"
         }
       ],
@@ -44473,6 +46722,10 @@
         {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
         }
       ]
     },
@@ -44529,6 +46782,10 @@
         {
           "kind": "event",
           "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
         },
         {
           "kind": "event",
@@ -44621,6 +46878,10 @@
         },
         {
           "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         }
       ]

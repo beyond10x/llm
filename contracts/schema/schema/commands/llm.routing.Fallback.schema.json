@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Evaluate input",
-  "x-ess-name": "llm.routing.Evaluate",
+  "title": "Fallback input",
+  "x-ess-name": "llm.routing.Fallback",
   "x-ess-kind": "command-input",
   "type": "object",
   "properties": {
@@ -13,18 +13,22 @@
     },
     "input_tokens": {
       "type": "integer"
+    },
+    "program_json": {
+      "type": "string"
     }
   },
   "required": [
     "catalog_toml",
-    "turn_json"
+    "turn_json",
+    "program_json"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
     "source_digest": "fece87265a557ac1dc08be93d3a2893cde091c2355b48235c285cb6541f186a5",
-    "contract_digest": "slice-sha256/2:ef82cfd3bd78f20b1e0be636d5dfe363ef936dda17d5f846c9d604d128776a42",
+    "contract_digest": "slice-sha256/2:1efcf3a0fd83f48e0edf895bdfffd380a2721735a269309f5eed91649d6253ee",
     "regenerate": "ess generate"
   }
 }

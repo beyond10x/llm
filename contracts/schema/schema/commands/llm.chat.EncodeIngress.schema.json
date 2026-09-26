@@ -13,6 +13,9 @@
     },
     "include_usage": {
       "type": "boolean"
+    },
+    "events_json": {
+      "type": "string"
     }
   },
   "required": [
@@ -24,8 +27,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "505f3c64f60cfbed9736c07eda6c60383fd17626ca46cb07cf914b9a25a63362",
-    "contract_digest": "slice-sha256/2:67da3dc5ff563e0a9383e4253cc0ba8ea272d984fc6602c8ef8558c97c1fa6e9",
+    "source_digest": "fece87265a557ac1dc08be93d3a2893cde091c2355b48235c285cb6541f186a5",
+    "contract_digest": "slice-sha256/2:bc140342ac685995a0007c1a2376c832282cb7f4b6cfc86ee34bb809143db3c0",
     "regenerate": "ess generate"
   }
 }

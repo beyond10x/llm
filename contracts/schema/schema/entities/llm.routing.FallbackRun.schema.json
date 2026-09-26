@@ -1,67 +1,67 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "IngressDecoding",
-  "x-ess-name": "llm.chat.IngressDecoding",
+  "title": "FallbackRun",
+  "x-ess-name": "llm.routing.FallbackRun",
   "x-ess-kind": "entity",
   "type": "object",
   "properties": {
-    "projection_id": {
+    "run_id": {
       "type": "string"
     },
-    "accepted": {
+    "valid_program": {
       "type": "boolean"
     },
     "error_code": {
       "type": "string"
     },
-    "error_message": {
+    "halt": {
       "type": "string"
     },
-    "dispatch": {
-      "type": "string"
-    },
-    "model": {
-      "type": "string"
-    },
-    "instructions": {
-      "type": "string"
-    },
-    "items": {
+    "attempted": {
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "tools": {
+    "attempt_results": {
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "tool_choice": {
+    "visible_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "attempt_usage": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rejections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "delivered_text": {
       "type": "string"
-    },
-    "output_limit": {
-      "type": "string"
-    },
-    "stream": {
-      "type": "boolean"
-    },
-    "include_usage": {
-      "type": "boolean"
-    },
-    "turn_valid": {
-      "type": "boolean"
     },
     "state": {
-      "$ref": "#/$defs/llm.chat.IngressDecoding.State"
+      "$ref": "#/$defs/llm.routing.FallbackRun.State"
     }
   },
   "required": [
-    "projection_id",
-    "accepted",
-    "items",
-    "tools",
+    "run_id",
+    "valid_program",
+    "attempted",
+    "attempt_results",
+    "visible_events",
+    "attempt_usage",
+    "rejections",
     "state"
   ],
   "additionalProperties": false,
@@ -69,13 +69,13 @@
     "system": "llm",
     "specification_version": "v1",
     "source_digest": "fece87265a557ac1dc08be93d3a2893cde091c2355b48235c285cb6541f186a5",
-    "contract_digest": "slice-sha256/2:6093a40810cf21139898604c5534017163f69adbdb3161abc9b8c69b0eabb652",
+    "contract_digest": "slice-sha256/2:1a3ce299c83bdf294d88c350b8560da516c9b39a8c4462bcba8df4ba80df8edd",
     "regenerate": "ess generate"
   },
   "$defs": {
-    "llm.chat.IngressDecoding.State": {
+    "llm.routing.FallbackRun.State": {
       "title": "State",
-      "x-ess-name": "llm.chat.IngressDecoding.State",
+      "x-ess-name": "llm.routing.FallbackRun.State",
       "x-ess-kind": "enum",
       "type": "string",
       "enum": [
