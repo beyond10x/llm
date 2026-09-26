@@ -1,0 +1,36 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: wide-aggregate-charge-is-exact
+summary: wide aggregate charge is exact
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":{"id":"scope","currency":"USD","limit":"0.0000001","max_active":4},"steps":[{"step":"apply","at_ms":0,"command":{"command":"post-charge","charge":{"id":"one","source":"Invoice
+      fixture","provider":"vendor","account":"account","subject":"subscription","period_start_unix_ms":0,"period_end_unix_ms":100,"currency":"USD","amount":"18446744073.709551615","charge_kind":"subscription"}}},{"step":"apply","at_ms":0,"command":{"command":"post-charge","charge":{"id":"two","source":"Invoice
+      fixture","provider":"vendor","account":"account","subject":"subscription","period_start_unix_ms":0,"period_end_unix_ms":100,"currency":"USD","amount":"18446744073.709551615","charge_kind":"subscription"}}}]}'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: true
+    error_code: null
+    storage_failed: false
+    attribution_preserved: true
+    results:
+    - ok
+    - ok
+    totals:
+      settled_nanos: '36893488147419103230'
+      held_nanos: '0'
+      exposure_nanos: '36893488147419103230'
+      uncertain_count: 0
+      active_count: 0
+      above_limit: true
+      stop_required: []
+    charge_ids:
+    - one
+    - two

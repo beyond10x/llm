@@ -1,0 +1,40 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: concurrent-reservations-cannot-overspend
+summary: concurrent reservations cannot overspend
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":{"id":"scope","currency":"USD","limit":"0.0000001","max_active":4},"steps":[{"step":"concurrent","at_ms":1,"requests":[{"id":"r-0","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-1","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-2","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-3","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-4","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-5","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-6","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-7","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-8","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100},{"id":"r-9","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000003","assumption":"price-v1","expires_at_ms":100}]}]}'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: true
+    error_code: null
+    storage_failed: false
+    attribution_preserved: true
+    results:
+    - concurrent-observed
+    concurrent_admitted:
+    - 3
+    concurrent_errors:
+    - err:limit-exceeded
+    - err:limit-exceeded
+    - err:limit-exceeded
+    - err:limit-exceeded
+    - err:limit-exceeded
+    - err:limit-exceeded
+    - err:limit-exceeded
+    totals:
+      settled_nanos: '0'
+      held_nanos: '90'
+      exposure_nanos: '90'
+      uncertain_count: 0
+      active_count: 3
+      above_limit: false
+      stop_required: []

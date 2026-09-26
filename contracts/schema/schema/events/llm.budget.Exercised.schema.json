@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exercised payload",
+  "x-ess-name": "llm.budget.Exercised",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "valid_program": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "valid_program"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:24a12c81acae6f104ff1968015d6c964e3639f0d9b60aa212c14e8e0dda8e9a4",
+    "regenerate": "ess generate"
+  }
+}

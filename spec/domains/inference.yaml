@@ -1,0 +1,51 @@
+domain: llm.inference
+
+# A bound value, not a new persisted event bus or an invocation permission.
+types:
+  - name: llm.inference.TurnObservation
+    kind: struct
+    fields:
+      - {name: binding, type: llm.catalog.Provenance}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: response_id, type: Optional<String>}
+      - {name: usage, type: Optional<llm.accounting.Usage>}
+      # True means these are terminal reported counters, not that all are known
+      # or that the provider's eventual invoice is final.
+      - {name: final_usage, type: Boolean}
+entities:
+  - name: llm.inference.ResultInspection
+    identity: {name: observation_id, type: String}
+    fields: &result_facts
+      - {name: accepted, type: Boolean}
+      - {name: failed, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: dispatch, type: Optional<String>}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: response_id, type: Optional<String>}
+      - {name: final_usage, type: Optional<Boolean>}
+      - {name: input_tokens, type: Optional<String>}
+      - {name: output_tokens, type: Optional<String>}
+      - {name: cached_input_tokens, type: Optional<String>}
+      - {name: cache_creation_input_tokens, type: Optional<String>}
+      - {name: reasoning_output_tokens, type: Optional<String>}
+      - {name: roundtrip_preserved, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.inference.InspectResult
+    input:
+      - {name: result_json, type: String}
+      - {name: failure, type: Boolean}
+    outcomes:
+      - name: observed
+        emits: [llm.inference.Inspected]
+        summary: Observe the neutral parser and result validation against a fixed fixture binding.
+events:
+  # Notification from the verification adapter only.
+  - name: llm.inference.Inspected
+    fields:
+      - {name: accepted, type: Boolean}
+views:
+  - name: llm.inference.LastResult
+    source: llm.inference.ResultInspection
+    consistency: read_your_writes
+    fields: *result_facts

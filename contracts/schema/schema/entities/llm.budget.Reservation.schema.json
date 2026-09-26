@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reservation",
+  "x-ess-name": "llm.budget.Reservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "ledger_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "reservations",
+        "kind": "owns",
+        "source": "llm.budget.Ledger",
+        "target": "llm.budget.Reservation",
+        "cardinality": "many",
+        "via": "ledger_id"
+      }
+    },
+    "kind": {
+      "$ref": "#/$defs/llm.budget.OperationKind"
+    },
+    "phase": {
+      "$ref": "#/$defs/llm.budget.Phase"
+    },
+    "reserved": {
+      "type": "string"
+    },
+    "assumption": {
+      "type": "string"
+    },
+    "expires_at_ms": {
+      "type": "string"
+    },
+    "settlement": {
+      "$ref": "#/$defs/llm.budget.Settlement"
+    },
+    "evidence": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.budget.Reservation.State"
+    }
+  },
+  "required": [
+    "id",
+    "ledger_id",
+    "kind",
+    "phase",
+    "reserved",
+    "assumption",
+    "expires_at_ms",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:1195c847c5ec37e58b9a4b3ebd5b460b0cfd90b62e05cbdd0f09eea9a4fbdf5c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.budget.OperationKind": {
+      "title": "OperationKind",
+      "x-ess-name": "llm.budget.OperationKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Inference",
+        "Compute"
+      ]
+    },
+    "llm.budget.Phase": {
+      "title": "Phase",
+      "x-ess-name": "llm.budget.Phase",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Reserved",
+        "Started",
+        "Uncertain",
+        "StopRequired",
+        "Stopped",
+        "Settled",
+        "Cancelled"
+      ]
+    },
+    "llm.budget.Reservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.budget.Reservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.budget.Settlement": {
+      "title": "Settlement",
+      "x-ess-name": "llm.budget.Settlement",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "known": {
+          "type": "string"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "currency",
+        "known",
+        "complete",
+        "evidence"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

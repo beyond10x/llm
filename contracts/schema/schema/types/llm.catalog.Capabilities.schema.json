@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.catalog.Capabilities",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:3a0adb5c755a49857abfa6442bcc0db0cd6b54d7bf16c261b95b6cf0fc768f83",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.Capabilities": {
+      "title": "Capabilities",
+      "x-ess-name": "llm.catalog.Capabilities",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "tools": {
+          "type": "boolean"
+        },
+        "tool_choice": {
+          "type": "boolean"
+        },
+        "temperature": {
+          "type": "boolean"
+        },
+        "top_p": {
+          "type": "boolean"
+        },
+        "reasoning_efforts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "context_window": {
+          "type": "integer"
+        },
+        "max_output_tokens": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tools",
+        "tool_choice",
+        "temperature",
+        "top_p",
+        "reasoning_efforts",
+        "context_window",
+        "max_output_tokens"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

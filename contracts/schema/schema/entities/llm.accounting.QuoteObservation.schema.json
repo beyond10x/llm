@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QuoteObservation",
+  "x-ess-name": "llm.accounting.QuoteObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "price_revision": {
+      "type": "string"
+    },
+    "price_source": {
+      "type": "string"
+    },
+    "price_as_of_unix_ms": {
+      "type": "integer"
+    },
+    "price_digest": {
+      "type": "string"
+    },
+    "record_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/llm.accounting.QuotedLine"
+      }
+    },
+    "totals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/llm.accounting.QuotedTotal"
+      }
+    },
+    "observations_preserved": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.accounting.QuoteObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "record_ids",
+    "lines",
+    "totals",
+    "observations_preserved",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:b1f670770c3bcc2abe957c6c3d2936a6e69b2df5e4ec070fef9ef096169f7399",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.QuoteObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.accounting.QuoteObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.accounting.QuotedLine": {
+      "title": "QuotedLine",
+      "x-ess-name": "llm.accounting.QuotedLine",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "record_id": {
+          "type": "string"
+        },
+        "basis": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "unknown": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_id",
+        "basis",
+        "unit"
+      ],
+      "additionalProperties": false
+    },
+    "llm.accounting.QuotedTotal": {
+      "title": "QuotedTotal",
+      "x-ess-name": "llm.accounting.QuotedTotal",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "basis": {
+          "type": "string"
+        },
+        "known_subtotal": {
+          "type": "string"
+        },
+        "unknown_lines": {
+          "type": "integer"
+        },
+        "complete_total": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "basis",
+        "known_subtotal",
+        "unknown_lines"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

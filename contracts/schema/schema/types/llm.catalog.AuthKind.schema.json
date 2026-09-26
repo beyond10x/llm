@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.catalog.AuthKind",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:c390e78bef804c7435887506b1f312ff8b05b9cf19e3e4ddbd4036e7a5ce91b4",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.AuthKind": {
+      "title": "AuthKind",
+      "x-ess-name": "llm.catalog.AuthKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Anonymous",
+        "Bearer",
+        "ApiKey"
+      ]
+    }
+  }
+}

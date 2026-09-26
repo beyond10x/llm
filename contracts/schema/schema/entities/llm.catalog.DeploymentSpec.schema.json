@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeploymentSpec",
+  "x-ess-name": "llm.catalog.DeploymentSpec",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "account_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "account",
+        "kind": "references",
+        "source": "llm.catalog.DeploymentSpec",
+        "target": "llm.catalog.Account",
+        "cardinality": "one",
+        "via": "account_id"
+      }
+    },
+    "model_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "model",
+        "kind": "references",
+        "source": "llm.catalog.DeploymentSpec",
+        "target": "llm.catalog.Model",
+        "cardinality": "one",
+        "via": "model_id"
+      }
+    },
+    "image": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.catalog.DeploymentSpec.State"
+    }
+  },
+  "required": [
+    "id",
+    "account_id",
+    "model_id",
+    "image",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:533850a3a200755e8dbf83514e1ba2e0ba70231554760faeffb5951ebd9f6488",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.DeploymentSpec.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.DeploymentSpec.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

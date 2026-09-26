@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ResultInspection",
+  "x-ess-name": "llm.inference.ResultInspection",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "failed": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "response_id": {
+      "type": "string"
+    },
+    "final_usage": {
+      "type": "boolean"
+    },
+    "input_tokens": {
+      "type": "string"
+    },
+    "output_tokens": {
+      "type": "string"
+    },
+    "cached_input_tokens": {
+      "type": "string"
+    },
+    "cache_creation_input_tokens": {
+      "type": "string"
+    },
+    "reasoning_output_tokens": {
+      "type": "string"
+    },
+    "roundtrip_preserved": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.inference.ResultInspection.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "failed",
+    "roundtrip_preserved",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:700677ed55097eba38dbe640c1fe6ee847390481a0d21460b6a859ee05d611e2",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.ResultInspection.State": {
+      "title": "State",
+      "x-ess-name": "llm.inference.ResultInspection.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

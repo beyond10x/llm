@@ -1,0 +1,36 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: unknown-charge-needs-reconciliation
+summary: unknown charge needs reconciliation
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":{"id":"scope","currency":"USD","limit":"0.0000001","max_active":4},"steps":[{"step":"apply","at_ms":0,"command":{"command":"post-charge","charge":{"id":"fee","source":"Invoice
+      fixture","provider":"vendor","account":"account","subject":"subscription","period_start_unix_ms":0,"period_end_unix_ms":100,"currency":"USD","amount":null,"charge_kind":"subscription"}}},{"step":"apply","at_ms":0,"command":{"command":"reserve","request":{"id":"a","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.000000001","assumption":"price-v1","expires_at_ms":100}}},{"step":"apply","at_ms":0,"command":{"command":"reconcile-charge","id":"fee","amount":"0.00000005","evidence":"invoice"}},{"step":"apply","at_ms":1,"command":{"command":"reserve","request":{"id":"a","operation":{"kind":"inference","binding":{"protocol":"chat-completions","provider":"vendor","account":"account","endpoint":"endpoint","model":"model","binding_revision":"binding-v1"},"billing":"metered","request_id":"request"},"reserved":"0.00000005","assumption":"price-v1","expires_at_ms":100}}}]}'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: true
+    error_code: null
+    storage_failed: false
+    attribution_preserved: true
+    results:
+    - ok
+    - err:uncertain-spend
+    - ok
+    - ok
+    totals:
+      settled_nanos: '50'
+      held_nanos: '50'
+      exposure_nanos: '100'
+      uncertain_count: 0
+      active_count: 1
+      above_limit: false
+      stop_required: []
+    charge_ids:
+    - fee

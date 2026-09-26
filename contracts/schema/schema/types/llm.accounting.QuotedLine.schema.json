@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.accounting.QuotedLine",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:854dd01a77db54325f041e8df41f3d1c2fca6ba9b50a547e89f407d2de74831e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.QuotedLine": {
+      "title": "QuotedLine",
+      "x-ess-name": "llm.accounting.QuotedLine",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "record_id": {
+          "type": "string"
+        },
+        "basis": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "unknown": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_id",
+        "basis",
+        "unit"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

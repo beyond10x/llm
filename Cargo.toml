@@ -1,0 +1,54 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/llm-core",
+    "crates/llm-http",
+    "crates/llm-responses",
+    "crates/llm-messages",
+    "crates/llm-chat",
+    "crates/llm-credentials",
+    "crates/llm-providers",
+    "crates/llm-routing",
+    "crates/llm-cost",
+    "crates/llm-provision",
+    "crates/llm-runpod",
+    "crates/llm-modal",
+    "crates/llm-gateway",
+    "crates/llm-cli",
+    "checks/conformance",
+]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.98"
+license = "LicenseRef-B10x-Proprietary"
+repository = "https://github.com/beyond10x/llm"
+publish = false
+
+[workspace.dependencies]
+llm-core = { package = "b10x-llm-core", path = "crates/llm-core" }
+llm-credentials = { package = "b10x-llm-credentials", path = "crates/llm-credentials" }
+llm-http = { package = "b10x-llm-http", path = "crates/llm-http" }
+llm-providers = { package = "b10x-llm-providers", path = "crates/llm-providers" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+zeroize = "1.8"
+tokio = { version = "1.53", features = ["rt", "macros", "time", "sync", "net", "io-util"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+reqwest = { version = "0.12.28", default-features = false, features = ["json", "rustls-tls", "stream"] }
+httpdate = "1.0.3"
+http = "1.5"
+url = "2.5.8"
+sha2 = "0.11.0"
+toml = { version = "1", default-features = false, features = ["parse", "serde"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"

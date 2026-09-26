@@ -1,0 +1,10 @@
+format: ess/1
+system: llm
+version: v1
+domains:
+  - llm.catalog
+  - llm.routing
+  - llm.secrets
+  - llm.accounting
+  - llm.budget
+  - llm.inference

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Account",
+  "x-ess-name": "llm.catalog.Account",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "provider_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "provider",
+        "kind": "references",
+        "source": "llm.catalog.Account",
+        "target": "llm.catalog.Provider",
+        "cardinality": "one",
+        "via": "provider_id"
+      }
+    },
+    "secret_reference_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "credential",
+        "kind": "references",
+        "source": "llm.catalog.Account",
+        "target": "llm.catalog.SecretReference",
+        "cardinality": "one",
+        "via": "secret_reference_id"
+      }
+    },
+    "auth_kind": {
+      "$ref": "#/$defs/llm.catalog.AuthKind"
+    },
+    "api_key_header": {
+      "type": "string"
+    },
+    "billing_kind": {
+      "$ref": "#/$defs/llm.catalog.BillingKind"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.catalog.Account.State"
+    }
+  },
+  "required": [
+    "id",
+    "provider_id",
+    "auth_kind",
+    "billing_kind",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:37b81886d5f81e7262aac2a89eec1101ba6b8da08923b257154b713f62342606",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.Account.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.Account.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    },
+    "llm.catalog.AuthKind": {
+      "title": "AuthKind",
+      "x-ess-name": "llm.catalog.AuthKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Anonymous",
+        "Bearer",
+        "ApiKey"
+      ]
+    },
+    "llm.catalog.BillingKind": {
+      "title": "BillingKind",
+      "x-ess-name": "llm.catalog.BillingKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Metered",
+        "Subscription",
+        "SelfHosted"
+      ]
+    }
+  }
+}

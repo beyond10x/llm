@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.accounting.Usage",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:9f8b3131b1ddf2f998701e31ef51eb38b6281817c9af211eef485dde9853b326",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.Usage": {
+      "title": "Usage",
+      "x-ess-name": "llm.accounting.Usage",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "input_tokens": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "cached_input_tokens": {
+          "type": "integer"
+        },
+        "cache_creation_input_tokens": {
+          "type": "integer"
+        },
+        "reasoning_output_tokens": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

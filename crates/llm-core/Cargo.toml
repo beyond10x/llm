@@ -1,0 +1,24 @@
+[package]
+name = "b10x-llm-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "Neutral model requests, results, streaming, capabilities and typed failures; no I/O or execution authority."
+
+[lints]
+workspace = true
+
+[lib]
+name = "llm_core"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio-util.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

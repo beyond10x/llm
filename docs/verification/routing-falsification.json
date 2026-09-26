@@ -1,0 +1,174 @@
+[
+  {
+    "mutation": "fallback-allowed-without-opt-in",
+    "source": "crates/llm-routing/src/selection.rs",
+    "before": "target.position > 0 && !route.declaration.fallback_enabled",
+    "after": "target.position > 0 && route.declaration.fallback_enabled",
+    "source_before_sha256": "fc0fc1307ca5bbe0023930cfd448f07f480470bd723511e4b82798457617f583",
+    "named_failure": "llm.routing/authored/fallback-disabled",
+    "counts": {
+      "error": 0,
+      "failed": 10,
+      "passed": 18,
+      "skipped": 0,
+      "total": 28,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/capability-reasons-observed",
+      "llm.routing/authored/context-overflow-refused",
+      "llm.routing/authored/explicit-fallback-selects-compatible-target",
+      "llm.routing/authored/fallback-default-disabled",
+      "llm.routing/authored/fallback-disabled",
+      "llm.routing/authored/fallback-preserves-first-compatible-order",
+      "llm.routing/authored/implicit-output-budget-refused",
+      "llm.routing/authored/opaque-state-refuses-cross-binding-fallback",
+      "llm.routing/authored/repointed-endpoint-refuses-opaque-state",
+      "llm.routing/authored/unknown-input-tokens-refused"
+    ]
+  },
+  {
+    "mutation": "context-boundary-exclusive",
+    "source": "crates/llm-routing/src/selection.rs",
+    "before": "total > caps.context_window",
+    "after": "total >= caps.context_window",
+    "source_before_sha256": "fc0fc1307ca5bbe0023930cfd448f07f480470bd723511e4b82798457617f583",
+    "named_failure": "llm.routing/authored/inclusive-context-boundary",
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 26,
+      "skipped": 0,
+      "total": 28,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/implicit-output-budget-inclusive",
+      "llm.routing/authored/inclusive-context-boundary"
+    ]
+  },
+  {
+    "mutation": "unknown-input-admitted",
+    "source": "crates/llm-routing/src/selection.rs",
+    "before": "None => reasons.push(Rejection::InputTokensUnknown),",
+    "after": "None => {},",
+    "source_before_sha256": "fc0fc1307ca5bbe0023930cfd448f07f480470bd723511e4b82798457617f583",
+    "named_failure": "llm.routing/authored/unknown-input-tokens-refused",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "total": 28,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/unknown-input-tokens-refused"
+    ]
+  },
+  {
+    "mutation": "last-compatible-target",
+    "source": "crates/llm-routing/src/selection.rs",
+    "before": "rejections.is_empty() && selected.is_none()",
+    "after": "rejections.is_empty()",
+    "source_before_sha256": "fc0fc1307ca5bbe0023930cfd448f07f480470bd723511e4b82798457617f583",
+    "named_failure": "llm.routing/authored/fallback-preserves-first-compatible-order",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "total": 28,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/fallback-preserves-first-compatible-order"
+    ]
+  },
+  {
+    "mutation": "request-content-lost",
+    "source": "crates/llm-routing/src/selection.rs",
+    "before": "let mut request = request.clone();",
+    "after": "let mut request = request.clone();\n        request.instructions.clear();",
+    "source_before_sha256": "fc0fc1307ca5bbe0023930cfd448f07f480470bd723511e4b82798457617f583",
+    "named_failure": "llm.routing/authored/primary-selection-preserves-request",
+    "counts": {
+      "error": 0,
+      "failed": 9,
+      "passed": 19,
+      "skipped": 0,
+      "total": 28,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/explicit-fallback-selects-compatible-target",
+      "llm.routing/authored/fallback-preserves-first-compatible-order",
+      "llm.routing/authored/implicit-output-budget-inclusive",
+      "llm.routing/authored/inclusive-context-boundary",
+      "llm.routing/authored/matching-opaque-binding-preserved",
+      "llm.routing/authored/primary-selection-preserves-request",
+      "llm.routing/authored/protocol-messages-independent-of-provider",
+      "llm.routing/authored/protocol-responses-independent-of-provider",
+      "llm.routing/authored/subscription-billing-independent-of-protocol"
+    ]
+  },
+  {
+    "mutation": "wrong-messages-path",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "Protocol::Messages => \"messages\"",
+    "after": "Protocol::Messages => \"responses\"",
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "named_failure": "llm.routing/authored/protocol-messages-independent-of-provider",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "total": 28,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/protocol-messages-independent-of-provider"
+    ]
+  },
+  {
+    "mutation": "missing-secret-ref-accepted",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "if self.secret_reference_id.is_none() {",
+    "after": "if false {",
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "named_failure": "llm.routing/authored/invalid-auth-binding-refused",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 27,
+      "skipped": 0,
+      "total": 28,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/invalid-auth-binding-refused"
+    ]
+  },
+  {
+    "mutation": "opaque-incompatibility-unreported",
+    "source": "crates/llm-routing/src/selection.rs",
+    "before": "reasons.push(Rejection::OpaqueState);",
+    "after": "// deliberately lose opaque rejection",
+    "source_before_sha256": "fc0fc1307ca5bbe0023930cfd448f07f480470bd723511e4b82798457617f583",
+    "named_failure": "llm.routing/authored/repointed-endpoint-refuses-opaque-state",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 25,
+      "skipped": 0,
+      "total": 28,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.routing/authored/opaque-state-refuses-cross-binding-fallback",
+      "llm.routing/authored/repointed-endpoint-refuses-opaque-state",
+      "llm.routing/authored/repointed-model-refuses-opaque-state"
+    ]
+  }
+]

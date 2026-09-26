@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.budget.ReservationFact",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:3e7fca7793f339ac7307b3929faeb20b97261ccda4f8b1b97e0f72313b4778ba",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.budget.ReservationFact": {
+      "title": "ReservationFact",
+      "x-ess-name": "llm.budget.ReservationFact",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "reserved": {
+          "type": "string"
+        },
+        "assumption": {
+          "type": "string"
+        },
+        "expires_at_ms": {
+          "type": "string"
+        },
+        "known": {
+          "type": "string"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "settlement_evidence": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "phase",
+        "reserved",
+        "assumption",
+        "expires_at_ms"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,73 @@
+type: ess-scenario/1
+domain: llm.accounting
+scenario: zero-denominator-refused
+summary: zero denominator refused
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.accounting.Quote
+  input:
+    prices_toml: '# Fictional fixture prices. No vendor, model or resource is qualified
+      by this example.
+
+      format = "llm.prices/1"
+
+      revision = "lab-fixture-r1"
+
+      source = "Operator supplied test fixture"
+
+      as_of_unix_ms = 1789776000000
+
+      currency = "USD"
+
+
+      [[models]]
+
+      id = "model-price"
+
+      serving_model_id = "lab-serving"
+
+      # Supply the actual immutable binding revision from the catalog for real observations.
+
+      binding_revision = "fixture-binding-r1"
+
+      upstream_model = "lab/model-v1"
+
+      input = { amount = "2", per_units = 0 }
+
+      cached_input = { amount = "0.5", per_units = 0 }
+
+      cache_creation_input = { amount = "3", per_units = 0 }
+
+      output = { amount = "8", per_units = 0 }
+
+
+      [[compute]]
+
+      id = "resource-price"
+
+      hosting_provider = "lab-host"
+
+      account = "lab-account"
+
+      resource_class = "whole-pod"
+
+      # One whole resource-hour, expressed as milliseconds. Not a per-GPU inference.
+
+      rate = { amount = "3.6", per_units = 3600000 }
+
+      '
+    usage_json: '{"format":"llm.usage/2","observations":[{"kind":"attempt","data":{"id":"one","usage_record_id":"usage","request_id":"request","route_target_id":"target","serving_model_id":"lab-serving","price_id":"model-price","binding":{"protocol":"responses","provider":"lab","account":"lab-account","endpoint":"endpoint","model":"model","binding_revision":"fixture-binding-r1"},"upstream_model":"lab/model-v1","billing":"metered","dispatch":"accepted","failed":false,"final_usage":true,"usage":{"input_tokens":100,"output_tokens":5,"cached_input_tokens":20,"cache_creation_input_tokens":10,"reasoning_output_tokens":3}}}]}'
+  outcome: observed
+assert:
+- view: llm.accounting.LastQuote
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.accounting.LastQuote
+  contains:
+    accepted: false
+    error_code: invalid-denominator
+    record_ids: []
+    lines: []
+    totals: []
+    observations_preserved: false

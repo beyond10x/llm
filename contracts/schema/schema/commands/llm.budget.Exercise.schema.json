@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exercise input",
+  "x-ess-name": "llm.budget.Exercise",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:1499e3813f5e9a09a260e71fcfa7a5d3d47cfd477e6aaf455e0833b2e6402c13",
+    "regenerate": "ess generate"
+  }
+}

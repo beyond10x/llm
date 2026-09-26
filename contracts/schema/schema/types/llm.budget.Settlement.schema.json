@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.budget.Settlement",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:8af66e40334c52e2bd4f6c6244569a3b5496e0e4f8b5828684dfc191f8162f89",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.budget.Settlement": {
+      "title": "Settlement",
+      "x-ess-name": "llm.budget.Settlement",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "known": {
+          "type": "string"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "currency",
+        "known",
+        "complete",
+        "evidence"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

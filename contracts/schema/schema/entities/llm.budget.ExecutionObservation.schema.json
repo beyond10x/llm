@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionObservation",
+  "x-ess-name": "llm.budget.ExecutionObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "valid_program": {
+      "type": "boolean"
+    },
+    "storage_failed": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "permits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "concurrent_admitted": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "concurrent_errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "policy_id": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "string"
+    },
+    "max_active": {
+      "type": "integer"
+    },
+    "now_ms": {
+      "type": "string"
+    },
+    "totals": {
+      "$ref": "#/$defs/llm.budget.Totals"
+    },
+    "reservations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/llm.budget.ReservationFact"
+      }
+    },
+    "charge_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "attribution_preserved": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.budget.ExecutionObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "valid_program",
+    "storage_failed",
+    "results",
+    "permits",
+    "concurrent_admitted",
+    "concurrent_errors",
+    "reservations",
+    "charge_ids",
+    "attribution_preserved",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:c6d6d3439da6b7d6ca710909be34c31c644b932598b359d6aed4b15b63bae713",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.budget.ExecutionObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.budget.ExecutionObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.budget.ReservationFact": {
+      "title": "ReservationFact",
+      "x-ess-name": "llm.budget.ReservationFact",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "reserved": {
+          "type": "string"
+        },
+        "assumption": {
+          "type": "string"
+        },
+        "expires_at_ms": {
+          "type": "string"
+        },
+        "known": {
+          "type": "string"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "settlement_evidence": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "phase",
+        "reserved",
+        "assumption",
+        "expires_at_ms"
+      ],
+      "additionalProperties": false
+    },
+    "llm.budget.Totals": {
+      "title": "Totals",
+      "x-ess-name": "llm.budget.Totals",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "settled_nanos": {
+          "type": "string"
+        },
+        "held_nanos": {
+          "type": "string"
+        },
+        "exposure_nanos": {
+          "type": "string"
+        },
+        "uncertain_count": {
+          "type": "integer"
+        },
+        "active_count": {
+          "type": "integer"
+        },
+        "above_limit": {
+          "type": "boolean"
+        },
+        "stop_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "settled_nanos",
+        "held_nanos",
+        "exposure_nanos",
+        "uncertain_count",
+        "active_count",
+        "above_limit",
+        "stop_required"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

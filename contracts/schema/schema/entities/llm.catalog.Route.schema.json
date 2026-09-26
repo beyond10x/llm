@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Route",
+  "x-ess-name": "llm.catalog.Route",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "alias": {
+      "type": "string"
+    },
+    "fallback_enabled": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.catalog.Route.State"
+    }
+  },
+  "required": [
+    "id",
+    "alias",
+    "fallback_enabled",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:5eb90f7a981a9c30ebc345d07d13f03c1d03e0be4a17920db90c6259cc47d1f1",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.Route.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.Route.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

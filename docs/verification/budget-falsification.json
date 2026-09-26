@@ -1,0 +1,326 @@
+[
+  {
+    "mutation": "omit-held-reservations",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "if totals\n            .exposure()?",
+    "after": "if totals\n            .settled",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/cap-includes-other-reservations",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 142,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/cap-includes-other-reservations",
+      "llm.budget/authored/concurrent-reservations-cannot-overspend",
+      "llm.budget/authored/failed-renewal-keeps-stop-obligation"
+    ]
+  },
+  {
+    "mutation": "ignore-unknown-spend",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "if totals.uncertain != 0 {",
+    "after": "if false {",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/unknown-holds-reservation",
+    "counts": {
+      "error": 0,
+      "failed": 5,
+      "passed": 140,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/partial-cost-does-not-free-unknown-exposure",
+      "llm.budget/authored/restart-retains-interrupted-model",
+      "llm.budget/authored/stopped-resource-still-needs-cost",
+      "llm.budget/authored/unknown-charge-needs-reconciliation",
+      "llm.budget/authored/unknown-holds-reservation"
+    ]
+  },
+  {
+    "mutation": "reissue-start",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "let record = self.get(&id)?;\n                if record.phase != Phase::Reserved {",
+    "after": "let record = self.get(&id)?;\n                if false {",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/one-shot-start",
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 143,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/one-shot-start",
+      "llm.budget/authored/restart-does-not-reissue-start"
+    ]
+  },
+  {
+    "mutation": "expire-start-as-free",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "Phase::Started => Phase::Uncertain,",
+    "after": "Phase::Started => Phase::Cancelled,",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/expired-start-is-not-free",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 144,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/expired-start-is-not-free"
+    ]
+  },
+  {
+    "mutation": "expire-compute-as-free",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "Phase::Started if matches!(record.request.operation, Operation::Compute { .. }) => {\n                    Phase::StopRequired\n                }",
+    "after": "Phase::Started if matches!(record.request.operation, Operation::Compute { .. }) => {\n                    Phase::Cancelled\n                }",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/compute-expiry-is-not-shutdown",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 144,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/compute-expiry-is-not-shutdown"
+    ]
+  },
+  {
+    "mutation": "forget-recovery-uncertainty",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "if record.phase == Phase::Started {",
+    "after": "if false {",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/restart-retains-interrupted-model",
+    "counts": {
+      "error": 0,
+      "failed": 4,
+      "passed": 141,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/restart-does-not-reissue-start",
+      "llm.budget/authored/restart-retains-compute-shutdown",
+      "llm.budget/authored/restart-retains-interrupted-model",
+      "llm.budget/authored/storage-failure-preserves-existing-shutdown-work"
+    ]
+  },
+  {
+    "mutation": "omit-renewal-stop",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "record.phase = Phase::StopRequired;\n                        record.evidence = Some(assumption);",
+    "after": "record.phase = Phase::Started;\n                        record.evidence = Some(assumption);",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/failed-renewal-keeps-stop-obligation",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 142,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/failed-renewal-keeps-stop-obligation",
+      "llm.budget/authored/invalid-renewal-also-requires-stop",
+      "llm.budget/authored/renewal-overflow-is-not-saturated"
+    ]
+  },
+  {
+    "mutation": "settlement-overrun-is-capped",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "record.settlement = Some(settlement);",
+    "after": "let mut settlement = settlement; settlement.known = settlement.known.min(record.request.reserved);\n        record.settlement = Some(settlement);",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/settlement-overrun-is-retained",
+    "counts": {
+      "error": 0,
+      "failed": 4,
+      "passed": 141,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/overrun-also-blocks-pre-reserved-start",
+      "llm.budget/authored/partial-overrun-keeps-known-charge",
+      "llm.budget/authored/settlement-overrun-is-retained",
+      "llm.budget/authored/stopped-and-priced-resource-settles"
+    ]
+  },
+  {
+    "mutation": "ignore-failed-commit",
+    "source": "crates/llm-cost/src/budget/sqlite.rs",
+    "before": "transaction.commit().map_err(storage)\n}",
+    "after": "let _ = transaction.commit(); Ok(())\n}",
+    "source_before_sha256": "0a7bc4c479936d3430b24a916a7be0d92c970bcc899b21735f517755f0706aa9",
+    "named_failure": "llm.budget/authored/failed-commit-issues-no-permit",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 142,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/failed-commit-issues-no-permit",
+      "llm.budget/authored/storage-failure-preserves-existing-shutdown-work",
+      "llm.budget/authored/write-failure-freezes-owner-until-reopen"
+    ]
+  },
+  {
+    "mutation": "ignore-owner-lock",
+    "source": "crates/llm-cost/src/budget/sqlite.rs",
+    "before": "file.try_lock().map_err(|error| match error {",
+    "after": "return Ok(());\n    file.try_lock().map_err(|error| match error {",
+    "source_before_sha256": "0a7bc4c479936d3430b24a916a7be0d92c970bcc899b21735f517755f0706aa9",
+    "named_failure": "llm.budget/authored/second-owner-refuses",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 144,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/second-owner-refuses"
+    ]
+  },
+  {
+    "mutation": "ignore-policy-mismatch",
+    "source": "crates/llm-cost/src/budget/sqlite.rs",
+    "before": "if &recorded != policy {",
+    "after": "if false {",
+    "source_before_sha256": "0a7bc4c479936d3430b24a916a7be0d92c970bcc899b21735f517755f0706aa9",
+    "named_failure": "llm.budget/authored/reopen-refuses-policy-reset",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 144,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/reopen-refuses-policy-reset"
+    ]
+  },
+  {
+    "mutation": "allow-after-write-failure",
+    "source": "crates/llm-cost/src/budget/sqlite.rs",
+    "before": "inner.failed = true;",
+    "after": "inner.failed = false;",
+    "source_before_sha256": "0a7bc4c479936d3430b24a916a7be0d92c970bcc899b21735f517755f0706aa9",
+    "named_failure": "llm.budget/authored/write-failure-freezes-owner-until-reopen",
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 142,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/failed-commit-issues-no-permit",
+      "llm.budget/authored/storage-failure-preserves-existing-shutdown-work",
+      "llm.budget/authored/write-failure-freezes-owner-until-reopen"
+    ]
+  },
+  {
+    "mutation": "ignore-clock-reversal",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "if now_ms < self.now_ms {",
+    "after": "if false {",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/clock-reversal-refuses",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 144,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/clock-reversal-refuses"
+    ]
+  },
+  {
+    "mutation": "allow-wrong-settlement-currency",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "if settlement.currency != self.policy.currency {",
+    "after": "if false {",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/settlement-currency-refused",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 144,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/settlement-currency-refused"
+    ]
+  },
+  {
+    "mutation": "round-wide-exposure",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "exposure_nanos: exposure.to_string(),",
+    "after": "exposure_nanos: (exposure as f64).to_string(),",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/wide-aggregate-charge-is-exact",
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 143,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/renewal-overflow-is-not-saturated",
+      "llm.budget/authored/wide-aggregate-charge-is-exact"
+    ]
+  },
+  {
+    "mutation": "allow-concurrency-overflow",
+    "source": "crates/llm-cost/src/budget/engine.rs",
+    "before": "if new && totals.active >= self.policy.max_active as usize {",
+    "after": "if false {",
+    "source_before_sha256": "05a990272af0843680363df294fe4d6fd7eca9ad10d28307d73da545d8214b39",
+    "named_failure": "llm.budget/authored/concurrency-includes-unfinished-work",
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 144,
+      "skipped": 0,
+      "total": 145,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.budget/authored/concurrency-includes-unfinished-work"
+    ]
+  }
+]

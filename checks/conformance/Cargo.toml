@@ -1,0 +1,26 @@
+[package]
+name = "b10x-llm-conformance"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+llm-core.workspace = true
+llm-cost = { package = "b10x-llm-cost", path = "../../crates/llm-cost", features = ["sqlite"] }
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+llm-credentials = { workspace = true, features = ["file", "keychain"] }
+keyring-core = "1.0.0"
+tempfile = "3.27"
+tokio.workspace = true
+rustix = { version = "1.1.5", default-features = false, features = ["std", "fs"] }
+llm-routing = { package = "b10x-llm-routing", path = "../../crates/llm-routing" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+ess-conformance = { git = "https://github.com/beyond10x/ess.git", rev = "a5f1bea13294510819b266561c83be9509e6ba57" }
+ess-primitives = { git = "https://github.com/beyond10x/ess.git", rev = "a5f1bea13294510819b266561c83be9509e6ba57" }

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.accounting.QuotedTotal",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:7b71179c73ad7c40793caa88175078ac22f043217b8b9a7ed97a38fb2443280b",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.QuotedTotal": {
+      "title": "QuotedTotal",
+      "x-ess-name": "llm.accounting.QuotedTotal",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "basis": {
+          "type": "string"
+        },
+        "known_subtotal": {
+          "type": "string"
+        },
+        "unknown_lines": {
+          "type": "integer"
+        },
+        "complete_total": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "basis",
+        "known_subtotal",
+        "unknown_lines"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

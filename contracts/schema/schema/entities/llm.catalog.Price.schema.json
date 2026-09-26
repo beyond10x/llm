@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Price",
+  "x-ess-name": "llm.catalog.Price",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "serving_model_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "serving_model",
+        "kind": "references",
+        "source": "llm.catalog.Price",
+        "target": "llm.catalog.ServingModel",
+        "cardinality": "one",
+        "via": "serving_model_id"
+      }
+    },
+    "currency": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.catalog.Price.State"
+    }
+  },
+  "required": [
+    "id",
+    "serving_model_id",
+    "currency",
+    "revision",
+    "source",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:ffec3988cc4baf2f06731e4d360001055b45d4f031e334e63706f07c2f3d041f",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.Price.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.Price.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

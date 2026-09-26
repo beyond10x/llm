@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evaluation",
+  "x-ess-name": "llm.routing.Evaluation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "evaluation_id": {
+      "type": "string"
+    },
+    "catalog_valid": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "selected_target": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "auth_kind": {
+      "type": "string"
+    },
+    "billing_kind": {
+      "type": "string"
+    },
+    "config_digest": {
+      "type": "string"
+    },
+    "input_tokens": {
+      "type": "integer"
+    },
+    "rejections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "request_preserved": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.routing.Evaluation.State"
+    }
+  },
+  "required": [
+    "evaluation_id",
+    "catalog_valid",
+    "rejections",
+    "request_preserved",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1e4410acbb59104a27f7fbdde1f33de64703f1b86743bfd6ff773fcc1d5ca823",
+    "contract_digest": "slice-sha256/2:250f988cd0fa0d7dbc9a380d82d56a123991aea2d98c96db308ef53ce8c8d5a0",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.routing.Evaluation.State": {
+      "title": "State",
+      "x-ess-name": "llm.routing.Evaluation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

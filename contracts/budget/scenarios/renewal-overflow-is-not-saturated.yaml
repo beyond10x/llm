@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: renewal-overflow-is-not-saturated
+summary: renewal overflow is not saturated
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":{"id":"scope","currency":"USD","limit":"18446744073.709551615","max_active":4},"steps":[{"step":"apply","at_ms":1,"command":{"command":"reserve","request":{"id":"pod","operation":{"kind":"compute","deployment":"pod","provider":"hosting","account":"owner"},"reserved":"18446744073.709551615","assumption":"price-v1","expires_at_ms":100}}},{"step":"apply","at_ms":2,"command":{"command":"begin","id":"pod"}},{"step":"apply","at_ms":3,"command":{"command":"renew","id":"pod","additional":"0.000000001","expires_at_ms":200,"assumption":"renewal"}}]}'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: true
+    error_code: null
+    storage_failed: false
+    attribution_preserved: true
+    results:
+    - ok
+    - ok
+    - err:arithmetic
+    totals:
+      settled_nanos: '0'
+      held_nanos: '18446744073709551615'
+      exposure_nanos: '18446744073709551615'
+      uncertain_count: 1
+      active_count: 1
+      above_limit: false
+      stop_required:
+      - pod

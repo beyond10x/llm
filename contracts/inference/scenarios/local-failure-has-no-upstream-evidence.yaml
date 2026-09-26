@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.inference
+scenario: local-failure-has-no-upstream-evidence
+summary: local failure has no upstream evidence
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.inference.InspectResult
+  input:
+    result_json: '{"code":"cancelled","message":"the caller cancelled","dispatch":"not-sent"}'
+    failure: true
+  outcome: observed
+assert:
+- view: llm.inference.LastResult
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.inference.LastResult
+  contains:
+    accepted: true
+    failed: true
+    error_code: cancelled
+    dispatch: not-sent
+    upstream_model: null
+    response_id: null
+    final_usage: null
+    input_tokens: null
+    output_tokens: null
+    cached_input_tokens: null
+    cache_creation_input_tokens: null
+    reasoning_output_tokens: null
+    roundtrip_preserved: true
