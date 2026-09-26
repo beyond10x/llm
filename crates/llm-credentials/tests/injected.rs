@@ -169,3 +169,77 @@ fn secret_material_is_not_a_config_value_and_binary_custody_is_supported() {
     assert!(serde_json::from_str::<SecretRef>("\"has whitespace\"").is_err());
     assert!(SecretRef::new("").is_err());
 }
+
+/// Refresh fails with the queued outcomes in order, then rotates like `Memory`.
+struct Scripted {
+    memory: Memory,
+    failures: std::sync::Mutex<Vec<Option<SecretError>>>,
+}
+impl SecretResolver for Scripted {
+    fn resolve<'a>(
+        &'a self,
+        reference: &'a SecretRef,
+    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
+        self.memory.resolve(reference)
+    }
+    fn refresh<'a>(
+        &'a self,
+        reference: &'a SecretRef,
+        rejected: &'a SecretVersion,
+    ) -> BoxFuture<'a, Result<(), SecretError>> {
+        Box::pin(async move {
+            let next = self.failures.lock().unwrap().pop();
+            match next {
+                Some(Some(error)) => {
+                    self.memory.refreshes.fetch_add(1, Ordering::SeqCst);
+                    Err(error)
+                }
+                // `Some(None)`: the source reports success without replacing the generation.
+                Some(None) => {
+                    self.memory.refreshes.fetch_add(1, Ordering::SeqCst);
+                    Ok(())
+                }
+                None => self.memory.refresh(reference, rejected).await,
+            }
+        })
+    }
+}
+
+#[tokio::test]
+async fn transient_unavailable_refresh_is_retried_on_the_next_call() {
+    let source = Arc::new(Scripted {
+        memory: Memory::default(),
+        failures: std::sync::Mutex::new(vec![Some(SecretError::Unavailable)]),
+    });
+    let resolver = CoordinatedResolver::new(source.clone(), 1);
+    let reference = SecretRef::new("account").unwrap();
+    let rejected = resolver.resolve(&reference).await.unwrap().version;
+    assert_eq!(
+        resolver.refresh(&reference, &rejected).await,
+        Err(SecretError::Unavailable)
+    );
+    resolver.refresh(&reference, &rejected).await.unwrap();
+    assert_eq!(source.memory.refreshes.load(Ordering::SeqCst), 2);
+    assert_eq!(
+        resolver.resolve(&reference).await.unwrap().secret.expose(),
+        b"test-value-1"
+    );
+}
+
+#[tokio::test]
+async fn rejected_refresh_is_cached_for_its_generation() {
+    let source = Arc::new(Scripted {
+        memory: Memory::default(),
+        failures: std::sync::Mutex::new(vec![None]),
+    });
+    let resolver = CoordinatedResolver::new(source.clone(), 1);
+    let reference = SecretRef::new("account").unwrap();
+    let rejected = resolver.resolve(&reference).await.unwrap().version;
+    for _ in 0..2 {
+        assert_eq!(
+            resolver.refresh(&reference, &rejected).await,
+            Err(SecretError::RefreshRejected)
+        );
+    }
+    assert_eq!(source.memory.refreshes.load(Ordering::SeqCst), 1);
+}

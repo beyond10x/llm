@@ -78,9 +78,9 @@ assert:
     - record_id: one
       basis: metered-estimate
       unit: input-token
-      quantity: '0'
-      amount: '0'
-      unknown: usage-incomplete
+      quantity: null
+      amount: null
+      unknown: quantity-unknown
     - record_id: one
       basis: metered-estimate
       unit: cached-input-token

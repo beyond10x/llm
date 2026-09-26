@@ -47,6 +47,9 @@ impl HttpClient {
         let client = Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .retry(reqwest::retry::never())
+            // Credentials go to the caller-selected endpoint only; ambient proxy settings never
+            // redirect them.
+            .no_proxy()
             // Our absolute deadline spans headers and body. A second reqwest deadline races it
             // and can turn the same expiration into an unrelated transport error.
             .build()

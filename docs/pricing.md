@@ -84,7 +84,12 @@ separate billable attempts.
 
 For `final_usage = false`, calculable amounts remain in `known_subtotal`, with `usage-incomplete`
 on otherwise priced lines. Such lines also increment `unknown_lines`, so even fully populated or
-all-zero partial snapshots never produce a `complete_total`. Existing missing model, quantity and
+all-zero partial snapshots never produce a `complete_total`. The uncached input line is the one
+exception to "calculable": it is a difference, and lower bounds of the total and of each cache
+class do not bound their difference, because a later snapshot can move input into a cache class.
+A partial snapshot therefore prices that line `quantity-unknown` with no quantity or amount; only
+a final cache split supplies it. Every other partial line is a directly reported, monotone
+quantity, so `known_subtotal` stays a lower bound of the attempt's final `complete_total`. Existing missing model, quantity and
 rate reasons remain when a line cannot be priced. `llm.usage/2` requires explicit finality and
 refuses v1; `llm.cost/2` reflects amounts and incomplete reasons coexisting on a line. The price
 book remains v1. These are unreleased contract changes, not implicit compatibility conversions.

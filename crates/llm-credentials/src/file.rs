@@ -79,10 +79,8 @@ fn read(path: &std::path::Path) -> Result<ResolvedSecret, SecretError> {
     };
     use std::{
         fs::{File, Metadata},
-        io::Read,
         os::unix::fs::MetadataExt,
     };
-    use zeroize::Zeroizing;
 
     fn failure(error: Errno) -> SecretError {
         match error {
@@ -146,14 +144,7 @@ fn read(path: &std::path::Path) -> Result<ResolvedSecret, SecretError> {
     if size > MAX_SECRET_BYTES {
         return Err(SecretError::TooLarge);
     }
-    let mut bytes = Zeroizing::new(Vec::with_capacity(size));
-    (&file)
-        .take((MAX_SECRET_BYTES + 1) as u64)
-        .read_to_end(&mut bytes)
-        .map_err(|_| SecretError::Unavailable)?;
-    if bytes.len() > MAX_SECRET_BYTES {
-        return Err(SecretError::TooLarge);
-    }
+    let mut bytes = read_exact_secret(&file, size)?;
     let after = metadata(&file)?;
     regular(&after)?;
     if before.len() != after.len()
@@ -166,4 +157,51 @@ fn read(path: &std::path::Path) -> Result<ResolvedSecret, SecretError> {
         return Err(SecretError::Unavailable);
     }
     local::resolved(Secret::new(std::mem::take(&mut *bytes))?)
+}
+
+/// Reads exactly `size` bytes into storage allocated once, so no reallocation can leave an
+/// unzeroized copy of secret material behind, then requires end of file.
+#[cfg(any(target_os = "linux", test))]
+fn read_exact_secret(
+    mut source: impl std::io::Read,
+    size: usize,
+) -> Result<zeroize::Zeroizing<Vec<u8>>, SecretError> {
+    let mut bytes = zeroize::Zeroizing::new(vec![0; size]);
+    source
+        .read_exact(&mut bytes)
+        .map_err(|_| SecretError::Unavailable)?;
+    let mut probe = zeroize::Zeroizing::new([0; 1]);
+    loop {
+        match source.read(&mut *probe) {
+            Ok(0) => return Ok(bytes),
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+            Ok(_) | Err(_) => return Err(SecretError::Unavailable),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn exact_read_keeps_one_allocation_and_refuses_short_or_long_sources() {
+        let bytes = read_exact_secret(Cursor::new(b"abc\n".to_vec()), 4).unwrap();
+        assert_eq!(bytes.as_slice(), b"abc\n");
+        assert_eq!(bytes.capacity(), 4);
+        assert!(
+            read_exact_secret(Cursor::new(Vec::new()), 0)
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            read_exact_secret(Cursor::new(b"abc".to_vec()), 4).unwrap_err(),
+            SecretError::Unavailable
+        );
+        assert_eq!(
+            read_exact_secret(Cursor::new(b"abcde".to_vec()), 4).unwrap_err(),
+            SecretError::Unavailable
+        );
+    }
 }

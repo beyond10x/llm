@@ -226,7 +226,13 @@ impl CoordinatedResolver {
             }),
             Err(error) => Err(error),
         };
-        guard.attempted = Some((rejected.clone(), result));
+        // Only a refused or uncertain mutation binds this generation; a transient failure is
+        // retried by the next caller.
+        guard.attempted = matches!(
+            result,
+            Err(SecretError::RefreshUncertain | SecretError::RefreshRejected)
+        )
+        .then(|| (rejected.clone(), result));
         result
     }
 }
