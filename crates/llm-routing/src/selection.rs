@@ -127,21 +127,24 @@ impl Catalog {
         input_tokens: Option<u64>,
     ) -> Result<Selection<'_>, Error> {
         let explanation = self.explain(request, input_tokens)?;
-        let selected = explanation.selected_target_id.ok_or_else(|| {
-            let reasons = explanation
-                .targets
-                .iter()
-                .flat_map(|target| target.rejections.iter().map(|reason| reason.label()))
-                .collect::<std::collections::BTreeSet<_>>()
-                .into_iter()
-                .collect::<Vec<_>>()
-                .join(", ");
-            Error::unsupported(format!("route has no compatible target: {reasons}"))
-        })?;
+        let selected = explanation
+            .selected_target_id
+            .as_ref()
+            .ok_or_else(|| crate::fallback::no_compatible_target(&explanation))?;
+        self.select(&explanation.alias, selected, request)
+    }
+
+    /// Bind an explained, admissible target; the request keeps every setting but the model name.
+    pub(crate) fn select(
+        &self,
+        alias: &Id,
+        selected: &Id,
+        request: &TurnRequest,
+    ) -> Result<Selection<'_>, Error> {
         let target = self
             .routes
-            .get(&explanation.alias)
-            .and_then(|route| route.targets.iter().find(|target| target.id == selected))
+            .get(alias)
+            .and_then(|route| route.targets.iter().find(|target| &target.id == selected))
             .ok_or_else(|| Error::invalid("selected route target is missing"))?;
         let binding = self
             .bindings

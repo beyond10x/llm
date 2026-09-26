@@ -1,5 +1,6 @@
 mod budgets;
 mod chat;
+mod fallback;
 mod gate;
 mod hosting;
 mod inference;
