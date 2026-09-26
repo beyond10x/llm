@@ -337,6 +337,9 @@ dependencies = [
 [[package]]
 name = "b10x-llm-runpod"
 version = "0.0.0"
+dependencies = [
+ "b10x-llm-provision",
+]
 
 [[package]]
 name = "base64"
