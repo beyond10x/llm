@@ -1,6 +1,6 @@
 # Wave 3
 
-Status: **running; approved by the operator 2026-09-26** ("then keep going with the next wave").
+Status: **closed 2026-09-26: one story implemented.** Approved by the operator ("then keep going with the next wave").
 Skill `aep:implementing` 0.14.2; `aep` 0.60.0. Base: `plan/llm-foundation` at `87070c3` on origin.
 
 ## Unit
@@ -28,7 +28,7 @@ remaining story is blocked or depends on an unfinished one:
 | Both envelopes move: `llm.turn/2` → `llm.turn/3` and `llm.outcome/3` → `llm.outcome/4`, because both carry `Item` | coordinator; `crates/llm-core/src/turn.rs:395`, `:417` |
 | Routing reuses `Rejection::OpaqueState` for the new state; no `spec/domains/catalog.yaml` change | coordinator; scoper report |
 | "Gateway round trip" is a projection ingress followed by the same projection's egress; the gateway translation itself is `story:gateway-translation` | coordinator; `crates/llm-gateway` has no `Item` use |
-| The unit owns the 74 scenario files that embed `llm.turn/2` and `docs/contract-v1.md` | coordinator |
+| The unit owns the 85 scenario files that embed `llm.turn/2` and `docs/contract-v1.md` | coordinator |
 
 ## Coordinator-owned
 
@@ -49,11 +49,39 @@ As in wave 2: workspace `Cargo.toml`, `Cargo.lock`, `contracts/ess-inputs.yaml`,
 
 | Unit | Branch | Worktree id | Build dir | Scratch root | Stage |
 |---|---|---|---|---|---|
-| integration | `wave/3` | `wave3-integration` | `~/.cache/b10x-target/llm-wave3-integration` | `~/.cache/llm-wave-3/integrate` | opening commit |
-| opaque | `impl/unattributed-opaque-state` | `wave3-opaque` | `~/.cache/b10x-target/llm-wave3-opaque` | `~/.cache/llm-wave-3/opaque` | dispatching |
+| integration | `wave/3` | `wave3-integration` | `~/.cache/b10x-target/llm-wave3-integration` | `~/.cache/llm-wave-3/integrate` | closed |
+| opaque | `impl/unattributed-opaque-state` | `wave3-opaque` | `~/.cache/b10x-target/llm-wave3-opaque` | `~/.cache/llm-wave-3/opaque` | merged `ee4b7a7` |
 
 ## The commits this wave makes
 
 The opening store commit on `wave/3`; one unit commit; one merge into `wave/3`; the contract
 regeneration commit; the closing store commit; the merge of `wave/3` into `plan/llm-foundation`
 and its push through the bot. No tag, no release, no merge into `main`.
+
+## The close
+
+| Adversary passes | Findings per pass | Corrections | Merged |
+|---|---|---|---|
+| 2 | 5, then 2 (0 carried, per `aep plan artifact findings`) | 2; the second reviewed by the coordinator | `ee4b7a7` |
+
+The first whole-repository gate on `wave/3` exited 1 at the conformance step, 422/423:
+`contracts/inference/scenarios/outcome-version-4-refused` asserted that `llm.outcome/4` is a
+refused future version, and this wave made it current. The unit's gate ran the chat, messages,
+responses and routing lanes only. `952de3f` moves that scenario to `llm.outcome/5`, adds
+`outcome-version-3-refused`, and regenerates the contract files. The eight Rust and ESS steps before
+conformance exited 0 on the merged tree; after `952de3f`, which changes scenario files only,
+`ess specify validate`, `conformance -- check` (424/424 in three runs) and
+`aep plan artifact validate` were re-run and exit 0.
+
+Coordinator decisions beyond the brief: the contract is JSON-equal, not byte-equal; Responses
+ingress carries only `CARRIED_ENTRY_TYPES` (`reasoning`); route selection refuses unattributed
+state as `opaque-state`, the same rejection as foreign state. `review-result:adversary-opaque-pass-2`
+finding 2 (a gateway binding carried state to the reader reinstates laundering) is written into
+`story:gateway-translation` under "Opaque state carried from ingress".
+
+### What it cost
+
+| Agent | Tokens | Tool uses | Wall |
+|---|---|---|---|
+| implementor, rounds 0–2 | 278,382 + 313,380 + 328,137 | 173 + 35 + 11 | 19m14s + 4m09s + 1m43s |
+| adversary, passes 1–2 | 151,883 + 154,330 | 46 + 40 | 8m48s + 8m37s |

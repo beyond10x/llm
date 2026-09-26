@@ -2,7 +2,7 @@
 format: aep.planning-md/1
 id: story:unattributed-opaque-state
 kind: story
-status: active
+status: implemented
 title: A gateway carries opaque state it cannot attribute, and cannot send it
 relations:
 - decomposes: epic:inference
@@ -27,6 +27,8 @@ scope:
 - confidence: cited
   path: crates/llm-chat/src/outgoing.rs
 - confidence: cited
+  path: crates/llm-chat/tests
+- confidence: cited
   path: crates/llm-core/src/item.rs
 - confidence: cited
   path: crates/llm-core/src/turn.rs
@@ -35,22 +37,36 @@ scope:
 - confidence: cited
   path: crates/llm-messages/src/codec.rs
 - confidence: cited
+  path: crates/llm-messages/tests
+- confidence: cited
+  path: crates/llm-responses/src/lib.rs
+- confidence: cited
   path: crates/llm-responses/src/request.rs
-- confidence: inferred
-  path: crates/llm-responses/src/stream.rs
+- confidence: cited
+  path: crates/llm-responses/tests
 - confidence: cited
   path: crates/llm-routing/src/selection.rs
 - confidence: cited
+  path: crates/llm-routing/tests
+- confidence: cited
+  path: docs/chat.md
+- confidence: cited
   path: docs/contract-v1.md
-- confidence: inferred
-  path: spec/domains/catalog.yaml
+- confidence: cited
+  path: docs/messages.md
+- confidence: cited
+  path: docs/responses.md
 - confidence: inferred
   path: spec/domains/chat.yaml
+- confidence: cited
+  path: spec/domains/messages.yaml
 - confidence: inferred
   path: spec/domains/responses.yaml
 - confidence: inferred
   path: spec/domains/routing.yaml
-revision: 7
+- confidence: cited
+  path: website/docs/reference/formats.md
+revision: 10
 ---
 ## Context
 
