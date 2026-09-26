@@ -46,7 +46,9 @@ struct EvaluationRequest {
 
 // ESS serializes exactly integral witnesses as `1.0`. Use its exact integer
 // accessor, never a lossy float cast, when crossing into the Rust u64 API.
-fn token_bound<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option<u64>, D::Error> {
+pub(crate) fn token_bound<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<u64>, D::Error> {
     let node = Option::<Node>::deserialize(deserializer)?;
     match node {
         None => Ok(None),
@@ -161,7 +163,8 @@ impl ConformanceTarget for CatalogTarget {
         let owned = crate::messages::observe(&command, &input)
             .or_else(|| crate::responses::observe(&command, &input))
             .or_else(|| crate::chat::observe(&command, &input))
-            .or_else(|| crate::hosting::observe(&command, &input));
+            .or_else(|| crate::hosting::observe(&command, &input))
+            .or_else(|| crate::fallback::observe(&command, &input));
         let (facts, view, event, field) = if let Some(observed) = owned {
             let observed = observed?;
             (
@@ -254,6 +257,7 @@ impl ConformanceTarget for CatalogTarget {
             crate::responses::VIEWS,
             crate::chat::VIEWS,
             crate::hosting::VIEWS,
+            crate::fallback::VIEWS,
         ]
         .iter()
         .any(|views| views.contains(&view.as_str()));
