@@ -1,77 +1,77 @@
 ---
-title: Roadmap
-description: The next implementation step, and the order the remaining work has to happen in.
+title: Not yet
+description: What is not implemented, what blocks each item, and the order the remaining work has to happen in.
 ---
 
-# Roadmap
+# Not yet
 
-The ordering is not arbitrary. Each item below is blocked by the one above it for a stated reason.
+These are not implemented. Each entry says what is missing and what it waits for.
 
-## Done: the protocol projections
+| Item | State | Waits for |
+| --- | --- | --- |
+| Modal hosting adapter | `llm-modal` exports nothing | A Modal account, a credential source and an authorised paid qualification run |
+| Provider access qualification (API and subscription) | Not started | Live evidence; for subscriptions, a documented supported contract per provider |
+| Gateway translation | Not started; the gateway refuses to translate | The Modal adapter, among other finished dependencies |
+| Operator command line | `llm-cli` exports nothing | Gateway translation |
+| A production Runpod transport | Only the in-process emulator exists | Not yet planned as its own item; the live control-plane assumptions on [Hosting](../concepts/hosting.md#not-verified) are unchecked |
+| A qualified release | No release exists | All of the above, and the versioned contract release |
 
-Responses, Messages and Chat Completions are implemented on top of the shared bounded transport,
-each with its own conformance suite and falsification record. The constraints the
-[contract](../concepts/neutral-boundary.md) fixed in advance are the ones they are held to:
+## Blocked items
 
-- Independent authentication, billing and protocol choices survive translation. An anonymous vLLM
-  binding is expressible without a special case.
-- Unsupported fields and provider-specific opaque continuation state are preserved or refused —
-  never dropped to make a translation look successful.
-- Each adapter normalizes its wire's usage counts before producing neutral values, and may report a
-  partial quantity only when it is a valid lower bound.
+### Modal hosting
 
-## Next: provider access qualification
+The acceptance for the Modal adapter requires a recorded live deployment, readiness check and
+cleanup. That needs a Modal account, a credential and a paid run. None is available to this
+repository, and the ordinary gate never makes a paid call. The lifecycle-fixture half could be
+split out and built first.
 
-`openai-access` and `anthropic-access` need API **and** caller-managed subscription presentation,
-each with its own compatibility evidence. Subscription access must never silently fall back to
-billable API credentials. Qualification is live evidence; it cannot be produced by the offline gate.
+### Subscription access
 
-## Then: ordered runtime fallback
+Calling a model through a caller's subscription, rather than a metered API key, is not
+implemented and not qualified for either provider. Holding a token is not evidence that a given
+use is supported. Each provider's supported contract and permitted deployment context must be
+established first. The design is fixed in two ways: the caller owns credential acquisition and
+renewal, and LLM will never run a login flow. A rejected subscription credential must never fall
+back to a billable API key.
 
-`ordered-fallback` needs the projections first, because eligibility is defined in terms of what a
-real attempt exposed. Only defined failures before output becomes visible are eligible, an
-ambiguously accepted request is never replayed as though it were free, and every attempt is
-recorded with its unknown spend preserved.
+API-key access through the implemented clients is not blocked by this, but it is also not
+qualified: no live provider credential has been used here.
 
-This is also where pricing and budget admission join the attempt loop: the effectful consumers
-still need to take the ledger's permits and honour its stop obligations.
+## The order of the remaining work
 
-## Then: the hosting adapters
+```mermaid
+flowchart TD
+  M["Modal adapter<br/>(blocked: account, paid run)"] --> T["Gateway translation"]
+  T --> C["Operator CLI"]
+  A["Provider access qualification<br/>(blocked: subscription contract)"] --> Q["Qualified release"]
+  C --> Q
+  R["Versioned contract release"] --> Q
+```
 
-`hosting-contract` is done: `llm-provision` models owned-resource lifecycle, leases,
-reconciliation and cleanup, with identity qualified by the provider's `incarnation` so two
-controllers can never own one billed resource, and a stop obligation nothing but evidence
-discharges. It opens no socket and allocates nothing; an in-process `FakeProvider` demonstrates
-the lifecycle.
+- **Gateway translation** exposes the three protocol surfaces over the published neutral subset,
+  preserving streaming, tools, cancellation and usage, or refusing explicitly. Its declared
+  dependencies are the gateway surface, ordered fallback, both hosting adapters and unattributed
+  opaque state; all but the Modal adapter are done.
+- **The operator command line** validates, inspects and runs one configuration from the same TOML.
+  Inspection must resolve no secret and start no resource.
+- **The qualified release** ties one published version to the full evidence matrix, including live
+  API, subscription and hosting results.
 
-`runpod-hosting` and `modal-hosting` follow behind that seam and are still five-line stubs.
-Cloud-specific capabilities need documented control-plane evidence; an unsupported lifecycle
-action is reported, never simulated. Nothing in this repository has yet allocated or stopped a
-real GPU.
+## Smaller open items
 
-## Then: gateway translation and the operator CLI
+- **A secrets-library resolver.** An optional adapter that resolves a `SecretRef` through a separate
+  shared secrets library. It waits for that library's first release.
+- **More ESS specifications.** The gateway, the HTTP transport, provider bindings and the Runpod
+  adapter are tested but have no ESS domain of their own yet.
+- **Spend enforcement in effectful paths.** The spending ledger exists, but no client or gateway
+  takes its permits yet. The hosting controller requires an authorization naming a ledger
+  reservation, but cannot see the ledger; the caller must reserve there first. Routing's `admit`
+  port is where a caller connects a limit today.
+- **Runpod cleanup outside the ledger.** Orphan sweeps and inherited-pod terminations bypass the
+  hosting controller, so no stop obligation is recorded for them. Fixing this needs a change to the
+  hosting contract.
 
-`gateway-auth` is done: `llm-gateway` admits one authenticated owner, decodes nothing past the
-HTTP head before acceptance, serves a read-only route inventory with no field for an endpoint URL
-or a secret reference, and starts, drains and stops deliberately.
+## Out of scope for this milestone
 
-`gateway-translation` is not, and the crate says so itself — its module documentation lists
-"protocol translation, proxying a model call, resolving a secret, reaching a network" among the
-things it refuses. Exposing the three protocol ingress surfaces over the published neutral subset
-is the remaining work, and it needs the projections it now has.
-
-`operator-cli` validates, inspects and runs one configuration — inspection resolving no secret
-and provisioning no resource. `llm-cli` is still a five-line stub.
-
-## Finally: a qualified release
-
-`foundation-qualified` needs an exact release, its required checks and artifacts, and every
-implementation and qualification evidence item above. Harness and Metaharness adopt a released or
-explicitly qualified exact revision afterwards; `llmgw` keeps operating until a reversible cutover
-retires it.
-
-## Explicitly out of scope for this milestone
-
-Product-level cheapest-model optimization, and the `connectors-secret-resolver` adapter, which
-waits for [Connectors](https://beyond10x.github.io/docs/connectors/) to support arbitrary secret
-custody.
+Choosing the cheapest model automatically. A resolver backed by a connector integration product,
+which has been superseded by the secrets-library adapter above.

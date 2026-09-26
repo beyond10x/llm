@@ -68,14 +68,14 @@ const config: Config = {
           items: [
             {label: 'Introduction', to: '/docs'},
             {label: 'Getting started', to: '/docs/getting-started'},
-            {label: 'The neutral boundary', to: '/docs/concepts/overview'},
+            {label: 'The five concepts', to: '/docs/concepts/overview'},
             {label: 'Crate reference', to: '/docs/reference/crates'},
           ],
         },
         {
           title: 'Build and verify',
           items: [
-            {label: 'Run a local turn', to: '/docs/guides/run-a-local-turn'},
+            {label: 'Call a local endpoint', to: '/docs/guides/call-a-local-endpoint'},
             {label: 'Explain a route', to: '/docs/guides/explain-a-route'},
             {label: 'Price recorded usage', to: '/docs/guides/price-recorded-usage'},
             {label: 'Run the checks', to: '/docs/guides/run-the-checks'},
@@ -84,9 +84,9 @@ const config: Config = {
         {
           title: 'Project',
           items: [
-            {label: 'Status', to: '/docs/status/where-this-stands'},
+            {label: 'What works today', to: '/docs/status/where-this-stands'},
             {label: 'Limitations', to: '/docs/status/limitations'},
-            {label: 'Roadmap', to: '/docs/status/roadmap'},
+            {label: 'Not yet', to: '/docs/status/roadmap'},
             {label: 'Source', href: 'https://github.com/beyond10x/llm'},
           ],
         },

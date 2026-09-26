@@ -1,12 +1,12 @@
 ---
 title: Routing
-description: A strict TOML catalog, ordered opt-in selection, capability admission, and an explanation that resolves no secret.
+description: A strict TOML catalog, ordered opt-in selection and fallback, capability admission, and an explanation that resolves no secret.
 ---
 
 # Routing
 
 `llm-routing` parses a strict `llm.catalog/1` TOML document and explains capability-aware selection
-without performing any I/O.
+without performing any I/O. It also runs a turn across a route's targets with ordered fallback, through model ports the caller supplies.
 
 ## What a catalog declares
 
@@ -54,11 +54,60 @@ nothing.
 
 See [Explain a route](../guides/explain-a-route.md) for the real output of the shipped example.
 
-## What routing does not do yet
+## Ordered fallback
 
-Runtime fallback *after an attempted request* is not implemented. The design constrains it in
-advance: only defined failures **before output becomes visible** are eligible; request
-capabilities, opaque-state compatibility, deadlines and remaining spending limits constrain every
-alternative; and an ambiguously accepted request is never replayed on the assumption that it was
-free. No semantic downgrade, no cross-account switch outside the named chain, and no fallback after
-an exposed partial stream.
+`Catalog::run_turn` runs a request against a route. It tries the route's targets in declared
+position order and skips every target that `explain` rejects. With `fallback_enabled = false`,
+`explain` rejects every alternative as `fallback-disabled`, so only the first target can run.
+With it on, the run moves to the next compatible target only when
+**all three** of these hold for the failed attempt:
+
+1. It offered no event to the caller's sink. Nothing was visible yet.
+2. Its dispatch evidence is `not-sent` or `rejected`, and that evidence belongs to the attempt's
+   binding.
+3. Its error is `transport`, `rate-limited` or `unavailable`.
+
+Everything else ends the run. That includes `unauthorized` (there is no fallback to another
+credential source or account), `invalid-request`, `refused`, `cancelled`, `deadline`, any
+`accepted` dispatch, and any `unknown` dispatch, which is never replayed.
+
+```rust
+pub async fn run_turn(
+    &self,
+    request: &TurnRequest,
+    input_tokens: Option<u64>,
+    policy: FallbackPolicy,   // max_attempts and an optional deadline
+    ports: Ports<'_>,         // models, admit, sink, cancel
+) -> Result<FallbackRun, Error>
+```
+
+The caller supplies everything effectful through `Ports`:
+
+| Port | What it is for |
+| --- | --- |
+| `models` | Maps a serving-model id to the single-attempt `Model` that serves it, such as a `ChatClient` |
+| `admit` | Called before every attempt, the first included. This is where a spending limit refuses; routing itself does not depend on `llm-cost` |
+| `sink` | Receives the stream of whichever attempt is running |
+| `cancel` | Cancels the run |
+
+Before the first attempt, every target the run could try must have a model whose provenance is
+exactly that target's binding; otherwise the run is refused. Before every attempt the run checks,
+in order, the attempt bound, cancellation, the deadline and admission. `FallbackPolicy::disabled()` allows one attempt, whatever the route says.
+
+The returned `FallbackRun` records every started attempt: its target, binding, authentication and
+billing kind, how many events it made visible, and its own observation, failures included. Usage an
+attempt did not report stays unknown. `halt` says why the run stopped:
+
+| `halt` | Meaning |
+| --- | --- |
+| `succeeded` | An attempt completed |
+| `exhausted` | No compatible target remained |
+| `ineligible-failure` | The failure class does not permit fallback |
+| `visible-output` | Output had already reached the caller |
+| `ambiguous-dispatch` | The request may have been accepted, so it is not replayed |
+| `limit-refused` | `admit` refused the next target |
+| `deadline`, `cancelled` | The caller's deadline passed, or the caller cancelled |
+| `attempt-bound` | `max_attempts` was reached |
+
+Fallback never moves to a target the route did not name, never degrades a request's capabilities to
+fit, and never falls back after a partial stream.

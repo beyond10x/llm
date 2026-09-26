@@ -5,8 +5,18 @@ description: An opaque reference, resolution at request time, coordinated renewa
 
 # Credentials
 
-Inference accepts an injected `SecretResolver`. A `SecretRef` is a validated opaque lookup name —
-not a secret value, and not a choice of storage backend.
+**Custody is injected.** LLM does not own where secrets live. The application that embeds it hands
+in a `SecretResolver`, and a catalog names only a `SecretRef`: a validated opaque lookup name — not
+a secret value, and not a choice of storage backend. The same catalog works unchanged whether the
+resolver reads a file, a keychain, or something the application wrote itself.
+
+```rust
+pub trait SecretResolver: Send + Sync {
+    fn resolve<'a>(&'a self, reference: &'a SecretRef)
+        -> BoxFuture<'a, Result<ResolvedSecret, SecretError>>;
+    // `refresh` has a default that returns `RefreshUnsupported`.
+}
+```
 
 ## The guarantees
 
@@ -46,3 +56,11 @@ independently replaced bytes are visible on the next resolve.
 
 [Resolve a local secret](../guides/resolve-a-local-secret.md) shows the file adapter's protection
 rules.
+
+## Planned: resolution through a shared secrets library
+
+A further adapter is planned but **not implemented**: an optional feature that resolves a
+`SecretRef` as a name in a scoped secret store provided by a separate secrets library. It waits
+for a release of that library, and it must not change any route reference or add a dependency to
+the core crates. Until it exists, inject your own `SecretResolver` for any store the two local
+adapters do not cover.

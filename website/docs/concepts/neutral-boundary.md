@@ -1,13 +1,23 @@
 ---
-title: The neutral boundary
+title: The neutral turn
 description: One asynchronous port, bounded validation before any network I/O, and opaque state bound to its exact target.
 ---
 
-# The neutral boundary
+# The neutral turn
+
+`llm-core` defines what every caller and every adapter agrees on: a request, a stream of events, an
+outcome, a failure. It performs no I/O and depends on no consumer.
 
 The implemented contract is *unreleased revision 2*. It supports stateless text and tool turns.
 Image and audio input, vendor-side tools, provider thread management and unrecognized request
 settings are outside this version and adapters must refuse them.
+
+## Streamed events
+
+A turn streams `StreamEvent`s into the caller's sink: text deltas, reasoning deltas, the start of a
+tool call, and fragments of that call's arguments. A tool call is announced once, with the
+identifier and name the provider sent, before any of its argument fragments. The finished
+`TurnOutcome` then carries the complete items, the stop reason and the observation.
 
 ## One attempt, one port
 
@@ -40,6 +50,18 @@ guarantee is verified against what the contract says a wire looks like, not agai
 provider. `llm-core` validates and refuses foreign binding coordinates on the values an adapter
 hands it; it cannot recover a coordinate an adapter discarded.
 :::
+
+### State that arrives without an origin
+
+A request that arrives at an ingress surface, such as a Messages or Responses body a client sends,
+names no binding. Reasoning state inside it therefore has no provable origin. Ingress decoders hold
+it as `Item::UnattributedOpaque`: the payload as a JSON value and the protocol it was read from,
+and nothing else.
+
+That item cannot be sent. Every egress path refuses it with the fixed message
+`Item::UNATTRIBUTED_REFUSAL` until the caller binds it with `TurnRequest::bind_unattributed`, which
+also refuses a target of a different protocol. No adapter makes that decision for the caller, and
+ingress never stamps the binding that read the state onto it.
 
 The binding revision hashes the complete validated single-binding declaration, including the
 endpoint URL, upstream model, auth reference and capabilities. Repointing an existing id therefore

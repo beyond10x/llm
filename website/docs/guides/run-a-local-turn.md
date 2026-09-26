@@ -9,6 +9,16 @@ description: Complete a model turn through the neutral port without a gateway, a
 cargo run --locked -p b10x-llm-core --example embedded
 ```
 
+```text
+An embedded model turn. (EndTurn; usage None)
+```
+
+The source is
+[`crates/llm-core/examples/embedded.rs`](https://github.com/beyond10x/llm/blob/main/crates/llm-core/examples/embedded.rs):
+a `LocalModel` that implements `Model`, validates the request against its own declared
+capabilities, streams one text delta and returns an outcome. `usage None` is the honest answer: the
+model reports no counters.
+
 The example completes a turn against an in-process model. There is no gateway, no network call and
 no credential, which is the point: the caller depends on the port, not on a vendor SDK.
 
@@ -22,11 +32,10 @@ no credential, which is the point: the caller depends on the port, not on a vend
 
 ## What it does not demonstrate
 
-It does not exercise a provider or a real network. The Responses, Messages and Chat Completions
-projections [are implemented](../status/where-this-stands.md), so an embedded model is no longer
-the only `Model` implementation — but no live provider credential has been used anywhere in this
-repository, so driving a projection against a real endpoint is something you would be doing
-first, not repeating.
+It does not touch a network. For that, [Call a local endpoint](call-a-local-endpoint.md) builds a
+`ChatClient` from a catalog and runs the same port over HTTP. No live provider credential has been
+used anywhere in this repository, so running a client against a real provider is something you
+would be doing first, not repeating.
 
 ## Writing your own caller
 

@@ -31,8 +31,10 @@ than accidental:
   inventory. You cannot point an OpenAI client at it and have a model answer.
 - **`llm-provision` is the hosting contract, not a hosting implementation.** It "opens no socket,
   reads no credential and allocates no cloud resource", and ships an in-process `FakeProvider` to
-  demonstrate the lifecycle. `llm-runpod` and `llm-modal` are still five-line stubs, so no real
-  GPU has ever been allocated or stopped through this code.
+  demonstrate the lifecycle.
+- **`llm-runpod` has no production transport.** Its only transport is the in-process
+  `EmulatedRunpod`, and `llm-modal` exports nothing. No real GPU has ever been allocated or stopped
+  through this code, and the adapter's assumptions about Runpod's live control plane are unchecked.
 
 There is therefore no cloud control plane here. The budget ledger's stop obligations record that a
 resource *must* be stopped — they cannot turn a GPU off, and they never prove that provider
@@ -40,8 +42,8 @@ billing stopped.
 
 ## There is no operator command line
 
-`llm-cli` is a five-line stub. Validating, inspecting and running one configuration from a
-terminal is not available.
+`llm-cli` exports nothing. Validating, inspecting and running one configuration from a terminal is
+not available; the routing example is the closest thing today.
 
 ## What the libraries deliberately do not claim
 
@@ -74,5 +76,6 @@ an embedding needing hard process deadlines must isolate that boundary itself.
 ## Licence
 
 The workspace declares `LicenseRef-B10x-Proprietary`. Publishing the source grants no open-source
-licence, no redistribution right and no patent grant. This differs from sibling beyond10x
-repositories that ship under Apache-2.0.
+licence, no redistribution right and no patent grant. Reading it, and building and running it
+locally to evaluate, review or verify it, are permitted; anything else needs a separate written
+agreement. [`LICENSE`](https://github.com/beyond10x/llm/blob/main/LICENSE) is the authority.

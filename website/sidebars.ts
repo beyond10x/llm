@@ -15,9 +15,12 @@ const sidebars: SidebarsConfig = {
       items: [
         'concepts/overview',
         'concepts/neutral-boundary',
+        'concepts/protocols',
         'concepts/credentials',
         'concepts/routing',
         'concepts/accounting',
+        'concepts/hosting',
+        'concepts/gateway',
       ],
     },
     {
@@ -26,9 +29,11 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'guides/run-a-local-turn',
+        'guides/call-a-local-endpoint',
         'guides/explain-a-route',
         'guides/price-recorded-usage',
         'guides/resolve-a-local-secret',
+        'guides/start-the-gateway',
         'guides/run-the-checks',
       ],
     },

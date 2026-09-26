@@ -174,29 +174,32 @@ function HonestStatus() {
     <PanelSection
       ordinal="04"
       label="Status"
-      title="Eleven of fourteen crates implemented; none of it qualified, none of it released">
+      title="Twelve of fourteen crates implemented; none of it qualified, none of it released">
       <div className={styles.ledger}>
         <p className={styles.ledgerBuilt}>
           Implemented and tested: the neutral core (asynchronous turns, tools, bounded streaming,
           cancellation, typed failures, target-bound opaque state); injected credential resolution
           with coordinated renewal and optional local file and keychain adapters; bounded
           single-attempt HTTP and SSE transport; validated provider/account/auth/protocol bindings;
-          strict TOML catalog routing with safe explanation; exact usage pricing with a durable
-          single-owner SQLite spending ledger; the Responses, Messages and Chat Completions
-          projections; an authenticated single-owner gateway; and the hosting lifecycle contract.
+          strict TOML catalog routing with safe explanation and ordered fallback; exact usage
+          pricing with a durable single-owner SQLite spending ledger; the Responses, Messages and
+          Chat Completions projections; an authenticated single-owner gateway; the hosting
+          lifecycle contract; and a Runpod adapter against an in-process emulator.
         </p>
         <p className={styles.ledgerNot}>
-          Not implemented: the operator command line, both cloud hosting adapters (Runpod and
-          Modal), protocol translation in the gateway, and ordered runtime fallback. And the
-          limit that bounds everything above it — <strong>no live provider credential has been
-          used anywhere in this repository</strong>. Every scenario runs against fixtures, local
-          sockets and in-process fakes, so no OpenAI or Anthropic access is qualified, no GPU has
-          been allocated or stopped, and there is no release and no published artifact. Local
-          fixture evidence is not provider qualification.
+          Not implemented: the Modal adapter, the operator command line, protocol translation in
+          the gateway, subscription access, and a production Runpod transport. And the limit that
+          bounds everything above it — <strong>no live provider credential has been used
+          anywhere in this repository</strong>. Every scenario runs against fixtures, local
+          sockets and in-process fakes, so no provider access is qualified, no GPU has been
+          allocated or stopped, and there is no release and no published artifact. Local fixture
+          evidence is not provider qualification.
         </p>
       </div>
       <p className={styles.panelMore}>
-        <Link to="/docs/status/where-this-stands">Story-by-story status →</Link>
+        <Link to="/docs/status/where-this-stands">What works today →</Link>
+        {' · '}
+        <Link to="/docs/status/roadmap">Not yet →</Link>
         {' · '}
         <Link to="/docs/status/limitations">Limitations and trust boundary →</Link>
       </p>
