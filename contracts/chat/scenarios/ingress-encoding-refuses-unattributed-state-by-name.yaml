@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: ingress-encoding-refuses-unattributed-state-by-name
+summary: ingress encoding refuses unattributed opaque state by name rather than dropping it
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.chat.EncodeIngress
+  input:
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"done"},{"kind":"unattributed-opaque","protocol":"chat-completions","payload":{"state":"x"}}],"observation":{"binding":{"protocol":"chat-completions","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"internal-model","binding_revision":"binding-r1"},"final_usage":true}}}'
+    streamed: false
+    include_usage: false
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressResponse
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressResponse
+  contains:
+    accepted: false
+    dispatch: not-sent
+    error_code: unsupported
+    error_message: unattributed opaque state is not sendable until a caller binds it to a target

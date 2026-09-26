@@ -8,8 +8,8 @@ use llm_chat::{
     decode_ingress_request, encode_ingress_completion,
 };
 use llm_core::{
-    CallId, Dispatch, ErrorCode, Id, Item, StopReason, StreamEvent, ToolCall, ToolChoice, ToolName,
-    TurnObservation, TurnOutcome, Usage,
+    CallId, Dispatch, ErrorCode, Id, Item, Protocol, StopReason, StreamEvent, ToolCall, ToolChoice,
+    ToolName, TurnObservation, TurnOutcome, Usage,
 };
 use serde_json::{Value, json};
 
@@ -626,4 +626,17 @@ fn encoding_places_every_counter_the_neutral_value_carries_and_only_those() {
             );
         }
     }
+}
+
+#[test]
+fn an_outcome_carrying_unattributed_state_cannot_be_encoded_onto_this_wire() {
+    let mut outcome = outcome_with(None, None);
+    outcome.items.push(Item::UnattributedOpaque {
+        protocol: Protocol::ChatCompletions,
+        payload: json!({"encrypted": "x"}),
+    });
+    let error =
+        encode_ingress_completion(&outcome, "chatcmpl-gw-6", 1_772_001_000).expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.message, Item::UNATTRIBUTED_REFUSAL);
 }

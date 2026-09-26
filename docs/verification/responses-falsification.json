@@ -459,46 +459,6 @@
   {
     "counts": {
       "error": 0,
-      "failed": 2,
-      "passed": 64,
-      "skipped": 0,
-      "total": 66,
-      "unsupported": 0
-    },
-    "edits": [
-      [
-        "fn input_to_item(entry: &Value) -> Result<Item, Error> {",
-        "fn input_to_item(binding: &Binding, entry: &Value) -> Result<Item, Error> {"
-      ],
-      [
-        "            items.push(input_to_item(entry)?);",
-        "            items.push(input_to_item(binding, entry)?);"
-      ],
-      [
-        "        _ => Err(Error::unsupported(\n            \"opaque continuation state cannot be attributed to a binding on ingress\",\n        )),",
-        "        _ => Ok(Item::Opaque {\n            provenance: binding.provenance().clone(),\n            payload: entry.clone(),\n        }),"
-      ]
-    ],
-    "errored": [],
-    "killed_by": "scenario+rust",
-    "mutation": "ingress-mints-provenance-it-never-observed",
-    "named_rust_case": "ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses",
-    "named_scenario": "llm.responses/authored/ingress-refuses-an-unmodelled-entry-it-cannot-attribute",
-    "rust_failed": [
-      "every_ingress_content_refusal_the_contract_promises_is_reachable",
-      "ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses",
-      "opaque_state_is_carried_out_verbatim_and_refused_on_the_way_back_in"
-    ],
-    "scenarios_failed": [
-      "llm.responses/authored/ingress-refuses-an-unmodelled-entry-it-cannot-attribute",
-      "llm.responses/authored/matching-opaque-state-is-carried-out-verbatim"
-    ],
-    "source": "crates/llm-responses/src/request.rs",
-    "source_before_sha256": "c43d3195088c9ee8e7bfdbf3d3fa81fda08eb444c66cceaa27876799247f83cc"
-  },
-  {
-    "counts": {
-      "error": 0,
       "failed": 1,
       "passed": 65,
       "skipped": 0,
@@ -975,5 +935,374 @@
     "scenarios_failed": [],
     "source": "crates/llm-responses/src/stream.rs",
     "source_before_sha256": "9f139b29023a28f6187246c4bd525e36a38c2f4e08a28129c2005a50a9b39217"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 76,
+      "skipped": 0,
+      "total": 79,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    let request = TurnRequest {\n        model: binding.provenance().model.as_str().to_owned(),",
+        "    let mut request = TurnRequest {\n        model: binding.provenance().model.as_str().to_owned(),"
+      ],
+      [
+        "    request.validate()?;\n    // **Every pre-flight",
+        "    request.bind_unattributed(binding.provenance())?;\n    request.validate()?;\n    // **Every pre-flight"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-ingress-stamps-the-reading-binding",
+    "named_rust_case": "a_bound_unattributed_entry_reprojects_its_payload_byte_for_byte",
+    "named_scenario": "llm.responses/authored/ingress-carries-an-unmodelled-entry-it-cannot-attribute",
+    "rust_failed": [
+      "a_bound_unattributed_entry_reprojects_its_payload_byte_for_byte",
+      "a_repointed_binding_still_refuses_what_the_caller_bound_elsewhere",
+      "an_unattributed_entry_is_refused_by_name_on_egress_until_a_caller_binds_it",
+      "ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses",
+      "opaque_state_is_carried_out_verbatim_and_read_back_unattributed"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-carries-an-unmodelled-entry-it-cannot-attribute",
+      "llm.responses/authored/ingress-under-a-repointed-binding-does-not-reinstate-opaque-state",
+      "llm.responses/authored/matching-opaque-state-is-carried-out-verbatim"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "1a48bd2c8d484c264c5b656ebab4427bcbd2cc08fbd0ab2ad18802f6fca43173"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 76,
+      "skipped": 0,
+      "total": 79,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        Item::UnattributedOpaque { .. } => {\n            return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n        }\n    })\n}",
+        "        Item::UnattributedOpaque { payload, .. } => payload.clone(),\n    })\n}"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-egress-sends-unbound-state",
+    "named_rust_case": "a_repointed_binding_still_refuses_what_the_caller_bound_elsewhere",
+    "named_scenario": "llm.responses/authored/ingress-carries-an-unmodelled-entry-it-cannot-attribute",
+    "rust_failed": [
+      "a_repointed_binding_still_refuses_what_the_caller_bound_elsewhere",
+      "an_unattributed_entry_is_refused_by_name_on_egress_until_a_caller_binds_it",
+      "ingress_does_not_reinstate_opaque_state_a_repointed_binding_refuses"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-carries-an-unmodelled-entry-it-cannot-attribute",
+      "llm.responses/authored/ingress-under-a-repointed-binding-does-not-reinstate-opaque-state",
+      "llm.responses/authored/unbound-unattributed-state-is-refused-on-egress"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "1a48bd2c8d484c264c5b656ebab4427bcbd2cc08fbd0ab2ad18802f6fca43173"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 78,
+      "skipped": 0,
+      "total": 79,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    #[serde(rename = \"llm.turn/3\")]",
+        "    #[serde(rename = \"llm.turn/3\", alias = \"llm.turn/2\")]"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "core-previous-turn-version-read",
+    "named_rust_case": "persisted_version_and_unrecognized_authority_fields_refuse",
+    "named_scenario": "llm.responses/authored/the-previous-turn-version-is-refused",
+    "rust_failed": [
+      "persisted_version_and_unrecognized_authority_fields_refuse"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/the-previous-turn-version-is-refused"
+    ],
+    "source": "crates/llm-core/src/turn.rs",
+    "source_before_sha256": "78f6d3cc22d6d149735fb8576999a53e0f6c2cd9aa770a77fe3fa219ec05001a"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 53,
+      "skipped": 0,
+      "total": 53,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                Item::UnattributedOpaque { .. } => {\n                    return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n                }",
+        "                Item::UnattributedOpaque { .. } => {}"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "rust",
+    "mutation": "core-validate-for-admits-unbound-state",
+    "named_rust_case": "unattributed_opaque_state_is_carried_but_refused_by_name_until_a_caller_binds_it",
+    "named_scenario": null,
+    "rust_failed": [
+      "unattributed_opaque_state_is_carried_but_refused_by_name_until_a_caller_binds_it"
+    ],
+    "scenarios_failed": [],
+    "source": "crates/llm-core/src/turn.rs",
+    "source_before_sha256": "78f6d3cc22d6d149735fb8576999a53e0f6c2cd9aa770a77fe3fa219ec05001a"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 77,
+      "skipped": 0,
+      "total": 77,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                Item::UnattributedOpaque { .. } => {\n                    return Err(Error::protocol(\n                        \"model output carries unattributed opaque state\",\n                    ));\n                }",
+        "                Item::UnattributedOpaque { .. } => {}"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "rust",
+    "mutation": "core-model-output-may-carry-unbound-state",
+    "named_rust_case": "model_output_carrying_unattributed_state_is_refused",
+    "named_scenario": null,
+    "rust_failed": [
+      "model_output_carrying_unattributed_state_is_refused"
+    ],
+    "scenarios_failed": [],
+    "source": "crates/llm-core/src/turn.rs",
+    "source_before_sha256": "78f6d3cc22d6d149735fb8576999a53e0f6c2cd9aa770a77fe3fa219ec05001a"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 56,
+      "skipped": 0,
+      "total": 56,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "                if protocol != target.protocol {",
+        "                if false && protocol != target.protocol {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "rust",
+    "mutation": "core-binding-ignores-the-protocol-it-was-read-from",
+    "named_rust_case": "binding_refuses_a_target_of_another_protocol_and_leaves_the_request_unchanged",
+    "named_scenario": null,
+    "rust_failed": [
+      "binding_refuses_a_target_of_another_protocol_and_leaves_the_request_unchanged"
+    ],
+    "scenarios_failed": [],
+    "source": "crates/llm-core/src/item.rs",
+    "source_before_sha256": "fd26fa8dccc1afdaf6f4d74201aa1e580bb6e4bfb63337cc127e820db42b1baf"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 77,
+      "skipped": 0,
+      "total": 77,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "    #[serde(rename = \"llm.outcome/4\")]",
+        "    #[serde(rename = \"llm.outcome/4\", alias = \"llm.outcome/3\")]"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "rust",
+    "mutation": "core-previous-outcome-version-read",
+    "named_rust_case": "output_document_versions_and_unknown_fields_are_rejected",
+    "named_scenario": null,
+    "rust_failed": [
+      "output_document_versions_and_unknown_fields_are_rejected",
+      "success_requires_terminal_bound_evidence_but_does_not_invent_unknown_fields"
+    ],
+    "scenarios_failed": [],
+    "source": "crates/llm-core/src/turn.rs",
+    "source_before_sha256": "78f6d3cc22d6d149735fb8576999a53e0f6c2cd9aa770a77fe3fa219ec05001a"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 82,
+      "skipped": 0,
+      "total": 83,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        Some(\"item_reference\") => Err(Error::unsupported(\n            \"an input entry refers to state the provider stored, which this projection never keeps\",\n        )),",
+        "        Some(\"item_reference\") => Ok(Item::UnattributedOpaque {\n            protocol: Protocol::Responses,\n            payload: entry.clone(),\n        }),"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-item-reference-carried-as-continuation-state",
+    "named_rust_case": "a_reference_to_provider_stored_state_is_refused_by_name",
+    "named_scenario": "llm.responses/authored/ingress-refuses-a-reference-to-provider-stored-state",
+    "rust_failed": [
+      "a_reference_to_provider_stored_state_is_refused_by_name",
+      "a_reference_to_provider_stored_state_is_still_refused_on_ingress"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-a-reference-to-provider-stored-state"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "5bf2c64849cc5046ec24c3569a3b468e0d2fdc70c5358b771885c727132a43f3"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 82,
+      "skipped": 0,
+      "total": 83,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        Some(kind) if CARRIED_ENTRY_TYPES.contains(&kind) => Ok(Item::UnattributedOpaque {",
+        "        Some(kind) if kind.is_empty() || CARRIED_ENTRY_TYPES.contains(&kind) => Ok(Item::UnattributedOpaque {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-empty-type-carried-as-continuation-state",
+    "named_rust_case": "a_reference_to_provider_stored_state_is_refused_by_name",
+    "named_scenario": "llm.responses/authored/ingress-refuses-an-entry-whose-type-is-empty",
+    "rust_failed": [
+      "a_reference_to_provider_stored_state_is_refused_by_name",
+      "an_entry_whose_type_is_empty_names_no_type_and_is_refused"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-an-entry-whose-type-is-empty"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "5bf2c64849cc5046ec24c3569a3b468e0d2fdc70c5358b771885c727132a43f3"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 80,
+      "skipped": 0,
+      "total": 83,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "        Some(kind) if CARRIED_ENTRY_TYPES.contains(&kind) => Ok(Item::UnattributedOpaque {",
+        "        Some(_) => Ok(Item::UnattributedOpaque {"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-every-typed-entry-carried-as-continuation-state",
+    "named_rust_case": "a_client_authored_entry_this_version_does_not_model_is_refused_by_name",
+    "named_scenario": "llm.responses/authored/ingress-refuses-a-client-authored-entry-it-does-not-model",
+    "rust_failed": [
+      "a_client_authored_entry_this_version_does_not_model_is_refused_by_name",
+      "a_reference_to_provider_stored_state_is_refused_by_name",
+      "a_reference_to_provider_stored_state_is_still_refused_on_ingress",
+      "an_entry_whose_type_is_empty_names_no_type_and_is_refused"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-a-client-authored-entry-it-does-not-model",
+      "llm.responses/authored/ingress-refuses-a-reference-to-provider-stored-state",
+      "llm.responses/authored/ingress-refuses-an-entry-whose-type-is-empty"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "5bf2c64849cc5046ec24c3569a3b468e0d2fdc70c5358b771885c727132a43f3"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 82,
+      "skipped": 0,
+      "total": 83,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "pub const CARRIED_ENTRY_TYPES: &[&str] = &[\"reasoning\"];",
+        "pub const CARRIED_ENTRY_TYPES: &[&str] = &[\"reasoning\", \"computer_call_output\"];"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-a-client-authored-type-listed-as-model-minted",
+    "named_rust_case": "a_client_authored_entry_this_version_does_not_model_is_refused_by_name",
+    "named_scenario": "llm.responses/authored/ingress-refuses-a-client-authored-entry-it-does-not-model",
+    "rust_failed": [
+      "a_client_authored_entry_this_version_does_not_model_is_refused_by_name",
+      "every_model_minted_entry_type_is_carried_unattributed"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/ingress-refuses-a-client-authored-entry-it-does-not-model"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "5bf2c64849cc5046ec24c3569a3b468e0d2fdc70c5358b771885c727132a43f3"
+  },
+  {
+    "counts": {
+      "error": 0,
+      "failed": 3,
+      "passed": 80,
+      "skipped": 0,
+      "total": 83,
+      "unsupported": 0
+    },
+    "edits": [
+      [
+        "pub const CARRIED_ENTRY_TYPES: &[&str] = &[\"reasoning\"];",
+        "pub const CARRIED_ENTRY_TYPES: &[&str] = &[];"
+      ]
+    ],
+    "errored": [],
+    "killed_by": "scenario+rust",
+    "mutation": "responses-reasoning-no-longer-carried",
+    "named_rust_case": "a_bound_unattributed_entry_reprojects_its_payload_json_equal",
+    "named_scenario": "llm.responses/authored/a-gateway-round-trip-preserves-the-payload-once-the-caller-binds-it",
+    "rust_failed": [
+      "a_bound_unattributed_entry_reprojects_its_payload_json_equal",
+      "a_repointed_binding_still_refuses_what_the_caller_bound_elsewhere",
+      "an_unattributed_entry_is_refused_by_name_on_egress_until_a_caller_binds_it",
+      "every_model_minted_entry_type_is_carried_unattributed",
+      "opaque_state_is_carried_out_verbatim_and_read_back_unattributed"
+    ],
+    "scenarios_failed": [
+      "llm.responses/authored/a-gateway-round-trip-preserves-the-payload-once-the-caller-binds-it",
+      "llm.responses/authored/ingress-carries-an-unmodelled-entry-it-cannot-attribute",
+      "llm.responses/authored/ingress-under-a-repointed-binding-does-not-reinstate-opaque-state"
+    ],
+    "source": "crates/llm-responses/src/request.rs",
+    "source_before_sha256": "5bf2c64849cc5046ec24c3569a3b468e0d2fdc70c5358b771885c727132a43f3"
   }
 ]

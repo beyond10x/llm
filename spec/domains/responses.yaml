@@ -62,11 +62,13 @@ entities:
     fields: &ingestion_facts
       - {name: accepted, type: Boolean}
       - {name: error_code, type: Optional<String>}
-      # The whole neutral llm.turn/2 document the wire body was read into.
+      # The whole neutral llm.turn/3 document the wire body was read into.
       - {name: turn_json, type: Optional<String>}
       # The operator's own model identifier, never the upstream name the body addressed.
       - {name: model, type: Optional<String>}
       - {name: instructions, type: Optional<String>}
+      # `unattributed-opaque` names an entry carried without a binding: never `opaque`, which
+      # would mean ingress stamped the reading binding onto state it could not attribute.
       - {name: item_kinds, type: List<String>}
       - {name: tool_names, type: List<String>}
       # Whether the turn read out of the body projects again without refusal. False means a
@@ -75,6 +77,13 @@ entities:
       # Whether that re-projection reproduces the body that was read. False means a field was
       # accepted, never read, and silently rewritten on the way back out.
       - {name: body_preserved, type: Boolean}
+      # The fixed diagnostic that refused forwarding the turn as ingress read it, if any.
+      - {name: forward_refusal, type: Optional<String>}
+      # The re-projected `input` after the adapter, standing in for the caller, explicitly binds
+      # every unattributed entry to the reading binding. Null when even that is refused.
+      - {name: bound_input_json, type: Optional<String>}
+      # Whether that bound re-projection reproduces every field of the body that was read.
+      - {name: bound_body_preserved, type: Boolean}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 
 commands:
@@ -86,7 +95,7 @@ commands:
       # production decoder instead of being filtered by the test target.
       - {name: binding_json, type: String}
       - {name: upstream_model, type: String}
-      # Serialized llm.turn/2, raw for the same reason.
+      # Serialized llm.turn/3, raw for the same reason.
       - {name: turn_json, type: String}
     outcomes:
       - name: observed

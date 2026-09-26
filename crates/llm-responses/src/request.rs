@@ -1,7 +1,7 @@
 //! The request body, in both directions, from one pinned description of the subset.
 
 use llm_core::{
-    CallId, Error, Item, Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest,
+    CallId, Error, Item, Protocol, Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest,
 };
 use serde_json::{Map, Value, json};
 
@@ -16,6 +16,15 @@ use crate::Binding;
 /// because it is one provider's restriction and a neutral identifier that enforced it would be
 /// shaped by one vendor.
 pub const TOOL_NAME_PATTERN: &str = "^[a-zA-Z0-9_-]+$";
+
+/// The `input` entry types ingress carries as unattributed continuation state.
+///
+/// Only what the **model** mints and a client replays: `reasoning` is the one this projection's
+/// stream decoder models as continuation state (`stream.rs`, `output_item`). Every other entry
+/// outside the four modelled shapes is the client's own content — a hosted-tool output, a
+/// reference to provider-stored state — and carrying it would let a bound copy skip every check a
+/// modelled entry gets, so ingress refuses it by name instead.
+pub const CARRIED_ENTRY_TYPES: &[&str] = &["reasoning"];
 
 /// The only `include` values this projection sends or accepts.
 ///
@@ -46,8 +55,9 @@ pub const ACCEPTED_BODY_FIELDS: &[&str] = &[
 ///
 /// # Errors
 /// Refuses a binding of another protocol, a request the neutral contract already refuses, a
-/// request addressed to a different model, a tool name this wire cannot publish, and opaque
-/// continuation state belonging to any other binding.
+/// request addressed to a different model, a tool name this wire cannot publish, opaque
+/// continuation state belonging to any other binding, and unattributed opaque state no caller
+/// has bound, with [`Item::UNATTRIBUTED_REFUSAL`].
 pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value, Error> {
     binding.validate()?;
     request.validate()?;
@@ -104,8 +114,14 @@ pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value
 /// # Errors
 /// Refuses a binding of another protocol, a body that is not an object, a top-level field outside
 /// [`ACCEPTED_BODY_FIELDS`], a body addressed to another upstream model, non-streaming or
-/// provider-stored conversations, content this version does not carry, a tool result outside the
-/// pinned envelope, and any request the neutral contract itself refuses.
+/// provider-stored conversations and `item_reference` entries pointing into them, content this
+/// version does not carry, an `input` entry that names no type, a client-authored entry this
+/// version does not model (a hosted-tool output, for example), a tool result outside the pinned
+/// envelope, and any request the neutral contract itself refuses.
+///
+/// An entry of a type in [`CARRIED_ENTRY_TYPES`] — continuation state the model mints — is not
+/// refused: it is carried as [`Item::UnattributedOpaque`], JSON-equal to what arrived, and
+/// [`project_request`] refuses it until a caller binds it.
 pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Error> {
     binding.validate()?;
     let object = body
@@ -182,7 +198,9 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
     // request its own outgoing side then refuses to forward has agreed to something it cannot
     // do, and the caller finds out one hop later. `project_request` applies exactly five checks
     // — the binding's protocol, `TurnRequest::validate`, the model, this one, and the opaque
-    // coordinates — and each has its counterpart above.
+    // coordinates — and each has its counterpart above. The one deliberate exception is state
+    // ingress carries unattributed: egress refuses it by name until the caller binds it, because
+    // that binding is a decision only the caller can make.
     check_tool_names(&request.tools)?;
     Ok(request)
 }
@@ -371,6 +389,11 @@ fn item_to_input(binding: &Binding, item: &Item) -> Result<Value, Error> {
             }
             payload.clone()
         }
+        // Carried by ingress, bound by nobody: sending it would make the origin this crate
+        // could not observe into one it asserts.
+        Item::UnattributedOpaque { .. } => {
+            return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
+        }
     })
 }
 
@@ -440,23 +463,36 @@ fn input_to_item(entry: &Value) -> Result<Item, Error> {
                 failed,
             })
         }
-        // **Refused, because this side cannot attribute it.**
+        // **Carried, because this side cannot attribute it** — but only what the model mints.
         //
-        // An entry outside the four modelled shapes is opaque continuation state, and
-        // `Item::Opaque` has exactly one representation: bound to a binding. The wire body
-        // carries no provenance, so stamping it with the binding doing the reading is this
-        // crate asserting an origin it never observed — and it launders state that
-        // `project_request` refuses into state `project_request` sends. A payload minted under
-        // one binding revision, replayed by a client after the endpoint was repointed, came
+        // A `reasoning` entry is opaque continuation state, and the wire body carries no
+        // provenance. Stamping it with the binding doing the reading would be this crate
+        // asserting an origin it never observed — and it launders: a payload minted under one
+        // binding revision, replayed by a client after the endpoint was repointed, would come
         // back out addressed to the new one.
         //
-        // The neutral contract has no third state for *carried, attribution unverified*, so the
-        // sound answer available inside this crate is the one `docs/design.md` already
-        // sanctions: preserved or **refused**, never quietly translated. The stream decoder
-        // still binds what it decodes, and that is not the same act — it watched this binding
-        // produce it.
-        _ => Err(Error::unsupported(
-            "opaque continuation state cannot be attributed to a binding on ingress",
+        // So it is carried as `Item::UnattributedOpaque`: the entry as a JSON value (equal, not
+        // byte-identical: keys re-serialize sorted) and the protocol it was read from, and
+        // nothing else. `project_request` refuses it by name until a caller binds it; this crate
+        // never does. The stream decoder still binds what it decodes, and that is not the same
+        // act — it watched this binding produce it.
+        Some(kind) if CARRIED_ENTRY_TYPES.contains(&kind) => Ok(Item::UnattributedOpaque {
+            protocol: Protocol::Responses,
+            payload: entry.clone(),
+        }),
+        // A pointer to state the provider kept. This projection sends `store: false` and replays
+        // the conversation whole, so there is nothing on this side it could point at.
+        Some("item_reference") => Err(Error::unsupported(
+            "an input entry refers to state the provider stored, which this projection never keeps",
+        )),
+        Some("") | None => Err(Error::unsupported(
+            "an input entry names no type this version can carry",
+        )),
+        // Client-authored content this version does not model, such as a hosted-tool output.
+        // It is not continuation state, and a bound copy would skip every check a modelled
+        // entry gets, so it is refused as at the base rather than carried.
+        Some(_) => Err(Error::unsupported(
+            "an input entry is neither modelled nor continuation state the model mints",
         )),
     }
 }

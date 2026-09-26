@@ -925,5 +925,60 @@
     ],
     "source": "crates/llm-chat/src/ingress.rs",
     "source_before_sha256": "d78ee968924a016b8c2f83e0fa00025e4f714fd2025a947bae06cf8ff3cd5007"
+  },
+  {
+    "after": "            Item::UnattributedOpaque { .. } => {}",
+    "before": "            Item::UnattributedOpaque { .. } => {\n                return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n            }",
+    "mutation": "chat-ingress-encoding-drops-unbound-state",
+    "named_failure": "scenario: llm.chat/authored/ingress-encoding-refuses-unattributed-state-by-name",
+    "rust_failed": [
+      "an_outcome_carrying_unattributed_state_cannot_be_encoded_onto_this_wire"
+    ],
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 76,
+      "skipped": 0,
+      "total": 77,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "ingress-encoding-refuses-unattributed-state-by-name"
+    ],
+    "source": "crates/llm-chat/src/ingress.rs",
+    "source_before_sha256": "186895f0e4fad439ec3595b9b369da7c9941d744cc3d73493e40fb60258c6b69"
+  },
+  {
+    "after": "            Item::UnattributedOpaque { .. } => {}",
+    "also": [
+      {
+        "edits": [
+          [
+            "                Item::UnattributedOpaque { .. } => {\n                    return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n                }",
+            "                Item::UnattributedOpaque { .. } => {}"
+          ]
+        ],
+        "source": "crates/llm-core/src/turn.rs"
+      }
+    ],
+    "before": "            Item::UnattributedOpaque { .. } => {\n                return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));\n            }",
+    "mutation": "validate-for-and-chat-outgoing-both-admit-unbound-state",
+    "named_failure": "scenario: llm.chat/authored/outgoing-unattributed-opaque-state-is-refused-by-name",
+    "rust_failed": [
+      "unattributed_opaque_state_is_refused_by_name_rather_than_dropped"
+    ],
+    "scenario_counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 76,
+      "skipped": 0,
+      "total": 77,
+      "unsupported": 0
+    },
+    "scenarios_failed": [
+      "outgoing-unattributed-opaque-state-is-refused-by-name"
+    ],
+    "source": "crates/llm-chat/src/outgoing.rs",
+    "source_before_sha256": "993c10aa8ba83cceeb589459fc4032235e93306e1511151ac3ce7e7325cdcdbb"
   }
 ]

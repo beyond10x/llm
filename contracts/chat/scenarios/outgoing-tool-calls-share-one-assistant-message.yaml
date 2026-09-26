@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-20T12:00:00Z'
   command: llm.chat.ProjectRequest
   input:
-    turn_json: '{"format":"llm.turn/2","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Weather?"},{"kind":"assistant-text","text":"Let
+    turn_json: '{"format":"llm.turn/3","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Weather?"},{"kind":"assistant-text","text":"Let
       me look."},{"kind":"tool-call","call_id":"call-1","name":"lookup","arguments":{"city":"Kyoto"}},{"kind":"tool-result","call_id":"call-1","output":"sunny","failed":false}],"tools":[{"name":"lookup","description":"Look
       a city up","input_schema":{"type":"object"}}]}}'
     protocol: chat-completions

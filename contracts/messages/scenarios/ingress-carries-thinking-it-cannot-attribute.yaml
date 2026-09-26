@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-carries-thinking-it-cannot-attribute
+summary: an arriving thinking block names no serving binding, so it is carried unattributed and JSON-equal rather than rebound to the reader
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"max_tokens\":512,\"messages\":[{\"content\":\"Summarise the log\",\"role\":\"user\"},{\"content\":[{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"},{\"data\":\"AAAA\",\"type\":\"redacted_thinking\"}],\"role\":\"assistant\"}],\"model\":\"caller-alias\"}"
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    error_message: null
+    wire_request: null
+    neutral_request: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"},{\"kind\":\"unattributed-opaque\",\"protocol\":\"messages\",\"payload\":{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}},{\"kind\":\"unattributed-opaque\",\"protocol\":\"messages\",\"payload\":{\"data\":\"AAAA\",\"type\":\"redacted_thinking\"}}],\"tools\":[],\"max_output_tokens\":512}}"
+    stream: false
+    items:
+      - "user-text:Summarise the log"
+      - "unattributed-opaque:\"messages\":{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}"
+      - "unattributed-opaque:\"messages\":{\"data\":\"AAAA\",\"type\":\"redacted_thinking\"}"

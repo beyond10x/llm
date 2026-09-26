@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: ingress-carries-an-unmodelled-entry-it-cannot-attribute
+summary: ingress carries a reasoning entry JSON-equal as unattributed state, and its own egress will not forward it unbound
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.responses.Ingest
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Hi"}]},{"type":"reasoning","id":"rs_1","encrypted_content":"gAAAAA-rev-1","summary":[{"type":"summary_text","text":"weighing"}]}],"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
+  outcome: observed
+assert:
+- view: llm.responses.LastIngestion
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastIngestion
+  contains:
+    accepted: true
+    error_code: null
+    item_kinds:
+    - user-text
+    - unattributed-opaque
+    turn_json: '{"format":"llm.turn/3","request":{"instructions":"","items":[{"kind":"user-text","text":"Hi"},{"kind":"unattributed-opaque","payload":{"encrypted_content":"gAAAAA-rev-1","id":"rs_1","summary":[{"text":"weighing","type":"summary_text"}],"type":"reasoning"},"protocol":"responses"}],"model":"small","tools":[]}}'
+    # The forward attempt without the caller's binding decision: refused, so nothing is re-projected.
+    reprojected: false
+    body_preserved: false

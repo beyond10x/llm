@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: unbound-unattributed-state-is-refused-on-egress
+summary: a turn carrying unattributed opaque state no caller has bound is refused before a byte is projected
+timeline:
+- at: '2026-09-26T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/3","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"},{"kind":"unattributed-opaque","protocol":"responses","payload":{"encrypted_content":"gAAAAA-rev-1","id":"rs_1","summary":[{"text":"weighing","type":"summary_text"}],"type":"reasoning"}}],"tools":[]}}'
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: false
+    error_code: unsupported
+    input_json: null
+    request_preserved: false

@@ -8,7 +8,7 @@ timeline:
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    turn_json: '{"format":"llm.turn/2","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"}],"tools":[]}}'
+    turn_json: '{"format":"llm.turn/3","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"}],"tools":[]}}'
   outcome: observed
 assert:
 - view: llm.responses.LastProjection

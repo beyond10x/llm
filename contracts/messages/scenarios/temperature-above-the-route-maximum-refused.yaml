@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-21T12:00:00Z'
   command: llm.messages.Project
   input:
-    request_json: "{\"format\":\"llm.turn/2\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"sampling\":{\"temperature\":1.5}}}"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"sampling\":{\"temperature\":1.5}}}"
     ingress: false
   outcome: observed
 assert:

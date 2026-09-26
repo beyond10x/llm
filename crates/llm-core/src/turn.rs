@@ -185,8 +185,26 @@ impl TurnRequest {
         Ok(())
     }
 
+    /// Bind every unattributed opaque item to `target`: the explicit caller decision, applied to
+    /// the whole request or not at all. Returns how many items were bound.
+    ///
     /// # Errors
-    /// Refuses incompatible opaque state, target model or unsupported requested settings.
+    /// Refuses, leaving the request unchanged, when any item was read from another protocol.
+    pub fn bind_unattributed(&mut self, target: &Provenance) -> Result<usize, Error> {
+        let mut bound = 0;
+        let mut items = Vec::with_capacity(self.items.len());
+        for item in &self.items {
+            if matches!(item, Item::UnattributedOpaque { .. }) {
+                bound += 1;
+            }
+            items.push(item.clone().bind_unattributed(target)?);
+        }
+        self.items = items;
+        Ok(bound)
+    }
+
+    /// # Errors
+    /// Refuses incompatible or unbound opaque state, target model or unsupported settings.
     pub fn validate_for(
         &self,
         target: &Provenance,
@@ -200,12 +218,16 @@ impl TurnRequest {
             ));
         }
         for item in &self.items {
-            if let Item::Opaque { provenance, .. } = item
-                && provenance != target
-            {
-                return Err(Error::unsupported(
-                    "opaque state belongs to a different serving binding",
-                ));
+            match item {
+                Item::Opaque { provenance, .. } if provenance != target => {
+                    return Err(Error::unsupported(
+                        "opaque state belongs to a different serving binding",
+                    ));
+                }
+                Item::UnattributedOpaque { .. } => {
+                    return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
+                }
+                _ => {}
             }
         }
         if (!self.tools.is_empty() && !capabilities.tools)
@@ -375,6 +397,13 @@ impl TurnOutcome {
                 Item::Opaque { provenance, .. } if provenance != target => {
                     return Err(Error::protocol("model output carries foreign opaque state"));
                 }
+                // A decoder watched its own binding produce what it decoded, so output that
+                // could not name its binding is a decoder defect, not a carriable state.
+                Item::UnattributedOpaque { .. } => {
+                    return Err(Error::protocol(
+                        "model output carries unattributed opaque state",
+                    ));
+                }
                 _ => {}
             }
         }
@@ -392,8 +421,8 @@ impl TurnOutcome {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum TurnFormat {
-    #[serde(rename = "llm.turn/2")]
-    V2,
+    #[serde(rename = "llm.turn/3")]
+    V3,
 }
 
 /// A versioned persisted request. Unknown envelope versions and fields refuse deserialization.
@@ -406,7 +435,7 @@ pub struct TurnDocument {
 impl TurnDocument {
     pub const fn new(request: TurnRequest) -> Self {
         Self {
-            format: TurnFormat::V2,
+            format: TurnFormat::V3,
             request,
         }
     }
@@ -414,8 +443,8 @@ impl TurnDocument {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 enum OutcomeFormat {
-    #[serde(rename = "llm.outcome/3")]
-    V3,
+    #[serde(rename = "llm.outcome/4")]
+    V4,
 }
 
 /// Versioned persisted output, distinct from the in-process result value.
@@ -428,7 +457,7 @@ pub struct OutcomeDocument {
 impl OutcomeDocument {
     pub const fn new(outcome: TurnOutcome) -> Self {
         Self {
-            format: OutcomeFormat::V3,
+            format: OutcomeFormat::V4,
             outcome,
         }
     }

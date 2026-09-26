@@ -48,6 +48,11 @@ pub(crate) fn block(item: &Item) -> Result<Value, Error> {
             opaque(payload)?;
             payload.clone()
         }
+        // `encode_request` refuses it in `validate_for` first; this arm keeps the refusal on
+        // every path that reaches a block, not only on the one that validates.
+        Item::UnattributedOpaque { .. } => {
+            return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
+        }
     })
 }
 fn user(item: &Item) -> bool {
@@ -121,9 +126,9 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
 ///
 /// `origin` states which protocol this gateway is reading, and nothing more. It is deliberately
 /// **not** used to attribute arriving opaque state: a request carries no evidence of what served
-/// the reasoning inside it, so this decoder refuses that state rather than binding it to the
-/// reader. See `docs/messages.md`; the cost is that reasoning continuity does not survive a
-/// gateway round trip until `story:unattributed-opaque-state` supplies a way to carry it.
+/// the reasoning inside it, so this decoder carries that state as [`Item::UnattributedOpaque`]
+/// rather than binding it to the reader. [`encode_request`] refuses it by name until the caller
+/// binds it with [`llm_core::TurnRequest::bind_unattributed`]; see `docs/messages.md`.
 ///
 /// # Errors
 /// Refuses unsupported fields/content rather than silently dropping provider semantics.
@@ -335,8 +340,9 @@ pub(crate) fn opaque(value: &Value) -> Result<(), Error> {
 ///
 /// `attribution` is the binding that **served** this block, and is `Some` only where that is a
 /// fact: a response this client read from its own bound endpoint. An arriving request carries no
-/// binding, so ingress passes `None` and unattributable opaque state is refused there. Stamping
-/// the reading binding onto it would launder state that egress refuses from any other binding.
+/// binding, so ingress passes `None` and opaque state is carried there as
+/// [`Item::UnattributedOpaque`]. Stamping the reading binding onto it would launder state that
+/// egress refuses from any other binding.
 pub(crate) fn decode_block(
     value: &Value,
     user: bool,
@@ -397,14 +403,17 @@ pub(crate) fn decode_block(
         }
         "thinking" | "redacted_thinking" if !user => {
             opaque(value)?;
-            let provenance = attribution.ok_or_else(|| {
-                Error::unsupported(
-                    "Messages thinking cannot be attributed to a serving binding on arrival",
-                )
-            })?;
-            Ok(Item::Opaque {
-                provenance: provenance.clone(),
-                payload: value.clone(),
+            // Where nothing observed the serving binding, the block is carried unattributed and
+            // is refused on egress until a caller binds it. It is never bound to the reader.
+            Ok(match attribution {
+                Some(provenance) => Item::Opaque {
+                    provenance: provenance.clone(),
+                    payload: value.clone(),
+                },
+                None => Item::UnattributedOpaque {
+                    protocol: Protocol::Messages,
+                    payload: value.clone(),
+                },
             })
         }
         _ => Err(Error::unsupported(

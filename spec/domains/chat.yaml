@@ -109,7 +109,7 @@ commands:
     # Build one outgoing Chat Completions body from a serialized neutral turn and a binding
     # declared by these inputs. No I/O, no credential resolution and no endpoint contact.
     input:
-      # Serialized llm.turn/2 is intentionally raw: a malformed envelope must reach the
+      # Serialized llm.turn/3 is intentionally raw: a malformed envelope must reach the
       # production decoder rather than being filtered out by the test target.
       - {name: turn_json, type: String}
       - {name: protocol, type: String}
@@ -148,7 +148,7 @@ commands:
   - name: llm.chat.EncodeIngress
     # Encode one neutral outcome back onto this wire, streamed or not.
     input:
-      # Serialized llm.outcome/3, raw for the same reason the turn envelope is raw.
+      # Serialized llm.outcome/4, raw for the same reason the turn envelope is raw.
       - {name: outcome_json, type: String}
       - {name: streamed, type: Boolean}
       - {name: include_usage, type: Boolean}
