@@ -5,7 +5,7 @@ description: Build the workspace, run the examples that need no provider account
 
 # Getting started
 
-Everything on this page runs offline. No example makes a paid provider call, starts a resource or
+Everything here runs offline. No example makes a paid provider call, starts a resource or
 reads a credential you already have.
 
 ## Prerequisites
@@ -14,8 +14,8 @@ reads a credential you already have.
 | --- | --- | --- |
 | Rust | 1.98, edition 2024 | The workspace |
 | [go-task](https://taskfile.dev) | any v3 | `task check` and `task rust` |
-| [ESS](https://beyond10x.github.io/docs/ess/) | 0.26.0 | The specification and conformance stages of `task check` |
-| [AEP](https://beyond10x.github.io/docs/aep/) | 0.55.0 | The planning stage of `task check` |
+| [ESS](https://beyond10x.github.io/docs/ess/) | 0.35.0 | The specification and conformance stages of `task check` |
+| [AEP](https://beyond10x.github.io/docs/aep/) | 0.60.0 | The planning stage of `task check` |
 
 Rust alone is enough to build, test and run the examples.
 
