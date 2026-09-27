@@ -4,6 +4,15 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
+## [0.1.4] - 2026-09-27
+
+### Changed
+
+- The specification has no open `UNMAPPED` markers. The gateway's route-count refusal and the
+  transport's disabled ambient proxy are declared and covered by scenarios (700, up from 697);
+  unbuilt work names its owning story, the gateway's single-owner scope is a recorded decision,
+  and the constant-time owner comparison is noted as a property ESS 0.36 cannot express.
+
 ## [0.1.3] - 2026-09-27
 
 ### Added
