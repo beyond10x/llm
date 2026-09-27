@@ -94,7 +94,7 @@ const config: Config = {
       logo: {alt: 'LLM', src: 'img/mark.svg', href: '/', width: 22, height: 22},
       copyright:
         '<span class="footer__claim">Unknown is never zero.</span>' +
-        'LLM · LicenseRef-B10x-Proprietary · built with Docusaurus.',
+        'LLM · Apache-2.0 · built with Docusaurus.',
     },
     prism: {
       theme: prismThemes.github,
