@@ -2,7 +2,7 @@
 format: aep.planning-md/2
 id: story:ess-http-transport
 kind: story
-status: draft
+status: active
 title: The HTTP transport is specified in ESS
 relations:
 - decomposes: epic:contracts
@@ -14,7 +14,7 @@ scope:
   path: contracts/transport/scenarios
 - confidence: cited
   path: spec/domains/transport.yaml
-revision: 2
+revision: 4
 ---
 ## Context
 
