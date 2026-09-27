@@ -2,13 +2,17 @@ mod budgets;
 mod chat;
 mod fallback;
 mod gate;
+mod gateway;
 mod hosting;
 mod inference;
 mod messages;
 mod pricing;
+mod providers;
 mod responses;
+mod runpod;
 mod secrets;
 mod target;
+mod transport;
 
 use ess_conformance::{
     AdmittedSuite, Clock, CountReport, CountRun, CountStatus, Ids, Runner, RunnerConfig,

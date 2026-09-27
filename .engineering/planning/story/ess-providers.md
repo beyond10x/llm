@@ -2,7 +2,7 @@
 format: aep.planning-md/2
 id: story:ess-providers
 kind: story
-status: draft
+status: implemented
 title: Provider accounts and bindings are specified in ESS
 relations:
 - decomposes: epic:contracts
@@ -14,7 +14,7 @@ scope:
   path: contracts/providers/scenarios
 - confidence: cited
   path: spec/domains/providers.yaml
-revision: 2
+revision: 5
 ---
 ## Context
 

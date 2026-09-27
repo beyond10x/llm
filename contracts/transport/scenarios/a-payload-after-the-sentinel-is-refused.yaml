@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-payload-after-the-sentinel-is-refused
+summary: a frame after [DONE] is refused as a protocol failure at once, not at end of stream; the frames before it stay observable
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"framing":"DoneSentinel","server":{"chunks":["data: {\"n\":1}\n\ndata: [DONE]\n\ndata: {\"n\":2}\n\n"],"end":"hold"}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: protocol
+    dispatch: accepted
+    events:
+    - payload:-:{"n":1}
+    - done
+    end: error

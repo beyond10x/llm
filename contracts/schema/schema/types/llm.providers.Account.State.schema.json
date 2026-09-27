@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.providers.Account.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:17cd80323774d4bffd86c0abb742ca1de3f6fcb6edcb3fb146bd5d7a1754f85a",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.providers.Account.State": {
+      "title": "State",
+      "x-ess-name": "llm.providers.Account.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

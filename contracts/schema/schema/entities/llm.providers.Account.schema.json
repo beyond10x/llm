@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Account",
+  "x-ess-name": "llm.providers.Account",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "provider_id": {
+      "type": "string"
+    },
+    "auth_kind": {
+      "type": "string"
+    },
+    "billing_kind": {
+      "type": "string"
+    },
+    "secret_reference_id": {
+      "type": "string"
+    },
+    "api_key_header": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.providers.Account.State"
+    }
+  },
+  "required": [
+    "id",
+    "provider_id",
+    "auth_kind",
+    "billing_kind",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:d9d32b658983b67ddbe3a4e09971023a296dd8303f1276137345d52d9c6f51b5",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.providers.Account.State": {
+      "title": "State",
+      "x-ess-name": "llm.providers.Account.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

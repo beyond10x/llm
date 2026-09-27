@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExchangeObservation",
+  "x-ess-name": "llm.transport.ExchangeObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "valid_program": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "retry_after_ms": {
+      "type": "integer"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "end": {
+      "type": "string"
+    },
+    "sticky": {
+      "type": "boolean"
+    },
+    "requests": {
+      "type": "integer"
+    },
+    "redirected_requests": {
+      "type": "integer"
+    },
+    "request_line": {
+      "type": "string"
+    },
+    "diagnostics_safe": {
+      "type": "boolean"
+    },
+    "ended_within": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.transport.ExchangeObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "valid_program",
+    "events",
+    "requests",
+    "redirected_requests",
+    "diagnostics_safe",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:e2d3139def97128e93cd57ea22529a9fc2eb9bfcd32a84486dee16a6d8689923",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.transport.ExchangeObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.transport.ExchangeObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

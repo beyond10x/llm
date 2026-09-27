@@ -2,7 +2,7 @@
 format: aep.planning-md/2
 id: story:ess-runpod
 kind: story
-status: draft
+status: implemented
 title: The Runpod adapter is specified in ESS
 relations:
 - decomposes: epic:contracts
@@ -14,7 +14,7 @@ scope:
   path: contracts/runpod/scenarios
 - confidence: cited
   path: spec/domains/runpod.yaml
-revision: 2
+revision: 5
 ---
 ## Context
 

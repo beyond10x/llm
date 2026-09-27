@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exercised payload",
+  "x-ess-name": "llm.runpod.Exercised",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "valid_program": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "valid_program"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:096e898a76df681f5a2181d264437f2388506983bbfc90dbff103143505d91eb",
+    "regenerate": "ess generate"
+  }
+}

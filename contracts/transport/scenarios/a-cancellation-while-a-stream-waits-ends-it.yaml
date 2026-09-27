@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-cancellation-while-a-stream-waits-ends-it
+summary: a cancellation that arrives while the stream waits on a silent server ends the wait at once, dispatch accepted
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"within_ms":4000,"cancel":{"after_ms":1000},"server":{"chunks":["data: {\"n\":1}\n\n"],"end":"hold"}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: cancelled
+    dispatch: accepted
+    end: error
+    ended_within: true

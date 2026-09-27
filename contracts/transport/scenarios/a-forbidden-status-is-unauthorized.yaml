@@ -1,0 +1,20 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-forbidden-status-is-unauthorized
+summary: 403 is unauthorized with dispatch rejected, like 401
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"status":403}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: unauthorized
+    dispatch: rejected
+    requests: 1

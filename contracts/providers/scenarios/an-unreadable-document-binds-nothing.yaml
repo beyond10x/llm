@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: an-unreadable-document-binds-nothing
+summary: a document that is not a binding reports no binding fact and calls nothing
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.providers.Prepare
+  input:
+    binding_json: '{"format":"llm.binding/2"}'
+    secret_error: null
+    secret: 'llm-fixture-private-marker-xxxxxxxxxx'
+    secret_length: null
+    cancel: Never
+  outcome: observed
+assert:
+- view: llm.providers.LastPreparation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastPreparation
+  contains:
+    bound: false
+    error_code: invalid-document
+    field_errors: []
+    request_url: null
+    provenance: null
+    prepared: false
+    header_count: null
+    resolver_calls: 0
+    refresh_calls: 0
+    diagnostics_safe: true

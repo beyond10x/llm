@@ -2,7 +2,7 @@
 format: aep.planning-md/2
 id: story:ess-gateway
 kind: story
-status: draft
+status: implemented
 title: The gateway surface is specified in ESS
 relations:
 - decomposes: epic:contracts
@@ -14,7 +14,7 @@ scope:
   path: contracts/gateway/scenarios
 - confidence: cited
   path: spec/domains/gateway.yaml
-revision: 2
+revision: 5
 ---
 ## Context
 

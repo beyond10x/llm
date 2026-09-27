@@ -1,0 +1,20 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-body-at-the-request-bound-is-sent
+summary: a body of exactly 16 MiB is sent
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"body_bytes":16777216,"server":{"chunks":["data: {\"n\":1}\n\n"]}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: null
+    end: end
+    requests: 1

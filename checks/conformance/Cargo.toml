@@ -24,6 +24,10 @@ llm-messages = { package = "b10x-llm-messages", path = "../../crates/llm-message
 llm-responses = { package = "b10x-llm-responses", path = "../../crates/llm-responses" }
 llm-chat = { package = "b10x-llm-chat", path = "../../crates/llm-chat" }
 llm-provision = { package = "b10x-llm-provision", path = "../../crates/llm-provision" }
+llm-runpod = { package = "b10x-llm-runpod", path = "../../crates/llm-runpod" }
+llm-gateway = { package = "b10x-llm-gateway", path = "../../crates/llm-gateway" }
+llm-providers.workspace = true
+llm-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true

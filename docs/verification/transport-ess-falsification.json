@@ -1,0 +1,817 @@
+[
+  {
+    "mutation": "a-redirect-is-followed",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": ".redirect(reqwest::redirect::Policy::none())",
+    "after": ".redirect(reqwest::redirect::Policy::limited(1))",
+    "named_failure": "llm.transport/authored/a-redirect-is-never-followed",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-redirect-is-never-followed"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-zero-timeout-is-admitted",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": ".any(|v| v.is_zero() || *v > Duration::from_hours(24))",
+    "after": ".any(|v| *v > Duration::from_hours(24))",
+    "named_failure": "llm.transport/authored/a-zero-timeout-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-zero-timeout-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-day-bound-refuses-its-own-size",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": ".any(|v| v.is_zero() || *v > Duration::from_hours(24))",
+    "after": ".any(|v| v.is_zero() || *v >= Duration::from_hours(24))",
+    "named_failure": "llm.transport/authored/a-timeout-of-exactly-one-day-is-admitted",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-timeout-of-exactly-one-day-is-admitted"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-day-bound-admits-one-millisecond-more",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": ".any(|v| v.is_zero() || *v > Duration::from_hours(24))",
+    "after": ".any(|v| v.is_zero() || *v > Duration::from_hours(24) + Duration::from_millis(1))",
+    "named_failure": "llm.transport/authored/a-timeout-longer-than-one-day-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-timeout-longer-than-one-day-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-cancelled-caller-still-sends",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "        if cancel.is_cancelled() {\n            return Err(Error::cancelled());\n        }\n        let url",
+    "after": "        let url",
+    "named_failure": "llm.transport/authored/a-cancellation-before-sending-sends-nothing",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-cancellation-before-sending-sends-nothing"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-username-in-the-endpoint-is-sent",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "            || !url.username().is_empty()\n",
+    "after": "\n",
+    "named_failure": "llm.transport/authored/an-endpoint-naming-a-user-is-refused-before-sending",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/an-endpoint-naming-a-user-is-refused-before-sending"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-password-in-the-endpoint-is-sent",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "            || url.password().is_some()\n",
+    "after": "\n",
+    "named_failure": "llm.transport/authored/an-endpoint-carrying-only-a-password-is-refused-before-sending",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/an-endpoint-carrying-only-a-password-is-refused-before-sending"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-fragment-in-the-endpoint-is-sent",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "            || url.fragment().is_some()\n",
+    "after": "\n",
+    "named_failure": "llm.transport/authored/an-endpoint-with-a-fragment-is-refused-before-sending",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/an-endpoint-with-a-fragment-is-refused-before-sending"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-body-bound-admits-one-byte-more",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "body.len() > MAX_REQUEST_BYTES || headers.len() > 64",
+    "after": "body.len() > MAX_REQUEST_BYTES + 1 || headers.len() > 64",
+    "named_failure": "llm.transport/authored/a-body-one-byte-over-the-request-bound-is-refused-before-sending",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-body-one-byte-over-the-request-bound-is-refused-before-sending"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-body-bound-refuses-its-own-size",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "body.len() > MAX_REQUEST_BYTES || headers.len() > 64",
+    "after": "body.len() >= MAX_REQUEST_BYTES || headers.len() > 64",
+    "named_failure": "llm.transport/authored/a-body-at-the-request-bound-is-sent",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-body-at-the-request-bound-is-sent"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-header-bound-admits-one-more",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "body.len() > MAX_REQUEST_BYTES || headers.len() > 64",
+    "after": "body.len() > MAX_REQUEST_BYTES || headers.len() > 65",
+    "named_failure": "llm.transport/authored/sixty-five-request-headers-are-refused-before-sending",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/sixty-five-request-headers-are-refused-before-sending"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-header-bound-refuses-its-own-count",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "body.len() > MAX_REQUEST_BYTES || headers.len() > 64",
+    "after": "body.len() > MAX_REQUEST_BYTES || headers.len() >= 64",
+    "named_failure": "llm.transport/authored/sixty-four-request-headers-are-sent",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/sixty-four-request-headers-are-sent"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-caller-instant-is-ignored",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "Some(until) => (started + self.limits.total).min(Instant::from_std(until)),",
+    "after": "Some(_) => started + self.limits.total,",
+    "named_failure": "llm.transport/authored/a-caller-instant-shorter-than-the-client-bound-ends-the-exchange",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 55,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-caller-instant-shorter-than-the-client-bound-ends-the-exchange",
+      "llm.transport/authored/a-caller-instant-shorter-than-the-client-bound-ends-the-stream"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-response-header-bound-is-ignored",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "deadline.min(started + self.limits.response_headers)",
+    "after": "deadline",
+    "named_failure": "llm.transport/authored/a-server-that-never-answers-ends-at-the-response-header-deadline",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-server-that-never-answers-ends-at-the-response-header-deadline"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "cancellation-while-awaiting-headers-is-ignored",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "() = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),",
+    "after": "() = std::future::pending::<()>() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),",
+    "named_failure": "llm.transport/authored/a-cancellation-while-awaiting-the-response-leaves-dispatch-unknown",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-cancellation-while-awaiting-the-response-leaves-dispatch-unknown"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "cancellation-while-a-stream-waits-is-ignored",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "() = self.cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),",
+    "after": "() = std::future::pending::<()>() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),",
+    "named_failure": "llm.transport/authored/a-cancellation-while-a-stream-waits-ends-it",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-cancellation-while-a-stream-waits-ends-it"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-idle-bound-is-ignored",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "self.deadline.min(Instant::now() + self.idle)",
+    "after": "self.deadline",
+    "named_failure": "llm.transport/authored/silence-past-the-idle-bound-ends-the-stream",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/silence-past-the-idle-bound-ends-the-stream"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-failure-is-not-final",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "        if let Some(error) = &self.failure {\n            return Err(error.clone());\n        }\n",
+    "after": "\n",
+    "named_failure": "llm.transport/authored/a-truncated-stream-keeps-its-prefix-is-final-and-is-not-retried",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-truncated-stream-keeps-its-prefix-is-final-and-is-not-retried"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-media-type-is-case-sensitive",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "v.eq_ignore_ascii_case(\"text/event-stream\")",
+    "after": "v == \"text/event-stream\"",
+    "named_failure": "llm.transport/authored/an-event-stream-media-type-with-parameters-is-accepted",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/an-event-stream-media-type-with-parameters-is-accepted"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "any-success-is-an-event-stream",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "if !media_type.is_some_and(|v| v.eq_ignore_ascii_case(\"text/event-stream\")) {",
+    "after": "if false {",
+    "named_failure": "llm.transport/authored/a-success-that-is-not-an-event-stream-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-success-that-is-not-an-event-stream-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-forbidden-status-is-not-unauthorized",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "401 | 403 => (ErrorCode::Unauthorized, Dispatch::Rejected),",
+    "after": "403 => (ErrorCode::Unauthorized, Dispatch::Rejected),",
+    "named_failure": "llm.transport/authored/an-authentication-status-is-rejected-and-quotes-no-body",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/an-authentication-status-is-rejected-and-quotes-no-body"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-server-failure-is-rejected",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "408 | 500..=599 => (ErrorCode::Transport, Dispatch::Unknown),",
+    "after": "408 => (ErrorCode::Transport, Dispatch::Unknown),",
+    "named_failure": "llm.transport/authored/a-server-failure-leaves-dispatch-unknown",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-server-failure-leaves-dispatch-unknown"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-redirect-status-is-rejected",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "300..=399 => (ErrorCode::Refused, Dispatch::Unknown),",
+    "after": "300..=399 => (ErrorCode::Refused, Dispatch::Rejected),",
+    "named_failure": "llm.transport/authored/a-redirect-is-never-followed",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-redirect-is-never-followed"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-rate-limit-is-a-refusal",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "429 => (ErrorCode::RateLimited, Dispatch::Rejected),",
+    "after": "429 => (ErrorCode::Refused, Dispatch::Rejected),",
+    "named_failure": "llm.transport/authored/a-rate-limit-carries-its-retry-hint-without-retrying",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-rate-limit-carries-its-retry-hint-without-retrying"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-retry-hint-is-read-as-milliseconds",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "return Some(Duration::from_secs(value.parse().unwrap_or(u64::MAX)));",
+    "after": "return Some(Duration::from_millis(value.parse().unwrap_or(u64::MAX)));",
+    "named_failure": "llm.transport/authored/a-rate-limit-carries-its-retry-hint-without-retrying",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-rate-limit-carries-its-retry-hint-without-retrying"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "an-error-body-is-quoted",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "Error::new(code, format!(\"HTTP endpoint returned status {status}\")).with_dispatch(dispatch);",
+    "after": "Error::new(code, format!(\"HTTP endpoint returned status {status} {headers:?} llm-fixture-untrusted-error-body\")).with_dispatch(dispatch);",
+    "named_failure": "llm.transport/authored/an-authentication-status-is-rejected-and-quotes-no-body",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 55,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-rate-limit-carries-its-retry-hint-without-retrying",
+      "llm.transport/authored/an-authentication-status-is-rejected-and-quotes-no-body"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-end-of-stream-inside-a-frame-completes",
+    "source": "crates/llm-http/src/sse.rs",
+    "before": "if self.saw_data || !self.line.is_empty() {",
+    "after": "if false {",
+    "named_failure": "llm.transport/authored/a-truncated-stream-keeps-its-prefix-is-final-and-is-not-retried",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-truncated-stream-keeps-its-prefix-is-final-and-is-not-retried"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2",
+    "source_restored_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2"
+  },
+  {
+    "mutation": "a-frame-after-the-sentinel-is-dropped",
+    "source": "crates/llm-http/src/sse.rs",
+    "before": "return Err(Error::protocol(\"SSE payload follows terminal sentinel\"));",
+    "after": "return Ok(None);",
+    "named_failure": "llm.transport/authored/a-payload-after-the-sentinel-is-refused",
+    "killed": false,
+    "counts": {
+      "error": 0,
+      "failed": 0,
+      "passed": 57,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [],
+    "lane_exit": 0,
+    "source_before_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2",
+    "source_restored_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2"
+  },
+  {
+    "mutation": "the-line-bound-admits-one-byte-more",
+    "source": "crates/llm-http/src/sse.rs",
+    "before": "if self.line.len() >= MAX_EVENT_BYTES {",
+    "after": "if self.line.len() > MAX_EVENT_BYTES {",
+    "named_failure": "llm.transport/authored/a-line-over-the-event-bound-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-line-over-the-event-bound-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2",
+    "source_restored_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2"
+  },
+  {
+    "mutation": "payloads-only-framing-reads-a-sentinel",
+    "source": "crates/llm-http/src/sse.rs",
+    "before": "if self.framing == Framing::DoneSentinel && data == b\"[DONE]\" {",
+    "after": "if data == b\"[DONE]\" {",
+    "named_failure": "llm.transport/authored/payloads-only-framing-does-not-recognise-a-sentinel",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/payloads-only-framing-does-not-recognise-a-sentinel"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2",
+    "source_restored_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2"
+  },
+  {
+    "mutation": "the-sentinel-is-not-recognised",
+    "source": "crates/llm-http/src/sse.rs",
+    "before": "if self.framing == Framing::DoneSentinel && data == b\"[DONE]\" {",
+    "after": "if false {",
+    "named_failure": "llm.transport/authored/the-done-sentinel-is-an-explicit-terminal-event",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 55,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-payload-after-the-sentinel-is-refused",
+      "llm.transport/authored/the-done-sentinel-is-an-explicit-terminal-event"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2",
+    "source_restored_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2"
+  },
+  {
+    "mutation": "a-frame-after-the-sentinel-is-dropped-rerun",
+    "source": "crates/llm-http/src/sse.rs",
+    "before": "return Err(Error::protocol(\"SSE payload follows terminal sentinel\"));",
+    "after": "return Ok(None);",
+    "named_failure": "llm.transport/authored/a-payload-after-the-sentinel-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 56,
+      "skipped": 0,
+      "total": 57,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-payload-after-the-sentinel-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2",
+    "source_restored_sha256": "67a736eaeec85bc38df5a73c72ac06126bf027b9ca588504f69a321850400ab2"
+  },
+  {
+    "mutation": "a-request-timeout-status-is-refused",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "408 | 500..=599 => (ErrorCode::Transport, Dispatch::Unknown),",
+    "after": "500..=599 => (ErrorCode::Transport, Dispatch::Unknown),",
+    "named_failure": "llm.transport/authored/adversary-w2-a-request-timeout-status-leaves-dispatch-unknown",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 62,
+      "skipped": 0,
+      "total": 63,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/adversary-w2-a-request-timeout-status-leaves-dispatch-unknown"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-server-failure-range-ends-at-598",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "408 | 500..=599 => (ErrorCode::Transport, Dispatch::Unknown),",
+    "after": "408 | 500..=598 => (ErrorCode::Transport, Dispatch::Unknown),",
+    "named_failure": "llm.transport/authored/adversary-w2-the-last-server-error-status-leaves-dispatch-unknown",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 62,
+      "skipped": 0,
+      "total": 63,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/adversary-w2-the-last-server-error-status-leaves-dispatch-unknown"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-past-retry-date-is-a-one-second-hint",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "            .unwrap_or_default(),",
+    "after": "            .unwrap_or(Duration::from_secs(1)),",
+    "named_failure": "llm.transport/authored/adversary-w2-a-retry-date-in-the-past-is-a-zero-hint",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 62,
+      "skipped": 0,
+      "total": 63,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/adversary-w2-a-retry-date-in-the-past-is-a-zero-hint"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "a-forbidden-status-is-a-refusal",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "401 | 403 => (ErrorCode::Unauthorized, Dispatch::Rejected),",
+    "after": "401 => (ErrorCode::Unauthorized, Dispatch::Rejected),",
+    "named_failure": "llm.transport/authored/a-forbidden-status-is-unauthorized",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 62,
+      "skipped": 0,
+      "total": 63,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/a-forbidden-status-is-unauthorized"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  },
+  {
+    "mutation": "the-redirect-range-starts-at-301",
+    "source": "crates/llm-http/src/transport.rs",
+    "before": "300..=399 => (ErrorCode::Refused, Dispatch::Unknown),",
+    "after": "301..=399 => (ErrorCode::Refused, Dispatch::Unknown),",
+    "named_failure": "llm.transport/authored/the-first-redirect-status-is-refused-with-dispatch-unknown",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 62,
+      "skipped": 0,
+      "total": 63,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.transport/authored/the-first-redirect-status-is-refused-with-dispatch-unknown"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b",
+    "source_restored_sha256": "e5fa048df91587e947c232fee00f89bb19d80df46f87043e664a6d2d6ed5ee3b"
+  }
+]

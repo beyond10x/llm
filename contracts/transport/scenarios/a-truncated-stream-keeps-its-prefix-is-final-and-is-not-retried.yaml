@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-truncated-stream-keeps-its-prefix-is-final-and-is-not-retried
+summary: end of stream inside a frame is a refusal, not a completion; the prefix survives, the refusal repeats, and nothing is resent
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"chunks":["data: {\"text\":\"prefix\"}\n\n","data: {\"partial\":"]}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: protocol
+    dispatch: accepted
+    events:
+    - payload:-:{"text":"prefix"}
+    end: error
+    sticky: true
+    requests: 1

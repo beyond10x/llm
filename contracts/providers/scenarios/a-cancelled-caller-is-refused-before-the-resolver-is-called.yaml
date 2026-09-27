@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: a-cancelled-caller-is-refused-before-the-resolver-is-called
+summary: a cancellation already signalled refuses preparation without resolving anything
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.providers.Prepare
+  input:
+    binding_json: '{"format":"llm.binding/1","provider":{"id":"my-lab","category":"private-compute"},"account":{"id":"research","provider_id":"my-lab","auth_kind":"bearer","billing_kind":"metered","secret_reference_id":"my-opaque-reference"},"endpoint":{"id":"gpu-7","account_id":"research","base_url":"http://127.0.0.1:8000/proxy/v1"},"model":{"id":"code","upstream_name":"custom-org/CustomModel-27B:revision-4"},"serving":{"id":"local-code","endpoint_id":"gpu-7","model_id":"code","protocol":"chat-completions","capabilities":{"tools":false,"tool_choice":false,"temperature":false,"top_p":false,"reasoning_efforts":[],"context_window":32768,"max_output_tokens":8192}}}'
+    secret_error: null
+    secret: 'llm-fixture-private-marker-xxxxxxxxxx'
+    secret_length: null
+    cancel: BeforeCall
+  outcome: observed
+assert:
+- view: llm.providers.LastPreparation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastPreparation
+  contains:
+    prepared: false
+    error_code: cancelled
+    resolver_calls: 0

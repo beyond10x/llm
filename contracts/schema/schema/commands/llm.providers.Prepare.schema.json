@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prepare input",
+  "x-ess-name": "llm.providers.Prepare",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "binding_json": {
+      "type": "string"
+    },
+    "secret_error": {
+      "$ref": "#/$defs/llm.providers.SecretFailure"
+    },
+    "secret": {
+      "type": "string"
+    },
+    "secret_length": {
+      "type": "integer"
+    },
+    "cancel": {
+      "$ref": "#/$defs/llm.providers.CancelPoint"
+    }
+  },
+  "required": [
+    "binding_json",
+    "cancel"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:7afc5aa1d03d5fc69bb6fc5685b1c52aeb7006890238341a06934bd1845b2935",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.providers.CancelPoint": {
+      "title": "CancelPoint",
+      "x-ess-name": "llm.providers.CancelPoint",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Never",
+        "BeforeCall",
+        "DuringResolve",
+        "AfterResolve"
+      ]
+    },
+    "llm.providers.SecretFailure": {
+      "title": "SecretFailure",
+      "x-ess-name": "llm.providers.SecretFailure",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "InvalidReference",
+        "Unavailable",
+        "Missing",
+        "Expired",
+        "RefreshUnsupported",
+        "RefreshRejected",
+        "RefreshUncertain",
+        "TooLarge",
+        "TooManyReferences",
+        "UnsafeSource",
+        "UnsupportedPlatform"
+      ]
+    }
+  }
+}

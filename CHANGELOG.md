@@ -4,6 +4,21 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
+## [0.1.3] - 2026-09-27
+
+### Added
+
+- ESS domains `llm.runpod`, `llm.gateway`, `llm.providers` and `llm.transport`, each run by the
+  conformance runner against the real crate: 697 scenarios, up from 523.
+
+### Fixed
+
+- The gateway refuses a header name followed by whitespace before its colon with `400
+  request-malformed`, as RFC 9112 §5.1 requires; it was trimmed and authenticated.
+- The gateway compares SHA-256 digests of the presented and expected owner secrets in constant
+  time, so the expected secret's length is not observable through timing. The verifier keeps only
+  the digest.
+
 ## [0.1.2] - 2026-09-27
 
 ### Changed

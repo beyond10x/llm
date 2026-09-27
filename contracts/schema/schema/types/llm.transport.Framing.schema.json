@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.transport.Framing",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:f47a781d24755c7883f6aa85078f7fb3e2c55b1e80934ccf226db21e44e307b2",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.transport.Framing": {
+      "title": "Framing",
+      "x-ess-name": "llm.transport.Framing",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "DoneSentinel",
+        "PayloadsOnly"
+      ]
+    }
+  }
+}

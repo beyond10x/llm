@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: adversary-w2-crlf-framing-joins-data-lines-and-keeps-the-event-name
+summary: CRLF line endings end one line each (sse.rs:91), two data lines join with a newline, and the event name survives its leading space; every authored transport scenario uses LF and no event name
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"chunks":["event: delta\r\ndata: {\"a\":\r\ndata: 1}\r\n\r\n"]}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: null
+    events:
+    - payload:delta:{"a":1}
+    end: end

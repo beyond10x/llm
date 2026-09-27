@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Client",
+  "x-ess-name": "llm.transport.Client",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "response_headers_ms": {
+      "type": "integer"
+    },
+    "idle_ms": {
+      "type": "integer"
+    },
+    "total_ms": {
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.transport.Client.State"
+    }
+  },
+  "required": [
+    "id",
+    "response_headers_ms",
+    "idle_ms",
+    "total_ms",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:735fc26e30e4b9a1f38728991357cecf6e60a1e407956a2cb5c7e1d4c7057c0d",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.transport.Client.State": {
+      "title": "State",
+      "x-ess-name": "llm.transport.Client.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

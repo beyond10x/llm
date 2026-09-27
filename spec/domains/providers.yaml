@@ -1,0 +1,107 @@
+domain: llm.providers
+
+# Provider accounts, bindings and request-time authentication (crates/llm-providers). A
+# `BindingDocument` names one provider, account, endpoint, served model and serving model;
+# `bind` validates their references without I/O (binding.rs:44-77), and `prepare_auth` resolves
+# only the account's explicitly named secret, once, through an injected resolver
+# (auth.rs:33-100). Its secret-error mapping is auth.rs:102-110: `missing` and `expired` are
+# `unauthorized`, every other resolver failure is `unavailable`.
+#
+# The entities are verification-adapter observations of the real crate with an injected
+# in-process resolver whose failures and material the fixture chooses. No credential store,
+# file or network is involved. The header *value* is never reported; only whether it is the
+# declared presentation of the fixture material.
+#
+# UNMAPPED: the catalog projection of these declarations (llm-routing `Catalog`) is llm.catalog
+# and llm.routing's contract, not restated here.
+types:
+  # Every SecretError the resolver seam can return (crates/llm-credentials/src/lib.rs:46-69).
+  - name: llm.providers.SecretFailure
+    kind: enum
+    variants: [InvalidReference, Unavailable, Missing, Expired, RefreshUnsupported, RefreshRejected, RefreshUncertain, TooLarge, TooManyReferences, UnsafeSource, UnsupportedPlatform]
+  # Where the caller's cancellation lands relative to resolution.
+  - name: llm.providers.CancelPoint
+    kind: enum
+    variants: [Never, BeforeCall, DuringResolve, AfterResolve]
+entities:
+  - name: llm.providers.Account
+    identity: {name: id, type: String}
+    fields:
+      - {name: provider_id, type: String}
+      - {name: auth_kind, type: String}
+      - {name: billing_kind, type: String}
+      # A non-secret lookup name; absent exactly when the account is anonymous.
+      - {name: secret_reference_id, type: 'Optional<String>'}
+      - {name: api_key_header, type: 'Optional<String>'}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.providers.Binding
+    identity: {name: serving_model_id, type: String}
+    fields:
+      - {name: account_id, type: String}
+      - {name: endpoint_id, type: String}
+      - {name: model_id, type: String}
+      - {name: protocol, type: String}
+      - {name: request_url, type: String}
+    relations:
+      - {name: account, kind: references, target: llm.providers.Account, cardinality: one, via: account_id}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.providers.PreparationObservation
+    identity: {name: observation_id, type: String}
+    fields: &preparation_facts
+      # Whether the document parsed and `bind` accepted it.
+      - {name: bound, type: Boolean}
+      # The refusal's llm-core error code and the fixed message the crate wrote, from `bind`
+      # or `prepare_auth`. `invalid-document` when the document itself does not parse.
+      - {name: error_code, type: 'Optional<String>'}
+      - {name: error_message, type: 'Optional<String>'}
+      # For a document that does not parse: each validated field the crate's own constructor
+      # refuses, as `<field>: <message>`.
+      - {name: field_errors, type: 'List<String>'}
+      - {name: request_url, type: 'Optional<String>'}
+      # `<protocol>/<provider>/<account>/<endpoint>/<model>` of the bound provenance.
+      - {name: provenance, type: 'Optional<String>'}
+      - {name: upstream_model, type: 'Optional<String>'}
+      # Whether `prepare_auth` returned headers.
+      - {name: prepared, type: Boolean}
+      - {name: header_count, type: 'Optional<Integer>'}
+      - {name: header_name, type: 'Optional<String>'}
+      # `Bearer` when the value carries the bearer scheme, `raw` otherwise.
+      - {name: header_scheme, type: 'Optional<String>'}
+      # Whether the value is exactly the declared presentation of the fixture material.
+      - {name: header_matches, type: 'Optional<Boolean>'}
+      - {name: header_sensitive, type: 'Optional<Boolean>'}
+      # Whether a credential generation came back with the headers.
+      - {name: generation_present, type: 'Optional<Boolean>'}
+      # Calls the injected resolver received.
+      - {name: resolver_calls, type: Integer}
+      - {name: refresh_calls, type: Integer}
+      # Whether every Debug rendering and diagnostic is free of the fixture material.
+      - {name: diagnostics_safe, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.providers.Prepare
+    input:
+      - {name: binding_json, type: String}
+      # What the injected resolver answers: its failure when present, otherwise the material,
+      # otherwise `secret_length` bytes of fixture material.
+      - {name: secret_error, type: 'Optional<llm.providers.SecretFailure>'}
+      - {name: secret, type: 'Optional<String>'}
+      - {name: secret_length, type: 'Optional<Integer>'}
+      - {name: cancel, type: llm.providers.CancelPoint}
+    outcomes:
+      - name: observed
+        emits: [llm.providers.Prepared]
+        payload:
+          llm.providers.Prepared:
+            diagnostics_safe: {generated: true}
+        summary: Observe binding validation and request-time authentication with an injected resolver.
+events:
+  # Test-adapter notification only; there is no production notification transport.
+  - name: llm.providers.Prepared
+    fields:
+      - {name: diagnostics_safe, type: Boolean}
+views:
+  - name: llm.providers.LastPreparation
+    source: llm.providers.PreparationObservation
+    consistency: read_your_writes
+    fields: *preparation_facts

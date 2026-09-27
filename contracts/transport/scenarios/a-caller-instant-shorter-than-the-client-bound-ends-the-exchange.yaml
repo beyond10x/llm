@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-caller-instant-shorter-than-the-client-bound-ends-the-exchange
+summary: an absolute instant the caller holds bounds the response headers even when every client limit is longer
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"limits":{"response_headers_ms":10000,"idle_ms":10000,"total_ms":10000},"until_ms":200,"within_ms":5000,"server":{"respond":false}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: deadline
+    dispatch: unknown
+    end: null
+    ended_within: true
