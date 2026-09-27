@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: architecture-design:llm-boundaries
 kind: architecture-design
 status: draft

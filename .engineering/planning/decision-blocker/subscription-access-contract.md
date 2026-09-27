@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: decision-blocker:subscription-access-contract
 kind: decision-blocker
 status: open

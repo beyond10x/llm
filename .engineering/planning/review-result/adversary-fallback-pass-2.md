@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-fallback-pass-2
 kind: review-result
 status: active
@@ -8,7 +8,7 @@ relations:
 - reviews: story:ordered-fallback
 revision: 1
 ---
-unit: story:ordered-fallback, second and last pass, on the uncommitted working tree at base `d5c73e8` (`/home/timo/.local/state/worktree/trees/b10x/llm/wave2-fallback`)
+unit: story:ordered-fallback, second and last pass, on the uncommitted working tree at base `d5c73e8` (`home-path:sha256:dbeab428e61fbbf75927badff457a86620c369c7f5190943d59e233d935bc12c`)
 verdict: CONFIRMED (3 mutants survive all 21 existing fallback cases; no case is red against the tree)
 cases: executed 32→35, red 0 against the tree (each new case is red against its mutant)
 origin: introduced 3 / pre-existing 0 / undecided 0
@@ -53,9 +53,9 @@ The existing suite under each mutant: `fallback` 16 passed, `fallback_adversary`
 - The adapter's use of the eligible-code and dispatch matrix (`Accepted`, `Unknown`) matches `routing-fallback.md`.
 
 **6. Paths written outside the worktree**
-- `/home/timo/.cache/llm-wave-2/fallback/adversary-2/` containing `mutate.sh`, `apply.py`, `fallback.rs.orig`, `mutate.log`, `alone-tree.log`, `suite.log` and `clippy.log`.
+- `home-path:sha256:379407403a0aa6775e1404dccff9cdd418440759d17b943ec32b85e1bb53c127` containing `mutate.sh`, `apply.py`, `fallback.rs.orig`, `mutate.log`, `alone-tree.log`, `suite.log` and `clippy.log`.
 - Removed already: `adversary-2/copy/` and `adversary-2/target/`.
-- The shared build dir `$HOME/.cache/b10x-target/llm-wave2-fallback` received the `fallback_adversary_2` test binary.
+- The shared build dir `home-path:sha256:150a02889bdd024f401141a7cde92a06454cb2c745ad840f4a6192473b2e4b47` received the `fallback_adversary_2` test binary.
 
 **7. Findings block**
 ```findings
