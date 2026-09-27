@@ -4,7 +4,22 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
-## [Unreleased]
+## [0.1.1] - 2026-09-27
+
+### Changed
+
+- The specification is at ESS source format `ess/14`; the conformance runner uses ESS 0.36.0 and
+  CI installs ESS 0.36.0 and AEP 0.61.1.
+- The conformance runner parses its command line with clap: `check`, or
+  `run SUITE BASELINE OUTPUT_DIR SOURCE_IDENTITY` for one suite.
+- `docs/design.md` and `docs/implementation-status.md` state the resolved hosting lifecycle and
+  the stories shipped in 0.1.0.
+
+### Added
+
+- 61 authored conformance scenarios from a mutation audit and a refusal-reachability pass (the
+  suite runs 523). `llm.secrets.ProbeFile` takes an optional `mode` fixture so each file and
+  directory permission rule is reached on its own.
 
 ## [0.1.0] - 2026-09-27
 

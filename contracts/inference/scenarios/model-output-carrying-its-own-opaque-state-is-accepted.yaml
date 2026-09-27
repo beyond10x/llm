@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.inference
+scenario: model-output-carrying-its-own-opaque-state-is-accepted
+summary: opaque state bound to the observing binding is carried, the positive pair of the foreign-state refusal
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.inference.InspectResult
+  input:
+    result_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"hello"},{"kind":"opaque","provenance":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"payload":{"state":"x"}}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"wire-model-revision","response_id":"response-1","final_usage":true,"usage":{"input_tokens":100,"output_tokens":5}}}}'
+    failure: false
+  outcome: observed
+assert:
+- view: llm.inference.LastResult
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.inference.LastResult
+  contains:
+    accepted: true
+    failed: false
+    error_code: null
+    dispatch: null
+    upstream_model: wire-model-revision
+    response_id: response-1
+    final_usage: true
+    input_tokens: '100'
+    output_tokens: '5'
+    cached_input_tokens: null
+    cache_creation_input_tokens: null
+    reasoning_output_tokens: null
+    roundtrip_preserved: true

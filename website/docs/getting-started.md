@@ -14,8 +14,8 @@ reads a credential you already have.
 | --- | --- | --- |
 | Rust | 1.98, edition 2024 | The workspace |
 | [go-task](https://taskfile.dev) | any v3 | `task check` and `task rust` |
-| [ESS](https://beyond10x.github.io/docs/ess/) | 0.35.0 | The specification and conformance stages of `task check` |
-| [AEP](https://beyond10x.github.io/docs/aep/) | 0.60.0 | The planning stage of `task check` |
+| [ESS](https://beyond10x.github.io/docs/ess/) | 0.36.0 | The specification and conformance stages of `task check` |
+| [AEP](https://beyond10x.github.io/docs/aep/) | 0.61.1 | The planning stage of `task check` |
 
 Rust alone is enough to build, test and run the examples.
 
@@ -72,7 +72,7 @@ building and running it locally to evaluate, review or verify it. Any other use 
 written agreement.
 :::
 
-Nothing is published to crates.io. The workspace is `publish = false` at version `0.1.0`. To try a
+Nothing is published to crates.io. The workspace is `publish = false` at version `0.1.1`. To try a
 crate from a scratch project, depend on it from Git and pin an exact revision, because nothing
 about the API is stable yet:
 

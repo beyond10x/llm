@@ -79,5 +79,5 @@ promise runtime event publication, persistent routing jobs or hosting/budget sta
 Budget ownership/scope is now resolved by [the single-owner ledger contract](budgets.md). Its ESS
 domain declares the policy, owned obligations and inspection records with closed runtime phase
 values; authored programs observe the real durable engine's transitions and refusals.
-UNMAPPED: provider-specific hosting lifecycle transitions await their design story. They must be
-modeled before those controllers are implemented, including consumption of budget stop obligations.
+The hosting lifecycle is resolved: `spec/domains/hosting.yaml` declares the permitted transition
+table the library enforces, and a pair absent from it is refused.

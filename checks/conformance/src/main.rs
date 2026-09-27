@@ -46,15 +46,36 @@ struct Baseline {
     skipped_ceiling: u64,
 }
 
+#[derive(clap::Parser)]
+#[command(name = "b10x-llm-conformance")]
+struct Cli {
+    #[command(subcommand)]
+    command: Cmd,
+}
+
+#[derive(clap::Subcommand)]
+enum Cmd {
+    /// Check ESS projection drift and run the suite three times against the baseline.
+    Check,
+    /// Run one suite against a baseline and write its report.
+    Run {
+        suite: String,
+        baseline: String,
+        output_dir: std::path::PathBuf,
+        source_identity: String,
+    },
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<_> = std::env::args().skip(1).collect();
-    if args == ["check"] {
-        return gate::check();
+    match <Cli as clap::Parser>::parse().command {
+        Cmd::Check => gate::check(),
+        Cmd::Run {
+            suite,
+            baseline,
+            output_dir,
+            source_identity,
+        } => execute(&suite, &baseline, &output_dir, &source_identity),
     }
-    let [suite_path, baseline_path, output, revision] = args.as_slice() else {
-        return Err("usage: b10x-llm-conformance SUITE BASELINE OUTPUT_DIR SOURCE_IDENTITY".into());
-    };
-    execute(suite_path, baseline_path, Path::new(output), revision)
 }
 
 fn execute(
