@@ -26,7 +26,7 @@ jobs:
       - name: Install pinned planning tools
         run: |
           cargo install --locked --git https://github.com/beyond10x/aep.git --rev 99ad0b51b748629ddf3708c366f18d69fe86cf5e aep-cli --bin aep
-          cargo install --locked --git https://github.com/beyond10x/ess.git --rev a5f1bea13294510819b266561c83be9509e6ba57 ess-cli --bin ess
+          cargo install --locked --git https://github.com/beyond10x/ess.git --rev a86579e13385476e324a1550aab2a5e207048ee2 ess-cli --bin ess
       - name: Specification and plan
         run: |
           ess specify validate --path spec

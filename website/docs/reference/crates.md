@@ -5,7 +5,7 @@ description: Fourteen workspace crates. Twelve are implemented, two are empty pl
 
 # Crate layout
 
-The workspace is `publish = false` at version `0.0.0`. Nothing is on a registry. Package names
+The workspace is `publish = false` at version `0.1.0`. Nothing is on a registry. Package names
 start with `b10x-`; library names do not (`b10x-llm-core` is `use llm_core`). `unsafe_code` is
 forbidden workspace-wide, and Clippy runs `all` plus `pedantic` at deny.
 

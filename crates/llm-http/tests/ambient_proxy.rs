@@ -19,15 +19,19 @@ fn ambient_proxy_environment_does_not_receive_caller_credentials() {
     proxy.set_nonblocking(false).unwrap();
     let proxy_url = format!("http://{}", proxy.local_addr().unwrap());
     let (seen_tx, seen_rx) = mpsc::channel();
+    // Every connection is read: another local process may reach an ephemeral port too, and only
+    // the child's own attempt (its `/v1/stream` target) is evidence against the transport.
     thread::spawn(move || {
-        if let Ok((mut socket, _)) = proxy.accept() {
+        while let Ok((mut socket, _)) = proxy.accept() {
             socket
                 .set_read_timeout(Some(Duration::from_secs(2)))
                 .unwrap();
             let mut bytes = vec![0; 8192];
             let length = socket.read(&mut bytes).unwrap_or(0);
             bytes.truncate(length);
-            seen_tx.send(bytes).ok();
+            if seen_tx.send(bytes).is_err() {
+                break;
+            }
         }
     });
     let status = Command::new(std::env::current_exe().unwrap())
@@ -44,8 +48,11 @@ fn ambient_proxy_environment_does_not_receive_caller_credentials() {
         .status()
         .unwrap();
     assert!(status.success(), "child fixture failed to run");
-    if let Ok(bytes) = seen_rx.recv_timeout(Duration::from_secs(3)) {
+    while let Ok(bytes) = seen_rx.recv_timeout(Duration::from_secs(3)) {
         let text = String::from_utf8_lossy(&bytes).to_ascii_lowercase();
+        if !text.contains("/v1/stream") && !text.contains(CREDENTIAL) {
+            continue;
+        }
         panic!(
             "ambient HTTP_PROXY received the attempt (credential forwarded: {}); first line: {:?}",
             text.contains(CREDENTIAL),
