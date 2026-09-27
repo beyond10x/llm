@@ -1,0 +1,1374 @@
+type: ess-scenario/1
+domain: llm.routing
+scenario: a-route-of-the-maximum-sixty-four-targets-is-accepted
+summary: a route naming exactly sixty-four targets is accepted
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.routing.Evaluate
+  input:
+    catalog_toml: |
+      # Illustrative declarations, not qualification of a particular model or deployment.
+      # Replace the endpoint, upstream model name and capabilities with your deployment's facts.
+      format = "llm.catalog/1"
+
+      [[providers]]
+      id = "my-lab"
+      category = "self-hosted"
+
+      [[accounts]]
+      id = "local"
+      provider_id = "my-lab"
+      auth_kind = "anonymous"
+      billing_kind = "self-hosted"
+
+      [[accounts]]
+      id = "remote"
+      provider_id = "my-lab"
+      auth_kind = "bearer"
+      billing_kind = "metered"
+      secret_reference_id = "lab-llm-token"
+
+      [[endpoints]]
+      id = "local-vllm"
+      account_id = "local"
+      base_url = "http://127.0.0.1:8000/v1"
+
+      [[endpoints]]
+      id = "remote-models"
+      account_id = "remote"
+      base_url = "https://models.example.invalid/v1"
+
+      [[models]]
+      id = "small"
+      upstream_name = "example/Small-Model"
+
+      [[models]]
+      id = "large"
+      upstream_name = "example/Large-Model"
+
+      [[serving_models]]
+      id = "local-small"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[serving_models]]
+      id = "remote-large"
+      endpoint_id = "remote-models"
+      model_id = "large"
+      protocol = "responses"
+      [serving_models.capabilities]
+      tools = true
+      tool_choice = true
+      temperature = true
+      top_p = true
+      reasoning_efforts = ["medium", "high"]
+      context_window = 32768
+      max_output_tokens = 8192
+
+      [[routes]]
+      id = "coding"
+      alias = "code"
+      fallback_enabled = true
+
+      [[serving_models]]
+      id = "sm-0"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-0"
+      route_id = "coding"
+      serving_model_id = "sm-0"
+      position = 0
+
+      [[serving_models]]
+      id = "sm-1"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-1"
+      route_id = "coding"
+      serving_model_id = "sm-1"
+      position = 1
+
+      [[serving_models]]
+      id = "sm-2"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-2"
+      route_id = "coding"
+      serving_model_id = "sm-2"
+      position = 2
+
+      [[serving_models]]
+      id = "sm-3"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-3"
+      route_id = "coding"
+      serving_model_id = "sm-3"
+      position = 3
+
+      [[serving_models]]
+      id = "sm-4"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-4"
+      route_id = "coding"
+      serving_model_id = "sm-4"
+      position = 4
+
+      [[serving_models]]
+      id = "sm-5"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-5"
+      route_id = "coding"
+      serving_model_id = "sm-5"
+      position = 5
+
+      [[serving_models]]
+      id = "sm-6"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-6"
+      route_id = "coding"
+      serving_model_id = "sm-6"
+      position = 6
+
+      [[serving_models]]
+      id = "sm-7"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-7"
+      route_id = "coding"
+      serving_model_id = "sm-7"
+      position = 7
+
+      [[serving_models]]
+      id = "sm-8"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-8"
+      route_id = "coding"
+      serving_model_id = "sm-8"
+      position = 8
+
+      [[serving_models]]
+      id = "sm-9"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-9"
+      route_id = "coding"
+      serving_model_id = "sm-9"
+      position = 9
+
+      [[serving_models]]
+      id = "sm-10"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-10"
+      route_id = "coding"
+      serving_model_id = "sm-10"
+      position = 10
+
+      [[serving_models]]
+      id = "sm-11"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-11"
+      route_id = "coding"
+      serving_model_id = "sm-11"
+      position = 11
+
+      [[serving_models]]
+      id = "sm-12"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-12"
+      route_id = "coding"
+      serving_model_id = "sm-12"
+      position = 12
+
+      [[serving_models]]
+      id = "sm-13"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-13"
+      route_id = "coding"
+      serving_model_id = "sm-13"
+      position = 13
+
+      [[serving_models]]
+      id = "sm-14"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-14"
+      route_id = "coding"
+      serving_model_id = "sm-14"
+      position = 14
+
+      [[serving_models]]
+      id = "sm-15"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-15"
+      route_id = "coding"
+      serving_model_id = "sm-15"
+      position = 15
+
+      [[serving_models]]
+      id = "sm-16"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-16"
+      route_id = "coding"
+      serving_model_id = "sm-16"
+      position = 16
+
+      [[serving_models]]
+      id = "sm-17"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-17"
+      route_id = "coding"
+      serving_model_id = "sm-17"
+      position = 17
+
+      [[serving_models]]
+      id = "sm-18"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-18"
+      route_id = "coding"
+      serving_model_id = "sm-18"
+      position = 18
+
+      [[serving_models]]
+      id = "sm-19"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-19"
+      route_id = "coding"
+      serving_model_id = "sm-19"
+      position = 19
+
+      [[serving_models]]
+      id = "sm-20"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-20"
+      route_id = "coding"
+      serving_model_id = "sm-20"
+      position = 20
+
+      [[serving_models]]
+      id = "sm-21"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-21"
+      route_id = "coding"
+      serving_model_id = "sm-21"
+      position = 21
+
+      [[serving_models]]
+      id = "sm-22"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-22"
+      route_id = "coding"
+      serving_model_id = "sm-22"
+      position = 22
+
+      [[serving_models]]
+      id = "sm-23"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-23"
+      route_id = "coding"
+      serving_model_id = "sm-23"
+      position = 23
+
+      [[serving_models]]
+      id = "sm-24"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-24"
+      route_id = "coding"
+      serving_model_id = "sm-24"
+      position = 24
+
+      [[serving_models]]
+      id = "sm-25"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-25"
+      route_id = "coding"
+      serving_model_id = "sm-25"
+      position = 25
+
+      [[serving_models]]
+      id = "sm-26"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-26"
+      route_id = "coding"
+      serving_model_id = "sm-26"
+      position = 26
+
+      [[serving_models]]
+      id = "sm-27"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-27"
+      route_id = "coding"
+      serving_model_id = "sm-27"
+      position = 27
+
+      [[serving_models]]
+      id = "sm-28"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-28"
+      route_id = "coding"
+      serving_model_id = "sm-28"
+      position = 28
+
+      [[serving_models]]
+      id = "sm-29"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-29"
+      route_id = "coding"
+      serving_model_id = "sm-29"
+      position = 29
+
+      [[serving_models]]
+      id = "sm-30"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-30"
+      route_id = "coding"
+      serving_model_id = "sm-30"
+      position = 30
+
+      [[serving_models]]
+      id = "sm-31"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-31"
+      route_id = "coding"
+      serving_model_id = "sm-31"
+      position = 31
+
+      [[serving_models]]
+      id = "sm-32"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-32"
+      route_id = "coding"
+      serving_model_id = "sm-32"
+      position = 32
+
+      [[serving_models]]
+      id = "sm-33"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-33"
+      route_id = "coding"
+      serving_model_id = "sm-33"
+      position = 33
+
+      [[serving_models]]
+      id = "sm-34"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-34"
+      route_id = "coding"
+      serving_model_id = "sm-34"
+      position = 34
+
+      [[serving_models]]
+      id = "sm-35"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-35"
+      route_id = "coding"
+      serving_model_id = "sm-35"
+      position = 35
+
+      [[serving_models]]
+      id = "sm-36"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-36"
+      route_id = "coding"
+      serving_model_id = "sm-36"
+      position = 36
+
+      [[serving_models]]
+      id = "sm-37"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-37"
+      route_id = "coding"
+      serving_model_id = "sm-37"
+      position = 37
+
+      [[serving_models]]
+      id = "sm-38"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-38"
+      route_id = "coding"
+      serving_model_id = "sm-38"
+      position = 38
+
+      [[serving_models]]
+      id = "sm-39"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-39"
+      route_id = "coding"
+      serving_model_id = "sm-39"
+      position = 39
+
+      [[serving_models]]
+      id = "sm-40"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-40"
+      route_id = "coding"
+      serving_model_id = "sm-40"
+      position = 40
+
+      [[serving_models]]
+      id = "sm-41"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-41"
+      route_id = "coding"
+      serving_model_id = "sm-41"
+      position = 41
+
+      [[serving_models]]
+      id = "sm-42"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-42"
+      route_id = "coding"
+      serving_model_id = "sm-42"
+      position = 42
+
+      [[serving_models]]
+      id = "sm-43"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-43"
+      route_id = "coding"
+      serving_model_id = "sm-43"
+      position = 43
+
+      [[serving_models]]
+      id = "sm-44"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-44"
+      route_id = "coding"
+      serving_model_id = "sm-44"
+      position = 44
+
+      [[serving_models]]
+      id = "sm-45"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-45"
+      route_id = "coding"
+      serving_model_id = "sm-45"
+      position = 45
+
+      [[serving_models]]
+      id = "sm-46"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-46"
+      route_id = "coding"
+      serving_model_id = "sm-46"
+      position = 46
+
+      [[serving_models]]
+      id = "sm-47"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-47"
+      route_id = "coding"
+      serving_model_id = "sm-47"
+      position = 47
+
+      [[serving_models]]
+      id = "sm-48"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-48"
+      route_id = "coding"
+      serving_model_id = "sm-48"
+      position = 48
+
+      [[serving_models]]
+      id = "sm-49"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-49"
+      route_id = "coding"
+      serving_model_id = "sm-49"
+      position = 49
+
+      [[serving_models]]
+      id = "sm-50"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-50"
+      route_id = "coding"
+      serving_model_id = "sm-50"
+      position = 50
+
+      [[serving_models]]
+      id = "sm-51"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-51"
+      route_id = "coding"
+      serving_model_id = "sm-51"
+      position = 51
+
+      [[serving_models]]
+      id = "sm-52"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-52"
+      route_id = "coding"
+      serving_model_id = "sm-52"
+      position = 52
+
+      [[serving_models]]
+      id = "sm-53"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-53"
+      route_id = "coding"
+      serving_model_id = "sm-53"
+      position = 53
+
+      [[serving_models]]
+      id = "sm-54"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-54"
+      route_id = "coding"
+      serving_model_id = "sm-54"
+      position = 54
+
+      [[serving_models]]
+      id = "sm-55"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-55"
+      route_id = "coding"
+      serving_model_id = "sm-55"
+      position = 55
+
+      [[serving_models]]
+      id = "sm-56"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-56"
+      route_id = "coding"
+      serving_model_id = "sm-56"
+      position = 56
+
+      [[serving_models]]
+      id = "sm-57"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-57"
+      route_id = "coding"
+      serving_model_id = "sm-57"
+      position = 57
+
+      [[serving_models]]
+      id = "sm-58"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-58"
+      route_id = "coding"
+      serving_model_id = "sm-58"
+      position = 58
+
+      [[serving_models]]
+      id = "sm-59"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-59"
+      route_id = "coding"
+      serving_model_id = "sm-59"
+      position = 59
+
+      [[serving_models]]
+      id = "sm-60"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-60"
+      route_id = "coding"
+      serving_model_id = "sm-60"
+      position = 60
+
+      [[serving_models]]
+      id = "sm-61"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-61"
+      route_id = "coding"
+      serving_model_id = "sm-61"
+      position = 61
+
+      [[serving_models]]
+      id = "sm-62"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-62"
+      route_id = "coding"
+      serving_model_id = "sm-62"
+      position = 62
+
+      [[serving_models]]
+      id = "sm-63"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[targets]]
+      id = "coding-63"
+      route_id = "coding"
+      serving_model_id = "sm-63"
+      position = 63
+    turn_json: '{"format":"llm.turn/3","request":{"model":"code","instructions":"Keep instructions","items":[{"kind":"user-text","text":"Keep
+      message"}],"tools":[],"max_output_tokens":128}}'
+    input_tokens: 100
+  outcome: observed
+assert:
+- view: llm.routing.LastEvaluation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routing.LastEvaluation
+  contains:
+    catalog_valid: true
+    error_code: null
+    selected_target: coding-0
