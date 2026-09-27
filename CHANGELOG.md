@@ -4,7 +4,7 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
-## [Unreleased]
+## [0.1.1] - 2026-09-27
 
 ### Changed
 
