@@ -38,6 +38,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.inference.Inspected]
+        payload:
+          llm.inference.Inspected:
+            accepted: {generated: true}
         summary: Observe the neutral parser and result validation against a fixed fixture binding.
 events:
   # Notification from the verification adapter only.

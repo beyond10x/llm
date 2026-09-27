@@ -37,6 +37,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.messages.Inspected]
+        payload:
+          llm.messages.Inspected:
+            accepted: {generated: true}
         summary: Observe actual shared request projection or ingress under the fixture Messages binding.
   - name: llm.messages.DecodeStream
     input:
@@ -45,6 +48,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.messages.Inspected]
+        payload:
+          llm.messages.Inspected:
+            accepted: {generated: true}
         summary: Observe the production SSE framing and Messages decoder, including failures and partial usage.
   - name: llm.messages.DecodeMessage
     input:
@@ -53,6 +59,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.messages.Inspected]
+        payload:
+          llm.messages.Inspected:
+            accepted: {generated: true}
         summary: Observe the shared complete-response decoder that the stream decoder also finishes through.
 events:
   - name: llm.messages.Inspected

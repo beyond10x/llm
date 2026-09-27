@@ -60,6 +60,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.routing.Evaluated]
+        payload:
+          llm.routing.Evaluated:
+            catalog_valid: {generated: true}
         summary: Return facts from evaluation, including typed refusals; this is not success of inference.
 
   - name: llm.routing.Fallback
@@ -75,6 +78,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.routing.FallbackObserved]
+        payload:
+          llm.routing.FallbackObserved:
+            valid_program: {generated: true}
         summary: Return the attempts, halt and final result the library reported; not inference success.
 
 events:

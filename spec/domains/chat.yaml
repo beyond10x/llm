@@ -119,6 +119,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.chat.Observed]
+        payload:
+          llm.chat.Observed:
+            accepted: {generated: true}
         summary: Return the projected body's facts, including typed refusals; not proof of a sent request.
 
   - name: llm.chat.ProjectResponse
@@ -134,6 +137,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.chat.Observed]
+        payload:
+          llm.chat.Observed:
+            accepted: {generated: true}
         summary: Return the neutral deltas, outcome and reported evidence a pinned response yields.
 
   - name: llm.chat.DecodeIngress
@@ -143,6 +149,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.chat.Observed]
+        payload:
+          llm.chat.Observed:
+            accepted: {generated: true}
         summary: Return the neutral turn a gateway client request decodes to, or its named refusal.
 
   - name: llm.chat.EncodeIngress
@@ -158,6 +167,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.chat.Observed]
+        payload:
+          llm.chat.Observed:
+            accepted: {generated: true}
         summary: Return what a gateway would answer, including omitted unreported facts.
 
 events:
