@@ -1,0 +1,114 @@
+type: ess-scenario/1
+domain: llm.routing
+scenario: an-unparsed-catalog-binds-nothing
+summary: a catalog that does not parse yields no digest, model, endpoint, protocol, authentication or
+  billing
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.routing.Evaluate
+  input:
+    catalog_toml: |
+      # Illustrative declarations, not qualification of a particular model or deployment.
+      # Replace the endpoint, upstream model name and capabilities with your deployment's facts.
+      format = "llm.catalog/2"
+
+      [[providers]]
+      id = "my-lab"
+      category = "self-hosted"
+
+      [[accounts]]
+      id = "local"
+      provider_id = "my-lab"
+      auth_kind = "anonymous"
+      billing_kind = "self-hosted"
+
+      [[accounts]]
+      id = "remote"
+      provider_id = "my-lab"
+      auth_kind = "bearer"
+      billing_kind = "metered"
+      secret_reference_id = "lab-llm-token"
+
+      [[endpoints]]
+      id = "local-vllm"
+      account_id = "local"
+      base_url = "http://127.0.0.1:8000/v1"
+
+      [[endpoints]]
+      id = "remote-models"
+      account_id = "remote"
+      base_url = "https://models.example.invalid/v1"
+
+      [[models]]
+      id = "small"
+      upstream_name = "example/Small-Model"
+
+      [[models]]
+      id = "large"
+      upstream_name = "example/Large-Model"
+
+      [[serving_models]]
+      id = "local-small"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[serving_models]]
+      id = "remote-large"
+      endpoint_id = "remote-models"
+      model_id = "large"
+      protocol = "responses"
+      [serving_models.capabilities]
+      tools = true
+      tool_choice = true
+      temperature = true
+      top_p = true
+      reasoning_efforts = ["medium", "high"]
+      context_window = 32768
+      max_output_tokens = 8192
+
+      [[routes]]
+      id = "coding"
+      alias = "code"
+      # Omission is false. Set true to permit selection from the explicitly named alternatives.
+      fallback_enabled = false
+
+      [[targets]]
+      id = "coding-primary"
+      route_id = "coding"
+      serving_model_id = "local-small"
+      position = 0
+
+      [[targets]]
+      id = "coding-secondary"
+      route_id = "coding"
+      serving_model_id = "remote-large"
+      position = 1
+    turn_json: '{"format":"llm.turn/3","request":{"model":"code","instructions":"Keep instructions","items":[{"kind":"user-text","text":"Keep
+      message"}],"tools":[],"max_output_tokens":128}}'
+    input_tokens: 100
+  outcome: observed
+assert:
+- view: llm.routing.LastEvaluation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routing.LastEvaluation
+  contains:
+    catalog_valid: false
+    error_code: invalid-request
+    config_digest: null
+    model: null
+    url: null
+    protocol: null
+    auth_kind: null
+    billing_kind: null
+    request_preserved: false

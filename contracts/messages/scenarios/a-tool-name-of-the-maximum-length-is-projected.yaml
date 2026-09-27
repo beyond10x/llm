@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: a-tool-name-of-the-maximum-length-is-projected
+summary: a tool name of exactly 128 bytes is projected onto the Messages wire
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"format":"llm.turn/3","request":{"model":"internal-model","instructions":"Stay terse","items":[{"kind":"user-text","text":"Summarise
+      the log"},{"kind":"opaque","provenance":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260"},"payload":{"signature":"sig-1","thinking":"weighing","type":"thinking"}},{"kind":"tool-call","call_id":"call-1","name":"tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt","arguments":{"query":"errors"}},{"kind":"tool-result","call_id":"call-1","output":"not
+      found","failed":true}],"tools":[{"name":"tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt","description":"Look
+      up a record","input_schema":{"type":"object"}}],"max_output_tokens":1024,"sampling":{"temperature":0.5,"top_p":0.8,"reasoning_effort":"high"},"tool_choice":{"named":"tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"}}}'
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null

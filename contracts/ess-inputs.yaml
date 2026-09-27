@@ -1,6 +1,8 @@
 format: ess-inputs/1
 specification: []
 scenarios:
+- budget/scenarios/a-policy-admitting-no-concurrent-work-is-refused.yaml
+- budget/scenarios/an-unreadable-program-reports-no-policy.yaml
 - budget/scenarios/cancel-started-is-refused.yaml
 - budget/scenarios/cancel-unsent-releases-only-that-reservation.yaml
 - budget/scenarios/cap-includes-other-reservations.yaml
@@ -16,12 +18,14 @@ scenarios:
 - budget/scenarios/failed-commit-issues-no-permit.yaml
 - budget/scenarios/failed-renewal-keeps-stop-obligation.yaml
 - budget/scenarios/inclusive-cap.yaml
+- budget/scenarios/inspection-reports-the-policy-the-ledger-was-opened-with.yaml
 - budget/scenarios/invalid-renewal-also-requires-stop.yaml
 - budget/scenarios/journal-decision-refuses-reset.yaml
 - budget/scenarios/journal-entry-refuses-reset.yaml
 - budget/scenarios/journal-gap-refuses-reset.yaml
 - budget/scenarios/journal-version-refuses-reset.yaml
 - budget/scenarios/one-outstanding-compute-owner.yaml
+- budget/scenarios/one-past-the-widest-concurrency-bound-is-refused.yaml
 - budget/scenarios/one-shot-start.yaml
 - budget/scenarios/overrun-also-blocks-pre-reserved-start.yaml
 - budget/scenarios/partial-cost-does-not-free-unknown-exposure.yaml
@@ -42,6 +46,7 @@ scenarios:
 - budget/scenarios/stopped-resource-still-needs-cost.yaml
 - budget/scenarios/storage-failure-preserves-existing-shutdown-work.yaml
 - budget/scenarios/subscription-fee-is-posted-once.yaml
+- budget/scenarios/the-widest-concurrency-bound-is-admitted.yaml
 - budget/scenarios/unknown-charge-needs-reconciliation.yaml
 - budget/scenarios/unknown-compute-requests-stop.yaml
 - budget/scenarios/unknown-holds-reservation.yaml
@@ -64,6 +69,8 @@ scenarios:
 - chat/scenarios/incoming-a-stream-without-a-finish-reason-is-refused.yaml
 - chat/scenarios/incoming-a-streamed-call-is-announced-by-name-before-its-arguments.yaml
 - chat/scenarios/incoming-a-truncated-stream-is-refused.yaml
+- chat/scenarios/incoming-a-truncated-stream-reports-no-final-usage.yaml
+- chat/scenarios/incoming-an-accepted-response-carries-no-refusal.yaml
 - chat/scenarios/incoming-an-unknown-finish-reason-is-refused.yaml
 - chat/scenarios/incoming-an-unreported-model-is-not-replaced-by-the-binding.yaml
 - chat/scenarios/incoming-contradictory-counters-are-refused.yaml
@@ -79,12 +86,16 @@ scenarios:
 - chat/scenarios/ingress-a-named-tool-choice-needs-published-tools.yaml
 - chat/scenarios/ingress-a-named-unsupported-field-is-refused-by-its-own-name.yaml
 - chat/scenarios/ingress-a-non-text-content-part-is-refused.yaml
+- chat/scenarios/ingress-a-refused-encoding-carries-no-content.yaml
+- chat/scenarios/ingress-a-refused-request-decodes-to-no-turn.yaml
 - chat/scenarios/ingress-a-response-format-request-is-refused-by-name.yaml
 - chat/scenarios/ingress-a-stream-without-include-usage-reports-no-counters.yaml
 - chat/scenarios/ingress-a-streamed-call-is-named-where-it-was-announced.yaml
 - chat/scenarios/ingress-a-temperature-outside-its-range-is-refused.yaml
 - chat/scenarios/ingress-a-tool-choice-of-none-is-refused.yaml
 - chat/scenarios/ingress-a-tool-message-answering-no-call-is-refused.yaml
+- chat/scenarios/ingress-an-accepted-encoding-carries-no-refusal.yaml
+- chat/scenarios/ingress-an-accepted-request-carries-no-refusal.yaml
 - chat/scenarios/ingress-an-outcome-leaving-out-an-announced-call-is-refused.yaml
 - chat/scenarios/ingress-an-outcome-renaming-an-announced-call-is-refused.yaml
 - chat/scenarios/ingress-an-unrecognized-field-is-refused-without-quoting-the-client.yaml
@@ -98,7 +109,9 @@ scenarios:
 - chat/scenarios/ingress-encoding-reports-exactly-the-counters-it-was-given.yaml
 - chat/scenarios/ingress-instructions-must-precede-the-conversation.yaml
 - chat/scenarios/ingress-streamed-closing-chunks-carry-calls-then-the-finish-reason.yaml
+- chat/scenarios/outgoing-a-refused-projection-builds-no-body.yaml
 - chat/scenarios/outgoing-absent-settings-stay-absent.yaml
+- chat/scenarios/outgoing-an-accepted-projection-carries-no-refusal.yaml
 - chat/scenarios/outgoing-an-undeclared-setting-is-refused.yaml
 - chat/scenarios/outgoing-another-protocols-binding-is-refused.yaml
 - chat/scenarios/outgoing-failed-tool-result-keeps-its-failure.yaml
@@ -110,6 +123,8 @@ scenarios:
 - hosting/scenarios/a-complete-listing-with-no-request-identifier-cannot-settle-an-ambiguous-create.yaml
 - hosting/scenarios/a-create-that-never-left-the-process-allocates-nothing.yaml
 - hosting/scenarios/a-create-the-provider-refused-allocates-nothing.yaml
+- hosting/scenarios/a-deployment-identifier-of-the-maximum-length-is-declared.yaml
+- hosting/scenarios/a-deployment-identifier-one-byte-too-long-is-refused.yaml
 - hosting/scenarios/a-duplicate-declaration-is-not-new-authority.yaml
 - hosting/scenarios/a-foreign-owner-tag-without-a-newer-epoch-obliges-a-stop.yaml
 - hosting/scenarios/a-lifetime-above-the-ceiling-is-refused-without-a-provider-call.yaml
@@ -198,6 +213,8 @@ scenarios:
 - inference/scenarios/unknown-observation-field-refused.yaml
 - inference/scenarios/unsent-observation-refused.yaml
 - inference/scenarios/wide-count-and-zero-stay-exact.yaml
+- messages/scenarios/a-tool-name-of-the-maximum-length-is-projected.yaml
+- messages/scenarios/a-tool-name-one-byte-too-long-is-refused.yaml
 - messages/scenarios/absent-output-bound-takes-the-binding-maximum.yaml
 - messages/scenarios/accepted-stop-sequence-in-an-undocumented-shape-refused.yaml
 - messages/scenarios/accepted-usage-metadata-in-an-undocumented-shape-refused.yaml
@@ -233,6 +250,9 @@ scenarios:
 - messages/scenarios/unreported-upstream-model-stays-unknown.yaml
 - messages/scenarios/unstarted-content-block-delta-refused.yaml
 - messages/scenarios/usage-regression-refused.yaml
+- pricing/scenarios/a-price-source-of-the-maximum-length-is-accepted.yaml
+- pricing/scenarios/a-price-source-one-byte-too-long-is-refused.yaml
+- pricing/scenarios/a-refused-price-book-attributes-no-price.yaml
 - pricing/scenarios/aggregate-overflow-refused.yaml
 - pricing/scenarios/amount-overflow-refused.yaml
 - pricing/scenarios/cache-arithmetic-overflow-refused.yaml
@@ -291,11 +311,13 @@ scenarios:
 - responses/scenarios/a-named-tool-choice-names-the-published-tool.yaml
 - responses/scenarios/a-rate-limited-failure-keeps-its-class-when-its-counters-disagree.yaml
 - responses/scenarios/a-rate-limited-response-is-its-own-class.yaml
+- responses/scenarios/a-refused-projection-addresses-no-endpoint.yaml
 - responses/scenarios/a-refused-request-is-not-widened-to-a-retriable-class.yaml
 - responses/scenarios/a-refused-terminal-object-still-reports-its-counters.yaml
 - responses/scenarios/a-repointed-binding-revision-refuses-opaque-state.yaml
 - responses/scenarios/a-repointed-endpoint-refuses-opaque-state.yaml
 - responses/scenarios/a-repointed-model-refuses-opaque-state.yaml
+- responses/scenarios/a-stream-with-an-unreadable-binding-carries-no-usage-evidence.yaml
 - responses/scenarios/a-stream-without-a-terminal-response-is-refused.yaml
 - responses/scenarios/a-text-stream-decodes-to-terminal-truth.yaml
 - responses/scenarios/a-tool-call-stream-names-the-call-its-arguments-belong-to.yaml
@@ -317,6 +339,7 @@ scenarios:
 - responses/scenarios/an-unreported-model-is-not-the-configured-one.yaml
 - responses/scenarios/contradictory-reported-counters-are-refused.yaml
 - responses/scenarios/ingress-carries-an-unmodelled-entry-it-cannot-attribute.yaml
+- responses/scenarios/ingress-refusal-reads-no-model-or-instructions.yaml
 - responses/scenarios/ingress-refuses-a-body-for-another-model.yaml
 - responses/scenarios/ingress-refuses-a-body-that-omits-a-fixed-field.yaml
 - responses/scenarios/ingress-refuses-a-body-that-omits-provider-side-storage.yaml
@@ -330,6 +353,7 @@ scenarios:
 - responses/scenarios/ingress-refuses-a-reference-to-provider-stored-state.yaml
 - responses/scenarios/ingress-refuses-a-strict-tool-schema.yaml
 - responses/scenarios/ingress-refuses-a-tool-name-egress-cannot-publish.yaml
+- responses/scenarios/ingress-refuses-a-tool-result-envelope-with-an-extra-field.yaml
 - responses/scenarios/ingress-refuses-a-tool-result-outside-the-envelope.yaml
 - responses/scenarios/ingress-refuses-an-empty-include.yaml
 - responses/scenarios/ingress-refuses-an-entry-whose-type-is-empty.yaml
@@ -347,6 +371,16 @@ scenarios:
 - responses/scenarios/the-text-and-tool-subset-round-trips.yaml
 - responses/scenarios/unbound-unattributed-state-is-refused-on-egress.yaml
 - responses/scenarios/vllm-reasoning-text-deltas-are-observed.yaml
+- routing/scenarios/a-route-of-sixty-five-targets-is-refused.yaml
+- routing/scenarios/a-route-of-the-maximum-sixty-four-targets-is-accepted.yaml
+- routing/scenarios/a-turn-publishing-513-tools-is-refused.yaml
+- routing/scenarios/a-turn-publishing-the-maximum-512-tools-is-admitted.yaml
+- routing/scenarios/an-empty-identifier-is-refused.yaml
+- routing/scenarios/an-identifier-of-the-maximum-length-is-accepted.yaml
+- routing/scenarios/an-identifier-one-byte-too-long-is-refused.yaml
+- routing/scenarios/an-overflowing-context-sum-is-refused-not-wrapped.yaml
+- routing/scenarios/an-unparsed-catalog-binds-nothing.yaml
+- routing/scenarios/an-unreadable-fallback-program-attempts-nothing.yaml
 - routing/scenarios/capability-reasons-observed.yaml
 - routing/scenarios/context-overflow-refused.yaml
 - routing/scenarios/duplicate-target-refused.yaml
@@ -364,6 +398,7 @@ scenarios:
 - routing/scenarios/fallback-refused-for-bound-opaque-state.yaml
 - routing/scenarios/fallback-refused-for-ineligible-failure.yaml
 - routing/scenarios/fallback-refused-for-too-large-failure.yaml
+- routing/scenarios/fallback-with-unknown-input-tokens-starts-no-attempt.yaml
 - routing/scenarios/implicit-output-budget-inclusive.yaml
 - routing/scenarios/implicit-output-budget-refused.yaml
 - routing/scenarios/inclusive-context-boundary.yaml
@@ -380,6 +415,9 @@ scenarios:
 - routing/scenarios/repointed-endpoint-refuses-opaque-state.yaml
 - routing/scenarios/repointed-model-refuses-opaque-state.yaml
 - routing/scenarios/subscription-billing-independent-of-protocol.yaml
+- routing/scenarios/the-configuration-digest-ignores-declaration-order-and-comments.yaml
+- routing/scenarios/the-configuration-digest-is-pinned.yaml
+- routing/scenarios/the-explanation-reports-the-callers-input-bound.yaml
 - routing/scenarios/unattributed-opaque-state-selects-no-target.yaml
 - routing/scenarios/unknown-alias-refused.yaml
 - routing/scenarios/unknown-catalog-version.yaml
