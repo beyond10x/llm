@@ -12,10 +12,10 @@ domain: llm.transport
 # loopback server whose answer the fixture scripts; nothing leaves the host and no credential is
 # involved.
 #
-# UNMAPPED: the disabled ambient proxy (transport.rs:59-61, f27b836) is proved by
-# crates/llm-http/tests/ambient_proxy.rs in a child process with proxy variables set; this
-# adapter cannot set process-wide proxy variables without affecting every other lane, so it is
-# not declared here.
+# Ambient proxy variables never redirect a request (transport.rs:50-52, `no_proxy`). A program
+# with `ambient_proxy` runs its exchange in a child process whose HTTP_PROXY, HTTPS_PROXY and
+# ALL_PROXY (either case) all name a local listener and whose NO_PROXY is unset, so no other
+# lane's environment changes; `proxied_requests` counts the requests that listener received.
 #
 # Status evidence (transport.rs status_error): 401 and 403 are `unauthorized` and 429 is
 # `rate-limited`, all with dispatch `rejected`. 408 and every status from 500 to 599 inclusive
@@ -63,6 +63,9 @@ entities:
       # Whether the exchange ended within the program's `within_ms` of its start; absent when
       # the program asks nothing. A deadline is a time, and this is the one fact that measures it.
       - {name: ended_within, type: 'Optional<Boolean>'}
+      # Requests the ambient proxy listener received; absent unless the program set
+      # `ambient_proxy`.
+      - {name: proxied_requests, type: 'Optional<Integer>'}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
   - name: llm.transport.Exchange

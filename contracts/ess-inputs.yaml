@@ -676,3 +676,6 @@ scenarios:
 - transport/scenarios/a-forbidden-status-is-unauthorized.yaml
 - transport/scenarios/the-first-redirect-status-is-refused-with-dispatch-unknown.yaml
 - runpod/scenarios/concurrent-callers-of-a-slow-pod-all-wait-on-one-create.yaml
+- gateway/scenarios/an-inventory-of-exactly-4096-routes-is-composed.yaml
+- gateway/scenarios/an-inventory-of-4097-routes-is-refused.yaml
+- transport/scenarios/ambient-proxy-variables-never-redirect-the-request.yaml

@@ -212,6 +212,8 @@
       "llm.gateway/authored/adversary-w2-a-route-repeating-a-target-is-refused",
       "llm.gateway/authored/adversary-w2-an-empty-label-is-refused",
       "llm.gateway/authored/adversary-w2-an-owner-secret-over-4096-bytes-is-refused-at-composition",
+      "llm.gateway/authored/an-inventory-of-4097-routes-is-refused",
+      "llm.gateway/authored/an-inventory-of-exactly-4096-routes-is-composed",
       "llm.gateway/authored/an-inventory-with-a-repeated-alias-is-refused",
       "llm.gateway/authored/an-overloaded-gateway-sheds-inspection-but-still-answers-probes",
       "llm.gateway/authored/an-owner-secret-of-exactly-4096-bytes-is-composed",
@@ -662,6 +664,7 @@
       "llm.transport/authored/adversary-w2-a-retry-date-in-the-past-is-a-zero-hint",
       "llm.transport/authored/adversary-w2-crlf-framing-joins-data-lines-and-keeps-the-event-name",
       "llm.transport/authored/adversary-w2-the-last-server-error-status-leaves-dispatch-unknown",
+      "llm.transport/authored/ambient-proxy-variables-never-redirect-the-request",
       "llm.transport/authored/an-authentication-status-is-rejected-and-quotes-no-body",
       "llm.transport/authored/an-endpoint-carrying-only-a-password-is-refused-before-sending",
       "llm.transport/authored/an-endpoint-naming-a-user-is-refused-before-sending",
@@ -1452,6 +1455,16 @@
         "digest": "sha256:62d3e1488de4acc0d9b2cb15dacf912c7e9a203a452afdabbb22b2fa2e62997f",
         "disposition": "accepted",
         "scenario": "llm.gateway/authored/a-write-method-is-refused-only-after-authentication"
+      },
+      "gateway/scenarios/an-inventory-of-4097-routes-is-refused.yaml": {
+        "digest": "sha256:7d4c854021a0e6ff10ac8c28e33f89ef1dbf538b89d8f5d02f92ec05f7279905",
+        "disposition": "accepted",
+        "scenario": "llm.gateway/authored/an-inventory-of-4097-routes-is-refused"
+      },
+      "gateway/scenarios/an-inventory-of-exactly-4096-routes-is-composed.yaml": {
+        "digest": "sha256:9b0e47bb1fdba22ef74dfca84e28755d42f3bc8b3076a5de0a4f93828f827664",
+        "disposition": "accepted",
+        "scenario": "llm.gateway/authored/an-inventory-of-exactly-4096-routes-is-composed"
       },
       "gateway/scenarios/an-inventory-with-a-repeated-alias-is-refused.yaml": {
         "digest": "sha256:8fc77d654ff231042c32084c81d0895994894aeac9d7e61308f6cdc14a92455b",
@@ -3963,6 +3976,11 @@
         "disposition": "accepted",
         "scenario": "llm.transport/authored/a-zero-timeout-is-refused"
       },
+      "transport/scenarios/ambient-proxy-variables-never-redirect-the-request.yaml": {
+        "digest": "sha256:5904c2f6355a8b9664e896a866f9bab958a9327e641a390112040880df5a1988",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/ambient-proxy-variables-never-redirect-the-request"
+      },
       "transport/scenarios/an-authentication-status-is-rejected-and-quotes-no-body.yaml": {
         "digest": "sha256:35b2a9654528763882c7ad97b5715ac3f50db2a786b45ec31ba66d4c8a850ce8",
         "disposition": "accepted",
@@ -4055,7 +4073,7 @@
       }
     },
     "counts": {
-      "authored": 675,
+      "authored": 678,
       "generated": 22,
       "outside": 0,
       "refused": 0
@@ -4098,8 +4116,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "3b2863278c16aed78526dd718741bc6e41fa85e441ddc9b1d539d632679fa046",
-    "spec_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "ed31a07a88c1896e400524d6f2155f2cc2ac73673a6edd6954adafc7d5014a72",
+    "spec_digest": "8c5b1006c8460b1f27db4a94ce3d2be7d2cfadc6b6b165bb5f6dffba12181b89",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -28012,6 +28030,175 @@
               "error_code": {
                 "kind": "literal",
                 "value": "token:too-large"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.gateway.LastExchange"
+        }
+      ]
+    },
+    "llm.gateway/authored/an-inventory-of-4097-routes-is-refused": {
+      "purpose": "one route past the snapshot bound is refused as inventory:too-many-routes and composes no gateway (inventory.rs RouteInventory::new)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.gateway"
+        },
+        {
+          "kind": "command",
+          "name": "llm.gateway.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.gateway.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.gateway.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.gateway.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"secret\":\"owner-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"inventory\":{\"routes\":[],\"generated_routes\":4097},\"steps\":[{\"step\":\"mark_ready\"}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.gateway.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.gateway.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.gateway.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.gateway.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "inventory:too-many-routes"
+              },
+              "results": {
+                "kind": "literal",
+                "value": []
+              },
+              "secret_on_wire": {
+                "kind": "literal",
+                "value": null
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.gateway.LastExchange"
+        }
+      ]
+    },
+    "llm.gateway/authored/an-inventory-of-exactly-4096-routes-is-composed": {
+      "purpose": "the snapshot route bound admits its own count, and the last route is inspectable by its alias (inventory.rs RouteInventory::new)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.gateway"
+        },
+        {
+          "kind": "command",
+          "name": "llm.gateway.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.gateway.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.gateway.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.gateway.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"secret\":\"owner-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"inventory\":{\"routes\":[],\"generated_routes\":4096},\"steps\":[{\"step\":\"mark_ready\"},{\"step\":\"send\",\"raw\":\"GET /v1/routes/g4095 HTTP/1.1\\r\\nauthorization: Bearer owner-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\r\\n\\r\\n\"}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.gateway.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.gateway.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.gateway.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.gateway.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "ok",
+                  "200 inspected"
+                ]
               },
               "valid_program": {
                 "kind": "literal",
@@ -78414,6 +78601,105 @@
               "requests": {
                 "kind": "literal",
                 "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/ambient-proxy-variables-never-redirect-the-request": {
+      "purpose": "with every proxy variable naming a local listener and no exemption, the request still goes only to the caller-selected endpoint (transport.rs HttpClient::new no_proxy)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"ambient_proxy\":true,\"limits\":{\"response_headers_ms\":2000,\"idle_ms\":2000,\"total_ms\":4000},\"server\":{\"chunks\":[\"data: {\\\"n\\\":1}\\n\\n\"]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "end": {
+                "kind": "literal",
+                "value": "end"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "events": {
+                "kind": "literal",
+                "value": [
+                  "payload:-:{\"n\":1}"
+                ]
+              },
+              "proxied_requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "request_line": {
+                "kind": "literal",
+                "value": "POST /arbitrary/prefix HTTP/1.1"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
               }
             }
           },

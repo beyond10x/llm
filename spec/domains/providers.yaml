@@ -12,8 +12,9 @@ domain: llm.providers
 # file or network is involved. The header *value* is never reported; only whether it is the
 # declared presentation of the fixture material.
 #
-# UNMAPPED: the catalog projection of these declarations (llm-routing `Catalog`) is llm.catalog
-# and llm.routing's contract, not restated here.
+# The catalog projection of these declarations (llm-routing `Catalog`) is declared once, in
+# llm.catalog (Provider, Account and their `references` relations) and llm.routing (the
+# evaluation observations), and is not restated here.
 types:
   # Every SecretError the resolver seam can return (crates/llm-credentials/src/lib.rs:46-69).
   - name: llm.providers.SecretFailure

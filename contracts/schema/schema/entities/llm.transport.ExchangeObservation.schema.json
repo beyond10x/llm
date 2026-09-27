@@ -47,6 +47,9 @@
     "ended_within": {
       "type": "boolean"
     },
+    "proxied_requests": {
+      "type": "integer"
+    },
     "state": {
       "$ref": "#/$defs/llm.transport.ExchangeObservation.State"
     }
@@ -64,8 +67,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
-    "contract_digest": "slice-sha256/2:e2d3139def97128e93cd57ea22529a9fc2eb9bfcd32a84486dee16a6d8689923",
+    "source_digest": "8c5b1006c8460b1f27db4a94ce3d2be7d2cfadc6b6b165bb5f6dffba12181b89",
+    "contract_digest": "slice-sha256/2:a2c996758ecf1301fa55b6fb7ad116062eaa73b3c9b9315074380c353d638974",
     "regenerate": "ess generate"
   },
   "$defs": {
