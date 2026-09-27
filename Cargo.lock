@@ -228,7 +228,7 @@ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
 name = "b10x-llm-chat"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-core",
  "b10x-llm-credentials",
@@ -242,11 +242,11 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-cli"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "b10x-llm-conformance"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-chat",
  "b10x-llm-core",
@@ -271,7 +271,7 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -282,7 +282,7 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-cost"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-core",
  "rusqlite",
@@ -296,7 +296,7 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-credentials"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "apple-native-keyring-store",
  "b10x-llm-core",
@@ -315,11 +315,11 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-gateway"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "b10x-llm-http"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-core",
  "httpdate",
@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-messages"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-core",
  "b10x-llm-credentials",
@@ -344,11 +344,11 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-modal"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "b10x-llm-providers"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-core",
  "b10x-llm-credentials",
@@ -363,11 +363,11 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-provision"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "b10x-llm-responses"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-core",
  "serde_json",
@@ -375,7 +375,7 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-routing"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-core",
  "b10x-llm-providers",
@@ -387,7 +387,7 @@ dependencies = [
 
 [[package]]
 name = "b10x-llm-runpod"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "b10x-llm-provision",
 ]

@@ -54,7 +54,7 @@ alternative. This inspects configuration and sends no request.
 
 ## License
 
-LicenseRef-B10x-Proprietary. Source publication does not grant an open-source license.
+Apache-2.0. See [LICENSE](LICENSE).
 
 <!-- b10x-docs:start -->
 ## Documentation

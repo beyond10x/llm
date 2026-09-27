@@ -75,7 +75,6 @@ an embedding needing hard process deadlines must isolate that boundary itself.
 
 ## Licence
 
-The workspace declares `LicenseRef-B10x-Proprietary`. Publishing the source grants no open-source
-licence, no redistribution right and no patent grant. Reading it, and building and running it
-locally to evaluate, review or verify it, are permitted; anything else needs a separate written
-agreement. [`LICENSE`](https://github.com/beyond10x/llm/blob/main/LICENSE) is the authority.
+The workspace is licensed under Apache-2.0 from version 0.1.2.
+[`LICENSE`](https://github.com/beyond10x/llm/blob/main/LICENSE) is the authority. Releases up to
+0.1.1 were published under `LicenseRef-B10x-Proprietary`.

@@ -4,6 +4,13 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
+## [0.1.2] - 2026-09-27
+
+### Changed
+
+- The workspace is licensed under Apache-2.0, like the other beyond10x repositories. Releases up to
+  0.1.1 remain under `LicenseRef-B10x-Proprietary`.
+
 ## [0.1.1] - 2026-09-27
 
 ### Changed
