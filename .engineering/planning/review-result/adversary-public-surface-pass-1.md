@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-public-surface-pass-1
 kind: review-result
 status: active
@@ -65,7 +65,7 @@ unit: story:public-surface
 verdict: NEEDS-CHANGE
 cases: executed 5→13, red 8
 origin: introduced 9 / pre-existing 2 / undecided 0
-wrote-outside-worktree: 21 paths under /home/timo/.cache/llm-wave-1/public-surface/adv/
+wrote-outside-worktree: 21 paths under home-path:sha256:f20639117ffe06c4cd490a38950f13da5fe9c31d4936e05410f9848bb20d56a3
 needs-coordinator: the catalog-subject fix is an Atlas store write; administrator Gates enrollment remains unowned
 ```
 

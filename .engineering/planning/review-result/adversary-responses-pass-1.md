@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-responses-pass-1
 kind: review-result
 status: active
@@ -58,7 +58,7 @@ unit: story:responses-projection
 verdict: NEEDS-CHANGE
 cases: executed 28→39, red 6
 origin: introduced 9 / pre-existing 0 / undecided 0
-wrote-outside-worktree: 12 paths under /home/timo/.cache/llm-wave-1/responses/adversary
+wrote-outside-worktree: 12 paths under home-path:sha256:1d592bbb54651136f6d5c82363e7ba691e7d986db5e6b0bc6bf04beadace26f1
 needs-coordinator: none
 ```
 

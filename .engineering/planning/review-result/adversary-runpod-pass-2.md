@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-runpod-pass-2
 kind: review-result
 status: active
@@ -9,11 +9,11 @@ relations:
 revision: 1
 ---
 ```
-unit: story:runpod-hosting (impl/runpod-hosting, base d5c73e8), uncommitted working tree at /home/timo/.local/state/worktree/trees/b10x/llm/wave2-runpod after correction round 1
+unit: story:runpod-hosting (impl/runpod-hosting, base d5c73e8), uncommitted working tree at home-path:sha256:47b2652f354c9f6005baff67b7df8fc51fc511b454cf4e2b61d9482f3990d8b6 after correction round 1
 verdict: NEEDS-CHANGE
 cases: executed 44→47, red 3
 origin: introduced 5 / pre-existing 0 / undecided 0
-wrote-outside-worktree: 5 paths under /home/timo/.cache/llm-wave-2/runpod/adversary-2/ (part 6)
+wrote-outside-worktree: 5 paths under home-path:sha256:42050f1e9faaf0b6bb8e89119ec6a1f165892804fc91c18d25b71b3eaf0eb044 (part 6)
 needs-coordinator: F7 may need a change in llm-provision (a takeover rule for resources whose owner label can't be rewritten), or a decision that takeover by another controller is out of scope for Runpod
 ```
 
@@ -87,11 +87,11 @@ Suggested fixes, which I did not apply:
 - Deployment id generation.
 - The two-live-records-per-alias theory from pass 1 still holds.
 
-**6. Paths written outside the worktree** (all under `/home/timo/.cache/llm-wave-2/runpod/adversary-2/`)
+**6. Paths written outside the worktree** (all under `home-path:sha256:42050f1e9faaf0b6bb8e89119ec6a1f165892804fc91c18d25b71b3eaf0eb044`)
 - `build.log`, `suite.log`
 - the three `alone-<case>.log` files, one per case in part 2
 
-I made no copy of the worktree. Builds used the assigned `$HOME/.cache/b10x-target/llm-wave2-runpod`. The session lease `adversary-2-runpod-wave2` was acquired and released.
+I made no copy of the worktree. Builds used the assigned `home-path:sha256:f0296db930f8ed8e480f6af2756f8e863e7314d86f05bb50890a27f7503fdc3f`. The session lease `adversary-2-runpod-wave2` was acquired and released.
 
 **7.**
 ```findings

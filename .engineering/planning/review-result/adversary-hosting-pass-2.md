@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-hosting-pass-2
 kind: review-result
 status: active
@@ -97,7 +97,7 @@ unreachable from `snapshot()` and is not raised as a finding.
 
 ## For the coordinator
 
-`/home/timo/.cache/llm-wave-1/hosting/ess-inputs.patch` adds 57 `hosting/scenarios/…` lines and needs
+`home-path:sha256:e8b3de0953ea03ac3b5d346f9a83b92568863ee24fdef2a4ee94696b3a0dedd2` adds 57 `hosting/scenarios/…` lines and needs
 a 58th for the scenario this pass added, or that scenario is never selected by the combined suite.
 `contracts/ess-inputs.yaml` is the coordinator's file and the adversary did not edit the patch.
 

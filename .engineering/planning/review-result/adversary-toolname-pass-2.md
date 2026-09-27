@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-toolname-pass-2
 kind: review-result
 status: active
@@ -8,11 +8,11 @@ relations:
 - reviews: story:streamed-tool-call-name
 revision: 1
 ---
-unit: story:streamed-tool-call-name, uncommitted working tree on base `d5c73e8` at `/home/timo/.local/state/worktree/trees/b10x/llm/wave2-toolname` (`stream.rs` sha `753136d…`, `ingress.rs` sha `d78ee96…`)
+unit: story:streamed-tool-call-name, uncommitted working tree on base `d5c73e8` at `home-path:sha256:90565d86e56bca06ebdd3c698c6d35c296fb743ea706c48a4e4b129c7decd9fe` (`stream.rs` sha `753136d…`, `ingress.rs` sha `d78ee96…`)
 verdict: INFEASIBLE (3 red cases, all on streams I built; 3 surviving mutants, killed by green cases I added)
 cases: executed 220→226, red 3
 origin: introduced 6 / pre-existing 0 / undecided 0
-wrote-outside-worktree: 1 directory, `/home/timo/.cache/llm-wave-2/toolname/adversary-2/` (660M build dir inside it, listed in part 6)
+wrote-outside-worktree: 1 directory, `home-path:sha256:82dc50851c898c9d34956fec2c4e5e52fd68ece18fd7585097235cffc471fc66` (660M build dir inside it, listed in part 6)
 needs-coordinator: decide whether "a producer emits it once per call" (`port.rs`) should be enforced by the three decoders, or reworded as a promise that holds only for well-formed streams
 
 **1. `git --no-pager diff --stat`**
@@ -81,12 +81,12 @@ For 4 to 6, the fix is to add a mutation record for each to `docs/verification/{
 - I found no production caller of `IngressStream` or of Responses `decode_stream` outside the conformance adapter.
 
 **6. Paths written outside the worktree**
-- `/home/timo/.cache/llm-wave-2/toolname/adversary-2/` (the assigned scratch directory), containing:
+- `home-path:sha256:82dc50851c898c9d34956fec2c4e5e52fd68ece18fd7585097235cffc471fc66` (the assigned scratch directory), containing:
   - `mutate.py`
   - `copy/` (9.8M copy of the worktree source, used for the mutations; restored after)
   - `target/` (660M build dir for the copy, left in place)
   - logs: `alone-chat.log`, `alone-responses.log`, `alone-messages.log`, `suite.log`, `mut-ingress-renamed-outcome-accepted.log`, `mut-ingress-omitted-announced-call-accepted.log`, `mut-responses-repeated-opening-item-reannounced.log`
-- The worktree builds went into the assigned `$HOME/.cache/b10x-target/llm-wave2-toolname`.
+- The worktree builds went into the assigned `home-path:sha256:74d70d6c022df8bdcdb5690ad4505210d7a2882e367a004d00978709bc2c63f2`.
 - I took the worktree session lease `adversary-2-toolname` and released it.
 
 **7. Findings block**

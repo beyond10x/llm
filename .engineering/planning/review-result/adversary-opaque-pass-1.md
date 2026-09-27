@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-opaque-pass-1
 kind: review-result
 status: active
@@ -8,11 +8,11 @@ relations:
 - reviews: story:unattributed-opaque-state
 revision: 1
 ---
-unit: story:unattributed-opaque-state, the uncommitted working tree at `/home/timo/.local/state/worktree/trees/b10x/llm/wave3-opaque` on base `6ce4253`
+unit: story:unattributed-opaque-state, the uncommitted working tree at `home-path:sha256:0139ae4d6d571aa8e182d6fc29852675a3af0fa3a87db678341fc52f854f8004` on base `6ce4253`
 verdict: CONFIRMED (3 red cases, 2 of them warnings; no blocker)
 cases: executed 272→278, red 3
 origin: introduced 5, pre-existing 0, undecided 0
-wrote-outside-worktree: 4 files, all under the assigned `/home/timo/.cache/llm-wave-3/opaque/adversary-1/`
+wrote-outside-worktree: 4 files, all under the assigned `home-path:sha256:462ea04b96cd234d2f2e7e208564fc56adfc2348ddebb36649f2929ba52f18b4`
 needs-coordinator: none
 
 **1. `git --no-pager diff --stat`**
@@ -70,7 +70,7 @@ error: 2 targets failed:
 EXIT=101
 ```
 
-- **272 before:** read from the implementor's gate log (`/home/timo/.cache/llm-wave-3/opaque/gate-test.log`, 272 passed, 0 failed), not from a run of mine.
+- **272 before:** read from the implementor's gate log (`home-path:sha256:43a532e4466199d1d625330bf938ea3bac25728097b39a6cfd1d1753e058c5da`, 272 passed, 0 failed), not from a run of mine.
 - **`--no-fail-fast`:** added so that every crate reports its count despite the failures.
 - **Lint and format:** clippy `-D warnings` on the three crates I touched is clean, and `cargo fmt --check` exits 0.
 
@@ -93,11 +93,11 @@ EXIT=101
 - **Mutants:** removing the arm in `validate_for`, the Responses egress arm, the arm in `TurnOutcome` or the protocol check is each killed by an existing case.
 
 **6. Paths written outside the worktree**
-- `/home/timo/.cache/llm-wave-3/opaque/adversary-1/red-b10x-llm-messages.log`
-- `/home/timo/.cache/llm-wave-3/opaque/adversary-1/red-b10x-llm-responses.log`
-- `/home/timo/.cache/llm-wave-3/opaque/adversary-1/red-b10x-llm-core.log`
-- `/home/timo/.cache/llm-wave-3/opaque/adversary-1/suite.log`
-- Incremental build output in the assigned `$HOME/.cache/b10x-target/llm-wave3-opaque`. No second build directory was made. Disk had 28G free after the runs.
+- `home-path:sha256:d9ce85ea823b24a75f2d704351b14a833b1655dc4eb9d06393470171dd3543b9`
+- `home-path:sha256:8c5e8d91f69eaa1c02ecff515bdf4a2005e34713ff57c03902d29ffcfe28f1a5`
+- `home-path:sha256:e0ddea40227d012f7929f48c19570f169e458532f11194511819516dc59f14cd`
+- `home-path:sha256:ba4bbb10e02512b591bb533b69dc7cc889a5bc3fe827c2a02108502b8a9e3bdb`
+- Incremental build output in the assigned `home-path:sha256:2b932709a3ccb2247629b688dbeb6e99888f0490b43287445bc6fa1925979bef`. No second build directory was made. Disk had 28G free after the runs.
 
 **7. Findings block**
 

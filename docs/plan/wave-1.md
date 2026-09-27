@@ -56,7 +56,7 @@ workspace declares `LicenseRef-B10x-Proprietary` while the sibling repositories 
 | `story:gateway-auth` | `impl/gateway-auth` | `wave1-gateway` | `~/.cache/b10x-target/llm-wave1/gateway` | merged into `wave/1` at `1ffba7b` |
 | `story:hosting-contract` | `impl/hosting-contract` | `wave1-hosting` | `~/.cache/b10x-target/llm-wave1/hosting` | merged into `wave/1` at `d937f9b`, after its correction round |
 
-Every worktree is under `/home/timo/.local/state/worktree/trees/b10x/llm/`. Each unit's scratch
+Every worktree is under `~/.local/state/worktree/trees/b10x/llm/`. Each unit's scratch
 directory is `~/.cache/llm-wave-1/<unit>/` and holds its brief. The briefs share
 `~/.cache/llm-wave-1/invariants.md`, which is written once and referenced rather than retyped.
 
@@ -92,8 +92,8 @@ All four applied with no conflict, including `Cargo.lock`, which two of them had
 Two units are under their second and final adversarial pass, dispatched against their own worktrees
 with a brief file each:
 
-- `/home/timo/.cache/llm-wave-1/hosting/brief-pass-2.md`
-- `/home/timo/.cache/llm-wave-1/messages/brief-pass-2.md`
+- `~/.cache/llm-wave-1/hosting/brief-pass-2.md`
+- `~/.cache/llm-wave-1/messages/brief-pass-2.md`
 
 Their work is still uncommitted in `wave1-hosting` and `wave1-messages`, which is the only copy of it.
 
