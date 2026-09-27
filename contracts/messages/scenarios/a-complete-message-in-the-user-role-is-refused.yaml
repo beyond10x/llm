@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: a-complete-message-in-the-user-role-is-refused
+summary: a complete response whose role is not assistant is refused (decode.rs)
+timeline:
+- at: '2026-09-21T12:00:00Z'
+  command: llm.messages.DecodeMessage
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+    message_json: "{\"content\":[{\"text\":\"Hello\",\"type\":\"text\"}],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"user\",\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":6,\"cache_read_input_tokens\":4,\"input_tokens\":11,\"output_tokens\":8}}"
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "protocol"
+    items: []
+    stop_reason: null

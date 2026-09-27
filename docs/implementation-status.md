@@ -48,19 +48,19 @@ while the versioned configuration surface and release prerequisites are complete
 | `secret-resolver` | Injected arbitrary secret references, redacted/zeroized material and coordinated caller-owned renewal implemented and tested. |
 | `provider-accounts` | Validated bindings, arbitrary endpoint URLs and selected-reference request-time auth implemented; live access qualification is separate. |
 | `local-secret-adapters` | Explicit file/keychain adapters implemented; Linux file protections, exact mock-store lookup, rotation and fixed errors tested. Native OS-service availability is not established by mock tests or compilation. |
-| `responses-projection` | Pending: Responses request, output and streaming projections. |
-| `messages-projection` | Pending: Messages request, output and streaming projections. |
-| `chat-projection` | Pending: Chat Completions projections and arbitrary compatible endpoints. |
+| `responses-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Responses request, output and streaming projections. |
+| `messages-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Messages request, output and streaming projections. |
+| `chat-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Chat Completions projections and arbitrary compatible endpoints. |
 | `openai-access` | Pending: API and caller-managed subscription presentation and successful qualification. |
 | `anthropic-access` | Pending: API and caller-managed subscription presentation and successful qualification. |
 | `catalog-routing` | Strict versioned TOML, deterministic identity, safe explanation, ordered selection and capability admission implemented and tested. |
-| `ordered-fallback` | Pending: explicit ordered alternatives, attempt accounting and refusal after exposed output or uncertain acceptance. |
+| `ordered-fallback` | Implemented (story implemented in the AEP store, shipped in 0.1.0): explicit ordered alternatives, attempt accounting and refusal after exposed output or uncertain acceptance. |
 | `usage-pricing` | Versioned price books, exact amounts, cache/compute pricing, attributed unknowns, failed attempts and separate recorded/subscription charges implemented with fixtures and ESS; live provider observations remain unqualified. |
 | `spending-limits` | Single-owner policy, pure engine, SQLite journal, concurrent admission, one-shot starts, restart uncertainty, overrun retention and compute stop obligations implemented with real local storage fixtures and ESS. Effectful consumers still need to use the ledger. |
-| `hosting-contract` | Pending: model owned-resource lifecycle, leases, reconciliation and cleanup before adapter implementation. |
-| `runpod-hosting` | Pending: port and qualify Runpod vLLM deployment mechanics against the hosting contract. |
+| `hosting-contract` | Implemented (story implemented in the AEP store, shipped in 0.1.0): model owned-resource lifecycle, leases, reconciliation and cleanup before adapter implementation. |
+| `runpod-hosting` | Implemented (story implemented in the AEP store, shipped in 0.1.0): port and qualify Runpod vLLM deployment mechanics against the hosting contract. |
 | `modal-hosting` | Pending: implement and qualify supported Modal lifecycle operations. |
-| `gateway-auth` | Pending: single-owner authenticated gateway. |
+| `gateway-auth` | Implemented (story implemented in the AEP store, shipped in 0.1.0): single-owner authenticated gateway. |
 | `gateway-translation` | Pending: three ingress protocols, explicit supported subset and streaming/tool/cancellation semantics. |
 | `operator-cli` | Pending: validate, inspect and run one configuration; inspection must not resolve secrets or provision resources. |
 | `foundation-qualified` | Pending: exact release, required checks/artifacts and all required implementation/qualification evidence. |

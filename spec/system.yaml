@@ -1,4 +1,4 @@
-format: ess/13
+format: ess/14
 system: llm
 version: v1
 domains:
@@ -12,3 +12,9 @@ domains:
   - llm.responses
   - llm.chat
   - llm.hosting
+# UNMAPPED: two implemented crates have no domain here. `b10x-llm-gateway` (docs/gateway.md:
+# owner authentication, liveness, readiness, read-only route inspection; CHANGELOG.md:70
+# "gateway-auth has a falsification record but no ESS suite") and `b10x-llm-runpod`
+# (docs/hosting.md:285, ordered GPU fallback and lost-create adoption proven against an
+# in-process emulator). Whether each gets its own domain or extends llm.hosting / llm.routing,
+# and which of their refusals are contract rather than adapter detail, is the owner's call.

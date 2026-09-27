@@ -17,6 +17,7 @@ llm-credentials = { workspace = true, features = ["file", "keychain"] }
 keyring-core = "1.0.0"
 tempfile = "3.27"
 tokio.workspace = true
+clap = { version = "4.5", features = ["derive"] }
 rustix = { version = "1.1.5", default-features = false, features = ["std", "fs"] }
 llm-routing = { package = "b10x-llm-routing", path = "../../crates/llm-routing" }
 llm-messages = { package = "b10x-llm-messages", path = "../../crates/llm-messages" }
@@ -26,5 +27,5 @@ llm-provision = { package = "b10x-llm-provision", path = "../../crates/llm-provi
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
-ess-conformance = { git = "https://github.com/beyond10x/ess.git", rev = "a86579e13385476e324a1550aab2a5e207048ee2" }
-ess-primitives = { git = "https://github.com/beyond10x/ess.git", rev = "a86579e13385476e324a1550aab2a5e207048ee2" }
+ess-conformance = { git = "https://github.com/beyond10x/ess.git", rev = "be44a3365eb273cb3d447b74cd5b0e75181d284e" }
+ess-primitives = { git = "https://github.com/beyond10x/ess.git", rev = "be44a3365eb273cb3d447b74cd5b0e75181d284e" }

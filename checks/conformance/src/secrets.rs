@@ -45,6 +45,32 @@ struct FileInput {
     shape: Shape,
     public_readable: bool,
     parent_writable: bool,
+    /// One permission arrangement applied after the switches above, when present.
+    #[serde(default)]
+    mode: Option<ModeFixture>,
+}
+/// Each arrangement is one mode away from the private default: a 0700 directory, a 0600 file.
+#[derive(Deserialize, Clone, Copy)]
+enum ModeFixture {
+    ParentGroupWritable,
+    ParentOtherWritable,
+    FileOwnerExecutable,
+    FileGroupReadable,
+    FileSetuid,
+    FileOwnerReadOnly,
+}
+impl ModeFixture {
+    /// Whether the arrangement is applied to the parent directory, and the bits it sets.
+    const fn bits(self) -> (bool, u32) {
+        match self {
+            Self::ParentGroupWritable => (true, 0o770),
+            Self::ParentOtherWritable => (true, 0o702),
+            Self::FileOwnerExecutable => (false, 0o700),
+            Self::FileGroupReadable => (false, 0o640),
+            Self::FileSetuid => (false, 0o4600),
+            Self::FileOwnerReadOnly => (false, 0o400),
+        }
+    }
 }
 #[derive(Deserialize)]
 struct KeychainInput {
@@ -173,6 +199,14 @@ pub fn file(input: Value) -> Result<Value, Box<dyn Error>> {
     }
     if input.parent_writable {
         fs::set_permissions(&root, fs::Permissions::from_mode(0o777))?;
+    }
+    // A leaf arrangement over a Missing shape has no leaf to apply to, and is left out.
+    if let Some(mode) = input.mode {
+        let (parent, bits) = mode.bits();
+        let target = if parent { &root } else { &real };
+        if fs::symlink_metadata(target).is_ok() {
+            fs::set_permissions(target, fs::Permissions::from_mode(bits))?;
+        }
     }
     let resolver = FileResolver::new(BTreeMap::from([(SecretRef::new("selected")?, path)]))?;
     tokio::runtime::Builder::new_current_thread()

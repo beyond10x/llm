@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: two-terminal-reasons-are-refused
+summary: a stream reporting two terminal reasons is refused (decode.rs)
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.messages.DecodeStream
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+    events_sse: "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_1\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"input_tokens\":11,\"output_tokens\":8}}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"input_tokens\":11,\"output_tokens\":8}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "protocol"
+    wire_request: null
+    neutral_request: null
+    items: []
+    text: ""
+    tool_arguments: []
+    stop_reason: null

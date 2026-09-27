@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: a-reconciled-charge-cannot-be-reconciled-again
+summary: a charge whose amount is known is not reconciled a second time (engine.rs ReconcileCharge)
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":{"id":"scope","currency":"USD","limit":"0.0000001","max_active":4},"steps":[{"step":"apply","at_ms":0,"command":{"command":"post-charge","charge":{"id":"fee","source":"Invoice fixture","provider":"vendor","account":"account","subject":"subscription","period_start_unix_ms":0,"period_end_unix_ms":100,"currency":"USD","amount":null,"charge_kind":"subscription"}}},{"step":"apply","at_ms":0,"command":{"command":"reconcile-charge","id":"fee","amount":"0.00000005","evidence":"invoice"}},{"step":"apply","at_ms":1,"command":{"command":"reconcile-charge","id":"fee","amount":"0.00000001","evidence":"invoice-2"}}]}'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: true
+    error_code: null
+    storage_failed: false
+    results:
+    - ok
+    - ok
+    - err:wrong-phase
