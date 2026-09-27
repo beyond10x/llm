@@ -2,11 +2,19 @@
 format: aep.planning-md/2
 id: story:resolve-spec-markers
 kind: story
-status: draft
+status: active
 title: Every open spec marker has a recorded outcome
 relations:
+- serves: vision:portable-model-inference
 - decomposes: epic:contracts
-revision: 1
+scope:
+- confidence: cited
+  path: checks/conformance
+- confidence: cited
+  path: contracts
+- confidence: cited
+  path: spec
+revision: 4
 ---
 ## Acceptance
 
