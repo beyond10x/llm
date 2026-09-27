@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-toolname-pass-1
 kind: review-result
 status: active
@@ -8,7 +8,7 @@ relations:
 - reviews: story:streamed-tool-call-name
 revision: 1
 ---
-unit: story:streamed-tool-call-name, uncommitted working tree on base `d5c73e8` at `/home/timo/.local/state/worktree/trees/b10x/llm/wave2-toolname`
+unit: story:streamed-tool-call-name, uncommitted working tree on base `d5c73e8` at `home-path:sha256:90565d86e56bca06ebdd3c698c6d35c296fb743ea706c48a4e4b129c7decd9fe`
 verdict: NEEDS-CHANGE
 cases: executed 216→220, red 4
 origin: introduced 3 / pre-existing 0 / undecided 1
@@ -64,9 +64,9 @@ D: announced call-1:file_read, outcome carries ["call-2:file_read"]
 - Ingress: an announcement repeated for the same call does not open a second index, and an announcement arriving after unannounced deltas stays out.
 
 **6. Paths written outside the worktree**
-- `/home/timo/.cache/llm-wave-2/toolname/adversary-1/` (directory I created; it is the scratch path the brief assigned)
-- `/home/timo/.cache/llm-wave-2/toolname/adversary-1/suite.log`
-- Build output went into the assigned `$HOME/.cache/b10x-target/llm-wave2-toolname`.
+- `home-path:sha256:1a44da0d9895dbcaae2345e183fdc71ca926d28f1f9069af4ea6902500c47860` (directory I created; it is the scratch path the brief assigned)
+- `home-path:sha256:971034597098c2a90941c2092a362a9301938cabdf7ca036b0e3d0493416ab50`
+- Build output went into the assigned `home-path:sha256:74d70d6c022df8bdcdb5690ad4505210d7a2882e367a004d00978709bc2c63f2`.
 
 **7. Findings block**
 ```findings

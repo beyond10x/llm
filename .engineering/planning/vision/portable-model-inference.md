@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: vision:portable-model-inference
 kind: vision
 status: draft

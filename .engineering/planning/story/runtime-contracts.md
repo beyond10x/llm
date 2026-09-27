@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: story:runtime-contracts
 kind: story
 status: active
@@ -135,7 +135,7 @@ Follow-up free diagnosis resolved the unknown_protocol refusal without suppressi
 AEP 0.55.0's explicit --task path uses --root or the current directory rather than the project's
 cached protocol source. Passing --root to the configured e27c84bd2f5e565a7974d889ee7e3d27dee872d1
 snapshot makes aep govern resolve succeed: LLM-CHAT-1, development.driven, adp/default, 11 obligations.
-Retained plan: /home/timo/.cache/llm-planning-20260919/chat-drive-plan.json.
+Retained plan: home-path:sha256:abaccae140f62962aa114fbd2b9c33c9339efc8c8b3a917eba7e97dcd1afb868
 No driver run has launched. The inherited map still needs repository-appropriate verifier review,
 and the requested operator total USD budget and per-session USD reservation remain unanswered.
 The ESS verifier work is ordinary-session verification; no historical implementation is relabeled

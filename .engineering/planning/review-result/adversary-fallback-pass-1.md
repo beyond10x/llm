@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-fallback-pass-1
 kind: review-result
 status: active
@@ -8,7 +8,7 @@ relations:
 - reviews: story:ordered-fallback
 revision: 1
 ---
-unit: story:ordered-fallback, uncommitted working tree on base `d5c73e8` at `/home/timo/.local/state/worktree/trees/b10x/llm/wave2-fallback`
+unit: story:ordered-fallback, uncommitted working tree on base `d5c73e8` at `home-path:sha256:dbeab428e61fbbf75927badff457a86620c369c7f5190943d59e233d935bc12c`
 verdict: CONFIRMED (1 red case, INFEASIBLE by reachability; 2 mutants the suite misses)
 cases: executed 23→28, red 1
 origin: introduced 3 / pre-existing 0 / undecided 0
@@ -78,13 +78,13 @@ error: 1 target failed:
 - The upper attempt bound (M3 was killed).
 
 **6. Paths written outside the worktree**
-- `/home/timo/.cache/llm-wave-2/fallback/adversary-1/mutate.sh`
-- `/home/timo/.cache/llm-wave-2/fallback/adversary-1/mutate.log`
-- `/home/timo/.cache/llm-wave-2/fallback/adversary-1/red-alone.log`
-- `/home/timo/.cache/llm-wave-2/fallback/adversary-1/suite.log`
-- `/home/timo/.cache/llm-wave-2/fallback/adversary-1/suite-nff.log`
+- `home-path:sha256:b7bf616b76f1b9c339d34089cc1e455b3298130628e07d183ae3df313e04b009`
+- `home-path:sha256:eaae987fae6d532e81b438920e285090d9920962150c172c6f12b34ace82e8f6`
+- `home-path:sha256:7099f9a9c45539fce6b915dcdb27c8a908711b8bd904611a66c4fc4adc2acc15`
+- `home-path:sha256:dc643dbfca178b4651fd69c8a7ab370ef9b7ede4fe0a6c61a4e8f8948c11cd80`
+- `home-path:sha256:f783babf292298c40977e56d08336e1e98c5e2895d8266e1efac5c0f583431cc`
 - Removed already: `adversary-1/copy/` (scratch tree copy) and `adversary-1/target/` (309M).
-- The shared build dir `$HOME/.cache/b10x-target/llm-wave2-fallback` received the test binary for my file.
+- The shared build dir `home-path:sha256:150a02889bdd024f401141a7cde92a06454cb2c745ad840f4a6192473b2e4b47` received the test binary for my file.
 
 **7. Findings block**
 ```findings

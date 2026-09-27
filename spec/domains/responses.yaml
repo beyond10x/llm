@@ -100,6 +100,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.responses.Projected]
+        payload:
+          llm.responses.Projected:
+            accepted: {generated: true}
         summary: Return facts from projecting and re-reading a turn, including typed refusals.
 
   - name: llm.responses.DecodeStream
@@ -112,6 +115,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.responses.StreamDecoded]
+        payload:
+          llm.responses.StreamDecoded:
+            accepted: {generated: true}
         summary: Return facts from decoding a stream, including refusals and partial evidence.
 
   - name: llm.responses.Ingest
@@ -124,6 +130,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.responses.Ingested]
+        payload:
+          llm.responses.Ingested:
+            accepted: {generated: true}
         summary: Return facts from reading a wire body, including typed refusals.
 
 events:

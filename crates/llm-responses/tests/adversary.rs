@@ -1,7 +1,7 @@
 //! Adversarial cases for the Responses projection.
 //!
 //! Every case here asserts something `docs/responses.md`, the story's Acceptance statement or
-//! `/home/timo/.cache/llm-wave-1/invariants.md` already claims, against a fixture the authored
+//! `~/.cache/llm-wave-1/invariants.md` already claims, against a fixture the authored
 //! suite does not build. They were written to fail; each one names the claim it drives.
 
 use llm_core::{

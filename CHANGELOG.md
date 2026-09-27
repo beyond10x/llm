@@ -1,12 +1,28 @@
 # Changelog
 
 All notable changes to this component are recorded here. Versions are component-scoped and released
-under bare-version tags such as `0.1.0`. Nothing has been released yet: the workspace is
-`publish = false` at version `0.0.0`, and every entry below is unreleased.
+under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
+are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-27
+
 ### Added
+
+- A mutation audit over the specification and implementation added 38 authored conformance
+  scenarios (the suite runs 462); every killable mutant is killed.
+- Ordered fallback in `b10x-llm-routing`: `run_turn` tries a route's compatible targets in declared
+  order, bounded by attempts and deadline, and halts on visible output, ambiguous dispatch,
+  incompatible opaque state, an ineligible failure, cancellation or a caller's limit refusal.
+- The Runpod adapter in `b10x-llm-runpod`: single-flight startup, ordered GPU fallback, lost-create
+  adoption by a per-controller request id, readiness and crash-window recovery, ownership-safe
+  cleanup, proven against an in-process emulator.
+- Streamed tool calls carry their announced name (`StreamEvent::ToolCallStarted`) in the Chat,
+  Responses and Messages projections.
+- Opaque continuation state ingress cannot attribute is carried as `Item::UnattributedOpaque` and
+  is never sent until a caller binds it; the envelopes move to `llm.turn/3` and `llm.outcome/4`
+  and older versions are refused by name.
 
 - Neutral inference boundary in `b10x-llm-core`: an object-safe asynchronous `Model::turn` port
   taking one request, a caller-owned sink and a cancellation token; bounded text and tool items;
@@ -58,6 +74,11 @@ under bare-version tags such as `0.1.0`. Nothing has been released yet: the work
 
 ### Changed
 
+- The specification is at ESS source format `ess/13` and the conformance runner uses ESS 0.35.0;
+  emitted payload fields the adapters observe are declared `generated`.
+- The planning store is `aep.project/3` on a tree Git merges, planned with AEP 0.60.0; CI installs
+  AEP 0.60.0.
+- The workspace version is 0.1.0.
 - Pin every action revision in `.github/workflows/gate.yml` to an exact commit and name the
   version beside it. Common Gates refuses a workflow whose action revisions are not exact commits
   or Docker digests, so the repository's own gate had to be pinned before the shared caller could
@@ -74,8 +95,7 @@ under bare-version tags such as `0.1.0`. Nothing has been released yet: the work
 
 ### Not yet implemented
 
-The operator command line (`llm-cli`), both cloud hosting adapters (`llm-runpod`, `llm-modal`),
-protocol translation in the gateway, and ordered runtime fallback — all still five-line stubs or
-unwritten. OpenAI and Anthropic access is unqualified: no live provider credential has been used
+The operator command line (`llm-cli`), the Modal hosting adapter (`llm-modal`) and protocol
+translation in the gateway are not written yet. OpenAI and Anthropic access is unqualified: no live provider credential has been used
 anywhere in this repository, so every guarantee above is held against fixtures, local sockets and
-in-process fakes. There is no release and no published artifact.
+in-process fakes. No crate is published to a registry.

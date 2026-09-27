@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-opaque-pass-2
 kind: review-result
 status: active
@@ -8,11 +8,11 @@ relations:
 - reviews: story:unattributed-opaque-state
 revision: 1
 ---
-unit: story:unattributed-opaque-state, pass 2, uncommitted working tree `/home/timo/.local/state/worktree/trees/b10x/llm/wave3-opaque` on base `6ce4253`
+unit: story:unattributed-opaque-state, pass 2, uncommitted working tree `home-path:sha256:0139ae4d6d571aa8e182d6fc29852675a3af0fa3a87db678341fc52f854f8004` on base `6ce4253`
 verdict: CONFIRMED (1 red case, warning; no blocker)
 cases: executed 281→282, red 1
 origin: introduced 2 / pre-existing 0 / undecided 0
-wrote-outside-worktree: 2 paths, both under the assigned `/home/timo/.cache/llm-wave-3/opaque/adversary-2/`
+wrote-outside-worktree: 2 paths, both under the assigned `home-path:sha256:8f455da07243d07e9799f3534a23b4dd58ca5550e40dd19ed1d4baabdea5c6c0`
 needs-coordinator: none
 
 The correction round held up. It has one real gap: `docs/contract-v1.md` says route selection refuses unattributed state "by name", and it doesn't.
@@ -79,9 +79,9 @@ EXIT=101
 - **JSON-equal boundaries:** the Responses API takes an already-parsed `Value`, and Messages opaque blocks hold only strings, so no number-precision loss is reachable.
 
 **6. Paths written outside the worktree**
-- `/home/timo/.cache/llm-wave-3/opaque/adversary-2/red-routing.log`
-- `/home/timo/.cache/llm-wave-3/opaque/adversary-2/suite.log`
-- Incremental build output went into the assigned `$HOME/.cache/b10x-target/llm-wave3-opaque`. I made no second build directory.
+- `home-path:sha256:e636dbca7994fea3990ee3d4db53abe10acc2c325c2c20d5e15b47b3302417e1`
+- `home-path:sha256:5a8bba42625fb602c380ebef0eb5095d24f7a1026bd5878d561a732344009bff`
+- Incremental build output went into the assigned `home-path:sha256:2b932709a3ccb2247629b688dbeb6e99888f0490b43287445bc6fa1925979bef`. I made no second build directory.
 
 **7. Findings block**
 

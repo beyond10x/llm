@@ -143,6 +143,9 @@ commands:
     outcomes:
       - name: observed
         emits: [llm.accounting.Quoted]
+        payload:
+          llm.accounting.Quoted:
+            accepted: {generated: true}
         summary: Observe actual price/quote API returns, including typed refusals and unknown lines.
 events:
   # Verification-only notification; the runtime is a pure library with no event transport.

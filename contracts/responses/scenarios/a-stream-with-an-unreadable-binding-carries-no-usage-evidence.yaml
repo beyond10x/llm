@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: a-stream-with-an-unreadable-binding-carries-no-usage-evidence
+summary: a stream refused before any binding exists carries no usage finality, model, identifier or counter
+timeline:
+- at: '2026-09-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.output_text.delta","delta":"Hel"}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: false
+    error_code: invalid-request
+    dispatch: null
+    final_usage: null
+    upstream_model: null
+    response_id: null
+    input_tokens: null
+    stream_events: []

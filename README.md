@@ -28,7 +28,7 @@ contract afterwards; the existing `llmgw` remains operational until a qualified 
 
 ## Checks
 
-Run `task check` with Rust 1.98, AEP 0.55.0 and ESS 0.26.0. `task rust` runs the Rust tests,
+Run `task check` with Rust 1.98, the newest AEP and ESS releases (AEP 0.60.0 and ESS 0.35.0 at the time of writing). `task rust` runs the Rust tests,
 formatting and lint checks without requiring the planning tools. Tests use injected models,
 resolvers and local HTTP fixtures; they make no paid provider calls. See the
 [verification record](docs/verification/core-foundation.md) for tested behavior and limits.

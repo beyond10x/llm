@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: a-policy-admitting-no-concurrent-work-is-refused
+summary: a policy with a concurrency bound of zero is refused before a ledger exists
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":{"id":"scope","currency":"USD","limit":"1","max_active":0},"steps":[]}'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: true
+    error_code: invalid-policy
+    policy_id: null
+    max_active: null
+    totals: null

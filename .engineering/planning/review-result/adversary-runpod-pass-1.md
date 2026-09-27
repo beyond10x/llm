@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/1
+format: aep.planning-md/2
 id: review-result:adversary-runpod-pass-1
 kind: review-result
 status: active
@@ -9,11 +9,11 @@ relations:
 revision: 1
 ---
 ```
-unit: story:runpod-hosting (impl/runpod-hosting, base d5c73e8), uncommitted working tree at /home/timo/.local/state/worktree/trees/b10x/llm/wave2-runpod
+unit: story:runpod-hosting (impl/runpod-hosting, base d5c73e8), uncommitted working tree at home-path:sha256:47b2652f354c9f6005baff67b7df8fc51fc511b454cf4e2b61d9482f3990d8b6
 verdict: NEEDS-CHANGE
 cases: executed 31→37, red 3
 origin: introduced 12 / pre-existing 0 / undecided 0
-wrote-outside-worktree: 11 paths under /home/timo/.cache/llm-wave-2/runpod/adversary-1/ (part 6)
+wrote-outside-worktree: 11 paths under home-path:sha256:93efe81e599943c5502277134fbed32c663719887e383316be10cb8e6bb5208d (part 6)
 needs-coordinator: none
 ```
 
@@ -27,7 +27,7 @@ needs-coordinator: none
 ```
 All four paths are the implementor's, unchanged from what I was handed. The implementation is untracked, so `--stat` can't show my file. My only change is the untracked `crates/llm-runpod/tests/adversary.rs`. All seven `src/*.rs` files still match `src.sha256.before1` (`sha256sum -c`: OK).
 
-**2. Cases added** (`/home/timo/.local/state/worktree/trees/b10x/llm/wave2-runpod/crates/llm-runpod/tests/adversary.rs`). Each was run alone first, with `--exact`.
+**2. Cases added** (`home-path:sha256:16b08056d1e2804182af2b0b421c061f072eb973b6ca99aa0c68c34a2d234431`). Each was run alone first, with `--exact`.
 
 | case | asserts | now |
 |---|---|---|
@@ -100,7 +100,7 @@ Clippy (`-D warnings`) and `cargo fmt --check` are clean with the new file. `<be
 - Generation-id collisions across aliases: the numeric suffix after the last `-` keeps them unique.
 - A second live record per alias: `start` only runs when the slot is empty.
 
-**6. Paths written outside the worktree** (all under `/home/timo/.cache/llm-wave-2/runpod/adversary-1/`)
+**6. Paths written outside the worktree** (all under `home-path:sha256:93efe81e599943c5502277134fbed32c663719887e383316be10cb8e6bb5208d`)
 - `mutate.py`, `mutants.json`, `suite.log`
 - six `alone-<case>.log` files
 - five `mutant-<name>.log` files

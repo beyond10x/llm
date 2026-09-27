@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.budget
+scenario: an-unreadable-program-reports-no-policy
+summary: a program that cannot be read opens no ledger and reports no policy, instant or totals
+timeline:
+- at: '2026-09-19T12:00:00Z'
+  command: llm.budget.Exercise
+  input:
+    program_json: '{"policy":'
+assert:
+- view: llm.budget.LastExecution
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.budget.LastExecution
+  contains:
+    valid_program: false
+    error_code: null
+    storage_failed: false
+    policy_id: null
+    currency: null
+    limit: null
+    max_active: null
+    now_ms: null
+    totals: null
+    results: []
+    reservations: []
