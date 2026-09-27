@@ -10,6 +10,8 @@ are source releases at bare-version tags.
 
 ### Added
 
+- A mutation audit over the specification and implementation added 38 authored conformance
+  scenarios (the suite runs 462); every killable mutant is killed.
 - Ordered fallback in `b10x-llm-routing`: `run_turn` tries a route's compatible targets in declared
   order, bounded by attempts and deadline, and halts on visible output, ambiguous dispatch,
   incompatible opaque state, an ineligible failure, cancellation or a caller's limit refusal.
