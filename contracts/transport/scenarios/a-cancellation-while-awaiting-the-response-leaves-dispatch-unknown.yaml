@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-cancellation-while-awaiting-the-response-leaves-dispatch-unknown
+summary: cancelling after the request left but before its answer reports cancelled with unknown dispatch
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"cancel":{"after_ms":100},"server":{"respond":false}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: cancelled
+    dispatch: unknown
+    end: null
+    requests: 1

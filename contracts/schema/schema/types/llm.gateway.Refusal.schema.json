@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.gateway.Refusal",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:14bd00ab99af3afbafdd255fa3cf35677a2e223d3824c2ee7ad32576a6f7d14f",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.gateway.Refusal": {
+      "title": "Refusal",
+      "x-ess-name": "llm.gateway.Refusal",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "BodyNotAllowed",
+        "CredentialAbsent",
+        "CredentialMalformed",
+        "CredentialRejected",
+        "MethodNotAllowed",
+        "Overloaded",
+        "PathUnknown",
+        "RequestMalformed",
+        "RequestTooLarge",
+        "RouteUnknown",
+        "Unavailable"
+      ]
+    }
+  }
+}

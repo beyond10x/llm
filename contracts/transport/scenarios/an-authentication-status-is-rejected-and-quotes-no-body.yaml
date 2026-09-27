@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: an-authentication-status-is-rejected-and-quotes-no-body
+summary: 401 is unauthorized with dispatch rejected, and the error body is never copied into the diagnostic
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"status":401}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: unauthorized
+    dispatch: rejected
+    end: null
+    diagnostics_safe: true
+    requests: 1

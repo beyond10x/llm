@@ -41,10 +41,11 @@ handle.mark_ready();
 
 `OwnerToken` is redacted in `Debug`, has no `Display`, no `Clone` and no serialisation, and its
 bytes are overwritten on drop. `GatewayConfig` holds no credential at all, so a configuration
-value can be logged or written to disk. `SharedSecretVerifier` compares in time independent of
-where the first differing byte is, and refuses a shared secret below 32 bytes at composition
-rather than serving a guessable one. The byte length of a presented credential remains
-observable, which is the same exposure any length-checked constant-time comparison has.
+value can be logged or written to disk. `SharedSecretVerifier` compares the SHA-256 digests of the
+expected and presented values in constant time, so the comparison depends on neither the content
+nor the length of the expected secret. It refuses a shared secret below 32 bytes at composition
+rather than serving a guessable one. Hashing the presented value takes time that depends only on
+its own length, which its sender already knows.
 
 An embedding that authenticates differently — a hardware token, a signed assertion, a reverse
 proxy's verified header — implements `OwnerVerifier` instead. An implementation must redact its

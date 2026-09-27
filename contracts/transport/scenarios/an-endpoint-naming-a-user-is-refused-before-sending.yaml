@@ -1,0 +1,20 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: an-endpoint-naming-a-user-is-refused-before-sending
+summary: a user name alone in the endpoint URL is refused as invalid and nothing is sent
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"url":"http://user@{addr}/prefix","server":{"chunks":["data: {\"n\":1}\n\n"]}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: invalid-request
+    dispatch: not-sent
+    requests: 0

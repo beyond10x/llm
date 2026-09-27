@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: an-event-stream-media-type-with-parameters-is-accepted
+summary: the media type is compared without its parameters and without regard to case
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"content_type":"Text/Event-Stream; charset=utf-8","chunks":["data: {\"n\":1}\n\n"]}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: null
+    events:
+    - payload:-:{"n":1}
+    end: end

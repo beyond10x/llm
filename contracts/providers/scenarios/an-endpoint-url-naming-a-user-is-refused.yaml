@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: an-endpoint-url-naming-a-user-is-refused
+summary: a user name alone in an endpoint URL is refused
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.providers.Prepare
+  input:
+    binding_json: '{"format":"llm.binding/1","provider":{"id":"my-lab","category":"private-compute"},"account":{"id":"research","provider_id":"my-lab","auth_kind":"anonymous","billing_kind":"self-hosted"},"endpoint":{"id":"gpu-7","account_id":"research","base_url":"https://user@models.example.invalid/v1"},"model":{"id":"code","upstream_name":"custom-org/CustomModel-27B:revision-4"},"serving":{"id":"local-code","endpoint_id":"gpu-7","model_id":"code","protocol":"chat-completions","capabilities":{"tools":false,"tool_choice":false,"temperature":false,"top_p":false,"reasoning_efforts":[],"context_window":32768,"max_output_tokens":8192}}}'
+    secret_error: null
+    secret: 'llm-fixture-private-marker-xxxxxxxxxx'
+    secret_length: null
+    cancel: Never
+  outcome: observed
+assert:
+- view: llm.providers.LastPreparation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastPreparation
+  contains:
+    bound: false
+    error_code: invalid-document
+    field_errors:
+    - 'endpoint.base_url: endpoint must be HTTP(S) with a host and no userinfo, query or fragment'
+    prepared: false
+    resolver_calls: 0

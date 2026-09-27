@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-server-that-never-answers-ends-at-the-response-header-deadline
+summary: no response head within its bound is a deadline whose dispatch is unknown, because the request was sent
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"limits":{"response_headers_ms":200,"idle_ms":5000,"total_ms":10000},"within_ms":5000,"server":{"respond":false}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: deadline
+    dispatch: unknown
+    end: null
+    requests: 1
+    ended_within: true

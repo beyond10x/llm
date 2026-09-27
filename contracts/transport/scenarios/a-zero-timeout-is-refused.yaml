@@ -1,0 +1,20 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-zero-timeout-is-refused
+summary: a zero bound is refused when the client is built
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"limits":{"response_headers_ms":5000,"idle_ms":0,"total_ms":10000},"server":{"chunks":["data: {\"n\":1}\n\n"]}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: invalid-request
+    end: null
+    requests: 0

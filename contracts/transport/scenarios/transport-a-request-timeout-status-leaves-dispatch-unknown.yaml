@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: adversary-w2-a-request-timeout-status-leaves-dispatch-unknown
+summary: 408 is a transport failure with dispatch unknown, like a server failure (transport.rs:246); no authored scenario sends 408
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"status":408}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: transport
+    dispatch: unknown
+    requests: 1
+    diagnostics_safe: true

@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: the-done-sentinel-is-an-explicit-terminal-event
+summary: with sentinel framing a [DONE] frame is its own event, and the stream then ends cleanly
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"framing":"DoneSentinel","server":{"chunks":["data: {\"n\":1}\n\n","data: [DONE]\n\n"]}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: null
+    events:
+    - payload:-:{"n":1}
+    - done
+    end: end

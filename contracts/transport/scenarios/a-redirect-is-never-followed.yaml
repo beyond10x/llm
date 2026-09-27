@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-redirect-is-never-followed
+summary: a 307 is refused with dispatch unknown and the redirect target is never contacted
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"status":307,"redirect":true}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: refused
+    dispatch: unknown
+    requests: 1
+    redirected_requests: 0

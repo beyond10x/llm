@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: a-line-over-the-event-bound-is-refused
+summary: a single SSE line one byte over 1 MiB is refused as too large, however the network split it
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"oversized_line":true}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: too-large
+    dispatch: accepted
+    events: []
+    end: error

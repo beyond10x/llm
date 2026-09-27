@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Binding",
+  "x-ess-name": "llm.providers.Binding",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "serving_model_id": {
+      "type": "string"
+    },
+    "account_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "account",
+        "kind": "references",
+        "source": "llm.providers.Binding",
+        "target": "llm.providers.Account",
+        "cardinality": "one",
+        "via": "account_id"
+      }
+    },
+    "endpoint_id": {
+      "type": "string"
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "request_url": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.providers.Binding.State"
+    }
+  },
+  "required": [
+    "serving_model_id",
+    "account_id",
+    "endpoint_id",
+    "model_id",
+    "protocol",
+    "request_url",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:18b633344c73c9a794acb1a6d23babff5d53212766bad85706bbda25ce6127f0",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.providers.Binding.State": {
+      "title": "State",
+      "x-ess-name": "llm.providers.Binding.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

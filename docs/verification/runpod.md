@@ -58,5 +58,8 @@ equals `source_restored_sha256` in every entry). Every defect failed its named c
 
 ## Limits
 
-No ESS scenarios are authored for this story. No production transport exists, and none of the
+The `llm.runpod` ESS domain (`spec/domains/runpod.yaml`) drives the same pool and emulator through
+`checks/conformance/src/runpod.rs`: 45 authored scenarios under `contracts/runpod/scenarios`, each
+guarded behaviour with a falsification record in `runpod-ess-falsification.json`. No production
+transport exists, and none of the
 live control-plane assumptions listed in the contract has been checked against Runpod.

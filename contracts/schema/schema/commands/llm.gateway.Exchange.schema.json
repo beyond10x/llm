@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exchange input",
+  "x-ess-name": "llm.gateway.Exchange",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:fe9c364ff10aca5db5e7465ecb0d4532e73b71206d6b596e44f3da6351548b0f",
+    "regenerate": "ess generate"
+  }
+}

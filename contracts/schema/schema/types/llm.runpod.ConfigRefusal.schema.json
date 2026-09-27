@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.runpod.ConfigRefusal",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4f74204fba1a9f7f04a17611b82112702e9b5bc1a891c671294ab57f3a6a5955",
+    "contract_digest": "slice-sha256/2:f74cd479f65be4695312a51fab8ecedfa9c6a3bef39376674b69707f33a5b1df",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.runpod.ConfigRefusal": {
+      "title": "ConfigRefusal",
+      "x-ess-name": "llm.runpod.ConfigRefusal",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "NoGpu",
+        "GpuUtilization",
+        "ZeroSetting",
+        "SecretReference",
+        "UnsafeText"
+      ]
+    }
+  }
+}

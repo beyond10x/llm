@@ -1,0 +1,652 @@
+[
+  {
+    "mutation": "an-expired-secret-is-unavailable",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "matches!(error, SecretError::Missing | SecretError::Expired)",
+    "after": "matches!(error, SecretError::Missing)",
+    "named_failure": "llm.providers/authored/an-expired-secret-means-the-caller-is-unauthorized",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-expired-secret-means-the-caller-is-unauthorized"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "a-missing-secret-is-unavailable",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "matches!(error, SecretError::Missing | SecretError::Expired)",
+    "after": "matches!(error, SecretError::Expired)",
+    "named_failure": "llm.providers/authored/missing-means-the-caller-is-unauthorized",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/missing-means-the-caller-is-unauthorized"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "an-unavailable-source-is-unauthorized",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "matches!(error, SecretError::Missing | SecretError::Expired)",
+    "after": "matches!(error, SecretError::Missing | SecretError::Expired | SecretError::Unavailable)",
+    "named_failure": "llm.providers/authored/an-unavailable-source-is-unavailable",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-unavailable-source-is-unavailable"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "every-resolver-failure-is-unauthorized",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "        ErrorCode::Unavailable\n    };",
+    "after": "        ErrorCode::Unauthorized\n    };",
+    "named_failure": "llm.providers/authored/an-unsafe-source-is-unavailable",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 9,
+      "passed": 53,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-rejected-refresh-is-unavailable",
+      "llm.providers/authored/an-invalid-reference-is-unavailable",
+      "llm.providers/authored/an-oversized-secret-is-unavailable",
+      "llm.providers/authored/an-unavailable-source-is-unavailable",
+      "llm.providers/authored/an-uncertain-refresh-is-unavailable",
+      "llm.providers/authored/an-unsafe-source-is-unavailable",
+      "llm.providers/authored/an-unsupported-platform-is-unavailable",
+      "llm.providers/authored/an-unsupported-refresh-is-unavailable",
+      "llm.providers/authored/too-many-references-is-unavailable"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "a-cancelled-caller-still-resolves",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "        if cancel.is_cancelled() {\n            return Err(Error::cancelled());\n        }\n        let account",
+    "after": "        let account",
+    "named_failure": "llm.providers/authored/a-cancelled-caller-is-refused-before-the-resolver-is-called",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-cancelled-caller-is-refused-before-the-resolver-is-called"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "a-credential-resolved-after-cancellation-is-presented",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "        if cancel.is_cancelled() {\n            return Err(Error::cancelled());\n        }\n        let material",
+    "after": "        let material",
+    "named_failure": "llm.providers/authored/a-cancellation-that-arrives-with-the-credential-discards-it",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-cancellation-that-arrives-with-the-credential-discards-it"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "an-empty-credential-is-presented",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "        if material.is_empty()\n",
+    "after": "        if false\n",
+    "named_failure": "llm.providers/authored/an-empty-credential-is-not-a-bounded-http-token",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-empty-credential-is-not-a-bounded-http-token"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "the-token-bound-admits-one-byte-more",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "material.len() > 16 * 1024",
+    "after": "material.len() > 16 * 1024 + 1",
+    "named_failure": "llm.providers/authored/a-credential-one-byte-over-sixteen-kibibytes-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-credential-one-byte-over-sixteen-kibibytes-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "the-token-bound-refuses-its-own-size",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "material.len() > 16 * 1024",
+    "after": "material.len() >= 16 * 1024",
+    "named_failure": "llm.providers/authored/a-credential-of-exactly-sixteen-kibibytes-is-presented",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-credential-of-exactly-sixteen-kibibytes-is-presented"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "a-credential-with-a-space-is-presented",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "|| !material.iter().all(u8::is_ascii_graphic)",
+    "after": "|| false",
+    "named_failure": "llm.providers/authored/a-credential-with-a-space-is-not-a-bounded-http-token",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-credential-with-a-space-is-not-a-bounded-http-token"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "the-header-is-not-sensitive",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "value.set_sensitive(true);",
+    "after": "value.set_sensitive(false);",
+    "named_failure": "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 60,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header",
+      "llm.providers/authored/an-api-key-account-presents-its-credential-in-its-own-header"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "no-generation-comes-back",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "generation: Some(credential.version),",
+    "after": "generation: None,",
+    "named_failure": "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 60,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header",
+      "llm.providers/authored/an-api-key-account-presents-its-credential-in-its-own-header"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "the-bearer-scheme-is-dropped",
+    "source": "crates/llm-providers/src/auth.rs",
+    "before": "bytes.extend_from_slice(b\"Bearer \");",
+    "after": "bytes.extend_from_slice(b\"\");",
+    "named_failure": "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111",
+    "source_restored_sha256": "98c868d7857d549d78aef3c4c1f4ff411d463908d38bdd4f485b6227bd69a111"
+  },
+  {
+    "mutation": "impossible-capabilities-bind",
+    "source": "crates/llm-providers/src/binding.rs",
+    "before": "self.serving.capabilities.validate()?;",
+    "after": "let _unchecked = &self.serving.capabilities;",
+    "named_failure": "llm.providers/authored/impossible-capability-limits-are-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/impossible-capability-limits-are-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864",
+    "source_restored_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864"
+  },
+  {
+    "mutation": "an-account-of-another-provider-binds",
+    "source": "crates/llm-providers/src/binding.rs",
+    "before": "if self.account.provider_id != self.provider.id {",
+    "after": "if false {",
+    "named_failure": "llm.providers/authored/an-account-of-another-provider-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-account-of-another-provider-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864",
+    "source_restored_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864"
+  },
+  {
+    "mutation": "an-endpoint-of-another-account-binds",
+    "source": "crates/llm-providers/src/binding.rs",
+    "before": "if self.endpoint.account_id != self.account.id {",
+    "after": "if false {",
+    "named_failure": "llm.providers/authored/an-endpoint-of-another-account-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-endpoint-of-another-account-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864",
+    "source_restored_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864"
+  },
+  {
+    "mutation": "a-serving-model-on-another-endpoint-binds",
+    "source": "crates/llm-providers/src/binding.rs",
+    "before": "if self.serving.endpoint_id != self.endpoint.id {",
+    "after": "if false {",
+    "named_failure": "llm.providers/authored/a-serving-model-on-another-endpoint-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-serving-model-on-another-endpoint-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864",
+    "source_restored_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864"
+  },
+  {
+    "mutation": "a-serving-model-of-another-model-binds",
+    "source": "crates/llm-providers/src/binding.rs",
+    "before": "if self.serving.model_id != self.model.id {",
+    "after": "if false {",
+    "named_failure": "llm.providers/authored/a-serving-model-of-another-model-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-serving-model-of-another-model-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864",
+    "source_restored_sha256": "1da6239c633c54fcc053995bde2859ed3635e97979873907b6407667e5f95864"
+  },
+  {
+    "mutation": "an-anonymous-account-may-name-a-credential",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "if self.secret_reference_id.is_some() || self.api_key_header.is_some() {",
+    "after": "if false {",
+    "named_failure": "llm.providers/authored/an-anonymous-account-that-names-a-credential-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-anonymous-account-that-names-a-credential-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "an-authenticated-account-needs-no-reference",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "if self.secret_reference_id.is_none() {",
+    "after": "if false {",
+    "named_failure": "llm.providers/authored/an-authenticated-account-without-a-reference-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-authenticated-account-without-a-reference-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "any-account-may-name-an-api-key-header",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "if (self.auth_kind == AuthKind::ApiKey) != self.api_key_header.is_some() {",
+    "after": "if false {",
+    "named_failure": "llm.providers/authored/a-bearer-account-with-an-api-key-header-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 60,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-bearer-account-with-an-api-key-header-is-refused",
+      "llm.providers/authored/an-api-key-account-without-a-header-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "a-username-in-the-endpoint-is-admitted",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "            || !url.username().is_empty()\n",
+    "after": "\n",
+    "named_failure": "llm.providers/authored/an-endpoint-url-naming-a-user-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-endpoint-url-naming-a-user-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "a-password-in-the-endpoint-is-admitted",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "            || url.password().is_some()\n",
+    "after": "\n",
+    "named_failure": "llm.providers/authored/an-endpoint-url-carrying-only-a-password-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-endpoint-url-carrying-only-a-password-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "a-query-in-the-endpoint-is-admitted",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "            || url.query().is_some()\n",
+    "after": "\n",
+    "named_failure": "llm.providers/authored/an-endpoint-url-with-a-query-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-endpoint-url-with-a-query-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "any-scheme-is-an-endpoint",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "if !matches!(url.scheme(), \"http\" | \"https\")",
+    "after": "if false",
+    "named_failure": "llm.providers/authored/an-endpoint-url-that-is-not-http-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-endpoint-url-that-is-not-http-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "whitespace-in-the-endpoint-is-admitted",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "value.bytes().any(|b| b.is_ascii_control() || b == b' ')",
+    "after": "value.bytes().any(|b| b.is_ascii_control())",
+    "named_failure": "llm.providers/authored/an-endpoint-url-with-whitespace-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-endpoint-url-with-whitespace-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "a-prefix-without-a-slash-loses-its-boundary",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "if !url.path().ends_with('/') {",
+    "after": "if false {",
+    "named_failure": "llm.providers/authored/a-messages-binding-addresses-the-messages-path",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 2,
+      "passed": 60,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-messages-binding-addresses-the-messages-path",
+      "llm.providers/authored/an-anonymous-account-prepares-no-header-and-never-consults-the-resolver"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "the-responses-path-is-misspelt",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "Protocol::Responses => \"responses\",",
+    "after": "Protocol::Responses => \"response\",",
+    "named_failure": "llm.providers/authored/a-responses-binding-addresses-the-responses-path",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/a-responses-binding-addresses-the-responses-path"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  },
+  {
+    "mutation": "content-type-may-carry-an-api-key",
+    "source": "crates/llm-providers/src/declaration.rs",
+    "before": "                | \"content-type\"\n",
+    "after": "\n",
+    "named_failure": "llm.providers/authored/an-api-key-header-that-alters-request-semantics-is-refused",
+    "killed": true,
+    "counts": {
+      "error": 0,
+      "failed": 1,
+      "passed": 61,
+      "skipped": 0,
+      "total": 62,
+      "unsupported": 0
+    },
+    "failed": [
+      "llm.providers/authored/an-api-key-header-that-alters-request-semantics-is-refused"
+    ],
+    "lane_exit": 1,
+    "source_before_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f",
+    "source_restored_sha256": "5c0971c5e991d58104c96e0b62bb23a1a5320e90b6bfdd73c01fb5b4cc681b0f"
+  }
+]

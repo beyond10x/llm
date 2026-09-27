@@ -6,9 +6,9 @@ checkpoint makes no model, provider or hosting call, resolves no secret and crea
 
 ## Counted coverage
 
-`cargo test -p b10x-llm-gateway --locked` runs **40** cases across the six sources this lane
-table covers, and 48 in the whole crate once `src/server.rs` and `tests/adversary_pass_2.rs` are
-included. **All 48 pass**, and the whole-crate command exits 0.
+`cargo test -p b10x-llm-gateway --locked` runs **42** cases across the six sources this lane
+table covers, and 50 in the whole crate once `src/server.rs` and `tests/adversary_pass_2.rs` are
+included. **All 50 pass**, and the whole-crate command exits 0.
 
 | Lane | Base | Now | Result |
 | --- | --- | --- | --- |

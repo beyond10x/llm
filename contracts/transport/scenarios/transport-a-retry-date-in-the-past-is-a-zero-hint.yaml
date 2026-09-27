@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: adversary-w2-a-retry-date-in-the-past-is-a-zero-hint
+summary: an HTTP-date Retry-After already past is a zero hint whatever the wall clock reads (transport.rs:264-267)
+timeline:
+- at: '2026-09-27T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"status":429,"retry_after":"Sun, 06 Nov 1994 08:49:37 GMT"}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: rate-limited
+    dispatch: rejected
+    retry_after_ms: 0
+    requests: 1
