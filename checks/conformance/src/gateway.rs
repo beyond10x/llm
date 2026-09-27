@@ -30,6 +30,8 @@ pub const VIEWS: &[&str] = &["llm.gateway.LastExchange"];
 const MAX_PROGRAM_BYTES: usize = 64 * 1024;
 const MAX_STEPS: usize = 64;
 const MAX_PAD_BYTES: usize = 64 * 1024;
+/// Twice the crate's route bound, so a fixture can step past it and no further.
+const MAX_GENERATED_ROUTES: usize = 8192;
 /// How long the client waits for the gateway's answer. Far above any authored read timeout.
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -82,6 +84,11 @@ struct InventoryInput {
     #[serde(default)]
     config_digest: Option<String>,
     routes: Vec<RouteInput>,
+    /// This many further routes, appended after `routes`: route `g<i>`, alias `g<i>`, one
+    /// target `g<i>-t` at position 0, for `i` from 0. A count no authored list could fit in
+    /// the program bound.
+    #[serde(default)]
+    generated_routes: usize,
 }
 
 #[derive(Deserialize)]
@@ -209,6 +216,7 @@ fn default_inventory() -> InventoryInput {
     };
     InventoryInput {
         config_digest: None,
+        generated_routes: 0,
         routes: vec![RouteInput {
             route_id: "coding".to_owned(),
             alias: "code".to_owned(),
@@ -234,6 +242,21 @@ fn inventory(input: &InventoryInput) -> Result<RouteInventory, String> {
                 targets,
             )
             .map_err(inventory_error)?,
+        );
+    }
+    for index in 0..input.generated_routes {
+        let name = format!("g{index}");
+        let only = TargetInput {
+            target_id: format!("{name}-t"),
+            position: 0,
+            auth_kind: None,
+            billing_kind: None,
+            context_window: None,
+            max_output_tokens: None,
+        };
+        routes.push(
+            RouteSummary::new(label(&name)?, label(&name)?, false, vec![target(&only)?])
+                .map_err(inventory_error)?,
         );
     }
     let snapshot = RouteInventory::new(routes).map_err(inventory_error)?;
@@ -354,7 +377,12 @@ fn run(program_json: &str) -> Value {
     let Ok(program) = serde_json::from_str::<Program>(program_json) else {
         return facts;
     };
-    if program.steps.len() > MAX_STEPS {
+    if program.steps.len() > MAX_STEPS
+        || program
+            .inventory
+            .as_ref()
+            .is_some_and(|inventory| inventory.generated_routes > MAX_GENERATED_ROUTES)
+    {
         return facts;
     }
     facts["valid_program"] = json!(true);

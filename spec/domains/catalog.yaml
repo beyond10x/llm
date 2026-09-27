@@ -1,4 +1,4 @@
-# Draft declaration model; see docs/design.md for sources and UNMAPPED semantics.
+# Declaration model; docs/design.md "Source evidence and draft limits" lists its sources.
 domain: llm.catalog
 types:
   - name: llm.catalog.Protocol

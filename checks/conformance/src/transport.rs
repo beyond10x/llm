@@ -11,7 +11,7 @@ use std::{
     net::SocketAddr,
     sync::{
         Arc, Mutex, PoisonError,
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
     time::Duration,
 };
@@ -100,6 +100,9 @@ struct Program {
     within_ms: Option<u64>,
     #[serde(default)]
     cancel: CancelInput,
+    /// Run the exchange in a child process whose proxy variables all name a local listener.
+    #[serde(default)]
+    ambient_proxy: bool,
     server: ServerInput,
 }
 
@@ -454,12 +457,28 @@ async fn exchange(program: Program, facts: &mut Value, seen: &Arc<Seen>) -> Resu
     read_stream(&mut stream, &cancel, program.cancel.after_events, facts).await
 }
 
-fn run(program_json: &str) -> Value {
-    let mut facts = json!({
+fn blank() -> Value {
+    json!({
         "valid_program": false, "error_code": null, "dispatch": null, "retry_after_ms": null,
         "events": [], "end": null, "sticky": null, "requests": 0, "redirected_requests": 0,
-        "request_line": null, "diagnostics_safe": true, "ended_within": null
-    });
+        "request_line": null, "diagnostics_safe": true, "ended_within": null,
+        "proxied_requests": null
+    })
+}
+
+/// Observe one program, in a child process when it asks for ambient proxy variables.
+pub fn run(program_json: &str) -> Value {
+    let ambient = program_json.len() <= MAX_PROGRAM_BYTES
+        && serde_json::from_str::<Program>(program_json).is_ok_and(|program| program.ambient_proxy);
+    if ambient {
+        return in_child(program_json);
+    }
+    run_here(program_json)
+}
+
+/// Observe one program in this process, whatever its `ambient_proxy` says.
+pub fn run_here(program_json: &str) -> Value {
+    let mut facts = blank();
     if program_json.len() > MAX_PROGRAM_BYTES {
         return facts;
     }
@@ -500,5 +519,91 @@ fn run(program_json: &str) -> Value {
             .clone()
     );
     drop(runtime);
+    facts
+}
+
+/// Every variable name an HTTP stack reads as an ambient proxy.
+pub(crate) const PROXY_VARIABLES: &[&str] = &[
+    "HTTP_PROXY",
+    "http_proxy",
+    "HTTPS_PROXY",
+    "https_proxy",
+    "ALL_PROXY",
+    "all_proxy",
+];
+
+/// A local listener standing in for an ambient proxy. It answers nothing and counts every
+/// connection that opens with a request (`POST` or `CONNECT`); a connection from some other
+/// local process that happens to reach the port is not counted.
+fn start_proxy() -> std::io::Result<(String, Arc<AtomicBool>, std::thread::JoinHandle<usize>)> {
+    use std::io::{ErrorKind, Read};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+    listener.set_nonblocking(true)?;
+    let url = format!("http://{}", listener.local_addr()?);
+    let stop = Arc::new(AtomicBool::new(false));
+    let stopped = Arc::clone(&stop);
+    let thread = std::thread::spawn(move || {
+        let mut proxied = 0;
+        loop {
+            match listener.accept() {
+                Ok((mut socket, _)) => {
+                    let _blocking = socket.set_nonblocking(false);
+                    let _timeout = socket.set_read_timeout(Some(Duration::from_secs(1)));
+                    let mut bytes = vec![0_u8; 8192];
+                    let read = socket.read(&mut bytes).unwrap_or(0);
+                    let head = bytes.get(..read).unwrap_or_default();
+                    if head.starts_with(b"POST ") || head.starts_with(b"CONNECT ") {
+                        proxied += 1;
+                    }
+                }
+                // Stop only once the backlog is empty, so a connection made before the child
+                // exited is always counted.
+                Err(error) if error.kind() == ErrorKind::WouldBlock => {
+                    if stopped.load(Ordering::SeqCst) {
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                Err(_) => break,
+            }
+        }
+        proxied
+    });
+    Ok((url, stop, thread))
+}
+
+/// Re-executes this binary on the program with every proxy variable naming a local listener
+/// and no proxy exemption, so the process-wide environment of every other lane is untouched.
+fn in_child(program_json: &str) -> Value {
+    let mut facts = blank();
+    facts["valid_program"] = json!(true);
+    let Ok((url, stop, proxy)) = start_proxy() else {
+        facts["error_code"] = json!("fixture:bind");
+        return facts;
+    };
+    let output = std::env::current_exe().and_then(|binary| {
+        let mut command = std::process::Command::new(binary);
+        command
+            .args(["transport-child", program_json])
+            .env_remove("NO_PROXY")
+            .env_remove("no_proxy")
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        for variable in PROXY_VARIABLES {
+            command.env(variable, &url);
+        }
+        command.output()
+    });
+    stop.store(true, Ordering::SeqCst);
+    let proxied = proxy.join().ok();
+    match output
+        .ok()
+        .filter(|output| output.status.success())
+        .and_then(|output| serde_json::from_slice::<Value>(&output.stdout).ok())
+    {
+        Some(child) => facts = child,
+        None => facts["error_code"] = json!("fixture:child"),
+    }
+    facts["proxied_requests"] = json!(proxied);
     facts
 }

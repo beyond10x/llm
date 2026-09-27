@@ -68,6 +68,10 @@ enum Cmd {
         output_dir: std::path::PathBuf,
         source_identity: String,
     },
+    /// Run one transport program in this process and print its facts; the transport lane
+    /// starts it with ambient proxy variables set so they never reach another lane.
+    #[command(hide = true)]
+    TransportChild { program_json: String },
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -79,6 +83,18 @@ fn main() -> Result<(), Box<dyn Error>> {
             output_dir,
             source_identity,
         } => execute(&suite, &baseline, &output_dir, &source_identity),
+        Cmd::TransportChild { program_json } => {
+            // A child that did not receive every proxy variable proves nothing about the client
+            // ignoring them, so it refuses rather than answering.
+            if transport::PROXY_VARIABLES
+                .iter()
+                .any(|variable| std::env::var_os(variable).is_none_or(|value| value.is_empty()))
+            {
+                return Err("transport-child started without its proxy environment".into());
+            }
+            println!("{}", transport::run_here(&program_json));
+            Ok(())
+        }
     }
 }
 
