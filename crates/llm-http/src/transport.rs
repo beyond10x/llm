@@ -2,13 +2,26 @@ use crate::{Framing, SseDecoder, SseEvent};
 use llm_core::{Cancel, Dispatch, Error, ErrorCode, MAX_REQUEST_BYTES};
 use reqwest::{
     Client, Response, Url,
-    header::{CONTENT_TYPE, HeaderMap, RETRY_AFTER},
+    header::{ACCEPT, CONTENT_TYPE, HeaderMap, RETRY_AFTER},
 };
 use std::{
     collections::VecDeque,
     time::{Duration, SystemTime},
 };
 use tokio::time::Instant;
+
+const EVENT_STREAM: &str = "text/event-stream";
+
+/// Whether any `accept` header of the request names `text/event-stream`, parameters ignored.
+fn accepts_event_stream(headers: &HeaderMap) -> bool {
+    headers
+        .get_all(ACCEPT)
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .filter_map(|range| range.split(';').next())
+        .any(|range| range.trim().eq_ignore_ascii_case(EVENT_STREAM))
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Limits {
@@ -64,6 +77,9 @@ impl HttpClient {
     }
 
     /// Sends exactly once, with a request-time header list supplied by the caller.
+    ///
+    /// A success with no `content-type` is read as an event stream when the caller's `accept`
+    /// header asked for `text/event-stream`; a success naming any other media type is refused.
     /// # Errors
     /// Refuses invalid URLs/body bounds, cancellation, timeout, transport failure and non-SSE replies.
     pub async fn post_sse(
@@ -116,6 +132,7 @@ impl HttpClient {
                 "HTTP request body or header count exceeds bound",
             ));
         }
+        let asked_for_event_stream = accepts_event_stream(&headers);
         for value in headers.values_mut() {
             value.set_sensitive(true);
         }
@@ -148,13 +165,18 @@ impl HttpClient {
                 SystemTime::now(),
             ));
         }
-        let media_type = response
-            .headers()
-            .get(CONTENT_TYPE)
-            .and_then(|v| v.to_str().ok())
-            .and_then(|v| v.split(';').next())
-            .map(str::trim);
-        if !media_type.is_some_and(|v| v.eq_ignore_ascii_case("text/event-stream")) {
+        // A success that names a media type must name an event stream. One that names none is
+        // read as the event stream the request asked for (the Codex backend answers that way);
+        // a request that did not ask for one gets no such reading.
+        let event_stream = match response.headers().get(CONTENT_TYPE) {
+            Some(value) => value
+                .to_str()
+                .ok()
+                .and_then(|v| v.split(';').next())
+                .is_some_and(|v| v.trim().eq_ignore_ascii_case(EVENT_STREAM)),
+            None => asked_for_event_stream,
+        };
+        if !event_stream {
             return Err(
                 Error::protocol("HTTP success response is not text/event-stream")
                     .with_dispatch(Dispatch::Accepted),
@@ -266,4 +288,70 @@ pub fn retry_after(headers: &HeaderMap, now: SystemTime) -> Option<Duration> {
             .duration_since(now)
             .unwrap_or_default(),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ACCEPT, Framing, HeaderMap, HttpClient, Limits};
+    use llm_core::{Cancel, Dispatch, ErrorCode};
+    use reqwest::header::HeaderValue;
+    use tokio::{
+        io::{AsyncReadExt, AsyncWriteExt},
+        net::TcpListener,
+    };
+
+    /// Answers one request with a `200` that names no `content-type`, then one event.
+    async fn untyped_success(accept: Option<&'static str>) -> Result<(), llm_core::Error> {
+        let listener = TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("a local port");
+        let url = format!("http://{}/v1", listener.local_addr().expect("an address"));
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.expect("a connection");
+            let mut seen = Vec::new();
+            let mut buffer = [0; 1024];
+            while !seen.windows(4).any(|w| w == b"\r\n\r\n") {
+                let length = socket.read(&mut buffer).await.expect("a readable socket");
+                assert!(length > 0, "the client closed before sending a request");
+                seen.extend_from_slice(&buffer[..length]);
+            }
+            let _ = socket
+                .write_all(b"HTTP/1.1 200 OK\r\nconnection: close\r\n\r\ndata: {\"n\":1}\n\n")
+                .await;
+            let _ = socket.shutdown().await;
+        });
+        let mut headers = HeaderMap::new();
+        if let Some(accept) = accept {
+            headers.insert(ACCEPT, HeaderValue::from_static(accept));
+        }
+        let client = HttpClient::new(Limits::default()).expect("bounded transport");
+        let outcome = client
+            .post_sse(
+                &url,
+                headers,
+                Vec::new(),
+                Framing::PayloadsOnly,
+                &Cancel::new(),
+            )
+            .await
+            .map(|_| ());
+        server.await.expect("the fixture server");
+        outcome
+    }
+
+    /// The other half of the Codex reading: an untyped success is an event stream only for a
+    /// request whose `accept` asked for one.
+    #[tokio::test]
+    async fn an_untyped_success_is_an_event_stream_only_when_one_was_asked_for() {
+        untyped_success(Some("application/json, text/event-stream; q=0.9"))
+            .await
+            .expect("a request that asked for an event stream reads an untyped success as one");
+        for accept in [None, Some("application/json")] {
+            let error = untyped_success(accept)
+                .await
+                .expect_err("a request that did not ask for an event stream gets no such reading");
+            assert_eq!(error.code, ErrorCode::Protocol, "{error}");
+            assert_eq!(error.dispatch, Dispatch::Accepted, "{error}");
+        }
+    }
 }
