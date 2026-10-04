@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-19T10:02:34Z",
+  "actor": "human:timo",
+  "artifact": "story:usage-pricing",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check; pinned ESS runner; eleven restored production mutations; quote example",
+    "reference": "docs/verification/pricing.md"
+  }
+}

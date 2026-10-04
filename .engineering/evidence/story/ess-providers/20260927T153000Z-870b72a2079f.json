@@ -1,0 +1,12 @@
+{
+  "at": "2026-09-27T15:30:00Z",
+  "actor": "human:timo",
+  "artifact": "story:ess-providers",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check: conformance 697/697 x3, exit 0 at 9d7edd83"
+  }
+}

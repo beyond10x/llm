@@ -1,0 +1,12 @@
+{
+  "at": "2026-09-27T19:46:00Z",
+  "actor": "human:timo",
+  "artifact": "story:resolve-spec-markers",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check: conformance 700/700 x3, exit 0"
+  }
+}

@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: story:public-surface
 kind: story
 status: implemented
@@ -25,6 +25,10 @@ scope:
 - confidence: cited
   path: website
 revision: 13
+transitions:
+- {from: "draft", to: "proposed", at: "2026-09-19T23:42:39Z", actor: "human:timo", revision: 10, imported: true}
+- {from: "proposed", to: "active", at: "2026-09-19T23:42:39Z", actor: "human:timo", revision: 11, imported: true}
+- {from: "active", to: "implemented", at: "2026-09-21T08:45:40Z", actor: "human:timo", revision: 13, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"ess_conformance_coverage_v1":1}}, imported: true}
 ---
 ## Context
 

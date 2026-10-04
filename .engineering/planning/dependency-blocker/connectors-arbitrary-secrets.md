@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: dependency-blocker:connectors-arbitrary-secrets
 kind: dependency-blocker
 status: open

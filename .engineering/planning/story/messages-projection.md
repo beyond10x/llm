@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: story:messages-projection
 kind: story
 status: implemented
@@ -28,6 +28,10 @@ scope:
 - confidence: cited
   path: spec/domains/messages.yaml
 revision: 11
+transitions:
+- {from: "draft", to: "proposed", at: "2026-09-19T23:42:36Z", actor: "human:timo", revision: 8, imported: true}
+- {from: "proposed", to: "active", at: "2026-09-19T23:42:36Z", actor: "human:timo", revision: 9, imported: true}
+- {from: "active", to: "implemented", at: "2026-09-21T08:45:38Z", actor: "human:timo", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"ess_conformance_coverage_v1":1}}, imported: true}
 ---
 ## Context
 

@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: story:neutral-inference
 kind: story
 status: implemented
@@ -20,6 +20,10 @@ scope:
 - confidence: cited
   path: spec
 revision: 10
+transitions:
+- {from: "draft", to: "proposed", at: "2026-09-19T07:01:13Z", actor: "human:timo", revision: 3, imported: true}
+- {from: "proposed", to: "active", at: "2026-09-19T07:01:13Z", actor: "human:timo", revision: 4, imported: true}
+- {from: "active", to: "implemented", at: "2026-09-19T19:34:24Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"test_result":2}}, imported: true}
 ---
 ## Context
 

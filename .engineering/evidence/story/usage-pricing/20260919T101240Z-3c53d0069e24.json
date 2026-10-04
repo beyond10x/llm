@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-19T10:12:40Z",
+  "actor": "human:timo",
+  "artifact": "story:usage-pricing",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check: 62 runtime tests, two compile-fail docs, ESS 97 passes x3, eleven caught production mutations; sources-sha256:b679461d24e436e7d91045693a05a1c5824d3e535ac11588ae1f648bbf50bbcb",
+    "reference": "docs/verification/pricing.md"
+  }
+}

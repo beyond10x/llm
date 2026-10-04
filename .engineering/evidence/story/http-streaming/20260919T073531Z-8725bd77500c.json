@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-19T07:35:31Z",
+  "actor": "human:timo",
+  "artifact": "story:http-streaming",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check passed; deadline regression passed twelve consecutive executions after CI correction",
+    "reference": "docs/verification/core-foundation.md"
+  }
+}

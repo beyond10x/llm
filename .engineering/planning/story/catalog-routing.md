@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: story:catalog-routing
 kind: story
 status: implemented
@@ -20,6 +20,10 @@ scope:
 - confidence: cited
   path: spec/domains/routing.yaml
 revision: 8
+transitions:
+- {from: "draft", to: "proposed", at: "2026-09-19T07:43:52Z", actor: "human:timo", revision: 3, imported: true}
+- {from: "proposed", to: "active", at: "2026-09-19T07:43:52Z", actor: "human:timo", revision: 4, imported: true}
+- {from: "active", to: "implemented", at: "2026-09-19T19:34:25Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1}}, imported: true}
 ---
 ## Context
 

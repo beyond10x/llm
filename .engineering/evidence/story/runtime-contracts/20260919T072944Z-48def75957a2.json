@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-19T07:29:44Z",
+  "actor": "human:timo",
+  "artifact": "story:runtime-contracts",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check: Rust tests, dependency boundaries, fmt, Clippy, ESS and AEP passed",
+    "reference": "docs/verification/core-foundation.md"
+  }
+}

@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: story:unattributed-opaque-state
 kind: story
 status: implemented
@@ -67,6 +67,10 @@ scope:
 - confidence: cited
   path: website/docs/reference/formats.md
 revision: 10
+transitions:
+- {from: "draft", to: "proposed", at: "2026-09-26T16:32:09Z", actor: "human:timo", revision: 6, imported: true}
+- {from: "proposed", to: "active", at: "2026-09-26T16:32:09Z", actor: "human:timo", revision: 7, imported: true}
+- {from: "active", to: "implemented", at: "2026-09-26T17:21:20Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":7}}, imported: true}
 ---
 ## Context
 

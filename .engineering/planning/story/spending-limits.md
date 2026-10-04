@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: story:spending-limits
 kind: story
 status: implemented
@@ -35,6 +35,10 @@ scope:
 - confidence: inferred
   path: spec/domains/catalog.yaml
 revision: 14
+transitions:
+- {from: "draft", to: "proposed", at: "2026-09-19T19:34:36Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"test_result":1,"ess_conformance_coverage_v1":3}}, imported: true}
+- {from: "proposed", to: "active", at: "2026-09-19T19:34:37Z", actor: "human:timo", revision: 13, decided_on: {"recorded":{"test_result":1,"ess_conformance_coverage_v1":3}}, imported: true}
+- {from: "active", to: "implemented", at: "2026-09-19T19:34:37Z", actor: "human:timo", revision: 14, decided_on: {"recorded":{"test_result":1,"ess_conformance_coverage_v1":3}}, imported: true}
 ---
 ## Context
 

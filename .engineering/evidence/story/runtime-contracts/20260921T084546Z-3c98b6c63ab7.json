@@ -1,0 +1,12 @@
+{
+  "at": "2026-09-21T08:45:46Z",
+  "actor": "human:timo",
+  "artifact": "story:runtime-contracts",
+  "kind": "story",
+  "revision": 16,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check on wave/1 at 14e8691: six sibling stories implemented, 452 Rust cases and 391 scenarios, ten gate steps each exit 0"
+  }
+}

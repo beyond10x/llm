@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: story:http-streaming
 kind: story
 status: implemented
@@ -12,6 +12,10 @@ scope:
 - confidence: inferred
   path: crates/llm-http
 revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-09-19T07:01:14Z", actor: "human:timo", revision: 3, imported: true}
+- {from: "proposed", to: "active", at: "2026-09-19T07:01:14Z", actor: "human:timo", revision: 4, imported: true}
+- {from: "active", to: "implemented", at: "2026-09-19T19:34:25Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"test_result":3}}, imported: true}
 ---
 ## Context
 

@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: approval-record:wave-1-proposal
 kind: approval-record
 status: draft

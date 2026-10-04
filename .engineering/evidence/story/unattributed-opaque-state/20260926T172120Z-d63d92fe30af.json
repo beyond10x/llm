@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-26T17:21:20Z",
+  "actor": "human:timo",
+  "artifact": "story:unattributed-opaque-state",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check: 9 steps exit 0 on ee4b7a7+regen; conformance re-run on 952de3f 424/424 x3",
+    "reference": "git:952de3f"
+  }
+}

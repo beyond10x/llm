@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: specification:declaration-domain
 kind: specification
 status: draft

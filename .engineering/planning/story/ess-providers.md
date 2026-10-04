@@ -1,5 +1,5 @@
 ---
-format: aep.planning-md/2
+format: aep.planning-md/3
 id: story:ess-providers
 kind: story
 status: implemented
@@ -15,6 +15,10 @@ scope:
 - confidence: cited
   path: spec/domains/providers.yaml
 revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-09-27T12:39:13Z", actor: "human:timo", revision: 3, imported: true}
+- {from: "proposed", to: "active", at: "2026-09-27T12:39:19Z", actor: "human:timo", revision: 4, imported: true}
+- {from: "active", to: "implemented", at: "2026-09-27T14:23:28Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}, imported: true}
 ---
 ## Context
 

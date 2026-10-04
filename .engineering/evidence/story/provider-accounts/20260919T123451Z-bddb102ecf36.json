@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-19T12:34:51Z",
+  "actor": "human:timo",
+  "artifact": "story:provider-accounts",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check at 9fc2f5c: 75 runtime tests, 2 compile-fail docs, ESS 183/183 x3, 10 mutants caught; CI 3/3 SUCCESS",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/35442527951"
+  }
+}
