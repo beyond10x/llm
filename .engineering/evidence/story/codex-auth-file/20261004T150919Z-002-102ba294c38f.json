@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-04T15:09:19Z",
+  "actor": "human:timo",
+  "artifact": "story:codex-auth-file",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test --workspace --locked and -p b10x-llm-credentials --all-features: 613 passed, 0 failed",
+    "reference": "https://github.com/beyond10x/llm/commit/96005727"
+  }
+}

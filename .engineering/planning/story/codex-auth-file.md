@@ -2,11 +2,16 @@
 format: aep.planning-md/3
 id: story:codex-auth-file
 kind: story
-status: draft
+status: implemented
 title: A Codex login resolves to its access token, read-only
 relations:
 - decomposes: epic:access
+- serves: vision:portable-model-inference
 scope:
+- confidence: cited
+  path: README.md
+- confidence: cited
+  path: contracts/
 - confidence: cited
   path: crates/llm-credentials/Cargo.toml
 - confidence: cited
@@ -15,15 +20,26 @@ scope:
   path: crates/llm-credentials/src/lib.rs
 - confidence: cited
   path: crates/llm-credentials/tests/codex.rs
-revision: 2
+- confidence: cited
+  path: docs/
+- confidence: cited
+  path: spec/domains/catalog.yaml
+revision: 8
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-04T14:12:24Z", actor: "human:timo", revision: 3}
+- {from: "proposed", to: "active", at: "2026-10-04T14:12:24Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-04T15:09:19Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":4,"verification":1}}}
 ---
 ## Outcome
 
 `llm-credentials` gains a read-only resolver for a Codex login, behind a feature
 (`codex-auth-file`, off by default, like `file`).
 
-- `CodexAuthFile::new(path)` resolves one `SecretRef` to the `/tokens/access_token` of the given
-  `auth.json` (default `~/.codex/auth.json`), reading it on every request.
+- `CodexAuthFile::new(reference, path)` resolves one `SecretRef` to the `/tokens/access_token` of
+  the `auth.json` at the given absolute path, reading it on every request. There is no default
+  path: the crate does no ambient lookup, so the embedding application expands
+  `~/.codex/auth.json` (intake `story:model-access`). Decided in wave 2026-10-04-w16, adversary
+  pass 1.
 - It never writes the file and never refreshes the token. Renewal is the caller's, and a Codex login
   is renewed by running `codex` (story `openai-access` context: never rewrite a vendor-owned auth
   document).
