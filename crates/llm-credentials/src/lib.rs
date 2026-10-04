@@ -4,11 +4,13 @@
 //!
 //! Secret references and caller-injected custody. No login, ambient lookup or persistent writes.
 
+#[cfg(feature = "codex-auth-file")]
+pub mod codex;
 #[cfg(feature = "file")]
 pub mod file;
 #[cfg(feature = "keychain")]
 pub mod keychain;
-#[cfg(any(feature = "file", feature = "keychain"))]
+#[cfg(any(feature = "codex-auth-file", feature = "file", feature = "keychain"))]
 mod local;
 
 /// Maximum secret material accepted from an injected or local source.

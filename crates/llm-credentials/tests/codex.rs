@@ -94,8 +94,8 @@ async fn a_codex_login_resolves_its_access_token() {
     let valid = token(NOW + 3600);
     write_fixture(&path, &login(&valid));
     let before = snapshot(&path);
-    let resolved = resolver.resolve(&reference()).await.unwrap();
-    assert_eq!(resolved.secret.expose(), valid.as_bytes());
+    let first = resolver.resolve(&reference()).await.unwrap();
+    assert_eq!(first.secret.expose(), valid.as_bytes());
     assert_eq!(snapshot(&path), before, "a resolve changed the fixture");
     assert_redacted(&resolver, &valid);
 
@@ -104,7 +104,7 @@ async fn a_codex_login_resolves_its_access_token() {
     let before = snapshot(&path);
     let reread = resolver.resolve(&reference()).await.unwrap();
     assert_eq!(reread.secret.expose(), rotated.as_bytes());
-    assert_ne!(reread.version, resolved.version);
+    assert_ne!(reread.version, first.version);
     assert_eq!(snapshot(&path), before, "a resolve changed the fixture");
 
     // Never refreshes: renewal is the caller's, by running `codex`.
@@ -177,4 +177,24 @@ async fn a_codex_login_resolves_its_access_token() {
     );
     assert_eq!(snapshot(&path), before, "a refusal changed the fixture");
     assert_redacted(&resolver, &valid);
+}
+
+/// A path that is not absolute is refused as `Unavailable` before anything is opened, with a
+/// message that says so; it is never resolved against the working directory.
+#[tokio::test]
+async fn a_relative_path_is_refused_as_not_absolute() {
+    for relative in ["auth.json", "./auth.json", ".codex/auth.json", ""] {
+        let resolver = resolver(Path::new(relative));
+        assert_eq!(
+            resolver.resolve(&reference()).await.unwrap_err(),
+            SecretError::Unavailable,
+            "{relative:?}"
+        );
+        let refusal = resolver.read(&reference()).await.unwrap_err();
+        assert_eq!(refusal.kind(), SecretError::Unavailable);
+        assert_eq!(refusal.path(), Path::new(relative));
+        let message = refusal.to_string();
+        assert!(message.contains("not absolute"), "{message}");
+        assert!(message.contains(relative), "{message}");
+    }
 }

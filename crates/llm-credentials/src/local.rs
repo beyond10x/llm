@@ -1,17 +1,18 @@
 use crate::SecretError;
-#[cfg(any(feature = "keychain", target_os = "linux"))]
+#[cfg(any(feature = "codex-auth-file", feature = "keychain", target_os = "linux"))]
 use crate::{ResolvedSecret, Secret, SecretVersion};
-#[cfg(any(feature = "keychain", target_os = "linux"))]
+#[cfg(any(feature = "codex-auth-file", feature = "keychain", target_os = "linux"))]
 use sha2::{Digest, Sha256};
-#[cfg(any(feature = "keychain", target_os = "linux"))]
+#[cfg(any(feature = "codex-auth-file", feature = "keychain", target_os = "linux"))]
 use std::fmt::Write;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
+#[cfg(any(feature = "file", feature = "keychain"))]
 pub const MAX_BINDINGS: usize = 4096;
 pub const MAX_BLOCKING_READS: usize = 8;
 
-#[cfg(any(feature = "keychain", target_os = "linux"))]
+#[cfg(any(feature = "codex-auth-file", feature = "keychain", target_os = "linux"))]
 pub fn resolved(secret: Secret) -> Result<ResolvedSecret, SecretError> {
     // Read-only sources have no issuer generation. Equal material identifies the
     // same value; restoring old bytes restores that identity. Never log this hash.

@@ -8,6 +8,7 @@ has no file or native credential-store dependency. Local adapters are optional:
 | `file` | Explicit absolute path per reference | Linux; other platforms return `UnsupportedPlatform` on resolve |
 | `keychain` | Explicit injected `keyring_core::CredentialStore` and service/entry per reference | Any compatible injected store |
 | `native-keychain` | Explicit native-store constructor, includes `keychain` | Linux Secret Service, macOS Keychain, Windows Credential Manager |
+| `codex-auth-file` | The access token of one Codex login's `auth.json`, at an explicit path, for one reference | Any platform with a readable file |
 
 These adapters read existing material. They do not create entries, perform login, refresh tokens,
 search vendor configuration directories, select another source when a reference is absent, or
@@ -92,17 +93,57 @@ unlock or user interaction. Linux needs an available Secret Service session. Moc
 backend compilation do not establish live OS-service availability or its support for every byte
 sequence. The selected store implementation is a trusted dependency of the embedding.
 
+## Read a Codex login's access token
+
+With `codex-auth-file`, one reference resolves to `/tokens/access_token` of the `auth.json` the
+Codex CLI maintains:
+
+```rust
+use llm_credentials::{codex::CodexAuthFile, SecretRef};
+use std::{path::Path, sync::Arc};
+
+// `home` is the operator's home directory, as the application resolves it.
+let resolver = Arc::new(CodexAuthFile::new(
+    SecretRef::new("codex-login")?,
+    Path::new(home).join(".codex/auth.json"),
+));
+```
+
+There is no default path. Codex keeps the file at `~/.codex/auth.json`; the embedding application
+expands that itself and passes the absolute result, so the crate performs no ambient lookup. A
+path that is not absolute is refused as `Unavailable` before anything is opened, and its message
+says the path is not absolute; it is never resolved against the working directory. The file is
+read on every request and never cached, written or refreshed. The token's JWT `exp` claim is
+judged against the system clock, or the caller's clock given with `with_clock`; a token whose
+integer `exp` (negative included) is not after it, on either side of the Unix epoch, is refused
+as `Expired`. A missing file or token, or another reference, is `Missing`; a file above 1 MiB is
+`TooLarge`. Anything but a regular file at the path (a FIFO, a device, a directory) is
+`Unavailable`; the file is opened without blocking, so a FIFO with no writer cannot stall the
+resolve. An unreadable document, a document or `tokens` that is not a JSON object, or a token whose
+`exp` is absent, whose JWT payload is not a JSON object, or whose `exp` is not an integer within
+the 64-bit range (a float, a string, `null`), is `Unavailable`. The signature is not verified: the issuer does that. Renewal is the caller's: running `codex` renews
+the login, and `refresh` returns `RefreshUnsupported`. `CodexAuthFile::read` returns the same
+refusal with the file's path; its message names the file and says to run `codex`.
+
+Unlike the `file` adapter, this one makes no permission or ownership checks. The Codex CLI owns
+the file and its protections, and this adapter only reads it.
+
+The file is read into one buffer allocated once and zeroized on drop. One copy is not covered: a
+token written with JSON escapes is unescaped through the JSON parser's own scratch buffer, which is
+freed without zeroizing. The Codex CLI writes the token as an unescaped base64url JWT, so only a
+hand-edited file reaches that path.
+
 ## Rotation, memory and cancellation
 
-Neither local adapter caches material between resolves. Local `SecretVersion` is an opaque SHA-256
+No local adapter caches material between resolves. Local `SecretVersion` is an opaque SHA-256
 content identity, not an issuer's monotonic generation: the same bytes keep the same identity,
 changed bytes change it, and restoring earlier bytes restores the earlier identity. It is redacted
 and nonserializable, and must never be logged or used as a public fingerprint. Refresh returns
 `RefreshUnsupported`. A caller may observe independently rotated bytes through `CoordinatedResolver`.
 
-Returned material uses the same zeroized, redacted `Secret` as injected resolvers. Each adapter
-accepts at most 4096 bindings and allows at most eight blocking OS reads at once. A cancelled async
-waiter does not release its permit until the OS call finishes. Blocking OS calls cannot be forcibly
+Returned material uses the same zeroized, redacted `Secret` as injected resolvers. The file and
+keychain adapters accept at most 4096 bindings, and each adapter allows at most eight blocking OS
+reads at once. A cancelled async waiter does not release its permit until the OS call finishes. Blocking OS calls cannot be forcibly
 cancelled through this interface; a stuck service can occupy capacity or delay runtime shutdown.
 An embedding that needs hard process deadlines must isolate that service boundary itself.
 
