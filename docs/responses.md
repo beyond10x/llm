@@ -23,7 +23,10 @@ disagree about nothing.
    `not-sent`, and no connection is opened;
 3. sends one streaming `POST {base_url}responses` through `llm-http`, with `content-type`,
    `accept` and the authentication header the binding declares, and no other header: no
-   originator, session or account header the caller did not declare;
+   originator, session or account header the caller did not declare. A success with no
+   `content-type` is read as the event stream the `accept` header asked for, which is how the
+   Codex backend answers; a success naming any other media type is `Protocol` with dispatch
+   `accepted`;
 4. reads the stream up to its first terminal or failure event and decodes it with
    `decode_stream`;
 5. hands the decoded events to the sink, in wire order. A sink refusal, a cancel or the deadline
@@ -243,6 +246,12 @@ The refusal table above says `Unsupported` for content this version does not car
 side*, and this is the other side.
 
 ### Terminal truth and failure
+
+**The turn's items come from the terminal object's `output` when it carries any.** When it carries
+none — `output` absent, or an empty array after items were streamed through
+`response.output_item.done`, as the Codex backend sends it — the streamed items are the turn.
+An empty `output` with nothing streamed stays an empty turn, and a forced tool that was never
+called is then refused by `TurnOutcome::validate_for`.
 
 `final_usage` is true only for a terminal or failed response object: it says the reported counters
 are terminal, not that every count is known. A stream that ends without one refuses with `Protocol`

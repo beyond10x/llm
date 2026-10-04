@@ -246,16 +246,17 @@ impl<'a> Decoder<'a> {
             return Err(retain(error));
         }
         // The terminal object is authoritative when it carries output; the streamed items are the
-        // fallback for a server that reports completion without repeating them.
+        // fallback for a server that reports completion without repeating them, whether it omits
+        // `output` or, as the Codex backend does, sends it empty after streaming the items.
         let mut items = match terminal.response.get("output").and_then(Value::as_array) {
-            Some(output) => {
+            Some(output) if !output.is_empty() || self.streamed.is_empty() => {
                 let mut decoded = Vec::with_capacity(output.len());
                 for value in output {
                     decoded.push(self.output_item(value).map_err(&retain)?);
                 }
                 decoded
             }
-            None => std::mem::take(&mut self.streamed),
+            _ => std::mem::take(&mut self.streamed),
         };
         for item in std::mem::take(&mut self.unmodelled) {
             if !items.contains(&item) {
