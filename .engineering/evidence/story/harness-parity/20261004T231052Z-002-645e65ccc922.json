@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-04T23:10:52Z",
+  "actor": "human:timo",
+  "artifact": "story:harness-parity",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "grep -c '^|' docs/harness-parity.md = 180; personal-path grep: none; 91 named llm tests found at their cited lines",
+    "reference": "wave/2026-10-05-w20 1c5df629"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-04T23:10:52Z",
+  "actor": "human:timo",
+  "artifact": "story:harness-parity",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "coordinator read of rows H8, H23, C7, R18, R35, M39 and the Gaps list (44 lines) after the fix",
+    "reference": "docs/harness-parity.md at 3511b0c0"
+  }
+}

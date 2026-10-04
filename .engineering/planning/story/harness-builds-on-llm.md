@@ -8,6 +8,14 @@ relations:
 - decomposes: epic:serving-split
 - depends_on: story:harness-parity
 - depends_on: story:serving-extraction
+- depends_on: story:parity-retry-classes
+- depends_on: story:parity-http-timeouts-cancel
+- depends_on: story:parity-credential-sources
+- depends_on: story:parity-codex-renewal
+- depends_on: story:parity-responses-wire
+- depends_on: story:parity-responses-live-stream
+- depends_on: story:parity-messages-wire
+- depends_on: story:parity-blocking-adapters
 revision: 1
 ---
 ## Outcome
