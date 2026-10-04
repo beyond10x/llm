@@ -4,6 +4,15 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
+## [0.1.6] - 2026-10-04
+
+### Fixed
+
+- `ResponsesClient` completes a turn against the Codex backend. `llm-http` reads a 2xx with no
+  `content-type` as an event stream when the request asked for `text/event-stream` (a 2xx naming
+  another type is still refused), and the Responses decoder falls back to the streamed items when
+  `response.completed` carries an empty `output` after items were streamed.
+
 ## [0.1.5] - 2026-10-04
 
 ### Added
