@@ -143,6 +143,51 @@ mod file {
         );
     }
 
+    // Harness's file source names its path in every refusal; this one names the reference the
+    // caller chose instead, so a caller can say which credential refused without the adapter
+    // ever printing where it lives or what it holds.
+    #[tokio::test]
+    async fn a_refusal_names_its_reference_without_path_or_value() {
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().canonicalize().unwrap();
+        let missing = dir.join("path-canary-missing");
+        let real = dir.join("path-canary-real");
+        protected(&real, b"llm-fixture-private-marker");
+        let link = dir.join("path-canary-link");
+        symlink(&real, &link).unwrap();
+        for (path, expected) in [
+            (&missing, SecretError::Missing),
+            (&link, SecretError::UnsafeSource),
+        ] {
+            let resolver = resolver(path);
+            assert_eq!(resolver.resolve(&reference()).await.unwrap_err(), expected);
+            let error = resolver.read(&reference()).await.unwrap_err();
+            assert_eq!(error.kind(), expected);
+            assert_eq!(error.reference(), &reference());
+            let rendered = format!("{error} {error:?}");
+            assert!(rendered.contains("explicit"), "{rendered}");
+            assert!(rendered.contains(&expected.to_string()), "{rendered}");
+            assert!(!rendered.contains("path-canary"), "{rendered}");
+            assert!(
+                !rendered.contains("llm-fixture-private-marker"),
+                "{rendered}"
+            );
+        }
+        let other = SecretRef::new("unbound").unwrap();
+        let error = resolver(&real).read(&other).await.unwrap_err();
+        assert_eq!(error.kind(), SecretError::Missing);
+        assert_eq!(error.reference(), &other);
+        assert_eq!(
+            resolver(&real)
+                .read(&reference())
+                .await
+                .unwrap()
+                .secret
+                .expose(),
+            b"llm-fixture-private-marker"
+        );
+    }
+
     #[test]
     fn rejects_path_traversal_and_redacts_paths() {
         for path in ["relative", "/", "/safe/../unsafe"] {

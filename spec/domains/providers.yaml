@@ -12,6 +12,11 @@ domain: llm.providers
 # file or network is involved. The header *value* is never reported; only whether it is the
 # declared presentation of the fixture material.
 #
+# The declared presentation is the material without one trailing line terminator (`\n` or
+# `\r\n`), the newline a token file written by an editor or `echo` ends with. Nothing else is
+# removed: a second terminator, a terminator anywhere else, or any other byte outside printable
+# US-ASCII is refused as `unauthorized`.
+#
 # The catalog projection of these declarations (llm-routing `Catalog`) is declared once, in
 # llm.catalog (Provider, Account and their `references` relations) and llm.routing (the
 # evaluation observations), and is not restated here.

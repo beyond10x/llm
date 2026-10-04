@@ -391,6 +391,9 @@
       "llm.providers/authored/a-cancellation-during-resolution-ends-preparation",
       "llm.providers/authored/a-cancellation-that-arrives-with-the-credential-discards-it",
       "llm.providers/authored/a-cancelled-caller-is-refused-before-the-resolver-is-called",
+      "llm.providers/authored/a-credential-ending-in-a-newline-is-presented-without-it",
+      "llm.providers/authored/a-credential-ending-in-crlf-is-presented-without-it",
+      "llm.providers/authored/a-credential-ending-in-two-newlines-is-refused",
       "llm.providers/authored/a-credential-of-exactly-sixteen-kibibytes-is-presented",
       "llm.providers/authored/a-credential-one-byte-over-sixteen-kibibytes-is-refused",
       "llm.providers/authored/a-credential-with-a-space-is-not-a-bounded-http-token",
@@ -609,6 +612,9 @@
       "llm.runpod/authored/the-orphan-sweep-never-selects-a-legacy-llmgw-pod",
       "llm.runpod/authored/the-orphan-sweep-terminates-only-this-controllers-unrecorded-pods",
       "llm.runpod/authored/the-resource-ceiling-refuses-a-second-model-before-anything-is-submitted",
+      "llm.secrets/authored/environment-exact-bytes",
+      "llm.secrets/authored/environment-unbound-reference",
+      "llm.secrets/authored/environment-unset",
       "llm.secrets/authored/file-directory-refused",
       "llm.secrets/authored/file-empty",
       "llm.secrets/authored/file-exact-bytes",
@@ -622,12 +628,14 @@
       "llm.secrets/authored/file-owner-read-only-accepted",
       "llm.secrets/authored/file-parent-symlink-refused",
       "llm.secrets/authored/file-public-readable-refused",
+      "llm.secrets/authored/file-refusal-names-its-reference",
       "llm.secrets/authored/file-rereads-rotation",
       "llm.secrets/authored/file-same-value-retains-version",
       "llm.secrets/authored/file-setuid-bit-refused",
       "llm.secrets/authored/file-size-bound",
       "llm.secrets/authored/file-symlink-refused",
       "llm.secrets/authored/file-unbound-reference",
+      "llm.secrets/authored/file-unsafe-refusal-names-its-reference",
       "llm.secrets/authored/file-writable-parent-refused",
       "llm.secrets/authored/keychain-backend-error-redacted",
       "llm.secrets/authored/keychain-empty",
@@ -637,6 +645,13 @@
       "llm.secrets/authored/keychain-same-value-retains-version",
       "llm.secrets/authored/keychain-size-bound",
       "llm.secrets/authored/keychain-unbound-reference",
+      "llm.secrets/authored/pointer-absent",
+      "llm.secrets/authored/pointer-empty-string",
+      "llm.secrets/authored/pointer-escaped-segments",
+      "llm.secrets/authored/pointer-non-string",
+      "llm.secrets/authored/pointer-not-json",
+      "llm.secrets/authored/pointer-token-at-pointer",
+      "llm.secrets/authored/pointer-unbound-reference",
       "llm.transport/authored/a-body-at-the-request-bound-is-sent",
       "llm.transport/authored/a-body-one-byte-over-the-request-bound-is-refused-before-sending",
       "llm.transport/authored/a-caller-instant-shorter-than-the-client-bound-ends-the-exchange",
@@ -2631,6 +2646,21 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-cancelled-caller-is-refused-before-the-resolver-is-called"
       },
+      "providers/scenarios/a-credential-ending-in-a-newline-is-presented-without-it.yaml": {
+        "digest": "sha256:9c5426cbcde899acb4953ec741889f4a37cc44dcf4ffe9c7ff1866393f2d2de1",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-credential-ending-in-a-newline-is-presented-without-it"
+      },
+      "providers/scenarios/a-credential-ending-in-crlf-is-presented-without-it.yaml": {
+        "digest": "sha256:c6bcc6e5350c5c633693a9def237ebc91487efcbcb365946b3917ad99d2dfc24",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-credential-ending-in-crlf-is-presented-without-it"
+      },
+      "providers/scenarios/a-credential-ending-in-two-newlines-is-refused.yaml": {
+        "digest": "sha256:67e8dc50af119e9dcbe989f715006fe5448a3950e2fbb5699212452c93a6e026",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-credential-ending-in-two-newlines-is-refused"
+      },
       "providers/scenarios/a-credential-of-exactly-sixteen-kibibytes-is-presented.yaml": {
         "digest": "sha256:6d616b8b9fb5bdfeae0bf5307dc7efa85d1f45a916723b0c94fd360c62d3d617",
         "disposition": "accepted",
@@ -3721,6 +3751,21 @@
         "disposition": "accepted",
         "scenario": "llm.runpod/authored/the-resource-ceiling-refuses-a-second-model-before-anything-is-submitted"
       },
+      "secrets/scenarios/environment-exact-bytes.yaml": {
+        "digest": "sha256:745c5ba694fb5b0276ee5302239bd92733c58821048368327fef5652d518899f",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/environment-exact-bytes"
+      },
+      "secrets/scenarios/environment-unbound-reference.yaml": {
+        "digest": "sha256:c60ac51227b277e6ce619dd9a9a8da3ab188c226d10787799726419f54555752",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/environment-unbound-reference"
+      },
+      "secrets/scenarios/environment-unset.yaml": {
+        "digest": "sha256:3367b9fe9e59368fb1f872914dbe57567f0daca5ea9e911b7bdf4e9f897c1f58",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/environment-unset"
+      },
       "secrets/scenarios/file-directory-refused.yaml": {
         "digest": "sha256:150ba774b541174d6946af3b78dcffeaa9bb054302eec338044afb0a5aaf5794",
         "disposition": "accepted",
@@ -3786,6 +3831,11 @@
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/file-public-readable-refused"
       },
+      "secrets/scenarios/file-refusal-names-its-reference.yaml": {
+        "digest": "sha256:bed66a3600f9df6dc1c335d63b76632d6a453735c844a095543090d7fcd87b0c",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-refusal-names-its-reference"
+      },
       "secrets/scenarios/file-rereads-rotation.yaml": {
         "digest": "sha256:6f25203982f0fbf37d6d92696294167c26119ad6ead947032523591d92201c92",
         "disposition": "accepted",
@@ -3815,6 +3865,11 @@
         "digest": "sha256:b28fb38b6a8f2bea732d06090b7f200444d7d0f7bc351f452b9f2908f42a4904",
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/file-unbound-reference"
+      },
+      "secrets/scenarios/file-unsafe-refusal-names-its-reference.yaml": {
+        "digest": "sha256:35bad769c9eee775d0adf4a0acf54a965de246046c1fb4f6025572cbea608208",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/file-unsafe-refusal-names-its-reference"
       },
       "secrets/scenarios/file-writable-parent-refused.yaml": {
         "digest": "sha256:b021de9903591c8cab4c8b95fa1ea4166ff7e590403b2c38dafee2e9bd7862cc",
@@ -3860,6 +3915,41 @@
         "digest": "sha256:2df55b35e3b3dbec6f1785cf3cac20dc8bb607eab1d00e90a68fadd9ac824bcc",
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/keychain-unbound-reference"
+      },
+      "secrets/scenarios/pointer-absent.yaml": {
+        "digest": "sha256:4d5d97b584674388edd58144ffd243e2b19e6676f78c8690c36227d8d93a928e",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/pointer-absent"
+      },
+      "secrets/scenarios/pointer-empty-string.yaml": {
+        "digest": "sha256:b5bfbb713cf0fa095d0080d0377ccba06d93c7d3fb43fd6defa3e3652ba96811",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/pointer-empty-string"
+      },
+      "secrets/scenarios/pointer-escaped-segments.yaml": {
+        "digest": "sha256:47edc307b5f9efaa0a5c2ed84796891d5d65a466d87a07d64d20d590bbb8c6c5",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/pointer-escaped-segments"
+      },
+      "secrets/scenarios/pointer-non-string.yaml": {
+        "digest": "sha256:d5c839938acd7d07498923f95945aad527f7af860a286dd22ef10f5ffd904fc6",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/pointer-non-string"
+      },
+      "secrets/scenarios/pointer-not-json.yaml": {
+        "digest": "sha256:a6575890925251f13caa8c4209a8c50c90fa89ba570db3acb3c95c3686eec86b",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/pointer-not-json"
+      },
+      "secrets/scenarios/pointer-token-at-pointer.yaml": {
+        "digest": "sha256:e065064d932da3a53106d519b9d367c93e6979b874cddb4b86811ba6fbc4a36a",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/pointer-token-at-pointer"
+      },
+      "secrets/scenarios/pointer-unbound-reference.yaml": {
+        "digest": "sha256:ab99f890000746414eccd000c942c62bbff69c0881db6e12056fddbfda93aae1",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/pointer-unbound-reference"
       },
       "transport/scenarios/a-body-at-the-request-bound-is-sent.yaml": {
         "digest": "sha256:b6045bbd0893fa6282db9f0b218649a3802c56b4e428ccc7475c39f63eac149a",
@@ -4073,8 +4163,8 @@
       }
     },
     "counts": {
-      "authored": 678,
-      "generated": 22,
+      "authored": 693,
+      "generated": 24,
       "outside": 0,
       "refused": 0
     },
@@ -4098,8 +4188,10 @@
       "llm.routing.Evaluate/outcome/observed",
       "llm.routing.Fallback/outcome/observed",
       "llm.runpod.Exercise/outcome/observed",
+      "llm.secrets.ProbeEnvironment/outcome/observed",
       "llm.secrets.ProbeFile/outcome/observed",
       "llm.secrets.ProbeKeychain/outcome/observed",
+      "llm.secrets.ProbePointer/outcome/observed",
       "llm.transport.Exchange/outcome/observed"
     ],
     "knowledge": "complete_inventory",
@@ -4116,8 +4208,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "d9520d299e2793cf15e4aea7f2029a8a1589831bdc6d9ac465be4edea95931cf",
-    "spec_digest": "5d0b6cf378489b9153003368470096fd1dc479c9c21955cee1e85808683ce7f4",
+    "contract_digest": "b2f5f628298c4c8b2e1a8c2c2fd82fc2046257ec40cdc09422a2fde3b9dd9889",
+    "spec_digest": "caf23b3db07ec95607ec47810f2fd4142e0cebdbcaf01dbeceabc4055d90199a",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -49305,6 +49397,377 @@
         }
       ]
     },
+    "llm.providers/authored/a-credential-ending-in-a-newline-is-presented-without-it": {
+      "purpose": "material whose last byte is a newline, as a token file ends, is presented as a bearer header without that newline",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"my-lab\",\"category\":\"private-compute\"},\"account\":{\"id\":\"research\",\"provider_id\":\"my-lab\",\"auth_kind\":\"bearer\",\"billing_kind\":\"metered\",\"secret_reference_id\":\"my-opaque-reference\"},\"endpoint\":{\"id\":\"gpu-7\",\"account_id\":\"research\",\"base_url\":\"http://127.0.0.1:8000/proxy/v1\"},\"model\":{\"id\":\"code\",\"upstream_name\":\"custom-org/CustomModel-27B:revision-4\"},\"serving\":{\"id\":\"local-code\",\"endpoint_id\":\"gpu-7\",\"model_id\":\"code\",\"protocol\":\"chat-completions\",\"capabilities\":{\"tools\":false,\"tool_choice\":false,\"temperature\":false,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":32768,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-xxxxxxxxxx\n"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": true
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "generation_present": {
+                "kind": "literal",
+                "value": true
+              },
+              "header_count": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "header_matches": {
+                "kind": "literal",
+                "value": true
+              },
+              "header_name": {
+                "kind": "literal",
+                "value": "authorization"
+              },
+              "header_scheme": {
+                "kind": "literal",
+                "value": "Bearer"
+              },
+              "header_sensitive": {
+                "kind": "literal",
+                "value": true
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_calls": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-credential-ending-in-crlf-is-presented-without-it": {
+      "purpose": "material ending in one CRLF line terminator is presented in its own API-key header without the terminator",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"my-lab\",\"category\":\"private-compute\"},\"account\":{\"id\":\"research\",\"provider_id\":\"my-lab\",\"auth_kind\":\"api-key\",\"billing_kind\":\"metered\",\"secret_reference_id\":\"my-opaque-reference\",\"api_key_header\":\"X-Lab-Key\"},\"endpoint\":{\"id\":\"gpu-7\",\"account_id\":\"research\",\"base_url\":\"http://127.0.0.1:8000/proxy/v1\"},\"model\":{\"id\":\"code\",\"upstream_name\":\"custom-org/CustomModel-27B:revision-4\"},\"serving\":{\"id\":\"local-code\",\"endpoint_id\":\"gpu-7\",\"model_id\":\"code\",\"protocol\":\"chat-completions\",\"capabilities\":{\"tools\":false,\"tool_choice\":false,\"temperature\":false,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":32768,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-xxxxxxxxxx\r\n"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": true
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "header_count": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "header_matches": {
+                "kind": "literal",
+                "value": true
+              },
+              "header_name": {
+                "kind": "literal",
+                "value": "x-lab-key"
+              },
+              "header_scheme": {
+                "kind": "literal",
+                "value": "raw"
+              },
+              "header_sensitive": {
+                "kind": "literal",
+                "value": true
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-credential-ending-in-two-newlines-is-refused": {
+      "purpose": "only one trailing line terminator is removed; material ending in two newlines is not a bounded HTTP token",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"my-lab\",\"category\":\"private-compute\"},\"account\":{\"id\":\"research\",\"provider_id\":\"my-lab\",\"auth_kind\":\"bearer\",\"billing_kind\":\"metered\",\"secret_reference_id\":\"my-opaque-reference\"},\"endpoint\":{\"id\":\"gpu-7\",\"account_id\":\"research\",\"base_url\":\"http://127.0.0.1:8000/proxy/v1\"},\"model\":{\"id\":\"code\",\"upstream_name\":\"custom-org/CustomModel-27B:revision-4\"},\"serving\":{\"id\":\"local-code\",\"endpoint_id\":\"gpu-7\",\"model_id\":\"code\",\"protocol\":\"chat-completions\",\"capabilities\":{\"tools\":false,\"tool_choice\":false,\"temperature\":false,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":32768,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-xxxxxxxxxx\n\n"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "credential is not a bounded HTTP token"
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
     "llm.providers/authored/a-credential-of-exactly-sixteen-kibibytes-is-presented": {
       "purpose": "16384 bytes of material is inside the HTTP token bound",
       "source": [
@@ -72209,6 +72672,183 @@
         }
       ]
     },
+    "llm.secrets.ProbeEnvironment/outcome/observed": {
+      "purpose": "`llm.secrets.ProbeEnvironment` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeEnvironment"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeEnvironment",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.gateway.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.hosting.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.runpod.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeEnvironment",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "content"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "variable_set": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeEnvironment",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "shape": {
+            "diagnostics_safe": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.gateway.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.hosting.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.runpod.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        }
+      ]
+    },
     "llm.secrets.ProbeFile/outcome/observed": {
       "purpose": "`llm.secrets.ProbeFile` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -72600,6 +73240,494 @@
         {
           "event": "llm.transport.Exchanged",
           "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.secrets.ProbePointer/outcome/observed": {
+      "purpose": "`llm.secrets.ProbePointer` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "type",
+          "name": "llm.secrets.PointerDocument"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbePointer"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.gateway.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.hosting.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.runpod.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbePointer",
+          "input": {
+            "document": {
+              "kind": "literal",
+              "value": "TokenAtPointer"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "pointer": {
+              "kind": "literal",
+              "value": "pointer"
+            },
+            "token": {
+              "kind": "literal",
+              "value": "token"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "shape": {
+            "diagnostics_safe": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.gateway.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.hosting.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.runpod.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.secrets/authored/environment-exact-bytes": {
+      "purpose": "a caller-named environment variable resolves to its exact bytes, trailing newline included, and is read-only",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeEnvironment"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeEnvironment",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeEnvironment",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "variable_set": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeEnvironment",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/environment-unbound-reference": {
+      "purpose": "a reference bound to no variable is missing even when the fixture variable is set",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeEnvironment"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeEnvironment",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeEnvironment",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": false
+            },
+            "variable_set": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeEnvironment",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "refusal_names_location": {
+                "kind": "literal",
+                "value": false
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/environment-unset": {
+      "purpose": "an unset caller-named variable is missing, and its refusal names the reference, never the variable",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeEnvironment"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeEnvironment",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeEnvironment",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "variable_set": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeEnvironment",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "refusal_names_location": {
+                "kind": "literal",
+                "value": false
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
         }
       ]
     },
@@ -74300,6 +75428,123 @@
         }
       ]
     },
+    "llm.secrets/authored/file-refusal-names-its-reference": {
+      "purpose": "a missing file's refusal names the reference that refused, never the path or the value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.ModeFixture"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Missing"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "refusal_names_location": {
+                "kind": "literal",
+                "value": false
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
     "llm.secrets/authored/file-rereads-rotation": {
       "purpose": "file rereads rotation",
       "source": [
@@ -75070,6 +76315,123 @@
               "version_changed": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/file-unsafe-refusal-names-its-reference": {
+      "purpose": "a symlinked file's unsafe-source refusal names the reference that refused, never the path or the value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.FileShape"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.ModeFixture"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeFile"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeFile",
+          "input": {
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "oversized": {
+              "kind": "literal",
+              "value": false
+            },
+            "parent_writable": {
+              "kind": "literal",
+              "value": false
+            },
+            "public_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "shape": {
+              "kind": "literal",
+              "value": "Symlink"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeFile",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "refusal_names_location": {
+                "kind": "literal",
+                "value": false
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
               }
             }
           },
@@ -76135,6 +77497,733 @@
               "version_changed": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/pointer-absent": {
+      "purpose": "a JSON document with nothing at the caller-named pointer is missing, and its refusal names the reference",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.PointerDocument"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbePointer"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbePointer",
+          "input": {
+            "document": {
+              "kind": "literal",
+              "value": "PointerAbsent"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "pointer": {
+              "kind": "literal",
+              "value": "/claudeAiOauth/accessToken"
+            },
+            "token": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-access-token"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "refusal_names_location": {
+                "kind": "literal",
+                "value": false
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/pointer-empty-string": {
+      "purpose": "an empty string at the caller-named pointer is missing, as an empty Codex access token is",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.PointerDocument"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbePointer"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbePointer",
+          "input": {
+            "document": {
+              "kind": "literal",
+              "value": "EmptyAtPointer"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "pointer": {
+              "kind": "literal",
+              "value": "/claudeAiOauth/accessToken"
+            },
+            "token": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-access-token"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/pointer-escaped-segments": {
+      "purpose": "a pointer follows RFC 6901 escapes, so `~1` is a slash and `~0` a tilde inside one member name",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.PointerDocument"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbePointer"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbePointer",
+          "input": {
+            "document": {
+              "kind": "literal",
+              "value": "TokenAtPointer"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "pointer": {
+              "kind": "literal",
+              "value": "/a~1b/c~0d"
+            },
+            "token": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-access-token"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/pointer-non-string": {
+      "purpose": "a JSON number at the caller-named pointer is unavailable, not coerced into a token",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.PointerDocument"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbePointer"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbePointer",
+          "input": {
+            "document": {
+              "kind": "literal",
+              "value": "NonStringAtPointer"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "pointer": {
+              "kind": "literal",
+              "value": "/claudeAiOauth/accessToken"
+            },
+            "token": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-access-token"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "refusal_names_location": {
+                "kind": "literal",
+                "value": false
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/pointer-not-json": {
+      "purpose": "a document that is not JSON is unavailable when a pointer was named, and is never read as a bare token",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.PointerDocument"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbePointer"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbePointer",
+          "input": {
+            "document": {
+              "kind": "literal",
+              "value": "NotJson"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "pointer": {
+              "kind": "literal",
+              "value": "/claudeAiOauth/accessToken"
+            },
+            "token": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-access-token"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "refusal_names_location": {
+                "kind": "literal",
+                "value": false
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/pointer-token-at-pointer": {
+      "purpose": "a token at a caller-named JSON pointer of a protected file resolves to exactly that string, and is read-only",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.PointerDocument"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbePointer"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbePointer",
+          "input": {
+            "document": {
+              "kind": "literal",
+              "value": "TokenAtPointer"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": true
+            },
+            "pointer": {
+              "kind": "literal",
+              "value": "/claudeAiOauth/accessToken"
+            },
+            "token": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-access-token"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-unsupported"
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/pointer-unbound-reference": {
+      "purpose": "a reference bound to no pointer is missing, even when the document holds the token",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.PointerDocument"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbePointer"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbePointer",
+          "input": {
+            "document": {
+              "kind": "literal",
+              "value": "TokenAtPointer"
+            },
+            "known_reference": {
+              "kind": "literal",
+              "value": false
+            },
+            "pointer": {
+              "kind": "literal",
+              "value": "/claudeAiOauth/accessToken"
+            },
+            "token": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-access-token"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbePointer",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "refusal_names_reference": {
+                "kind": "literal",
+                "value": true
               }
             }
           },
