@@ -374,7 +374,11 @@ name = "b10x-llm-responses"
 version = "0.1.4"
 dependencies = [
  "b10x-llm-core",
+ "b10x-llm-credentials",
+ "b10x-llm-http",
+ "b10x-llm-providers",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

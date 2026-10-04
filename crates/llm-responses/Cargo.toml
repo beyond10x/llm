@@ -17,3 +17,9 @@ name = "llm_responses"
 [dependencies]
 llm-core.workspace = true
 serde_json.workspace = true
+
+[dev-dependencies]
+llm-credentials.workspace = true
+llm-http.workspace = true
+llm-providers.workspace = true
+tokio.workspace = true
