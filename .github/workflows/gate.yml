@@ -25,7 +25,7 @@ jobs:
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Install pinned planning tools
         run: |
-          cargo install --locked --git https://github.com/beyond10x/aep.git --rev b6213e1fc28df03c11ec99f5c015e8cf6302f3f7 aep-cli --bin aep
+          cargo install --locked --git https://github.com/beyond10x/aep.git --rev 6d7a44d3607d2d9a6ffdf0a165993c546c43d0db aep-cli --bin aep
           cargo install --locked --git https://github.com/beyond10x/ess.git --rev be44a3365eb273cb3d447b74cd5b0e75181d284e ess-cli --bin ess
       - name: Specification and plan
         run: |
