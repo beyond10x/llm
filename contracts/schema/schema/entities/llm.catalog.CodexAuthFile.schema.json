@@ -1,43 +1,35 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Price",
-  "x-ess-name": "llm.catalog.Price",
+  "title": "CodexAuthFile",
+  "x-ess-name": "llm.catalog.CodexAuthFile",
   "x-ess-kind": "entity",
   "type": "object",
   "properties": {
     "id": {
       "type": "string"
     },
-    "serving_model_id": {
+    "reference_id": {
       "type": "string",
       "x-ess-relation": {
-        "name": "serving_model",
+        "name": "reference",
         "kind": "references",
-        "source": "llm.catalog.Price",
-        "target": "llm.catalog.ServingModel",
+        "source": "llm.catalog.CodexAuthFile",
+        "target": "llm.catalog.SecretReference",
         "cardinality": "one",
-        "via": "serving_model_id"
+        "via": "reference_id"
       }
     },
-    "currency": {
-      "type": "string"
-    },
-    "revision": {
-      "type": "string"
-    },
-    "source": {
+    "absolute_path": {
       "type": "string"
     },
     "state": {
-      "$ref": "#/$defs/llm.catalog.Price.State"
+      "$ref": "#/$defs/llm.catalog.CodexAuthFile.State"
     }
   },
   "required": [
     "id",
-    "serving_model_id",
-    "currency",
-    "revision",
-    "source",
+    "reference_id",
+    "absolute_path",
     "state"
   ],
   "additionalProperties": false,
@@ -45,13 +37,13 @@
     "system": "llm",
     "specification_version": "v1",
     "source_digest": "5d0b6cf378489b9153003368470096fd1dc479c9c21955cee1e85808683ce7f4",
-    "contract_digest": "slice-sha256/2:ace5bd426e328c6bc4f125b38a141be4fb19510bb40177748a8707636c9b52b1",
+    "contract_digest": "slice-sha256/2:263eb7258c727479f8aadda014651e6255f8c5c637cf64bd88dbd0a21fdbb0f3",
     "regenerate": "ess generate"
   },
   "$defs": {
-    "llm.catalog.Price.State": {
+    "llm.catalog.CodexAuthFile.State": {
       "title": "State",
-      "x-ess-name": "llm.catalog.Price.State",
+      "x-ess-name": "llm.catalog.CodexAuthFile.State",
       "x-ess-kind": "enum",
       "type": "string",
       "enum": [

@@ -16,6 +16,7 @@ name = "llm_credentials"
 
 [features]
 default = []
+codex-auth-file = []
 file = ["dep:rustix", "dep:sha2"]
 keychain = ["dep:keyring-core", "dep:sha2"]
 native-keychain = ["keychain", "dep:zbus-secret-service-keyring-store", "dep:apple-native-keyring-store", "dep:windows-native-keyring-store"]
