@@ -1,19 +1,22 @@
 #![forbid(unsafe_code)]
 
-//! Responses protocol projection and gateway ingress for the declared supported subset.
+//! Responses protocol projection, gateway ingress and a single-attempt client for the declared
+//! supported subset.
 //!
 //! One contract serves both directions. [`project_request`] turns a neutral [`TurnRequest`] into
 //! the body this wire accepts; [`ingest_request`] reads that same body back into a neutral request,
 //! which is what a gateway ingress surface needs. [`decode_stream`] turns the wire's decoded
-//! server-sent-event payloads into a neutral [`llm_core::TurnOutcome`].
+//! server-sent-event payloads into a neutral [`llm_core::TurnOutcome`]. [`ResponsesClient`] puts
+//! the three on one bound endpoint as an [`llm_core::Model`].
 //!
 //! # What is here and what is not
 //!
 //! Everything here names an `OpenAI` Responses field or event. Server-sent-event **framing** is
 //! not: bounded line, event and stream decoding belongs to `llm-http`'s `SseDecoder`, and this
 //! crate consumes the payload values that decoder yields. Credential acquisition, endpoint
-//! selection, retry and fallback belong to their own boundaries and are absent here; nothing in
-//! this crate performs I/O.
+//! selection, retry and fallback belong to their own boundaries and are absent here. The
+//! projection and the decoder perform no I/O; only [`ResponsesClient`] does, through `llm-http`
+//! and an injected `llm_credentials::SecretResolver`.
 //!
 //! # Where the pinned subset comes from
 //!
@@ -25,10 +28,12 @@
 //! names each one and why.
 
 mod binding;
+mod client;
 mod request;
 mod stream;
 
 pub use binding::{Binding, PATH, PROTOCOL};
+pub use client::ResponsesClient;
 pub use request::{
     ACCEPTED_BODY_FIELDS, CARRIED_ENTRY_TYPES, INCLUDE, TOOL_NAME_PATTERN, ingest_request,
     project_request,

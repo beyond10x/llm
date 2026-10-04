@@ -1,15 +1,47 @@
 # The Responses projection
 
 `b10x-llm-responses` projects the neutral turn contract onto the `OpenAI` Responses protocol and
-reads that same protocol back. It is pure: no I/O, no credential, no endpoint, no retry. One
-contract serves both directions, so a gateway ingress surface and an outgoing client disagree
-about nothing.
+reads that same protocol back. The projection is pure: no I/O, no credential, no endpoint, no
+retry. One contract serves both directions, so a gateway ingress surface and an outgoing client
+disagree about nothing.
 
 | function | direction |
 | --- | --- |
 | `project_request(&Binding, &TurnRequest) -> Result<Value, Error>` | neutral turn to wire body |
 | `ingest_request(&Binding, &Value) -> Result<TurnRequest, Error>` | wire body to neutral turn |
 | `decode_stream(&Binding, &[Value]) -> StreamDecoding` | wire stream to neutral outcome |
+| `ResponsesClient::new(llm_providers::Binding, HttpClient, Arc<dyn SecretResolver>)` | one bound endpoint as an `llm_core::Model` |
+
+## The client
+
+`ResponsesClient` is the only part of this crate that performs I/O. One turn:
+
+1. checks the request against the binding (`TurnRequest::validate_for`), projects it with
+   `project_request` and bounds the encoded body by `MAX_REQUEST_BYTES`, all before any I/O;
+2. resolves the account's credential through the injected resolver, once, before anything is
+   sent. A resolver failure is returned as `Unauthorized` or `Unavailable` with dispatch
+   `not-sent`, and no connection is opened;
+3. sends one streaming `POST {base_url}responses` through `llm-http`, with `content-type`,
+   `accept` and the authentication header the binding declares, and no other header: no
+   originator, session or account header the caller did not declare;
+4. reads the stream up to its first terminal or failure event and decodes it with
+   `decode_stream`;
+5. hands the decoded events to the sink, in wire order. A sink refusal, a cancel or the deadline
+   during hand-over is returned with dispatch `accepted` and the decoded evidence: the outcome's
+   observation, or the decoder refusal's, with the counters the provider already reported;
+6. returns a decoder refusal with the binding attached when the decoder attached nothing, so every
+   refusal after dispatch names the serving binding;
+7. checks the outcome against the request (`TurnOutcome::validate_for`): a call to a tool other
+   than a forced one is `Protocol` with dispatch `accepted` and the outcome's observation.
+
+It makes one attempt: no retry, no credential refresh, no fallback, the same contract as the
+Messages client. A connection that drops before the terminal object is `Transport` with dispatch
+`accepted`; a body that ends cleanly without one is `Protocol`, as [below](#terminal-truth-and-failure).
+The turn is bounded by the transport's `total` limit, credential resolution included. A refusal
+raised before anything was sent carries no observation, so `Error::validate_for` accepts it.
+
+The decoder reads a whole stream, so a turn's stream events reach the caller's sink after the
+stream has ended, in wire order, rather than as each one arrives.
 
 A `Binding` is a `Provenance` — protocol, provider, account, endpoint, model, binding revision —
 plus the **upstream model name** that binding is configured to send. The two are separate because
@@ -234,7 +266,8 @@ the other is its consequence.
 
 One refusal deliberately carries **no counters**: when the reported ones are contradictory there
 is no valid evidence to attach, and attaching invalid evidence is worse than attaching none. On a
-successful decode that is a `Protocol` refusal in its own right. On a **provider failure** it is
+successful decode that is a `Protocol` refusal in its own right, and `ResponsesClient` returns it
+with the binding alone attached. On a **provider failure** it is
 not: the failure is classified from the provider's own code first and the evidence attaches
 second, so a rate limit stays `RateLimited` and only the invalid counters are dropped — the
 binding, the upstream model and the response id are still what was observed. Reporting a rate
@@ -278,7 +311,8 @@ run found vLLM documents the field as accepted and ignored, so it is not sent.
 
 ## What this does not establish
 
-Fixture evidence for a projection, not a client. Nothing here reaches a provider, and no paid call
+Fixture evidence for a projection and a client exercised against local sockets
+(`crates/llm-responses/tests/client.rs`). Nothing here reaches a provider, and no paid call
 runs in the ordinary gate. The vLLM measurements cited above were made against
 `vllm/vllm-openai:v0.27.1` on different weights and a different host than any deployment; they are
 claims about that server's HTTP surface and about nothing else.
