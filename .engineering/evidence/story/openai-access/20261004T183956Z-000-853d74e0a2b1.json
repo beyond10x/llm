@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-04T18:39:56Z",
+  "actor": "human:timo",
+  "artifact": "story:openai-access",
+  "kind": "story",
+  "revision": 2,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "live run of the Codex subscription route: ResponsesClient (llm 0.1.6) with CodexAuthFile against https://chatgpt.com/backend-api/codex, model gpt-5.6-sol, forced tool calls answered; intake qualification record",
+    "reference": "https://github.com/beyond10x/intake/blob/main/docs/qualification/2026-10-04-live-run.md"
+  }
+}
