@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-04T17:56:17Z",
+  "actor": "human:timo",
+  "artifact": "story:codex-stream",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo +1.98.0 test --workspace --locked and credentials --all-features: 631 passed, 0 failed",
+    "reference": "https://github.com/beyond10x/llm/commit/0fb20aad"
+  }
+}

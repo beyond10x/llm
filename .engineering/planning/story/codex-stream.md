@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:codex-stream
 kind: story
-status: proposed
+status: implemented
 title: The Responses client completes a turn against the Codex backend
 relations:
 - decomposes: epic:access
@@ -15,9 +15,11 @@ scope:
   path: crates/llm-responses/src/stream.rs
 - confidence: cited
   path: crates/llm-responses/tests/codex_stream.rs
-revision: 5
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-04T17:22:35Z", actor: "human:timo", revision: 5}
+- {from: "proposed", to: "active", at: "2026-10-04T17:22:37Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-04T17:56:17Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":3,"verification":1}}}
 ---
 
 ## Outcome
@@ -45,7 +47,7 @@ llm refuses the answer in two places:
 recorded (no `content-type`, a `function_call` streamed through `output_item.done`, then
 `response.completed` with `output: []`): the turn returns the call with its arguments, stop reason
 `ToolCalls`, final usage. Beside it: a 2xx with `content-type: application/json` is still refused;
-an empty terminal `output` with no streamed items is still refused as a turn without output.
+for a forced tool, an empty terminal `output` with no streamed items is still refused (core `TurnOutcome::validate_for`: the forced tool was never called). Without a forced tool such a turn stays an empty `EndTurn` turn, as `docs/responses.md` states (corrected in wave 2026-10-04-w18 after the adversary pass).
 
 ## ESS first
 
@@ -57,3 +59,9 @@ None: the transport and stream entities keep their states and outcomes. If a spe
 The probe's source and log are outside the repository (`~/.cache/intake-codex-probe`); the
 fixture in the acceptance reproduces the recorded headers and event order. First user:
 beyond10x/intake `story:model-access` live check.
+
+## Follow-up
+
+Pre-existing, found by the w18 adversary pass and not reached by any observed server: text deltas
+handed to the caller can end in an `EndTurn` turn with no items, because the decoder checks
+announced calls but not shown text (`crates/llm-responses/src/stream.rs`).

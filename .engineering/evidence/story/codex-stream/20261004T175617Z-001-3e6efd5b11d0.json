@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-04T17:56:17Z",
+  "actor": "human:timo",
+  "artifact": "story:codex-stream",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "wave 2026-10-04-w18 integration gate: fmt, clippy --all-features, credentials checks, ess specify validate, b10x-llm-conformance check, aep validate",
+    "reference": "https://github.com/beyond10x/llm/commit/0fb20aad"
+  }
+}
