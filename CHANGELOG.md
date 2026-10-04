@@ -4,6 +4,24 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
+## [0.1.5] - 2026-10-04
+
+### Added
+
+- `llm-responses` has a client: `ResponsesClient` implements `Model` over the OpenAI Responses
+  wire. It validates the request against its binding, bounds the projected body before the
+  credential is resolved, stops at the first terminal event, validates the outcome, and attaches
+  the best evidence decoded so far to every refusal after dispatch. All three protocol crates now
+  have clients.
+- `llm-credentials` feature `codex-auth-file`: `CodexAuthFile` resolves the access token of a Codex
+  login's `auth.json` at an explicit absolute path, read-only and on every request. The JWT `exp`
+  claim is judged against the caller's clock; renewal is running `codex`. Specified as
+  `llm.catalog.CodexAuthFile`.
+
+### Changed
+
+- The AEP store is `aep.project/5`; CI validates it with aep 0.68.0.
+
 ## [0.1.4] - 2026-09-27
 
 ### Changed
