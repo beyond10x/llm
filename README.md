@@ -11,8 +11,8 @@ selection without I/O. `llm-cost` prices attributed usage with exact arithmetic 
 unknowns, keeping estimates and recorded charges separate. Its optional SQLite budget ledger
 adds durable reservations, concurrency admission and explicit shutdown obligations. `llm-routing`
 also runs ordered fallback over caller-supplied models. `llm-chat`, `llm-messages` and
-`llm-responses` project the neutral turn onto Chat Completions, Messages and Responses; the first
-two include single-attempt clients. `llm-gateway` authenticates one owner and serves a read-only
+`llm-responses` project the neutral turn onto Chat Completions, Messages and Responses; all three
+include single-attempt clients. `llm-gateway` authenticates one owner and serves a read-only
 route inventory, without translating model calls. `llm-provision` defines the hosting lifecycle, and
 `llm-runpod` implements it for vLLM against an in-process emulator only. `llm-modal` and `llm-cli`
 are empty placeholders. Everything is tested against fixtures and local sockets; no live provider

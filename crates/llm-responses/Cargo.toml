@@ -6,7 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish.workspace = true
-description = "Responses protocol projection and gateway ingress for the declared supported subset."
+description = "Responses protocol projection, gateway ingress and a single-attempt client for the declared supported subset."
 
 [lints]
 workspace = true
@@ -16,10 +16,8 @@ name = "llm_responses"
 
 [dependencies]
 llm-core.workspace = true
-serde_json.workspace = true
-
-[dev-dependencies]
 llm-credentials.workspace = true
 llm-http.workspace = true
 llm-providers.workspace = true
+serde_json.workspace = true
 tokio.workspace = true

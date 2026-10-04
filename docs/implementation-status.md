@@ -49,6 +49,7 @@ while the versioned configuration surface and release prerequisites are complete
 | `provider-accounts` | Validated bindings, arbitrary endpoint URLs and selected-reference request-time auth implemented; live access qualification is separate. |
 | `local-secret-adapters` | Explicit file/keychain adapters implemented; Linux file protections, exact mock-store lookup, rotation and fixed errors tested. Native OS-service availability is not established by mock tests or compilation. |
 | `responses-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Responses request, output and streaming projections. |
+| `responses-client` | Implemented, unreleased: `ResponsesClient`, a single-attempt `Model` over one bound Responses endpoint, tested against local sockets only. |
 | `messages-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Messages request, output and streaming projections. |
 | `chat-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Chat Completions projections and arbitrary compatible endpoints. |
 | `openai-access` | Pending: API and caller-managed subscription presentation and successful qualification. |
@@ -65,7 +66,7 @@ while the versioned configuration surface and release prerequisites are complete
 | `operator-cli` | Pending: validate, inspect and run one configuration; inspection must not resolve secrets or provision resources. |
 | `foundation-qualified` | Pending: exact release, required checks/artifacts and all required implementation/qualification evidence. |
 
-The twenty-third story, `connectors-secret-resolver`, is explicitly deferred until Connectors
+One further story, `connectors-secret-resolver`, is explicitly deferred until Connectors
 supports arbitrary secret custody. `SecretRef` does not encode a backend, so this adapter must not
 require editing route references or adding a Connectors dependency to core.
 
