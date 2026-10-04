@@ -304,6 +304,7 @@ version = "0.1.4"
 dependencies = [
  "apple-native-keyring-store",
  "b10x-llm-core",
+ "base64",
  "keyring-core",
  "rustix",
  "serde",

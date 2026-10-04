@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CodexAuthFile",
+  "x-ess-name": "llm.catalog.CodexAuthFile",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "reference_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "reference",
+        "kind": "references",
+        "source": "llm.catalog.CodexAuthFile",
+        "target": "llm.catalog.SecretReference",
+        "cardinality": "one",
+        "via": "reference_id"
+      }
+    },
+    "absolute_path": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.catalog.CodexAuthFile.State"
+    }
+  },
+  "required": [
+    "id",
+    "reference_id",
+    "absolute_path",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "5d0b6cf378489b9153003368470096fd1dc479c9c21955cee1e85808683ce7f4",
+    "contract_digest": "slice-sha256/2:263eb7258c727479f8aadda014651e6255f8c5c637cf64bd88dbd0a21fdbb0f3",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.catalog.CodexAuthFile.State": {
+      "title": "State",
+      "x-ess-name": "llm.catalog.CodexAuthFile.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

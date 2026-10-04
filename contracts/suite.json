@@ -4116,8 +4116,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "ed31a07a88c1896e400524d6f2155f2cc2ac73673a6edd6954adafc7d5014a72",
-    "spec_digest": "8c5b1006c8460b1f27db4a94ce3d2be7d2cfadc6b6b165bb5f6dffba12181b89",
+    "contract_digest": "d9520d299e2793cf15e4aea7f2029a8a1589831bdc6d9ac465be4edea95931cf",
+    "spec_digest": "5d0b6cf378489b9153003368470096fd1dc479c9c21955cee1e85808683ce7f4",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
