@@ -2,3 +2,4 @@
 /contracts/schema/.ess-output/
 .engineering/.aep-planning-writer*.lock
 .engineering/migrations/
+/.engineering/drafts/

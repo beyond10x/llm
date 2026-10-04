@@ -8,6 +8,8 @@ relations:
 - decomposes: epic:access
 - depends_on: story:provider-accounts
 - depends_on: story:responses-projection
+- depends_on: story:responses-client
+- depends_on: story:codex-auth-file
 scope:
 - confidence: inferred
   path: contracts/openai
