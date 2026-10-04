@@ -2,11 +2,18 @@
 format: aep.planning-md/3
 id: story:harness-parity
 kind: story
-status: draft
+status: active
 title: A cited matrix shows llm covers every capability of Harness's model crates
 relations:
 - decomposes: epic:serving-split
-revision: 1
+- serves: vision:portable-model-inference
+scope:
+- confidence: inferred
+  path: docs
+revision: 4
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-04T22:42:44Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-10-04T22:42:45Z", actor: "human:timo", revision: 3}
 ---
 ## Outcome
 
