@@ -4,22 +4,29 @@ domain: llm.providers
 # `BindingDocument` names one provider, account, endpoint, served model and serving model;
 # `bind` validates their references without I/O (binding.rs:44-77), and `prepare_auth` resolves
 # only the account's explicitly named secret, once, through an injected resolver
-# (auth.rs:33-100). Its secret-error mapping is auth.rs:102-110: `missing` and `expired` are
-# `unauthorized`, every other resolver failure is `unavailable`.
+# (auth.rs:33-106). Its secret-error mapping is auth.rs:108-126: `missing`, `expired` and
+# `malformed` are `unauthorized`, which no fallback takes; every other resolver failure is
+# `unavailable`. The message is the failure's fixed text prefixed by the reference that refused
+# ("secret reference `<id>` refused: ..."), never a path, variable name or value.
 #
 # The entities are verification-adapter observations of the real crate with an injected
 # in-process resolver whose failures and material the fixture chooses. No credential store,
 # file or network is involved. The header *value* is never reported; only whether it is the
 # declared presentation of the fixture material.
 #
+# The declared presentation is the material without one trailing line terminator (`\n` or
+# `\r\n`), the newline a token file written by an editor or `echo` ends with. Nothing else is
+# removed: a second terminator, a terminator anywhere else, or any other byte outside printable
+# US-ASCII is refused as `unauthorized`.
+#
 # The catalog projection of these declarations (llm-routing `Catalog`) is declared once, in
 # llm.catalog (Provider, Account and their `references` relations) and llm.routing (the
 # evaluation observations), and is not restated here.
 types:
-  # Every SecretError the resolver seam can return (crates/llm-credentials/src/lib.rs:46-69).
+  # Every SecretError the resolver seam can return (crates/llm-credentials/src/lib.rs:58-88).
   - name: llm.providers.SecretFailure
     kind: enum
-    variants: [InvalidReference, Unavailable, Missing, Expired, RefreshUnsupported, RefreshRejected, RefreshUncertain, TooLarge, TooManyReferences, UnsafeSource, UnsupportedPlatform]
+    variants: [InvalidReference, Unavailable, Missing, Expired, RefreshUnsupported, RefreshRejected, RefreshUncertain, TooLarge, TooManyReferences, UnsafeSource, UnsupportedPlatform, Malformed]
   # Where the caller's cancellation lands relative to resolution.
   - name: llm.providers.CancelPoint
     kind: enum

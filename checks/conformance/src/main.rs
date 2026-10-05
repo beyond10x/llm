@@ -72,6 +72,11 @@ enum Cmd {
     /// starts it with ambient proxy variables set so they never reach another lane.
     #[command(hide = true)]
     TransportChild { program_json: String },
+    /// Resolve one environment-variable probe in this process and print its facts; the
+    /// secrets lane starts it with the fixture variable set, since no lane changes its own
+    /// environment.
+    #[command(hide = true)]
+    SecretsEnvironmentChild { input_json: String },
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -93,6 +98,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 return Err("transport-child started without its proxy environment".into());
             }
             println!("{}", transport::run_here(&program_json));
+            Ok(())
+        }
+        Cmd::SecretsEnvironmentChild { input_json } => {
+            println!("{}", secrets::environment_here(&input_json)?);
             Ok(())
         }
     }

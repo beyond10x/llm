@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.providers
 scenario: too-many-references-is-unavailable
-summary: a resolver answering TooManyReferences is refused as unavailable with its fixed diagnostic (auth.rs:102-110)
+summary: a resolver answering TooManyReferences is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)
 timeline:
 - at: '2026-09-27T12:00:00Z'
   command: llm.providers.Prepare
@@ -22,7 +22,7 @@ assert:
     bound: true
     prepared: false
     error_code: unavailable
-    error_message: 'too many secret references are coordinated'
+    error_message: 'secret reference `my-opaque-reference` refused: too many secret references are coordinated'
     header_count: null
     generation_present: null
     resolver_calls: 1

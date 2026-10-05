@@ -203,6 +203,18 @@ impl ConformanceTarget for CatalogTarget {
                     "llm.secrets.Probed",
                     "diagnostics_safe",
                 ),
+                "llm.secrets.ProbeEnvironment" => (
+                    crate::secrets::environment(&input).map_err(unavailable)?,
+                    "llm.secrets.LastProbe",
+                    "llm.secrets.Probed",
+                    "diagnostics_safe",
+                ),
+                "llm.secrets.ProbePointer" => (
+                    crate::secrets::pointer(input).map_err(unavailable)?,
+                    "llm.secrets.LastProbe",
+                    "llm.secrets.Probed",
+                    "diagnostics_safe",
+                ),
                 "llm.accounting.Quote" => (
                     crate::pricing::observe(&serde_json::from_value(input).map_err(unavailable)?),
                     "llm.accounting.LastQuote",
