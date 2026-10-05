@@ -15,6 +15,7 @@ members = [
     "crates/llm-modal",
     "crates/llm-gateway",
     "crates/llm-cli",
+    "crates/llm-tool-call",
     "checks/conformance",
 ]
 
