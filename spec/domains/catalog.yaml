@@ -6,7 +6,9 @@ types:
     variants: [Responses, Messages, ChatCompletions]
   - name: llm.catalog.AuthKind
     kind: enum
-    variants: [Anonymous, Bearer, ApiKey]
+    # SubscriptionOauth is a caller-supplied subscription token, served only over Messages and
+    # only under Subscription billing (llm.providers, llm.messages).
+    variants: [Anonymous, Bearer, ApiKey, SubscriptionOauth]
   - name: llm.catalog.BillingKind
     kind: enum
     variants: [Metered, Subscription, SelfHosted]

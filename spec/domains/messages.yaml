@@ -43,7 +43,54 @@ entities:
       - {name: usage_json, type: Optional<String>}
       - {name: stop_reason, type: Optional<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # What the production Messages client puts on the wire under one account presentation, observed
+  # by a scripted server on the loopback interface with an injected resolver that answers a new
+  # fixture credential on every resolution. No provider, credential store or login file is
+  # involved.
+  #
+  # Under `subscription-oauth` the client sends the token as `authorization: Bearer <token>` plus
+  # `anthropic-beta: oauth-2025-04-20`, and `system` opens with its own unmarked block whose text is
+  # exactly "You are Claude Code, Anthropic's official CLI for Claude." and which carries `type` and
+  # `text` only. The instruction, when not empty, follows as the last block and keeps the cache
+  # breakpoint; an empty instruction leaves the preamble alone. `api-key` and `bearer` send neither
+  # the beta header nor the preamble. The credential is resolved through the account's secret
+  # reference on every turn, so a rotated credential is used by the next turn.
+  - name: llm.messages.PresentationObservation
+    identity: {name: observation_id, type: String}
+    fields: &presentation_facts
+      # Whether every turn completed against the scripted server.
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # The secret reference names the resolver was asked for, in order.
+      - {name: resolved_references, type: List<String>}
+      # How many requests reached the scripted server.
+      - {name: requests, type: Integer}
+      # The first request's headers as `<name>: <value>`, sorted by name, without the transport's
+      # own `host` and `content-length`; the fixture credential reads `<credential>`.
+      - {name: request_headers, type: List<String>}
+      # The first request's body, re-encoded with sorted keys.
+      - {name: wire_request, type: Optional<String>}
+      # For each request, the 1-based ordinal of the resolver answer it carried; 0 for none.
+      - {name: presented_credentials, type: List<Integer>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
+  - name: llm.messages.Present
+    input:
+      - {name: request_json, type: String}
+      # The fixture account's declared `auth_kind` and `billing_kind` spellings; an `api-key`
+      # account names `x-api-key`.
+      - {name: auth_kind, type: String}
+      - {name: billing_kind, type: String}
+      # Turns run one after another through one client, at most four.
+      - {name: turns, type: Integer}
+    outcomes:
+      - name: observed
+        emits: [llm.messages.Presented]
+        payload:
+          llm.messages.Presented:
+            accepted: {generated: true}
+        summary: Observe the headers and body the Messages client sends under one account presentation.
   - name: llm.messages.Project
     input:
       - {name: request_json, type: String}
@@ -81,8 +128,15 @@ events:
   - name: llm.messages.Inspected
     fields:
       - {name: accepted, type: Boolean}
+  - name: llm.messages.Presented
+    fields:
+      - {name: accepted, type: Boolean}
 views:
   - name: llm.messages.LastInspection
     source: llm.messages.CodecInspection
     consistency: read_your_writes
     fields: *codec_facts
+  - name: llm.messages.LastPresentation
+    source: llm.messages.PresentationObservation
+    consistency: read_your_writes
+    fields: *presentation_facts

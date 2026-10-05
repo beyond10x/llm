@@ -225,13 +225,18 @@
       "llm.inference/authored/unknown-observation-field-refused",
       "llm.inference/authored/unsent-observation-refused",
       "llm.inference/authored/wide-count-and-zero-stay-exact",
+      "llm.messages/authored/a-bearer-request-carries-neither-the-oauth-beta-nor-the-client-preamble",
       "llm.messages/authored/a-block-before-its-message-start-is-refused",
       "llm.messages/authored/a-complete-message-in-the-user-role-is-refused",
       "llm.messages/authored/a-conversation-that-opens-with-the-model-is-refused-before-projection",
       "llm.messages/authored/a-message-start-carrying-content-is-refused",
       "llm.messages/authored/a-restarted-content-block-index-is-refused",
+      "llm.messages/authored/a-rotated-subscription-token-is-presented-on-the-next-turn",
       "llm.messages/authored/a-single-one-hour-cache-creation-token-is-refused",
       "llm.messages/authored/a-stop-for-a-block-that-never-started-is-refused",
+      "llm.messages/authored/a-subscription-request-without-an-instruction-opens-with-the-preamble-alone",
+      "llm.messages/authored/a-subscription-token-billed-as-metered-sends-nothing",
+      "llm.messages/authored/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble",
       "llm.messages/authored/a-tail-with-nothing-markable-carries-no-rolling-breakpoint",
       "llm.messages/authored/a-terminal-reason-while-a-block-is-open-is-refused",
       "llm.messages/authored/a-tool-name-of-the-maximum-length-is-projected",
@@ -240,6 +245,7 @@
       "llm.messages/authored/absent-output-bound-takes-the-binding-maximum",
       "llm.messages/authored/accepted-stop-sequence-in-an-undocumented-shape-refused",
       "llm.messages/authored/accepted-usage-metadata-in-an-undocumented-shape-refused",
+      "llm.messages/authored/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble",
       "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name",
       "llm.messages/authored/cache-breakpoints-mark-the-system-prompt-and-the-conversation-tail",
       "llm.messages/authored/charged-server-tool-use-refused",
@@ -301,6 +307,11 @@
       "llm.providers/authored/a-responses-binding-addresses-the-responses-path",
       "llm.providers/authored/a-serving-model-of-another-model-is-refused",
       "llm.providers/authored/a-serving-model-on-another-endpoint-is-refused",
+      "llm.providers/authored/a-subscription-oauth-account-billed-as-metered-is-refused",
+      "llm.providers/authored/a-subscription-oauth-account-on-another-protocol-is-refused",
+      "llm.providers/authored/a-subscription-oauth-account-presents-its-token-once-as-a-sensitive-bearer-header",
+      "llm.providers/authored/a-subscription-oauth-account-with-an-api-key-header-is-refused",
+      "llm.providers/authored/a-subscription-oauth-account-without-a-reference-is-refused",
       "llm.providers/authored/adversary-w2-an-endpoint-url-with-a-fragment-is-refused",
       "llm.providers/authored/an-account-of-another-provider-is-refused",
       "llm.providers/authored/an-anonymous-account-prepares-no-header-and-never-consults-the-resolver",
@@ -653,6 +664,61 @@
       "llm.transport/authored/the-first-redirect-status-is-refused-with-dispatch-unknown"
     ],
     "authored_sources": {
+      "anthropic/scenarios/a-bearer-request-carries-neither-the-oauth-beta-nor-the-client-preamble.yaml": {
+        "digest": "sha256:ed8c4f66795c11a715e99c13115c89a71d242e02f7fe1b651c3c1760882a8825",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-bearer-request-carries-neither-the-oauth-beta-nor-the-client-preamble"
+      },
+      "anthropic/scenarios/a-rotated-subscription-token-is-presented-on-the-next-turn.yaml": {
+        "digest": "sha256:c189b30cebe8143ca6569d12ac19fee1734aa4ce8325a91edabf3fc4a2bcd5c6",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-rotated-subscription-token-is-presented-on-the-next-turn"
+      },
+      "anthropic/scenarios/a-subscription-oauth-account-billed-as-metered-is-refused.yaml": {
+        "digest": "sha256:ef08d73a5b1e65f7ca8d65001b98148f0e44577a986f307b2791ae5f9604e5c5",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-subscription-oauth-account-billed-as-metered-is-refused"
+      },
+      "anthropic/scenarios/a-subscription-oauth-account-on-another-protocol-is-refused.yaml": {
+        "digest": "sha256:8bd07da45d1dab148d669e7a597ff2a939f2e3d58a8b430e9bd9221b9d82f430",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-subscription-oauth-account-on-another-protocol-is-refused"
+      },
+      "anthropic/scenarios/a-subscription-oauth-account-presents-its-token-once-as-a-sensitive-bearer-header.yaml": {
+        "digest": "sha256:192f6bc7a5646fd07007177239239f966806194c22939d24a122237696ca94f6",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-subscription-oauth-account-presents-its-token-once-as-a-sensitive-bearer-header"
+      },
+      "anthropic/scenarios/a-subscription-oauth-account-with-an-api-key-header-is-refused.yaml": {
+        "digest": "sha256:c2856330b121699215ba7465d0bf32e4ba2d95cccdab770ec7124f4688f170bb",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-subscription-oauth-account-with-an-api-key-header-is-refused"
+      },
+      "anthropic/scenarios/a-subscription-oauth-account-without-a-reference-is-refused.yaml": {
+        "digest": "sha256:8dcc04d534a55607d15a9657fd2383275904f84efc03916da03686d430f8b2ae",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-subscription-oauth-account-without-a-reference-is-refused"
+      },
+      "anthropic/scenarios/a-subscription-request-without-an-instruction-opens-with-the-preamble-alone.yaml": {
+        "digest": "sha256:80cb5c57c8b4706c3b0a16046592cfa1703338d0a390460240520230e86bc348",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-subscription-request-without-an-instruction-opens-with-the-preamble-alone"
+      },
+      "anthropic/scenarios/a-subscription-token-billed-as-metered-sends-nothing.yaml": {
+        "digest": "sha256:c4790ec31415148ccfd64305d600274ca42d32ec9c89699747d18f08d1cb0380",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-subscription-token-billed-as-metered-sends-nothing"
+      },
+      "anthropic/scenarios/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble.yaml": {
+        "digest": "sha256:ac05a588a1ecc13539fd610bfcd09c68eadb4d72c749b61394d9b407452c4f28",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble"
+      },
+      "anthropic/scenarios/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble.yaml": {
+        "digest": "sha256:337a84b419cbec47392f494e052a33b0a5d160c269e6550141c816f231a08cdf",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble"
+      },
       "budget/scenarios/a-policy-admitting-no-concurrent-work-is-refused.yaml": {
         "digest": "sha256:1be08a37133e6dd0cbc0461e4d49983300af6c8eca40ae2694c4d52d7296cd18",
         "disposition": "accepted",
@@ -3905,8 +3971,8 @@
       }
     },
     "counts": {
-      "authored": 650,
-      "generated": 24,
+      "authored": 661,
+      "generated": 25,
       "outside": 0,
       "refused": 0
     },
@@ -3920,6 +3986,7 @@
       "llm.inference.InspectResult/outcome/observed",
       "llm.messages.DecodeMessage/outcome/observed",
       "llm.messages.DecodeStream/outcome/observed",
+      "llm.messages.Present/outcome/observed",
       "llm.messages.Project/outcome/observed",
       "llm.providers.Prepare/outcome/observed",
       "llm.responses.DecodeStream/outcome/observed",
@@ -3950,8 +4017,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "7dd4570f37f6a9fb2ac5616dfbcc53d7c48324f1f3889a19f1d4ce5238f5ba19",
-    "spec_digest": "f65b4e78c94db3ff29eebeaf3cbf9d712314e6c1413b7d0101a5b3034723195d",
+    "contract_digest": "a98c421069feb47cc0aad0387e74c94f17a146406f186e0f74d1126cba916a18",
+    "spec_digest": "177456ac09cc89519bebdc815f69ba480f18d76202c32a36241175bf86b8f033",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -3990,6 +4057,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -4078,6 +4149,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {
@@ -11321,6 +11396,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -11402,6 +11481,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {
@@ -17874,6 +17957,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -17958,6 +18045,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18032,6 +18123,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -18131,6 +18226,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18205,6 +18304,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -18308,6 +18411,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18382,6 +18489,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -18474,6 +18585,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {
@@ -25641,6 +25756,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -25726,6 +25845,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {
@@ -30681,6 +30804,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -30769,6 +30896,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -30843,6 +30974,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -30934,6 +31069,191 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.messages.Present/outcome/observed": {
+      "purpose": "`llm.messages.Present` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.messages.Present"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Present",
+          "input": {
+            "auth_kind": {
+              "kind": "literal",
+              "value": "auth_kind"
+            },
+            "billing_kind": {
+              "kind": "literal",
+              "value": "billing_kind"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "request_json"
+            },
+            "turns": {
+              "kind": "literal",
+              "value": 1.0
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "shape": {
+            "accepted": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -31008,6 +31328,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -31099,6 +31423,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -31137,6 +31465,118 @@
         {
           "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.messages/authored/a-bearer-request-carries-neither-the-oauth-beta-nor-the-client-preamble": {
+      "purpose": "a plain bearer account on Messages sends the same authorization header as a subscription token but neither the OAuth beta header nor the client preamble, so the two presentations stay distinct",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Present"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastPresentation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Present",
+          "input": {
+            "auth_kind": {
+              "kind": "literal",
+              "value": "bearer"
+            },
+            "billing_kind": {
+              "kind": "literal",
+              "value": "metered"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            },
+            "turns": {
+              "kind": "literal",
+              "value": 1.0
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "presented_credentials": {
+                "kind": "literal",
+                "value": [
+                  1.0
+                ]
+              },
+              "request_headers": {
+                "kind": "literal",
+                "value": [
+                  "accept: text/event-stream",
+                  "anthropic-version: 2023-06-01",
+                  "authorization: Bearer <credential>",
+                  "content-type: application/json"
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true,\"system\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Stay terse\",\"type\":\"text\"}]}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
         }
       ]
     },
@@ -31681,6 +32121,113 @@
         }
       ]
     },
+    "llm.messages/authored/a-rotated-subscription-token-is-presented-on-the-next-turn": {
+      "purpose": "the subscription token is resolved through the account's secret reference on every turn, so a token rotated between two turns is the one the second turn presents",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Present"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastPresentation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Present",
+          "input": {
+            "auth_kind": {
+              "kind": "literal",
+              "value": "subscription-oauth"
+            },
+            "billing_kind": {
+              "kind": "literal",
+              "value": "subscription"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            },
+            "turns": {
+              "kind": "literal",
+              "value": 2.0
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "presented_credentials": {
+                "kind": "literal",
+                "value": [
+                  1.0,
+                  2.0
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 2.0
+              },
+              "resolved_references": {
+                "kind": "literal",
+                "value": [
+                  "messages-credential",
+                  "messages-credential"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        }
+      ]
+    },
     "llm.messages/authored/a-single-one-hour-cache-creation-token-is-refused": {
       "purpose": "one one-hour cache-creation token is already outside the subset (usage.rs)",
       "source": [
@@ -31916,6 +32463,345 @@
           },
           "step": "expect_view",
           "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/a-subscription-request-without-an-instruction-opens-with-the-preamble-alone": {
+      "purpose": "an empty instruction still sends the client preamble under a subscription token, alone and unmarked, and the rolling breakpoint stays on the conversation tail",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Present"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastPresentation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Present",
+          "input": {
+            "auth_kind": {
+              "kind": "literal",
+              "value": "subscription-oauth"
+            },
+            "billing_kind": {
+              "kind": "literal",
+              "value": "subscription"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            },
+            "turns": {
+              "kind": "literal",
+              "value": 1.0
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "presented_credentials": {
+                "kind": "literal",
+                "value": [
+                  1.0
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true,\"system\":[{\"text\":\"You are Claude Code, Anthropic's official CLI for Claude.\",\"type\":\"text\"}]}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        }
+      ]
+    },
+    "llm.messages/authored/a-subscription-token-billed-as-metered-sends-nothing": {
+      "purpose": "a subscription OAuth account declared with metered billing is refused before any credential is resolved or any request is sent, so no turn is silently billed as API use",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Present"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastPresentation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Present",
+          "input": {
+            "auth_kind": {
+              "kind": "literal",
+              "value": "subscription-oauth"
+            },
+            "billing_kind": {
+              "kind": "literal",
+              "value": "metered"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            },
+            "turns": {
+              "kind": "literal",
+              "value": 1.0
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "subscription OAuth accounts require subscription billing"
+              },
+              "presented_credentials": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_headers": {
+                "kind": "literal",
+                "value": []
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolved_references": {
+                "kind": "literal",
+                "value": []
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        }
+      ]
+    },
+    "llm.messages/authored/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble": {
+      "purpose": "under a subscription OAuth account the client sends the token as a bearer with the OAuth beta header, and system opens with the client preamble as its own unmarked block before the marked instruction",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Present"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastPresentation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Present",
+          "input": {
+            "auth_kind": {
+              "kind": "literal",
+              "value": "subscription-oauth"
+            },
+            "billing_kind": {
+              "kind": "literal",
+              "value": "subscription"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            },
+            "turns": {
+              "kind": "literal",
+              "value": 1.0
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": null
+              },
+              "presented_credentials": {
+                "kind": "literal",
+                "value": [
+                  1.0
+                ]
+              },
+              "request_headers": {
+                "kind": "literal",
+                "value": [
+                  "accept: text/event-stream",
+                  "anthropic-beta: oauth-2025-04-20",
+                  "anthropic-version: 2023-06-01",
+                  "authorization: Bearer <credential>",
+                  "content-type: application/json"
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "resolved_references": {
+                "kind": "literal",
+                "value": [
+                  "messages-credential"
+                ]
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true,\"system\":[{\"text\":\"You are Claude Code, Anthropic's official CLI for Claude.\",\"type\":\"text\"},{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Stay terse\",\"type\":\"text\"}]}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
         }
       ]
     },
@@ -32862,6 +33748,118 @@
           },
           "step": "expect_view",
           "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble": {
+      "purpose": "under an API-key account the key travels in its own header, with no OAuth beta header and no client preamble; the instruction is the one marked system block",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Present"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastPresentation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Present",
+          "input": {
+            "auth_kind": {
+              "kind": "literal",
+              "value": "api-key"
+            },
+            "billing_kind": {
+              "kind": "literal",
+              "value": "metered"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            },
+            "turns": {
+              "kind": "literal",
+              "value": 1.0
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Present",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastPresentation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "presented_credentials": {
+                "kind": "literal",
+                "value": [
+                  1.0
+                ]
+              },
+              "request_headers": {
+                "kind": "literal",
+                "value": [
+                  "accept: text/event-stream",
+                  "anthropic-version: 2023-06-01",
+                  "content-type: application/json",
+                  "x-api-key: <credential>"
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true,\"system\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Stay terse\",\"type\":\"text\"}]}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastPresentation"
         }
       ]
     },
@@ -38668,6 +39666,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -38769,6 +39771,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {
@@ -40742,6 +41748,623 @@
               "error_message": {
                 "kind": "literal",
                 "value": "serving model references a different endpoint"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-subscription-oauth-account-billed-as-metered-is-refused": {
+      "purpose": "a subscription token is never billed as metered API use, so the binding is refused before any resolution",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"anthropic\",\"category\":\"hosted\"},\"account\":{\"id\":\"operator\",\"provider_id\":\"anthropic\",\"auth_kind\":\"subscription-oauth\",\"billing_kind\":\"metered\",\"secret_reference_id\":\"operator-subscription\"},\"endpoint\":{\"id\":\"messages\",\"account_id\":\"operator\",\"base_url\":\"https://messages.example.invalid/v1\"},\"model\":{\"id\":\"internal-model\",\"upstream_name\":\"example/Model-Revision\"},\"serving\":{\"id\":\"subscription-model\",\"endpoint_id\":\"messages\",\"model_id\":\"internal-model\",\"protocol\":\"messages\",\"capabilities\":{\"tools\":true,\"tool_choice\":true,\"temperature\":true,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":200000,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-subscription"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "subscription OAuth accounts require subscription billing"
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": false
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-subscription-oauth-account-on-another-protocol-is-refused": {
+      "purpose": "a subscription OAuth account is served only over Messages, so a Responses binding is refused before any resolution",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"anthropic\",\"category\":\"hosted\"},\"account\":{\"id\":\"operator\",\"provider_id\":\"anthropic\",\"auth_kind\":\"subscription-oauth\",\"billing_kind\":\"subscription\",\"secret_reference_id\":\"operator-subscription\"},\"endpoint\":{\"id\":\"messages\",\"account_id\":\"operator\",\"base_url\":\"https://messages.example.invalid/v1\"},\"model\":{\"id\":\"internal-model\",\"upstream_name\":\"example/Model-Revision\"},\"serving\":{\"id\":\"subscription-model\",\"endpoint_id\":\"messages\",\"model_id\":\"internal-model\",\"protocol\":\"responses\",\"capabilities\":{\"tools\":true,\"tool_choice\":true,\"temperature\":true,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":200000,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-subscription"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "subscription OAuth accounts are served only over Messages"
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": false
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-subscription-oauth-account-presents-its-token-once-as-a-sensitive-bearer-header": {
+      "purpose": "a subscription OAuth account resolves its named reference once and presents the token as one sensitive authorization bearer header",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"anthropic\",\"category\":\"hosted\"},\"account\":{\"id\":\"operator\",\"provider_id\":\"anthropic\",\"auth_kind\":\"subscription-oauth\",\"billing_kind\":\"subscription\",\"secret_reference_id\":\"operator-subscription\"},\"endpoint\":{\"id\":\"messages\",\"account_id\":\"operator\",\"base_url\":\"https://messages.example.invalid/v1\"},\"model\":{\"id\":\"internal-model\",\"upstream_name\":\"example/Model-Revision\"},\"serving\":{\"id\":\"subscription-model\",\"endpoint_id\":\"messages\",\"model_id\":\"internal-model\",\"protocol\":\"messages\",\"capabilities\":{\"tools\":true,\"tool_choice\":true,\"temperature\":true,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":200000,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-subscription"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": true
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "generation_present": {
+                "kind": "literal",
+                "value": true
+              },
+              "header_count": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "header_matches": {
+                "kind": "literal",
+                "value": true
+              },
+              "header_name": {
+                "kind": "literal",
+                "value": "authorization"
+              },
+              "header_scheme": {
+                "kind": "literal",
+                "value": "Bearer"
+              },
+              "header_sensitive": {
+                "kind": "literal",
+                "value": true
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": true
+              },
+              "provenance": {
+                "kind": "literal",
+                "value": "messages/anthropic/operator/messages/internal-model"
+              },
+              "refresh_calls": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "request_url": {
+                "kind": "literal",
+                "value": "https://messages.example.invalid/v1/messages"
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-subscription-oauth-account-with-an-api-key-header-is-refused": {
+      "purpose": "a subscription OAuth account naming an API-key header is contradictory and refused before any resolution",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"anthropic\",\"category\":\"hosted\"},\"account\":{\"id\":\"operator\",\"provider_id\":\"anthropic\",\"auth_kind\":\"subscription-oauth\",\"billing_kind\":\"subscription\",\"secret_reference_id\":\"operator-subscription\",\"api_key_header\":\"x-api-key\"},\"endpoint\":{\"id\":\"messages\",\"account_id\":\"operator\",\"base_url\":\"https://messages.example.invalid/v1\"},\"model\":{\"id\":\"internal-model\",\"upstream_name\":\"example/Model-Revision\"},\"serving\":{\"id\":\"subscription-model\",\"endpoint_id\":\"messages\",\"model_id\":\"internal-model\",\"protocol\":\"messages\",\"capabilities\":{\"tools\":true,\"tool_choice\":true,\"temperature\":true,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":200000,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-subscription"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "exactly API-key accounts require an API-key header"
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": false
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-subscription-oauth-account-without-a-reference-is-refused": {
+      "purpose": "a subscription OAuth account must name the secret reference its token is resolved through; llm reads no login file in its place",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"anthropic\",\"category\":\"hosted\"},\"account\":{\"id\":\"operator\",\"provider_id\":\"anthropic\",\"auth_kind\":\"subscription-oauth\",\"billing_kind\":\"subscription\"},\"endpoint\":{\"id\":\"messages\",\"account_id\":\"operator\",\"base_url\":\"https://messages.example.invalid/v1\"},\"model\":{\"id\":\"internal-model\",\"upstream_name\":\"example/Model-Revision\"},\"serving\":{\"id\":\"subscription-model\",\"endpoint_id\":\"messages\",\"model_id\":\"internal-model\",\"protocol\":\"messages\",\"capabilities\":{\"tools\":true,\"tool_choice\":true,\"temperature\":true,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":200000,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-subscription"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "authenticated accounts require a secret reference"
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": false
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
               }
             }
           },
@@ -44174,6 +45797,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -44270,6 +45897,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -44340,6 +45971,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -44439,6 +46074,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -44509,6 +46148,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -44613,6 +46256,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {
@@ -53507,6 +55154,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -53603,6 +55254,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -53673,6 +55328,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -53773,6 +55432,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {
@@ -62077,6 +63740,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -62173,6 +63840,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -62251,6 +63922,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -62370,6 +64045,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -62440,6 +64119,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -62551,6 +64234,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -62625,6 +64312,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -62728,6 +64419,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -62802,6 +64497,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -62917,6 +64616,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -63003,6 +64706,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -63131,6 +64838,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {
@@ -73810,6 +75521,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -73898,6 +75613,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -73968,6 +75687,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
         },
         {
           "kind": "event",
@@ -74056,6 +75779,10 @@
         },
         {
           "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
           "step": "expect_no_event"
         },
         {

@@ -54,8 +54,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "f65b4e78c94db3ff29eebeaf3cbf9d712314e6c1413b7d0101a5b3034723195d",
-    "contract_digest": "slice-sha256/2:aa487282d8cca9b7457b039a77d806821754e1c598231f06950ec899ec3d449a",
+    "source_digest": "177456ac09cc89519bebdc815f69ba480f18d76202c32a36241175bf86b8f033",
+    "contract_digest": "slice-sha256/2:bb2bd6856061333fcd79322da586b98b9f2667986109d6a7160c1a6aae3f1a17",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -76,7 +76,8 @@
       "enum": [
         "Anonymous",
         "Bearer",
-        "ApiKey"
+        "ApiKey",
+        "SubscriptionOauth"
       ]
     },
     "llm.catalog.BillingKind": {

@@ -19,6 +19,16 @@ domain: llm.providers
 # removed: a second terminator, a terminator anywhere else, or any other byte outside printable
 # US-ASCII is refused as `unauthorized`.
 #
+# A `subscription-oauth` account holds a caller-supplied subscription token behind its secret
+# reference; llm offers no login and reads no login file. At this layer it is presented as one
+# sensitive `authorization: Bearer` header, like `bearer`; what makes it a different
+# presentation is protocol-specific and belongs to llm.messages (the OAuth beta header and the
+# subscription client preamble). `bind` refuses it, before any resolution, without a secret
+# reference or with an API-key header (the `bearer` rules), with any billing other than
+# `subscription` ("subscription OAuth accounts require subscription billing": a subscription
+# token is never billed as metered API use), and on any protocol other than `messages`
+# ("subscription OAuth accounts are served only over Messages").
+#
 # The catalog projection of these declarations (llm-routing `Catalog`) is declared once, in
 # llm.catalog (Provider, Account and their `references` relations) and llm.routing (the
 # evaluation observations), and is not restated here.

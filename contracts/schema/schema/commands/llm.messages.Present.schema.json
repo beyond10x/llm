@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Present input",
+  "x-ess-name": "llm.messages.Present",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "request_json": {
+      "type": "string"
+    },
+    "auth_kind": {
+      "type": "string"
+    },
+    "billing_kind": {
+      "type": "string"
+    },
+    "turns": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "request_json",
+    "auth_kind",
+    "billing_kind",
+    "turns"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "177456ac09cc89519bebdc815f69ba480f18d76202c32a36241175bf86b8f033",
+    "contract_digest": "slice-sha256/2:07d31707981cc46832bf36324e231f5fc2e9cecd3a805d90597a073f4fa6eace",
+    "regenerate": "ess generate"
+  }
+}

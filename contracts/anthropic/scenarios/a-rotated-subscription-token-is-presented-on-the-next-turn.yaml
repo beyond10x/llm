@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: a-rotated-subscription-token-is-presented-on-the-next-turn
+summary: the subscription token is resolved through the account's secret reference on every turn, so a token rotated between two turns is the one the second turn presents
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.messages.Present
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+    auth_kind: subscription-oauth
+    billing_kind: subscription
+    turns: 2
+  outcome: observed
+assert:
+- view: llm.messages.LastPresentation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastPresentation
+  contains:
+    accepted: true
+    error_code: null
+    resolved_references:
+      - messages-credential
+      - messages-credential
+    requests: 2
+    presented_credentials:
+      - 1
+      - 2

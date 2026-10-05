@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: a-subscription-oauth-account-without-a-reference-is-refused
+summary: a subscription OAuth account must name the secret reference its token is resolved through; llm reads no login file in its place
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.providers.Prepare
+  input:
+    binding_json: '{"format":"llm.binding/1","provider":{"id":"anthropic","category":"hosted"},"account":{"id":"operator","provider_id":"anthropic","auth_kind":"subscription-oauth","billing_kind":"subscription"},"endpoint":{"id":"messages","account_id":"operator","base_url":"https://messages.example.invalid/v1"},"model":{"id":"internal-model","upstream_name":"example/Model-Revision"},"serving":{"id":"subscription-model","endpoint_id":"messages","model_id":"internal-model","protocol":"messages","capabilities":{"tools":true,"tool_choice":true,"temperature":true,"top_p":false,"reasoning_efforts":[],"context_window":200000,"max_output_tokens":8192}}}'
+    secret_error: null
+    secret: 'llm-fixture-private-marker-subscription'
+    secret_length: null
+    cancel: Never
+  outcome: observed
+assert:
+- view: llm.providers.LastPreparation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastPreparation
+  contains:
+    bound: false
+    error_code: invalid-request
+    error_message: authenticated accounts require a secret reference
+    prepared: false
+    resolver_calls: 0
+    diagnostics_safe: true
