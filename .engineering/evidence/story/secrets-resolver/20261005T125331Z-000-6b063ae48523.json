@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T12:53:31Z",
+  "actor": "human:timo",
+  "artifact": "story:secrets-resolver",
+  "kind": "story",
+  "revision": 12,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "phase 1: 9 behaviour tests red (no llm_credentials::secrets), 8 scenarios unsupported; 5 implementor mutants and 9 boundary mutants each caught; adversary pass 1: boundary gap, capability check and doc comment fixed, findings 4 (llm-providers auth.rs:114 retries configuration errors, pre-existing) and 5 (git-sourced optional dependency fetched by every consumer) recorded, not fixed",
+    "reference": "~/.cache/ga-wave-2026-10-05-w45/llm-secrets-resolver/scratch"
+  }
+}

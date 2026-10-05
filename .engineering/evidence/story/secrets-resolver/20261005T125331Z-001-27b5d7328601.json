@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T12:53:31Z",
+  "actor": "human:timo",
+  "artifact": "story:secrets-resolver",
+  "kind": "story",
+  "revision": 12,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "unit gate: fmt, clippy +1.98.0, cargo test --workspace 639 passed 0 failed, llm-docs --check, ess validate, conformance 674/674 x3, site build, credentials all-features 118 and no-default-features 25 passed; wave branch after merging main (ESS 0.52.0): credentials 118 passed, conformance 674/674, docs, ess and aep validate exit 0",
+    "reference": "wave/2026-10-05-w45"
+  }
+}
