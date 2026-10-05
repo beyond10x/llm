@@ -1,0 +1,131 @@
+{
+  "format": "b10x-product-landing/1",
+  "product": {
+    "name": "LLM",
+    "mark": "LLM",
+    "eyebrow": "Model inference · Rust libraries",
+    "promise": [
+      "One neutral turn.",
+      "Credentials, routes and costs stay explicit."
+    ],
+    "lede": "llm is a set of Rust libraries for calling language models through one neutral interface. A caller runs a turn; behind it, an operator chooses the wire protocol, the account, the credential source, the route and its fallbacks, and llm keeps each of those choices separate and visible. It never runs a tool, never runs a login flow, and never turns an unknown usage count into a zero.",
+    "actions": [
+      {
+        "label": "Read the documentation",
+        "href": "/docs/",
+        "kind": "primary"
+      },
+      {
+        "label": "What ships today",
+        "href": "/docs/status"
+      }
+    ],
+    "meta": "Rust libraries · Responses, Messages and Chat Completions · specified in ESS · Apache-2.0",
+    "kpis": [
+      "shipped",
+      "planned"
+    ]
+  },
+  "sections": [
+    {
+      "kind": "features",
+      "eyebrow": "What it does",
+      "title": "Refuse the guess, keep the evidence.",
+      "lede": "Model clients tend to fail quietly: they guess where they should have refused. llm is built around refusing those guesses and recording what actually happened.",
+      "items": [
+        {
+          "title": "One port for every wire",
+          "description": "Model::turn is the same for a Responses, Messages or Chat Completions endpoint, an anonymous local vLLM server or a subscription login. A caller depends on the port, not on a vendor SDK.",
+          "status": "shipped",
+          "href": "/docs/concepts/neutral-boundary"
+        },
+        {
+          "title": "Credentials injected, never searched for",
+          "description": "A catalog names an opaque reference; the embedding supplies the resolver. Files, keychains, environment variables, JSON pointers and a Codex login are opt-in adapters.",
+          "status": "shipped",
+          "href": "/docs/concepts/credentials"
+        },
+        {
+          "title": "Routes you can explain",
+          "description": "Strict TOML catalogs, an explanation that resolves no secret, same-target retry before any output is visible, then ordered fallback across named alternatives only.",
+          "status": "shipped",
+          "href": "/docs/concepts/routing"
+        },
+        {
+          "title": "Qualified against live providers",
+          "description": "The gate runs against recorded bytes, loopback sockets and in-process fakes. API and subscription access is not yet qualified for any provider.",
+          "status": "planned",
+          "href": "/docs/status/limitations"
+        }
+      ]
+    },
+    {
+      "kind": "flow",
+      "eyebrow": "One request",
+      "title": "From a caller's turn to a priced observation.",
+      "lede": "Each step is its own crate, and each refuses on its own before the next one runs.",
+      "steps": [
+        {
+          "label": "llm-core",
+          "title": "Validate the turn",
+          "description": "Against the target's declared capabilities, before any network I/O."
+        },
+        {
+          "label": "llm-routing",
+          "title": "Select and explain",
+          "description": "The route's first compatible target; retry it, then fall back in declared order."
+        },
+        {
+          "label": "llm-credentials",
+          "title": "Resolve the credential",
+          "description": "At request time, through the resolver the embedding injected."
+        },
+        {
+          "label": "protocol client",
+          "title": "One attempt",
+          "description": "Over the bounded transport, events streamed to the caller as they arrive."
+        },
+        {
+          "label": "llm-cost",
+          "title": "Price what was observed",
+          "description": "Exact decimals; unknown counts stay unknown, and a ledger admits or refuses spend."
+        }
+      ]
+    },
+    {
+      "kind": "status",
+      "eyebrow": "Status",
+      "title": "Libraries that ship, and what they do not establish yet.",
+      "lede": "Shipped means in llm's libraries and tested in the gate. Planned means on the plan and not built. Generated from the repository's status record by llm-docs.",
+      "items": "data/status.json"
+    },
+    {
+      "kind": "related",
+      "eyebrow": "Related tools",
+      "title": "Where llm sits.",
+      "tools": [
+        {
+          "id": "loom",
+          "relation": "uses",
+          "via": "llm's client crates"
+        },
+        {
+          "name": "Harness",
+          "description": "The beyond10x agent loop. It may build on llm in place of its own model wire crates; that move is planned.",
+          "href": "https://beyond10x.github.io/docs/harness/",
+          "status": "planned"
+        },
+        {
+          "name": "llm-gateway",
+          "description": "The gateway and hosting crates, moving out of llm into their own repository; it serves llm's protocols to clients.",
+          "href": "https://github.com/beyond10x/llm-gateway",
+          "status": "planned"
+        },
+        {
+          "id": "ess",
+          "relation": "specifies"
+        }
+      ]
+    }
+  ]
+}

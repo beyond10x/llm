@@ -1,5 +1,6 @@
 ---
 title: Versioned formats
+sidebar_position: 2
 description: Every persisted document carries an explicit version, and an unknown version refuses.
 ---
 
@@ -8,19 +9,20 @@ description: Every persisted document carries an explicit version, and an unknow
 Published Rust APIs follow the crate release's semantic version. Persisted documents carry an
 explicit envelope, and an old or unknown version refuses rather than being coerced.
 
-| Format | Carried by | Status |
-| --- | --- | --- |
-| `llm.turn/3` | Persisted neutral requests | Unreleased |
-| `llm.outcome/4` | Persisted neutral outputs | Unreleased |
-| `llm.binding/1` | Provider/account/endpoint/model declarations | Unreleased |
-| `llm.catalog/1` | TOML routing catalogs | Unreleased |
-| `llm.prices/1` | Price books, TOML or JSON | Unreleased |
-| `llm.usage/2` | Attributed usage observations | Unreleased; refuses v1 |
-| `llm.cost/2` | Derived accounting reports | Unreleased |
-| `llm.budget/1` | The SQLite budget journal | Unreleased |
+| Format | Carried by |
+| --- | --- |
+| `llm.turn/3` | Persisted neutral requests |
+| `llm.outcome/4` | Persisted neutral outputs |
+| `llm.binding/1` | Provider/account/endpoint/model declarations |
+| `llm.catalog/1` | TOML routing catalogs |
+| `llm.prices/1` | Price books, TOML or JSON |
+| `llm.usage/2` | Attributed usage observations; refuses v1 |
+| `llm.cost/2` | Derived accounting reports |
+| `llm.budget/1` | The SQLite budget journal |
 
-"Unreleased" is load-bearing. These are contract *changes in progress*, not implicit compatibility
-conversions, and there is no released artifact that pins them.
+These versions ship in llm's releases. They are not yet a published contract with a
+compatibility policy (planned, see [Status](/docs/status)): until it is, a release may change a
+version, and the change is named in the changelog.
 
 ## What a version is, and is not
 

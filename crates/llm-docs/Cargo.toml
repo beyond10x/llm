@@ -6,13 +6,21 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish = false
-description = "Generates and drift-checks the derived pages of the llm documentation site."
+description = "Generates and drift-checks the derived pages of the llm documentation site, and holds the programs its guides quote."
 
 [lints]
 workspace = true
 
 [dependencies]
 clap = { version = "4.6", features = ["derive"] }
+serde_json.workspace = true
 
 [dev-dependencies]
-serde_json.workspace = true
+b10x-llm-tool-call = { path = "../llm-tool-call" }
+llm-blocking = { package = "b10x-llm-blocking", path = "../llm-blocking" }
+llm-chat = { package = "b10x-llm-chat", path = "../llm-chat" }
+llm-core.workspace = true
+llm-credentials.workspace = true
+llm-http.workspace = true
+llm-routing = { package = "b10x-llm-routing", path = "../llm-routing" }
+tokio.workspace = true

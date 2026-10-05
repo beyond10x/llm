@@ -1,12 +1,12 @@
 ---
 title: The five concepts
+sidebar_position: 1
 description: Protocol, provider account, credential source, model and hosting provider stay distinct, and none of them implies another.
+lede: Vendors bundle five separate things; llm keeps them apart and never infers one from another.
+source: crates/llm-core, crates/llm-providers, crates/llm-routing, docs/design.md
 ---
 
 # The five concepts
-
-Vendors routinely bundle five separate things. LLM keeps them apart, and never infers one from
-another.
 
 | Concept | What it decides | What it does **not** decide |
 | --- | --- | --- |
@@ -38,8 +38,8 @@ any of those and the revision changes. Rotating the secret behind the same refer
 ```mermaid
 flowchart LR
   A["Caller<br/>(agent loop, service, CLI)"] --> B["llm-core<br/>neutral turn"]
-  B --> C["llm-routing<br/>select, then fall back in order"]
-  C --> D["llm-chat / llm-messages<br/>one attempt on one binding"]
+  B --> C["llm-routing<br/>select, retry, fall back"]
+  C --> D["llm-responses / llm-messages / llm-chat<br/>one attempt on one binding"]
   D --> E["llm-credentials<br/>resolve at request time"]
   D --> F["llm-http<br/>bounded HTTP/SSE"]
   C --> G["llm-cost<br/>price and limit what was observed"]
@@ -49,22 +49,40 @@ Each step is its own crate, and each one refuses on its own:
 
 1. **Core** validates the request against the target's declared capabilities before any network
    I/O.
-2. **Routing** picks a target from the route's ordered list and explains the choice. If fallback is
-   on, it tries the next named target only after a failure that is safe to retry.
-3. **A protocol client** makes exactly one attempt. It resolves the credential for that attempt and
-   sends through the bounded transport.
+2. **Routing** picks a target from the route's ordered list and explains the choice. A failure
+   whose class may be retried, and that showed the caller nothing, is retried on the same target;
+   then, if fallback is on, the next named target runs.
+3. **A protocol client** makes exactly one attempt. It resolves the credential for that attempt,
+   sends through the bounded transport and hands each event to the caller as it arrives.
 4. **Accounting** prices what was actually reported, and a durable ledger admits or refuses spend.
 
-The gateway and the hosting lifecycle sit beside this path, not on it: the gateway authenticates an
-owner and lists routes; hosting owns the lifecycle of GPU machines. Neither is wired into the
-request path yet. See [Not yet](../status/roadmap.md).
+Two helpers sit on top of the port: `call_tool` forces one tool and returns its arguments, and
+`BlockingModel` runs a turn from a synchronous loop. The gateway and the hosting lifecycle sit
+beside the path, not on it, and are moving to their own repository; see [the gateway](gateway.md)
+and [hosting](hosting.md).
+
+## Which crate do I need?
+
+| To… | Depend on |
+| --- | --- |
+| Write a caller that works with any model | `b10x-llm-core` |
+| Call a Responses endpoint, including a Codex login | `b10x-llm-responses`, `b10x-llm-http`, `b10x-llm-credentials`, and a binding from `b10x-llm-routing` or `b10x-llm-providers` |
+| Call a Chat Completions or vLLM endpoint | `b10x-llm-chat` and the same three |
+| Call a Messages endpoint | `b10x-llm-messages` and the same three |
+| Force one tool and read its arguments | `b10x-llm-tool-call` |
+| Run turns from a synchronous loop | `b10x-llm-blocking` |
+| Declare routes in TOML, retry and fall back between targets | `b10x-llm-routing` |
+| Price usage, or limit spend | `b10x-llm-cost`, with `sqlite` for the ledger |
+
+[Crates](../reference/crates.md) lists every package with its library name and features.
 
 ## What stays outside
 
-LLM never executes a tool, holds an approval, runs an agent loop, runs a login flow, writes a
-credential file or reads a vendor's configuration directory. A tool definition is a name, a
-description and a JSON Schema. It grants no permission to run anything. When a model asks for a
-tool call, the caller runs it and sends the result in the next request.
+llm never executes a tool, holds an approval, runs an agent loop or runs a login flow. It reads
+a credential only where the caller pointed it: `codex_model` reads the Codex login under
+`CODEX_HOME` or `~/.codex` because calling it asks for exactly that. A tool definition grants no
+permission to run anything. When a model asks for a tool call, the caller runs it and sends the
+result in the next request.
 
 Read on: [the neutral turn](neutral-boundary.md), [protocols](protocols.md),
 [credentials](credentials.md), [routing](routing.md), [accounting](accounting.md),

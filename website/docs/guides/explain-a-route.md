@@ -1,6 +1,9 @@
 ---
 title: Explain a route
+sidebar_position: 5
 description: Read the routing library's explanation of a catalog, and see why a candidate was refused.
+lede: The explanation names the selected target and every other candidate's rejection, without resolving a secret or sending a request.
+source: crates/llm-routing/examples/explain.rs, examples/catalog.toml
 ---
 
 # Explain a route

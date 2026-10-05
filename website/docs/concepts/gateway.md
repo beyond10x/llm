@@ -1,15 +1,24 @@
 ---
 title: The gateway
+sidebar_position: 8
 description: An authenticated single-owner HTTP surface that reports liveness and readiness and lets its owner read which routes it serves. It does not translate or proxy model calls yet.
+lede: One owner, authenticated before anything else is decoded, reads which routes a deployment serves; no model call passes through it yet.
+source: crates/llm-gateway, docs/gateway.md
 ---
 
 # The gateway
+
+:::note[Moving to llm-gateway]
+`b10x-llm-gateway` is moving to its own repository, llm-gateway
+([GitHub](https://github.com/beyond10x/llm-gateway)), where protocol translation is planned. Until that
+move lands it lives in llm and is described here.
+:::
 
 `b10x-llm-gateway` is the start of a network surface for one owner or one trusted deployment. Today
 it does four things: it authenticates that owner, reports liveness and readiness, lists the routes
 the deployment serves, and starts, drains and stops deliberately.
 
-:::caution It does not answer model requests yet
+:::caution[It does not answer model requests yet]
 The crate performs no protocol translation, proxies no model call, resolves no secret and reaches
 no network. Pointing a Chat Completions client at it does not produce a model answer. That is the
 unbuilt gateway translation work; see [Not yet](../status/roadmap.md).

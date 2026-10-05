@@ -51,11 +51,11 @@ surfaces:
     label: Concepts
     url: https://beyond10x.github.io/docs/llm/concepts/overview/
   - kind: reference
-    label: Crate layout
+    label: Crates
     url: https://beyond10x.github.io/docs/llm/reference/crates/
   - kind: status
     label: Status
-    url: https://beyond10x.github.io/docs/llm/status/where-this-stands/
+    url: https://beyond10x.github.io/docs/llm/status/limitations/
   - kind: source
     label: Source
     url: https://github.com/beyond10x/llm

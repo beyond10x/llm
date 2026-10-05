@@ -1,6 +1,9 @@
 ---
 title: Accounting
+sidebar_position: 6
 description: Exact decimal money, six separate totals, and an unknown that stays unknown.
+lede: Usage is priced in exact decimals over six separate bases, and a quantity nobody reported stays unknown.
+source: crates/llm-cost, docs/pricing.md, docs/budgets.md
 ---
 
 # Accounting

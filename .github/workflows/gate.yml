@@ -23,6 +23,8 @@ jobs:
           cargo check -p b10x-llm-cost --no-default-features --locked
           cargo fmt --all --check
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - name: Generated documentation
+        run: cargo run --locked -p llm-docs -- generate --check
       - name: Install pinned planning tools
         run: |
           cargo install --locked --git https://github.com/beyond10x/aep.git --rev 6d7a44d3607d2d9a6ffdf0a165993c546c43d0db aep-cli --bin aep

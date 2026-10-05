@@ -1,100 +1,130 @@
 # LLM implementation status
 
-The goal is the full agreed foundation and subsequent consumer adoption, not a compiling
-workspace. This record maps implementation evidence to the repository-owned stories. The AEP
-store owns lifecycle state; this page explains what those states mean for callers.
+This record maps llm's capabilities to the repository-owned AEP stories and says what stands
+behind each one. The AEP store owns lifecycle state; this page explains what those states mean for
+callers. `llm-docs` generates the public status page (`website/data/status.json` and
+`website/docs/status.mdx`) from the status section at the end, so a change here is a change to
+the site: run `cargo run --locked -p llm-docs -- generate` after editing it.
 
-## Foundation checkpoint — 2026-09-19
+Rules for the status section, which is the last section of this record. Each `###` heading is an
+area. Each row is one capability: the owning story id (or a short id where several stories make one
+capability), then `**Label.**` and what exists. A row whose text opens with `Pending` is planned;
+every other row ships in the version the heading names. The label is the bold sentence, or the
+first sentence when nothing is bold; the rest is the detail. Story ids stay in the first column and
+out of the text, which is public.
 
-Six libraries now implement the shared boundary. The neutral core supports asynchronous model
-turns, text/tools, bounded streaming, cancellation, bound success/failure observations with usage finality, typed failures, and opaque
-continuation state bound to its exact protocol/provider/account/endpoint/model/binding revision. Credentials are
-injected and resolved on each request; concurrent renewal is coordinated without owning a login
-or persistent credential store. The HTTP transport streams bounded SSE with explicit deadlines,
-no redirects, a single attempt per call with a retry class on every refusal, and failure after
-partial output preserved. Routing retries a retriable failure on the same target before any
-output is visible (Harness policy by default), then falls back.
+## Evidence
 
-Optional local secret adapters now read explicitly mapped protected files on Linux or an injected
-keychain store. Native constructors select Linux Secret Service, macOS Keychain or Windows
-Credential Manager. The `codex-auth-file` adapter reads a Codex login's access token from an
-explicit absolute `auth.json` path, read-only and refused once expired; the opt-in `codex-renewal`
-feature renews it through its token endpoint and writes it back atomically and byte-preserving. [Adapter documentation](local-secrets.md) records the platform and trust
-boundaries; tests use disposable files and mock stores, never existing user credentials.
+Every shipped row is tested in the repository gate against recorded response bytes, loopback
+sockets and in-process fakes; the gate makes no paid provider call and provisions nothing. ESS
+suites run the real crates three times, and `docs/verification/*-falsification.json` records the
+deliberate mutations each suite catches. The [verification records](verification/) say what each
+suite covers. A live probe of the Codex backend on 2026-10-04 (outside the gate) drove the 0.1.6
+fix; it is not a qualification.
 
-Provider bindings validate independent protocol, provider, auth and billing choices, including
-anonymous arbitrary endpoints. Routing validates strict TOML catalogs, preserves ordered opt-in
-selection, checks capabilities and conservative input-token bounds, and explains safe refusal
-reasons without resolving secrets. Runtime fallback after an attempted request is still pending.
-
-Pricing now validates explicit versioned JSON/TOML rates and prices attributed token/cache and
-resource-millisecond observations. Exact decimal arithmetic preserves unknown quantities and
-separates metered/compute estimates, reference usage valuations and recorded charges. Failed and
-uncertain attempts are retained. [Pricing](pricing.md) documents the caller-observation contract;
-end-to-end provider attribution remains separate work.
-
-The optional SQLite budget ledger now persists reservations before dispatch, serializes concurrent
-callers, excludes another process owner, retains uncertain charges after restart and exposes compute
-shutdown obligations. [Budgets](budgets.md) defines the declared-estimate policy and trusted-storage
-boundary. Gateway/fallback/hosting integration and actual cloud shutdown remain separate work.
-
-The [initial verification record](verification/core-foundation.md) records the first foundation
-checkpoint. [Routing verification](verification/routing-conformance.md) adds executable ESS
-behavior, generated-schema drift checks and deliberate mutation evidence. This is fixture evidence
-for these libraries, not a usable remote model client or release qualification. Owning stories remain active
-while the versioned configuration surface and release prerequisites are completed.
-
-| Required story | Implementation and remaining work |
-| --- | --- |
-| `runtime-contracts` | Unreleased turn v2/outcome v3, usage/cost v2, binding/catalog v1 and ESS verification implemented; release/common Gates setup remains. |
-| `neutral-inference` | Public async port, bounded data, tool round trip, cancellation and embedding example implemented and tested. |
-| `http-streaming` | Bounded single-attempt HTTP/SSE, terminal truth, cancellation, deadline, retry-class and retry-hint fixtures pass; same-target retry before visible output is in routing. |
-| `secret-resolver` | Injected arbitrary secret references, redacted/zeroized material and coordinated caller-owned renewal implemented and tested. |
-| `provider-accounts` | Validated bindings, arbitrary endpoint URLs and selected-reference request-time auth implemented; live access qualification is separate. |
-| `local-secret-adapters` | Explicit file/keychain adapters implemented; Linux file protections, exact mock-store lookup, rotation and fixed errors tested. Native OS-service availability is not established by mock tests or compilation. |
-| `responses-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Responses request, output and streaming projections. |
-| `responses-client` | Implemented, unreleased: `ResponsesClient`, a single-attempt `Model` over one bound Responses endpoint, tested against local sockets only. |
-| `call-tool-helper` | Implemented, unreleased: `llm-tool-call` offers `call_tool` (one forced tool on any `Model`, returning that call's JSON arguments or a typed `ModelError`) and the Codex Responses preset (`codex_model`, `codex_model_at`, `codex_auth_path`), moved from Loom's `intake-model` with its API and tests. Tested against local sockets and recorded models only; Loom switches after a release. |
-| `parity-blocking-adapters` | Implemented, unreleased: `llm-blocking` offers `BlockingModel`, a blocking turn adapter over any `Model` for a synchronous loop (own or borrowed multi-thread runtime, events to a `BlockingSink` as they arrive, cancellation from another thread, shared or forked for concurrent turns). Tested against local fake servers only. |
-| `messages-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Messages request, output and streaming projections. |
-| `chat-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Chat Completions projections and arbitrary compatible endpoints. |
-| `openai-access` | Pending: API and caller-managed subscription presentation and successful qualification. |
-| `anthropic-access` | Pending: API and caller-managed subscription presentation and successful qualification. |
-| `catalog-routing` | Strict versioned TOML, deterministic identity, safe explanation, ordered selection and capability admission implemented and tested. |
-| `ordered-fallback` | Implemented (story implemented in the AEP store, shipped in 0.1.0): explicit ordered alternatives, attempt accounting and refusal after exposed output or uncertain acceptance. |
-| `usage-pricing` | Versioned price books, exact amounts, cache/compute pricing, attributed unknowns, failed attempts and separate recorded/subscription charges implemented with fixtures and ESS; live provider observations remain unqualified. |
-| `spending-limits` | Single-owner policy, pure engine, SQLite journal, concurrent admission, one-shot starts, restart uncertainty, overrun retention and compute stop obligations implemented with real local storage fixtures and ESS. Effectful consumers still need to use the ledger. |
-| `hosting-contract` | Implemented (story implemented in the AEP store, shipped in 0.1.0): model owned-resource lifecycle, leases, reconciliation and cleanup before adapter implementation. |
-| `runpod-hosting` | Implemented (story implemented in the AEP store, shipped in 0.1.0): port and qualify Runpod vLLM deployment mechanics against the hosting contract. |
-| `modal-hosting` | Pending: implement and qualify supported Modal lifecycle operations. |
-| `gateway-auth` | Implemented (story implemented in the AEP store, shipped in 0.1.0): single-owner authenticated gateway. |
-| `gateway-translation` | Pending: three ingress protocols, explicit supported subset and streaming/tool/cancellation semantics. |
-| `operator-cli` | Pending: validate, inspect and run one configuration; inspection must not resolve secrets or provision resources. |
-| `foundation-qualified` | Pending: exact release, required checks/artifacts and all required implementation/qualification evidence. |
-
-One further story, `connectors-secret-resolver`, is explicitly deferred until Connectors
-supports arbitrary secret custody. `SecretRef` does not encode a backend, so this adapter must not
-require editing route references or adding a Connectors dependency to core.
+`connectors-secret-resolver` is deferred until Connectors supports arbitrary secret custody.
+`SecretRef` does not encode a backend, so that adapter must not require editing route references
+or adding a Connectors dependency to core.
 
 ## Completion requirements
 
-The foundation is complete only when every required story above has its acceptance evidence,
+The foundation is complete only when every pending row above has its acceptance evidence,
 including successful API/subscription and hosting qualification. Missing qualification is a
 remaining requirement, not a successful negative test. An ordinary local or CI gate makes no paid
 provider call and provisions no external resource.
 
-Harness and Metaharness migration plans are held in their own AEP stores; the llmgw store holds
-reversible retirement. None has migrated in this checkpoint. Consumer adoption uses a released
-or explicitly qualified exact revision, and existing llmgw operation continues until cutover.
-Atlas holds the catalog/release-unit declaration. Planning publication in Harness and Atlas has
-separate recorded authorship-policy blockers; those blockers do not supply implementation evidence
-or authorize changing source-publication controls.
+Consumers pin a release tag: Loom depends on llm's client crates by tag, and Harness plans to
+(`harness-builds-on-llm`). The previous gateway, llmgw, stays in service until its reversible
+cutover.
 
-## Next implementation step
+## Status at 0.1.7 (2026-10-05)
 
-Implement protocol projections using the shared transport. The draft governed task names
-`story:chat-projection`; no driver run has launched while operator map selection and USD terms remain pending.
-Preserve independent auth, billing and protocol choices;
-an anonymous vLLM binding must be explicit. Continue recording acceptance evidence in each owning
-story. Model the remaining hosting runtime semantics before implementing its controllers; consume
-the budget ledger's permits and shutdown obligations in the later effectful integrations.
+### Neutral turn
+
+| Story | Capability |
+| --- | --- |
+| `neutral-inference` | **A neutral model turn.** `Model::turn` takes one request, a caller-owned sink and a cancellation token, and makes one attempt: bounded text and tool items, streamed events, typed failures with independent dispatch evidence, and opaque state bound to its protocol, provider, account, endpoint, model and binding revision. |
+| `streamed-tool-call-name` | **Streamed tool calls carry their announced name.** The start of a streamed tool call names the tool before any argument fragment, in all three protocol projections. |
+| `unattributed-opaque-state` | **Opaque state from ingress cannot be sent until bound.** Reasoning state that arrives in a client request is held unattributed, and every egress path refuses it until the caller binds it to a target of the same protocol. |
+| `parity-retry-classes` | **Every failure says whether it may be retried.** `Error::retriable` and `Error::may_retry`: the transport marks 408, 429, 5xx, no response, a body failing mid-stream and a stream ending inside an event; unauthorized, refused, invalid and cancelled failures never are. |
+| `runtime-contracts` | Pending: **A published contract and compatibility policy.** The versioned envelopes (`llm.turn/3`, `llm.outcome/4`, `llm.usage/2`, `llm.cost/2`, `llm.binding/1`, `llm.catalog/1`) are implemented in the tree; a released contract with its compatibility policy is not. |
+
+### Transport
+
+| Story | Capability |
+| --- | --- |
+| `http-streaming` | **Bounded HTTP and server-sent events.** One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails. |
+| `parity-http-timeouts-cancel` | **Connect and idle bounds, and cancellation.** A 15-second connect timeout (`HttpClient::with_connect_timeout`), a 180-second idle bound by default, and cancellation that wins over a pending read. |
+| `ess-specifications` | **Every library crate is specified in ESS.** The transport, providers, gateway and Runpod adapter joined the other domains in 0.1.3; the conformance runner runs 823 scenarios against the real crates three times. |
+
+### Protocols
+
+| Story | Capability |
+| --- | --- |
+| `chat-projection` | **Chat Completions projection and client.** `ChatClient` and an ingress codec for any compatible endpoint, including an anonymous local vLLM server; usage is always requested on a stream. |
+| `messages-projection` | **Messages projection and client.** `MessagesClient` and an ingress codec; signed and redacted thinking cross as bound opaque state. |
+| `parity-messages-wire` | **Messages prompt caching and unknown events.** Cache breakpoints on the standing instruction and on the conversation tail; an unknown stream event, delta or content block is kept as an opaque item with a warning. |
+| `responses-projection` | **Responses projection.** Request bodies and stream decoding for the declared subset, stateless (`store: false`) and always streamed. |
+| `responses-client` | **Responses client.** `ResponsesClient` implements `Model` over one Responses endpoint: the request is checked against its binding and bounded before the credential is resolved. |
+| `parity-responses-live-stream` | **Live Responses streaming.** Each event reaches the caller as it arrives, and text the caller was shown stays in the turn when the terminal output omits it. |
+| `parity-responses-wire` | **Responses request encoding and conversation identity.** `encode_request` gives the exact bytes the client sends; opt-in conversation identity sends `prompt_cache_key`, `session-id` and `x-client-request-id`. |
+| `codex-stream` | **Responses turns against the Codex backend.** A success without a content type is read as an event stream when one was asked for, and an empty terminal output after streamed items keeps the streamed items. |
+
+### Credentials
+
+| Story | Capability |
+| --- | --- |
+| `secret-resolver` | **Injected secret resolution and coordinated renewal.** A catalog names an opaque `SecretRef`; the embedding injects the `SecretResolver`, resolution happens on every request, and renewal refreshes only the rejected generation. |
+| `local-secret-adapters` | **Protected-file and keychain adapters.** Opt-in `file` (Linux, explicit absolute paths, strict ownership and mode checks), `keychain` and `native-keychain` features; read-only. |
+| `parity-credential-sources` | **Environment variables and JSON pointers.** Opt-in `environment` (caller-named variables only) and `json-pointer` (an RFC 6901 pointer into a document another resolver returns). |
+| `codex-auth-file` | **A Codex login, read-only.** Opt-in `codex-auth-file`: `CodexAuthFile` reads the access token of a Codex `auth.json` at an explicit absolute path on every request and refuses it once expired. |
+| `parity-codex-renewal` | **Codex login renewal, opt-in.** Feature `codex-renewal`: renews inside a 15-minute margin through one non-retried request and writes only the token values back, atomically, refusing a file that changed meanwhile. |
+| `codex-config-refusal` | **A misconfigured Codex login is refused.** A login file that is not a Codex login, or whose token has no readable expiry, is refused as malformed and never falls back to another account. |
+| `secrets-resolver` | Pending: **Resolution through the Secrets library.** An optional resolver backed by the Secrets library's named storage; it waits for that library's release. |
+
+### Providers and routing
+
+| Story | Capability |
+| --- | --- |
+| `provider-accounts` | **Bindings independent of protocol.** Provider, account, endpoint, model and serving declaration are separate choices; authentication and billing kind never follow from the protocol. |
+| `catalog-routing` | **TOML catalogs, selection and explanation.** Strict `llm.catalog/1`, a deterministic configuration digest, ordered opt-in selection, capability and input-token admission, and an explanation that resolves no secret. |
+| `ordered-fallback` | **Ordered fallback.** `Catalog::run_turn` tries a route's declared targets in order and stops on visible output, an ineligible failure, an ambiguous dispatch, the attempt bound, the deadline, cancellation or the caller's limit. |
+| `same-target-retry` | **Same-target retry before visible output.** `RetryPolicy`, on by default: four attempts per target with 1, 2 and 4 second waits, server delays honoured up to 30 seconds, a `turn-retried` warning before each wait, then fallback. |
+| `openai-access` | Pending: **OpenAI access qualified.** API and caller-managed subscription routes with recorded live evidence. A live probe of the Codex backend found the two incompatibilities 0.1.6 fixed; no route is qualified. |
+| `anthropic-access` | Pending: **Anthropic access qualified.** API and caller-managed subscription routes with recorded live evidence. |
+
+### Helpers for agent loops
+
+| Story | Capability |
+| --- | --- |
+| `call-tool-helper` | **One forced tool call.** `b10x-llm-tool-call`: `call_tool` forces one named tool on any `Model` and returns that call's JSON arguments or a typed `ModelError`; `codex_model` binds a Responses model to the operator's Codex login. |
+| `parity-blocking-adapters` | **A blocking adapter for a synchronous loop.** `b10x-llm-blocking`: `BlockingModel` runs one turn on the calling thread, hands events to a `BlockingSink` as they arrive, takes cancellation from any thread, and forks for concurrent turns. |
+| `harness-builds-on-llm` | Pending: **Harness builds on llm.** Harness replaces its own model wire crates with llm's; the parity matrix maps every capability they need. |
+
+### Accounting
+
+| Story | Capability |
+| --- | --- |
+| `usage-pricing` | **Usage pricing.** Versioned `llm.prices/1` books, exact decimal amounts, cache and compute pricing, six separate bases and unknown quantities kept unknown. |
+| `spending-limits` | **Durable spending limits.** Opt-in `sqlite`: reservations committed before dispatch, concurrent callers serialized, uncertain charges kept across restart, and compute stop obligations. |
+
+### Gateway and hosting (moving to llm-gateway)
+
+| Story | Capability |
+| --- | --- |
+| `gateway-auth` | **An authenticated single-owner gateway.** Probes and a read-only route inventory for one owner; it translates no protocol and proxies no model call. |
+| `hosting-contract` | **The hosting lifecycle contract.** Resource identity with incarnation, requested state apart from observed state, leases, and stop obligations that only evidence discharges. |
+| `runpod-hosting` | **A Runpod vLLM adapter, against an emulator.** Single-flight start, ordered GPU fallback, crash recovery and ownership-safe cleanup, verified against the in-process `EmulatedRunpod` only. |
+| `serving-extraction` | Pending: **The gateway and hosting crates move to llm-gateway.** `b10x-llm-gateway`, `b10x-llm-provision`, `b10x-llm-runpod` and `b10x-llm-modal` move to their own repository, and llm keeps the client side. |
+| `gateway-translation` | Pending: **Gateway protocol translation.** The three ingress protocols over the supported subset, with streaming, tools and cancellation. |
+| `runpod-production-transport` | Pending: **A production Runpod transport.** Only the in-process emulator exists. |
+| `orphan-termination-obligations` | Pending: **Orphan terminations record a stop obligation.** Orphan sweeps and inherited-pod terminations bypass the ledger today. |
+| `modal-hosting` | Pending: **A Modal hosting adapter.** `b10x-llm-modal` exports nothing; it needs a Modal account and a paid qualification run. |
+| `llmgw-retirement` | Pending: **Deployments move from llmgw.** A reversible cutover from the previous gateway to llm-gateway. |
+| `operator-cli` | Pending: **An operator command line.** Validate, inspect and run one configuration; `b10x-llm-cli` exports nothing yet. |
+
+### Release
+
+| Story | Capability |
+| --- | --- |
+| `foundation-qualified` | Pending: **A qualified release.** One exact release tied to its required checks, artifacts and live provider and hosting qualification. |

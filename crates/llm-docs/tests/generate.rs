@@ -308,3 +308,67 @@ fn provenance_binds_the_site_to_its_commit() {
     assert!(site.join(".nojekyll").is_file());
     fs::remove_dir_all(site).unwrap();
 }
+
+#[test]
+fn provenance_lists_every_page_route_with_a_trailing_slash() {
+    let site = scratch("routes");
+    let at = site.to_str().unwrap();
+    let commit = "e86f43d90b637fc2c1790f77d59efff2eb852386";
+    fs::create_dir_all(site.join("docs/status")).unwrap();
+    fs::write(site.join("index.html"), r#"<main id="main">"#).unwrap();
+    fs::write(site.join("docs.html"), r#"<h1 id="llm">"#).unwrap();
+    fs::write(site.join("docs/status.html"), r#"<h2 id="shipped">"#).unwrap();
+    // docs-system's trailing-slash copy and a client redirect are not routes of their own.
+    fs::write(
+        site.join("docs/status/index.html"),
+        r#"<!-- b10x-trailing-slash-copy --><h2 id="shipped">"#,
+    )
+    .unwrap();
+    fs::write(
+        site.join("docs/status/where-this-stands.html"),
+        r#"<meta http-equiv="refresh" content="0; url=/llm/docs/status">"#,
+    )
+    .unwrap();
+    fs::write(site.join("404.html"), r#"<main id="lost">"#).unwrap();
+    let out = llm_docs(&["provenance", "--site", at, "--commit", commit]);
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    let routes: serde_json::Value =
+        serde_json::from_str(&read(&site, ".well-known/b10x-routes.json")).unwrap();
+    assert_eq!(routes["schema"], "b10x-project-routes/v1");
+    assert_eq!(routes["repository"], "llm");
+    assert_eq!(routes["baseUrl"], "/llm/");
+    assert_eq!(routes["commit"], commit);
+    let listed: Vec<(&str, Vec<&str>)> = routes["routes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|route| {
+            let anchors = route["anchors"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|anchor| anchor.as_str().unwrap())
+                .collect();
+            (route["path"].as_str().unwrap(), anchors)
+        })
+        .collect();
+    assert_eq!(
+        listed,
+        [
+            ("/llm/", vec!["main"]),
+            ("/llm/docs/", vec!["llm"]),
+            ("/llm/docs/status/", vec!["shipped"]),
+        ]
+    );
+
+    // A built site without its landing page is refused, and nothing is written.
+    fs::remove_file(site.join("index.html")).unwrap();
+    fs::remove_dir_all(site.join(".well-known")).unwrap();
+    assert!(
+        !llm_docs(&["provenance", "--site", at, "--commit", commit])
+            .status
+            .success()
+    );
+    assert!(!site.join(".well-known").exists());
+    fs::remove_dir_all(site).unwrap();
+}

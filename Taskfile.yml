@@ -4,9 +4,18 @@ tasks:
     desc: Check the implementation, specification and governed plan
     cmds:
       - task: rust
+      - task: docs
       - ess specify validate --path spec
       - task: conformance
       - aep plan artifact validate
+  docs:
+    desc: Check the generated documentation pages and the guides' quoted examples for drift
+    cmds:
+      - cargo run --locked -p llm-docs -- generate --check
+  docs-generate:
+    desc: Regenerate the crate reference and the status page
+    cmds:
+      - cargo run --locked -p llm-docs -- generate
   conformance:
     desc: Check ESS projection drift and run behavioral conformance three times
     cmds:
