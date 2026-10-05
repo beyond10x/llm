@@ -28,5 +28,5 @@ llm-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
-ess-conformance = { git = "https://github.com/beyond10x/ess.git", rev = "be44a3365eb273cb3d447b74cd5b0e75181d284e" }
-ess-primitives = { git = "https://github.com/beyond10x/ess.git", rev = "be44a3365eb273cb3d447b74cd5b0e75181d284e" }
+ess-conformance = { git = "https://github.com/beyond10x/ess.git", tag = "0.52.0" }
+ess-primitives = { git = "https://github.com/beyond10x/ess.git", tag = "0.52.0" }
