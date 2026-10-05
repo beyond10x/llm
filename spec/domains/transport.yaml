@@ -35,6 +35,21 @@ domain: llm.transport
 # bound, cancellation and every deadline. The transport itself still sends exactly once;
 # whether another attempt is made, and only before any output is visible, is routing's
 # decision (llm.routing).
+#
+# Connect bound and idle default (Harness harness-http/src/transport.rs:54-87,
+# `Settings::streaming`: connect 15 s, per-read 180 s). A client carries a connect bound of its
+# own beside its limits: 15 s unless the caller names another, positive and at most one day like
+# every other bound. A connection the far side never establishes within it is a request that
+# failed before any response arrived: `transport`, dispatch `unknown`, `retriable` true, without
+# waiting for the response-header deadline; nothing was answered, so the stream is absent. The
+# default idle limit is 180 s, long enough for a model that thinks silently between two events;
+# the response-header (60 s) and total (600 s) defaults are unchanged.
+#
+# Fixture program grammar for `llm.transport.Exchange` adds `limits.connect_ms` (optional; the
+# client's default connect bound when absent) and `server.accepting` (default true). A server
+# that is not accepting holds a listener whose accept queue is full, so the kernel drops every
+# further connection attempt and a connection neither completes nor is refused; such a server
+# accepts no connection, so `requests` stays 0.
 types:
   - name: llm.transport.Framing
     kind: enum
@@ -47,6 +62,8 @@ entities:
       - {name: response_headers_ms, type: Integer}
       - {name: idle_ms, type: Integer}
       - {name: total_ms, type: Integer}
+      # How long establishing one connection may take; 15 s unless the caller names another.
+      - {name: connect_ms, type: Integer}
     lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
   - name: llm.transport.ExchangeObservation
     identity: {name: observation_id, type: String}

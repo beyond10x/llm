@@ -9,4 +9,6 @@ mod sse;
 mod transport;
 pub use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 pub use sse::{Framing, MAX_EVENT_BYTES, MAX_STREAM_BYTES, SseDecoder, SseEvent};
-pub use transport::{HttpClient, Limits, MAX_EXCHANGE_BYTES, SseStream, retry_after, status_error};
+pub use transport::{
+    CONNECT_TIMEOUT, HttpClient, Limits, MAX_EXCHANGE_BYTES, SseStream, retry_after, status_error,
+};

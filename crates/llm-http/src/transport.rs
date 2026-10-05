@@ -23,6 +23,12 @@ fn accepts_event_stream(headers: &HeaderMap) -> bool {
         .any(|range| range.trim().eq_ignore_ascii_case(EVENT_STREAM))
 }
 
+/// The default bound on establishing one connection, as Harness streams with
+/// (`Settings::streaming`, connect 15 s).
+pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
+
+/// The idle default is 180 s, Harness's per-read bound: long enough for a model that thinks
+/// silently between two events.
 #[derive(Debug, Clone, Copy)]
 pub struct Limits {
     pub response_headers: Duration,
@@ -33,7 +39,7 @@ impl Default for Limits {
     fn default() -> Self {
         Self {
             response_headers: Duration::from_secs(60),
-            idle: Duration::from_secs(60),
+            idle: Duration::from_secs(180),
             total: Duration::from_secs(600),
         }
     }
@@ -44,12 +50,25 @@ impl Default for Limits {
 pub struct HttpClient {
     client: Client,
     limits: Limits,
+    connect: Duration,
 }
 impl HttpClient {
+    /// A client with the default connect bound, [`CONNECT_TIMEOUT`].
+    ///
     /// # Errors
     /// Refuses zero/unbounded timeouts or a failed TLS/client initialization.
     pub fn new(limits: Limits) -> Result<Self, Error> {
-        if [limits.response_headers, limits.idle, limits.total]
+        Self::with_connect_timeout(limits, CONNECT_TIMEOUT)
+    }
+
+    /// A client whose connection attempts end after `connect`. A connection not established in
+    /// time is a request that failed before any response: `transport`, dispatch `unknown`,
+    /// retriable.
+    ///
+    /// # Errors
+    /// Refuses zero/unbounded timeouts or a failed TLS/client initialization.
+    pub fn with_connect_timeout(limits: Limits, connect: Duration) -> Result<Self, Error> {
+        if [limits.response_headers, limits.idle, limits.total, connect]
             .iter()
             .any(|v| v.is_zero() || *v > Duration::from_hours(24))
         {
@@ -60,6 +79,7 @@ impl HttpClient {
         let client = Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .retry(reqwest::retry::never())
+            .connect_timeout(connect)
             // Credentials go to the caller-selected endpoint only; ambient proxy settings never
             // redirect them.
             .no_proxy()
@@ -67,13 +87,22 @@ impl HttpClient {
             // and can turn the same expiration into an unrelated transport error.
             .build()
             .map_err(|_| Error::new(ErrorCode::Transport, "HTTP client initialization failed"))?;
-        Ok(Self { client, limits })
+        Ok(Self {
+            client,
+            limits,
+            connect,
+        })
     }
 
     /// The limits this client enforces, so a caller can bound the rest of its turn on the same
     /// instant rather than restating the value and letting the two drift apart.
     pub const fn limits(&self) -> &Limits {
         &self.limits
+    }
+
+    /// How long establishing one connection may take.
+    pub const fn connect_timeout(&self) -> Duration {
+        self.connect
     }
 
     /// Sends exactly once, with a request-time header list supplied by the caller.

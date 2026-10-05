@@ -789,3 +789,8 @@ scenarios:
 - responses/scenarios/wire-a-successful-string-tool-result-travels-inside-the-envelope.yaml
 - responses/scenarios/wire-an-unknown-output-item-is-preserved-with-a-warning.yaml
 - responses/scenarios/wire-a-streamed-unknown-output-item-is-preserved-with-a-warning.yaml
+- transport/scenarios/connect-a-connection-never-established-ends-at-the-connect-bound.yaml
+- transport/scenarios/connect-without-a-short-connect-bound-the-header-deadline-ends-it.yaml
+- transport/scenarios/connect-a-zero-connect-bound-is-refused.yaml
+- transport/scenarios/connect-a-connect-bound-longer-than-one-day-is-refused.yaml
+- transport/scenarios/connect-a-connect-bound-of-exactly-one-day-is-admitted.yaml

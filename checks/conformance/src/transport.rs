@@ -19,7 +19,8 @@ use std::{
 use ess_conformance::target::TargetError;
 use llm_core::{Cancel, Error};
 use llm_http::{
-    Framing, HeaderMap, HeaderName, HeaderValue, HttpClient, Limits, SseEvent, SseStream,
+    CONNECT_TIMEOUT, Framing, HeaderMap, HeaderName, HeaderValue, HttpClient, Limits, SseEvent,
+    SseStream,
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -50,6 +51,9 @@ const MAX_REQUEST_HEAD: usize = 64 * 1024;
 const UNTRUSTED_BODY: &str = "llm-fixture-untrusted-error-body";
 /// How long the adapter waits for a second connection that would reveal a resend.
 const RESEND_GRACE: Duration = Duration::from_millis(50);
+/// How long a connection attempt to an unaccepting listener may stall before its queue counts
+/// as full.
+const QUEUE_FULL: Duration = Duration::from_millis(200);
 /// A backstop so a fixture can never hang the gate. Far above every authored bound.
 const BACKSTOP: Duration = Duration::from_secs(30);
 
@@ -119,6 +123,9 @@ struct LimitsInput {
     idle: u64,
     #[serde(rename = "total_ms")]
     total: u64,
+    /// The connect bound; the client's default when absent.
+    #[serde(rename = "connect_ms", default)]
+    connect: Option<u64>,
 }
 
 #[derive(Deserialize, Clone, Copy)]
@@ -138,6 +145,9 @@ struct CancelInput {
 #[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields, default)]
 struct ServerInput {
+    /// `false` holds a listener whose accept queue is full, so a connection neither completes
+    /// nor is refused. Absent means accepting.
+    accepting: Option<bool>,
     respond: bool,
     status: u16,
     content_type: Option<String>,
@@ -152,6 +162,7 @@ struct ServerInput {
 impl Default for ServerInput {
     fn default() -> Self {
         Self {
+            accepting: None,
             respond: true,
             status: 200,
             content_type: Some("text/event-stream".to_owned()),
@@ -342,8 +353,40 @@ fn headers(count: usize) -> HeaderMap {
     headers
 }
 
+/// Binds a listener that never accepts and fills its accept queue, so the kernel drops every
+/// further connection attempt. The listener and the queued connections live until the runtime
+/// that observes the exchange is dropped.
+async fn start_unaccepting() -> Result<SocketAddr, String> {
+    let bind_error = |_| "fixture:bind".to_owned();
+    let socket = tokio::net::TcpSocket::new_v4().map_err(bind_error)?;
+    socket
+        .bind(SocketAddr::from(([127, 0, 0, 1], 0)))
+        .map_err(bind_error)?;
+    let listener = socket.listen(0).map_err(bind_error)?;
+    let addr = listener.local_addr().map_err(bind_error)?;
+    let mut queued = Vec::new();
+    loop {
+        if queued.len() >= MAX_CHUNKS {
+            return Err("fixture:accept-queue".to_owned());
+        }
+        match tokio::time::timeout(QUEUE_FULL, TcpStream::connect(addr)).await {
+            Ok(Ok(stream)) => queued.push(stream),
+            Ok(Err(_)) => return Err("fixture:accept-queue".to_owned()),
+            Err(_) => break,
+        }
+    }
+    tokio::spawn(async move {
+        let _held = (listener, queued);
+        std::future::pending::<()>().await;
+    });
+    Ok(addr)
+}
+
 /// Binds the scripted server, and the redirect target it points at when it redirects.
 async fn start_server(script: &ServerInput, seen: &Arc<Seen>) -> Result<SocketAddr, String> {
+    if script.accepting == Some(false) {
+        return start_unaccepting().await;
+    }
     let bind_error = |_| "fixture:bind".to_owned();
     let listener = TcpListener::bind("127.0.0.1:0").await.map_err(bind_error)?;
     let addr = listener.local_addr().map_err(bind_error)?;
@@ -395,6 +438,11 @@ async fn read_stream(
 }
 
 async fn exchange(program: Program, facts: &mut Value, seen: &Arc<Seen>) -> Result<(), String> {
+    let connect = program
+        .limits
+        .as_ref()
+        .and_then(|limits| limits.connect)
+        .map_or(CONNECT_TIMEOUT, Duration::from_millis);
     let limits = program.limits.map_or_else(
         || Limits {
             response_headers: Duration::from_secs(5),
@@ -408,7 +456,7 @@ async fn exchange(program: Program, facts: &mut Value, seen: &Arc<Seen>) -> Resu
         },
     );
     let addr = start_server(&program.server, seen).await?;
-    let client = match HttpClient::new(limits) {
+    let client = match HttpClient::with_connect_timeout(limits, connect) {
         Ok(client) => client,
         Err(error) => {
             refusal(facts, &error);
