@@ -2,12 +2,25 @@
 format: aep.planning-md/3
 id: story:parity-responses-wire
 kind: story
-status: draft
+status: active
 title: llm-responses request and stream encoding match Harness where a route needs it
 relations:
 - decomposes: epic:serving-split
 - informed_by: story:harness-parity
-revision: 1
+- serves: vision:portable-model-inference
+scope:
+- confidence: inferred
+  path: contracts
+- confidence: inferred
+  path: crates/llm-responses
+- confidence: inferred
+  path: docs/harness-parity.md
+- confidence: inferred
+  path: spec
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-05T07:09:59Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-10-05T07:09:59Z", actor: "human:timo", revision: 3}
 ---
 ## Outcome
 
