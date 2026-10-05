@@ -6,7 +6,6 @@ status: open
 title: Direct subscription integration needs provider-specific access evidence
 relations:
 - blocks: story:openai-access
-- blocks: story:anthropic-access
 revision: 1
 ---
 ## Missing evidence
