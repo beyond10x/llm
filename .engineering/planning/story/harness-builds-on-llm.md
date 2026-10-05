@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:harness-builds-on-llm
 kind: story
-status: draft
+status: active
 title: Harness builds and passes its tests on llm in place of its own wire crates
 relations:
 - decomposes: epic:serving-split
@@ -16,7 +16,11 @@ relations:
 - depends_on: story:parity-responses-live-stream
 - depends_on: story:parity-messages-wire
 - depends_on: story:parity-blocking-adapters
-revision: 1
+- serves: vision:portable-model-inference
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-05T10:20:28Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-10-05T10:20:28Z", actor: "human:timo", revision: 3}
 ---
 ## Outcome
 
