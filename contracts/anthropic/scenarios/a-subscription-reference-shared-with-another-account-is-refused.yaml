@@ -1,0 +1,100 @@
+type: ess-scenario/1
+domain: llm.routing
+scenario: a-subscription-reference-shared-with-another-account-is-refused
+summary: a subscription OAuth account whose secret reference another account also names is refused, so the subscription token can never be presented as a metered bearer
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.routing.Evaluate
+  input:
+    catalog_toml: |
+      format = "llm.catalog/1"
+
+      [[providers]]
+      id = "anthropic"
+      category = "hosted"
+
+      [[accounts]]
+      id = "operator"
+      provider_id = "anthropic"
+      auth_kind = "subscription-oauth"
+      billing_kind = "subscription"
+      secret_reference_id = "operator-subscription"
+
+      [[accounts]]
+      id = "other"
+      provider_id = "anthropic"
+      auth_kind = "bearer"
+      billing_kind = "metered"
+      secret_reference_id = "operator-subscription"
+      [[endpoints]]
+      id = "subscription-messages"
+      account_id = "operator"
+      base_url = "https://messages.example.invalid/v1"
+
+      [[endpoints]]
+      id = "other-messages"
+      account_id = "other"
+      base_url = "https://messages.example.invalid/v1"
+
+      [[models]]
+      id = "internal-model"
+      upstream_name = "example/Model-Revision"
+
+      [[serving_models]]
+      id = "subscription-model"
+      endpoint_id = "subscription-messages"
+      model_id = "internal-model"
+      protocol = "messages"
+      [serving_models.capabilities]
+      tools = true
+      tool_choice = true
+      temperature = true
+      top_p = false
+      reasoning_efforts = []
+      context_window = 200000
+      max_output_tokens = 8192
+
+      [[serving_models]]
+      id = "other-model"
+      endpoint_id = "other-messages"
+      model_id = "internal-model"
+      protocol = "messages"
+      [serving_models.capabilities]
+      tools = true
+      tool_choice = true
+      temperature = true
+      top_p = false
+      reasoning_efforts = []
+      context_window = 200000
+      max_output_tokens = 8192
+
+      [[routes]]
+      id = "assistant"
+      alias = "assist"
+      fallback_enabled = false
+
+      [[targets]]
+      id = "subscription-target"
+      route_id = "assistant"
+      serving_model_id = "subscription-model"
+      position = 0
+
+      [[targets]]
+      id = "other-target"
+      route_id = "assistant"
+      serving_model_id = "other-model"
+      position = 1
+    turn_json: '{"format":"llm.turn/3","request":{"model":"assist","instructions":"Stay terse","items":[{"kind":"user-text","text":"Summarise the log"}],"tools":[],"max_output_tokens":512}}'
+    input_tokens: 100
+  outcome: observed
+assert:
+- view: llm.routing.LastEvaluation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routing.LastEvaluation
+  contains:
+    catalog_valid: false
+    error_code: invalid-request
+    error_message: a subscription OAuth account cannot share its secret reference with another account
+    selected_target: null

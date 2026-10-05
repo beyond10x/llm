@@ -662,3 +662,8 @@ scenarios:
 - anthropic/scenarios/a-subscription-request-without-an-instruction-opens-with-the-preamble-alone.yaml
 - anthropic/scenarios/a-subscription-token-billed-as-metered-sends-nothing.yaml
 - anthropic/scenarios/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble.yaml
+- anthropic/scenarios/a-subscription-reference-shared-with-another-account-is-refused.yaml
+- anthropic/scenarios/a-falling-back-route-from-a-subscription-target-to-a-metered-one-is-refused.yaml
+- anthropic/scenarios/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused.yaml
+- anthropic/scenarios/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target.yaml
+- anthropic/scenarios/a-falling-back-route-between-subscription-billed-targets-is-accepted.yaml

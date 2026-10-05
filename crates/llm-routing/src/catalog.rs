@@ -1,4 +1,4 @@
-use llm_core::{Error, Id, exceeds};
+use llm_core::{AuthKind, BillingKind, Error, Id, exceeds};
 use llm_providers::{
     Account, Binding, BindingDocument, Endpoint, Provider, ServedModel, ServingModel,
 };
@@ -81,6 +81,7 @@ impl CatalogDocument {
             account.validate()?;
             lookup(&providers, &account.provider_id, "account provider")?;
         }
+        unshared_subscription_references(&self.accounts)?;
         for endpoint in &self.endpoints {
             lookup(&accounts, &endpoint.account_id, "endpoint account")?;
         }
@@ -117,6 +118,7 @@ impl CatalogDocument {
                     "each route requires between one and 64 targets",
                 ));
             }
+            subscription_billing_kept(route, &targets, &bindings)?;
             targets.sort_by_key(|target| target.position);
             let mut unique_bindings = BTreeSet::new();
             for (position, target) in targets.iter().enumerate() {
@@ -186,6 +188,55 @@ fn index<'a, T>(
         }
     }
     Ok(indexed)
+}
+
+/// Another account naming a subscription account's reference would present the subscription
+/// token under another kind or billing, so it is refused whatever that account declares.
+fn unshared_subscription_references(accounts: &[Account]) -> Result<(), Error> {
+    for subscription in accounts
+        .iter()
+        .filter(|account| account.auth_kind == AuthKind::SubscriptionOauth)
+    {
+        if accounts.iter().any(|other| {
+            other.id != subscription.id
+                && other.secret_reference_id.is_some()
+                && other.secret_reference_id == subscription.secret_reference_id
+        }) {
+            return Err(Error::invalid(
+                "a subscription OAuth account cannot share its secret reference with another account",
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// Fallback would move a turn between the targets of a route, so a subscription token's turn
+/// could continue under other billing. Without fallback only the first target is ever selected.
+fn subscription_billing_kept(
+    route: &Route,
+    targets: &[RouteTarget],
+    bindings: &BTreeMap<Id, Binding>,
+) -> Result<(), Error> {
+    if !route.fallback_enabled {
+        return Ok(());
+    }
+    let accounts: Vec<&Account> = targets
+        .iter()
+        .filter_map(|target| bindings.get(&target.serving_model_id))
+        .map(|binding| &binding.declaration().account)
+        .collect();
+    if accounts
+        .iter()
+        .any(|account| account.auth_kind == AuthKind::SubscriptionOauth)
+        && accounts
+            .iter()
+            .any(|account| account.billing_kind != BillingKind::Subscription)
+    {
+        return Err(Error::invalid(
+            "a route with fallback cannot mix a subscription OAuth target with a target under other billing",
+        ));
+    }
+    Ok(())
 }
 
 fn lookup<'a, T>(values: &BTreeMap<Id, &'a T>, id: &Id, field: &str) -> Result<&'a T, Error> {

@@ -47,6 +47,14 @@ for byte, because its signature covers it as produced, and a tail with nothing m
 rolling marker. An empty instruction sends no `system` at all; the rolling marker already covers
 the tools.
 
+**A subscription token changes `system`.** Under a `subscription-oauth` account, `system` opens
+with the subscription client preamble ("You are Claude Code, Anthropic's official CLI for
+Claude.") as its own block carrying only `type` and `text`, and the caller's instruction follows as
+the marked block, so the breakpoint still covers the whole constant head. An empty instruction sends
+the preamble alone, unmarked. The same account adds `anthropic-beta: oauth-2025-04-20` to the
+headers and sends the token as `authorization: Bearer`. API-key and plain bearer accounts send
+neither. Such a body has two `system` blocks, so it is not valid ingress input either.
+
 Everything else is refused, not dropped: unknown request fields, image, document, search-result and
 server-tool content, citations, cache-control on a block, a `none` tool choice, a system prompt that
 is not one text block, and a role outside user/assistant. A translation that silently loses a field

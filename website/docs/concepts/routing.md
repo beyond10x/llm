@@ -44,7 +44,9 @@ max_output_tokens = 8192
 `fallback_enabled` defaults to **false**; omission is false. When it is off, only the first target
 of a route is eligible and every other candidate is reported with the rejection reason
 `fallback-disabled`. When it is on, selection may take the first compatible target among the
-explicitly named alternatives — never a target the route did not name.
+explicitly named alternatives — never a target the route did not name. A route with fallback on
+cannot mix a `subscription-oauth` target with a target under other billing; the catalog refuses it,
+so a turn never moves from a subscription to metered or self-hosted billing.
 
 Admission requires a caller-supplied **input-token upper bound** that must be valid for every
 candidate. An unknown input count refuses admission rather than guessing.

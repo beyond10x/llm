@@ -65,7 +65,7 @@ pub(crate) fn token_bound<'de, D: serde::Deserializer<'de>>(
 
 fn observe(input: &EvaluationRequest) -> Value {
     let mut facts = json!({
-        "catalog_valid": false, "error_code": null, "selected_target": null,
+        "catalog_valid": false, "error_code": null, "error_message": null, "selected_target": null,
         "model": null, "url": null, "protocol": null, "auth_kind": null,
         "billing_kind": null, "config_digest": null, "input_tokens": input.input_tokens,
         "rejections": [], "request_preserved": false
@@ -73,6 +73,7 @@ fn observe(input: &EvaluationRequest) -> Value {
     let result = evaluate(input, &mut facts);
     if let Err(error) = result {
         facts["error_code"] = json!(error.code);
+        facts["error_message"] = json!(error.message);
     }
     facts
 }

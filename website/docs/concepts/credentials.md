@@ -50,7 +50,10 @@ token is whatever the caller's resolver answers, such as the `secrets` library r
 Messages client sends it as `authorization: Bearer` with `anthropic-beta: oauth-2025-04-20`, and
 opens `system` with the client preamble that route requires. The kind is the one exception to
 independence: a binding is refused unless its protocol is `messages` and its billing kind is
-`subscription`, so a subscription token is never billed as metered use. The route is built and
+`subscription`. A catalog also refuses the token's secret reference when any other account names
+it, and a route with fallback that mixes a `subscription-oauth` target with a target under any other
+billing. So a subscription token is never billed as metered use, and a turn never moves from the
+subscription to other billing. The route is built and
 checked against fixtures, but not qualified: no live turn has been recorded.
 
 ## Optional adapters

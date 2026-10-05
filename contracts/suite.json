@@ -430,11 +430,16 @@
       "llm.responses/authored/wire-the-encoded-body-is-the-bytes-the-client-sends",
       "llm.routing/authored/a-caller-attempt-bound-above-sixty-four-is-refused",
       "llm.routing/authored/a-caller-attempt-bound-of-zero-is-refused",
+      "llm.routing/authored/a-falling-back-route-between-subscription-billed-targets-is-accepted",
+      "llm.routing/authored/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused",
+      "llm.routing/authored/a-falling-back-route-from-a-subscription-target-to-a-metered-one-is-refused",
       "llm.routing/authored/a-named-tool-choice-that-is-not-published-is-refused",
       "llm.routing/authored/a-repeated-tool-call-id-is-refused",
       "llm.routing/authored/a-route-alias-declared-twice-is-refused",
       "llm.routing/authored/a-route-of-sixty-five-targets-is-refused",
       "llm.routing/authored/a-route-of-the-maximum-sixty-four-targets-is-accepted",
+      "llm.routing/authored/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target",
+      "llm.routing/authored/a-subscription-reference-shared-with-another-account-is-refused",
       "llm.routing/authored/a-tool-published-twice-is-refused",
       "llm.routing/authored/a-tool-schema-that-is-not-a-schema-is-refused",
       "llm.routing/authored/a-top-p-of-zero-is-refused",
@@ -669,10 +674,30 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-bearer-request-carries-neither-the-oauth-beta-nor-the-client-preamble"
       },
+      "anthropic/scenarios/a-falling-back-route-between-subscription-billed-targets-is-accepted.yaml": {
+        "digest": "sha256:b4cb82ac23badb7deb9a6f7fb2322c565ee3f2db54eb0ab507163373a5f289ff",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-falling-back-route-between-subscription-billed-targets-is-accepted"
+      },
+      "anthropic/scenarios/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused.yaml": {
+        "digest": "sha256:b243f06e3fcdaeef3f9334314b222bb0f44e358c151c907aad531bb423025ec1",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused"
+      },
+      "anthropic/scenarios/a-falling-back-route-from-a-subscription-target-to-a-metered-one-is-refused.yaml": {
+        "digest": "sha256:2332a704784f0eb4dab29dff59f9a71a8a703bc5a538a0d0f744146828e984ce",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-falling-back-route-from-a-subscription-target-to-a-metered-one-is-refused"
+      },
       "anthropic/scenarios/a-rotated-subscription-token-is-presented-on-the-next-turn.yaml": {
         "digest": "sha256:c189b30cebe8143ca6569d12ac19fee1734aa4ce8325a91edabf3fc4a2bcd5c6",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-rotated-subscription-token-is-presented-on-the-next-turn"
+      },
+      "anthropic/scenarios/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target.yaml": {
+        "digest": "sha256:e0dafe6f37b968f5de34ab03f5e385c127cd792b0972f81573a7ad7b7ad10776",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target"
       },
       "anthropic/scenarios/a-subscription-oauth-account-billed-as-metered-is-refused.yaml": {
         "digest": "sha256:ef08d73a5b1e65f7ca8d65001b98148f0e44577a986f307b2791ae5f9604e5c5",
@@ -698,6 +723,11 @@
         "digest": "sha256:8dcc04d534a55607d15a9657fd2383275904f84efc03916da03686d430f8b2ae",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-subscription-oauth-account-without-a-reference-is-refused"
+      },
+      "anthropic/scenarios/a-subscription-reference-shared-with-another-account-is-refused.yaml": {
+        "digest": "sha256:ae7673e63f7d3a42aa9d36165fa70add8165e9995e2e50a9b76937d63a3fc78f",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-subscription-reference-shared-with-another-account-is-refused"
       },
       "anthropic/scenarios/a-subscription-request-without-an-instruction-opens-with-the-preamble-alone.yaml": {
         "digest": "sha256:80cb5c57c8b4706c3b0a16046592cfa1703338d0a390460240520230e86bc348",
@@ -3971,7 +4001,7 @@
       }
     },
     "counts": {
-      "authored": 661,
+      "authored": 666,
       "generated": 25,
       "outside": 0,
       "refused": 0
@@ -4017,8 +4047,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "a98c421069feb47cc0aad0387e74c94f17a146406f186e0f74d1126cba916a18",
-    "spec_digest": "177456ac09cc89519bebdc815f69ba480f18d76202c32a36241175bf86b8f033",
+    "contract_digest": "a1bd875ae5912cece62b217b5948bb3a4efd85c941e5a13c1cf5b4286b2a411c",
+    "spec_digest": "f39883cd430129fe109619d74c2a771387b09afa5c7d8b44701d48bcc27a3f8d",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -55694,6 +55724,297 @@
         }
       ]
     },
+    "llm.routing/authored/a-falling-back-route-between-subscription-billed-targets-is-accepted": {
+      "purpose": "fallback between a subscription OAuth target and another subscription-billed bearer target never changes the billing kind, so it is accepted",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"anthropic\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"operator\"\nprovider_id = \"anthropic\"\nauth_kind = \"subscription-oauth\"\nbilling_kind = \"subscription\"\nsecret_reference_id = \"operator-subscription\"\n\n[[accounts]]\nid = \"other\"\nprovider_id = \"anthropic\"\nauth_kind = \"bearer\"\nbilling_kind = \"subscription\"\nsecret_reference_id = \"other-subscription\"\n[[endpoints]]\nid = \"subscription-messages\"\naccount_id = \"operator\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[endpoints]]\nid = \"other-messages\"\naccount_id = \"other\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[models]]\nid = \"internal-model\"\nupstream_name = \"example/Model-Revision\"\n\n[[serving_models]]\nid = \"subscription-model\"\nendpoint_id = \"subscription-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"other-model\"\nendpoint_id = \"other-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"assistant\"\nalias = \"assist\"\nfallback_enabled = true\n\n[[targets]]\nid = \"subscription-target\"\nroute_id = \"assistant\"\nserving_model_id = \"subscription-model\"\nposition = 0\n\n[[targets]]\nid = \"other-target\"\nroute_id = \"assistant\"\nserving_model_id = \"other-model\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"assist\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "subscription-oauth"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "subscription"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": null
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": []
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "subscription-target"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused": {
+      "purpose": "the refusal holds in either order, so a metered target followed by a subscription OAuth target under fallback is refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"anthropic\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"operator\"\nprovider_id = \"anthropic\"\nauth_kind = \"subscription-oauth\"\nbilling_kind = \"subscription\"\nsecret_reference_id = \"operator-subscription\"\n\n[[accounts]]\nid = \"other\"\nprovider_id = \"anthropic\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"metered-key\"\napi_key_header = \"x-api-key\"\n[[endpoints]]\nid = \"subscription-messages\"\naccount_id = \"operator\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[endpoints]]\nid = \"other-messages\"\naccount_id = \"other\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[models]]\nid = \"internal-model\"\nupstream_name = \"example/Model-Revision\"\n\n[[serving_models]]\nid = \"subscription-model\"\nendpoint_id = \"subscription-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"other-model\"\nendpoint_id = \"other-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"assistant\"\nalias = \"assist\"\nfallback_enabled = true\n\n[[targets]]\nid = \"other-target\"\nroute_id = \"assistant\"\nserving_model_id = \"other-model\"\nposition = 0\n\n[[targets]]\nid = \"subscription-target\"\nroute_id = \"assistant\"\nserving_model_id = \"subscription-model\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"assist\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "a route with fallback cannot mix a subscription OAuth target with a target under other billing"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-falling-back-route-from-a-subscription-target-to-a-metered-one-is-refused": {
+      "purpose": "a route with fallback whose subscription OAuth target is followed by a metered target is refused, so a turn never moves from the subscription to metered billing",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"anthropic\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"operator\"\nprovider_id = \"anthropic\"\nauth_kind = \"subscription-oauth\"\nbilling_kind = \"subscription\"\nsecret_reference_id = \"operator-subscription\"\n\n[[accounts]]\nid = \"other\"\nprovider_id = \"anthropic\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"metered-key\"\napi_key_header = \"x-api-key\"\n[[endpoints]]\nid = \"subscription-messages\"\naccount_id = \"operator\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[endpoints]]\nid = \"other-messages\"\naccount_id = \"other\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[models]]\nid = \"internal-model\"\nupstream_name = \"example/Model-Revision\"\n\n[[serving_models]]\nid = \"subscription-model\"\nendpoint_id = \"subscription-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"other-model\"\nendpoint_id = \"other-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"assistant\"\nalias = \"assist\"\nfallback_enabled = true\n\n[[targets]]\nid = \"subscription-target\"\nroute_id = \"assistant\"\nserving_model_id = \"subscription-model\"\nposition = 0\n\n[[targets]]\nid = \"other-target\"\nroute_id = \"assistant\"\nserving_model_id = \"other-model\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"assist\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "a route with fallback cannot mix a subscription OAuth target with a target under other billing"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
     "llm.routing/authored/a-named-tool-choice-that-is-not-published-is-refused": {
       "purpose": "a named tool choice must name a published tool (turn.rs validate_tools)",
       "source": [
@@ -56147,6 +56468,206 @@
               "selected_target": {
                 "kind": "literal",
                 "value": "coding-0"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target": {
+      "purpose": "without fallback only the first target is ever selected, so a subscription OAuth target ahead of a metered one is accepted and the metered one stays ineligible",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"anthropic\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"operator\"\nprovider_id = \"anthropic\"\nauth_kind = \"subscription-oauth\"\nbilling_kind = \"subscription\"\nsecret_reference_id = \"operator-subscription\"\n\n[[accounts]]\nid = \"other\"\nprovider_id = \"anthropic\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"metered-key\"\napi_key_header = \"x-api-key\"\n[[endpoints]]\nid = \"subscription-messages\"\naccount_id = \"operator\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[endpoints]]\nid = \"other-messages\"\naccount_id = \"other\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[models]]\nid = \"internal-model\"\nupstream_name = \"example/Model-Revision\"\n\n[[serving_models]]\nid = \"subscription-model\"\nendpoint_id = \"subscription-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"other-model\"\nendpoint_id = \"other-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"assistant\"\nalias = \"assist\"\nfallback_enabled = false\n\n[[targets]]\nid = \"subscription-target\"\nroute_id = \"assistant\"\nserving_model_id = \"subscription-model\"\nposition = 0\n\n[[targets]]\nid = \"other-target\"\nroute_id = \"assistant\"\nserving_model_id = \"other-model\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"assist\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "subscription-oauth"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "subscription"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": null
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "other-target:fallback-disabled"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "subscription-target"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-subscription-reference-shared-with-another-account-is-refused": {
+      "purpose": "a subscription OAuth account whose secret reference another account also names is refused, so the subscription token can never be presented as a metered bearer",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"anthropic\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"operator\"\nprovider_id = \"anthropic\"\nauth_kind = \"subscription-oauth\"\nbilling_kind = \"subscription\"\nsecret_reference_id = \"operator-subscription\"\n\n[[accounts]]\nid = \"other\"\nprovider_id = \"anthropic\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"operator-subscription\"\n[[endpoints]]\nid = \"subscription-messages\"\naccount_id = \"operator\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[endpoints]]\nid = \"other-messages\"\naccount_id = \"other\"\nbase_url = \"https://messages.example.invalid/v1\"\n\n[[models]]\nid = \"internal-model\"\nupstream_name = \"example/Model-Revision\"\n\n[[serving_models]]\nid = \"subscription-model\"\nendpoint_id = \"subscription-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"other-model\"\nendpoint_id = \"other-messages\"\nmodel_id = \"internal-model\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 200000\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"assistant\"\nalias = \"assist\"\nfallback_enabled = false\n\n[[targets]]\nid = \"subscription-target\"\nroute_id = \"assistant\"\nserving_model_id = \"subscription-model\"\nposition = 0\n\n[[targets]]\nid = \"other-target\"\nroute_id = \"assistant\"\nserving_model_id = \"other-model\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"assist\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "a subscription OAuth account cannot share its secret reference with another account"
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
               }
             }
           },
