@@ -2,19 +2,33 @@
 format: aep.planning-md/3
 id: story:anthropic-access
 kind: story
-status: draft
+status: active
 title: Anthropic API and caller-managed subscription routes are qualified
 relations:
 - decomposes: epic:access
 - depends_on: story:provider-accounts
 - depends_on: story:messages-projection
 - depends_on: story:secrets-resolver
+- serves: vision:portable-model-inference
 scope:
 - confidence: inferred
   path: contracts/anthropic
 - confidence: inferred
+  path: contracts/messages
+- confidence: inferred
+  path: crates/llm-messages
+- confidence: inferred
   path: crates/llm-providers
-revision: 3
+- confidence: inferred
+  path: docs/harness-parity.md
+- confidence: inferred
+  path: spec
+- confidence: inferred
+  path: website/docs
+revision: 10
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-05T13:03:52Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"review_outcome":1}}}
+- {from: "proposed", to: "active", at: "2026-10-05T13:03:52Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":1}}}
 ---
 ## Context
 
