@@ -46,6 +46,49 @@ domain: llm.responses
 # in; one whose delta names no index, or an index past the end, goes after every other item.
 # This holds whether the terminal `output` was empty, absent, or carried other items, and for
 # `response.incomplete` as for `response.completed`.
+#
+# The terminal sentinel (row R3). This route needs no `data: [DONE]` line: terminal truth is the
+# response object. A route that sends one after the terminal object still answers its turn,
+# because nothing after the first terminal object is read. A `data: [DONE]` line before any
+# terminal object is not a JSON payload and ends the turn as `protocol`, dispatch `accepted`.
+#
+# Unknown output items (row R25). An output item of a type this subset does not model, whether
+# the terminal `output` carries it or `response.output_item.done` streams it, is kept in the turn
+# as opaque state bound to the serving binding, JSON-equal to what arrived, and each time one is
+# read the caller is shown an `unknown-output-item` warning. It is never dropped.
+#
+# Request bytes (row H31). `encode_request` returns the exact bytes of the request body. The
+# client sends what it returns and serialises the body nowhere else, so a caller or a test that
+# calls it holds the bytes the client sends. `Project` observes those bytes as `encoded_body`,
+# and the body's top-level field names, in encoded order, as `body_fields`.
+#
+# Unset stays absent (row R14). A field the turn leaves unset is absent from the body, never
+# present as `null`: an unset `max_output_tokens`, `temperature`, `top_p`, `reasoning` effort, an
+# automatic `tool_choice`, and the conversation key below when there is no conversation.
+#
+# Conversation identity (rows R8, R13). Nothing names a conversation unless the caller opts in by
+# giving the client one conversation: an identifier the caller mints for that conversation and,
+# optionally, an originator naming the calling application. A client without one sends what it
+# always sent, which the Codex backend accepted on the 2026-10-04 probe: no `prompt_cache_key`, and
+# no header beyond `accept`, `content-type` and the binding's authentication header. A client with
+# one serves that conversation only. Every request it sends carries `prompt_cache_key` equal to
+# the identifier in the body, and the headers `session-id`, the identifier, and
+# `x-client-request-id`, the identifier, `-`, and the number of requests that client sent before
+# this one, in decimal, so each attempt is a new request id of the same conversation. It sends
+# `originator` only when the caller named one, and never invents one. The non-secret headers are,
+# in order: `accept: text/event-stream`, `content-type: application/json`, then `originator`,
+# `session-id` and `x-client-request-id` where they apply; `Project` observes them, for the
+# client's first request, as `request_headers`. Ingress does not read `prompt_cache_key`: the
+# neutral turn has no conversation to carry it in, so a body carrying one is refused as a field
+# outside the subset, and `request_preserved` is false for a projection that sent one.
+#
+# Tool results (row R18). Every tool result travels as the string `{"ok":<bool>,"output":<value>}`,
+# a successful string result included, where Harness sends a successful string unenveloped and a
+# failure as `{"ok":false,"error":<value>}`. The difference is deliberate: an envelope used only
+# for some results makes a successful result shaped like one indistinguishable from a failure,
+# and a successful string from a successful number or object, so reading a body back could flip
+# `failed` or change the value. One envelope for every result is what lets ingress return the turn
+# that was projected, field for field.
 entities:
   - name: llm.responses.RequestProjection
     identity: {name: projection_id, type: String}
@@ -69,6 +112,15 @@ entities:
       # Whether reading the projected body back through the same contract returns the turn
       # that produced it, field for field.
       - {name: request_preserved, type: Boolean}
+      # The exact bytes `encode_request` returned, which are the bytes the client sends (H31).
+      - {name: encoded_body, type: Optional<String>}
+      # The body's top-level field names, in encoded order. An unset field is not here (R14).
+      - {name: body_fields, type: List<String>}
+      # The conversation key the body carries, absent without a conversation (R13).
+      - {name: prompt_cache_key, type: Optional<String>}
+      # Every header the client sets other than authentication, as `name: value`, for the
+      # client's first request (R8).
+      - {name: request_headers, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 
   - name: llm.responses.StreamDecoding
@@ -139,6 +191,10 @@ commands:
       - {name: upstream_model, type: String}
       # Serialized llm.turn/3, raw for the same reason.
       - {name: turn_json, type: String}
+      # The conversation the caller opted the client into. Absent means none (R8, R13).
+      - {name: conversation_id, type: Optional<String>}
+      # The calling application the caller named for that conversation. Absent means none.
+      - {name: originator, type: Optional<String>}
     outcomes:
       - name: observed
         emits: [llm.responses.Projected]

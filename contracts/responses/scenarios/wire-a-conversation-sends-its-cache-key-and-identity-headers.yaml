@@ -1,0 +1,40 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: wire-a-conversation-sends-its-cache-key-and-identity-headers
+summary: an opted-in conversation sends its cache key and the three identity headers
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/3","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"}],"tools":[]}}'
+    conversation_id: conv-1
+    originator: b10x-harness
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: true
+    error_code: null
+    encoded_body: '{"include":["reasoning.encrypted_content"],"input":[{"content":[{"text":"Hi","type":"input_text"}],"role":"user","type":"message"}],"model":"example/Small-Model","prompt_cache_key":"conv-1","store":false,"stream":true,"tools":[]}'
+    body_fields:
+    - include
+    - input
+    - model
+    - prompt_cache_key
+    - store
+    - stream
+    - tools
+    prompt_cache_key: conv-1
+    request_headers:
+    - 'accept: text/event-stream'
+    - 'content-type: application/json'
+    - 'originator: b10x-harness'
+    - 'session-id: conv-1'
+    - 'x-client-request-id: conv-1-0'
+    request_preserved: false

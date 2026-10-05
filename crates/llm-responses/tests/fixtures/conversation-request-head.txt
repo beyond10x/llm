@@ -1,0 +1,9 @@
+POST /v1/responses HTTP/1.1
+accept: text/event-stream
+authorization: <credential omitted>
+content-length: 933
+content-type: application/json
+host: <local address>
+originator: b10x-harness
+session-id: conv-1
+x-client-request-id: conv-1-0
