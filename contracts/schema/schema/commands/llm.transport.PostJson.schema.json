@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PostJson input",
+  "x-ess-name": "llm.transport.PostJson",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "98df485bc126b7d3577eb740b753700c9e07364bb568d6481d0c3b5b43ba5a84",
+    "contract_digest": "slice-sha256/2:550c8cb8f6dd704a9fb40a5902396db9c5eaa05a2d677ad0fd6af455a6790fe8",
+    "regenerate": "ess generate"
+  }
+}

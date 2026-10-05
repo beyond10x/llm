@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: json-exchange-a-json-answer-comes-back-from-one-post
+summary: one JSON POST returns the JSON document the server answered
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.transport.PostJson
+  input:
+    program_json: '{"server":{"body":"{\"issued\":\"fixture\",\"n\":1}"}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastJsonExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastJsonExchange
+  contains:
+    error_code: null
+    requests: 1
+    redirected_requests: 0
+    request_content_type: application/json
+    answer_matches: true
+    diagnostics_safe: true

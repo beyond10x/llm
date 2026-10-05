@@ -81,6 +81,30 @@ entities:
       # `ambient_proxy`.
       - {name: proxied_requests, type: 'Optional<Integer>'}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # One JSON document exchange (`HttpClient::post_json`, Harness harness-http/src/exchange.rs):
+  # a JSON body out, one JSON document back, for a credential exchange rather than a turn. It
+  # sends exactly once with the client's redirect, proxy and deadline rules, and every refusal
+  # is final (`retriable` false), whatever the status table says for a turn: the body may be a
+  # non-idempotent document such as a refresh grant. The answer is read up to 64 KiB inclusive
+  # (`MAX_EXCHANGE_BYTES`); one byte more is `too-large`. A success whose body is not JSON is
+  # `protocol` with dispatch `accepted`. Neither the request body nor the answer body reaches a
+  # diagnostic, also for a failing status (llm never quotes upstream text, H14).
+  - name: llm.transport.JsonExchangeObservation
+    identity: {name: observation_id, type: String}
+    fields: &json_exchange_facts
+      - {name: valid_program, type: Boolean}
+      - {name: error_code, type: 'Optional<String>'}
+      - {name: dispatch, type: 'Optional<String>'}
+      - {name: retriable, type: 'Optional<Boolean>'}
+      - {name: requests, type: Integer}
+      - {name: redirected_requests, type: Integer}
+      # The `content-type` the scripted server received, when it received a request.
+      - {name: request_content_type, type: 'Optional<String>'}
+      # Whether the returned document equals the JSON the server sent; absent on refusal.
+      - {name: answer_matches, type: 'Optional<Boolean>'}
+      # Whether no diagnostic quotes the request body's or the answer body's marker.
+      - {name: diagnostics_safe, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
   - name: llm.transport.Exchange
     input:
@@ -94,9 +118,28 @@ commands:
           llm.transport.Exchanged:
             valid_program: {generated: true}
         summary: Observe one real exchange with a scripted local server.
+  - name: llm.transport.PostJson
+    input:
+      # A bounded fixture program: `{"server": {...}}` where the server is `listening` (default
+      # true; false leaves nothing on the port), answers `status` (default 200) with
+      # `content_type` (default `application/json`) and either `body` (JSON text) or
+      # `body_bytes` (a JSON string literal of exactly that many bytes), or a redirect when
+      # `redirect` is true. The request body carries a private marker, and so does every
+      # failing answer body.
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.transport.JsonPosted]
+        payload:
+          llm.transport.JsonPosted:
+            valid_program: {generated: true}
+        summary: Observe one real JSON document exchange with a scripted local server.
 events:
   # Test-adapter notification only; there is no production notification transport.
   - name: llm.transport.Exchanged
+    fields:
+      - {name: valid_program, type: Boolean}
+  - name: llm.transport.JsonPosted
     fields:
       - {name: valid_program, type: Boolean}
 views:
@@ -104,3 +147,7 @@ views:
     source: llm.transport.ExchangeObservation
     consistency: read_your_writes
     fields: *exchange_facts
+  - name: llm.transport.LastJsonExchange
+    source: llm.transport.JsonExchangeObservation
+    consistency: read_your_writes
+    fields: *json_exchange_facts

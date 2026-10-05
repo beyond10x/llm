@@ -639,6 +639,26 @@
       "llm.runpod/authored/the-orphan-sweep-never-selects-a-legacy-llmgw-pod",
       "llm.runpod/authored/the-orphan-sweep-terminates-only-this-controllers-unrecorded-pods",
       "llm.runpod/authored/the-resource-ceiling-refuses-a-second-model-before-anything-is-submitted",
+      "llm.secrets/authored/codex-renewal-a-due-login-is-renewed-and-written-back-in-place",
+      "llm.secrets/authored/codex-renewal-a-due-login-without-a-refresh-token-refuses-before-sending",
+      "llm.secrets/authored/codex-renewal-a-group-readable-login-keeps-its-mode",
+      "llm.secrets/authored/codex-renewal-a-kept-refresh-token-is-not-reported-rotated",
+      "llm.secrets/authored/codex-renewal-a-login-at-the-margin-is-renewed",
+      "llm.secrets/authored/codex-renewal-a-login-changed-during-renewal-is-not-overwritten",
+      "llm.secrets/authored/codex-renewal-a-login-outside-the-margin-is-neither-sent-nor-written",
+      "llm.secrets/authored/codex-renewal-a-non-string-id-token-refuses-before-writing",
+      "llm.secrets/authored/codex-renewal-a-refused-exchange-quotes-neither-the-answer-nor-the-refresh-token",
+      "llm.secrets/authored/codex-renewal-a-repeated-value-is-replaced-only-at-its-pointer",
+      "llm.secrets/authored/codex-renewal-a-server-failure-is-sent-once-and-not-retried",
+      "llm.secrets/authored/codex-renewal-an-answer-without-a-refresh-token-keeps-the-one-on-disk",
+      "llm.secrets/authored/codex-renewal-an-empty-access-token-refuses-before-writing",
+      "llm.secrets/authored/codex-renewal-an-empty-refresh-token-refuses-before-writing",
+      "llm.secrets/authored/codex-renewal-an-expired-login-is-renewed",
+      "llm.secrets/authored/codex-renewal-an-undated-login-is-left-alone",
+      "llm.secrets/authored/codex-renewal-an-undated-login-is-still-refused-by-the-resolver",
+      "llm.secrets/authored/codex-renewal-the-read-only-resolver-never-renews",
+      "llm.secrets/authored/codex-renewal-the-renewing-resolver-answers-the-renewed-token",
+      "llm.secrets/authored/codex-renewal-the-renewing-resolver-sends-nothing-for-a-fresh-login",
       "llm.secrets/authored/environment-exact-bytes",
       "llm.secrets/authored/environment-unbound-reference",
       "llm.secrets/authored/environment-unset",
@@ -714,6 +734,15 @@
       "llm.transport/authored/an-endpoint-with-embedded-credentials-is-refused-before-sending",
       "llm.transport/authored/an-event-stream-media-type-with-parameters-is-accepted",
       "llm.transport/authored/an-unrunnable-program-exchanges-nothing",
+      "llm.transport/authored/json-exchange-a-json-answer-comes-back-from-one-post",
+      "llm.transport/authored/json-exchange-a-rate-limit-is-final",
+      "llm.transport/authored/json-exchange-a-redirect-is-never-followed",
+      "llm.transport/authored/json-exchange-a-refused-status-quotes-no-body",
+      "llm.transport/authored/json-exchange-a-server-failure-is-final",
+      "llm.transport/authored/json-exchange-a-success-that-is-not-json-is-refused",
+      "llm.transport/authored/json-exchange-an-answer-at-the-bound-is-read",
+      "llm.transport/authored/json-exchange-an-answer-one-byte-over-the-bound-is-refused",
+      "llm.transport/authored/json-exchange-nothing-listening-is-a-final-transport-failure",
       "llm.transport/authored/keepalives-cannot-outlast-the-total-bound",
       "llm.transport/authored/payloads-only-framing-does-not-recognise-a-sentinel",
       "llm.transport/authored/retry-class-a-bad-request-is-final",
@@ -3927,6 +3956,106 @@
         "disposition": "accepted",
         "scenario": "llm.runpod/authored/the-resource-ceiling-refuses-a-second-model-before-anything-is-submitted"
       },
+      "secrets/scenarios/codex-renewal-a-due-login-is-renewed-and-written-back-in-place.yaml": {
+        "digest": "sha256:06ad4effe8680089f404ec0ab72aae130dfefae0a3ab291b1c2b024f547e8819",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-due-login-is-renewed-and-written-back-in-place"
+      },
+      "secrets/scenarios/codex-renewal-a-due-login-without-a-refresh-token-refuses-before-sending.yaml": {
+        "digest": "sha256:e83407c3fa974b8df3484b4049042507554530edba1a92f0ffed8aa133168183",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-due-login-without-a-refresh-token-refuses-before-sending"
+      },
+      "secrets/scenarios/codex-renewal-a-group-readable-login-keeps-its-mode.yaml": {
+        "digest": "sha256:0dd925965a3a50b82a0b3e198150d5621f9dcd1aa2165779ed6a88bf4be4e21f",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-group-readable-login-keeps-its-mode"
+      },
+      "secrets/scenarios/codex-renewal-a-kept-refresh-token-is-not-reported-rotated.yaml": {
+        "digest": "sha256:fe72dad2f364fd70b5e575029734845653ad24865d13cd09ef39bea5a92bd1f9",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-kept-refresh-token-is-not-reported-rotated"
+      },
+      "secrets/scenarios/codex-renewal-a-login-at-the-margin-is-renewed.yaml": {
+        "digest": "sha256:4adb6682871289f010d983e310761893fabf32ce0b1108a19279641085714547",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-login-at-the-margin-is-renewed"
+      },
+      "secrets/scenarios/codex-renewal-a-login-changed-during-renewal-is-not-overwritten.yaml": {
+        "digest": "sha256:144971c0a81741761bc5baf24ab65b35a8e19a3004dd562cfaf63a2cb76bbfe2",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-login-changed-during-renewal-is-not-overwritten"
+      },
+      "secrets/scenarios/codex-renewal-a-login-outside-the-margin-is-neither-sent-nor-written.yaml": {
+        "digest": "sha256:813c282c8ef81619fa474666033720808eb63fee4c3aad907ce6027fd4404e07",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-login-outside-the-margin-is-neither-sent-nor-written"
+      },
+      "secrets/scenarios/codex-renewal-a-non-string-id-token-refuses-before-writing.yaml": {
+        "digest": "sha256:4eb929632172a90bcce352f9423668148a877ed7bb6f279d5de1784d828ccd8c",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-non-string-id-token-refuses-before-writing"
+      },
+      "secrets/scenarios/codex-renewal-a-refused-exchange-quotes-neither-the-answer-nor-the-refresh-token.yaml": {
+        "digest": "sha256:e4bbf1832f49a9dca9ba2180cf2d224945968cf78d53fc69412fc703f6a4cab3",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-refused-exchange-quotes-neither-the-answer-nor-the-refresh-token"
+      },
+      "secrets/scenarios/codex-renewal-a-repeated-value-is-replaced-only-at-its-pointer.yaml": {
+        "digest": "sha256:e1f2e8082dbf8f35e87129e884641aaf41f8765ac0190decc8133e72c605bcc2",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-repeated-value-is-replaced-only-at-its-pointer"
+      },
+      "secrets/scenarios/codex-renewal-a-server-failure-is-sent-once-and-not-retried.yaml": {
+        "digest": "sha256:4a16715db4dbfb90bc75c4f0fa790a9b64cde6c65890fdcf0c7af5757959637c",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-server-failure-is-sent-once-and-not-retried"
+      },
+      "secrets/scenarios/codex-renewal-an-answer-without-a-refresh-token-keeps-the-one-on-disk.yaml": {
+        "digest": "sha256:d38080ab776f078f4c7f551380b21e7eaa5014b6e969020f8fb38fe69105f9d4",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-an-answer-without-a-refresh-token-keeps-the-one-on-disk"
+      },
+      "secrets/scenarios/codex-renewal-an-empty-access-token-refuses-before-writing.yaml": {
+        "digest": "sha256:3c34beaae4f17214cf5d7698fb04d490e3b70327f2174095a60a98ab1badb3a5",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-an-empty-access-token-refuses-before-writing"
+      },
+      "secrets/scenarios/codex-renewal-an-empty-refresh-token-refuses-before-writing.yaml": {
+        "digest": "sha256:4f5ff1da1b2ce7e6204000e867d8b6be92d10907c2ad9067e96875a292196c37",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-an-empty-refresh-token-refuses-before-writing"
+      },
+      "secrets/scenarios/codex-renewal-an-expired-login-is-renewed.yaml": {
+        "digest": "sha256:7180d5b78bc9771b3ccfcc1456af9fc43e3ad9e8ab54a9cf7020d170544a3363",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-an-expired-login-is-renewed"
+      },
+      "secrets/scenarios/codex-renewal-an-undated-login-is-left-alone.yaml": {
+        "digest": "sha256:71f3f19db5efc05af933247f9c02ac14911949d9618277130013442b4e6fdee3",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-an-undated-login-is-left-alone"
+      },
+      "secrets/scenarios/codex-renewal-an-undated-login-is-still-refused-by-the-resolver.yaml": {
+        "digest": "sha256:335552ab189be7322982bfd7705edd531e571c223d33bd1fc165e6d2aae94b67",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-an-undated-login-is-still-refused-by-the-resolver"
+      },
+      "secrets/scenarios/codex-renewal-the-read-only-resolver-never-renews.yaml": {
+        "digest": "sha256:b56b8dd28d04413a1d1afd87349a9c88bd8aa7345c0bc753db244b88dfbb39a2",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-the-read-only-resolver-never-renews"
+      },
+      "secrets/scenarios/codex-renewal-the-renewing-resolver-answers-the-renewed-token.yaml": {
+        "digest": "sha256:2616d1f43a1b0c748263ae29f977dc6277f3427a98f6b6cc6a84eb8257561ef1",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-the-renewing-resolver-answers-the-renewed-token"
+      },
+      "secrets/scenarios/codex-renewal-the-renewing-resolver-sends-nothing-for-a-fresh-login.yaml": {
+        "digest": "sha256:382e586229e427b57f32f1b0e4adc199294fc52944c00f9fab3f57d016e62821",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-the-renewing-resolver-sends-nothing-for-a-fresh-login"
+      },
       "secrets/scenarios/environment-exact-bytes.yaml": {
         "digest": "sha256:745c5ba694fb5b0276ee5302239bd92733c58821048368327fef5652d518899f",
         "disposition": "accepted",
@@ -4282,6 +4411,51 @@
         "disposition": "accepted",
         "scenario": "llm.transport/authored/an-unrunnable-program-exchanges-nothing"
       },
+      "transport/scenarios/json-exchange-a-json-answer-comes-back-from-one-post.yaml": {
+        "digest": "sha256:97a2764076bdd95eeff8d1548c45b0bb3aeaf8e7a621697e015b1afd17858045",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-a-json-answer-comes-back-from-one-post"
+      },
+      "transport/scenarios/json-exchange-a-rate-limit-is-final.yaml": {
+        "digest": "sha256:24fbe1d39a7078dd5977d506cda6ba2c851aa8f826e2d546ec5758fe3a2c4759",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-a-rate-limit-is-final"
+      },
+      "transport/scenarios/json-exchange-a-redirect-is-never-followed.yaml": {
+        "digest": "sha256:78993cd7d60177ada21c235ccd92197ab3098fe5fdcfb93a9d462fe84c3e7e2b",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-a-redirect-is-never-followed"
+      },
+      "transport/scenarios/json-exchange-a-refused-status-quotes-no-body.yaml": {
+        "digest": "sha256:ac3556088a6bab6ec99e78a0c7df309ba9efb3f4533b8a71ca650809d4fef592",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-a-refused-status-quotes-no-body"
+      },
+      "transport/scenarios/json-exchange-a-server-failure-is-final.yaml": {
+        "digest": "sha256:819db5c2d7c128ff725e2e879a1b021a58f1804206fd703aee561349e74e0db8",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-a-server-failure-is-final"
+      },
+      "transport/scenarios/json-exchange-a-success-that-is-not-json-is-refused.yaml": {
+        "digest": "sha256:41d99154cc077f148cb5bc769c7ede1de6b8a37bc381102645544647a94f8d3a",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-a-success-that-is-not-json-is-refused"
+      },
+      "transport/scenarios/json-exchange-an-answer-at-the-bound-is-read.yaml": {
+        "digest": "sha256:12d906fc98b8e5b7fd192743a246306f8853fb25947b7a408407b0659d7ffe41",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-an-answer-at-the-bound-is-read"
+      },
+      "transport/scenarios/json-exchange-an-answer-one-byte-over-the-bound-is-refused.yaml": {
+        "digest": "sha256:c140d398c5e67373eb347d5cd74f03c73b071515d7ca0383491cab6492d6b36c",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-an-answer-one-byte-over-the-bound-is-refused"
+      },
+      "transport/scenarios/json-exchange-nothing-listening-is-a-final-transport-failure.yaml": {
+        "digest": "sha256:95a501075355d3395a7473f9676c1a7556f5f45cdccb4d1e40a7a93b054533b4",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/json-exchange-nothing-listening-is-a-final-transport-failure"
+      },
       "transport/scenarios/keepalives-cannot-outlast-the-total-bound.yaml": {
         "digest": "sha256:883e51b0da6ce036aa02a636b76f52714e41dbf58f9dd50937e71aa00daf815e",
         "disposition": "accepted",
@@ -4409,8 +4583,8 @@
       }
     },
     "counts": {
-      "authored": 734,
-      "generated": 24,
+      "authored": 763,
+      "generated": 26,
       "outside": 0,
       "refused": 0
     },
@@ -4438,7 +4612,9 @@
       "llm.secrets.ProbeFile/outcome/observed",
       "llm.secrets.ProbeKeychain/outcome/observed",
       "llm.secrets.ProbePointer/outcome/observed",
-      "llm.transport.Exchange/outcome/observed"
+      "llm.secrets.RenewCodexLogin/outcome/observed",
+      "llm.transport.Exchange/outcome/observed",
+      "llm.transport.PostJson/outcome/observed"
     ],
     "knowledge": "complete_inventory",
     "outside": [],
@@ -4454,8 +4630,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "4c985191d1ee4767d5f35020beedab1362bd5f4d5708bd26ad1c78fca7f22752",
-    "spec_digest": "061f88cc96a53e01334de711f34e0e80d38db479f6fbc43917f2b50195768168",
+    "contract_digest": "608bf1f73df0e4edacce04b33a9634ef4d0ee49daf2f917fa7ecd6f0ea22a5d8",
+    "spec_digest": "98df485bc126b7d3577eb740b753700c9e07364bb568d6481d0c3b5b43ba5a84",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -4537,7 +4713,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -4629,7 +4813,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -11873,7 +12065,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -11961,7 +12161,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -18434,7 +18642,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -18522,7 +18738,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -18603,7 +18827,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -18703,7 +18935,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -18784,7 +19024,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -18888,7 +19136,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -18969,7 +19225,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -19065,7 +19329,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -26233,7 +26505,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -26321,7 +26601,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -30025,7 +30313,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -30113,7 +30409,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -37137,7 +37441,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -37229,7 +37541,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -42185,7 +42505,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -42277,7 +42605,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -42358,7 +42694,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -42450,7 +42794,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -42531,7 +42883,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -42623,7 +42983,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -50060,7 +50428,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -50164,7 +50540,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -55574,7 +55958,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -55670,7 +56062,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -55751,7 +56151,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -55847,7 +56255,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -55928,7 +56344,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -56024,7 +56448,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -63496,7 +63928,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -63592,7 +64032,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -63673,7 +64121,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -63773,7 +64229,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -72082,7 +72546,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -72170,7 +72642,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -76284,7 +76764,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -76380,7 +76868,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -76469,7 +76965,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -76585,7 +77089,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -76666,7 +77178,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -76774,7 +77294,15 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
         }
       ]
@@ -76859,7 +77387,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -76959,8 +77495,2909 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.transport.Exchanged",
           "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.secrets.RenewCodexLogin/outcome/observed": {
+      "purpose": "`llm.secrets.RenewCodexLogin` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.gateway.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.hosting.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.runpod.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": true
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": true
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "shape": {
+            "diagnostics_safe": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.gateway.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.hosting.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.runpod.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-due-login-is-renewed-and-written-back-in-place": {
+      "purpose": "a login inside its margin is renewed by one refresh grant and only its token values change on disk, mode kept, no stray file",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "file_spliced": {
+                "kind": "literal",
+                "value": true
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": false
+              },
+              "mode_kept": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "renewed"
+              },
+              "refresh_token_rotated": {
+                "kind": "literal",
+                "value": true
+              },
+              "request_well_formed": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "stray_files": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-due-login-without-a-refresh-token-refuses-before-sending": {
+      "purpose": "a due login with nothing at /tokens/refresh_token refuses naming that pointer before anything is sent",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "no-refresh-token"
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "refusal_names_pointer": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "missing"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-group-readable-login-keeps-its-mode": {
+      "purpose": "a 0640 login is renewed and stays 0640",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": true
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "file_spliced": {
+                "kind": "literal",
+                "value": true
+              },
+              "mode_kept": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "renewed"
+              },
+              "stray_files": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-kept-refresh-token-is-not-reported-rotated": {
+      "purpose": "an answer that repeats the refresh token on disk renews the access token and reports no rotation",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Kept"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "file_spliced": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "renewed"
+              },
+              "refresh_token_rotated": {
+                "kind": "literal",
+                "value": false
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-login-at-the-margin-is-renewed": {
+      "purpose": "a token expiring exactly at the margin is due and renewed",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "file_spliced": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "renewed"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-login-changed-during-renewal-is-not-overwritten": {
+      "purpose": "a file rewritten while the refresh request was in flight is kept and the renewal refuses",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": true
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "changed-during-renewal"
+              },
+              "file_spliced": {
+                "kind": "literal",
+                "value": false
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": null
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "refresh-uncertain"
+              },
+              "stray_files": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-login-outside-the-margin-is-neither-sent-nor-written": {
+      "purpose": "a token expiring one second after the margin is not due, nothing is sent and the file is untouched",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 901.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "not-due"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "stray_files": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-non-string-id-token-refuses-before-writing": {
+      "purpose": "an answer whose id token is not a string refuses and the file is untouched",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "NonStringIdToken"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "answer-invalid-id-token"
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "refresh-uncertain"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-refused-exchange-quotes-neither-the-answer-nor-the-refresh-token": {
+      "purpose": "a 400 from the token endpoint refuses the renewal without quoting its body or the refresh token, and writes nothing",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 400.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "exchange-failed"
+              },
+              "exchange_error": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "exchange_retriable": {
+                "kind": "literal",
+                "value": false
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "refresh-rejected"
+              },
+              "stray_files": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-repeated-value-is-replaced-only-at-its-pointer": {
+      "purpose": "a refresh token copied under a second key is replaced at its pointer only and every other byte survives",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "RepeatedValue"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "file_spliced": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "renewed"
+              },
+              "refresh_token_rotated": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-a-server-failure-is-sent-once-and-not-retried": {
+      "purpose": "a 503 from the token endpoint is final after one request and leaves the outcome uncertain",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 503.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "exchange-failed"
+              },
+              "exchange_error": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "exchange_retriable": {
+                "kind": "literal",
+                "value": false
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "refresh-uncertain"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-an-answer-without-a-refresh-token-keeps-the-one-on-disk": {
+      "purpose": "an answer carrying only an access token replaces it and leaves the refresh and id tokens as they were",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "AccessOnly"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "file_spliced": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "renewed"
+              },
+              "refresh_token_rotated": {
+                "kind": "literal",
+                "value": false
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-an-empty-access-token-refuses-before-writing": {
+      "purpose": "an answer with an empty access token refuses and the file is untouched",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "EmptyAccess"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "answer-without-access-token"
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "refresh-uncertain"
+              },
+              "stray_files": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-an-empty-refresh-token-refuses-before-writing": {
+      "purpose": "an answer with an empty refresh token refuses and the file is untouched",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "EmptyRefresh"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "answer-invalid-refresh-token"
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "refresh-uncertain"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-an-expired-login-is-renewed": {
+      "purpose": "a token already past its expiry is due and renewed",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": -60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "file_spliced": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "renewed"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-an-undated-login-is-left-alone": {
+      "purpose": "an access token whose exp cannot be read is left alone, no refresh token is spent and nothing is written",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome": {
+                "kind": "literal",
+                "value": "undated"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-an-undated-login-is-still-refused-by-the-resolver": {
+      "purpose": "the renewing resolver leaves an undated token alone and still refuses to send it",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "RenewingResolver"
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolved_renewed_token": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "unavailable"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-the-read-only-resolver-never-renews": {
+      "purpose": "the read-only resolver refuses an expired login and never contacts the endpoint",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "ReadOnlyResolver"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": -60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "expired"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-the-renewing-resolver-answers-the-renewed-token": {
+      "purpose": "the renewing resolver renews an expired login and answers the access token the endpoint issued",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "RenewingResolver"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": -60.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "file_spliced": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "resolved_renewed_token": {
+                "kind": "literal",
+                "value": true
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-renewal-the-renewing-resolver-sends-nothing-for-a-fresh-login": {
+      "purpose": "the renewing resolver answers a token outside its margin without contacting the endpoint",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "RenewingResolver"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 3600.0
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolved_renewed_token": {
+                "kind": "literal",
+                "value": false
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
         }
       ]
     },
@@ -81844,7 +85281,15 @@
         },
         {
           "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
           "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
         }
       ],
       "steps": [
@@ -81933,6 +85378,199 @@
         },
         {
           "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.transport.PostJson/outcome/observed": {
+      "purpose": "`llm.transport.PostJson` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.gateway.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.hosting.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.runpod.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "program_json"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "shape": {
+            "valid_program": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.gateway.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.hosting.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.runpod.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
           "step": "expect_no_event"
         }
       ]
@@ -84939,6 +88577,775 @@
           },
           "step": "expect_view",
           "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-a-json-answer-comes-back-from-one-post": {
+      "purpose": "one JSON POST returns the JSON document the server answered",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"body\":\"{\\\"issued\\\":\\\"fixture\\\",\\\"n\\\":1}\"}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answer_matches": {
+                "kind": "literal",
+                "value": true
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "redirected_requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "request_content_type": {
+                "kind": "literal",
+                "value": "application/json"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-a-rate-limit-is-final": {
+      "purpose": "a 429 is rate-limited and not retriable, after one request",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":429}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "rejected"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "rate-limited"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-a-redirect-is-never-followed": {
+      "purpose": "a 307 is refused and the redirect target is never contacted",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":307,\"redirect\":true}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "redirected_requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-a-refused-status-quotes-no-body": {
+      "purpose": "a 400 is refused with dispatch rejected and neither body reaches the diagnostic",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":400}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "rejected"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-a-server-failure-is-final": {
+      "purpose": "a 503 is a transport failure with dispatch unknown that is not retriable, after one request",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":503}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-a-success-that-is-not-json-is-refused": {
+      "purpose": "a 200 whose body is not JSON is a protocol refusal with dispatch accepted that quotes no body",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"body\":\"not json\"}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-an-answer-at-the-bound-is-read": {
+      "purpose": "an answer of exactly 65536 bytes is read whole",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"body_bytes\":65536}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answer_matches": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-an-answer-one-byte-over-the-bound-is-refused": {
+      "purpose": "an answer of 65537 bytes is refused as too large and not retriable",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"body_bytes\":65537}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "too-large"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/json-exchange-nothing-listening-is-a-final-transport-failure": {
+      "purpose": "a refused connection is a transport failure that is not retriable",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.PostJson"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastJsonExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.PostJson",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"listening\":false}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.PostJson",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastJsonExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastJsonExchange"
         }
       ]
     },

@@ -17,6 +17,7 @@ name = "llm_credentials"
 [features]
 default = []
 codex-auth-file = ["dep:base64", "dep:rustix", "dep:serde_json", "dep:sha2"]
+codex-renewal = ["codex-auth-file"]
 environment = ["dep:sha2"]
 file = ["dep:rustix", "dep:sha2"]
 json-pointer = ["dep:serde_json", "dep:sha2"]

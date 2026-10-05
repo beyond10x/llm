@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: json-exchange-a-refused-status-quotes-no-body
+summary: a 400 is refused with dispatch rejected and neither body reaches the diagnostic
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.transport.PostJson
+  input:
+    program_json: '{"server":{"status":400}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastJsonExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastJsonExchange
+  contains:
+    error_code: refused
+    dispatch: rejected
+    retriable: false
+    requests: 1
+    diagnostics_safe: true
