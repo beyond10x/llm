@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T10:39:28Z",
+  "actor": "human:timo",
+  "artifact": "story:harness-builds-on-llm",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base harness 3169042f: 1134 cases; spike: 928 passed 4 ignored, 206 left with the four deleted crates, +3 adapter tests, 3 newly ignored; no crate depends on the four Harness wire crates; one copy of b10x-llm-core at tag 0.1.7; adapters crates/harness-cli/src/llm_port.rs 701 lines (listed in the unit report); test list saved",
+    "reference": "beyond10x/harness spike/builds-on-llm-0.1.7 8989d138; ~/.cache/ga-wave-2026-10-05-w40/scratch/test-list.txt"
+  }
+}

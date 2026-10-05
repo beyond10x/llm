@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T10:39:29Z",
+  "actor": "human:timo",
+  "artifact": "story:harness-builds-on-llm",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "spike gate: fmt 0, clippy -D warnings 0, cargo test --workspace --locked 928 passed 0 failed 4 ignored, substrate conformance and every cargo xtask check 0, strict rustdoc 0; branch not merged",
+    "reference": "beyond10x/harness@8989d138"
+  }
+}
