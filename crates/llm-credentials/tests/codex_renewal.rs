@@ -31,7 +31,7 @@ use tokio::{
 const NOW: u64 = 1_790_985_600;
 /// The same instant as `/last_refresh` is written.
 const NOW_RFC3339: &str = "2026-10-03T00:00:00Z";
-const MARGIN: Duration = Duration::from_secs(900);
+const MARGIN: Duration = Duration::from_mins(15);
 const CLIENT: &str = "fixture-client";
 const OLD_REFRESH: &str = "fixture-refresh-token-one";
 const NEW_REFRESH: &str = "fixture-refresh-token-two";
@@ -120,14 +120,14 @@ fn renewal(url: &str) -> CodexRenewal {
         .with_endpoint(url, CLIENT)
         .with_margin(MARGIN)
 }
-
+type Requests = Arc<Mutex<Vec<(String, Vec<u8>)>>>;
 /// A scripted token endpoint on 127.0.0.1 that answers every connection with one status and
 /// body, records each request, and runs `before_answer` once, after it has read the first request
 /// and before it answers it.
 struct Endpoint {
     url: String,
     requests: Arc<AtomicUsize>,
-    received: Arc<Mutex<Vec<(String, Vec<u8>)>>>,
+    received: Requests,
 }
 
 impl Endpoint {
@@ -388,7 +388,7 @@ async fn a_kept_or_absent_refresh_token_is_not_reported_rotated() {
 /// nor written.
 #[tokio::test]
 async fn renewal_is_due_inside_the_margin_and_not_one_second_outside_it() {
-    assert_eq!(DEFAULT_RENEWAL_MARGIN, Duration::from_secs(15 * 60));
+    assert_eq!(DEFAULT_RENEWAL_MARGIN, Duration::from_mins(15));
     assert_eq!(
         CodexRenewal::new().unwrap().margin(),
         DEFAULT_RENEWAL_MARGIN

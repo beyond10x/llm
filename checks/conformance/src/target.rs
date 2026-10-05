@@ -161,6 +161,7 @@ impl ConformanceTarget for CatalogTarget {
         // Each domain module answers only its own commands and returns `None` otherwise,
         // so a new domain is a new file rather than an edit to this shared one.
         let owned = crate::messages::observe(&command, &input)
+            .or_else(|| crate::secrets::observe_renewal(&command, &input))
             .or_else(|| crate::responses::observe(&command, &input))
             .or_else(|| crate::chat::observe(&command, &input))
             .or_else(|| crate::hosting::observe(&command, &input))
@@ -278,6 +279,7 @@ impl ConformanceTarget for CatalogTarget {
             crate::gateway::VIEWS,
             crate::providers::VIEWS,
             crate::transport::VIEWS,
+            crate::secrets::VIEWS,
         ]
         .iter()
         .any(|views| views.contains(&view.as_str()));

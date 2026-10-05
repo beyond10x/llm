@@ -456,3 +456,413 @@ pub fn keychain(input: Value) -> Result<Value, Box<dyn Error>> {
             Ok(())
         }))
 }
+
+// Codex login renewal over a disposable `auth.json` (under this checkout's `target/conformance`)
+// and a scripted token endpoint on 127.0.0.1. Never the operator's login, never a real endpoint.
+
+/// Every view this module answers through `query_view` besides `llm.secrets.LastProbe`.
+pub const VIEWS: &[&str] = &["llm.secrets.LastRenewal"];
+
+/// The fixture clock: 2026-10-03T00:00:00Z, and the same instant as `/last_refresh` is written.
+const RENEWAL_NOW: i64 = 1_790_985_600;
+const RENEWAL_NOW_TEXT: &str = "2026-10-03T00:00:00Z";
+const RENEWAL_CLIENT: &str = "llm-fixture-client";
+const OLD_REFRESH: &str = "llm-fixture-private-marker-refresh-one";
+const NEW_REFRESH: &str = "llm-fixture-private-marker-refresh-two";
+const OLD_ID: &str = "llm-fixture-private-marker-id-one";
+const NEW_ID: &str = "llm-fixture-private-marker-id-two";
+const UNDATED_ACCESS: &str = "llm-fixture-private-marker-opaque-access";
+
+#[derive(Deserialize, Clone, Copy)]
+enum RenewalEntry {
+    Renew,
+    RenewingResolver,
+    ReadOnlyResolver,
+}
+#[derive(Deserialize, Clone, Copy)]
+enum AuthLayout {
+    Codex,
+    RepeatedValue,
+}
+#[derive(Deserialize, Clone, Copy)]
+enum TokenAnswer {
+    Rotated,
+    Kept,
+    AccessOnly,
+    EmptyAccess,
+    EmptyRefresh,
+    NonStringIdToken,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RenewInput {
+    entry: RenewalEntry,
+    #[serde(default)]
+    expires_in_s: Option<f64>,
+    margin_s: f64,
+    layout: AuthLayout,
+    refresh_token_present: bool,
+    group_readable: bool,
+    answer_status: f64,
+    answer: TokenAnswer,
+    concurrent_change: bool,
+}
+
+/// An exact integer from an ESS number, which may arrive as `60.0`.
+fn integer(value: f64) -> Result<i64, Box<dyn Error>> {
+    if value.fract() != 0.0 || value.abs() > 1e15 {
+        return Err("fixture number is not an exact integer".into());
+    }
+    #[expect(clippy::cast_possible_truncation, reason = "checked exact and bounded")]
+    Ok(value as i64)
+}
+
+/// Unpadded base64url, as a JWT segment is written.
+fn segment(bytes: &[u8]) -> String {
+    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    let mut out = String::new();
+    for chunk in bytes.chunks(3) {
+        let mut group = [0_u8; 3];
+        group[..chunk.len()].copy_from_slice(chunk);
+        let bits = (u32::from(group[0]) << 16) | (u32::from(group[1]) << 8) | u32::from(group[2]);
+        for index in 0..=chunk.len() {
+            out.push(char::from(
+                ALPHABET[(bits >> (18 - 6 * index)) as usize & 63],
+            ));
+        }
+    }
+    out
+}
+
+/// An unsigned fixture JWT with `exp`.
+fn jwt(exp: i64, subject: &str) -> String {
+    format!(
+        "{}.{}.{}",
+        segment(br#"{"alg":"none","typ":"JWT"}"#),
+        segment(format!(r#"{{"exp":{exp},"sub":"{subject}"}}"#).as_bytes()),
+        segment(b"fixture-signature"),
+    )
+}
+
+/// The login the way its owner wrote it: an odd indent, its own key order, keys no renewal
+/// reads, and in `RepeatedValue` a copy of the refresh token under a second key.
+fn auth_document(
+    layout: AuthLayout,
+    id: &str,
+    access: &str,
+    refresh: Option<&str>,
+    last_refresh: &str,
+) -> String {
+    let refresh = refresh.map_or(String::new(), |refresh| {
+        format!(",\n     \"refresh_token\": \"{refresh}\"")
+    });
+    let copy = match layout {
+        AuthLayout::Codex => String::new(),
+        AuthLayout::RepeatedValue => format!("  \"previous_refresh_token\": \"{OLD_REFRESH}\",\n"),
+    };
+    format!(
+        "{{\n{copy}    \"OPENAI_API_KEY\": null,\n  \"tokens\": {{\"id_token\": \"{id}\", \"access_token\":  \"{access}\"{refresh}, \"account_id\": \"fixture-account\"}},\n  \"last_refresh\": \"{last_refresh}\",\n  \"zz_unknown\": [1, 2, {{\"keep\": true}}]\n}}\n"
+    )
+}
+
+/// What the scripted endpoint saw.
+#[derive(Default)]
+struct EndpointSeen {
+    requests: std::sync::atomic::AtomicUsize,
+    received: std::sync::Mutex<Vec<(String, Vec<u8>)>>,
+}
+
+async fn read_renewal_request(socket: &mut tokio::net::TcpStream) -> Option<(String, Vec<u8>)> {
+    use tokio::io::AsyncReadExt;
+    let mut bytes = Vec::new();
+    let mut buffer = [0_u8; 4096];
+    let end = loop {
+        if let Some(end) = bytes.windows(4).position(|w| w == b"\r\n\r\n") {
+            break end;
+        }
+        if bytes.len() > 64 * 1024 {
+            return None;
+        }
+        let read = socket.read(&mut buffer).await.ok()?;
+        if read == 0 {
+            return None;
+        }
+        bytes.extend_from_slice(buffer.get(..read)?);
+    };
+    let head = String::from_utf8_lossy(bytes.get(..end)?).into_owned();
+    let length: usize = head
+        .lines()
+        .find_map(|line| {
+            let (name, value) = line.split_once(':')?;
+            name.trim()
+                .eq_ignore_ascii_case("content-length")
+                .then(|| value.trim().parse().ok())?
+        })
+        .unwrap_or(0);
+    let mut body = bytes.get(end + 4..)?.to_vec();
+    while body.len() < length {
+        let read = socket.read(&mut buffer).await.ok()?;
+        if read == 0 {
+            return None;
+        }
+        body.extend_from_slice(buffer.get(..read)?);
+    }
+    Some((head, body))
+}
+
+/// Starts the endpoint: every connection is answered with `status` and `answer`, and
+/// `before_answer` runs once, after the first request was read and before it is answered.
+async fn start_endpoint(
+    status: u16,
+    answer: Vec<u8>,
+    before_answer: impl FnOnce() + Send + 'static,
+) -> Result<(String, Arc<EndpointSeen>), Box<dyn Error>> {
+    use tokio::io::AsyncWriteExt;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
+    let url = format!("http://{}/oauth/token", listener.local_addr()?);
+    let seen = Arc::new(EndpointSeen::default());
+    let log = seen.clone();
+    tokio::spawn(async move {
+        let mut hook = Some(before_answer);
+        while let Ok((mut socket, _)) = listener.accept().await {
+            log.requests
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            let Some(request) = read_renewal_request(&mut socket).await else {
+                continue;
+            };
+            log.received
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .push(request);
+            if let Some(hook) = hook.take() {
+                hook();
+            }
+            let head = format!(
+                "HTTP/1.1 {status} Fixture\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n",
+                answer.len()
+            );
+            let _ = socket.write_all(head.as_bytes()).await;
+            let _ = socket.write_all(&answer).await;
+            let _ = socket.shutdown().await;
+        }
+    });
+    Ok((url, seen))
+}
+
+/// Dispatches `llm.secrets.RenewCodexLogin`; `None` for any other command.
+pub fn observe_renewal(
+    command: &str,
+    input: &Value,
+) -> Option<Result<crate::target::Observed, ess_conformance::target::TargetError>> {
+    if command != "llm.secrets.RenewCodexLogin" {
+        return None;
+    }
+    Some(
+        renew(input.clone())
+            .map(|facts| crate::target::Observed {
+                facts,
+                view: "llm.secrets.LastRenewal",
+                event: "llm.secrets.Renewed",
+                field: "diagnostics_safe",
+            })
+            .map_err(|error| {
+                ess_conformance::target::TargetError::unavailable(
+                    "renewal observation",
+                    error.to_string(),
+                )
+            }),
+    )
+}
+
+#[expect(
+    clippy::too_many_lines,
+    reason = "one fixture, one call and its facts, in order"
+)]
+fn renew(input: Value) -> Result<Value, Box<dyn Error>> {
+    use llm_credentials::codex::{CodexAuthFile, CodexRenewal, Renewal};
+    let input: RenewInput = serde_json::from_value(input)?;
+    let margin = std::time::Duration::from_secs(u64::try_from(integer(input.margin_s)?)?);
+    let status = u16::try_from(integer(input.answer_status)?)?;
+    let stale = match input.expires_in_s {
+        Some(seconds) => jwt(RENEWAL_NOW + integer(seconds)?, "stale"),
+        None => UNDATED_ACCESS.to_owned(),
+    };
+    let fresh = jwt(RENEWAL_NOW + 3600, "fresh");
+
+    let scratch = Path::new("target/conformance");
+    fs::create_dir_all(scratch)?;
+    let temp = tempfile::tempdir_in(scratch)?;
+    let path = temp.path().canonicalize()?.join("auth.json");
+    let before = auth_document(
+        input.layout,
+        OLD_ID,
+        &stale,
+        input.refresh_token_present.then_some(OLD_REFRESH),
+        "2026-10-01T00:00:00Z",
+    );
+    let mode = if input.group_readable { 0o640 } else { 0o600 };
+    fs::write(&path, &before)?;
+    fs::set_permissions(&path, fs::Permissions::from_mode(mode))?;
+    let concurrent = auth_document(
+        input.layout,
+        "concurrent-id",
+        &jwt(RENEWAL_NOW + 7200, "concurrent"),
+        Some("concurrent-refresh"),
+        "2026-10-02T23:59:00Z",
+    );
+    let last_written = if input.concurrent_change {
+        concurrent.clone()
+    } else {
+        before.clone()
+    };
+
+    let answer = if (200..300).contains(&status) {
+        match input.answer {
+            TokenAnswer::Rotated => {
+                json!({"access_token": fresh, "refresh_token": NEW_REFRESH, "id_token": NEW_ID})
+            }
+            TokenAnswer::Kept => json!({"access_token": fresh, "refresh_token": OLD_REFRESH}),
+            TokenAnswer::AccessOnly => json!({"access_token": fresh}),
+            TokenAnswer::EmptyAccess => json!({"access_token": ""}),
+            TokenAnswer::EmptyRefresh => json!({"access_token": fresh, "refresh_token": ""}),
+            TokenAnswer::NonStringIdToken => json!({"access_token": fresh, "id_token": 42}),
+        }
+    } else {
+        json!({"error": format!("{CANARY}-endpoint-answer")})
+    };
+    // What a renewal that changed only the token values and `/last_refresh` leaves on disk.
+    let text = |key: &str| answer.get(key).and_then(Value::as_str).map(str::to_owned);
+    let spliced = auth_document(
+        input.layout,
+        &text("id_token").unwrap_or_else(|| OLD_ID.to_owned()),
+        &text("access_token").unwrap_or_default(),
+        input
+            .refresh_token_present
+            .then(|| text("refresh_token").unwrap_or_else(|| OLD_REFRESH.to_owned()))
+            .as_deref(),
+        RENEWAL_NOW_TEXT,
+    );
+
+    let runtime = runtime()?;
+    let (url, seen) =
+        runtime.block_on(start_endpoint(status, answer.to_string().into_bytes(), {
+            let (target, bytes) = (path.clone(), concurrent.clone());
+            let change = input.concurrent_change;
+            move || {
+                if change {
+                    let _ = fs::write(target, bytes);
+                }
+            }
+        }))?;
+    let renewal = CodexRenewal::new()?
+        .with_endpoint(url, RENEWAL_CLIENT)
+        .with_margin(margin);
+    let file = CodexAuthFile::new(SecretRef::new("selected")?, &path).with_clock(|| {
+        std::time::SystemTime::UNIX_EPOCH
+            + std::time::Duration::from_secs(RENEWAL_NOW.unsigned_abs())
+    });
+    let reference = SecretRef::new("selected")?;
+
+    let mut facts = json!({
+        "outcome": null, "error_code": null, "resolver_error": null, "exchange_error": null,
+        "exchange_retriable": null, "requests": 0, "request_well_formed": null,
+        "refresh_token_rotated": null, "file_unchanged": false, "file_spliced": false,
+        "mode_kept": false, "stray_files": 0, "resolved_renewed_token": null,
+        "refusal_names_pointer": null, "diagnostics_safe": true
+    });
+    let mut diagnostics = format!("{renewal:?}");
+    match input.entry {
+        RenewalEntry::Renew => {
+            match runtime.block_on(file.renew(&renewal, &llm_core::Cancel::new())) {
+                Ok(outcome) => {
+                    write!(diagnostics, "{outcome:?}")?;
+                    facts["outcome"] = json!(match outcome {
+                        Renewal::NotDue => "not-due",
+                        Renewal::Undated => "undated",
+                        Renewal::Renewed(_) => "renewed",
+                    });
+                    if let Renewal::Renewed(renewed) = outcome {
+                        facts["refresh_token_rotated"] = json!(renewed.refresh_token_rotated);
+                    }
+                }
+                Err(error) => {
+                    write!(diagnostics, "{error} {error:?}")?;
+                    facts["error_code"] = json!(error.refusal().code());
+                    facts["resolver_error"] = json!(code(error.kind()));
+                    facts["exchange_error"] =
+                        error.exchange().map_or(Value::Null, |e| json!(e.code));
+                    facts["exchange_retriable"] =
+                        error.exchange().map_or(Value::Null, |e| json!(e.retriable));
+                    facts["refusal_names_pointer"] =
+                        json!(error.to_string().contains("/tokens/refresh_token"));
+                }
+            }
+        }
+        RenewalEntry::RenewingResolver => {
+            let renewing = file.renewing(renewal);
+            write!(diagnostics, "{renewing:?}")?;
+            match runtime.block_on(renewing.resolve(&reference)) {
+                Ok(resolved) => {
+                    write!(diagnostics, "{resolved:?}")?;
+                    facts["resolved_renewed_token"] =
+                        json!(resolved.secret.expose() == fresh.as_bytes());
+                }
+                Err(error) => facts["resolver_error"] = json!(code(error)),
+            }
+        }
+        RenewalEntry::ReadOnlyResolver => {
+            write!(diagnostics, "{file:?}")?;
+            match runtime.block_on(file.resolve(&reference)) {
+                Ok(resolved) => {
+                    write!(diagnostics, "{resolved:?}")?;
+                    facts["resolved_renewed_token"] =
+                        json!(resolved.secret.expose() == fresh.as_bytes());
+                }
+                Err(error) => facts["resolver_error"] = json!(code(error)),
+            }
+        }
+    }
+
+    let received = std::mem::take(
+        &mut *seen
+            .received
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner),
+    );
+    facts["requests"] = json!(seen.requests.load(std::sync::atomic::Ordering::SeqCst));
+    if let [(head, body)] = received.as_slice() {
+        let grant = json!({
+            "client_id": RENEWAL_CLIENT, "grant_type": "refresh_token", "refresh_token": OLD_REFRESH
+        });
+        let json_body = head
+            .lines()
+            .any(|line| line.eq_ignore_ascii_case("content-type: application/json"));
+        facts["request_well_formed"] =
+            json!(json_body && serde_json::from_slice::<Value>(body).ok() == Some(grant));
+    }
+    drop(runtime);
+
+    let after = fs::read(&path).ok();
+    facts["file_unchanged"] = json!(after.as_deref() == Some(last_written.as_bytes()));
+    facts["file_spliced"] = json!(after.as_deref() == Some(spliced.as_bytes()));
+    facts["mode_kept"] = json!(
+        fs::metadata(&path).is_ok_and(|metadata| metadata.permissions().mode() & 0o7777 == mode)
+    );
+    facts["stray_files"] = json!(
+        fs::read_dir(temp.path())?
+            .filter(|entry| entry
+                .as_ref()
+                .is_ok_and(|entry| entry.file_name() != "auth.json"))
+            .count()
+    );
+    let secrets = [stale.as_str(), fresh.as_str(), CANARY];
+    facts["diagnostics_safe"] = json!(
+        !secrets.iter().any(|secret| diagnostics.contains(secret))
+            && !fresh
+                .split('.')
+                .chain(stale.split('.'))
+                .filter(|part| part.len() > 24)
+                .any(|part| diagnostics.contains(part))
+    );
+    Ok(facts)
+}

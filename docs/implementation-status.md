@@ -18,7 +18,8 @@ output is visible (Harness policy by default), then falls back.
 Optional local secret adapters now read explicitly mapped protected files on Linux or an injected
 keychain store. Native constructors select Linux Secret Service, macOS Keychain or Windows
 Credential Manager. The `codex-auth-file` adapter reads a Codex login's access token from an
-explicit absolute `auth.json` path, read-only and refused once expired. [Adapter documentation](local-secrets.md) records the platform and trust
+explicit absolute `auth.json` path, read-only and refused once expired; the opt-in `codex-renewal`
+feature renews it through its token endpoint and writes it back atomically and byte-preserving. [Adapter documentation](local-secrets.md) records the platform and trust
 boundaries; tests use disposable files and mock stores, never existing user credentials.
 
 Provider bindings validate independent protocol, provider, auth and billing choices, including

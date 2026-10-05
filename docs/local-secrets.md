@@ -9,10 +9,12 @@ has no file or native credential-store dependency. Local adapters are optional:
 | `keychain` | Explicit injected `keyring_core::CredentialStore` and service/entry per reference | Any compatible injected store |
 | `native-keychain` | Explicit native-store constructor, includes `keychain` | Linux Secret Service, macOS Keychain, Windows Credential Manager |
 | `codex-auth-file` | The access token of one Codex login's `auth.json`, at an explicit path, for one reference | Any platform with a readable file |
+| `codex-renewal` | Includes `codex-auth-file`; renews that login through its token endpoint and writes it back, when the caller opts in | As `codex-auth-file`; tested on Unix |
 | `environment` | An explicit, caller-named environment variable per reference | Any platform; raw bytes on Unix, Unicode values elsewhere |
 | `json-pointer` | The string at an explicit RFC 6901 pointer of a JSON document another resolver returns | Wherever the wrapped resolver is available |
 
-These adapters read existing material. They do not create entries, perform login, refresh tokens,
+These adapters read existing material. Apart from the opt-in Codex renewal below, they do not
+create entries, perform login, refresh tokens,
 search vendor configuration directories, look up any variable or member the caller did not name,
 select another source when a reference is absent, or modify the process-global keyring store. The application or operator provisions and rotates the
 source separately. Entry values never belong in argv, TOML, tracing or diagnostics. A future
@@ -132,8 +134,9 @@ as `Expired`. A missing file or token, or another reference, is `Missing`; a fil
 `Unavailable`; the file is opened without blocking, so a FIFO with no writer cannot stall the
 resolve. An unreadable document, a document or `tokens` that is not a JSON object, or a token whose
 `exp` is absent, whose JWT payload is not a JSON object, or whose `exp` is not an integer within
-the 64-bit range (a float, a string, `null`), is `Unavailable`. The signature is not verified: the issuer does that. Renewal is the caller's: running `codex` renews
-the login, and `refresh` returns `RefreshUnsupported`. `CodexAuthFile::read` returns the same
+the 64-bit range (a float, a string, `null`), is `Unavailable`. The signature is not verified: the issuer does that. `CodexAuthFile` itself never renews: running
+`codex` renews the login, `refresh` returns `RefreshUnsupported`, and renewal through the token
+endpoint is the separate, opt-in `codex-renewal` feature below. `CodexAuthFile::read` returns the same
 refusal with the file's path; its message names the file and says to run `codex`.
 
 Unlike the `file` adapter, this one makes no permission or ownership checks. The Codex CLI owns
@@ -143,6 +146,34 @@ The file is read into one buffer allocated once and zeroized on drop. One copy i
 token written with JSON escapes is unescaped through the JSON parser's own scratch buffer, which is
 freed without zeroizing. The Codex CLI writes the token as an unescaped base64url JWT, so only a
 hand-edited file reaches that path.
+
+## Renew a Codex login (opt-in)
+
+With `codex-renewal`, the same `CodexAuthFile` can renew its login through the token endpoint,
+as Harness does. `CodexRenewal::new()` names Codex's own endpoint (`CODEX_TOKEN_URL`) and public
+client id (`CODEX_CLIENT_ID`), a 15-minute margin and a 30-second exchange; `with_endpoint` and
+`with_margin` replace them. `CodexAuthFile::renew` renews once when asked;
+`CodexAuthFile::renewing` returns a `RenewingCodexAuthFile` resolver that renews a due login
+before answering its token, one renewal at a time. The read-only resolver stays available.
+
+- **When.** Renewal is due when the token's `exp` is at or before the clock plus the margin. A
+  token whose `exp` cannot be read is `Undated`: nothing is sent or written, no refresh token is
+  spent, and the read rule still refuses it as `Unavailable`.
+- **The exchange.** One JSON POST of `client_id`, `grant_type: refresh_token` and the refresh
+  token, without `scope`, through `HttpClient::post_json`: never retried, no redirect, no ambient
+  proxy, an answer bounded at 64 KiB. No diagnostic quotes the answer or a token. An answer with an
+  empty or non-string token refuses before anything is written.
+- **The write-back.** Only `/tokens/access_token`, `/tokens/refresh_token` (when the answer
+  carries one), `/tokens/id_token` (when both the file and the answer carry one) and
+  `/last_refresh` (when present) change, each replaced at its own position, so every other byte
+  and the key order survive. The result goes to a new file in the same directory with the
+  original's mode, is flushed, and is renamed over the original only when the original still
+  holds the bytes the renewal read; otherwise the newer file is kept and the renewal refuses
+  `ChangedDuringRenewal`. A symlink at the path is refused rather than replaced.
+- **Refusals as a resolver sees them.** A refusal before anything is sent keeps its read kind (no
+  refresh token is `Missing`); a refusal status from the endpoint is `RefreshRejected`; a refusal
+  after the endpoint may have issued tokens is `RefreshUncertain`, because the refresh token on
+  disk may have been retired. Run `codex` to log in again.
 
 ## Bind a reference to a caller-named environment variable
 

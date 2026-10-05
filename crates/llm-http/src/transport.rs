@@ -2,7 +2,7 @@ use crate::{Framing, SseDecoder, SseEvent};
 use llm_core::{Cancel, Dispatch, Error, ErrorCode, MAX_REQUEST_BYTES};
 use reqwest::{
     Client, Response, Url,
-    header::{ACCEPT, CONTENT_TYPE, HeaderMap, RETRY_AFTER},
+    header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue, RETRY_AFTER},
 };
 use std::{
     collections::VecDeque,
@@ -294,6 +294,142 @@ pub fn retry_after(headers: &HeaderMap, now: SystemTime) -> Option<Duration> {
             .duration_since(now)
             .unwrap_or_default(),
     )
+}
+
+// One JSON document exchange, beside the streaming POST above. `post_sse_until` applies the same
+// URL and request bounds inline.
+impl HttpClient {
+    /// One JSON document exchange: `body` (JSON the caller serialised) out as
+    /// `application/json`, one JSON document back. For a credential exchange, not a turn.
+    ///
+    /// Sends exactly once with this client's redirect, proxy and deadline rules. The answer is
+    /// read up to [`MAX_EXCHANGE_BYTES`] inclusive. Every refusal is final (`retriable` false),
+    /// whatever the status table says for a turn: the body may be a non-idempotent document such
+    /// as a refresh grant. Neither the request body nor the answer body reaches a diagnostic.
+    ///
+    /// # Errors
+    /// Refuses invalid URLs and bounds, cancellation, deadlines, transport failures, a failing
+    /// status (as [`status_error`]), an answer over the bound and a success that is not JSON.
+    pub async fn post_json(
+        &self,
+        url: &str,
+        headers: HeaderMap,
+        body: Vec<u8>,
+        cancel: &Cancel,
+    ) -> Result<serde_json::Value, Error> {
+        self.post_json_once(url, headers, body, cancel)
+            .await
+            .map_err(|error| error.with_retriable(false))
+    }
+
+    async fn post_json_once(
+        &self,
+        url: &str,
+        mut headers: HeaderMap,
+        body: Vec<u8>,
+        cancel: &Cancel,
+    ) -> Result<serde_json::Value, Error> {
+        if cancel.is_cancelled() {
+            return Err(Error::cancelled());
+        }
+        let url = checked_url(url)?;
+        check_request_bounds(&headers, &body)?;
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static(JSON));
+        headers.insert(ACCEPT, HeaderValue::from_static(JSON));
+        for value in headers.values_mut() {
+            value.set_sensitive(true);
+        }
+        let started = Instant::now();
+        let deadline = started + self.limits.total;
+        let request = self
+            .client
+            .post(url)
+            .headers(headers)
+            .body(body)
+            .build()
+            .map_err(|_| Error::invalid("HTTP request could not be constructed"))?;
+        let mut response = tokio::select! {
+            biased;
+            () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),
+            reply = tokio::time::timeout_at(deadline.min(started + self.limits.response_headers), self.client.execute(request)) => {
+                reply.map_err(|_| Error::new(ErrorCode::Deadline, "HTTP response-header deadline exceeded").with_dispatch(Dispatch::Unknown))?
+                    .map_err(|_| Error::new(ErrorCode::Transport, "HTTP request failed").with_dispatch(Dispatch::Unknown))?
+            }
+        };
+        if !response.status().is_success() {
+            // The body is never read: its sensitivity is unknown here.
+            return Err(status_error(
+                response.status().as_u16(),
+                response.headers(),
+                SystemTime::now(),
+            ));
+        }
+        let too_large = || {
+            Error::too_large(format!(
+                "HTTP answer passed the {MAX_EXCHANGE_BYTES} byte bound"
+            ))
+            .with_dispatch(Dispatch::Accepted)
+        };
+        if response
+            .content_length()
+            .is_some_and(|length| length > MAX_EXCHANGE_BYTES as u64)
+        {
+            return Err(too_large());
+        }
+        let mut answer = Vec::new();
+        loop {
+            let chunk = tokio::select! {
+                biased;
+                () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
+                chunk = tokio::time::timeout_at(deadline.min(Instant::now() + self.limits.idle), response.chunk()) => {
+                    chunk.map_err(|_| Error::new(ErrorCode::Deadline, "HTTP idle or total deadline exceeded").with_dispatch(Dispatch::Accepted))?
+                        .map_err(|_| Error::new(ErrorCode::Transport, "HTTP response body failed").with_dispatch(Dispatch::Accepted))?
+                }
+            };
+            let Some(chunk) = chunk else { break };
+            if answer.len() + chunk.len() > MAX_EXCHANGE_BYTES {
+                return Err(too_large());
+            }
+            answer.extend_from_slice(&chunk);
+        }
+        serde_json::from_slice(&answer).map_err(|_| {
+            Error::protocol(format!(
+                "HTTP success answer of {} byte(s) is not JSON",
+                answer.len()
+            ))
+            .with_dispatch(Dispatch::Accepted)
+        })
+    }
+}
+
+/// The largest answer [`HttpClient::post_json`] reads: 64 KiB, inclusive.
+pub const MAX_EXCHANGE_BYTES: usize = 64 * 1024;
+
+const JSON: &str = "application/json";
+
+/// An absolute `http`/`https` URL with a host, no embedded credentials and no fragment.
+fn checked_url(url: &str) -> Result<Url, Error> {
+    let url = Url::parse(url).map_err(|_| Error::invalid("invalid HTTP endpoint URL"))?;
+    if !matches!(url.scheme(), "http" | "https")
+        || url.host_str().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.fragment().is_some()
+    {
+        return Err(Error::invalid(
+            "HTTP endpoint must have a host and no embedded credentials or fragment",
+        ));
+    }
+    Ok(url)
+}
+
+fn check_request_bounds(headers: &HeaderMap, body: &[u8]) -> Result<(), Error> {
+    if body.len() > MAX_REQUEST_BYTES || headers.len() > 64 {
+        return Err(Error::too_large(
+            "HTTP request body or header count exceeds bound",
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(test)]
