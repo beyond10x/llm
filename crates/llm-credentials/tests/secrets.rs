@@ -153,9 +153,9 @@ async fn the_route_reference_resolves_through_the_keychain_backend() {
     put(&store, &elsewhere, &name, b"wrong-namespace").await;
 
     let resolver = keychain(&store, Scope::local());
-    let resolved = resolver.resolve(&reference(&name)).await.unwrap();
-    assert_eq!(resolved.secret.expose(), content.as_bytes());
-    let diagnostics = format!("{resolved:?} {resolver:?}");
+    let answer = resolver.resolve(&reference(&name)).await.unwrap();
+    assert_eq!(answer.secret.expose(), content.as_bytes());
+    let diagnostics = format!("{answer:?} {resolver:?}");
     assert!(!diagnostics.contains(CANARY), "{diagnostics}");
     assert!(!diagnostics.contains("raw content"), "{diagnostics}");
 }

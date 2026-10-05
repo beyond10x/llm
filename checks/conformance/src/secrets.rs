@@ -1,6 +1,6 @@
 //! Disposable fixture construction around real adapters. No scenario names or
 //! expected assertions are accessible here. Native user credential stores are never opened.
-use keyring_core::{api::CredentialStoreApi, mock};
+use keyring_core::{CredentialStore, api::CredentialStoreApi, mock};
 use llm_core::Id;
 use llm_credentials::{
     ReferenceError, ResolvedSecret, SecretError, SecretRef, SecretResolver,
@@ -8,6 +8,14 @@ use llm_credentials::{
     file::FileResolver,
     keychain::{KeychainEntry, KeychainResolver},
     pointer::JsonPointerResolver,
+    secrets::{
+        SecretsResolver,
+        keychain::{DEFAULT_SERVICE, KeychainBackend, entry_user},
+        storage::{
+            Address, Capability, Revealed, Scope, ScopeName, SecretName, SecretStorage,
+            SecretValue, StorageError, Target,
+        },
+    },
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -18,6 +26,7 @@ use std::{
     fs,
     os::unix::fs::{PermissionsExt, symlink},
     path::Path,
+    pin::Pin,
     process::{Command, Stdio},
     sync::Arc,
 };
@@ -120,11 +129,30 @@ async fn observe(
     input: &Common,
     rotate: impl FnOnce(&[u8]) -> Result<(), Box<dyn Error>>,
 ) -> Result<Value, Box<dyn Error>> {
+    let reference = reference(input)?;
+    observe_with(resolver, &reference, input, |replacement| {
+        let rotated = rotate(&replacement);
+        Box::pin(async move { rotated })
+    })
+    .await
+}
+
+/// A rotation that may await, such as a write through a storage backend.
+type Rotation<'a> = Pin<Box<dyn Future<Output = Result<(), Box<dyn Error>>> + 'a>>;
+
+/// [`observe`] for a caller-named reference: resolve, refresh the first version, rotate when
+/// `input` has a replacement, and resolve again.
+async fn observe_with<'a>(
+    resolver: &dyn SecretResolver,
+    reference: &SecretRef,
+    input: &Common,
+    rotate: impl FnOnce(Vec<u8>) -> Rotation<'a>,
+) -> Result<Value, Box<dyn Error>> {
     let mut facts = json!({"error_code":null, "reread_error":null,
         "matches_content":null, "matches_replacement":null,
         "version_changed":null, "refresh_error":null, "refusal_names_reference":null,
         "refusal_names_location":null, "diagnostics_safe":true});
-    let reference = reference(input)?;
+    let reference = reference.clone();
     let first = resolver.resolve(&reference).await;
     let mut diagnostics = format!("{first:?}");
     let mut redacted = true;
@@ -137,7 +165,7 @@ async fn observe(
             write!(diagnostics, "{refresh:?}")?;
             facts["refresh_error"] = json!(refresh.err().map(code));
             if let Some(replacement) = &input.replacement {
-                rotate(replacement.as_bytes())?;
+                rotate(replacement.as_bytes().to_vec()).await?;
             }
             let second = resolver.resolve(&reference).await;
             write!(diagnostics, "{second:?}")?;
@@ -457,6 +485,132 @@ pub fn keychain(input: Value) -> Result<Value, Box<dyn Error>> {
         }))
 }
 
+#[derive(Deserialize, Clone, Copy)]
+enum LibraryStorage {
+    Keychain,
+    NoReadCapability,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LibraryInput {
+    reference: String,
+    content: String,
+    replacement: Option<String>,
+    storage: LibraryStorage,
+    entry_present: bool,
+    tenant_admitted: bool,
+    backend_fault: bool,
+}
+
+/// A fixture backend that offers no read capability and answers the port's `unsupported`.
+struct NoRead;
+#[async_trait::async_trait]
+impl SecretStorage for NoRead {
+    fn capabilities(&self) -> &[Capability] {
+        &[]
+    }
+    async fn read(&self, _: &Target) -> Result<Revealed, StorageError> {
+        Err(StorageError::Unsupported)
+    }
+}
+
+/// Writes `value` at `address` through the library's own keychain backend over `store`.
+async fn library_write(
+    store: &Arc<mock::Store>,
+    address: &Address,
+    value: &[u8],
+) -> Result<(), Box<dyn Error>> {
+    KeychainBackend::new(store.clone() as Arc<CredentialStore>)
+        .write(
+            &Target::unbound(address.clone()),
+            SecretValue::new(value.to_vec())?,
+        )
+        .await?;
+    Ok(())
+}
+
+/// A route reference resolved through the `secrets` library: its keychain backend behind the
+/// local authorizer over a fresh mock store, or a backend without read. Never a native store.
+pub fn secrets_library(input: Value) -> Result<Value, Box<dyn Error>> {
+    let input: LibraryInput = serde_json::from_value(input)?;
+    let scope = if input.tenant_admitted {
+        Scope::local()
+    } else {
+        Scope {
+            tenant: ScopeName::parse("other")?,
+            ..Scope::local()
+        }
+    };
+    let common = Common {
+        content: input.content,
+        replacement: input.replacement,
+        known_reference: true,
+        oversized: false,
+    };
+    let reference = SecretRef::new(input.reference.as_str())?;
+    // A reference that is not a secrets name has no address to hold a value at.
+    let address = SecretName::parse(&input.reference)
+        .ok()
+        .map(|name| Address {
+            scope: scope.clone(),
+            name,
+        });
+    let store = mock::Store::new()?;
+    let runtime = runtime()?;
+    let resolver = match input.storage {
+        LibraryStorage::NoReadCapability => SecretsResolver::new(Arc::new(NoRead), scope.clone()),
+        LibraryStorage::Keychain => {
+            SecretsResolver::keychain(store.clone() as Arc<CredentialStore>, scope.clone())
+        }
+    };
+    runtime.block_on(async {
+        // Decoys: another name in the scope, and the same name in another namespace.
+        library_write(
+            &store,
+            &Address {
+                scope: scope.clone(),
+                name: SecretName::parse("decoy-token")?,
+            },
+            b"wrong-name",
+        )
+        .await?;
+        if let Some(address) = &address {
+            let elsewhere = Address {
+                scope: Scope {
+                    namespace: ScopeName::parse("elsewhere")?,
+                    ..scope.clone()
+                },
+                name: address.name.clone(),
+            };
+            library_write(&store, &elsewhere, b"wrong-namespace").await?;
+            if input.entry_present {
+                library_write(&store, address, &bytes(&common)).await?;
+            }
+            if input.backend_fault {
+                store
+                    .build(DEFAULT_SERVICE, &entry_user(address), None)?
+                    .as_any()
+                    .downcast_ref::<mock::Cred>()
+                    .ok_or("mock fixture credential type")?
+                    .set_error(keyring_core::Error::Invalid(CANARY.into(), CANARY.into()));
+            }
+        }
+        let mut facts = observe_with(&resolver, &reference, &common, |replacement| {
+            let store = store.clone();
+            let address = address.clone();
+            Box::pin(async move {
+                let address = address.ok_or("no address to rotate")?;
+                library_write(&store, &address, &replacement).await
+            })
+        })
+        .await?;
+        if format!("{resolver:?}").contains(CANARY) {
+            facts["diagnostics_safe"] = json!(false);
+        }
+        Ok(facts)
+    })
+}
+
 // Codex login renewal over a disposable `auth.json` (under this checkout's `target/conformance`)
 // and a scripted token endpoint on 127.0.0.1. Never the operator's login, never a real endpoint.
 
@@ -668,6 +822,37 @@ async fn start_endpoint(
 }
 
 /// Dispatches `llm.secrets.RenewCodexLogin`; `None` for any other command.
+/// Every `llm.secrets.Probe*` command, observed into `llm.secrets.LastProbe`; `None` for any
+/// other command.
+pub fn observe_probe(
+    command: &str,
+    input: &Value,
+) -> Option<Result<crate::target::Observed, ess_conformance::target::TargetError>> {
+    let facts = match command {
+        "llm.secrets.ProbeFile" => file(input.clone()),
+        "llm.secrets.ProbeKeychain" => keychain(input.clone()),
+        "llm.secrets.ProbeSecretsLibrary" => secrets_library(input.clone()),
+        "llm.secrets.ProbeEnvironment" => environment(input),
+        "llm.secrets.ProbePointer" => pointer(input.clone()),
+        _ => return None,
+    };
+    Some(
+        facts
+            .map(|facts| crate::target::Observed {
+                facts,
+                view: "llm.secrets.LastProbe",
+                event: "llm.secrets.Probed",
+                field: "diagnostics_safe",
+            })
+            .map_err(|error| {
+                ess_conformance::target::TargetError::unavailable(
+                    "catalog observation",
+                    error.to_string(),
+                )
+            }),
+    )
+}
+
 pub fn observe_renewal(
     command: &str,
     input: &Value,

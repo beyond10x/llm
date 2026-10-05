@@ -24,6 +24,8 @@ pub mod keychain;
 mod local;
 #[cfg(feature = "json-pointer")]
 pub mod pointer;
+#[cfg(feature = "secrets")]
+pub mod secrets;
 
 /// Maximum secret material accepted from an injected or local source.
 pub const MAX_SECRET_BYTES: usize = 1024 * 1024;

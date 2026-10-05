@@ -262,6 +262,7 @@ version = "0.2.0"
 name = "b10x-llm-conformance"
 version = "0.2.0"
 dependencies = [
+ "async-trait",
  "b10x-llm-chat",
  "b10x-llm-core",
  "b10x-llm-cost",

@@ -23,7 +23,7 @@ file = ["dep:rustix", "dep:sha2"]
 json-pointer = ["dep:serde_json", "dep:sha2"]
 keychain = ["dep:keyring-core", "dep:sha2"]
 native-keychain = ["keychain", "dep:zbus-secret-service-keyring-store", "dep:apple-native-keyring-store", "dep:windows-native-keyring-store"]
-secrets = ["dep:secrets-core", "dep:secrets-keychain", "dep:keyring-core"]
+secrets = ["dep:secrets-core", "dep:secrets-keychain", "dep:keyring-core", "dep:sha2"]
 
 [dependencies]
 llm-core.workspace = true

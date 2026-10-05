@@ -136,7 +136,7 @@
     },
     {
       "area": "Credentials",
-      "detail": "An optional resolver backed by the Secrets library's named storage; it waits for that library's release.",
+      "detail": "Feature secrets: SecretsResolver reads a route's reference as a name in one configured scope of the Secrets library's storage (v0.5.0), over its keychain backend or any SecretStorage, with refusals mapped to the existing SecretError codes. In the tree; not in a release yet.",
       "label": "Resolution through the Secrets library",
       "status": "planned"
     },

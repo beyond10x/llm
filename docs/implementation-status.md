@@ -80,7 +80,7 @@ cutover.
 | `codex-auth-file` | **A Codex login, read-only.** Opt-in `codex-auth-file`: `CodexAuthFile` reads the access token of a Codex `auth.json` at an explicit absolute path on every request and refuses it once expired. |
 | `parity-codex-renewal` | **Codex login renewal, opt-in.** Feature `codex-renewal`: renews inside a 15-minute margin through one non-retried request and writes only the token values back, atomically, refusing a file that changed meanwhile. |
 | `codex-config-refusal` | **A misconfigured Codex login is refused.** A login file that is not a Codex login, or whose token has no readable expiry, is refused as malformed and never falls back to another account. |
-| `secrets-resolver` | Pending: **Resolution through the Secrets library.** An optional resolver backed by the Secrets library's named storage; it waits for that library's release. |
+| `secrets-resolver` | Pending: **Resolution through the Secrets library.** Feature `secrets`: `SecretsResolver` reads a route's reference as a name in one configured scope of the Secrets library's storage (v0.5.0), over its keychain backend or any `SecretStorage`, with refusals mapped to the existing `SecretError` codes. In the tree; not in a release yet. |
 
 ### Providers and routing
 

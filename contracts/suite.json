@@ -573,6 +573,14 @@
       "llm.secrets/authored/pointer-not-json",
       "llm.secrets/authored/pointer-token-at-pointer",
       "llm.secrets/authored/pointer-unbound-reference",
+      "llm.secrets/authored/secrets-library-backend-error-redacted",
+      "llm.secrets/authored/secrets-library-denied-scope",
+      "llm.secrets/authored/secrets-library-invalid-name",
+      "llm.secrets/authored/secrets-library-missing",
+      "llm.secrets/authored/secrets-library-rereads-rotation",
+      "llm.secrets/authored/secrets-library-route-reference-resolves",
+      "llm.secrets/authored/secrets-library-same-value-is-a-new-version",
+      "llm.secrets/authored/secrets-library-unsupported-read",
       "llm.transport/authored/a-body-at-the-request-bound-is-sent",
       "llm.transport/authored/a-body-one-byte-over-the-request-bound-is-refused-before-sending",
       "llm.transport/authored/a-caller-instant-shorter-than-the-client-bound-ends-the-exchange",
@@ -3505,6 +3513,46 @@
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/pointer-unbound-reference"
       },
+      "secrets/scenarios/secrets-library-backend-error-redacted.yaml": {
+        "digest": "sha256:859afc55c18544af3c4f955f4ad1b4c1edea46f3f4647e3300ca9392e2760259",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/secrets-library-backend-error-redacted"
+      },
+      "secrets/scenarios/secrets-library-denied-scope.yaml": {
+        "digest": "sha256:fb1ade95364f7a92e0652ba5c832f23dff1088bbb1eee992f17495f5d620ccfb",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/secrets-library-denied-scope"
+      },
+      "secrets/scenarios/secrets-library-invalid-name.yaml": {
+        "digest": "sha256:f707ca8fe0c91cd73f68fa05fb0b1d1e8ebb5858be5fe406a3d1f25597e20efc",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/secrets-library-invalid-name"
+      },
+      "secrets/scenarios/secrets-library-missing.yaml": {
+        "digest": "sha256:2bacb751a69d609c2d0d11194d9e0f5b5d7f60f098f00ddc37f0705c24e0ca62",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/secrets-library-missing"
+      },
+      "secrets/scenarios/secrets-library-rereads-rotation.yaml": {
+        "digest": "sha256:a00344bd630cc61d1051213c5f16301477573557f1a9dab9add1efaf5abb0928",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/secrets-library-rereads-rotation"
+      },
+      "secrets/scenarios/secrets-library-route-reference-resolves.yaml": {
+        "digest": "sha256:07b870390c0930cb2b960d6d8879cbe81760847b4609749cd339e5f78cc8286f",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/secrets-library-route-reference-resolves"
+      },
+      "secrets/scenarios/secrets-library-same-value-is-a-new-version.yaml": {
+        "digest": "sha256:9b9657c9246add8c4b37dc211ee5b35d62cb042202a0a1eeec4c8d9c75f44741",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/secrets-library-same-value-is-a-new-version"
+      },
+      "secrets/scenarios/secrets-library-unsupported-read.yaml": {
+        "digest": "sha256:2441ac213f85ac24402fd1a4188cb0ec7c51743170432b84c239cb605ac42443",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/secrets-library-unsupported-read"
+      },
       "transport/scenarios/a-body-at-the-request-bound-is-sent.yaml": {
         "digest": "sha256:b6045bbd0893fa6282db9f0b218649a3802c56b4e428ccc7475c39f63eac149a",
         "disposition": "accepted",
@@ -3857,8 +3905,8 @@
       }
     },
     "counts": {
-      "authored": 642,
-      "generated": 23,
+      "authored": 650,
+      "generated": 24,
       "outside": 0,
       "refused": 0
     },
@@ -3883,6 +3931,7 @@
       "llm.secrets.ProbeFile/outcome/observed",
       "llm.secrets.ProbeKeychain/outcome/observed",
       "llm.secrets.ProbePointer/outcome/observed",
+      "llm.secrets.ProbeSecretsLibrary/outcome/observed",
       "llm.secrets.RenewCodexLogin/outcome/observed",
       "llm.transport.Exchange/outcome/observed",
       "llm.transport.PostJson/outcome/observed"
@@ -3901,8 +3950,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "44d0a94de0fd041ed7ef2cc9c49aecc08184283f7200c304677cde55070e7c56",
-    "spec_digest": "da2ed300b8bf244dda7fed5790623c26046814790cf6cd396ace4a943c880406",
+    "contract_digest": "7dd4570f37f6a9fb2ac5616dfbcc53d7c48324f1f3889a19f1d4ce5238f5ba19",
+    "spec_digest": "f65b4e78c94db3ff29eebeaf3cbf9d712314e6c1413b7d0101a5b3034723195d",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -62716,6 +62765,195 @@
         }
       ]
     },
+    "llm.secrets.ProbeSecretsLibrary/outcome/observed": {
+      "purpose": "`llm.secrets.ProbeSecretsLibrary` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": true
+            },
+            "content": {
+              "kind": "literal",
+              "value": "content"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "reference"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "replacement"
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "Keychain"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "shape": {
+            "diagnostics_safe": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
     "llm.secrets.RenewCodexLogin/outcome/observed": {
       "purpose": "`llm.secrets.RenewCodexLogin` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -72528,6 +72766,1006 @@
               "refusal_names_reference": {
                 "kind": "literal",
                 "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/secrets-library-backend-error-redacted": {
+      "purpose": "a secrets library backend error is unavailable and redacted",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": true
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "lab-llm-token"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "Keychain"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/secrets-library-denied-scope": {
+      "purpose": "a scope the local authorizer denies is unsafe-source",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "lab-llm-token"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "Keychain"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsafe-source"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/secrets-library-invalid-name": {
+      "purpose": "a reference that is not a secrets name is an invalid reference",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "Lab_LLM_Token"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "Keychain"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-reference"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/secrets-library-missing": {
+      "purpose": "a name the secrets library does not hold is missing",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": false
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "lab-llm-token"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "Keychain"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "missing"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/secrets-library-rereads-rotation": {
+      "purpose": "a value rewritten in the secrets library is read again under a new version",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "lab-llm-token"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "rotated"
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "Keychain"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-rejected"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/secrets-library-route-reference-resolves": {
+      "purpose": "a route reference resolves through the secrets library keychain backend",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "lab-llm-token"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "Keychain"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-rejected"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/secrets-library-same-value-is-a-new-version": {
+      "purpose": "rewriting the same value in the secrets library is a new version",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "lab-llm-token"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "Keychain"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": true
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": true
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": "refresh-rejected"
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        }
+      ]
+    },
+    "llm.secrets/authored/secrets-library-unsupported-read": {
+      "purpose": "a backend without read capability is unsupported-platform",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.LibraryStorage"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.ProbeSecretsLibrary"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastProbe"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.ProbeSecretsLibrary",
+          "input": {
+            "backend_fault": {
+              "kind": "literal",
+              "value": false
+            },
+            "content": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker\n raw content \n"
+            },
+            "entry_present": {
+              "kind": "literal",
+              "value": true
+            },
+            "reference": {
+              "kind": "literal",
+              "value": "lab-llm-token"
+            },
+            "replacement": {
+              "kind": "literal",
+              "value": null
+            },
+            "storage": {
+              "kind": "literal",
+              "value": "NoReadCapability"
+            },
+            "tenant_admitted": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.ProbeSecretsLibrary",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastProbe"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported-platform"
+              },
+              "matches_content": {
+                "kind": "literal",
+                "value": null
+              },
+              "matches_replacement": {
+                "kind": "literal",
+                "value": null
+              },
+              "refresh_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "reread_error": {
+                "kind": "literal",
+                "value": null
+              },
+              "version_changed": {
+                "kind": "literal",
+                "value": null
               }
             }
           },
