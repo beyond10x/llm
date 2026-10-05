@@ -158,7 +158,8 @@ async fn a_clock_before_the_epoch_judges_negative_exp_against_that_instant() {
 
 /// The story: "resolves one `SecretRef` to the `/tokens/access_token` of the given `auth.json`".
 /// A JSON array has no member named `tokens` or `access_token`, so neither document below has
-/// that pointer, and neither may resolve to a token.
+/// that pointer, and neither may resolve to a token: each is a document read whole that is not a
+/// Codex login, `Malformed`.
 #[tokio::test]
 async fn an_array_in_place_of_an_object_has_no_tokens_pointer() {
     let (_temp, path) = fixture_dir();
@@ -172,17 +173,14 @@ async fn an_array_in_place_of_an_object_has_no_tokens_pointer() {
         write_fixture(&path, &document);
         let outcome = resolver.resolve(&reference()).await;
         assert!(
-            matches!(
-                outcome,
-                Err(SecretError::Missing | SecretError::Unavailable)
-            ),
+            matches!(outcome, Err(SecretError::Malformed)),
             "{document} resolved a token at no `/tokens/access_token`: {:?}",
             outcome.map(|value| value.secret.expose() == token.as_bytes())
         );
     }
 }
 
-/// docs/local-secrets.md: "a token whose `exp` is absent ... is `Unavailable`". A JWT payload that
+/// docs/local-secrets.md: "a token whose `exp` is absent ... is `Malformed`". A JWT payload that
 /// is a JSON array carries no `exp` claim, whatever its first element is.
 #[tokio::test]
 async fn a_jwt_payload_that_is_an_array_has_no_exp_claim() {
@@ -192,7 +190,7 @@ async fn a_jwt_payload_that_is_an_array_has_no_exp_claim() {
     let outcome = resolver.resolve(&reference()).await;
     assert_eq!(
         outcome.map(|value| value.secret.expose().len()),
-        Err(SecretError::Unavailable)
+        Err(SecretError::Malformed)
     );
 }
 

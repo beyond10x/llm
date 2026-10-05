@@ -198,3 +198,51 @@ async fn a_relative_path_is_refused_as_not_absolute() {
         assert!(message.contains(relative), "{message}");
     }
 }
+
+/// docs/local-secrets.md: a login read whole that is not a Codex login is `Malformed`, a
+/// configuration error no fallback takes; a login that ends before its document does (an empty
+/// file included) is what a reader sees while the file is rewritten in place, and stays
+/// `Unavailable`. Either refusal names the file and says to run `codex`, never the token.
+#[tokio::test]
+async fn a_whole_login_that_is_not_one_is_malformed_and_a_cut_one_is_unavailable() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().canonicalize().unwrap().join("auth.json");
+    let resolver = resolver(&path);
+    let valid = token(NOW + 3600);
+    let whole = login(&valid);
+    let cut_in_token = whole.find(&valid).unwrap() + valid.len() / 2;
+
+    for (document, kind) in [
+        ("not json\n".to_owned(), SecretError::Malformed),
+        (
+            r#"{"tokens":{"access_token":17}}"#.to_owned(),
+            SecretError::Malformed,
+        ),
+        (
+            format!(r#"{{"tokens":{{"access_token":"{valid}"}},"tokens":{{}}}}"#),
+            SecretError::Malformed,
+        ),
+        (
+            whole[..whole.len() - 1].to_owned(),
+            SecretError::Unavailable,
+        ),
+        (whole[..cut_in_token].to_owned(), SecretError::Unavailable),
+        (String::new(), SecretError::Unavailable),
+    ] {
+        write_fixture(&path, &document);
+        let before = snapshot(&path);
+        assert_eq!(
+            resolver.resolve(&reference()).await.unwrap_err(),
+            kind,
+            "{document:?}"
+        );
+        let refusal = resolver.read(&reference()).await.unwrap_err();
+        assert_eq!(refusal.kind(), kind, "{document:?}");
+        let message = refusal.to_string();
+        assert!(message.contains(&path.display().to_string()), "{message}");
+        assert!(message.contains("codex"), "{message}");
+        assert!(!message.contains(&valid), "{message}");
+        assert_eq!(snapshot(&path), before, "a refusal changed the fixture");
+        assert_redacted(&resolver, &valid);
+    }
+}

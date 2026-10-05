@@ -441,7 +441,8 @@ async fn renewal_is_due_inside_the_margin_and_not_one_second_outside_it() {
 }
 
 /// C18: an access token whose `exp` cannot be read is left alone, so no refresh token is spent on
-/// a credential nobody can date, and it is still not sent: llm's read rule refuses it.
+/// a credential nobody can date, and it is still not sent: llm's read rule refuses it as
+/// `Malformed`.
 #[tokio::test]
 async fn an_undated_access_token_is_left_alone_and_still_not_sent() {
     let dir = fixture_dir();
@@ -465,7 +466,7 @@ async fn an_undated_access_token_is_left_alone_and_still_not_sent() {
         let renewing = resolver(&path).renewing(renewal(&endpoint.url));
         assert_eq!(
             renewing.resolve(&reference()).await.unwrap_err(),
-            SecretError::Unavailable,
+            SecretError::Malformed,
             "{access}"
         );
         assert_eq!(endpoint.requests(), 0, "{access}");

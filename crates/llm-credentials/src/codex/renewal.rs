@@ -33,7 +33,9 @@
 //! **Secret copies.** The request body is zeroized when the HTTP client drops it, and every string
 //! of the answer is zeroized after the tokens are taken from it. Copies inside the HTTP and TLS
 //! stack and the JSON parser's scratch buffers are not covered.
-use super::{CodexAuthError, CodexAuthFile, expiry, open, read_exact, unix_seconds};
+use super::{
+    CodexAuthError, CodexAuthFile, document_error, expiry, open, read_exact, unix_seconds,
+};
 use crate::{MAX_SECRET_BYTES, ResolvedSecret, SecretError, SecretRef, SecretResolver, local};
 use llm_core::{BoxFuture, Cancel, Dispatch};
 use llm_http::{HeaderMap, HttpClient, Limits};
@@ -161,8 +163,12 @@ pub enum RenewalRefusal {
     NotAbsolute,
     /// No file, or no access token in it.
     Missing,
-    /// The file, its document or its access token cannot be read.
+    /// The file cannot be read, changed length while it was read, or ends before its document
+    /// does, as one being rewritten in place does.
     Unavailable,
+    /// The file was read whole and is not a Codex login: not JSON, not an object, a key named
+    /// twice, or a token that is not a string. A configuration error.
+    Malformed,
     /// The file exceeds 1 MiB.
     TooLarge,
     /// A symlink or anything but a regular file is at the path, which a renewal would replace.
@@ -192,6 +198,7 @@ impl RenewalRefusal {
             Self::NotAbsolute => "not-absolute",
             Self::Missing => "missing",
             Self::Unavailable => "unavailable",
+            Self::Malformed => "malformed",
             Self::TooLarge => "too-large",
             Self::NotARegularFile => "not-a-regular-file",
             Self::MultipleLinks => "multiple-links",
@@ -246,6 +253,7 @@ impl CodexRenewalError {
             RenewalRefusal::NotAbsolute
             | RenewalRefusal::Unavailable
             | RenewalRefusal::NotARegularFile => SecretError::Unavailable,
+            RenewalRefusal::Malformed => SecretError::Malformed,
             RenewalRefusal::MultipleLinks => SecretError::UnsafeSource,
             RenewalRefusal::Missing | RenewalRefusal::NoRefreshToken => SecretError::Missing,
             RenewalRefusal::TooLarge => SecretError::TooLarge,
@@ -277,6 +285,10 @@ impl fmt::Display for CodexRenewalError {
             RenewalRefusal::Unavailable => write!(
                 f,
                 "the Codex login in {path} cannot be read for renewal; run `codex` to refresh the login"
+            ),
+            RenewalRefusal::Malformed => write!(
+                f,
+                "the Codex login in {path} is not a Codex login document; run `codex` to log in again"
             ),
             RenewalRefusal::TooLarge => {
                 write!(f, "the Codex login in {path} exceeds its size bound")
@@ -647,18 +659,27 @@ fn plan(path: &Path, now: SystemTime, margin: Duration) -> Result<Plan, RenewalR
         .filter(|size| *size <= MAX_SECRET_BYTES)
         .ok_or(RenewalRefusal::TooLarge)?;
     let bytes = read_exact(&file, size).map_err(RenewalRefusal::from_read)?;
+    // A sequence cut off at the end is a file being rewritten in place; any other invalid byte is
+    // a document that is not a Codex login, as the read rule judges it.
     let text = Zeroizing::new(
         std::str::from_utf8(&bytes)
-            .map_err(|_| RenewalRefusal::Unavailable)?
+            .map_err(|error| match error.error_len() {
+                None => RenewalRefusal::Unavailable,
+                Some(_) => RenewalRefusal::Malformed,
+            })?
             .to_owned(),
     );
     drop(bytes);
 
-    let root: &RawValue = serde_json::from_str(&text).map_err(|_| RenewalRefusal::Unavailable)?;
+    let root: &RawValue =
+        serde_json::from_str(&text).map_err(|error| match document_error(&error) {
+            SecretError::Unavailable => RenewalRefusal::Unavailable,
+            _ => RenewalRefusal::Malformed,
+        })?;
     let access_raw = lookup(root, &ACCESS)
-        .map_err(|()| RenewalRefusal::Unavailable)?
+        .map_err(|()| RenewalRefusal::Malformed)?
         .ok_or(RenewalRefusal::Missing)?;
-    let access = string(access_raw).ok_or(RenewalRefusal::Unavailable)?;
+    let access = string(access_raw).ok_or(RenewalRefusal::Malformed)?;
     if access.is_empty() {
         return Err(RenewalRefusal::Missing);
     }
@@ -669,7 +690,7 @@ fn plan(path: &Path, now: SystemTime, margin: Duration) -> Result<Plan, RenewalR
         return Ok(Plan::NotDue);
     }
     let refresh_raw = lookup(root, &REFRESH)
-        .map_err(|()| RenewalRefusal::Unavailable)?
+        .map_err(|()| RenewalRefusal::Malformed)?
         .ok_or(RenewalRefusal::NoRefreshToken)?;
     let refresh_token = string(refresh_raw)
         .filter(|token| !token.is_empty())
