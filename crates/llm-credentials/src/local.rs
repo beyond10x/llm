@@ -1,18 +1,50 @@
 use crate::SecretError;
-#[cfg(any(feature = "codex-auth-file", feature = "keychain", target_os = "linux"))]
+#[cfg(any(
+    feature = "codex-auth-file",
+    feature = "environment",
+    feature = "json-pointer",
+    feature = "keychain",
+    target_os = "linux"
+))]
 use crate::{ResolvedSecret, Secret, SecretVersion};
-#[cfg(any(feature = "codex-auth-file", feature = "keychain", target_os = "linux"))]
+#[cfg(any(
+    feature = "codex-auth-file",
+    feature = "environment",
+    feature = "json-pointer",
+    feature = "keychain",
+    target_os = "linux"
+))]
 use sha2::{Digest, Sha256};
-#[cfg(any(feature = "codex-auth-file", feature = "keychain", target_os = "linux"))]
+#[cfg(any(
+    feature = "codex-auth-file",
+    feature = "environment",
+    feature = "json-pointer",
+    feature = "keychain",
+    target_os = "linux"
+))]
 use std::fmt::Write;
+#[cfg(any(feature = "codex-auth-file", feature = "file", feature = "keychain"))]
 use std::sync::Arc;
+#[cfg(any(feature = "codex-auth-file", feature = "file", feature = "keychain"))]
 use tokio::sync::Semaphore;
 
-#[cfg(any(feature = "file", feature = "keychain"))]
+#[cfg(any(
+    feature = "environment",
+    feature = "file",
+    feature = "json-pointer",
+    feature = "keychain"
+))]
 pub const MAX_BINDINGS: usize = 4096;
+#[cfg(any(feature = "codex-auth-file", feature = "file", feature = "keychain"))]
 pub const MAX_BLOCKING_READS: usize = 8;
 
-#[cfg(any(feature = "codex-auth-file", feature = "keychain", target_os = "linux"))]
+#[cfg(any(
+    feature = "codex-auth-file",
+    feature = "environment",
+    feature = "json-pointer",
+    feature = "keychain",
+    target_os = "linux"
+))]
 pub fn resolved(secret: Secret) -> Result<ResolvedSecret, SecretError> {
     // Read-only sources have no issuer generation. Equal material identifies the
     // same value; restoring old bytes restores that identity. Never log this hash.
@@ -26,6 +58,7 @@ pub fn resolved(secret: Secret) -> Result<ResolvedSecret, SecretError> {
     })
 }
 
+#[cfg(any(feature = "codex-auth-file", feature = "file", feature = "keychain"))]
 pub async fn blocking<T: Send + 'static>(
     permits: Arc<Semaphore>,
     operation: impl FnOnce() -> Result<T, SecretError> + Send + 'static,
@@ -44,7 +77,10 @@ pub async fn blocking<T: Send + 'static>(
     .map_err(|_| SecretError::Unavailable)?
 }
 
-#[cfg(test)]
+#[cfg(all(
+    test,
+    any(feature = "codex-auth-file", feature = "file", feature = "keychain")
+))]
 mod tests {
     use super::*;
     #[tokio::test]

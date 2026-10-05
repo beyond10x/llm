@@ -9,10 +9,12 @@ has no file or native credential-store dependency. Local adapters are optional:
 | `keychain` | Explicit injected `keyring_core::CredentialStore` and service/entry per reference | Any compatible injected store |
 | `native-keychain` | Explicit native-store constructor, includes `keychain` | Linux Secret Service, macOS Keychain, Windows Credential Manager |
 | `codex-auth-file` | The access token of one Codex login's `auth.json`, at an explicit path, for one reference | Any platform with a readable file |
+| `environment` | An explicit, caller-named environment variable per reference | Any platform; raw bytes on Unix, Unicode values elsewhere |
+| `json-pointer` | The string at an explicit RFC 6901 pointer of a JSON document another resolver returns | Wherever the wrapped resolver is available |
 
 These adapters read existing material. They do not create entries, perform login, refresh tokens,
-search vendor configuration directories, select another source when a reference is absent, or
-modify the process-global keyring store. The application or operator provisions and rotates the
+search vendor configuration directories, look up any variable or member the caller did not name,
+select another source when a reference is absent, or modify the process-global keyring store. The application or operator provisions and rotates the
 source separately. Entry values never belong in argv, TOML, tracing or diagnostics. A future
 Connectors arbitrary-secret adapter can implement the same trait without changing route references.
 
@@ -52,13 +54,22 @@ Symlink-based projected volumes must be copied or mounted into an explicitly pro
 file by the application deployment before using this adapter.
 
 Reads preserve raw bytes, including empty values, NUL, invalid UTF-8 and trailing newlines.
-Nothing is trimmed. The consumer validates whether those bytes can be presented as authentication.
-Reads are capped at 1 MiB, and changes to size, modification time or change time during a read
+Nothing is trimmed. The consumer validates whether those bytes can be presented as authentication:
+`llm-providers` presents the material without one trailing line terminator (`\n` or `\r\n`), so a
+token file written by an editor or `echo` works, and refuses any other byte outside printable
+US-ASCII. Reads are capped at 1 MiB, and changes to size, modification time or change time during a read
 are refused. Rotate with an atomic replacement in the protected directory to provide a coherent
 old or new value. The trusted boundary is the kernel, filesystem and root/effective-user writers;
 the adapter does not protect against a compromised privileged writer or a filesystem that lies
 about its permissions. A hostile writer can race metadata checks, so they are not a transactional
 snapshot guarantee.
+
+`resolve` returns the bare `SecretError` kind. `FileResolver::read` resolves the same way and
+returns a `ReferenceError` that also names the reference that refused (``secret reference
+`lab-token` refused: secret reference was not found``), so a caller can report which credential
+failed. Neither the error's `Display` nor its `Debug` carries the path or the value. The refusal
+`prepare_auth` returns, and so the error a model turn returns, carries the same text for every
+resolver: ``secret reference `lab-token` refused: secret reference was not found``.
 
 macOS ACL evaluation is outside this file adapter's implemented protection checks. It therefore
 refuses macOS, Windows and other unsupported platforms instead of accepting a mode-bit-only
@@ -132,6 +143,65 @@ The file is read into one buffer allocated once and zeroized on drop. One copy i
 token written with JSON escapes is unescaped through the JSON parser's own scratch buffer, which is
 freed without zeroizing. The Codex CLI writes the token as an unescaped base64url JWT, so only a
 hand-edited file reaches that path.
+
+## Bind a reference to a caller-named environment variable
+
+With `environment`, each reference resolves to exactly the variable the embedding names:
+
+```rust
+use llm_credentials::{environment::EnvironmentResolver, SecretRef};
+use std::{collections::BTreeMap, sync::Arc};
+
+let resolver = Arc::new(EnvironmentResolver::new(BTreeMap::from([
+    (SecretRef::new("lab-token")?, "MY_APPLICATION_LAB_TOKEN".to_owned()),
+]))?);
+```
+
+No variable name is built in, and no other variable is consulted. An empty name or one holding
+`=` or NUL is refused as `InvalidReference` at construction, which reads nothing. The variable is
+read on every resolve and never cached. The value is raw bytes on Unix, as for a file; on other
+platforms a value that is not Unicode is `Unavailable`. An unset variable or an unbound reference
+is `Missing`; a value above 1 MiB is `TooLarge` (Linux caps one environment string at 128 KiB, so
+there that bound is never reached). `refresh` returns `RefreshUnsupported`. `read` returns a
+`ReferenceError` naming the reference, never the variable name or the value, and `Debug` shows
+only the binding count.
+
+## Read a token at a caller-named JSON pointer
+
+With `json-pointer`, `JsonPointerResolver` wraps any resolver whose material is a JSON document and
+binds each reference to an RFC 6901 pointer into the document that resolver returns for the same
+reference. For a credential store kept in a protected file:
+
+```rust
+use llm_credentials::{file::FileResolver, pointer::JsonPointerResolver, SecretRef};
+use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
+
+let reference = SecretRef::new("subscription-login")?;
+let file = FileResolver::new(BTreeMap::from([
+    (reference.clone(), PathBuf::from("/run/llm-secrets/credentials.json")),
+]))?;
+let resolver = Arc::new(JsonPointerResolver::new(
+    Arc::new(file),
+    BTreeMap::from([(reference, "/claudeAiOauth/accessToken".to_owned())]),
+)?);
+```
+
+The pointer is the caller's; this crate knows no store's layout. A pointer that is neither empty
+nor starts with `/`, or that holds a `~` not followed by `0` or `1`, is refused as
+`InvalidReference` at construction. `~1` selects a `/` and `~0` a `~` inside one member name; an
+array is indexed by a decimal without leading zeros. The token is the JSON string at the pointer,
+raw: nothing is trimmed. A reference bound to no pointer is `Missing` and the wrapped resolver is
+not asked; nothing at the pointer, or an empty string there, is `Missing`; a document that is not
+JSON, or a value at the pointer that is not a string, is `Malformed`: a configuration error, which
+`llm-providers` refuses as `Unauthorized` and routing never falls back from. Any refusal of the
+wrapped resolver is returned unchanged. The version is the content identity of the token alone, so a
+sibling member (a refresh token, an expiry) changing on its own keeps it. `refresh` returns
+`RefreshUnsupported` and never reaches the wrapped resolver. `read` returns a `ReferenceError`
+naming the reference.
+
+The document is walked through borrowed raw JSON values, so no member but the selected one is
+copied. The selected token is moved into zeroized storage; as for Codex, a token written with JSON
+escapes is unescaped through the parser's own buffer, which is freed without zeroizing.
 
 ## Rotation, memory and cancellation
 

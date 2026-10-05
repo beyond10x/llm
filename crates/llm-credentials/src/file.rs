@@ -1,5 +1,5 @@
 //! Explicit protected mounted files. Files are raw bytes: nothing is trimmed or decoded.
-use crate::{ResolvedSecret, SecretError, SecretRef, SecretResolver, local};
+use crate::{ReferenceError, ResolvedSecret, SecretError, SecretRef, SecretResolver, local};
 use llm_core::BoxFuture;
 use std::{
     collections::BTreeMap,
@@ -40,6 +40,25 @@ impl FileResolver {
             permits: Arc::new(Semaphore::new(local::MAX_BLOCKING_READS)),
         })
     }
+
+    /// Resolves as [`SecretResolver::resolve`] does, with a refusal that names `reference`.
+    ///
+    /// # Errors
+    /// The same refusal kinds as `resolve`; the error never carries the path or the value.
+    pub async fn read(&self, reference: &SecretRef) -> Result<ResolvedSecret, ReferenceError> {
+        self.lookup(reference)
+            .await
+            .map_err(|kind| ReferenceError::new(kind, reference.clone()))
+    }
+
+    async fn lookup(&self, reference: &SecretRef) -> Result<ResolvedSecret, SecretError> {
+        let path = self
+            .bindings
+            .get(reference)
+            .ok_or(SecretError::Missing)?
+            .clone();
+        local::blocking(self.permits.clone(), move || read(&path)).await
+    }
 }
 impl fmt::Debug for FileResolver {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -53,14 +72,7 @@ impl SecretResolver for FileResolver {
         &'a self,
         reference: &'a SecretRef,
     ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
-        Box::pin(async move {
-            let path = self
-                .bindings
-                .get(reference)
-                .ok_or(SecretError::Missing)?
-                .clone();
-            local::blocking(self.permits.clone(), move || read(&path)).await
-        })
+        Box::pin(self.lookup(reference))
     }
 }
 

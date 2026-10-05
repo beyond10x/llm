@@ -3,9 +3,11 @@
 use keyring_core::{api::CredentialStoreApi, mock};
 use llm_core::Id;
 use llm_credentials::{
-    ResolvedSecret, SecretError, SecretRef, SecretResolver,
+    ReferenceError, ResolvedSecret, SecretError, SecretRef, SecretResolver,
+    environment::EnvironmentResolver,
     file::FileResolver,
     keychain::{KeychainEntry, KeychainResolver},
+    pointer::JsonPointerResolver,
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -16,6 +18,8 @@ use std::{
     fs,
     os::unix::fs::{PermissionsExt, symlink},
     path::Path,
+    process::{Command, Stdio},
+    sync::Arc,
 };
 
 const CANARY: &str = "llm-fixture-private-marker";
@@ -88,6 +92,7 @@ fn code(error: SecretError) -> &'static str {
         SecretError::RefreshUnsupported => "refresh-unsupported",
         SecretError::Unavailable => "unavailable",
         SecretError::UnsupportedPlatform => "unsupported-platform",
+        SecretError::Malformed => "malformed",
         SecretError::InvalidReference => "invalid-reference",
         SecretError::Expired => "expired",
         SecretError::RefreshRejected => "refresh-rejected",
@@ -117,12 +122,9 @@ async fn observe(
 ) -> Result<Value, Box<dyn Error>> {
     let mut facts = json!({"error_code":null, "reread_error":null,
         "matches_content":null, "matches_replacement":null,
-        "version_changed":null, "refresh_error":null, "diagnostics_safe":true});
-    let reference = SecretRef::new(if input.known_reference {
-        "selected"
-    } else {
-        "unbound"
-    })?;
+        "version_changed":null, "refresh_error":null, "refusal_names_reference":null,
+        "refusal_names_location":null, "diagnostics_safe":true});
+    let reference = reference(input)?;
     let first = resolver.resolve(&reference).await;
     let mut diagnostics = format!("{first:?}");
     let mut redacted = true;
@@ -157,6 +159,44 @@ async fn observe(
     }
     facts["diagnostics_safe"] = json!(redacted && !diagnostics.contains(CANARY));
     Ok(facts)
+}
+
+fn reference(input: &Common) -> Result<SecretRef, SecretError> {
+    SecretRef::new(if input.known_reference {
+        "selected"
+    } else {
+        "unbound"
+    })
+}
+
+/// For a refused first resolve, what the source's own `read` refusal says: whether its message
+/// names the reference, and whether it names any of `locations` (where the value lives).
+fn refusal(
+    facts: &mut Value,
+    read: Result<ResolvedSecret, ReferenceError>,
+    reference: &SecretRef,
+    locations: &[&str],
+) {
+    if facts["error_code"].is_null() {
+        return;
+    }
+    let Err(error) = read else {
+        facts["refusal_names_reference"] = json!(false);
+        return;
+    };
+    let rendered = format!("{error} {error:?}");
+    facts["refusal_names_reference"] = json!(error.to_string().contains(reference.as_str()));
+    facts["refusal_names_location"] =
+        json!(locations.iter().any(|location| rendered.contains(location)));
+    if rendered.contains(CANARY) {
+        facts["diagnostics_safe"] = json!(false);
+    }
+}
+
+fn runtime() -> std::io::Result<tokio::runtime::Runtime> {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
 }
 
 fn debug_redacted(value: &ResolvedSecret) -> bool {
@@ -208,13 +248,174 @@ pub fn file(input: Value) -> Result<Value, Box<dyn Error>> {
             fs::set_permissions(target, fs::Permissions::from_mode(bits))?;
         }
     }
+    let locations = [
+        path.to_str().ok_or("non-UTF8 fixture path")?.to_owned(),
+        root.to_str().ok_or("non-UTF8 fixture path")?.to_owned(),
+    ];
     let resolver = FileResolver::new(BTreeMap::from([(SecretRef::new("selected")?, path)]))?;
-    tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()?
-        .block_on(observe(&resolver, &input.common, |replacement| {
-            protected(&real, replacement)
-        }))
+    let runtime = runtime()?;
+    let mut facts = runtime.block_on(observe(&resolver, &input.common, |replacement| {
+        protected(&real, replacement)
+    }))?;
+    let reference = reference(&input.common)?;
+    refusal(
+        &mut facts,
+        runtime.block_on(resolver.read(&reference)),
+        &reference,
+        &locations.each_ref().map(String::as_str),
+    );
+    Ok(facts)
+}
+
+/// The variable the environment child resolves; set only in the child's environment.
+const ENVIRONMENT_VARIABLE: &str = "LLM_CONFORMANCE_FIXTURE_SECRET";
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EnvironmentInput {
+    content: String,
+    variable_set: bool,
+    known_reference: bool,
+}
+
+/// Starts this binary's hidden `secrets-environment-child` with the fixture variable set (or
+/// removed) and returns the facts it prints. Nothing changes this process's environment.
+pub fn environment(input: &Value) -> Result<Value, Box<dyn Error>> {
+    let parsed: EnvironmentInput = serde_json::from_value(input.clone())?;
+    let mut command = Command::new(std::env::current_exe()?);
+    command
+        .args(["secrets-environment-child", &serde_json::to_string(input)?])
+        .env_remove(ENVIRONMENT_VARIABLE)
+        .stdin(Stdio::null());
+    if parsed.variable_set {
+        command.env(ENVIRONMENT_VARIABLE, &parsed.content);
+    }
+    let output = command.output()?;
+    if !output.status.success() {
+        return Err(format!(
+            "secrets-environment-child failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into());
+    }
+    Ok(serde_json::from_slice(&output.stdout)?)
+}
+
+/// The child half of [`environment`]: resolves through a real `EnvironmentResolver` bound to
+/// [`ENVIRONMENT_VARIABLE`] in whatever environment this process was started with.
+pub fn environment_here(input_json: &str) -> Result<Value, Box<dyn Error>> {
+    let input: EnvironmentInput = serde_json::from_str(input_json)?;
+    let common = Common {
+        content: input.content,
+        replacement: None,
+        known_reference: input.known_reference,
+        oversized: false,
+    };
+    let resolver = EnvironmentResolver::new(BTreeMap::from([(
+        SecretRef::new("selected")?,
+        ENVIRONMENT_VARIABLE.to_owned(),
+    )]))?;
+    let runtime = runtime()?;
+    let mut facts = runtime.block_on(observe(&resolver, &common, |_| {
+        Err("an environment variable is not rotated inside the child".into())
+    }))?;
+    let reference = reference(&common)?;
+    refusal(
+        &mut facts,
+        runtime.block_on(resolver.read(&reference)),
+        &reference,
+        &[ENVIRONMENT_VARIABLE],
+    );
+    Ok(facts)
+}
+
+#[derive(Deserialize)]
+enum PointerDocument {
+    TokenAtPointer,
+    PointerAbsent,
+    NonStringAtPointer,
+    EmptyAtPointer,
+    NotJson,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PointerInput {
+    token: String,
+    pointer: String,
+    document: PointerDocument,
+    known_reference: bool,
+}
+
+/// Builds the JSON document the scenario names around the pointer's (unescaped) member names.
+fn pointer_document(input: &PointerInput) -> Result<Vec<u8>, Box<dyn Error>> {
+    let leaf = match input.document {
+        PointerDocument::NotJson => return Ok(format!("{}\n", input.token).into_bytes()),
+        PointerDocument::TokenAtPointer => Some(json!(input.token)),
+        PointerDocument::PointerAbsent => None,
+        PointerDocument::NonStringAtPointer => Some(json!(17)),
+        PointerDocument::EmptyAtPointer => Some(json!("")),
+    };
+    let members: Vec<String> = input
+        .pointer
+        .split('/')
+        .skip(1)
+        .map(|member| member.replace("~1", "/").replace("~0", "~"))
+        .collect();
+    // A pointer naming no member selects the whole document.
+    let Some((last, parents)) = members.split_last() else {
+        return Ok(serde_json::to_vec(&leaf.unwrap_or_else(|| json!({})))?);
+    };
+    let mut value = Value::Object(leaf.map(|leaf| (last.clone(), leaf)).into_iter().collect());
+    for member in parents.iter().rev() {
+        value = Value::Object(std::iter::once((member.clone(), value)).collect());
+    }
+    Ok(serde_json::to_vec(&value)?)
+}
+
+pub fn pointer(input: Value) -> Result<Value, Box<dyn Error>> {
+    let input: PointerInput = serde_json::from_value(input)?;
+    let temp = tempfile::tempdir()?;
+    let root = temp.path().canonicalize()?;
+    let path = root.join("credentials.json");
+    protected(&path, &pointer_document(&input)?)?;
+    let locations = [
+        path.to_str().ok_or("non-UTF8 fixture path")?.to_owned(),
+        root.to_str().ok_or("non-UTF8 fixture path")?.to_owned(),
+    ];
+    let selected = SecretRef::new("selected")?;
+    let file = FileResolver::new(BTreeMap::from([(selected.clone(), path)]))?;
+    // A pointer the constructor refuses is an observation, not a fixture failure.
+    let resolver = match JsonPointerResolver::new(
+        Arc::new(file),
+        BTreeMap::from([(selected, input.pointer.clone())]),
+    ) {
+        Ok(resolver) => resolver,
+        Err(error) => {
+            return Ok(json!({"error_code":code(error), "reread_error":null,
+                "matches_content":null, "matches_replacement":null, "version_changed":null,
+                "refresh_error":null, "refusal_names_reference":null,
+                "refusal_names_location":null, "diagnostics_safe":true}));
+        }
+    };
+    let common = Common {
+        content: input.token,
+        replacement: None,
+        known_reference: input.known_reference,
+        oversized: false,
+    };
+    let runtime = runtime()?;
+    let mut facts = runtime.block_on(observe(&resolver, &common, |_| {
+        Err("the pointer probe does not rotate its document".into())
+    }))?;
+    let reference = reference(&common)?;
+    refusal(
+        &mut facts,
+        runtime.block_on(resolver.read(&reference)),
+        &reference,
+        &locations.each_ref().map(String::as_str),
+    );
+    Ok(facts)
 }
 
 pub fn keychain(input: Value) -> Result<Value, Box<dyn Error>> {

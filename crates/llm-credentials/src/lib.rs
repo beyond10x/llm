@@ -2,16 +2,28 @@
 
 //! Injected secret resolution and caller-managed credential refresh; optional backend adapters.
 //!
-//! Secret references and caller-injected custody. No login, ambient lookup or persistent writes.
+//! Secret references and caller-injected custody. No login or persistent writes, and no lookup
+//! the caller did not name: every path, variable and pointer an adapter reads is bound by the
+//! caller to one reference.
 
 #[cfg(feature = "codex-auth-file")]
 pub mod codex;
+#[cfg(feature = "environment")]
+pub mod environment;
 #[cfg(feature = "file")]
 pub mod file;
 #[cfg(feature = "keychain")]
 pub mod keychain;
-#[cfg(any(feature = "codex-auth-file", feature = "file", feature = "keychain"))]
+#[cfg(any(
+    feature = "codex-auth-file",
+    feature = "environment",
+    feature = "file",
+    feature = "json-pointer",
+    feature = "keychain"
+))]
 mod local;
+#[cfg(feature = "json-pointer")]
+pub mod pointer;
 
 /// Maximum secret material accepted from an injected or local source.
 pub const MAX_SECRET_BYTES: usize = 1024 * 1024;
@@ -68,7 +80,45 @@ pub enum SecretError {
     UnsafeSource,
     #[error("secret adapter is unsupported on this platform")]
     UnsupportedPlatform,
+    /// The source answered, but not in the form its binding declares (a JSON pointer whose
+    /// document is not JSON or whose target is not a string). A configuration error: retrying
+    /// or choosing another target does not fix it.
+    #[error("secret source does not hold a credential in its declared form")]
+    Malformed,
 }
+
+/// A refusal and the reference it concerns, so a caller can say which credential refused.
+///
+/// The reference is the caller's non-secret lookup name. Neither `Display` nor `Debug` carries
+/// where the value lives (a path, a variable name) or the value itself.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReferenceError {
+    kind: SecretError,
+    reference: SecretRef,
+}
+impl ReferenceError {
+    pub fn new(kind: SecretError, reference: SecretRef) -> Self {
+        Self { kind, reference }
+    }
+    /// The typed refusal, as [`SecretResolver::resolve`] returns it.
+    pub fn kind(&self) -> SecretError {
+        self.kind
+    }
+    pub fn reference(&self) -> &SecretRef {
+        &self.reference
+    }
+}
+impl fmt::Display for ReferenceError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "secret reference `{}` refused: {}",
+            self.reference.as_str(),
+            self.kind
+        )
+    }
+}
+impl std::error::Error for ReferenceError {}
 
 /// Arbitrary short-lived bytes; Debug is redacted and storage is zeroized on drop.
 ///

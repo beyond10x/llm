@@ -1,7 +1,7 @@
 use crate::Binding;
 use http::{HeaderMap, HeaderName, HeaderValue, header::AUTHORIZATION};
 use llm_core::{AuthKind, Cancel, Error, ErrorCode};
-use llm_credentials::{SecretError, SecretResolver, SecretVersion};
+use llm_credentials::{ReferenceError, SecretError, SecretRef, SecretResolver, SecretVersion};
 use std::fmt;
 use zeroize::Zeroizing;
 
@@ -50,12 +50,18 @@ impl Binding {
         let credential = tokio::select! {
             biased;
             () = cancel.cancelled() => return Err(Error::cancelled()),
-            reply = resolver.resolve(reference) => reply.map_err(secret_error)?,
+            reply = resolver.resolve(reference) => reply.map_err(|e| secret_error(reference, e))?,
         };
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
         }
+        // A token file written by an editor or `echo` ends in one line terminator; that one is
+        // not part of the token. Nothing else is removed.
         let material = credential.secret.expose();
+        let material = material
+            .strip_suffix(b"\r\n")
+            .or_else(|| material.strip_suffix(b"\n"))
+            .unwrap_or(material);
         if material.is_empty()
             || material.len() > 16 * 1024
             || !material.iter().all(u8::is_ascii_graphic)
@@ -99,12 +105,22 @@ impl Binding {
     }
 }
 
-fn secret_error(error: SecretError) -> Error {
-    let code = if matches!(error, SecretError::Missing | SecretError::Expired) {
+/// The refusal names the account's reference, so an operator can tell which credential failed;
+/// never its path, variable or value. A missing, expired or malformed credential is the caller's
+/// to fix and is `unauthorized`, which no fallback takes; every other failure is `unavailable`.
+fn secret_error(reference: &SecretRef, error: SecretError) -> Error {
+    let code = if matches!(
+        error,
+        SecretError::Missing | SecretError::Expired | SecretError::Malformed
+    ) {
         ErrorCode::Unauthorized
     } else {
         ErrorCode::Unavailable
     };
-    // SecretError carries only fixed, safe diagnostics, never a backend exception or secret.
-    Error::new(code, error.to_string())
+    // SecretError carries only fixed, safe diagnostics, never a backend exception or secret, and
+    // the reference is the operator's non-secret lookup name.
+    Error::new(
+        code,
+        ReferenceError::new(error, reference.clone()).to_string(),
+    )
 }

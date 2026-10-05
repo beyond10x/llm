@@ -138,20 +138,20 @@ async fn pointer_refusals_are_typed_and_name_only_the_reference() {
         ),
         (
             br#"{"claudeAiOauth":{"accessToken":17}}"#,
-            SecretError::Unavailable,
+            SecretError::Malformed,
         ),
         (
             br#"{"claudeAiOauth":{"accessToken":null}}"#,
-            SecretError::Unavailable,
+            SecretError::Malformed,
         ),
         (
             br#"{"claudeAiOauth":"llm-fixture-private-marker"}"#,
             SecretError::Missing,
         ),
-        (b"llm-fixture-private-marker\n", SecretError::Unavailable),
+        (b"llm-fixture-private-marker\n", SecretError::Malformed),
         (
             br#"{"claudeAiOauth":{"accessToken":"llm-fixture-private-marker"}"#,
-            SecretError::Unavailable,
+            SecretError::Malformed,
         ),
     ] {
         let resolver = bound(&Document::new(Ok(document)), POINTER);

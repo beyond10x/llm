@@ -90,9 +90,11 @@ Derived inspection views and in-process commands are not independently versioned
 `SecretRef` is a validated opaque name, not a value or backend selection. `SecretResolver`
 resolves at request time and may implement caller-owned renewal. Secret values are zeroized on
 drop, redacted in Debug, and have no serialization or Display implementation. LLM never searches
-ambient vendor directories, runs a login flow or writes credential files. A coordinated resolver
-serializes resolution/refresh per reference and refreshes only the credential generation actually
-rejected, preventing concurrent callers from refreshing the same generation repeatedly.
+ambient vendor directories, runs a login flow or writes credential files; the only paths,
+environment variables and JSON pointers it reads are ones the caller names for a reference. A
+coordinated resolver serializes resolution/refresh per reference and refreshes only the credential
+generation actually rejected, preventing concurrent callers from refreshing the same generation
+repeatedly.
 
 Optional [local adapters](local-secrets.md) implement the same reference contract. File protection
 checks currently support Linux; native-keychain constructors also support macOS and Windows.

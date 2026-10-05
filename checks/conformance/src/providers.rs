@@ -56,6 +56,7 @@ enum SecretFailure {
     TooManyReferences,
     UnsafeSource,
     UnsupportedPlatform,
+    Malformed,
 }
 
 impl SecretFailure {
@@ -72,6 +73,7 @@ impl SecretFailure {
             Self::TooManyReferences => SecretError::TooManyReferences,
             Self::UnsafeSource => SecretError::UnsafeSource,
             Self::UnsupportedPlatform => SecretError::UnsupportedPlatform,
+            Self::Malformed => SecretError::Malformed,
         }
     }
 }
@@ -170,6 +172,15 @@ fn field_errors(binding_json: &str) -> Vec<String> {
         errors.push(format!("account.api_key_header: {}", error.message));
     }
     errors
+}
+
+/// The declared presentation of fixture material (spec/domains/providers.yaml): the material
+/// without one trailing line terminator, `\r\n` or `\n`.
+fn presentation(material: &[u8]) -> &[u8] {
+    material
+        .strip_suffix(b"\r\n")
+        .or_else(|| material.strip_suffix(b"\n"))
+        .unwrap_or(material)
 }
 
 fn material(request: &Prepare) -> Result<Vec<u8>, SecretError> {
@@ -295,7 +306,7 @@ fn prepare(
                     resolver
                         .answer
                         .as_deref()
-                        .is_ok_and(|material| material == presented)
+                        .is_ok_and(|material| presentation(material) == presented)
                 );
                 facts["header_sensitive"] = json!(value.is_sensitive());
             }

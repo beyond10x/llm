@@ -29,8 +29,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "caf23b3db07ec95607ec47810f2fd4142e0cebdbcaf01dbeceabc4055d90199a",
-    "contract_digest": "slice-sha256/2:7afc5aa1d03d5fc69bb6fc5685b1c52aeb7006890238341a06934bd1845b2935",
+    "source_digest": "5d5cd6dd56afb2cf2aff4fc0e24f44efa690cec66ad90ae589f90933cd079cd0",
+    "contract_digest": "slice-sha256/2:ea876ef89b9c3b6cb1b407ee6e280b3a85789ac497325c56e0ee046c045a8c46",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -62,7 +62,8 @@
         "TooLarge",
         "TooManyReferences",
         "UnsafeSource",
-        "UnsupportedPlatform"
+        "UnsupportedPlatform",
+        "Malformed"
       ]
     }
   }

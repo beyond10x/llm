@@ -694,3 +694,4 @@ scenarios:
 - providers/scenarios/a-credential-ending-in-a-newline-is-presented-without-it.yaml
 - providers/scenarios/a-credential-ending-in-crlf-is-presented-without-it.yaml
 - providers/scenarios/a-credential-ending-in-two-newlines-is-refused.yaml
+- providers/scenarios/a-malformed-secret-means-the-caller-is-unauthorized.yaml

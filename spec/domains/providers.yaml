@@ -4,8 +4,10 @@ domain: llm.providers
 # `BindingDocument` names one provider, account, endpoint, served model and serving model;
 # `bind` validates their references without I/O (binding.rs:44-77), and `prepare_auth` resolves
 # only the account's explicitly named secret, once, through an injected resolver
-# (auth.rs:33-100). Its secret-error mapping is auth.rs:102-110: `missing` and `expired` are
-# `unauthorized`, every other resolver failure is `unavailable`.
+# (auth.rs:33-106). Its secret-error mapping is auth.rs:108-126: `missing`, `expired` and
+# `malformed` are `unauthorized`, which no fallback takes; every other resolver failure is
+# `unavailable`. The message is the failure's fixed text prefixed by the reference that refused
+# ("secret reference `<id>` refused: ..."), never a path, variable name or value.
 #
 # The entities are verification-adapter observations of the real crate with an injected
 # in-process resolver whose failures and material the fixture chooses. No credential store,
@@ -21,10 +23,10 @@ domain: llm.providers
 # llm.catalog (Provider, Account and their `references` relations) and llm.routing (the
 # evaluation observations), and is not restated here.
 types:
-  # Every SecretError the resolver seam can return (crates/llm-credentials/src/lib.rs:46-69).
+  # Every SecretError the resolver seam can return (crates/llm-credentials/src/lib.rs:58-88).
   - name: llm.providers.SecretFailure
     kind: enum
-    variants: [InvalidReference, Unavailable, Missing, Expired, RefreshUnsupported, RefreshRejected, RefreshUncertain, TooLarge, TooManyReferences, UnsafeSource, UnsupportedPlatform]
+    variants: [InvalidReference, Unavailable, Missing, Expired, RefreshUnsupported, RefreshRejected, RefreshUncertain, TooLarge, TooManyReferences, UnsafeSource, UnsupportedPlatform, Malformed]
   # Where the caller's cancellation lands relative to resolution.
   - name: llm.providers.CancelPoint
     kind: enum

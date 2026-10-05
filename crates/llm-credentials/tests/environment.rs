@@ -44,8 +44,7 @@ fn in_child(name: &str, value: Option<&[u8]>) -> bool {
     // The runner's own summary line, the last one: a filter that selected nothing exits 0 too.
     let summary = stdout
         .lines()
-        .filter(|line| line.starts_with("test result:"))
-        .last()
+        .rfind(|line| line.starts_with("test result:"))
         .unwrap();
     assert!(summary.contains(" 1 passed;"), "{summary}");
     false

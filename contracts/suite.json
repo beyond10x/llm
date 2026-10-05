@@ -397,6 +397,7 @@
       "llm.providers/authored/a-credential-of-exactly-sixteen-kibibytes-is-presented",
       "llm.providers/authored/a-credential-one-byte-over-sixteen-kibibytes-is-refused",
       "llm.providers/authored/a-credential-with-a-space-is-not-a-bounded-http-token",
+      "llm.providers/authored/a-malformed-secret-means-the-caller-is-unauthorized",
       "llm.providers/authored/a-messages-binding-addresses-the-messages-path",
       "llm.providers/authored/a-rejected-refresh-is-unavailable",
       "llm.providers/authored/a-responses-binding-addresses-the-responses-path",
@@ -2676,13 +2677,18 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-credential-with-a-space-is-not-a-bounded-http-token"
       },
+      "providers/scenarios/a-malformed-secret-means-the-caller-is-unauthorized.yaml": {
+        "digest": "sha256:28cce091ce7d44e2c81dbbde18c8d810c086f5b25cd14329aa8756170276e306",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-malformed-secret-means-the-caller-is-unauthorized"
+      },
       "providers/scenarios/a-messages-binding-addresses-the-messages-path.yaml": {
         "digest": "sha256:2ef1dfec9f7ad476353eddea5e727d838b99739310c728c30713f3c1b6e1d21d",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-messages-binding-addresses-the-messages-path"
       },
       "providers/scenarios/a-rejected-refresh-is-unavailable.yaml": {
-        "digest": "sha256:318b0370c9b1aa7455b56bb0cef56c7147fab6539cfaf3889669026e84c451f8",
+        "digest": "sha256:a7f6017c75a21fbb5349a94084832b2cdb1c891d44fb43e84a40846b9248835d",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-rejected-refresh-is-unavailable"
       },
@@ -2777,27 +2783,27 @@
         "scenario": "llm.providers/authored/an-endpoint-url-with-whitespace-is-refused"
       },
       "providers/scenarios/an-expired-secret-means-the-caller-is-unauthorized.yaml": {
-        "digest": "sha256:2cc6eec085769ba6472ad80c87efbf454a28c99c3e008db32403d09a438a407f",
+        "digest": "sha256:37700847cd620c8a6bd1b3ffa65cde11c38101595c9daf9440ffaacaa2c48591",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-expired-secret-means-the-caller-is-unauthorized"
       },
       "providers/scenarios/an-invalid-reference-is-unavailable.yaml": {
-        "digest": "sha256:5a47f8728b5ab08da5ed5e30f2865ba0fd2b9e5ca9b17d43be167a23e02d6658",
+        "digest": "sha256:5184137734a37d141ecb5fd1e405904bcbde87454aeb98d0f2d78440e5c3580e",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-invalid-reference-is-unavailable"
       },
       "providers/scenarios/an-oversized-secret-is-unavailable.yaml": {
-        "digest": "sha256:ea860e081409756eefb665af81c87eff3deced36ea9a61a8eb609dcf7706f653",
+        "digest": "sha256:600258305ae709727693229d665a89fafad83865c0aa2f34e465cda70cf6e7cc",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-oversized-secret-is-unavailable"
       },
       "providers/scenarios/an-unavailable-source-is-unavailable.yaml": {
-        "digest": "sha256:6420948ce8c29f1b91b22d8269f695ffb8b37dff4535c3cd8621132b32a4e20f",
+        "digest": "sha256:9ef0239c076d102431b8a4b495ffc381de67c3bc7afc74be0348464cac7d71fe",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-unavailable-source-is-unavailable"
       },
       "providers/scenarios/an-uncertain-refresh-is-unavailable.yaml": {
-        "digest": "sha256:fef060c242b9aa2efcb0024007b74580012a994deed6aaf5d31259b0498e985e",
+        "digest": "sha256:76d02433cd90205bd487ef15a712eb6d17489d390de0836632d3e830a8adfe31",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-uncertain-refresh-is-unavailable"
       },
@@ -2807,17 +2813,17 @@
         "scenario": "llm.providers/authored/an-unreadable-document-binds-nothing"
       },
       "providers/scenarios/an-unsafe-source-is-unavailable.yaml": {
-        "digest": "sha256:d70a60fe19b5c7fed67fa88af125cefacdb585936d1a70c3b68f6a9ab63a8817",
+        "digest": "sha256:4a8ddc3034bc9a1881ccb4d5c02b334994aa91dcf5d2bb1c19dd88bbcf1af156",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-unsafe-source-is-unavailable"
       },
       "providers/scenarios/an-unsupported-platform-is-unavailable.yaml": {
-        "digest": "sha256:09e97e7e35f0bae60f54e6e5adb8b99c21e6740cb1ba7aee0110b05cf05223dd",
+        "digest": "sha256:d9b3f7303b7457192583a5b341801200806c343174fd9e7dd93f05f3abdd3d05",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-unsupported-platform-is-unavailable"
       },
       "providers/scenarios/an-unsupported-refresh-is-unavailable.yaml": {
-        "digest": "sha256:d55b5821f69772905ba0c34497a11e83d0a225ce2050326a911d7af7101e8c54",
+        "digest": "sha256:45bd060c3a03de7c16f8f7a2d1acb8b177ac291e4a70d0d368b7f7d052fa4ecf",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-unsupported-refresh-is-unavailable"
       },
@@ -2827,7 +2833,7 @@
         "scenario": "llm.providers/authored/impossible-capability-limits-are-refused"
       },
       "providers/scenarios/missing-means-the-caller-is-unauthorized.yaml": {
-        "digest": "sha256:39ba7cb4d020a0da2ce6afc953bf05728c0704de80488a06269317ae6b595597",
+        "digest": "sha256:3e4fe899b83637e843d683836391d0d1f196a67beffdf07b554a1770b2f8a585",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/missing-means-the-caller-is-unauthorized"
       },
@@ -2837,7 +2843,7 @@
         "scenario": "llm.providers/authored/adversary-w2-an-endpoint-url-with-a-fragment-is-refused"
       },
       "providers/scenarios/too-many-references-is-unavailable.yaml": {
-        "digest": "sha256:47028e01d35c7f95e329b0fc912ad8f488c7e2e895cef7f0e77d68ed108b7e46",
+        "digest": "sha256:d112b0c7cba80855c060581443d3e504bd723bac527b7567d4593889cabcd7b6",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/too-many-references-is-unavailable"
       },
@@ -3932,12 +3938,12 @@
         "scenario": "llm.secrets/authored/pointer-escaped-segments"
       },
       "secrets/scenarios/pointer-non-string.yaml": {
-        "digest": "sha256:d5c839938acd7d07498923f95945aad527f7af860a286dd22ef10f5ffd904fc6",
+        "digest": "sha256:000daac4c01e38e11148e16ea2201355e8d18d80d9e4d836a357c773f4a7c613",
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/pointer-non-string"
       },
       "secrets/scenarios/pointer-not-json.yaml": {
-        "digest": "sha256:a6575890925251f13caa8c4209a8c50c90fa89ba570db3acb3c95c3686eec86b",
+        "digest": "sha256:26fed9f003b0b62e2455b37639f15ac674b34f8422a963fcce011520eb655ed0",
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/pointer-not-json"
       },
@@ -4163,7 +4169,7 @@
       }
     },
     "counts": {
-      "authored": 693,
+      "authored": 694,
       "generated": 24,
       "outside": 0,
       "refused": 0
@@ -4208,8 +4214,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "b2f5f628298c4c8b2e1a8c2c2fd82fc2046257ec40cdc09422a2fde3b9dd9889",
-    "spec_digest": "caf23b3db07ec95607ec47810f2fd4142e0cebdbcaf01dbeceabc4055d90199a",
+    "contract_digest": "eda0075c7399419bb5fc65ae8e63c0b5d653a78c925b7a2f27d25e2d079c2c94",
+    "spec_digest": "5d5cd6dd56afb2cf2aff4fc0e24f44efa690cec66ad90ae589f90933cd079cd0",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -50087,6 +50093,135 @@
         }
       ]
     },
+    "llm.providers/authored/a-malformed-secret-means-the-caller-is-unauthorized": {
+      "purpose": "a resolver answering Malformed (a source not in its declared form) is refused as unauthorized, which no fallback takes, with its fixed diagnostic prefixed by the reference (auth.rs:108-126)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"my-lab\",\"category\":\"private-compute\"},\"account\":{\"id\":\"research\",\"provider_id\":\"my-lab\",\"auth_kind\":\"bearer\",\"billing_kind\":\"metered\",\"secret_reference_id\":\"my-opaque-reference\"},\"endpoint\":{\"id\":\"gpu-7\",\"account_id\":\"research\",\"base_url\":\"http://127.0.0.1:8000/proxy/v1\"},\"model\":{\"id\":\"code\",\"upstream_name\":\"custom-org/CustomModel-27B:revision-4\"},\"serving\":{\"id\":\"local-code\",\"endpoint_id\":\"gpu-7\",\"model_id\":\"code\",\"protocol\":\"chat-completions\",\"capabilities\":{\"tools\":false,\"tool_choice\":false,\"temperature\":false,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":32768,\"max_output_tokens\":8192}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": "Malformed"
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": true
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "secret reference `my-opaque-reference` refused: secret source does not hold a credential in its declared form"
+              },
+              "generation_present": {
+                "kind": "literal",
+                "value": null
+              },
+              "header_count": {
+                "kind": "literal",
+                "value": null
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": false
+              },
+              "refresh_calls": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 1.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
     "llm.providers/authored/a-messages-binding-addresses-the-messages-path": {
       "purpose": "a messages binding appends the messages path to its prefix",
       "source": [
@@ -50189,7 +50324,7 @@
       ]
     },
     "llm.providers/authored/a-rejected-refresh-is-unavailable": {
-      "purpose": "a resolver answering RefreshRejected is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering RefreshRejected is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -50288,7 +50423,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "caller resolver did not replace the rejected generation"
+                "value": "secret reference `my-opaque-reference` refused: caller resolver did not replace the rejected generation"
               },
               "generation_present": {
                 "kind": "literal",
@@ -52493,7 +52628,7 @@
       ]
     },
     "llm.providers/authored/an-expired-secret-means-the-caller-is-unauthorized": {
-      "purpose": "a resolver answering Expired is refused as unauthorized with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering Expired is refused as unauthorized with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -52592,7 +52727,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "secret has expired"
+                "value": "secret reference `my-opaque-reference` refused: secret has expired"
               },
               "generation_present": {
                 "kind": "literal",
@@ -52622,7 +52757,7 @@
       ]
     },
     "llm.providers/authored/an-invalid-reference-is-unavailable": {
-      "purpose": "a resolver answering InvalidReference is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering InvalidReference is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -52721,7 +52856,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "invalid secret reference"
+                "value": "secret reference `my-opaque-reference` refused: invalid secret reference"
               },
               "generation_present": {
                 "kind": "literal",
@@ -52751,7 +52886,7 @@
       ]
     },
     "llm.providers/authored/an-oversized-secret-is-unavailable": {
-      "purpose": "a resolver answering TooLarge is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering TooLarge is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -52850,7 +52985,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "secret value or version exceeds its size bound"
+                "value": "secret reference `my-opaque-reference` refused: secret value or version exceeds its size bound"
               },
               "generation_present": {
                 "kind": "literal",
@@ -52880,7 +53015,7 @@
       ]
     },
     "llm.providers/authored/an-unavailable-source-is-unavailable": {
-      "purpose": "a resolver answering Unavailable is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering Unavailable is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -52979,7 +53114,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "secret is unavailable"
+                "value": "secret reference `my-opaque-reference` refused: secret is unavailable"
               },
               "generation_present": {
                 "kind": "literal",
@@ -53009,7 +53144,7 @@
       ]
     },
     "llm.providers/authored/an-uncertain-refresh-is-unavailable": {
-      "purpose": "a resolver answering RefreshUncertain is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering RefreshUncertain is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -53108,7 +53243,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "refresh outcome is uncertain; caller must reconcile credential state"
+                "value": "secret reference `my-opaque-reference` refused: refresh outcome is uncertain; caller must reconcile credential state"
               },
               "generation_present": {
                 "kind": "literal",
@@ -53271,7 +53406,7 @@
       ]
     },
     "llm.providers/authored/an-unsafe-source-is-unavailable": {
-      "purpose": "a resolver answering UnsafeSource is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering UnsafeSource is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -53370,7 +53505,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "secret source does not satisfy the required access protections"
+                "value": "secret reference `my-opaque-reference` refused: secret source does not satisfy the required access protections"
               },
               "generation_present": {
                 "kind": "literal",
@@ -53400,7 +53535,7 @@
       ]
     },
     "llm.providers/authored/an-unsupported-platform-is-unavailable": {
-      "purpose": "a resolver answering UnsupportedPlatform is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering UnsupportedPlatform is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -53499,7 +53634,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "secret adapter is unsupported on this platform"
+                "value": "secret reference `my-opaque-reference` refused: secret adapter is unsupported on this platform"
               },
               "generation_present": {
                 "kind": "literal",
@@ -53529,7 +53664,7 @@
       ]
     },
     "llm.providers/authored/an-unsupported-refresh-is-unavailable": {
-      "purpose": "a resolver answering RefreshUnsupported is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering RefreshUnsupported is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -53628,7 +53763,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "caller resolver does not support refresh"
+                "value": "secret reference `my-opaque-reference` refused: caller resolver does not support refresh"
               },
               "generation_present": {
                 "kind": "literal",
@@ -53763,7 +53898,7 @@
       ]
     },
     "llm.providers/authored/missing-means-the-caller-is-unauthorized": {
-      "purpose": "a resolver answering Missing is refused as unauthorized with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering Missing is refused as unauthorized with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -53862,7 +53997,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "secret reference was not found"
+                "value": "secret reference `my-opaque-reference` refused: secret reference was not found"
               },
               "generation_present": {
                 "kind": "literal",
@@ -53892,7 +54027,7 @@
       ]
     },
     "llm.providers/authored/too-many-references-is-unavailable": {
-      "purpose": "a resolver answering TooManyReferences is refused as unavailable with its fixed diagnostic (auth.rs:102-110)",
+      "purpose": "a resolver answering TooManyReferences is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
         {
           "kind": "domain",
@@ -53991,7 +54126,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "too many secret references are coordinated"
+                "value": "secret reference `my-opaque-reference` refused: too many secret references are coordinated"
               },
               "generation_present": {
                 "kind": "literal",
@@ -77809,7 +77944,7 @@
       ]
     },
     "llm.secrets/authored/pointer-non-string": {
-      "purpose": "a JSON number at the caller-named pointer is unavailable, not coerced into a token",
+      "purpose": "a JSON number at the caller-named pointer is malformed (a configuration error), not coerced into a token",
       "source": [
         {
           "kind": "domain",
@@ -77892,7 +78027,7 @@
               },
               "error_code": {
                 "kind": "literal",
-                "value": "unavailable"
+                "value": "malformed"
               },
               "matches_content": {
                 "kind": "literal",
@@ -77914,7 +78049,7 @@
       ]
     },
     "llm.secrets/authored/pointer-not-json": {
-      "purpose": "a document that is not JSON is unavailable when a pointer was named, and is never read as a bare token",
+      "purpose": "a document that is not JSON is malformed when a pointer was named, and is never read as a bare token",
       "source": [
         {
           "kind": "domain",
@@ -77997,7 +78132,7 @@
               },
               "error_code": {
                 "kind": "literal",
-                "value": "unavailable"
+                "value": "malformed"
               },
               "matches_content": {
                 "kind": "literal",
