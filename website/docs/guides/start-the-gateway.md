@@ -1,9 +1,18 @@
 ---
 title: Start the gateway
+sidebar_position: 8
 description: Compose the authenticated single-owner gateway with a route inventory, and query its probes and inspection routes with curl.
+lede: The gateway answers probes without a credential and route inspection only for its owner.
+source: crates/llm-gateway, run against a local build of this program
 ---
 
 # Start the gateway
+
+:::note[Moving to llm-gateway]
+`b10x-llm-gateway` is moving to its own repository, llm-gateway
+([GitHub](https://github.com/beyond10x/llm-gateway)). Until that move lands, this program builds against
+the crate in llm. The output below is from a run of this program against 0.1.7.
+:::
 
 This guide composes `b10x-llm-gateway` in a small program and queries it. It serves liveness,
 readiness and route inspection; it does not answer model requests.

@@ -1,6 +1,9 @@
 ---
 title: Price recorded usage
+sidebar_position: 6
 description: Quote a price book against fixture observations, and read the six separate totals.
+lede: A quote prices exactly what was observed, and an unknown quantity stays unknown.
+source: crates/llm-cost/examples/quote.rs, examples/prices.toml, examples/usage.json
 ---
 
 # Price recorded usage

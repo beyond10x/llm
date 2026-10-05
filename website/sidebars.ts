@@ -6,7 +6,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Start here',
       collapsed: false,
-      items: ['index', 'getting-started'],
+      items: ['index', 'getting-started', 'status'],
     },
     {
       type: 'category',
@@ -30,6 +30,8 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/run-a-local-turn',
         'guides/call-a-local-endpoint',
+        'guides/call-a-model-with-one-forced-tool',
+        'guides/use-llm-from-a-synchronous-loop',
         'guides/explain-a-route',
         'guides/price-recorded-usage',
         'guides/resolve-a-local-secret',
@@ -47,7 +49,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Project status',
       collapsed: false,
-      items: ['status/where-this-stands', 'status/limitations', 'status/roadmap'],
+      items: ['status/limitations', 'status/roadmap'],
     },
   ],
 };

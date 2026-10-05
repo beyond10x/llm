@@ -15,9 +15,10 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@beyond10x/docs-system": "git+https://github.com/beyond10x/docs-system.git#8eb302de78feba319fbdd8191270d9fe7b6c1244",
+    "@beyond10x/docs-system": "git+https://github.com/beyond10x/docs-system.git#acbc7a39a2a495114a507a92e0a0c4c933e81d8f",
     "@docusaurus/core": "3.10.2",
     "@docusaurus/faster": "3.10.2",
+    "@docusaurus/plugin-client-redirects": "3.10.2",
     "@docusaurus/preset-classic": "3.10.2",
     "@docusaurus/theme-mermaid": "^3.10.2",
     "@mdx-js/react": "^3.0.0",

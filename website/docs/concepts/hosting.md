@@ -1,9 +1,18 @@
 ---
 title: Hosting
+sidebar_position: 7
 description: The owned-resource lifecycle every GPU hosting adapter is held to, and the Runpod adapter built on it, verified against an in-process emulator.
+lede: A billed GPU machine is stopped only on evidence; the hosting contract and its Runpod adapter are verified against an in-process emulator.
+source: crates/llm-provision, crates/llm-runpod, docs/hosting.md
 ---
 
 # Hosting
+
+:::note[Moving to llm-gateway]
+`b10x-llm-provision`, `b10x-llm-runpod` and `b10x-llm-modal` are moving to their own repository,
+llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)), with the gateway. Until that move lands they
+live in llm and are described here.
+:::
 
 An endpoint that already exists needs no hosting: declare it in the catalog and call it. Hosting is
 for the other case, where LLM starts a billed GPU machine, serves a model on it, and must make sure
@@ -16,7 +25,7 @@ Two crates cover it:
 | `b10x-llm-provision` | The hosting contract: identity, lifecycle, leases, reconciliation and cleanup. It has no dependencies, opens no socket, reads no credential and allocates nothing. `FakeProvider` demonstrates it in process |
 | `b10x-llm-runpod` | The first adapter behind that contract, for vLLM on Runpod. Every Runpod call goes through a `RunpodTransport` trait, and the only transport that exists is `EmulatedRunpod`, an in-process control plane |
 
-:::caution No real machine has been started
+:::caution[No real machine has been started]
 There is no production Runpod transport yet. Nothing in this repository has contacted a hosting
 provider, allocated a GPU or stopped one. The adapter's behavior is verified against the emulator
 only.

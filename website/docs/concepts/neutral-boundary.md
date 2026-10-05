@@ -1,6 +1,9 @@
 ---
 title: The neutral turn
+sidebar_position: 2
 description: One asynchronous port, bounded validation before any network I/O, and opaque state bound to its exact target.
+lede: One asynchronous port, one attempt per call, and failures that say what they know about dispatch and retry.
+source: crates/llm-core (turn.rs, error.rs, item.rs), docs/contract-v1.md
 ---
 
 # The neutral turn
@@ -8,7 +11,8 @@ description: One asynchronous port, bounded validation before any network I/O, a
 `llm-core` defines what every caller and every adapter agrees on: a request, a stream of events, an
 outcome, a failure. It performs no I/O and depends on no consumer.
 
-The implemented contract is *unreleased revision 2*. It supports stateless text and tool turns.
+The persisted envelopes are `llm.turn/3` and `llm.outcome/4`; publishing them as a released contract
+with a compatibility policy is planned. The contract supports stateless text and tool turns.
 Image and audio input, vendor-side tools, provider thread management and unrecognized request
 settings are outside this version and adapters must refuse them.
 
@@ -43,7 +47,7 @@ requires every adapter to check **all six** against the selected binding before 
 including same-protocol cross-model and cross-account requests. There is no implicit exception; a
 narrower documented exception would need a versioned contract change.
 
-:::note Enforced by three adapters, against fixtures
+:::note[Enforced by three adapters, against fixtures]
 The Responses, Messages and Chat Completions adapters implement this check and each carries
 scenarios that assert it. Those scenarios run against fixtures and in-process fakes, so the
 guarantee is verified against what the contract says a wire looks like, not against a live
@@ -103,6 +107,32 @@ error kind:
 | `unknown` | The upstream may have accepted and may bill |
 | `accepted` | The upstream accepted the request |
 
-A transport failure after dispatch is `unknown`, not proof of a free retry. A server delay hint is a
-hint, not permission to retry. Error diagnostics never include authorization headers, request
-bodies or arbitrary upstream error text.
+A transport failure after dispatch is `unknown`, not proof that a retry is free. Error diagnostics
+never include authorization headers, request bodies or arbitrary upstream error text.
+
+## Whether a failure may be retried
+
+Retry is a separate fact from dispatch. The producer of a failure marks it `retriable`, and
+`Error::may_retry` is true only when that mark is set **and** the code is `transport`,
+`rate-limited`, `unavailable` or `protocol`. `unauthorized`, `refused`, `invalid-request`,
+`unsupported`, `too-large`, `cancelled` and `deadline` failures are never retried, whatever the mark
+says.
+
+The HTTP transport marks these as retriable:
+
+| Failure | Dispatch |
+| --- | --- |
+| No response at all | `unknown` |
+| `429` | `rejected` |
+| `408` and every `5xx` status | `unknown`: the work may have run |
+| A response body that fails mid-stream | `accepted` |
+| A stream that ends inside an event | `unknown` |
+
+A server's `Retry-After` is kept as a hint (`retry_after_ms`); routing honours it, capped, only for
+a failure that is already retriable. A client never retries by itself: one call is one attempt, and
+[routing](routing.md#same-target-retry) decides whether another follows. Because a retried attempt
+may have been billed, it stays in the run's record with its own dispatch evidence.
+
+The transport bounds each attempt: a connection must open within 15 seconds
+(`llm_http::CONNECT_TIMEOUT`), and a stream that sends nothing for 180 seconds fails
+(`Limits::default().idle`).

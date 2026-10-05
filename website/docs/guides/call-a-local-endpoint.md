@@ -1,6 +1,9 @@
 ---
 title: Call a local endpoint
+sidebar_position: 2
 description: Declare an anonymous vLLM-compatible server in TOML, build a Chat Completions client from the catalog, and run one turn through the neutral port.
+lede: One anonymous turn to a vLLM-compatible server, with the request llm sent and the answer it observed.
+source: crates/llm-docs/examples/local_endpoint.rs, crates/llm-chat (client, fixtures/vllm-text-no-usage.sse), examples/catalog.toml
 ---
 
 # Call a local endpoint
@@ -32,12 +35,23 @@ Replace `base_url`, `upstream_name` and the declared capabilities with your serv
 
 ## The program
 
-Dependencies: `b10x-llm-core`, `b10x-llm-chat`, `b10x-llm-http`, `b10x-llm-credentials`,
-`b10x-llm-routing`, and `tokio` with the `rt` and `macros` features. See
-[Getting started](../getting-started.md#evaluate-a-crate-from-your-own-project) for the Git
+The program is an example in the repository. Start your server on `127.0.0.1:8000`, then run it
+from the repository root:
+
+```bash
+cargo run --locked -p llm-docs --example local_endpoint
+```
+
+In your own project it needs `b10x-llm-core`, `b10x-llm-chat`, `b10x-llm-http`,
+`b10x-llm-credentials`, `b10x-llm-routing`, and `tokio` with the `rt` and `macros` features; see
+[Getting started](../getting-started.md#depend-on-a-crate-from-your-own-project) for the Git
 dependency form.
 
-```rust
+```rust title="crates/llm-docs/examples/local_endpoint.rs"
+//! Send one turn to the anonymous Chat Completions server `examples/catalog.toml` declares.
+//!
+//! Start a vLLM-compatible server on `127.0.0.1:8000`, then run
+//! `cargo run --locked -p llm-docs --example local_endpoint` from the repository root.
 use llm_chat::ChatClient;
 use llm_core::{BoxFuture, Cancel, Id, Item, Model, TurnRequest, VecSink};
 use llm_credentials::{ResolvedSecret, SecretError, SecretRef, SecretResolver};
@@ -63,7 +77,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .binding(&Id::new("local-small")?)
         .ok_or("no such serving model")?
         .clone();
-    let client = ChatClient::new(binding, HttpClient::new(Limits::default())?, Arc::new(NoSecrets));
+    let client = ChatClient::new(
+        binding,
+        HttpClient::new(Limits::default())?,
+        Arc::new(NoSecrets),
+    );
 
     let request = TurnRequest::new("small", vec![Item::user("Hallo")]);
     let mut sink = VecSink::new(64, 64 * 1024);
@@ -71,7 +89,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("text:           {}", sink.text());
     println!("stop reason:    {:?}", outcome.stop_reason);
-    println!("upstream model: {:?}", outcome.observation.upstream_model.map(|m| m.to_string()));
+    println!(
+        "upstream model: {:?}",
+        outcome.observation.upstream_model.map(|m| m.to_string())
+    );
     println!("usage:          {:?}", outcome.observation.usage);
     println!("final usage:    {}", outcome.observation.final_usage);
     Ok(())
@@ -94,8 +115,8 @@ The client sends one `POST` to `http://127.0.0.1:8000/v1/chat/completions` with 
 - No `Authorization` header is sent, because the account is anonymous. The resolver is never
   called.
 
-Replayed against the vLLM response fixture in `crates/llm-chat/fixtures/vllm-text-no-usage.sse`,
-the program prints:
+Run against a local server that answered with the vLLM response fixture
+`crates/llm-chat/fixtures/vllm-text-no-usage.sse`, the program printed:
 
 ```text
 text:           Guten Tag
@@ -118,5 +139,5 @@ Read the last three lines carefully:
   [Resolve a local secret](resolve-a-local-secret.md).
 - Put several targets behind one alias and fall back between them:
   [Routing](../concepts/routing.md#ordered-fallback).
-- `MessagesClient::new` has the same inputs but returns a `Result`, because it refuses a binding
-  whose protocol is not `messages`.
+- `MessagesClient::new` and `ResponsesClient::new` take the same inputs but return a `Result`,
+  because each refuses a binding whose protocol is not its own.

@@ -1334,6 +1334,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 
 [[package]]
+name = "llm-docs"
+version = "0.1.7"
+dependencies = [
+ "b10x-llm-blocking",
+ "b10x-llm-chat",
+ "b10x-llm-core",
+ "b10x-llm-credentials",
+ "b10x-llm-http",
+ "b10x-llm-routing",
+ "b10x-llm-tool-call",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "log"
 version = "0.4.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"

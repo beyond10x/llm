@@ -1,0 +1,277 @@
+{
+  "asOf": "2026-10-05",
+  "format": "b10x-status/1",
+  "items": [
+    {
+      "area": "Neutral turn",
+      "detail": "Model::turn takes one request, a caller-owned sink and a cancellation token, and makes one attempt: bounded text and tool items, streamed events, typed failures with independent dispatch evidence, and opaque state bound to its protocol, provider, account, endpoint, model and binding revision.",
+      "label": "A neutral model turn",
+      "status": "shipped"
+    },
+    {
+      "area": "Neutral turn",
+      "detail": "The start of a streamed tool call names the tool before any argument fragment, in all three protocol projections.",
+      "label": "Streamed tool calls carry their announced name",
+      "status": "shipped"
+    },
+    {
+      "area": "Neutral turn",
+      "detail": "Reasoning state that arrives in a client request is held unattributed, and every egress path refuses it until the caller binds it to a target of the same protocol.",
+      "label": "Opaque state from ingress cannot be sent until bound",
+      "status": "shipped"
+    },
+    {
+      "area": "Neutral turn",
+      "detail": "Error::retriable and Error::may_retry: the transport marks 408, 429, 5xx, no response, a body failing mid-stream and a stream ending inside an event; unauthorized, refused, invalid and cancelled failures never are.",
+      "label": "Every failure says whether it may be retried",
+      "status": "shipped"
+    },
+    {
+      "area": "Neutral turn",
+      "detail": "The versioned envelopes (llm.turn/3, llm.outcome/4, llm.usage/2, llm.cost/2, llm.binding/1, llm.catalog/1) are implemented in the tree; a released contract with its compatibility policy is not.",
+      "label": "A published contract and compatibility policy",
+      "status": "planned"
+    },
+    {
+      "area": "Transport",
+      "detail": "One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails.",
+      "label": "Bounded HTTP and server-sent events",
+      "status": "shipped"
+    },
+    {
+      "area": "Transport",
+      "detail": "A 15-second connect timeout (HttpClient::with_connect_timeout), a 180-second idle bound by default, and cancellation that wins over a pending read.",
+      "label": "Connect and idle bounds, and cancellation",
+      "status": "shipped"
+    },
+    {
+      "area": "Transport",
+      "detail": "The transport, providers, gateway and Runpod adapter joined the other domains in 0.1.3; the conformance runner runs 823 scenarios against the real crates three times.",
+      "label": "Every library crate is specified in ESS",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "ChatClient and an ingress codec for any compatible endpoint, including an anonymous local vLLM server; usage is always requested on a stream.",
+      "label": "Chat Completions projection and client",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "MessagesClient and an ingress codec; signed and redacted thinking cross as bound opaque state.",
+      "label": "Messages projection and client",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "Cache breakpoints on the standing instruction and on the conversation tail; an unknown stream event, delta or content block is kept as an opaque item with a warning.",
+      "label": "Messages prompt caching and unknown events",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "Request bodies and stream decoding for the declared subset, stateless (store: false) and always streamed.",
+      "label": "Responses projection",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "ResponsesClient implements Model over one Responses endpoint: the request is checked against its binding and bounded before the credential is resolved.",
+      "label": "Responses client",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "Each event reaches the caller as it arrives, and text the caller was shown stays in the turn when the terminal output omits it.",
+      "label": "Live Responses streaming",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "encode_request gives the exact bytes the client sends; opt-in conversation identity sends prompt_cache_key, session-id and x-client-request-id.",
+      "label": "Responses request encoding and conversation identity",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "A success without a content type is read as an event stream when one was asked for, and an empty terminal output after streamed items keeps the streamed items.",
+      "label": "Responses turns against the Codex backend",
+      "status": "shipped"
+    },
+    {
+      "area": "Credentials",
+      "detail": "A catalog names an opaque SecretRef; the embedding injects the SecretResolver, resolution happens on every request, and renewal refreshes only the rejected generation.",
+      "label": "Injected secret resolution and coordinated renewal",
+      "status": "shipped"
+    },
+    {
+      "area": "Credentials",
+      "detail": "Opt-in file (Linux, explicit absolute paths, strict ownership and mode checks), keychain and native-keychain features; read-only.",
+      "label": "Protected-file and keychain adapters",
+      "status": "shipped"
+    },
+    {
+      "area": "Credentials",
+      "detail": "Opt-in environment (caller-named variables only) and json-pointer (an RFC 6901 pointer into a document another resolver returns).",
+      "label": "Environment variables and JSON pointers",
+      "status": "shipped"
+    },
+    {
+      "area": "Credentials",
+      "detail": "Opt-in codex-auth-file: CodexAuthFile reads the access token of a Codex auth.json at an explicit absolute path on every request and refuses it once expired.",
+      "label": "A Codex login, read-only",
+      "status": "shipped"
+    },
+    {
+      "area": "Credentials",
+      "detail": "Feature codex-renewal: renews inside a 15-minute margin through one non-retried request and writes only the token values back, atomically, refusing a file that changed meanwhile.",
+      "label": "Codex login renewal, opt-in",
+      "status": "shipped"
+    },
+    {
+      "area": "Credentials",
+      "detail": "A login file that is not a Codex login, or whose token has no readable expiry, is refused as malformed and never falls back to another account.",
+      "label": "A misconfigured Codex login is refused",
+      "status": "shipped"
+    },
+    {
+      "area": "Credentials",
+      "detail": "An optional resolver backed by the Secrets library's named storage; it waits for that library's release.",
+      "label": "Resolution through the Secrets library",
+      "status": "planned"
+    },
+    {
+      "area": "Providers and routing",
+      "detail": "Provider, account, endpoint, model and serving declaration are separate choices; authentication and billing kind never follow from the protocol.",
+      "label": "Bindings independent of protocol",
+      "status": "shipped"
+    },
+    {
+      "area": "Providers and routing",
+      "detail": "Strict llm.catalog/1, a deterministic configuration digest, ordered opt-in selection, capability and input-token admission, and an explanation that resolves no secret.",
+      "label": "TOML catalogs, selection and explanation",
+      "status": "shipped"
+    },
+    {
+      "area": "Providers and routing",
+      "detail": "Catalog::run_turn tries a route's declared targets in order and stops on visible output, an ineligible failure, an ambiguous dispatch, the attempt bound, the deadline, cancellation or the caller's limit.",
+      "label": "Ordered fallback",
+      "status": "shipped"
+    },
+    {
+      "area": "Providers and routing",
+      "detail": "RetryPolicy, on by default: four attempts per target with 1, 2 and 4 second waits, server delays honoured up to 30 seconds, a turn-retried warning before each wait, then fallback.",
+      "label": "Same-target retry before visible output",
+      "status": "shipped"
+    },
+    {
+      "area": "Providers and routing",
+      "detail": "API and caller-managed subscription routes with recorded live evidence. A live probe of the Codex backend found the two incompatibilities 0.1.6 fixed; no route is qualified.",
+      "label": "OpenAI access qualified",
+      "status": "planned"
+    },
+    {
+      "area": "Providers and routing",
+      "detail": "API and caller-managed subscription routes with recorded live evidence.",
+      "label": "Anthropic access qualified",
+      "status": "planned"
+    },
+    {
+      "area": "Helpers for agent loops",
+      "detail": "b10x-llm-tool-call: call_tool forces one named tool on any Model and returns that call's JSON arguments or a typed ModelError; codex_model binds a Responses model to the operator's Codex login.",
+      "label": "One forced tool call",
+      "status": "shipped"
+    },
+    {
+      "area": "Helpers for agent loops",
+      "detail": "b10x-llm-blocking: BlockingModel runs one turn on the calling thread, hands events to a BlockingSink as they arrive, takes cancellation from any thread, and forks for concurrent turns.",
+      "label": "A blocking adapter for a synchronous loop",
+      "status": "shipped"
+    },
+    {
+      "area": "Helpers for agent loops",
+      "detail": "Harness replaces its own model wire crates with llm's; the parity matrix maps every capability they need.",
+      "label": "Harness builds on llm",
+      "status": "planned"
+    },
+    {
+      "area": "Accounting",
+      "detail": "Versioned llm.prices/1 books, exact decimal amounts, cache and compute pricing, six separate bases and unknown quantities kept unknown.",
+      "label": "Usage pricing",
+      "status": "shipped"
+    },
+    {
+      "area": "Accounting",
+      "detail": "Opt-in sqlite: reservations committed before dispatch, concurrent callers serialized, uncertain charges kept across restart, and compute stop obligations.",
+      "label": "Durable spending limits",
+      "status": "shipped"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "Probes and a read-only route inventory for one owner; it translates no protocol and proxies no model call.",
+      "label": "An authenticated single-owner gateway",
+      "status": "shipped"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "Resource identity with incarnation, requested state apart from observed state, leases, and stop obligations that only evidence discharges.",
+      "label": "The hosting lifecycle contract",
+      "status": "shipped"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "Single-flight start, ordered GPU fallback, crash recovery and ownership-safe cleanup, verified against the in-process EmulatedRunpod only.",
+      "label": "A Runpod vLLM adapter, against an emulator",
+      "status": "shipped"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "b10x-llm-gateway, b10x-llm-provision, b10x-llm-runpod and b10x-llm-modal move to their own repository, and llm keeps the client side.",
+      "label": "The gateway and hosting crates move to llm-gateway",
+      "status": "planned"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "The three ingress protocols over the supported subset, with streaming, tools and cancellation.",
+      "label": "Gateway protocol translation",
+      "status": "planned"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "Only the in-process emulator exists.",
+      "label": "A production Runpod transport",
+      "status": "planned"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "Orphan sweeps and inherited-pod terminations bypass the ledger today.",
+      "label": "Orphan terminations record a stop obligation",
+      "status": "planned"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "b10x-llm-modal exports nothing; it needs a Modal account and a paid qualification run.",
+      "label": "A Modal hosting adapter",
+      "status": "planned"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "A reversible cutover from the previous gateway to llm-gateway.",
+      "label": "Deployments move from llmgw",
+      "status": "planned"
+    },
+    {
+      "area": "Gateway and hosting (moving to llm-gateway)",
+      "detail": "Validate, inspect and run one configuration; b10x-llm-cli exports nothing yet.",
+      "label": "An operator command line",
+      "status": "planned"
+    },
+    {
+      "area": "Release",
+      "detail": "One exact release tied to its required checks, artifacts and live provider and hosting qualification.",
+      "label": "A qualified release",
+      "status": "planned"
+    }
+  ],
+  "source": "docs/implementation-status.md in the llm repository, at 0.1.7"
+}

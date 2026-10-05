@@ -1,6 +1,9 @@
 ---
 title: Run a local turn
+sidebar_position: 1
 description: Complete a model turn through the neutral port without a gateway, a network or a credential.
+lede: A turn completes through the neutral port with no gateway, no network and no credential.
+source: crates/llm-core/examples/embedded.rs
 ---
 
 # Run a local turn
@@ -33,9 +36,8 @@ no credential, which is the point: the caller depends on the port, not on a vend
 ## What it does not demonstrate
 
 It does not touch a network. For that, [Call a local endpoint](call-a-local-endpoint.md) builds a
-`ChatClient` from a catalog and runs the same port over HTTP. No live provider credential has been
-used anywhere in this repository, so running a client against a real provider is something you
-would be doing first, not repeating.
+`ChatClient` from a catalog and runs the same port over HTTP. The gate never calls a live provider,
+and no provider route is qualified, so treat a first run against a real provider as a trial.
 
 ## Writing your own caller
 
