@@ -57,3 +57,13 @@ async-trait = "0.1"
 toml.workspace = true
 serde_json.workspace = true
 tempfile = "3.27"
+clap = { version = "4.6", features = ["derive"] }
+llm-http.workspace = true
+llm-messages = { package = "b10x-llm-messages", path = "../llm-messages" }
+llm-providers.workspace = true
+llm-routing = { package = "b10x-llm-routing", path = "../llm-routing" }
+
+[[example]]
+name = "live_subscription_turn"
+path = "examples/live_subscription_turn/main.rs"
+required-features = ["secrets", "native-keychain"]

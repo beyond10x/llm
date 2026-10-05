@@ -6,6 +6,17 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `llm-credentials`: the example `live_subscription_turn` (features `secrets` and
+  `native-keychain`) runs one Messages turn over the operator's own subscription token, read from
+  the platform keychain through the secrets library where `secretsctl put` stores it, and prints a
+  JSON report: endpoint, auth and billing kind, header names, whether the OAuth beta and the client
+  preamble were sent, stop reason, usage, latency or the typed error. `--rotate-check` runs a
+  second turn after the token is replaced and reports whether the version changed. The report
+  never carries the token. Its logic is tested on a mock store and a loopback fixture; no gate
+  runs it live. `docs/live-qualification.md` gives the operator's steps.
+
 ### Changed
 
 - ESS moves to 0.52.0: CI installs the `ess` 0.52.0 release asset after checking it against the
