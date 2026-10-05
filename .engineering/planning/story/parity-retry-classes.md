@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:parity-retry-classes
 kind: story
-status: active
+status: implemented
 title: llm retries the failure classes Harness retries, before any output is visible
 relations:
 - decomposes: epic:serving-split
@@ -21,10 +21,11 @@ scope:
   path: docs/harness-parity.md
 - confidence: inferred
   path: spec
-revision: 9
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T00:56:18Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-05T00:56:18Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T01:57:09Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Outcome
 

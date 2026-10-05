@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T01:57:09Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-messages-wire",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "the same integration gate (658 passed, conformance 758/758)",
+    "reference": "wave/2026-10-05-w27"
+  }
+}

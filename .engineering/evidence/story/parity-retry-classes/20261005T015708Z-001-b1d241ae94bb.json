@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T01:57:08Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-retry-classes",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base 2e0a8da: retry_class, retry_classes, retry tests do not compile; conformance 718/748; treatment: 25+7 new tests green, conformance 758/758, 9 mutants killed (1 equivalent)",
+    "reference": "phase1-red.log vs int-gate3.log"
+  }
+}

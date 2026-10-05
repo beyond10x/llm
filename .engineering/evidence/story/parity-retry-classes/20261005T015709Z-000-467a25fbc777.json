@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T01:57:09Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-retry-classes",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "integration gate on clean packages: fmt 0, scoped clippy 0, cargo test --workspace --no-fail-fast 658 passed 0 failed, credentials 0, no-default-features 0, ess validate 0, conformance 758/758; workspace clippy on rustc 1.99 fails only in pre-existing files (story:lints-rust-1-99)",
+    "reference": "wave/2026-10-05-w27"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T01:57:09Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-messages-wire",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base 4fb630d: messages lane 9 red, conformance 8 failed; treatment: 82/82 messages tests, 46 recorded mutations 0 survivors",
+    "reference": "phase1-red.log vs int-gate3.log"
+  }
+}

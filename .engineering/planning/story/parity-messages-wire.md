@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:parity-messages-wire
 kind: story
-status: active
+status: implemented
 title: llm-messages caching, refusals and unknown events match Harness
 relations:
 - decomposes: epic:serving-split
@@ -17,10 +17,11 @@ scope:
   path: docs/harness-parity.md
 - confidence: inferred
   path: spec
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T00:56:25Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-05T00:56:25Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T01:57:09Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 
