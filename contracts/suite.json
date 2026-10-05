@@ -759,6 +759,11 @@
       "llm.transport/authored/an-endpoint-with-embedded-credentials-is-refused-before-sending",
       "llm.transport/authored/an-event-stream-media-type-with-parameters-is-accepted",
       "llm.transport/authored/an-unrunnable-program-exchanges-nothing",
+      "llm.transport/authored/connect-a-connect-bound-longer-than-one-day-is-refused",
+      "llm.transport/authored/connect-a-connect-bound-of-exactly-one-day-is-admitted",
+      "llm.transport/authored/connect-a-connection-never-established-ends-at-the-connect-bound",
+      "llm.transport/authored/connect-a-zero-connect-bound-is-refused",
+      "llm.transport/authored/connect-without-a-short-connect-bound-the-header-deadline-ends-it",
       "llm.transport/authored/json-exchange-a-json-answer-comes-back-from-one-post",
       "llm.transport/authored/json-exchange-a-rate-limit-is-final",
       "llm.transport/authored/json-exchange-a-redirect-is-never-followed",
@@ -4561,6 +4566,31 @@
         "disposition": "accepted",
         "scenario": "llm.transport/authored/an-unrunnable-program-exchanges-nothing"
       },
+      "transport/scenarios/connect-a-connect-bound-longer-than-one-day-is-refused.yaml": {
+        "digest": "sha256:d7c2379da8ae087fba1514df186082a086d891e5fe0c9682a1a534c05c6115b1",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/connect-a-connect-bound-longer-than-one-day-is-refused"
+      },
+      "transport/scenarios/connect-a-connect-bound-of-exactly-one-day-is-admitted.yaml": {
+        "digest": "sha256:522b7353426d6d44fcb8479f1101beefc1d2aadfbdaa2f48db8ba0d2d7b65954",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/connect-a-connect-bound-of-exactly-one-day-is-admitted"
+      },
+      "transport/scenarios/connect-a-connection-never-established-ends-at-the-connect-bound.yaml": {
+        "digest": "sha256:0baa135df2d7171a70daef3461fdc833396ad93a914fb340602d096ce7c91ffc",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/connect-a-connection-never-established-ends-at-the-connect-bound"
+      },
+      "transport/scenarios/connect-a-zero-connect-bound-is-refused.yaml": {
+        "digest": "sha256:5cb7a4ff80e76cb1ba3c14c6884bfce22a1d50728d856c8160bcf0d8edbb9411",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/connect-a-zero-connect-bound-is-refused"
+      },
+      "transport/scenarios/connect-without-a-short-connect-bound-the-header-deadline-ends-it.yaml": {
+        "digest": "sha256:846a9c8376ab4a01a1d4deaea94cff21a69729f629ca82cd46cf2962681ffd17",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/connect-without-a-short-connect-bound-the-header-deadline-ends-it"
+      },
       "transport/scenarios/json-exchange-a-json-answer-comes-back-from-one-post.yaml": {
         "digest": "sha256:97a2764076bdd95eeff8d1548c45b0bb3aeaf8e7a621697e015b1afd17858045",
         "disposition": "accepted",
@@ -4733,7 +4763,7 @@
       }
     },
     "counts": {
-      "authored": 788,
+      "authored": 793,
       "generated": 26,
       "outside": 0,
       "refused": 0
@@ -4780,8 +4810,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "31cd70ef635f8b5e50a5895d9da1c05196ae4dc6fa7dd65ec086683923b07774",
-    "spec_digest": "d194b969981796d08cb0da1aa79de2f0ed77d01636c79409a1984b7693ca3b97",
+    "contract_digest": "5fea27f1be63d72f07b0dacb9d2f3c463d5e977b4316ff92c359f4bd3024ae77",
+    "spec_digest": "f66ce4e9f5ef9876f4312b280101ebf430676dd158ad4e31bc8a081ba7d3178c",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -91752,6 +91782,461 @@
               "valid_program": {
                 "kind": "literal",
                 "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/connect-a-connect-bound-longer-than-one-day-is-refused": {
+      "purpose": "a connect bound one millisecond over a day is refused when the client is built",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"limits\":{\"connect_ms\":86400001,\"response_headers_ms\":5000,\"idle_ms\":5000,\"total_ms\":10000},\"server\":{\"chunks\":[\"data: {\\\"n\\\":1}\\n\\n\"]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "end": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/connect-a-connect-bound-of-exactly-one-day-is-admitted": {
+      "purpose": "a connect bound of exactly one day is admitted and the exchange completes",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"limits\":{\"connect_ms\":86400000,\"response_headers_ms\":5000,\"idle_ms\":5000,\"total_ms\":10000},\"server\":{\"chunks\":[\"data: {\\\"n\\\":1}\\n\\n\"]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "end": {
+                "kind": "literal",
+                "value": "end"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "events": {
+                "kind": "literal",
+                "value": [
+                  "payload:-:{\"n\":1}"
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/connect-a-connection-never-established-ends-at-the-connect-bound": {
+      "purpose": "a connection the far side never establishes ends at the connect bound as a retriable transport failure, before the response-header deadline",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"limits\":{\"connect_ms\":200,\"response_headers_ms\":5000,\"idle_ms\":5000,\"total_ms\":10000},\"within_ms\":2000,\"server\":{\"accepting\":false}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "end": {
+                "kind": "literal",
+                "value": null
+              },
+              "ended_within": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/connect-a-zero-connect-bound-is-refused": {
+      "purpose": "a zero connect bound is refused when the client is built",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"limits\":{\"connect_ms\":0,\"response_headers_ms\":5000,\"idle_ms\":5000,\"total_ms\":10000},\"server\":{\"chunks\":[\"data: {\\\"n\\\":1}\\n\\n\"]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "end": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/connect-without-a-short-connect-bound-the-header-deadline-ends-it": {
+      "purpose": "the control for the connect bound; with the default connect bound, a connection never established waits for the shorter response-header deadline, so the fixture really leaves the connection hanging",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"limits\":{\"response_headers_ms\":300,\"idle_ms\":5000,\"total_ms\":10000},\"within_ms\":2000,\"server\":{\"accepting\":false}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "end": {
+                "kind": "literal",
+                "value": null
+              },
+              "ended_within": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "deadline"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
               }
             }
           },

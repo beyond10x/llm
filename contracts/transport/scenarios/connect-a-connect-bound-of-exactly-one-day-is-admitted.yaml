@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: connect-a-connect-bound-of-exactly-one-day-is-admitted
+summary: a connect bound of exactly one day is admitted and the exchange completes
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"limits":{"connect_ms":86400000,"response_headers_ms":5000,"idle_ms":5000,"total_ms":10000},"server":{"chunks":["data: {\"n\":1}\n\n"]}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    valid_program: true
+    error_code: null
+    events:
+    - payload:-:{"n":1}
+    end: end
+    requests: 1

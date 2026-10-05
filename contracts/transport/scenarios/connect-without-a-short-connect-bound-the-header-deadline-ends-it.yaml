@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: connect-without-a-short-connect-bound-the-header-deadline-ends-it
+summary: the control for the connect bound; with the default connect bound, a connection never established waits for the shorter response-header deadline, so the fixture really leaves the connection hanging
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"limits":{"response_headers_ms":300,"idle_ms":5000,"total_ms":10000},"within_ms":2000,"server":{"accepting":false}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    valid_program: true
+    error_code: deadline
+    dispatch: unknown
+    retriable: false
+    end: null
+    requests: 0
+    ended_within: true
