@@ -27,11 +27,14 @@ disagree about nothing.
    `content-type` is read as the event stream the `accept` header asked for, which is how the
    Codex backend answers; a success naming any other media type is `Protocol` with dispatch
    `accepted`;
-4. reads the stream up to its first terminal or failure event and decodes it with
-   `decode_stream`;
-5. hands the decoded events to the sink, in wire order. A sink refusal, a cancel or the deadline
-   during hand-over is returned with dispatch `accepted` and the decoded evidence: the outcome's
-   observation, or the decoder refusal's, with the counters the provider already reported;
+4. reads the stream up to its first terminal or failure event, decoding each payload as it
+   arrives with the decoder behind `decode_stream`;
+5. hands each payload's events to the sink before it reads the next payload, in wire order. A
+   sink refusal, a cancel or the deadline during hand-over ends the turn there: nothing more is
+   read, and the failure has dispatch `accepted` and the evidence decoded so far. Before the
+   terminal object that is the binding alone, and counters that were never read stay absent;
+   for the events deciding the turn produces (a warning for an unknown output item), it is the
+   outcome's observation, or the decoder refusal's, with the counters the provider reported;
 6. returns a decoder refusal with the binding attached when the decoder attached nothing, so every
    refusal after dispatch names the serving binding;
 7. checks the outcome against the request (`TurnOutcome::validate_for`): a call to a tool other
@@ -43,8 +46,15 @@ Messages client. A connection that drops before the terminal object is `Transpor
 The turn is bounded by the transport's `total` limit, credential resolution included. A refusal
 raised before anything was sent carries no observation, so `Error::validate_for` accepts it.
 
-The decoder reads a whole stream, so a turn's stream events reach the caller's sink after the
-stream has ended, in wire order, rather than as each one arrives.
+A turn's stream events reach the caller's sink as each payload arrives, as the Messages client's
+do. The transport's bounds (bytes per event, bytes and events per stream, the `total` limit) still
+hold: a payload over a bound ends the turn after the events before it were shown. A cut after any
+payload other than `response.created`, `response.in_progress`, `response.queued` or `keepalive`
+is final, not retriable; a cut after nothing but those keeps the transport's retry class, since a
+`keepalive` advances no turn. Routing's rule that an attempt which showed an event is never
+retried sees the same events, and the client's rule also covers output that produced no visible
+event. `decode_stream` reads nothing after the first terminal object either, so it reports the
+events and the turn the client does.
 
 A `Binding` is a `Provenance` — protocol, provider, account, endpoint, model, binding revision —
 plus the **upstream model name** that binding is configured to send. The two are separate because
@@ -252,6 +262,16 @@ none — `output` absent, or an empty array after items were streamed through
 `response.output_item.done`, as the Codex backend sends it — the streamed items are the turn.
 An empty `output` with nothing streamed stays an empty turn, and a forced tool that was never
 called is then refused by `TurnOutcome::validate_for`.
+
+**Text the caller was shown stays in the turn.** Text shown through `response.output_text.delta`
+belongs to the output item its `item_id` names. Each such item's text is kept as one assistant
+message, its deltas in arrival order, whenever no message the turn carries is that item. A message
+the turn carries under the same `id`, from the terminal `output` or the streamed items, outranks
+its deltas; a message or a delta that names no item counts as the same item as any other. Kept
+messages are placed by the `output_index` of their first delta, ascending and stable among equal
+indexes, whatever order they arrived in; one without an index, or with one past the end, goes last.
+A server that streams a message only as deltas and completes with an empty `output` would
+otherwise return a turn without the answer the caller just watched arrive.
 
 `final_usage` is true only for a terminal or failed response object: it says the reported counters
 are terminal, not that every count is known. A stream that ends without one refuses with `Protocol`

@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: kept-text-of-two-shown-messages-stays-two-messages
+summary: two messages shown through deltas and omitted from the output stay two messages
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.output_text.delta","item_id":"msg_a","output_index":0,"content_index":0,"delta":"Fir"},{"type":"response.output_text.delta","item_id":"msg_a","output_index":0,"content_index":0,"delta":"st"},{"type":"response.output_text.delta","item_id":"msg_b","output_index":1,"content_index":0,"delta":"Second"},{"type":"response.completed","response":{"status":"completed","output":[]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stop_reason: end-turn
+    items_json: '[{"kind":"assistant-text","text":"First"},{"kind":"assistant-text","text":"Second"}]'
+    stream_events:
+    - text-delta:Fir
+    - text-delta:st
+    - text-delta:Second

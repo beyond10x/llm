@@ -10,7 +10,7 @@ use llm_credentials::SecretResolver;
 use llm_http::{Framing, HeaderMap, HeaderName, HeaderValue, HttpClient, SseEvent};
 use serde_json::Value;
 
-use crate::{PROTOCOL, decode_stream, project_request};
+use crate::{PROTOCOL, StreamDecoding, project_request, stream::Decoder};
 
 /// The stream events after which this wire sends nothing the decoder reads.
 ///
@@ -23,9 +23,12 @@ const FINAL_EVENTS: &[&str] = &[
     "error",
 ];
 
-/// The stream events that only report the response's lifecycle and carry no output. Any other
-/// event (an output item, a content part, a delta) means the turn has answered.
+/// The stream events that only report the response's lifecycle, or that it is still alive, and
+/// carry no output. Any other event (an output item, a content part, a delta) means the turn has
+/// answered. A `keepalive` advances no turn, as in Harness (`harness-responses/src/lib.rs:421`),
+/// so a cut after nothing but these stays retriable.
 const LIFECYCLE_EVENTS: &[&str] = &[
+    "keepalive",
     "response.created",
     "response.in_progress",
     "response.queued",
@@ -35,14 +38,15 @@ const LIFECYCLE_EVENTS: &[&str] = &[
 ///
 /// A turn projects the neutral request with [`project_request`], resolves the account's
 /// credential through the injected resolver, sends one streaming `POST {base_url}responses`
-/// through `llm-http`, and decodes what arrives with [`decode_stream`]. The request carries the
-/// content headers and the authentication header the binding declares, and nothing else.
+/// through `llm-http`, and decodes what arrives with the decoder behind
+/// [`crate::decode_stream`]. The request carries the content headers and the authentication
+/// header the binding declares, and nothing else.
 ///
 /// It never retries, never refreshes a credential, never changes account or endpoint, and never
 /// falls back: those belong to routing and to the caller.
 ///
-/// The decoder reads a whole stream, so the turn's [`StreamEvent`]s reach the sink once the
-/// stream has ended, in wire order, and not while it is still arriving.
+/// Each payload is decoded as it arrives and the [`StreamEvent`]s it produced reach the sink
+/// before the next payload is read, in wire order, as the Messages client does.
 pub struct ResponsesClient {
     binding: llm_providers::Binding,
     projection: crate::Binding,
@@ -106,16 +110,15 @@ impl ResponsesClient {
         let (mut headers, _) = auth.into_parts();
         set(&mut headers, "content-type", "application/json");
         set(&mut headers, "accept", "text/event-stream");
-        let payloads = self.exchange(headers, body, cancel, deadline).await?;
-        let decoding = decode_stream(&self.projection, &payloads);
-        // The whole stream is read before the first event is handed over, so the provider's
-        // counters are already known: a sink refusal or a cancel during hand-over keeps them.
-        let evidence = self.evidence(&decoding.result);
-        for event in decoding.events {
-            bounded(deadline, emit(sink, event, cancel), Dispatch::Accepted)
-                .await
-                .map_err(|error| keep(error, &evidence))?;
-        }
+        let decoding = self.exchange(headers, body, sink, cancel, deadline).await?;
+        // Every event before the terminal object was handed over while the stream arrived. What
+        // is left was produced by deciding the turn, so the provider's counters are known: a
+        // sink refusal or a cancel now keeps them.
+        let evidence = self.evidence(match &decoding.result {
+            Ok(outcome) => Some(&outcome.observation),
+            Err(error) => error.observation.as_deref(),
+        });
+        hand_over(sink, decoding.events, cancel, deadline, &evidence).await?;
         let outcome = decoding.result.map_err(|error| self.attach(error))?;
         // The decoder checks the wire; this checks the turn: a forced tool, a published tool,
         // caller-owned content. A refusal here comes after the provider accepted the request.
@@ -125,14 +128,20 @@ impl ResponsesClient {
         Ok(outcome)
     }
 
-    /// Sends the one request and reads its stream up to the first final event.
+    /// Sends the one request and reads its stream up to the first final event, handing each
+    /// payload's events to the sink before the next payload is read.
+    ///
+    /// A sink refusal, a cancel or the deadline while an event is handed over ends the turn
+    /// there: nothing more is read. No terminal object has been decoded yet, so the failure
+    /// carries the binding and no counters; counters that were never read stay unknown.
     async fn exchange(
         &self,
         headers: HeaderMap,
         body: Vec<u8>,
+        sink: &mut dyn StreamSink,
         cancel: &Cancel,
         deadline: Instant,
-    ) -> Result<Vec<Value>, Error> {
+    ) -> Result<StreamDecoding, Error> {
         // This route sends no `[DONE]` sentinel: terminal truth is the response object.
         let mut stream = self
             .http
@@ -146,11 +155,13 @@ impl ResponsesClient {
             )
             .await
             .map_err(|error| self.attach(error))?;
-        let mut payloads = Vec::new();
-        // Whether the provider has produced any output yet. The stream is read whole before
-        // the caller sees an event, so routing cannot count what was produced; once the turn has
-        // answered, a cut is final rather than offered for another attempt that would answer
-        // again and bill again (Harness: a turn that had already answered is never retried).
+        let mut decoder = Decoder::new(&self.projection);
+        // Whether the provider has produced any output yet. Once the turn has answered, a cut
+        // is final rather than offered for another attempt that would answer again and bill
+        // again (Harness: a turn that had already answered is never retried). Routing's own
+        // rule sees every event the sink was shown; this one also covers a payload that produced
+        // output without a visible event (an opening item, a content part), so it is the
+        // stricter of the two and they never disagree about an attempt that showed something.
         let mut answered = false;
         // End of body ends the loop too. The decoder refuses unless a terminal object arrived.
         while let Some(SseEvent::Payload { data, .. }) = stream.next().await.map_err(|error| {
@@ -164,12 +175,25 @@ impl ResponsesClient {
             let kind = data.get("type").and_then(Value::as_str);
             let last = kind.is_some_and(|kind| FINAL_EVENTS.contains(&kind));
             answered |= !kind.is_some_and(|kind| LIFECYCLE_EVENTS.contains(&kind));
-            payloads.push(data);
+            let applied = decoder.apply(&data);
+            // A provider failure carries the counters its own object reported; anything else
+            // handed over before the terminal object carries the binding alone.
+            let evidence = match &applied {
+                Ok(()) => TurnObservation::new(self.binding.provenance().clone()),
+                Err(error) => self.evidence(error.observation.as_deref()),
+            };
+            hand_over(sink, decoder.take_events(), cancel, deadline, &evidence).await?;
+            if let Err(error) = applied {
+                return Ok(StreamDecoding {
+                    events: Vec::new(),
+                    result: Err(error),
+                });
+            }
             if last {
                 break;
             }
         }
-        Ok(payloads)
+        Ok(decoder.finish())
     }
 
     fn attach(&self, error: Error) -> Error {
@@ -178,17 +202,30 @@ impl ResponsesClient {
 
     /// The best evidence a decoded stream holds: the outcome's observation, else the
     /// refusal's, else the binding alone. Evidence this binding would refuse is not carried.
-    fn evidence(&self, result: &Result<TurnOutcome, Error>) -> TurnObservation {
+    fn evidence(&self, decoded: Option<&TurnObservation>) -> TurnObservation {
         let target = self.binding.provenance();
-        let decoded = match result {
-            Ok(outcome) => Some(&outcome.observation),
-            Err(error) => error.observation.as_deref(),
-        };
         decoded
             .filter(|observation| observation.validate_for(target).is_ok())
             .cloned()
             .unwrap_or_else(|| TurnObservation::new(target.clone()))
     }
+}
+
+/// Hands events to the caller in order, each under the turn's deadline and the caller's cancel.
+/// A failure carries `evidence` unless it carries its own.
+async fn hand_over(
+    sink: &mut dyn StreamSink,
+    events: Vec<StreamEvent>,
+    cancel: &Cancel,
+    deadline: Instant,
+    evidence: &TurnObservation,
+) -> Result<(), Error> {
+    for event in events {
+        bounded(deadline, emit(sink, event, cancel), Dispatch::Accepted)
+            .await
+            .map_err(|error| keep(error, evidence))?;
+    }
+    Ok(())
 }
 
 /// Attaches the binding as the only evidence a failure before decoding has.

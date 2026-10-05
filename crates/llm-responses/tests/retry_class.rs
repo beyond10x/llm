@@ -1,6 +1,7 @@
-//! The retry class of a Responses turn cut mid-stream. The client reads the whole stream before
-//! the caller sees an event, so routing cannot count what the provider produced: the client
-//! decides. A cut before any output stays retriable; a cut after any output item or delta is
+//! The retry class of a Responses turn cut mid-stream. The client hands events to the caller as
+//! they arrive, but a payload can produce output without a visible event (an opening item), so
+//! routing cannot count everything the provider produced: the client decides too. A cut before
+//! any output stays retriable; a cut after any output item or delta is
 //! final (Harness `a_turn_that_had_already_answered_is_never_retried`,
 //! `harness-responses/tests/provider_emulated.rs:521`). Local sockets only.
 
