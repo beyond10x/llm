@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: retry-class-an-overloaded-status-529-is-retriable
+summary: 529, an unregistered overloaded status, lands with the 5xx range as a retriable transport failure
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"status":529}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: transport
+    dispatch: unknown
+    retriable: true
+    requests: 1
