@@ -52,9 +52,15 @@ fn sentinel_is_explicit_and_eof_never_invents_a_terminal_event() {
         ErrorCode::Protocol
     );
     let mut decoder = SseDecoder::new(Framing::DoneSentinel);
-    assert!(decoder.push(b"").is_empty());
+    assert_eq!(
+        decoder.push(b""),
+        [] as [Result<SseEvent, llm_core::Error>; 0]
+    );
     decoder.finish().unwrap();
-    assert!(decoder.push(b"data: {}").is_empty());
+    assert_eq!(
+        decoder.push(b"data: {}"),
+        [] as [Result<SseEvent, llm_core::Error>; 0]
+    );
     assert!(decoder.finish().is_err());
     let mut decoder = SseDecoder::new(Framing::DoneSentinel);
     let events = decoder.push(b"data: [DONE]\n\ndata: {}\n\n");
@@ -66,7 +72,10 @@ fn sentinel_is_explicit_and_eof_never_invents_a_terminal_event() {
 fn line_event_and_stream_limits_hold_across_chunks() {
     let mut decoder = SseDecoder::new(Framing::PayloadsOnly);
     let long_line = vec![b'x'; MAX_EVENT_BYTES];
-    assert!(decoder.push(&long_line).is_empty());
+    assert_eq!(
+        decoder.push(&long_line),
+        [] as [Result<SseEvent, llm_core::Error>; 0]
+    );
     assert_eq!(
         decoder.push(b"x")[0].as_ref().unwrap_err().code,
         ErrorCode::TooLarge
@@ -74,7 +83,10 @@ fn line_event_and_stream_limits_hold_across_chunks() {
 
     let mut decoder = SseDecoder::new(Framing::PayloadsOnly);
     let line = format!("data: {}\n", " ".repeat(MAX_EVENT_BYTES / 2));
-    assert!(decoder.push(line.as_bytes()).is_empty());
+    assert_eq!(
+        decoder.push(line.as_bytes()),
+        [] as [Result<SseEvent, llm_core::Error>; 0]
+    );
     assert_eq!(
         decoder.push(line.as_bytes())[0].as_ref().unwrap_err().code,
         ErrorCode::TooLarge
@@ -83,7 +95,10 @@ fn line_event_and_stream_limits_hold_across_chunks() {
     let mut decoder = SseDecoder::new(Framing::PayloadsOnly);
     let comment = format!(":{}\n", "x".repeat(1022));
     for _ in 0..MAX_STREAM_BYTES / 1024 {
-        assert!(decoder.push(comment.as_bytes()).is_empty());
+        assert_eq!(
+            decoder.push(comment.as_bytes()),
+            [] as [Result<SseEvent, llm_core::Error>; 0]
+        );
     }
     assert_eq!(
         decoder.push(b"x")[0].as_ref().unwrap_err().code,

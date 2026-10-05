@@ -223,7 +223,7 @@ fn a_call_that_is_never_named_is_never_announced_and_refused_only_at_the_end() {
     ]);
     assert_eq!(error.message, "chat tool call carries no name");
     assert_eq!(usage.and_then(|usage| usage.input_tokens), Some(40));
-    assert!(tool_stream(&events).is_empty());
+    assert_eq!(tool_stream(&events), [] as [String; 0]);
 }
 
 #[test]
