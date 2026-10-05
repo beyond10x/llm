@@ -50,7 +50,7 @@ pub(crate) fn block(item: &Item) -> Result<Value, Error> {
             json!({"type":"tool_result","tool_use_id":call_id,"content":output.as_str().map_or_else(|| output.to_string(), str::to_owned),"is_error":failed})
         }
         Item::Opaque { payload, .. } => {
-            opaque(payload)?;
+            opaque(payload, "messages[].content[]")?;
             payload.clone()
         }
         // `encode_request` refuses it in `validate_for` first; this arm keeps the refusal on
@@ -202,6 +202,7 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
         .map_err(|_| Error::invalid("Messages ingress is not JSON"))?;
     fields(
         &value,
+        "",
         &[
             "model",
             "max_tokens",
@@ -242,7 +243,7 @@ fn instructions(value: &Value) -> Result<String, Error> {
         None => Ok(String::new()),
         Some(Value::String(text)) => Ok(text.clone()),
         Some(Value::Array(blocks)) if blocks.len() == 1 => {
-            fields(&blocks[0], &["type", "text"])?;
+            fields(&blocks[0], "system[]", &["type", "text"])?;
             if string(&blocks[0], "type")? != "text" {
                 return Err(Error::unsupported("Messages system block is not text"));
             }
@@ -260,7 +261,7 @@ fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error
         .and_then(Value::as_array)
         .ok_or_else(|| Error::invalid("Messages messages must be an array"))?;
     for message in messages {
-        fields(message, &["role", "content"])?;
+        fields(message, "messages[]", &["role", "content"])?;
         let role = string(message, "role")?;
         if !matches!(role, "user" | "assistant") {
             return Err(Error::unsupported(
@@ -281,9 +282,12 @@ fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error
                 .as_array()
                 .ok_or_else(|| Error::invalid("Messages content must be text or blocks"))?
             {
-                request
-                    .items
-                    .push(decode_block(block, role == "user", None)?);
+                request.items.push(decode_block(
+                    block,
+                    role == "user",
+                    None,
+                    "messages[].content[]",
+                )?);
             }
         }
     }
@@ -301,7 +305,7 @@ fn decode_tools(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
         .as_array()
         .ok_or_else(|| Error::invalid("Messages tools must be an array"))?
     {
-        fields(tool, &["name", "description", "input_schema"])?;
+        fields(tool, "tools[]", &["name", "description", "input_schema"])?;
         let schema = tool
             .get("input_schema")
             .filter(|schema| schema.is_object())
@@ -330,7 +334,7 @@ fn decode_sampling(value: &Value, request: &mut TurnRequest) -> Result<(), Error
         return Err(Error::unsupported("Messages temperature exceeds one"));
     }
     if let Some(config) = optional(value, "output_config") {
-        fields(config, &["effort"])?;
+        fields(config, "output_config", &["effort"])?;
         request.sampling.reasoning_effort = Some(string(config, "effort")?.to_owned());
     }
     Ok(())
@@ -340,7 +344,7 @@ fn decode_tool_choice(value: &Value, request: &mut TurnRequest) -> Result<(), Er
     let Some(choice) = optional(value, "tool_choice") else {
         return Ok(());
     };
-    fields(choice, &["type", "name"])?;
+    fields(choice, "tool_choice", &["type", "name"])?;
     request.tool_choice = match string(choice, "type")? {
         "auto" => {
             absent(choice, "name")?;
@@ -369,17 +373,17 @@ fn number(value: &Value, field: &str) -> Result<Option<f64>, Error> {
         .transpose()
 }
 
-pub(crate) fn opaque(value: &Value) -> Result<(), Error> {
+pub(crate) fn opaque(value: &Value, at: &str) -> Result<(), Error> {
     match string(value, "type")? {
         "thinking" => {
-            fields(value, &["type", "thinking", "signature"])?;
+            fields(value, at, &["type", "thinking", "signature"])?;
             string(value, "thinking")?;
             if string(value, "signature")?.is_empty() {
                 return Err(Error::protocol("Messages thinking signature is empty"));
             }
         }
         "redacted_thinking" => {
-            fields(value, &["type", "data"])?;
+            fields(value, at, &["type", "data"])?;
             if string(value, "data")?.is_empty() {
                 return Err(Error::protocol("Messages redacted thinking is empty"));
             }
@@ -399,15 +403,16 @@ pub(crate) fn opaque(value: &Value) -> Result<(), Error> {
 /// fact: a response this client read from its own bound endpoint. An arriving request carries no
 /// binding, so ingress passes `None` and opaque state is carried there as
 /// [`Item::UnattributedOpaque`]. Stamping the reading binding onto it would launder state that
-/// egress refuses from any other binding.
+/// egress refuses from any other binding. `at` is where the block sits, for a refusal to name.
 pub(crate) fn decode_block(
     value: &Value,
     user: bool,
     attribution: Option<&Provenance>,
+    at: &str,
 ) -> Result<Item, Error> {
     match string(value, "type")? {
         "text" => {
-            fields(value, &["type", "text", "citations"])?;
+            fields(value, at, &["type", "text", "citations"])?;
             if value
                 .get("citations")
                 .is_some_and(|v| !v.is_null() && v.as_array().is_none_or(|v| !v.is_empty()))
@@ -424,7 +429,7 @@ pub(crate) fn decode_block(
             })
         }
         "tool_use" if !user => {
-            fields(value, &["type", "id", "name", "input", "caller"])?;
+            fields(value, at, &["type", "id", "name", "input", "caller"])?;
             absent(value, "caller")?;
             let arguments = value
                 .get("input")
@@ -441,7 +446,7 @@ pub(crate) fn decode_block(
             }))
         }
         "tool_result" if user => {
-            fields(value, &["type", "tool_use_id", "content", "is_error"])?;
+            fields(value, at, &["type", "tool_use_id", "content", "is_error"])?;
             let failed = match optional(value, "is_error") {
                 None => false,
                 Some(Value::Bool(b)) => *b,
@@ -459,7 +464,7 @@ pub(crate) fn decode_block(
             })
         }
         "thinking" | "redacted_thinking" if !user => {
-            opaque(value)?;
+            opaque(value, at)?;
             // Where nothing observed the serving binding, the block is carried unattributed and
             // is refused on egress until a caller binds it. It is never bound to the reader.
             Ok(match attribution {

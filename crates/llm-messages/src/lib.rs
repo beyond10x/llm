@@ -31,12 +31,20 @@ fn object(value: &Value) -> Result<&Map<String, Value>, Error> {
 /// any value at all is outside the declared subset, so `decode_block` refuses them outright.
 const UNCONSUMED: [&str; 3] = ["inference_geo", "service_tier", "stop_sequence"];
 
-fn fields(value: &Value, allowed: &[&str]) -> Result<(), Error> {
+/// Refuses a field `value` carries that `allowed` does not name, and an accepted-but-unread one
+/// in a shape the route does not report.
+///
+/// `at` is where `value` sits, as a dotted path from the event or body root
+/// (`message_start.message`, `messages[].content[]`; empty for the root itself). A refusal names
+/// the field by that path and its own name, so a run against a live route says which field to
+/// read the producer's documentation for; it never carries the field's value.
+fn fields(value: &Value, at: &str, allowed: &[&str]) -> Result<(), Error> {
     let object = object(value)?;
-    if object.keys().any(|key| !allowed.contains(&key.as_str())) {
-        return Err(Error::unsupported(
-            "Messages field is outside the declared subset",
-        ));
+    if let Some(key) = object.keys().find(|key| !allowed.contains(&key.as_str())) {
+        return Err(Error::unsupported(format!(
+            "Messages field is outside the declared subset: {}",
+            path(at, key)
+        )));
     }
     if object.iter().any(|(key, found)| {
         UNCONSUMED.contains(&key.as_str()) && !found.is_null() && !found.is_string()
@@ -46,6 +54,27 @@ fn fields(value: &Value, allowed: &[&str]) -> Result<(), Error> {
         ));
     }
     Ok(())
+}
+/// The longest field name a diagnostic copies.
+const MAX_NAME_BYTES: usize = 64;
+
+/// `key` under `at`. A field name is producer text, so only a bounded one of the route's own name
+/// shape is copied; any other is written `?`.
+fn path(at: &str, key: &str) -> String {
+    let key = if (1..=MAX_NAME_BYTES).contains(&key.len())
+        && key
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_' || byte == b'-')
+    {
+        key
+    } else {
+        "?"
+    };
+    if at.is_empty() {
+        key.to_owned()
+    } else {
+        format!("{at}.{key}")
+    }
 }
 /// An optional field's value, or `None` when it is missing **or** spelled as an explicit null.
 ///

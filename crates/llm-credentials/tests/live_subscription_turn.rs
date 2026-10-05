@@ -360,3 +360,101 @@ async fn a_keychain_that_cannot_be_opened_is_refused_before_any_request() {
     assert_eq!(report_json["refused"]["dispatch"], "not-sent");
     assert!(report_json["turns"].as_array().unwrap().is_empty());
 }
+
+/// `--capture-response` keeps what the route sent back, so a refusal of the live stream can be
+/// read against the bytes that caused it: the status line, the response headers and the event
+/// stream exactly as it arrived. Nothing the client sent is in it — no request header, no token.
+#[tokio::test]
+async fn capture_response_writes_what_the_route_sent_and_never_the_request_or_its_token() {
+    let store = store();
+    put(&store, "llm", "anthropic-subscription", FIRST_TOKEN).await;
+    let (origin, listener) = serve().await;
+    let server = tokio::spawn(answer(listener, 1));
+    let directory = tempfile::tempdir().unwrap();
+    let capture = directory.path().join("response.capture");
+
+    let report = turn::run(
+        &args(&origin, &["--capture-response", capture.to_str().unwrap()]),
+        Ok(store.clone() as Arc<CredentialStore>),
+        async || unreachable!("no rotation was asked for"),
+    )
+    .await;
+    let captured = server.await.unwrap();
+    let (text, report_json) = printed(&report);
+    assert!(report.succeeded(), "{text}");
+    // The request really carried the token, so its absence below is not an accident.
+    let (headers, _) = split(&captured[0]);
+    assert_eq!(
+        header(&headers, "authorization"),
+        Some(format!("Bearer {FIRST_TOKEN}").as_str())
+    );
+
+    let bytes = std::fs::read(&capture).unwrap();
+    let written = String::from_utf8(bytes.clone()).unwrap();
+    assert!(written.starts_with("HTTP/1.1 200 OK\r\n"), "{written}");
+    assert!(
+        written.contains("\r\ncontent-type: text/event-stream\r\n"),
+        "{written}"
+    );
+    assert!(
+        written.ends_with(std::str::from_utf8(STREAM).unwrap()),
+        "{written}"
+    );
+    let lowered = written.to_ascii_lowercase();
+    for sent in [
+        "authorization",
+        "anthropic-beta",
+        "anthropic-version",
+        "bearer",
+    ] {
+        assert!(!lowered.contains(sent), "the capture carries `{sent}`");
+    }
+    assert!(
+        !written.contains(FIRST_TOKEN),
+        "the capture carries the token"
+    );
+    assert_eq!(report_json["capture"]["bytes"], bytes.len());
+    assert_eq!(report_json["capture"]["complete"], true);
+    assert!(
+        !text.contains(capture.to_str().unwrap()),
+        "the report names the capture path"
+    );
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(
+            std::fs::metadata(&capture).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+    }
+}
+
+/// An existing file is never overwritten or widened: the run is refused before any request.
+#[tokio::test]
+async fn capture_response_to_an_existing_file_is_refused_before_any_request() {
+    let store = store();
+    put(&store, "llm", "anthropic-subscription", FIRST_TOKEN).await;
+    let (origin, listener) = serve().await;
+    let directory = tempfile::tempdir().unwrap();
+    let capture = directory.path().join("response.capture");
+    std::fs::write(&capture, b"kept").unwrap();
+
+    let report = turn::run(
+        &args(&origin, &["--capture-response", capture.to_str().unwrap()]),
+        Ok(store.clone() as Arc<CredentialStore>),
+        async || unreachable!("no rotation was asked for"),
+    )
+    .await;
+    let (text, report_json) = printed(&report);
+
+    assert!(
+        tokio::time::timeout(Duration::from_millis(300), listener.accept())
+            .await
+            .is_err(),
+        "a request was sent without its capture file"
+    );
+    assert!(!report.succeeded(), "{text}");
+    assert_eq!(report_json["refused"]["code"], "invalid-request");
+    assert!(report_json["turns"].as_array().unwrap().is_empty());
+    assert_eq!(std::fs::read(&capture).unwrap(), b"kept");
+}

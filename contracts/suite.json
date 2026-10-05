@@ -1755,7 +1755,7 @@
         "scenario": "llm.messages/authored/ingress-refuses-a-conversation-that-opens-with-the-assistant"
       },
       "messages/scenarios/ingress-refuses-a-request-field-outside-the-subset.yaml": {
-        "digest": "sha256:b265fa54886cfb8d4ff054a20b0a6d85dadc4b23a838a71fb086e323b4c80d4a",
+        "digest": "sha256:40bb5ecc763640cd2dbd25e1be3835dcb7f3d7739ecf71ab0bf9f2852869f868",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-refuses-a-request-field-outside-the-subset"
       },
@@ -35827,7 +35827,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "Messages field is outside the declared subset"
+                "value": "Messages field is outside the declared subset: metadata"
               },
               "final_usage": {
                 "kind": "literal",

@@ -4,7 +4,7 @@
   "case": "cargo test -p b10x-llm-messages --locked --no-fail-fast (and cargo test -p b10x-llm-http --locked --no-fail-fast for a mutation in that crate)",
   "scenario": "ess verify conform synthesize --path spec --suite-format 5 --target ir --scenarios contracts/messages/scenarios --out target/messages-suite.json, then cargo run --locked -p b10x-llm-conformance -- target/messages-suite.json target/messages-baseline.json target/messages-run local"
  },
- "measured": "2026-09-21; 2026-10-05 for the six mutations of wave 2026-10-05-w27; 2026-10-05 for the five subscription-presentation mutations of wave 2026-10-05-w48",
+ "measured": "2026-09-21; 2026-10-05 for the six mutations of wave 2026-10-05-w27; 2026-10-05 for the five subscription-presentation mutations of wave 2026-10-05-w48; 2026-10-05 for the four mutations re-measured in wave 2026-10-05-w53",
  "mutations": [
   {
    "edits": [
@@ -630,20 +630,24 @@
    "edits": [
     {
      "after": "    let _ = allowed;",
-     "before": "    if object.keys().any(|key| !allowed.contains(&key.as_str())) {\n        return Err(Error::unsupported(\n            \"Messages field is outside the declared subset\",\n        ));\n    }"
+     "before": "    if let Some(key) = object.keys().find(|key| !allowed.contains(&key.as_str())) {\n        return Err(Error::unsupported(format!(\n            \"Messages field is outside the declared subset: {}\",\n            path(at, key)\n        )));\n    }"
     }
    ],
    "failed_cases": [
     "a_complete_message_field_outside_the_declared_subset_is_refused",
+    "a_complete_message_field_outside_the_declared_subset_is_refused_by_its_path",
+    "a_streamed_field_outside_the_declared_subset_is_refused_by_its_path_and_never_its_value",
+    "ingress_names_the_path_of_a_field_outside_the_declared_subset",
     "ingress_refuses_a_request_field_outside_the_declared_subset",
-    "ingress_refuses_content_outside_the_declared_subset"
+    "ingress_refuses_content_outside_the_declared_subset",
+    "ingress_refuses_the_breakpoints_egress_places"
    ],
    "failed_scenarios": [
     "llm.messages/authored/complete-response-metadata-outside-the-subset-refused",
     "llm.messages/authored/ingress-refuses-a-request-field-outside-the-subset"
    ],
    "guards": [
-    "Messages field is outside the declared subset"
+    "Messages field is outside the declared subset: {}"
    ],
    "killed_by": [
     "scenario",
@@ -651,17 +655,17 @@
    ],
    "mutation": "unknown-request-field-accepted",
    "restored": true,
-   "restored_sha256": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3",
+   "restored_sha256": "a9cb905d534b2dc98d8cc466227328fb2487723b5ddb682040ed43b73292b765",
    "scenario_counts": {
     "error": 0,
     "failed": 2,
-    "passed": 39,
+    "passed": 689,
     "skipped": 0,
-    "total": 41,
+    "total": 691,
     "unsupported": 0
    },
    "source": "crates/llm-messages/src/lib.rs",
-   "source_before_sha256": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3"
+   "source_before_sha256": "a9cb905d534b2dc98d8cc466227328fb2487723b5ddb682040ed43b73292b765"
   },
   {
    "edits": [
@@ -776,11 +780,12 @@
      "before": "    decode_messages(&value, &mut request)?;"
     },
     {
-     "after": "                request\n                    .items\n                    .push(decode_block(block, role == \"user\", Some(origin))?);",
-     "before": "                request\n                    .items\n                    .push(decode_block(block, role == \"user\", None)?);"
+     "after": "                request.items.push(decode_block(\n                    block,\n                    role == \"user\",\n                    Some(origin),\n                    \"messages[].content[]\",\n                )?);",
+     "before": "                request.items.push(decode_block(\n                    block,\n                    role == \"user\",\n                    None,\n                    \"messages[].content[]\",\n                )?);"
     }
    ],
    "failed_cases": [
+    "a_bound_thinking_block_goes_out_exactly_as_it_came_in",
     "ingress_does_not_bind_unattributable_thinking_to_the_reading_binding",
     "thinking_survives_a_gateway_round_trip_only_through_the_callers_binding"
    ],
@@ -794,23 +799,23 @@
    ],
    "mutation": "ingress-stamps-the-reading-binding-onto-thinking",
    "restored": true,
-   "restored_sha256": "4e166a50e7eb2ccf21b93bda42788ab51487d744348fc73a5da9f20ac27c8e13",
+   "restored_sha256": "d201263f1a67a99b8fd0b74b64cd06c893572e481c23df4106c4c9aab324962e",
    "scenario_counts": {
     "error": 0,
     "failed": 1,
-    "passed": 52,
+    "passed": 690,
     "skipped": 0,
-    "total": 53,
+    "total": 691,
     "unsupported": 0
    },
    "source": "crates/llm-messages/src/codec.rs",
-   "source_before_sha256": "4e166a50e7eb2ccf21b93bda42788ab51487d744348fc73a5da9f20ac27c8e13"
+   "source_before_sha256": "d201263f1a67a99b8fd0b74b64cd06c893572e481c23df4106c4c9aab324962e"
   },
   {
    "edits": [
     {
-     "after": "        fields(message, &MESSAGE_FIELDS)?;",
-     "before": "        assistant_message(message)?;"
+     "after": "        fields(message, START, &MESSAGE_FIELDS)?;",
+     "before": "        assistant_message(message, START)?;"
     }
    ],
    "failed_cases": [
@@ -828,23 +833,23 @@
    ],
    "mutation": "stream-start-not-checked-as-an-assistant-message",
    "restored": true,
-   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "restored_sha256": "a0479025d342ffde7315796b07c53654fbcd10fbb90c8cc47a207d012a3eb01c",
    "scenario_counts": {
     "error": 0,
     "failed": 1,
-    "passed": 40,
+    "passed": 690,
     "skipped": 0,
-    "total": 41,
+    "total": 691,
     "unsupported": 0
    },
    "source": "crates/llm-messages/src/decode.rs",
-   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+   "source_before_sha256": "a0479025d342ffde7315796b07c53654fbcd10fbb90c8cc47a207d012a3eb01c"
   },
   {
    "edits": [
     {
-     "after": "        self.items.insert(\n            self.items.len() as u64,\n            decode_block(&block.value, false, Some(&self.target))?,\n        );",
-     "before": "        self.items.insert(\n            index,\n            decode_block(&block.value, false, Some(&self.target))?,\n        );"
+     "after": "        self.items.insert(\n            self.items.len() as u64,\n            decode_block(&block.value, false, Some(&self.target), BLOCK)?,\n        );",
+     "before": "        self.items.insert(\n            index,\n            decode_block(&block.value, false, Some(&self.target), BLOCK)?,\n        );"
     }
    ],
    "failed_cases": [
@@ -860,17 +865,17 @@
    ],
    "mutation": "content-assembled-in-block-stop-order",
    "restored": true,
-   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+   "restored_sha256": "a0479025d342ffde7315796b07c53654fbcd10fbb90c8cc47a207d012a3eb01c",
    "scenario_counts": {
     "error": 0,
     "failed": 1,
-    "passed": 40,
+    "passed": 690,
     "skipped": 0,
-    "total": 41,
+    "total": 691,
     "unsupported": 0
    },
    "source": "crates/llm-messages/src/decode.rs",
-   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
+   "source_before_sha256": "a0479025d342ffde7315796b07c53654fbcd10fbb90c8cc47a207d012a3eb01c"
   },
   {
    "edits": [
@@ -1736,7 +1741,7 @@
    "source_before_sha256": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a"
   }
  ],
- "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not. Wave 2026-10-05-w27 (Harness parity M23, M36, M39): unknown stream events, deltas and blocks are now preserved with a warning, so unknown-stream-event-ignored was retired with the refusal it claimed; in-flight-content-block-bound-deleted was re-measured where the bound moved; and six mutations were run in a second pass against the tree named under `sources`, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- run <suite> <baseline> <out> <identity>`. Three of the claimed literals are fixed warnings rather than refusals: each mutation claiming one deletes the preservation that warning reports. Wave 2026-10-05-w48 (story:anthropic-access, Harness parity M5, M6): five mutations of the subscription presentation were run in a third pass with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- check`; the subscription client preamble is a fixed literal the route requires rather than a refusal, and the mutation claiming it changes its text.",
+ "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not. Wave 2026-10-05-w27 (Harness parity M23, M36, M39): unknown stream events, deltas and blocks are now preserved with a warning, so unknown-stream-event-ignored was retired with the refusal it claimed; in-flight-content-block-bound-deleted was re-measured where the bound moved; and six mutations were run in a second pass against the tree named under `sources`, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- run <suite> <baseline> <out> <identity>`. Three of the claimed literals are fixed warnings rather than refusals: each mutation claiming one deletes the preservation that warning reports. Wave 2026-10-05-w48 (story:anthropic-access, Harness parity M5, M6): five mutations of the subscription presentation were run in a third pass with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- check`; the subscription client preamble is a fixed literal the route requires rather than a refusal, and the mutation claiming it changes its text. Wave 2026-10-05-w53 (story:anthropic-access): the field refusal now names the refused field by its path, so the four mutations whose recorded text that change touched were re-measured: unknown-request-field-accepted (lib.rs), ingress-stamps-the-reading-binding-onto-thinking (codec.rs), stream-start-not-checked-as-an-assistant-message and content-assembled-in-block-stop-order (decode.rs), whose calls now pass that path; each was run alone against the sha256 it records, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- check` under ess 0.52.0; their failed cases omit tests/falsification.rs, whose checks fail under any mutation that removes recorded text.",
  "sources": {
   "crates/llm-http/src/transport.rs": "2d488d03ef7c914c2c75dc41e32fc217701dbf73f07623013ca87e67408d48be",
   "crates/llm-messages/src/client.rs": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a",

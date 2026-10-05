@@ -62,6 +62,15 @@ notes go to stderr. Exit status 0 means the turn completed.
 Options: `--model`, `--prompt`, `--endpoint` (an origin; the request goes to
 `<endpoint>/v1/messages`), `--namespace`, `--name`, `--rotate-check`. `--help` lists them.
 
+When a turn is refused, `--capture-response <path>` keeps what the route sent back so the refusal
+can be read against it: the response line, the response headers and the event stream exactly as it
+arrived, written to a new file (mode 0600 on Unix; an existing file is refused before any request).
+Nothing the client sent is written: no request header and no token. The capture is the
+operator's own response data and is not evidence to hand on; the report's `capture` field gives
+only the bytes written and whether every write succeeded. A refusal of a field outside the
+declared subset names the field by its path, such as
+`Messages field is outside the declared subset: message_start.message.usage.<name>`.
+
 The report holds:
 
 | Field | What it says |
@@ -78,6 +87,7 @@ The report holds:
 | `turns` | Per turn: `outcome`, `latency_ms`, `stop_reason`, `usage`, `upstream_model`, `response_id`, `reply`, or the typed `error` |
 | `refused` | A refusal before any turn: the keychain could not be opened, or an argument is invalid |
 | `rotation` | With `--rotate-check`: how many resolutions there were and whether the version changed |
+| `capture` | With `--capture-response`: `bytes` written and whether the capture is `complete` |
 
 A missing token is reported as a turn `error` with code `unauthorized`, dispatch `not-sent` and the
 message ``secret reference `anthropic-subscription` refused: secret reference was not found``; no

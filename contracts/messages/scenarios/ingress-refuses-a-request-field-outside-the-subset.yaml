@@ -18,7 +18,7 @@ assert:
   contains:
     accepted: false
     error_code: "unsupported"
-    error_message: "Messages field is outside the declared subset"
+    error_message: "Messages field is outside the declared subset: metadata"
     dispatch: "not-sent"
     wire_request: null
     neutral_request: null

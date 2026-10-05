@@ -426,3 +426,136 @@ async fn the_clients_own_total_still_ends_an_exchange_a_later_instant_would_not(
     assert_eq!(error.code, ErrorCode::Deadline);
     worker.abort();
 }
+
+/// Everything a tap was shown, in order.
+#[derive(Default)]
+struct Recorded(std::sync::Mutex<Vec<u8>>);
+
+impl llm_http::ResponseTap for Recorded {
+    fn head(&self, status_line: &str, headers: &HeaderMap) {
+        let mut seen = self.0.lock().unwrap();
+        seen.extend_from_slice(status_line.as_bytes());
+        seen.extend_from_slice(b"\r\n");
+        for (name, value) in headers {
+            seen.extend_from_slice(name.as_str().as_bytes());
+            seen.extend_from_slice(b": ");
+            seen.extend_from_slice(value.as_bytes());
+            seen.extend_from_slice(b"\r\n");
+        }
+        seen.extend_from_slice(b"\r\n");
+    }
+    fn chunk(&self, bytes: &[u8]) {
+        self.0.lock().unwrap().extend_from_slice(bytes);
+    }
+}
+
+/// A tap sees one streamed response as it arrived: status line, response headers, then the body
+/// byte for byte. It is shown nothing the client sent, and a JSON exchange (the shape a credential
+/// refresh takes) is never shown to it at all.
+#[tokio::test]
+async fn a_response_tap_sees_the_streamed_response_and_nothing_the_client_sent() {
+    const SENT_TOKEN: &str = "request-credential-the-tap-never-sees";
+    const BODY: &[u8] = b"event: one\ndata: {\"n\":1}\n\ndata: {\"n\":2}\n\n";
+    let (listener, url) = listener().await;
+    let worker = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        request(&mut socket).await;
+        socket
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nX-Fixture: seen\r\nConnection: close\r\n\r\n")
+            .await
+            .unwrap();
+        socket.write_all(&BODY[..9]).await.unwrap();
+        socket.flush().await.unwrap();
+        socket.write_all(&BODY[9..]).await.unwrap();
+        socket.shutdown().await.unwrap();
+        let (mut socket, _) = listener.accept().await.unwrap();
+        request(&mut socket).await;
+        socket
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 13\r\nConnection: close\r\n\r\n{\"token\":\"t\"}")
+            .await
+            .unwrap();
+        socket.shutdown().await.unwrap();
+    });
+    let tap = std::sync::Arc::new(Recorded::default());
+    let client = client().with_response_tap(tap.clone());
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "authorization",
+        HeaderValue::from_str(&format!("Bearer {SENT_TOKEN}")).unwrap(),
+    );
+    let mut stream = client
+        .post_sse(
+            &url,
+            headers.clone(),
+            format!("{{\"secret\":\"{SENT_TOKEN}\"}}").into_bytes(),
+            Framing::PayloadsOnly,
+            &Cancel::new(),
+        )
+        .await
+        .unwrap();
+    while stream.next().await.unwrap().is_some() {}
+    let streamed = tap.0.lock().unwrap().clone();
+    client
+        .post_json(&url, headers, b"{}".to_vec(), &Cancel::new())
+        .await
+        .unwrap();
+    worker.await.unwrap();
+
+    let seen = tap.0.lock().unwrap().clone();
+    assert_eq!(seen, streamed, "a JSON exchange reached the tap");
+    let text = String::from_utf8(seen).unwrap();
+    assert!(text.starts_with("HTTP/1.1 200 OK\r\n"), "{text}");
+    assert!(text.contains("\r\nx-fixture: seen\r\n"), "{text}");
+    assert!(text.ends_with(std::str::from_utf8(BODY).unwrap()), "{text}");
+    assert!(
+        !text.to_ascii_lowercase().contains("authorization"),
+        "{text}"
+    );
+    assert!(!text.contains(SENT_TOKEN), "{text}");
+}
+
+#[tokio::test]
+async fn adversary_refused_response_tap_records_head_but_never_body() {
+    for (status, media, expected) in [
+        (
+            "429 Too Many Requests",
+            "text/event-stream",
+            ErrorCode::RateLimited,
+        ),
+        ("200 OK", "application/json", ErrorCode::Protocol),
+    ] {
+        let (listener, url) = listener().await;
+        let worker = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            request(&mut socket).await;
+            socket.write_all(format!(
+                "HTTP/1.1 {status}\r\nContent-Type: {media}\r\nRetry-After: 17\r\nConnection: close\r\n\r\nprivate-response-body"
+            ).as_bytes()).await.unwrap();
+        });
+        let tap = std::sync::Arc::new(Recorded::default());
+        let result = client()
+            .with_response_tap(tap.clone())
+            .post_sse(
+                &url,
+                HeaderMap::new(),
+                b"{}".to_vec(),
+                Framing::PayloadsOnly,
+                &Cancel::new(),
+            )
+            .await;
+        let error = match result {
+            Ok(_) => panic!("a refused response became a stream"),
+            Err(error) => error,
+        };
+        worker.await.unwrap();
+        assert_eq!(error.code, expected);
+        let seen = String::from_utf8(tap.0.lock().unwrap().clone()).unwrap();
+        assert!(
+            seen.starts_with(&format!("HTTP/1.1 {status}\r\n")),
+            "{seen}"
+        );
+        assert!(seen.contains("\r\nretry-after: 17\r\n"), "{seen}");
+        assert!(seen.ends_with("\r\n\r\n"), "{seen}");
+        assert!(!seen.contains("private-response-body"), "{seen}");
+    }
+}

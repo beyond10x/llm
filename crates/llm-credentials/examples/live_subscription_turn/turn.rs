@@ -20,7 +20,7 @@ use llm_credentials::{
         storage::{Scope, ScopeName, SecretName},
     },
 };
-use llm_http::{HttpClient, Limits};
+use llm_http::{HeaderMap, HttpClient, Limits, ResponseTap};
 use llm_messages::{
     ANTHROPIC_VERSION, BETA_HEADER, MessagesClient, SUBSCRIPTION_CLIENT_PREAMBLE, VERSION_HEADER,
     encode_request,
@@ -31,6 +31,9 @@ use serde::Serialize;
 use serde_json::{Value, json};
 use std::{
     collections::BTreeSet,
+    fs::{File, OpenOptions},
+    io::Write,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
@@ -81,6 +84,11 @@ pub struct Args {
     /// and report whether the resolved credential version changed.
     #[arg(long)]
     pub rotate_check: bool,
+    /// Write what the route sent back (status line, response headers and the event stream as
+    /// it arrived) to this new file, mode 0600 on Unix. Nothing the client sent is written: no
+    /// request header and no credential. The file must not exist yet.
+    #[arg(long, value_name = "PATH")]
+    pub capture_response: Option<PathBuf>,
 }
 
 /// Where the token was read from. All of it is non-secret lookup metadata.
@@ -132,6 +140,8 @@ pub struct Report {
     pub refused: Option<Error>,
     pub turns: Vec<TurnReport>,
     pub rotation: Option<Rotation>,
+    /// What `--capture-response` wrote; its path is the operator's and is not repeated here.
+    pub capture: Option<CaptureReport>,
 }
 
 impl Report {
@@ -158,6 +168,7 @@ impl Report {
             refused: None,
             turns: Vec::new(),
             rotation: None,
+            capture: None,
         }
     }
 
@@ -216,6 +227,88 @@ impl SecretResolver for Placeholder {
                 version: SecretVersion::new("placeholder".to_owned())?,
             })
         })
+    }
+}
+
+/// How much of the response `--capture-response` wrote, and whether every write succeeded.
+#[derive(Debug, Serialize)]
+pub struct CaptureReport {
+    pub bytes: u64,
+    pub complete: bool,
+}
+
+/// The capture file, shown each streamed response by the transport's [`ResponseTap`], which is
+/// never shown the request. A turn of the rotation check appends after the one before it.
+struct Capture {
+    file: Mutex<File>,
+    written: Mutex<CaptureReport>,
+}
+
+impl Capture {
+    /// Creates `path` new, readable and writable by its owner alone on Unix; an existing file is
+    /// refused rather than overwritten or left with wider permissions.
+    fn create(path: &Path) -> Result<Self, Error> {
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
+        let file = options.open(path).map_err(|_| {
+            Error::invalid("--capture-response could not be created; it must name a new file")
+        })?;
+        Ok(Self {
+            file: Mutex::new(file),
+            written: Mutex::new(CaptureReport {
+                bytes: 0,
+                complete: true,
+            }),
+        })
+    }
+
+    fn write(&self, bytes: &[u8]) {
+        let wrote = self
+            .file
+            .lock()
+            .is_ok_and(|mut file| file.write_all(bytes).is_ok());
+        if let Ok(mut written) = self.written.lock() {
+            if wrote {
+                written.bytes += bytes.len() as u64;
+            } else {
+                written.complete = false;
+            }
+        }
+    }
+
+    fn report(&self) -> CaptureReport {
+        self.written.lock().map_or(
+            CaptureReport {
+                bytes: 0,
+                complete: false,
+            },
+            |written| CaptureReport {
+                bytes: written.bytes,
+                complete: written.complete,
+            },
+        )
+    }
+}
+
+impl ResponseTap for Capture {
+    fn head(&self, status_line: &str, headers: &HeaderMap) {
+        let mut head = Vec::new();
+        head.extend_from_slice(status_line.as_bytes());
+        head.extend_from_slice(b"\r\n");
+        for (name, value) in headers {
+            head.extend_from_slice(name.as_str().as_bytes());
+            head.extend_from_slice(b": ");
+            head.extend_from_slice(value.as_bytes());
+            head.extend_from_slice(b"\r\n");
+        }
+        head.extend_from_slice(b"\r\n");
+        self.write(&head);
+    }
+
+    fn chunk(&self, bytes: &[u8]) {
+        self.write(bytes);
     }
 }
 
@@ -348,6 +441,12 @@ async fn turns(
         .iter()
         .any(|name| name == BETA_HEADER);
     report.system_opens_with_preamble = opens_with_preamble(&request, &binding)?;
+    let capture = args
+        .capture_response
+        .as_deref()
+        .map(Capture::create)
+        .transpose()?
+        .map(Arc::new);
 
     let resolver = Arc::new(Recording {
         inner: SecretsResolver::keychain(
@@ -359,20 +458,25 @@ async fn turns(
         ),
         versions: Mutex::new(Vec::new()),
     });
-    let http = HttpClient::new(Limits {
+    let mut http = HttpClient::new(Limits {
         response_headers: TURN_LIMIT,
         idle: TURN_LIMIT,
         total: TURN_LIMIT,
     })?;
+    if let Some(capture) = &capture {
+        http = http.with_response_tap(capture.clone());
+    }
     let client = MessagesClient::new(binding, http, resolver.clone())?;
 
     report.turns.push(one_turn(&client, &request).await);
+    report.capture = capture.as_ref().map(|capture| capture.report());
     if !args.rotate_check {
         return Ok(());
     }
     if report.turns.iter().all(|turn| turn.error.is_none()) {
         rotate().await;
         report.turns.push(one_turn(&client, &request).await);
+        report.capture = capture.as_ref().map(|capture| capture.report());
     }
     let versions = resolver
         .versions

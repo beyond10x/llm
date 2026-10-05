@@ -1,4 +1,4 @@
-use crate::{codec::decode_block, fields, object, string, usage::Snapshot};
+use crate::{codec::decode_block, fields, object, path, string, usage::Snapshot};
 use llm_core::{
     CallId, Cancel, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES,
     Provenance, StopReason, StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
@@ -20,14 +20,18 @@ const MESSAGE_FIELDS: [&str; 8] = [
     "usage",
 ];
 const MAX_STOP_REASON_BYTES: usize = 64;
+// Where a streamed object sits, as a refusal names it: the event type, then the field path.
+const START: &str = "message_start.message";
+const BLOCK: &str = "content_block_start.content_block";
+const DELTA: &str = "content_block_delta.delta";
 
 /// The invariants that travel with [`MESSAGE_FIELDS`].
 ///
 /// Both halves of this codec read the same object — a complete response, and the one inside
 /// `message_start` — so both ask the same question of it. A field list shared without the checks
 /// that go with it is two decoders that agree about spelling and disagree about meaning.
-fn assistant_message(message: &Value) -> Result<(), Error> {
-    fields(message, &MESSAGE_FIELDS)?;
+fn assistant_message(message: &Value, at: &str) -> Result<(), Error> {
+    fields(message, at, &MESSAGE_FIELDS)?;
     if text(message, "type")? != Some("message") || text(message, "role")? != Some("assistant") {
         return Err(Error::protocol(
             "Messages response is not an assistant message",
@@ -54,7 +58,7 @@ struct Header {
 }
 
 impl Header {
-    fn read(&mut self, message: &Value) -> Result<(), Error> {
+    fn read(&mut self, message: &Value, at: &str) -> Result<(), Error> {
         if let Some(model) = text(message, "model")? {
             // The route's own name for what served the turn; a configured alias never fills it.
             self.upstream_model =
@@ -65,7 +69,7 @@ impl Header {
                 Some(Id::new(id).map_err(|_| Error::protocol("invalid Messages response id"))?);
         }
         if let Some(usage) = message.get("usage").filter(|value| !value.is_null()) {
-            self.usage = self.usage.update(usage)?;
+            self.usage = self.usage.update(usage, &path(at, "usage"))?;
         }
         self.reason(text(message, "stop_reason")?)
     }
@@ -171,15 +175,16 @@ fn read_message(
     target: &Provenance,
     header: &mut Header,
 ) -> Result<TurnOutcome, Error> {
-    assistant_message(message)?;
-    header.read(message)?;
+    // A complete response is its own root: its fields are named from there.
+    assistant_message(message, "")?;
+    header.read(message, "")?;
     let content = message
         .get("content")
         .and_then(Value::as_array)
         .ok_or_else(|| Error::protocol("Messages content must be an array"))?;
     let mut items = Vec::new();
     for block in content {
-        items.push(decode_block(block, false, Some(target))?);
+        items.push(decode_block(block, false, Some(target), "content[]")?);
     }
     header.outcome(items, request, target)
 }
@@ -282,7 +287,7 @@ impl StreamDecoder {
         }
         match kind {
             // A keep-alive. Its irrelevance to this subset is the route's own documentation.
-            "ping" => fields(data, &["type"]),
+            "ping" => fields(data, "ping", &["type"]),
             "message_start" => self.start_message(data),
             "content_block_start" => self.start_block(data, sink, cancel).await,
             "content_block_delta" => self.apply_delta(data, sink, cancel).await,
@@ -355,21 +360,21 @@ impl StreamDecoder {
     }
 
     fn start_message(&mut self, data: &Value) -> Result<(), Error> {
-        fields(data, &["type", "message"])?;
+        fields(data, "message_start", &["type", "message"])?;
         if self.started {
             return Err(Error::protocol("Messages stream started twice"));
         }
         let message = data
             .get("message")
             .ok_or_else(|| Error::protocol("Messages start carries no message"))?;
-        assistant_message(message)?;
+        assistant_message(message, START)?;
         if message
             .get("content")
             .is_some_and(|content| content.as_array().is_none_or(|blocks| !blocks.is_empty()))
         {
             return Err(Error::protocol("Messages start carries content"));
         }
-        self.header.read(message)?;
+        self.header.read(message, START)?;
         self.started = true;
         Ok(())
     }
@@ -381,7 +386,11 @@ impl StreamDecoder {
         cancel: &Cancel,
     ) -> Result<(), Error> {
         self.started()?;
-        fields(data, &["type", "index", "content_block"])?;
+        fields(
+            data,
+            "content_block_start",
+            &["type", "index", "content_block"],
+        )?;
         let index = index(data)?;
         if self.blocks.contains_key(&index) || index < self.next_index {
             return Err(Error::protocol("Messages content block is out of order"));
@@ -401,7 +410,8 @@ impl StreamDecoder {
                 // rather than after its arguments were already relayed.
                 let opening = json!({"type": "tool_use", "id": call_id.as_str(),
                     "name": string(&value, "name")?, "input": {}});
-                let Item::ToolCall(call) = decode_block(&opening, false, Some(&self.target))?
+                let Item::ToolCall(call) =
+                    decode_block(&opening, false, Some(&self.target), BLOCK)?
                 else {
                     return Err(Error::unsupported(
                         "Messages content is outside the declared subset",
@@ -454,7 +464,7 @@ impl StreamDecoder {
         cancel: &Cancel,
     ) -> Result<(), Error> {
         self.started()?;
-        fields(data, &["type", "index", "delta"])?;
+        fields(data, "content_block_delta", &["type", "index", "delta"])?;
         let index = index(data)?;
         let delta = data
             .get("delta")
@@ -468,7 +478,7 @@ impl StreamDecoder {
         }
         let event = match string(delta, "type")? {
             "text_delta" => {
-                fields(delta, &["type", "text"])?;
+                fields(delta, DELTA, &["type", "text"])?;
                 let text = string(delta, "text")?;
                 append(&mut block.value, "text", text)?;
                 (!text.is_empty()).then(|| StreamEvent::TextDelta {
@@ -478,7 +488,7 @@ impl StreamDecoder {
             // Shown as it arrives and also folded into the block, which stays opaque and is
             // replayed with its signature. Opaque means never reinterpreted, not never seen.
             "thinking_delta" => {
-                fields(delta, &["type", "thinking"])?;
+                fields(delta, DELTA, &["type", "thinking"])?;
                 let text = string(delta, "thinking")?;
                 append(&mut block.value, "thinking", text)?;
                 (!text.is_empty()).then(|| StreamEvent::ReasoningDelta {
@@ -489,7 +499,7 @@ impl StreamDecoder {
             // A thinking block may open with no `signature` field at all; its first delta begins
             // it. The finished block is still refused unless it carries a signature.
             "signature_delta" => {
-                fields(delta, &["type", "signature"])?;
+                fields(delta, DELTA, &["type", "signature"])?;
                 if block.value.get("type").and_then(Value::as_str) == Some("thinking")
                     && let Some(opened) = block.value.as_object_mut()
                 {
@@ -501,7 +511,7 @@ impl StreamDecoder {
                 None
             }
             "input_json_delta" => {
-                fields(delta, &["type", "partial_json"])?;
+                fields(delta, DELTA, &["type", "partial_json"])?;
                 let fragment = string(delta, "partial_json")?;
                 if block.arguments.len().saturating_add(fragment.len()) > MAX_TOOL_ARGUMENT_BYTES {
                     return Err(Error::too_large(
@@ -530,7 +540,7 @@ impl StreamDecoder {
 
     fn stop_block(&mut self, data: &Value) -> Result<(), Error> {
         self.started()?;
-        fields(data, &["type", "index"])?;
+        fields(data, "content_block_stop", &["type", "index"])?;
         let index = index(data)?;
         let mut block = self.blocks.remove(&index).ok_or_else(|| {
             Error::protocol("Messages block stop names a block that never started")
@@ -556,28 +566,32 @@ impl StreamDecoder {
         }
         self.items.insert(
             index,
-            decode_block(&block.value, false, Some(&self.target))?,
+            decode_block(&block.value, false, Some(&self.target), BLOCK)?,
         );
         Ok(())
     }
 
     fn apply_message_delta(&mut self, data: &Value) -> Result<(), Error> {
         self.started()?;
-        fields(data, &["type", "delta", "usage"])?;
+        fields(data, "message_delta", &["type", "delta", "usage"])?;
         let delta = data
             .get("delta")
             .ok_or_else(|| Error::protocol("Messages message delta carries no delta"))?;
-        fields(delta, &["stop_reason", "stop_sequence"])?;
+        fields(
+            delta,
+            "message_delta.delta",
+            &["stop_reason", "stop_sequence"],
+        )?;
         // Cumulative, not incremental: the reported counters replace the previous ones.
         if let Some(usage) = data.get("usage").filter(|value| !value.is_null()) {
-            self.header.usage = self.header.usage.update(usage)?;
+            self.header.usage = self.header.usage.update(usage, "message_delta.usage")?;
         }
         self.header.reason(text(delta, "stop_reason")?)
     }
 
     fn stop_message(&mut self, data: &Value) -> Result<(), Error> {
         self.started()?;
-        fields(data, &["type"])?;
+        fields(data, "message_stop", &["type"])?;
         if !self.blocks.is_empty() {
             return Err(Error::protocol(
                 "Messages terminal event leaves a content block open",

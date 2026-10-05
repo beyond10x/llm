@@ -467,3 +467,66 @@ fn ingress_requires_a_messages_origin_and_bounds_its_input() {
         ErrorCode::TooLarge
     );
 }
+
+/// An arriving request names the field it was refused for, by path from the body, and never the
+/// field's value.
+#[test]
+fn ingress_names_the_path_of_a_field_outside_the_declared_subset() {
+    let value = "value-that-no-diagnostic-may-carry";
+    let body = || {
+        json!({"model":"m","max_tokens":8,
+            "system":[{"type":"text","text":"be brief"}],
+            "messages":[{"role":"user","content":[{"type":"text","text":"hi"}]}],
+            "tools":[{"name":"lookup","input_schema":{"type":"object"}}],
+            "tool_choice":{"type":"auto"},
+            "output_config":{"effort":"low"}})
+    };
+    for (pointer, path) in [
+        ("", "undeclared"),
+        ("/system/0", "system[].undeclared"),
+        ("/messages/0", "messages[].undeclared"),
+        ("/messages/0/content/0", "messages[].content[].undeclared"),
+        ("/tools/0", "tools[].undeclared"),
+        ("/tool_choice", "tool_choice.undeclared"),
+        ("/output_config", "output_config.undeclared"),
+    ] {
+        let mut body = body();
+        body.pointer_mut(pointer)
+            .and_then(Value::as_object_mut)
+            .unwrap_or_else(|| panic!("{pointer} is an object"))
+            .insert("undeclared".to_owned(), json!(value));
+        let error = ingress(&body).expect_err(path);
+        assert_eq!(error.code, ErrorCode::Unsupported, "{path}: {error}");
+        assert_eq!(
+            error.message,
+            format!("Messages field is outside the declared subset: {path}")
+        );
+        assert!(!error.message.contains(value), "{error}");
+    }
+}
+
+#[test]
+fn adversary_field_name_diagnostics_obey_byte_and_character_boundaries() {
+    for (name, expected) in [
+        (String::new(), "?".to_owned()),
+        ("a".repeat(64), "a".repeat(64)),
+        ("a".repeat(65), "?".to_owned()),
+        ("A9_-".to_owned(), "A9_-".to_owned()),
+        ("field.name".to_owned(), "?".to_owned()),
+        ("a\nb".to_owned(), "?".to_owned()),
+        ("é".repeat(32), "?".to_owned()),
+    ] {
+        let mut body = json!({"model":"m","max_tokens":8,
+            "messages":[{"role":"user","content":"hi"}]});
+        body.as_object_mut()
+            .unwrap()
+            .insert(name, json!("private-value"));
+        let error = ingress(&body).expect_err("undeclared field must refuse");
+        assert_eq!(error.code, ErrorCode::Unsupported);
+        assert_eq!(
+            error.message,
+            format!("Messages field is outside the declared subset: {expected}")
+        );
+        assert!(!error.message.contains("private-value"));
+    }
+}

@@ -6,6 +6,7 @@ use reqwest::{
 };
 use std::{
     collections::VecDeque,
+    sync::Arc,
     time::{Duration, SystemTime},
 };
 use tokio::time::Instant;
@@ -45,12 +46,29 @@ impl Default for Limits {
     }
 }
 
-/// Cloning shares a connection pool, never retry policy or credentials.
+/// Shown one streamed response as it arrives: its status line and headers once, then every body
+/// chunk in order, exactly as read.
+///
+/// It is never shown the request. Nothing a caller sends reaches a tap, its credential included,
+/// and neither does a JSON exchange: that is the shape a credential refresh takes, and its answer
+/// is a credential. Only [`HttpClient::post_sse`] and [`HttpClient::post_sse_until`] show a tap
+/// anything, and an answer they refuse by its status or media type shows it the head alone: that
+/// body is never read.
+pub trait ResponseTap: Send + Sync {
+    /// The response line (`HTTP/1.1 200 OK`) and the response headers, before any body, whatever
+    /// the status.
+    fn head(&self, status_line: &str, headers: &HeaderMap);
+    /// One body chunk, after any transfer framing was removed and before it is decoded.
+    fn chunk(&self, bytes: &[u8]);
+}
+
+/// Cloning shares a connection pool and a response tap, never retry policy or credentials.
 #[derive(Clone)]
 pub struct HttpClient {
     client: Client,
     limits: Limits,
     connect: Duration,
+    tap: Option<Arc<dyn ResponseTap>>,
 }
 impl HttpClient {
     /// A client with the default connect bound, [`CONNECT_TIMEOUT`].
@@ -91,7 +109,17 @@ impl HttpClient {
             client,
             limits,
             connect,
+            tap: None,
         })
+    }
+
+    /// Show every streamed response this client reads to `tap`, for a diagnostic capture.
+    ///
+    /// [`ResponseTap`] says what a tap is shown and what it never is.
+    #[must_use]
+    pub fn with_response_tap(mut self, tap: Arc<dyn ResponseTap>) -> Self {
+        self.tap = Some(tap);
+        self
     }
 
     /// The limits this client enforces, so a caller can bound the rest of its turn on the same
@@ -187,6 +215,12 @@ impl HttpClient {
                     .map_err(|_| Error::new(ErrorCode::Transport, "HTTP request failed").with_dispatch(Dispatch::Unknown).with_retriable(true))?
             }
         };
+        if let Some(tap) = &self.tap {
+            tap.head(
+                &format!("{:?} {}", response.version(), response.status()),
+                response.headers(),
+            );
+        }
         if !response.status().is_success() {
             return Err(status_error(
                 response.status().as_u16(),
@@ -219,6 +253,7 @@ impl HttpClient {
             deadline,
             idle: self.limits.idle,
             failure: None,
+            tap: self.tap.clone(),
         })
     }
 }
@@ -232,6 +267,7 @@ pub struct SseStream {
     deadline: Instant,
     idle: Duration,
     failure: Option<Error>,
+    tap: Option<Arc<dyn ResponseTap>>,
 }
 impl SseStream {
     /// # Errors
@@ -277,6 +313,9 @@ impl SseStream {
                 }
             };
             if let Some(chunk) = chunk {
+                if let Some(tap) = &self.tap {
+                    tap.chunk(&chunk);
+                }
                 self.queued.extend(self.decoder.push(&chunk));
             } else {
                 self.response = None;

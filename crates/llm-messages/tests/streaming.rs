@@ -897,3 +897,120 @@ async fn an_accepted_field_in_its_documented_shape_is_carried_without_complaint(
         }
     );
 }
+
+/// A value the producer could put in a field; a refusal must never carry it.
+const UNDECLARED_VALUE: &str = "value-that-no-diagnostic-may-carry";
+
+fn outside_the_subset(path: &str) -> String {
+    format!("Messages field is outside the declared subset: {path}")
+}
+
+/// Adds `undeclared` to the object at `pointer` inside `event`.
+fn with_undeclared(mut event: Value, pointer: &str) -> Value {
+    event
+        .pointer_mut(pointer)
+        .and_then(Value::as_object_mut)
+        .unwrap_or_else(|| panic!("{pointer} is an object"))
+        .insert("undeclared".to_owned(), json!(UNDECLARED_VALUE));
+    event
+}
+
+/// A live stream refused with "field is outside the declared subset" and nothing else, so the
+/// next run could not say which field to read the producer's documentation for. Every object a
+/// stream carries names itself in that refusal, by path from the event, with the field's name and
+/// never its value.
+#[tokio::test]
+async fn a_streamed_field_outside_the_declared_subset_is_refused_by_its_path_and_never_its_value() {
+    let usage = json!({"input_tokens":11,"output_tokens":1,
+        "cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},
+        "output_tokens_details":{"thinking_tokens":0},
+        "server_tool_use":{"web_search_requests":0}});
+    // (event position in `text_turn`, pointer inside that event, path the refusal names)
+    let cases = [
+        (0, "", "message_start.undeclared"),
+        (0, "/message", "message_start.message.undeclared"),
+        (
+            0,
+            "/message/usage",
+            "message_start.message.usage.undeclared",
+        ),
+        (
+            0,
+            "/message/usage/cache_creation",
+            "message_start.message.usage.cache_creation.undeclared",
+        ),
+        (
+            0,
+            "/message/usage/output_tokens_details",
+            "message_start.message.usage.output_tokens_details.undeclared",
+        ),
+        (
+            0,
+            "/message/usage/server_tool_use",
+            "message_start.message.usage.server_tool_use.undeclared",
+        ),
+        (1, "", "content_block_start.undeclared"),
+        (
+            1,
+            "/content_block",
+            "content_block_start.content_block.undeclared",
+        ),
+        (2, "", "content_block_delta.undeclared"),
+        (2, "/delta", "content_block_delta.delta.undeclared"),
+        (3, "", "content_block_stop.undeclared"),
+        (4, "", "message_delta.undeclared"),
+        (4, "/delta", "message_delta.delta.undeclared"),
+        (4, "/usage", "message_delta.usage.undeclared"),
+        (5, "", "message_stop.undeclared"),
+    ];
+    for (at, pointer, path) in cases {
+        let mut events = text_turn(usage.clone(), usage.clone());
+        events[at] = with_undeclared(events[at].clone(), pointer);
+        let (outcome, _) = decode(&events).await;
+        let error = outcome.expect_err(path);
+        assert_eq!(error.code, ErrorCode::Unsupported, "{path}: {error}");
+        assert_eq!(error.message, outside_the_subset(path));
+        assert!(!error.message.contains(UNDECLARED_VALUE), "{error}");
+    }
+
+    // A keep-alive is an event too.
+    let mut events = text_turn(json!({"input_tokens":11}), json!({"output_tokens":8}));
+    events.insert(1, json!({"type":"ping","undeclared":UNDECLARED_VALUE}));
+    let (outcome, _) = decode(&events).await;
+    assert_eq!(
+        outcome.expect_err("ping").message,
+        outside_the_subset("ping.undeclared")
+    );
+
+    // A field name is producer text too: one that is not name-shaped is not copied.
+    let mut events = text_turn(json!({"input_tokens":11}), json!({"output_tokens":8}));
+    events[0]["message"]["usage"]["not a name\n"] = json!(1);
+    let (outcome, _) = decode(&events).await;
+    assert_eq!(
+        outcome.expect_err("unnamed").message,
+        outside_the_subset("message_start.message.usage.?")
+    );
+}
+
+#[test]
+fn a_complete_message_field_outside_the_declared_subset_is_refused_by_its_path() {
+    let message = || {
+        json!({"id":"msg_014a","type":"message","role":"assistant",
+            "model":"example-model-20260201","content":[{"type":"text","text":"Hello"}],
+            "stop_reason":"end_turn","usage":{"input_tokens":11,"output_tokens":8}})
+    };
+    for (pointer, path) in [
+        ("", "undeclared"),
+        ("/usage", "usage.undeclared"),
+        ("/content/0", "content[].undeclared"),
+    ] {
+        let error = decode_message(
+            &with_undeclared(message(), pointer),
+            &request(),
+            binding().provenance(),
+        )
+        .expect_err(path);
+        assert_eq!(error.code, ErrorCode::Unsupported, "{path}: {error}");
+        assert_eq!(error.message, outside_the_subset(path));
+    }
+}

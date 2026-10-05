@@ -62,6 +62,12 @@ is a translation that appeared to succeed. Ingress still refuses `cache_control`
 projection now sends it: a caller's own breakpoint has no neutral field to travel in, and dropping it
 would hide a billing decision. So a body this projection sends is not itself valid ingress input.
 
+A field outside the declared subset is refused by its path, in a request, a complete response or
+a stream alike: `Messages field is outside the declared subset: <path>`, where the path starts at
+the body or at the event type (`tools[].cache_control`, `message_start.message.usage.<name>`,
+`content_block_delta.delta.<name>`). The field's name is copied only when it is at most 64 bytes of
+`[A-Za-z0-9_-]`, and written `?` otherwise; its value never reaches the message.
+
 An optional field spelled as an explicit `null` means absent, on both sides of the codec. The
 producer writes `"stop_reason": null` for a message that has not stopped, and a caller may write
 `"tool_choice": null` for a choice it is not making; one codec cannot read one spelling two ways.

@@ -1,4 +1,4 @@
-use crate::{fields, object};
+use crate::{fields, object, path};
 use llm_core::{Error, Usage};
 use serde_json::Value;
 
@@ -13,9 +13,10 @@ pub(crate) struct Snapshot {
 }
 
 impl Snapshot {
-    pub fn update(&self, value: &Value) -> Result<Self, Error> {
+    pub fn update(&self, value: &Value, at: &str) -> Result<Self, Error> {
         fields(
             value,
+            at,
             &[
                 "input_tokens",
                 "output_tokens",
@@ -34,12 +35,17 @@ impl Snapshot {
         update(&mut next.read, value, "cache_read_input_tokens")?;
         update(&mut next.created, value, "cache_creation_input_tokens")?;
         if let Some(details) = value.get("output_tokens_details").filter(|v| !v.is_null()) {
-            fields(details, &["thinking_tokens"])?;
+            fields(
+                details,
+                &path(at, "output_tokens_details"),
+                &["thinking_tokens"],
+            )?;
             update(&mut next.reasoning, details, "thinking_tokens")?;
         }
         if let Some(cache) = value.get("cache_creation").filter(|v| !v.is_null()) {
             fields(
                 cache,
+                &path(at, "cache_creation"),
                 &["ephemeral_1h_input_tokens", "ephemeral_5m_input_tokens"],
             )?;
             let hour = count(cache, "ephemeral_1h_input_tokens")?;
@@ -58,7 +64,11 @@ impl Snapshot {
             }
         }
         if let Some(tools) = value.get("server_tool_use").filter(|v| !v.is_null()) {
-            fields(tools, &["web_search_requests", "web_fetch_requests"])?;
+            fields(
+                tools,
+                &path(at, "server_tool_use"),
+                &["web_search_requests", "web_fetch_requests"],
+            )?;
             for key in object(tools)?.keys() {
                 if count(tools, key)?.is_none_or(|n| n != 0) {
                     return Err(Error::unsupported(

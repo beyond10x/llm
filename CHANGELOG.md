@@ -16,9 +16,17 @@ are source releases at bare-version tags.
   second turn after the token is replaced and reports whether the version changed. The report
   never carries the token. Its logic is tested on a mock store and a loopback fixture; no gate
   runs it live. `docs/live-qualification.md` gives the operator's steps.
+- `live_subscription_turn --capture-response <path>` writes the response line, response headers
+  and event stream the route sent to a new file, mode 0600 on Unix, and never a request header or
+  the token; the report gives the bytes written. It rides on `llm-http`'s new `ResponseTap`
+  (`HttpClient::with_response_tap`), which is shown streamed responses only: never the request,
+  and never a JSON exchange such as a credential refresh.
 
 ### Changed
 
+- `llm-messages`: a field outside the declared subset is refused with its path, for example
+  `Messages field is outside the declared subset: message_start.message.usage.<name>`. The
+  name is copied only when it is a bounded name (`?` otherwise); a value never is.
 - ESS moves to 0.52.0: CI installs the `ess` 0.52.0 release asset after checking it against the
   release's `SHA256SUMS`, and the conformance runner takes `ess-conformance` and `ess-primitives` at
   tag `0.52.0`. The regenerated suite (665 scenarios) and schemas are byte-identical.
