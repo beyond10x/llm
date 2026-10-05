@@ -164,10 +164,7 @@ impl ConformanceTarget for CatalogTarget {
             .or_else(|| crate::secrets::observe_renewal(&command, &input))
             .or_else(|| crate::responses::observe(&command, &input))
             .or_else(|| crate::chat::observe(&command, &input))
-            .or_else(|| crate::hosting::observe(&command, &input))
             .or_else(|| crate::fallback::observe(&command, &input))
-            .or_else(|| crate::runpod::observe(&command, &input))
-            .or_else(|| crate::gateway::observe(&command, &input))
             .or_else(|| crate::providers::observe(&command, &input))
             .or_else(|| crate::transport::observe(&command, &input));
         let (facts, view, event, field) = if let Some(observed) = owned {
@@ -273,10 +270,7 @@ impl ConformanceTarget for CatalogTarget {
             crate::messages::VIEWS,
             crate::responses::VIEWS,
             crate::chat::VIEWS,
-            crate::hosting::VIEWS,
             crate::fallback::VIEWS,
-            crate::runpod::VIEWS,
-            crate::gateway::VIEWS,
             crate::providers::VIEWS,
             crate::transport::VIEWS,
             crate::secrets::VIEWS,

@@ -9,7 +9,7 @@ custom_edit_url: null
 
 # Crates
 
-The workspace holds 18 packages at version `0.1.7`. None is published to a registry: a project depends on them from Git at a release tag. Package names start with `b10x-`; library names do not, so `b10x-llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
+The workspace holds 14 packages at version `0.1.7`. None is published to a registry: a project depends on them from Git at a release tag. Package names start with `b10x-`; library names do not, so `b10x-llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
 
 | Package | Library | Directory | What it is |
 | --- | --- | --- | --- |
@@ -21,15 +21,11 @@ The workspace holds 18 packages at version `0.1.7`. None is published to a regis
 | `b10x-llm-cost` | `llm_cost` | `crates/llm-cost` | Usage accounting, versioned price estimates and explicit admission limits. |
 | `b10x-llm-credentials` | `llm_credentials` | `crates/llm-credentials` | Injected secret resolution and caller-managed credential refresh; optional backend adapters. |
 | `llm-docs` | binary `llm-docs` | `crates/llm-docs` | Generates and drift-checks the derived pages of the llm documentation site, and holds the programs its guides quote. |
-| `b10x-llm-gateway` | `llm_gateway` | `crates/llm-gateway` | Authenticated single-owner gateway composition and protocol translation. |
 | `b10x-llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |
 | `b10x-llm-messages` | `llm_messages` | `crates/llm-messages` | Messages protocol projection and gateway ingress for the declared supported subset. |
-| `b10x-llm-modal` | `b10x_llm_modal` | `crates/llm-modal` | Modal provisioning adapter behind the hosting lifecycle port. |
 | `b10x-llm-providers` | `llm_providers` | `crates/llm-providers` | Provider/account and authentication bindings independent of protocol selection. |
-| `b10x-llm-provision` | `llm_provision` | `crates/llm-provision` | Hosting lifecycle ports and resource ownership contracts. |
 | `b10x-llm-responses` | `llm_responses` | `crates/llm-responses` | Responses protocol projection, gateway ingress and a single-attempt client for the declared supported subset. |
 | `b10x-llm-routing` | `llm_routing` | `crates/llm-routing` | TOML catalogs, capability-aware resolution and explicit ordered fallback. |
-| `b10x-llm-runpod` | `llm_runpod` | `crates/llm-runpod` | Runpod provisioning adapter for vLLM. |
 | `b10x-llm-tool-call` | `b10x_llm_tool_call` | `crates/llm-tool-call` | One forced tool call on any model, returning the tool's JSON input, and a Responses model preset over the operator's Codex login. |
 
 ## Optional features

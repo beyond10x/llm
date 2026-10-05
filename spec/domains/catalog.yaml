@@ -206,7 +206,7 @@ entities:
       terminal: [Declared]
   # Requested. Every field is what an operator asked for; none of them is evidence about a
   # resource. The observed counterpart is llm.catalog.ProvisionedDeployment, and no field of
-  # that one is ever filled in from this one. See docs/hosting.md.
+  # that one is ever filled in from this one. See docs/hosting.md in beyond10x/llm-gateway.
   - name: llm.catalog.DeploymentSpec
     identity: { name: id, type: String }
     fields:

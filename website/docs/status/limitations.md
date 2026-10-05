@@ -3,7 +3,7 @@ title: Limitations and trust boundary
 sidebar_position: 1
 description: What the tests do not establish, and what this boundary refuses to promise.
 lede: Shipped means tested against fixtures in the gate; it does not mean qualified against a live provider, a keychain service or a hosting account.
-source: docs/implementation-status.md, docs/verification/, crates/llm-gateway, crates/llm-provision, crates/llm-runpod, crates/llm-credentials
+source: docs/implementation-status.md, docs/verification/, crates/llm-credentials
 ---
 
 # Limitations and trust boundary
@@ -20,21 +20,11 @@ streamed items), which 0.1.6 handles. A probe is not a qualification. Neither Op
 access, API or caller-managed subscription, is qualified, and no route has recorded live evidence.
 Treat the clients as ready to try against your own endpoint, not as qualified.
 
-## The gateway does not translate, and hosting reaches no cloud
+## No gateway and no hosting here
 
-Three crates are narrower than their names suggest, and all three are moving to their own
-repository, llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)):
-
-- **`b10x-llm-gateway` performs no protocol translation.** It authenticates one owner and serves a
-  read-only route inventory; it refuses "protocol translation, proxying a model call, resolving a
-  secret, reaching a network, and multi-tenant accounts or quotas". You cannot point an OpenAI
-  client at it and have a model answer.
-- **`b10x-llm-provision` is the hosting contract, not a hosting implementation.** It "opens no
-  socket, reads no credential and allocates no cloud resource", and ships an in-process
-  `FakeProvider` to demonstrate the lifecycle.
-- **`b10x-llm-runpod` has no production transport.** Its only transport is the in-process
-  `EmulatedRunpod`, and `b10x-llm-modal` exports nothing. No real GPU has been allocated or stopped
-  through this code, and the adapter's assumptions about Runpod's live control plane are unchecked.
+llm serves nothing and provisions nothing. The gateway, the hosting contract and the Runpod and
+Modal adapters live in llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)), and their
+limits are that repository's to state.
 
 There is therefore no cloud control plane here. The budget ledger's stop obligations record that a
 resource *must* be stopped; they cannot turn a GPU off, and they never prove that provider billing

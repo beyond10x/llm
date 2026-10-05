@@ -4,6 +4,17 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
+## [Unreleased]
+
+### Removed
+
+- The serving crates moved to [beyond10x/llm-gateway](https://github.com/beyond10x/llm-gateway),
+  with their tests and history: `b10x-llm-gateway`, `b10x-llm-provision`, `b10x-llm-runpod` and
+  `b10x-llm-modal`. The `llm.gateway`, `llm.hosting` and `llm.runpod` ESS domains, their 156
+  authored scenarios, `docs/gateway.md`, `docs/hosting.md` and their verification records moved
+  with them. llm is the client side; none of its client crates depended on the serving crates, so
+  no client API changes. The conformance suite runs 664 scenarios (was 823), and its floor is 664.
+
 ## [0.1.7] - 2026-10-05
 
 Harness parity: `docs/harness-parity.md` maps every public item and test-pinned behaviour of

@@ -19,8 +19,6 @@ const sidebars: SidebarsConfig = {
         'concepts/credentials',
         'concepts/routing',
         'concepts/accounting',
-        'concepts/hosting',
-        'concepts/gateway',
       ],
     },
     {
@@ -35,7 +33,6 @@ const sidebars: SidebarsConfig = {
         'guides/explain-a-route',
         'guides/price-recorded-usage',
         'guides/resolve-a-local-secret',
-        'guides/start-the-gateway',
         'guides/run-the-checks',
       ],
     },

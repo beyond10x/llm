@@ -55,7 +55,7 @@ cutover.
 | --- | --- |
 | `http-streaming` | **Bounded HTTP and server-sent events.** One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails. |
 | `parity-http-timeouts-cancel` | **Connect and idle bounds, and cancellation.** A 15-second connect timeout (`HttpClient::with_connect_timeout`), a 180-second idle bound by default, and cancellation that wins over a pending read. |
-| `ess-specifications` | **Every library crate is specified in ESS.** The transport, providers, gateway and Runpod adapter joined the other domains in 0.1.3; the conformance runner runs 823 scenarios against the real crates three times. |
+| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner runs 664 scenarios against the real crates three times. |
 
 ### Protocols
 
@@ -108,18 +108,11 @@ cutover.
 | `usage-pricing` | **Usage pricing.** Versioned `llm.prices/1` books, exact decimal amounts, cache and compute pricing, six separate bases and unknown quantities kept unknown. |
 | `spending-limits` | **Durable spending limits.** Opt-in `sqlite`: reservations committed before dispatch, concurrent callers serialized, uncertain charges kept across restart, and compute stop obligations. |
 
-### Gateway and hosting (moving to llm-gateway)
+### Serving
 
 | Story | Capability |
 | --- | --- |
-| `gateway-auth` | **An authenticated single-owner gateway.** Probes and a read-only route inventory for one owner; it translates no protocol and proxies no model call. |
-| `hosting-contract` | **The hosting lifecycle contract.** Resource identity with incarnation, requested state apart from observed state, leases, and stop obligations that only evidence discharges. |
-| `runpod-hosting` | **A Runpod vLLM adapter, against an emulator.** Single-flight start, ordered GPU fallback, crash recovery and ownership-safe cleanup, verified against the in-process `EmulatedRunpod` only. |
-| `serving-extraction` | Pending: **The gateway and hosting crates move to llm-gateway.** `b10x-llm-gateway`, `b10x-llm-provision`, `b10x-llm-runpod` and `b10x-llm-modal` move to their own repository, and llm keeps the client side. |
-| `gateway-translation` | Pending: **Gateway protocol translation.** The three ingress protocols over the supported subset, with streaming, tools and cancellation. |
-| `runpod-production-transport` | Pending: **A production Runpod transport.** Only the in-process emulator exists. |
-| `orphan-termination-obligations` | Pending: **Orphan terminations record a stop obligation.** Orphan sweeps and inherited-pod terminations bypass the ledger today. |
-| `modal-hosting` | Pending: **A Modal hosting adapter.** `b10x-llm-modal` exports nothing; it needs a Modal account and a paid qualification run. |
+| `serving-extraction` | **The gateway and hosting crates live in llm-gateway.** `b10x-llm-gateway`, `b10x-llm-provision`, `b10x-llm-runpod` and `b10x-llm-modal` moved with their tests and their ESS domains to their own repository; its status covers the gateway, the hosting contract, the Runpod adapter and their pending work, and llm keeps the client side. |
 | `llmgw-retirement` | Pending: **Deployments move from llmgw.** A reversible cutover from the previous gateway to llm-gateway. |
 | `operator-cli` | Pending: **An operator command line.** Validate, inspect and run one configuration; `b10x-llm-cli` exports nothing yet. |
 
