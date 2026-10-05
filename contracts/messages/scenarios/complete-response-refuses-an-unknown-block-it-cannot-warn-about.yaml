@@ -1,13 +1,13 @@
 type: ess-scenario/1
 domain: llm.messages
-scenario: unknown-stream-event-refused
-summary: an event outside the declared subset is refused rather than preserved as unknown state
+scenario: complete-response-refuses-an-unknown-block-it-cannot-warn-about
+summary: a complete response has no stream to warn on, so a content block outside the declared subset is still refused there
 timeline:
-- at: '2026-09-21T12:00:00Z'
-  command: llm.messages.DecodeStream
+- at: '2026-10-05T12:00:00Z'
+  command: llm.messages.DecodeMessage
   input:
     request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
-    events_sse: "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: message_reconsidered\ndata: {\"type\":\"message_reconsidered\"}\n\n"
+    message_json: "{\"content\":[{\"text\":\"Hello\",\"type\":\"text\"},{\"detail\":\"kept\",\"type\":\"novel_block\"}],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":8}}"
   outcome: observed
 assert:
 - view: llm.messages.LastInspection
@@ -18,6 +18,7 @@ assert:
   contains:
     accepted: false
     error_code: "unsupported"
+    error_message: "Messages content is outside the declared subset"
     dispatch: "accepted"
     wire_request: null
     neutral_request: null
@@ -29,5 +30,5 @@ assert:
     upstream_model: "example-model-20260201"
     response_id: "msg_014a"
     final_usage: false
-    usage_json: "{\"input_tokens\":11,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+    usage_json: "{\"input_tokens\":11,\"output_tokens\":8,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
     stop_reason: null

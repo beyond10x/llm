@@ -2,14 +2,20 @@
 mod support;
 
 use llm_core::{
-    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Item, Model, StreamEvent, StreamSink,
-    TurnRequest, VecSink,
+    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Item, Model, StreamEvent, StreamSink, ToolName,
+    ToolSpec, TurnRequest, VecSink,
 };
-use llm_credentials::SecretError;
+use llm_credentials::{SecretError, SecretResolver};
 use llm_http::{HttpClient, Limits};
 use llm_messages::{ANTHROPIC_VERSION, MessagesClient, VERSION_HEADER};
 use serde_json::{Value, json};
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
+    time::Duration,
+};
 use support::{StaticResolver, binding_with, capabilities};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -154,7 +160,8 @@ async fn a_turn_presents_its_credential_at_request_time_and_streams_the_declared
     assert_eq!(
         body,
         json!({"model":"example/Model-Revision","max_tokens":512,"stream":true,
-            "messages":[{"role":"user","content":[{"type":"text","text":"Summarise the log"}]}]})
+            "messages":[{"role":"user","content":[{"type":"text","text":"Summarise the log",
+                "cache_control":{"type":"ephemeral"}}]}]})
     );
     assert_eq!(
         sink.events(),
@@ -247,7 +254,7 @@ async fn a_refused_status_carries_no_upstream_body_text() {
     assert_eq!(error.code, ErrorCode::Unauthorized);
     assert_eq!(error.dispatch, Dispatch::Rejected);
     assert!(!error.message.contains("sk-secret"), "{}", error.message);
-    assert!(sink.events().is_empty());
+    assert_eq!(sink.events(), []);
 }
 
 #[tokio::test]
@@ -268,6 +275,123 @@ async fn an_unresolvable_credential_never_reaches_the_network() {
             .is_err(),
         "an unresolved credential still opened a connection"
     );
+}
+
+/// A fixture credential that counts how often the client asked for it.
+struct CountingResolver {
+    inner: StaticResolver,
+    calls: Arc<AtomicUsize>,
+}
+impl SecretResolver for CountingResolver {
+    fn resolve<'a>(
+        &'a self,
+        reference: &'a llm_credentials::SecretRef,
+    ) -> BoxFuture<'a, Result<llm_credentials::ResolvedSecret, SecretError>> {
+        self.calls.fetch_add(1, Ordering::SeqCst);
+        self.inner.resolve(reference)
+    }
+}
+
+/// Harness parity M19, M21 and M39 (`harness-messages/src/lib.rs:692`-`699`, test `:1249`).
+///
+/// The refusals are unit-tested against `encode_request`; this is the wiring. A client that
+/// stopped projecting before it resolved a credential and connected would still pass every one of
+/// those, and would be answered by the far side in its own field names instead of the caller's.
+/// So each refusal goes through `MessagesClient::turn` against a listening server, and the case
+/// asserts that no credential was resolved and no connection was opened. The last case is the
+/// control: a request the route can carry does reach the same server through the same client,
+/// which is what makes "nothing arrived" mean something.
+#[tokio::test]
+async fn every_pre_flight_refusal_is_reached_through_the_client_before_anything_is_sent() {
+    let tool = |name: &str| ToolSpec {
+        name: ToolName::new(name).expect("a neutral tool name"),
+        description: "Look up a record".to_owned(),
+        input_schema: json!({"type":"object"}),
+    };
+    let mut dotted = request();
+    dotted.tools = vec![tool("workspace.read")];
+    let mut long = request();
+    long.tools = vec![tool(&"t".repeat(129))];
+    let mut opens_with_the_model = request();
+    opens_with_the_model.items = vec![Item::assistant("Looking"), Item::user("Go on")];
+    let mut hot = request();
+    hot.sampling.temperature = Some(1.5);
+    let cases = [
+        (
+            "M19: a tool name outside this route's character class",
+            dotted,
+            "Messages tool name is outside the supported character or length bound",
+        ),
+        (
+            "M19: a tool name one byte over this route's length cap",
+            long,
+            "Messages tool name is outside the supported character or length bound",
+        ),
+        (
+            "M21: a conversation that opens with the model",
+            opens_with_the_model,
+            "Messages requires an initial user message",
+        ),
+        (
+            "M39: a temperature above this route's maximum",
+            hot,
+            "Messages temperature exceeds one",
+        ),
+    ];
+    let (listener, url) = listener().await;
+    let calls = Arc::new(AtomicUsize::new(0));
+    let client = MessagesClient::new(
+        binding_with(&url, capabilities()),
+        HttpClient::new(limits(Duration::from_secs(10))).unwrap(),
+        Arc::new(CountingResolver {
+            inner: StaticResolver::new("fixture-key"),
+            calls: Arc::clone(&calls),
+        }),
+    )
+    .expect("a Messages binding");
+    for (name, request, message) in cases {
+        let mut sink = VecSink::new(16, 4096);
+        let error = client
+            .turn(&request, &mut sink, &Cancel::new())
+            .await
+            .expect_err(name);
+        assert_eq!(error.code, ErrorCode::Unsupported, "{name}: {error:?}");
+        assert_eq!(error.message, message, "{name}");
+        assert_eq!(error.dispatch, Dispatch::NotSent, "{name}");
+        assert!(error.observation.is_none(), "{name}");
+        assert!(sink.events().is_empty(), "{name}");
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            0,
+            "{name} resolved a credential"
+        );
+        assert!(
+            tokio::time::timeout(Duration::from_millis(100), listener.accept())
+                .await
+                .is_err(),
+            "{name} opened a connection"
+        );
+    }
+
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = accept(&listener).await;
+        read_request(&mut socket).await;
+        socket
+            .write_all(
+                b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n",
+            )
+            .await
+            .unwrap();
+        socket.write_all(STREAM).await.unwrap();
+        socket.shutdown().await.unwrap();
+    });
+    let mut sink = VecSink::new(16, 4096);
+    client
+        .turn(&request(), &mut sink, &Cancel::new())
+        .await
+        .expect("the control reaches the same server");
+    server.await.unwrap();
+    assert_eq!(calls.load(Ordering::SeqCst), 1, "the control resolved once");
 }
 
 struct BlockedSink;

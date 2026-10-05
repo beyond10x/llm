@@ -245,7 +245,6 @@ scenarios:
 - messages/scenarios/the-previous-turn-version-is-refused.yaml
 - messages/scenarios/truncated-stream-retains-its-partial-usage.yaml
 - messages/scenarios/unbound-thinking-is-refused-by-name.yaml
-- messages/scenarios/unknown-stream-event-refused.yaml
 - messages/scenarios/unreported-counter-stays-unknown.yaml
 - messages/scenarios/unreported-upstream-model-stays-unknown.yaml
 - messages/scenarios/unstarted-content-block-delta-refused.yaml
@@ -695,3 +694,12 @@ scenarios:
 - providers/scenarios/a-credential-ending-in-crlf-is-presented-without-it.yaml
 - providers/scenarios/a-credential-ending-in-two-newlines-is-refused.yaml
 - providers/scenarios/a-malformed-secret-means-the-caller-is-unauthorized.yaml
+- messages/scenarios/cache-breakpoints-mark-the-system-prompt-and-the-conversation-tail.yaml
+- messages/scenarios/the-rolling-breakpoint-never-marks-replayed-thinking.yaml
+- messages/scenarios/a-tail-with-nothing-markable-carries-no-rolling-breakpoint.yaml
+- messages/scenarios/a-conversation-that-opens-with-the-model-is-refused-before-projection.yaml
+- messages/scenarios/a-tool-name-outside-the-character-class-is-refused.yaml
+- messages/scenarios/unknown-stream-event-preserved-with-a-warning.yaml
+- messages/scenarios/unknown-content-delta-preserved-with-a-warning.yaml
+- messages/scenarios/unknown-content-block-preserved-with-a-warning.yaml
+- messages/scenarios/complete-response-refuses-an-unknown-block-it-cannot-warn-about.yaml

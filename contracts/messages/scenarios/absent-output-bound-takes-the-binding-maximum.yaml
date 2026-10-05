@@ -19,7 +19,7 @@ assert:
     accepted: true
     error_code: null
     dispatch: null
-    wire_request: "{\"max_tokens\":2048,\"messages\":[{\"content\":[{\"text\":\"hello\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true}"
+    wire_request: "{\"max_tokens\":2048,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"hello\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true}"
     neutral_request: null
     stream: null
     items:

@@ -415,32 +415,134 @@ async fn out_of_order_and_duplicate_transitions_are_refused() {
     }
 }
 
-#[tokio::test]
-async fn an_unknown_stream_event_or_delta_is_refused_rather_than_interpreted() {
-    let start = message_start(json!({"input_tokens":11,"output_tokens":1}));
-    for events in [
-        vec![start.clone(), json!({"type":"message_reconsidered"})],
-        vec![
-            start.clone(),
-            json!({"type":"content_block_start","index":0,
-                "content_block":{"type":"text","text":""}}),
-            json!({"type":"content_block_delta","index":0,
-                "delta":{"type":"citations_delta","citation":{}}}),
-        ],
-        vec![
-            start.clone(),
-            json!({"type":"content_block_start","index":0,
-                "content_block":{"type":"server_tool_use","id":"srvtoolu_1",
-                    "name":"web_search","input":{}}}),
-        ],
-    ] {
-        let (outcome, _) = decode(&events).await;
-        assert_eq!(
-            outcome.expect_err("refused").code,
-            ErrorCode::Unsupported,
-            "{events:?}"
-        );
+fn opaque(payload: Value) -> Item {
+    Item::Opaque {
+        provenance: binding().provenance().clone(),
+        payload,
     }
+}
+
+fn warning(code: &str, message: &str) -> StreamEvent {
+    StreamEvent::Warning {
+        code: code.to_owned(),
+        message: message.to_owned(),
+    }
+}
+
+/// `text_turn` with `extra` spliced in at `at`.
+fn text_turn_with(at: usize, extra: &[Value]) -> Vec<Value> {
+    let mut events = text_turn(
+        json!({"input_tokens":11,"output_tokens":1}),
+        json!({"input_tokens":11,"output_tokens":8}),
+    );
+    events.splice(at..at, extra.iter().cloned());
+    events
+}
+
+/// Harness parity M36 (`harness-messages/src/lib.rs:443`-`455`, test `:1146`).
+///
+/// A route that adds an event type is not a broken stream. The event is kept whole as opaque
+/// state bound to the serving binding, the caller is told it was not interpreted, and the turn
+/// still completes on its own terminal event. The diagnostic is fixed: no producer text in it.
+#[tokio::test]
+async fn an_unknown_stream_event_is_preserved_with_a_warning_instead_of_ending_the_turn() {
+    let event = json!({"type":"message_reconsidered","detail":"kept"});
+    // After the text block stopped, before the terminal delta.
+    let (outcome, sink) = decode(&text_turn_with(4, std::slice::from_ref(&event))).await;
+    let outcome = outcome.expect("the turn completes");
+    assert_eq!(outcome.stop_reason, StopReason::EndTurn);
+    assert_eq!(outcome.items, vec![Item::assistant("Hello"), opaque(event)]);
+    assert_eq!(
+        sink.events(),
+        [
+            StreamEvent::TextDelta {
+                text: "Hello".to_owned()
+            },
+            warning(
+                "unknown-stream-event",
+                "a stream event outside the pinned subset was preserved, not interpreted"
+            ),
+        ]
+    );
+    assert!(outcome.observation.final_usage);
+}
+
+/// Harness parity M36 (`harness-messages/src/lib.rs:566`-`578`).
+///
+/// A delta type this subset does not model, inside a block it does, is kept as the whole event and
+/// warned about; the block itself still assembles from the deltas around it. The preserved event
+/// sits after every block that had started when it arrived.
+#[tokio::test]
+async fn an_unknown_content_delta_is_preserved_with_a_warning_and_its_block_completes() {
+    let event = json!({"type":"content_block_delta","index":0,
+        "delta":{"type":"citations_delta","citation":{"cited_text":"kept"}}});
+    // Between the text delta and the block stop.
+    let (outcome, sink) = decode(&text_turn_with(3, std::slice::from_ref(&event))).await;
+    let outcome = outcome.expect("the turn completes");
+    assert_eq!(outcome.items, vec![Item::assistant("Hello"), opaque(event)]);
+    assert_eq!(
+        sink.events(),
+        [
+            StreamEvent::TextDelta {
+                text: "Hello".to_owned()
+            },
+            warning(
+                "unknown-stream-event",
+                "a content block delta outside the pinned subset was preserved, not interpreted"
+            ),
+        ]
+    );
+}
+
+/// Harness parity M23 (`harness-messages/src/project.rs:321`-`354`, test `:773`).
+///
+/// A content block type this subset does not model is kept at its index as opaque state bound to
+/// the serving binding, and warned about when it opens. It is never dropped: a dropped block is a
+/// hole in the conversation the next turn cannot see.
+#[tokio::test]
+async fn an_unknown_content_block_is_preserved_with_a_warning_instead_of_ending_the_turn() {
+    let block = json!({"type":"server_tool_use","id":"srvtoolu_1","name":"web_search",
+        "input":{"query":"errors"}});
+    let (outcome, sink) = decode(&text_turn_with(
+        4,
+        &[
+            json!({"type":"content_block_start","index":1,"content_block":block}),
+            json!({"type":"content_block_stop","index":1}),
+        ],
+    ))
+    .await;
+    let outcome = outcome.expect("the turn completes");
+    assert_eq!(outcome.stop_reason, StopReason::EndTurn);
+    assert_eq!(outcome.items, vec![Item::assistant("Hello"), opaque(block)]);
+    assert_eq!(
+        sink.events(),
+        [
+            StreamEvent::TextDelta {
+                text: "Hello".to_owned()
+            },
+            warning(
+                "unknown-output-item",
+                "a content block outside the pinned subset was preserved, not interpreted"
+            ),
+        ]
+    );
+}
+
+/// The other half of the M23 decision. A complete response has no stream to warn on, and a block
+/// preserved without telling anyone is one nobody knows is uninterpreted, so `decode_message`
+/// keeps refusing it.
+#[test]
+fn a_complete_message_still_refuses_an_unknown_block_it_has_no_channel_to_warn_about() {
+    let message = json!({
+        "id":"msg_014a","type":"message","role":"assistant","model":"example-model-20260201",
+        "content":[{"type":"text","text":"Hello"},{"type":"novel_block","detail":"kept"}],
+        "stop_reason":"end_turn","usage":{"input_tokens":11,"output_tokens":8}});
+    let error = decode_message(&message, &request(), binding().provenance()).expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(
+        error.message,
+        "Messages content is outside the declared subset"
+    );
 }
 
 #[tokio::test]
