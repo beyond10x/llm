@@ -8,6 +8,7 @@ relations:
 - decomposes: epic:access
 - depends_on: story:provider-accounts
 - depends_on: story:messages-projection
+- depends_on: story:secrets-resolver
 scope:
 - confidence: inferred
   path: contracts/anthropic

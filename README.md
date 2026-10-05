@@ -8,7 +8,7 @@ unknown usage count into a zero.
 
 **Documentation: <https://beyond10x.github.io/llm/>**
 
-**Status: 0.1.7, libraries tested against fixtures; no provider route qualified.** The clients,
+**Status: 0.2.0, libraries tested against fixtures; no provider route qualified.** The clients,
 credential adapters, routing with same-target retry and ordered fallback, the `call_tool` and
 blocking helpers, and usage pricing ship and are tested in the gate against recorded responses,
 loopback sockets and in-process fakes. llm is the client side: the gateway and hosting crates
