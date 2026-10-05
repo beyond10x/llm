@@ -11,13 +11,27 @@ entities:
       # The diagnostic itself, so a scenario pins that it is fixed and carries no upstream text.
       - {name: error_message, type: Optional<String>}
       - {name: dispatch, type: Optional<String>}
+      # The projected body. It carries at most two prompt-cache breakpoints, each
+      # `cache_control: {type: ephemeral}`: one on the single `system` text block, sent only when
+      # the instruction is not empty, and one rolling marker on the last `text` or `tool_result`
+      # block of the last message. Only those two block types are ever marked: a block carried
+      # through from the model (`thinking`, `redacted_thinking`) is replayed unmodified, and a
+      # tail with nothing markable carries no rolling marker.
       - {name: wire_request, type: Optional<String>}
       - {name: neutral_request, type: Optional<String>}
       # The ingress streaming choice, which the neutral request does not carry.
       - {name: stream, type: Optional<Boolean>}
+      # A streamed event, content delta or content block outside the declared subset is
+      # preserved as an opaque item bound to the serving binding, never dropped and never ending
+      # the turn. A preserved event sits after every content block that had started when it
+      # arrived. A complete response has no channel to warn on and still refuses one.
       - {name: items, type: List<String>}
       - {name: text, type: String}
       - {name: reasoning, type: String}
+      # Argument fragments as `<call>:<fragment>`, and each stream warning as `<code>:<message>`
+      # in the order it was emitted. Preserving an unknown event or content delta warns
+      # `unknown-stream-event`; preserving an unknown content block warns `unknown-output-item`.
+      # Both messages are fixed and carry no producer text.
       - {name: tool_arguments, type: List<String>}
       # The tool events in the order a caller saw them: `started:<call>:<name>` where the
       # route opened a tool_use block, then `arguments:<call>:<fragment>` for each fragment.

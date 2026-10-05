@@ -4,7 +4,7 @@
   "case": "cargo test -p b10x-llm-messages --locked --no-fail-fast (and cargo test -p b10x-llm-http --locked --no-fail-fast for a mutation in that crate)",
   "scenario": "ess verify conform synthesize --path spec --suite-format 5 --target ir --scenarios contracts/messages/scenarios --out target/messages-suite.json, then cargo run --locked -p b10x-llm-conformance -- target/messages-suite.json target/messages-baseline.json target/messages-run local"
  },
- "measured": "2026-09-21",
+ "measured": "2026-09-21; 2026-10-05 for the six mutations of wave 2026-10-05-w27",
  "mutations": [
   {
    "edits": [
@@ -321,40 +321,6 @@
     "scenario"
    ],
    "mutation": "event-name-mismatch-ignored",
-   "restored": true,
-   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
-   "scenario_counts": {
-    "error": 0,
-    "failed": 1,
-    "passed": 40,
-    "skipped": 0,
-    "total": 41,
-    "unsupported": 0
-   },
-   "source": "crates/llm-messages/src/decode.rs",
-   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
-  },
-  {
-   "edits": [
-    {
-     "after": "            _ => Ok(()),",
-     "before": "            _ => Err(Error::unsupported(\n                \"Messages stream event is outside the declared subset\",\n            )),"
-    }
-   ],
-   "failed_cases": [
-    "an_unknown_stream_event_or_delta_is_refused_rather_than_interpreted"
-   ],
-   "failed_scenarios": [
-    "llm.messages/authored/unknown-stream-event-refused"
-   ],
-   "guards": [
-    "Messages stream event is outside the declared subset"
-   ],
-   "killed_by": [
-    "scenario",
-    "case"
-   ],
-   "mutation": "unknown-stream-event-ignored",
    "restored": true,
    "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
    "scenario_counts": {
@@ -1158,37 +1124,6 @@
   {
    "edits": [
     {
-     "after": "        if false {",
-     "before": "        if self.items.len() + self.blocks.len() >= MAX_ITEMS {"
-    }
-   ],
-   "failed_cases": [
-    "content_blocks_are_bounded_while_the_stream_is_still_arriving"
-   ],
-   "failed_scenarios": [],
-   "guards": [
-    "Messages content exceeds its bound"
-   ],
-   "killed_by": [
-    "case"
-   ],
-   "mutation": "in-flight-content-block-bound-deleted",
-   "restored": true,
-   "restored_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
-   "scenario_counts": {
-    "error": 0,
-    "failed": 0,
-    "passed": 41,
-    "skipped": 0,
-    "total": 41,
-    "unsupported": 0
-   },
-   "source": "crates/llm-messages/src/decode.rs",
-   "source_before_sha256": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8"
-  },
-  {
-   "edits": [
-    {
      "after": "    if false {",
      "before": "    if object.iter().any(|(key, found)| {\n        UNCONSUMED.contains(&key.as_str()) && !found.is_null() && !found.is_string()\n    }) {"
     }
@@ -1417,25 +1352,221 @@
    },
    "source": "crates/llm-messages/src/codec.rs",
    "source_before_sha256": "4e166a50e7eb2ccf21b93bda42788ab51487d744348fc73a5da9f20ac27c8e13"
+  },
+  {
+   "edits": [
+    {
+     "after": "            _ => Ok(()),",
+     "before": "            _ => {\n                self.preserve(\n                    data,\n                    \"a stream event outside the pinned subset was preserved, not interpreted\",\n                    sink,\n                    cancel,\n                )\n                .await\n            }"
+    }
+   ],
+   "failed_cases": [
+    "an_unknown_stream_event_is_preserved_with_a_warning_instead_of_ending_the_turn"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/unknown-stream-event-preserved-with-a-warning"
+   ],
+   "guards": [
+    "a stream event outside the pinned subset was preserved, not interpreted"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unknown-stream-event-dropped-without-a-warning",
+   "restored": true,
+   "restored_sha256": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 81,
+    "skipped": 0,
+    "total": 82,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0"
+  },
+  {
+   "edits": [
+    {
+     "after": "        let _ = (data, sink, cancel);\n        Ok(())",
+     "before": "        self.preserve(\n            data,\n            \"a content block delta outside the pinned subset was preserved, not interpreted\",\n            sink,\n            cancel,\n        )\n        .await"
+    }
+   ],
+   "failed_cases": [
+    "an_unknown_content_delta_is_preserved_with_a_warning_and_its_block_completes"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/unknown-content-delta-preserved-with-a-warning"
+   ],
+   "guards": [
+    "a content block delta outside the pinned subset was preserved, not interpreted"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unknown-content-delta-dropped-without-a-warning",
+   "restored": true,
+   "restored_sha256": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 81,
+    "skipped": 0,
+    "total": 82,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0"
+  },
+  {
+   "edits": [
+    {
+     "after": "            _ => None,",
+     "before": "            _ => Some(warning(\n                UNKNOWN_BLOCK,\n                \"a content block outside the pinned subset was preserved, not interpreted\",\n            )),"
+    }
+   ],
+   "failed_cases": [
+    "an_unknown_content_block_is_preserved_with_a_warning_instead_of_ending_the_turn"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/unknown-content-block-preserved-with-a-warning"
+   ],
+   "guards": [
+    "a content block outside the pinned subset was preserved, not interpreted"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "unknown-content-block-kept-unannounced",
+   "restored": true,
+   "restored_sha256": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 81,
+    "skipped": 0,
+    "total": 82,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if false {",
+     "before": "        if self.items.len() + self.blocks.len() + self.preserved.len() >= MAX_ITEMS {"
+    }
+   ],
+   "failed_cases": [
+    "content_blocks_are_bounded_while_the_stream_is_still_arriving"
+   ],
+   "failed_scenarios": [],
+   "guards": [
+    "Messages content exceeds its bound"
+   ],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "in-flight-content-block-bound-deleted",
+   "restored": true,
+   "restored_sha256": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 82,
+    "skipped": 0,
+    "total": 82,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/decode.rs",
+   "source_before_sha256": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0"
+  },
+  {
+   "edits": [
+    {
+     "after": "        let body = encode_request(request, &self.binding).unwrap_or_default();",
+     "before": "        let body = encode_request(request, &self.binding)?;"
+    }
+   ],
+   "failed_cases": [
+    "every_pre_flight_refusal_is_reached_through_the_client_before_anything_is_sent"
+   ],
+   "failed_scenarios": [],
+   "guards": [],
+   "killed_by": [
+    "case"
+   ],
+   "mutation": "client-sends-a-request-its-projection-refused",
+   "restored": true,
+   "restored_sha256": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 0,
+    "passed": 82,
+    "skipped": 0,
+    "total": 82,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/client.rs",
+   "source_before_sha256": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec"
+  },
+  {
+   "edits": [
+    {
+     "after": "",
+     "before": "    if request.items.first().is_none_or(|item| !user(item)) {\n        return Err(Error::unsupported(\n            \"Messages requires an initial user message\",\n        ));\n    }"
+    }
+   ],
+   "failed_cases": [
+    "every_pre_flight_refusal_is_reached_through_the_client_before_anything_is_sent"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/a-conversation-that-opens-with-the-model-is-refused-before-projection"
+   ],
+   "guards": [
+    "Messages requires an initial user message"
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "a-conversation-opening-with-the-model-sent-anyway",
+   "restored": true,
+   "restored_sha256": "e6c1114ab512be3645179033a8fbb2af96676913d743edc52730401f04653c8f",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 81,
+    "skipped": 0,
+    "total": 82,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "e6c1114ab512be3645179033a8fbb2af96676913d743edc52730401f04653c8f"
   }
  ],
- "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not.",
+ "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not. Wave 2026-10-05-w27 (Harness parity M23, M36, M39): unknown stream events, deltas and blocks are now preserved with a warning, so unknown-stream-event-ignored was retired with the refusal it claimed; in-flight-content-block-bound-deleted was re-measured where the bound moved; and six mutations were run in a second pass against the tree named under `sources`, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- run <suite> <baseline> <out> <identity>`. Three of the claimed literals are fixed warnings rather than refusals: each mutation claiming one deletes the preservation that warning reports.",
  "sources": {
   "crates/llm-http/src/transport.rs": "2d488d03ef7c914c2c75dc41e32fc217701dbf73f07623013ca87e67408d48be",
   "crates/llm-messages/src/client.rs": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec",
-  "crates/llm-messages/src/codec.rs": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
-  "crates/llm-messages/src/decode.rs": "fb6a044057853165e552d6d1d1f979003380909c0c9d7ecdf4c2f4213d2638a8",
+  "crates/llm-messages/src/codec.rs": "e6c1114ab512be3645179033a8fbb2af96676913d743edc52730401f04653c8f",
+  "crates/llm-messages/src/decode.rs": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0",
   "crates/llm-messages/src/lib.rs": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3",
   "crates/llm-messages/src/usage.rs": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
  },
  "summary": {
-  "diagnostics_claimed_by_a_mutation": 23,
-  "diagnostics_in_source": 90,
-  "diagnostics_nothing_is_aimed_at": 67,
-  "killed_by_a_case_only": 12,
+  "diagnostics_claimed_by_a_mutation": 26,
+  "diagnostics_in_source": 91,
+  "diagnostics_nothing_is_aimed_at": 65,
+  "killed_by_a_case_only": 13,
   "killed_by_a_scenario_only": 4,
-  "killed_by_both_lanes": 26,
-  "mutations": 42,
+  "killed_by_both_lanes": 29,
+  "mutations": 46,
   "survivors": 0
  },
  "unaimed": [
@@ -1445,7 +1576,6 @@
   "Messages citations are outside the declared subset",
   "Messages content block index is missing or invalid",
   "Messages content block is out of order",
-  "Messages content delta is outside the declared subset",
   "Messages content is missing",
   "Messages content must be an array",
   "Messages content must be text or blocks",
@@ -1469,7 +1599,6 @@
   "Messages reported two terminal reasons",
   "Messages request encoding failed",
   "Messages requires a Messages binding",
-  "Messages requires an initial user message",
   "Messages requires initial user content",
   "Messages sampling must be numeric",
   "Messages start carries content",

@@ -1,0 +1,36 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: cache-breakpoints-mark-the-system-prompt-and-the-conversation-tail
+summary: the instruction travels as one marked system block and only the last block of the last message carries the rolling marker
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"},{\"kind\":\"assistant-text\",\"text\":\"Looking\"},{\"kind\":\"user-text\",\"text\":\"Go on\"}],\"tools\":[]}}"
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: "{\"max_tokens\":2048,\"messages\":[{\"content\":[{\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"},{\"content\":[{\"text\":\"Looking\",\"type\":\"text\"}],\"role\":\"assistant\"},{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Go on\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true,\"system\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Stay terse\",\"type\":\"text\"}]}"
+    neutral_request: null
+    stream: null
+    items:
+      - "user-text:Summarise the log"
+      - "assistant-text:Looking"
+      - "user-text:Go on"
+    text: ""
+    reasoning: ""
+    tool_arguments: []
+    upstream_model: null
+    response_id: null
+    final_usage: null
+    usage_json: null
+    stop_reason: null

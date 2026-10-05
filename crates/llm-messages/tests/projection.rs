@@ -58,14 +58,15 @@ fn ordered_roles_tools_and_thinking_project_onto_one_wire_request() {
             "model": "example/Model-Revision",
             "max_tokens": 1024,
             "stream": true,
-            "system": "Stay terse",
+            "system": [{"type":"text","text":"Stay terse","cache_control":{"type":"ephemeral"}}],
             "messages": [
                 {"role":"user","content":[{"type":"text","text":"Summarise the log"}]},
                 {"role":"assistant","content":[
                     {"type":"thinking","thinking":"weighing","signature":"sig-1"},
                     {"type":"tool_use","id":"call-1","name":"lookup","input":{"query":"errors"}}]},
                 {"role":"user","content":[
-                    {"type":"tool_result","tool_use_id":"call-1","content":"not found","is_error":true}]}
+                    {"type":"tool_result","tool_use_id":"call-1","content":"not found","is_error":true,
+                        "cache_control":{"type":"ephemeral"}}]}
             ],
             "tools": [{"name":"lookup","description":"Look up a record","input_schema":{"type":"object"}}],
             "temperature": 0.5,
@@ -74,6 +75,145 @@ fn ordered_roles_tools_and_thinking_project_onto_one_wire_request() {
             "tool_choice": {"type":"tool","name":"lookup"}
         })
     );
+}
+
+const MARKER: &str = "cache_control";
+
+fn ephemeral() -> Value {
+    json!({"type":"ephemeral"})
+}
+
+fn thinking() -> Item {
+    Item::Opaque {
+        provenance: binding().provenance().clone(),
+        payload: json!({"type":"thinking","thinking":"weighing","signature":"sig-1"}),
+    }
+}
+
+/// Harness parity M14/M15 (`harness-messages/src/project.rs:253`-`300`, `:535`-`542`).
+///
+/// The loop is stateless: every turn resends the whole transcript. A breakpoint at the end of
+/// `system` caches the constant head (tools, then system); a rolling one on the last block of the
+/// last message makes each turn write the prefix the next turn reads back, so the conversation's
+/// growth is paid for once rather than on every remaining turn. Two breakpoints, against the
+/// route's four, and none anywhere else.
+#[test]
+fn the_system_prompt_and_the_conversation_tail_carry_the_two_cache_breakpoints() {
+    let mut request = TurnRequest::new(
+        "internal-model",
+        vec![
+            Item::user("Summarise the log"),
+            Item::assistant("Looking"),
+            Item::user("Go on"),
+        ],
+    );
+    "Stay terse".clone_into(&mut request.instructions);
+    let body = wire(&request);
+    assert_eq!(
+        body,
+        json!({
+            "model": "example/Model-Revision",
+            "max_tokens": 2048,
+            "stream": true,
+            "system": [{"type":"text","text":"Stay terse","cache_control":{"type":"ephemeral"}}],
+            "messages": [
+                {"role":"user","content":[{"type":"text","text":"Summarise the log"}]},
+                {"role":"assistant","content":[{"type":"text","text":"Looking"}]},
+                {"role":"user","content":[
+                    {"type":"text","text":"Go on","cache_control":{"type":"ephemeral"}}]}
+            ]
+        })
+    );
+    // Only the tail moves: an earlier message keeping a marker would stop the cache chaining.
+    assert_eq!(body.to_string().matches(MARKER).count(), 2, "{body}");
+}
+
+/// A `thinking` block is replayed byte for byte or not at all: its signature covers the block as
+/// the model produced it, so a marker added to it is a turn the route rejects. The marker falls
+/// back to the last block this projection built itself.
+#[test]
+fn a_replayed_thinking_block_is_never_the_block_that_gets_marked() {
+    let request = TurnRequest::new(
+        "internal-model",
+        vec![
+            Item::user("Summarise the log"),
+            Item::assistant("Looking"),
+            thinking(),
+        ],
+    );
+    let body = wire(&request);
+    let tail = &body["messages"][1]["content"];
+    assert_eq!(tail[0]["cache_control"], ephemeral(), "{body}");
+    assert_eq!(
+        tail[1],
+        json!({"type":"thinking","thinking":"weighing","signature":"sig-1"}),
+        "a replayed block is sent exactly as it arrived"
+    );
+    assert_eq!(body.to_string().matches(MARKER).count(), 1, "{body}");
+}
+
+/// A missing breakpoint costs money; a modified opaque block costs the turn. A tail of nothing
+/// this projection built itself carries no rolling marker at all, and an empty instruction sends
+/// no `system` block to mark.
+#[test]
+fn a_tail_with_nothing_markable_carries_no_rolling_breakpoint() {
+    let redacted = json!({"type":"redacted_thinking","data":"AAAA"});
+    let mut request = TurnRequest::new(
+        "internal-model",
+        vec![
+            Item::user("Summarise the log"),
+            thinking(),
+            Item::Opaque {
+                provenance: binding().provenance().clone(),
+                payload: redacted.clone(),
+            },
+        ],
+    );
+    request.tools = full_request().tools;
+    "Stay terse".clone_into(&mut request.instructions);
+    let body = wire(&request);
+    assert_eq!(body["system"][0]["cache_control"], ephemeral(), "{body}");
+    assert_eq!(
+        body["messages"][1]["content"],
+        json!([{"type":"thinking","thinking":"weighing","signature":"sig-1"}, redacted])
+    );
+    assert_eq!(body.to_string().matches(MARKER).count(), 1, "{body}");
+
+    request.instructions.clear();
+    let body = wire(&request);
+    assert!(body.get("system").is_none(), "{body}");
+    assert_eq!(body.to_string().matches(MARKER).count(), 0, "{body}");
+}
+
+/// The projection marks what it sends, and ingress still refuses `cache_control` on an arriving
+/// block (`docs/messages.md`): a caller's own breakpoint has no neutral field to travel in, and
+/// dropping it would hide a billing decision. So the projected body is not itself ingress input.
+#[test]
+fn ingress_refuses_the_breakpoints_egress_places() {
+    let projected = encode_request(&full_request(), &binding()).expect("projected");
+    assert!(
+        String::from_utf8_lossy(&projected).contains(MARKER),
+        "the projection placed no breakpoint"
+    );
+    let error = decode_request(&projected, binding().provenance()).expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+}
+
+/// The projected body with every breakpoint removed: what the round trips below read back.
+fn without_breakpoints(projected: &[u8]) -> Vec<u8> {
+    fn strip(value: &mut Value) {
+        match value {
+            Value::Object(fields) => {
+                fields.remove(MARKER);
+                fields.values_mut().for_each(strip);
+            }
+            Value::Array(values) => values.iter_mut().for_each(strip),
+            _ => {}
+        }
+    }
+    let mut body: Value = serde_json::from_slice(projected).expect("JSON");
+    strip(&mut body);
+    serde_json::to_vec(&body).expect("JSON")
 }
 
 #[test]
@@ -182,7 +322,8 @@ fn ingress_preserves_the_neutral_request_across_a_round_trip() {
     // Thinking is the one item a round trip cannot carry; the case below states why.
     request.items.remove(1);
     let projected = encode_request(&request, &binding()).expect("projected");
-    let decoded = decode_request(&projected, binding().provenance()).expect("decoded");
+    let decoded =
+        decode_request(&without_breakpoints(&projected), binding().provenance()).expect("decoded");
     let mut restored = decoded.request;
     // Only the routing alias differs: the wire carries the binding's upstream model name.
     restored.model.clone_from(&request.model);
@@ -198,7 +339,7 @@ fn ingress_preserves_the_neutral_request_across_a_round_trip() {
 #[test]
 fn thinking_survives_a_gateway_round_trip_only_through_the_callers_binding() {
     let projected = encode_request(&full_request(), &binding()).expect("egress carries thinking");
-    let mut decoded = decode_request(&projected, binding().provenance())
+    let mut decoded = decode_request(&without_breakpoints(&projected), binding().provenance())
         .expect("ingress carries what it cannot attribute")
         .request;
     assert_eq!(

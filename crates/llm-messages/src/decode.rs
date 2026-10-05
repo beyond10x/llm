@@ -191,7 +191,12 @@ struct Block {
     /// argument object must never reach a caller as a whole one.
     arguments: String,
     call: Option<CallId>,
+    /// A block type outside the declared subset: kept whole, never interpreted.
+    unknown: bool,
 }
+
+const UNKNOWN_EVENT: &str = "unknown-stream-event";
+const UNKNOWN_BLOCK: &str = "unknown-output-item";
 
 /// Accumulates one Messages event stream into a bound neutral outcome.
 ///
@@ -211,6 +216,9 @@ pub struct StreamDecoder {
     /// Every `tool_use` id already announced. A second block under one of them is not
     /// announced again and its fragments are not relayed; the finish refuses the duplicate.
     announced: Vec<CallId>,
+    /// Events outside the declared subset, kept whole, each with the block index that would
+    /// have started next when it arrived: it sits after every block that had already started.
+    preserved: Vec<(u64, Item)>,
     started: bool,
     complete: bool,
 }
@@ -225,6 +233,7 @@ impl StreamDecoder {
             items: BTreeMap::new(),
             next_index: 0,
             announced: Vec::new(),
+            preserved: Vec::new(),
             started: false,
             complete: false,
         }
@@ -281,10 +290,61 @@ impl StreamDecoder {
             "message_delta" => self.apply_message_delta(data),
             "message_stop" => self.stop_message(data),
             "error" => Err(stream_error(data.get("error"))),
-            _ => Err(Error::unsupported(
-                "Messages stream event is outside the declared subset",
-            )),
+            // A route that adds an event type is not a broken stream: the event is kept whole
+            // and the caller told it was not interpreted. Dropping it would hide it; refusing it
+            // would end a turn the route is still answering.
+            _ => {
+                self.preserve(
+                    data,
+                    "a stream event outside the pinned subset was preserved, not interpreted",
+                    sink,
+                    cancel,
+                )
+                .await
+            }
         }
+    }
+
+    /// Refuses one more item past the content bound, counting what is open and what was kept.
+    fn bound(&self) -> Result<(), Error> {
+        if self.items.len() + self.blocks.len() + self.preserved.len() >= MAX_ITEMS {
+            return Err(Error::too_large("Messages content exceeds its bound"));
+        }
+        Ok(())
+    }
+
+    async fn preserve_delta(
+        &mut self,
+        data: &Value,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<(), Error> {
+        self.preserve(
+            data,
+            "a content block delta outside the pinned subset was preserved, not interpreted",
+            sink,
+            cancel,
+        )
+        .await
+    }
+
+    /// Keeps one event outside the declared subset, bound to the serving binding, and says so.
+    async fn preserve(
+        &mut self,
+        data: &Value,
+        message: &str,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<(), Error> {
+        self.bound()?;
+        self.preserved.push((
+            self.next_index,
+            Item::Opaque {
+                provenance: self.target.clone(),
+                payload: data.clone(),
+            },
+        ));
+        emit(sink, warning(UNKNOWN_EVENT, message), cancel, self.deadline).await
     }
 
     fn started(&self) -> Result<(), Error> {
@@ -326,9 +386,7 @@ impl StreamDecoder {
         if self.blocks.contains_key(&index) || index < self.next_index {
             return Err(Error::protocol("Messages content block is out of order"));
         }
-        if self.items.len() + self.blocks.len() >= MAX_ITEMS {
-            return Err(Error::too_large("Messages content exceeds its bound"));
-        }
+        self.bound()?;
         let value = data
             .get("content_block")
             .ok_or_else(|| Error::protocol("Messages block start carries no block"))?
@@ -354,12 +412,14 @@ impl StreamDecoder {
                     name: call.name,
                 })
             }
-            _ => {
-                return Err(Error::unsupported(
-                    "Messages content is outside the declared subset",
-                ));
-            }
+            // Kept whole at its index and never interpreted: a dropped block is a hole in the
+            // conversation the next turn cannot see. The caller is told when it opens.
+            _ => Some(warning(
+                UNKNOWN_BLOCK,
+                "a content block outside the pinned subset was preserved, not interpreted",
+            )),
         };
+        let unknown = matches!(announcement, Some(StreamEvent::Warning { .. }));
         let announcement = announcement.filter(|event| match event {
             StreamEvent::ToolCallStarted { call_id, .. } => !self.announced.contains(call_id),
             _ => true,
@@ -378,6 +438,7 @@ impl StreamDecoder {
                 value,
                 arguments: String::new(),
                 call,
+                unknown,
             },
         );
         match announcement {
@@ -401,6 +462,10 @@ impl StreamDecoder {
         let block = self.blocks.get_mut(&index).ok_or_else(|| {
             Error::protocol("Messages delta names a content block that never started")
         })?;
+        // Nothing inside a block this subset does not model is interpreted, whatever its type.
+        if block.unknown {
+            return self.preserve_delta(data, sink, cancel).await;
+        }
         let event = match string(delta, "type")? {
             "text_delta" => {
                 fields(delta, &["type", "text"])?;
@@ -444,11 +509,9 @@ impl StreamDecoder {
                         delta: fragment.to_owned(),
                     })
             }
-            _ => {
-                return Err(Error::unsupported(
-                    "Messages content delta is outside the declared subset",
-                ));
-            }
+            // A delta type this subset does not model is kept as its whole event; the block it
+            // names still assembles from the deltas around it.
+            _ => return self.preserve_delta(data, sink, cancel).await,
         };
         match event {
             Some(event) => emit(sink, event, cancel, self.deadline).await,
@@ -463,6 +526,17 @@ impl StreamDecoder {
         let mut block = self.blocks.remove(&index).ok_or_else(|| {
             Error::protocol("Messages block stop names a block that never started")
         })?;
+        if block.unknown {
+            // Its deltas were kept as events of their own; the block is kept as it opened.
+            self.items.insert(
+                index,
+                Item::Opaque {
+                    provenance: self.target.clone(),
+                    payload: block.value,
+                },
+            );
+            return Ok(());
+        }
         if !block.arguments.is_empty() {
             let arguments: Value = serde_json::from_str(&block.arguments)
                 .map_err(|_| Error::protocol("Messages streamed tool arguments are not JSON"))?;
@@ -513,6 +587,7 @@ impl StreamDecoder {
             target,
             header,
             items,
+            preserved,
             complete,
             ..
         } = self;
@@ -522,10 +597,24 @@ impl StreamDecoder {
                     "the Messages stream ended before its terminal event",
                 ));
             }
-            header.outcome(items.into_values().collect(), request, &target)
+            header.outcome(merge(items, preserved), request, &target)
         };
         decoded().map_err(|error| header.attach(error, &target))
     }
+}
+
+/// Content in index order, each kept event after every block that had started when it arrived.
+fn merge(items: BTreeMap<u64, Item>, preserved: Vec<(u64, Item)>) -> Vec<Item> {
+    let mut merged = Vec::with_capacity(items.len() + preserved.len());
+    let mut preserved = preserved.into_iter().peekable();
+    for (index, item) in items {
+        while let Some((_, kept)) = preserved.next_if(|(next, _)| *next <= index) {
+            merged.push(kept);
+        }
+        merged.push(item);
+    }
+    merged.extend(preserved.map(|(_, kept)| kept));
+    merged
 }
 
 /// Decode a complete Messages event stream through the production framing and decoder.
@@ -562,6 +651,14 @@ fn index(data: &Value) -> Result<u64, Error> {
     data.get("index")
         .and_then(Value::as_u64)
         .ok_or_else(|| Error::protocol("Messages content block index is missing or invalid"))
+}
+
+/// A fixed warning: the code and this crate's own text, never the producer's.
+fn warning(code: &str, message: &str) -> StreamEvent {
+    StreamEvent::Warning {
+        code: code.to_owned(),
+        message: message.to_owned(),
+    }
 }
 
 fn append(block: &mut Value, field: &str, text: &str) -> Result<(), Error> {

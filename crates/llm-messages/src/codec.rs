@@ -55,6 +55,42 @@ pub(crate) fn block(item: &Item) -> Result<Value, Error> {
         }
     })
 }
+/// Content blocks this projection builds itself, and may therefore annotate.
+///
+/// A marker modifies the block it lands on. On a block carried through from the model — a
+/// `thinking` block, whose signature covers the block as it was produced — that is a turn the
+/// route rejects. An allowlist, so that a new opaque shape never becomes markable unnoticed.
+const MARKABLE: [&str; 2] = ["text", "tool_result"];
+
+fn ephemeral() -> Value {
+    json!({"type":"ephemeral"})
+}
+
+/// Places the rolling prompt-cache breakpoint on the last markable block of the last message.
+///
+/// The caller replays the whole transcript every turn. A breakpoint on the tail makes each turn
+/// write the prefix the next one reads back, so the conversation's growth is paid for once rather
+/// than on every remaining turn. A tail with nothing markable carries no marker: a missing
+/// breakpoint costs money, a modified opaque block costs the turn.
+fn mark_rolling_breakpoint(messages: &mut [Value]) {
+    let tail = messages
+        .last_mut()
+        .and_then(|message| message.get_mut("content"))
+        .and_then(Value::as_array_mut)
+        .and_then(|blocks| {
+            blocks.iter_mut().rev().find(|block| {
+                block
+                    .get("type")
+                    .and_then(Value::as_str)
+                    .is_some_and(|kind| MARKABLE.contains(&kind))
+            })
+        })
+        .and_then(Value::as_object_mut);
+    if let Some(block) = tail {
+        block.insert("cache_control".to_owned(), ephemeral());
+    }
+}
+
 fn user(item: &Item) -> bool {
     matches!(item, Item::UserText { .. } | Item::ToolResult { .. })
 }
@@ -95,9 +131,14 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
         }
         tools.push(json!({"name":tool.name,"description":tool.description,"input_schema":tool.input_schema}));
     }
+    mark_rolling_breakpoint(&mut messages);
     let mut body = json!({"model":binding.upstream_model(),"max_tokens":request.max_output_tokens.unwrap_or(binding.capabilities().max_output_tokens),"messages":messages,"stream":true});
+    // A block list rather than a string, so it can carry the breakpoint that caches the constant
+    // head (tools, then system) of every turn. An empty instruction sends nothing to mark; the
+    // rolling breakpoint below already covers the tools.
     if !request.instructions.is_empty() {
-        body["system"] = json!(request.instructions);
+        body["system"] =
+            json!([{"type":"text","text":request.instructions,"cache_control":ephemeral()}]);
     }
     if !tools.is_empty() {
         body["tools"] = json!(tools);
