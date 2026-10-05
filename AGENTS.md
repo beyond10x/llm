@@ -55,35 +55,17 @@ that differs from that file, and on an unbracketed admonition title. Guide progr
 A release or a wave that changes a crate, a command, a default or a capability updates
 `docs/implementation-status.md` (then regenerates), the hand-written pages it affects, README.md and
 this file in the same change. Pages link other components to their public docs and their GitHub
-repository. Until the unified-site retirement for llm lands, `b10x.docs.yaml` and the
-`b10x-docs-*` workflows stay beside `pages.yml` and `b10x-docs-site.yml`; the unified site collects
-only `website/docs/**/*.md`, so a Markdown page links the status page by route (`/docs/status`),
-never by file.
+repository. `pages.yml` (Documentation validation: build, provenance and route inventory) and
+`b10x-docs-site.yml` (Documentation site: Website's `project-site.yml`) publish the site; the
+unified-site files (`b10x.docs.yaml`, `b10x-docs-bundle.yml`, `b10x-docs-check.yml`,
+`b10x-docs-pages.yml`) are retired and do not come back. Keep page paths and heading IDs stable:
+the organization Website redirects the former `/docs/llm/` pages to them. A Markdown page links
+the status page by route (`/docs/status`), never by file.
 
 Read docs/implementation-status.md for the implemented libraries and remaining planned boundaries.
 Do not mark implementation stories complete merely because the workspace builds. Published
 contracts are versioned; later consumer adoption pins a released or explicitly qualified exact
 revision. Local fixture evidence does not establish live provider or hosting qualification.
-
-<!-- b10x-docs-operations:start -->
-## Public documentation operations
-
-This repository owns the public source and presentation allowlist in `b10x.docs.yaml`. The generated credential-free `.github/workflows/b10x-docs-bundle.yml` passively packages only those declared files for the exact successful `main` commit; it must never run repository code. The generated `.github/workflows/b10x-docs-check.yml` runs the publisher's per-source checks on every pull request and main push, with read-only contents and no credentials; it is deliberately separate from the shared gate, which runs on `pull_request_target` with a secret and never reads candidate source. Atlas selects the latest successful bundle with every other catalog source, and Website plus Docs System own rendering, shared components, search, and feeds. Do not add a standalone docs deployer or put App credentials in this public repository. If Atlas catalogs a former Pages workflow, that file remains repository-owned validation: preserve its bespoke checks while keeping exact read-only permissions, an unconditional pull-request trigger, and no deployment primitives. Project Pages at `/llm/` is only the generated stable redirect façade in `.github/workflows/b10x-docs-pages.yml`; content-only publication never rebuilds it.
-
-From the complete organization workspace, verify the contract with a clean Atlas checkout at the current remote `main`. Set `B10X_ATLAS_CHECKOUT` to a managed Atlas worktree when the primary checkout is dirty or stale; never infer command availability from the primary alone.
-
-```bash
-atlas_checkout="${B10X_ATLAS_CHECKOUT:-atlas}"
-atlas_head="$(git -C "$atlas_checkout" rev-parse HEAD)"
-atlas_main="$(git -C "$atlas_checkout" ls-remote origin refs/heads/main | awk '{print $1}')"
-test -z "$(git -C "$atlas_checkout" status --porcelain)"
-test "$atlas_head" = "$atlas_main"
-cargo run --manifest-path "$atlas_checkout/Cargo.toml" --locked -q -- \
-  --store "$atlas_checkout/catalog/store" docs reconcile --workspace . --check
-```
-
-Keep internal plans, stories, ADRs, decisions, worklogs, security material, and research out of the public allowlist unless a repository authority explicitly declares them public.
-<!-- b10x-docs-operations:end -->
 
 <!-- b10x-release-operations:start -->
 ## Release completion

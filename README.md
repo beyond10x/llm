@@ -52,9 +52,3 @@ lists the versions. To build the site: `npm --prefix website ci && npm --prefix 
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
-
-<!-- b10x-docs:start -->
-## Documentation
-
-[LLM documentation](https://beyond10x.github.io/docs/llm/) · [Start](https://beyond10x.github.io/) · [Ecosystem](https://beyond10x.github.io/ecosystem/) · [Impact](https://beyond10x.github.io/changes/) · [Releases](https://beyond10x.github.io/releases/)
-<!-- b10x-docs:end -->
