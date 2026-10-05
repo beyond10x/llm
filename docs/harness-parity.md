@@ -6,7 +6,7 @@
 | llm commit | `aaf21d41df7041187b8b4258631ddfe681ccea42` (base of `wave/2026-10-05-w20`) |
 | Date | 2026-10-05 |
 | Story | `story:harness-parity` (decomposes `epic:serving-split`) |
-| Rows | 146: 131 covered, 5 partial, 4 gap, 6 not needed |
+| Rows | 146: 133 covered, 3 partial, 4 gap, 6 not needed |
 
 **How the rows were found.** Every file of `crates/harness-{http,credential,responses,messages}`
 was read in full at the Harness commit with `git archive origin/main` (sources, unit tests and
@@ -135,7 +135,7 @@ what is missing. `gap`: llm has nothing for it. `not needed`: the cell says why.
 | **R37** a stream with no terminal response refuses (retriable) `harness-responses/src/lib.rs:318`-`324`, `:478` (tests `:705`, `:716`) | `Protocol`, `Dispatch::Unknown` `llm-responses/src/stream.rs:322`-`331` | `a_stream_that_never_reaches_a_terminal_response_refuses_and_keeps_its_output` `llm-responses/tests/projection.rs:649`; `a_stream_closed_cleanly_before_completion_is_refused_not_completed` `llm-responses/tests/client.rs:353` | covered |
 | **R38** `decode_stream` over a `BufRead`, the live decoder `harness-responses/src/lib.rs:588` | `decode_stream(binding, payloads) -> StreamDecoding` `llm-responses/src/stream.rs:77` | `a_text_stream_decodes_to_terminal_truth_and_exact_counts` `llm-responses/tests/projection.rs:384` | covered (takes decoded payloads, not bytes) |
 | **R39** pre-flight before any I/O: `validate`, `check_opaque_items`, `check_tool_names` `harness-responses/src/lib.rs:516`-`521` (test `:915`) | `validate_for` then `project_request` `llm-responses/src/client.rs:120`-`126` | `every_unsent_refusal_is_a_valid_not_sent_failure` `llm-responses/tests/adversary2_client.rs:451` | covered |
-| **R40** `ModelPort for ResponsesClient`: blocking `turn(&mut self, …)` `harness-responses/src/lib.rs:527` | `Model for ResponsesClient`: async `turn(&self, …, cancel)` `llm-responses/src/client.rs:303` | `a_responses_turn_returns_its_function_call` `llm-responses/tests/client.rs:212` | partial: async only; Harness's loop calls a blocking port; where the adapter lives (llm or Harness): unknown, `story:harness-builds-on-llm` |
+| **R40** `ModelPort for ResponsesClient`: blocking `turn(&mut self, …)` `harness-responses/src/lib.rs:527` | blocking `BlockingModel::turn(&self, …, cancel)` over any `Model`, on an owned or a borrowed multi-thread runtime `llm-blocking/src/lib.rs:126`, `:63`, `:87`; async `Model for ResponsesClient` `llm-responses/src/client.rs:303` | `a_blocking_responses_turn_returns_its_function_call_without_a_caller_runtime` `llm-blocking/tests/blocking.rs:321`; `the_blocking_sink_sees_each_event_while_the_turn_is_still_running` `:389`; `another_thread_cancels_a_turn_blocked_mid_stream` `:473` | covered (the adapter lives in llm, generic over `Model`; `&self` rather than `&mut self`, and cancellation is the caller's `Cancel`, which another thread may fire) |
 | **R41** `fork`: a second loop shares one client `harness-responses/src/lib.rs:547`-`572` | `turn(&self)` makes a shared reference enough `llm-responses/src/client.rs:310` | `two_concurrent_turns_on_one_client_are_independent` `llm-responses/tests/adversary_client.rs:768` | covered |
 | **R42** emulated runs over a socket: cancel mid-stream `harness-responses/tests/provider_emulated.rs:459`; retry before answering `:504`; never after answering `:521`; cold gateway `:290` | cancel: `llm-http/src/transport.rs:255`; retry before answering and never after answering: `Catalog::run_turn` `llm-routing/src/fallback.rs:299`, and for the Responses client (`llm-responses/tests/live_stream.rs:484`), the class it reports once output was produced `llm-responses/src/client.rs:196`; cold gateway: 503 is retriable, `status_error` `llm-http/src/transport.rs:297` | `cancellation_closes_a_silent_stream_even_when_the_stream_value_is_retained` `llm-http/tests/transport.rs:132`; `a_cancel_while_events_are_handed_over_keeps_the_billed_counters` `llm-responses/tests/adversary2_client.rs:319`; `a_retriable_failure_is_retried_on_the_same_target_before_any_output` `llm-routing/tests/retry.rs:285`; `an_attempt_that_showed_output_is_never_retried` `llm-routing/tests/retry.rs:413`; `a_responses_turn_that_had_already_answered_is_not_offered_for_another_attempt` `llm-responses/tests/adversary_w27_retry.rs:110` (over a socket); `a_cut_after_an_output_item_is_final` `llm-responses/tests/retry_class.rs:158`; `every_status_harness_maps_has_its_code_dispatch_and_retry_class` `llm-http/tests/retry_classes.rs:17` | covered (never after answering is checked over a socket for the Responses client; retry before answering over scripted models in routing. No provider adapter is composed with routing in one socket run; live streaming of Responses events is `story:parity-responses-live-stream`) |
 | **R43** summary request projection `harness-responses/tests/summary_request.rs:57`, `:87` | — | — | not needed: exercises `harness_loop::summary_request_items`; llm projects any neutral request |
@@ -185,7 +185,7 @@ what is missing. `gap`: llm has nothing for it. `not needed`: the cell says why.
 | **M38** `decode_stream` over a `BufRead`, the live decoder `harness-messages/src/lib.rs:776` | `decode_stream(bytes, request, target, sink, cancel)` `llm-messages/src/decode.rs:627`; `StreamDecoder` `:205` | `a_streamed_turn_preserves_text_thinking_tools_and_terminal_usage` `llm-messages/tests/streaming.rs:76` | covered |
 | **M39** every pre-flight check is reached before a request goes out `harness-messages/src/lib.rs:692`-`699` (test `:1249`) | `encode_request` before any credential or I/O `llm-messages/src/client.rs:86` | `every_pre_flight_refusal_is_reached_through_the_client_before_anything_is_sent` `llm-messages/tests/client.rs:305` (tool name, conversation and temperature through `MessagesClient::turn`; no credential resolved, no connection opened, and a control request does reach the same server). Mutation `client-sends-a-request-its-projection-refused` is killed by it | covered |
 | **M40** a foreign opaque item is refused by name `harness-messages/src/lib.rs:693` (test `:1299`) | `validate_for` in `encode_request` `llm-messages/src/codec.rs:102` | `opaque_state_from_another_binding_is_refused_rather_than_projected` `llm-messages/tests/projection.rs:236` | covered |
-| **M41** `ModelPort for MessagesClient` (blocking) and `fork` `harness-messages/src/lib.rs:715`-`760` | `Model for MessagesClient` (async, `&self`) `llm-messages/src/client.rs:177` | — | partial: async only (as R40); no llm test runs two turns on one Messages client |
+| **M41** `ModelPort for MessagesClient` (blocking) and `fork` `harness-messages/src/lib.rs:715`-`760` | `BlockingModel::turn` `llm-blocking/src/lib.rs:126` and `BlockingModel::fork` `:112` over `Model for MessagesClient` (async, `&self`) `llm-messages/src/client.rs:177` | `two_concurrent_turns_run_on_one_shared_messages_client` `llm-blocking/tests/blocking.rs:436`; `a_fork_runs_its_turn_on_its_own_thread_beside_the_original` `:456` | covered (one adapter is shared across threads, and a fork is always available: an owned handle on the same client and runtime, where Harness returns an optional borrowed port) |
 | **M42** a rejected credential is `Unauthorized` and final `harness-messages/tests/provider_emulated.rs:387` | `status_error` `llm-http/src/transport.rs:297` | `a_refused_status_carries_no_upstream_body_text` `llm-messages/tests/client.rs:228` | covered |
 | **M43** summary request projection `harness-messages/tests/summary_request.rs:60`, `:90` | — | — | not needed: exercises `harness_loop::summary_request_items`; llm projects any neutral request |
 | **M44** pinned contract fixtures incl. the subscription request `harness-messages/tests/contract.rs:134`-`409` | `llm-messages/tests/wire_names.rs:182`, `:204` | `every_wire_name_the_projection_speaks_carries_its_evidence` `llm-messages/tests/wire_names.rs:182` | partial: no subscription-request fixture (M5, M6) |
@@ -240,18 +240,16 @@ One line per `gap` or `partial` row, phrased as a story title.
 - C8: llm-providers presents a subscription OAuth token differently from an API bearer (`story:anthropic-access`)
 - C21: llm resolves an Anthropic subscription login (`story:anthropic-access`)
 - R35: llm keeps a streamed call when the terminal `output` is empty, deliberately (`story:codex-stream`); no llm change: Harness test `lib.rs:865` asserts the opposite and changes when Harness builds on llm
-- R40: llm offers a blocking Responses turn adapter for a synchronous agent loop
 - M5: llm-messages presents a subscription token with the OAuth beta header (`story:anthropic-access`)
 - M6: llm-messages opens `system` with the subscription client preamble (`story:anthropic-access`)
-- M41: llm offers a blocking Messages turn adapter and tests two concurrent turns on one Messages client
 - M44: llm-messages pins a subscription-request fixture
 
 ## Counts
 
 | Status | Rows |
 | --- | --- |
-| covered | 131 |
-| partial | 5 |
+| covered | 133 |
+| partial | 3 |
 | gap | 4 |
 | not needed | 6 |
 | total | 146 |

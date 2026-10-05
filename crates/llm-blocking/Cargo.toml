@@ -1,0 +1,27 @@
+[package]
+name = "b10x-llm-blocking"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "A blocking turn adapter over any asynchronous model port, for a synchronous agent loop."
+
+[lints]
+workspace = true
+
+[lib]
+name = "llm_blocking"
+
+[dependencies]
+llm-core.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+
+[dev-dependencies]
+llm-credentials.workspace = true
+llm-http.workspace = true
+llm-providers.workspace = true
+llm-messages = { package = "b10x-llm-messages", path = "../llm-messages" }
+llm-responses = { package = "b10x-llm-responses", path = "../llm-responses" }
+serde_json.workspace = true
