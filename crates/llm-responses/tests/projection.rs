@@ -196,7 +196,7 @@ fn a_failed_tool_result_keeps_its_failure_through_the_round_trip() {
 #[test]
 fn an_empty_instruction_projects_no_developer_entry_and_round_trips() {
     let request = tool_round_trip_request();
-    assert!(request.instructions.is_empty());
+    assert_eq!(request.instructions, "");
     let body = project_request(&binding(), &request).expect("projects");
     assert_ne!(body["input"][0]["role"], json!("developer"));
     assert_eq!(

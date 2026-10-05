@@ -665,7 +665,7 @@ async fn error_statuses_are_typed_and_their_endless_bodies_are_not_read() {
         assert!(!shown.contains(TOKEN), "{status}: {shown}");
         assert!(!shown.contains("echo"), "{status}: {shown}");
         assert_eq!(error.validate_for(client.provenance()), Ok(()), "{status}");
-        assert!(sink.events().is_empty());
+        assert_eq!(sink.events(), []);
     }
 }
 

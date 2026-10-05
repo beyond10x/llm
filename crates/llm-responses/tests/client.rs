@@ -385,7 +385,7 @@ async fn a_resolver_error_gives_the_credential_error_before_any_request_is_sent(
         .expect_err("no credential, no turn");
     assert_eq!(error.code, ErrorCode::Unauthorized, "{error}");
     assert_eq!(error.dispatch, Dispatch::NotSent, "{error}");
-    assert!(sink.events().is_empty());
+    assert_eq!(sink.events(), []);
     assert!(
         tokio::time::timeout(Duration::from_millis(100), listener.accept())
             .await
