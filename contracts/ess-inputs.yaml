@@ -782,3 +782,10 @@ scenarios:
 - secrets/scenarios/codex-renewal-an-unwritable-directory-refuses-uncertain-and-leaves-the-login.yaml
 - secrets/scenarios/codex-renewal-a-refused-grant-is-not-presented-again-for-the-same-login.yaml
 - secrets/scenarios/codex-renewal-an-uncertain-grant-is-not-presented-again-for-the-same-login.yaml
+- responses/scenarios/wire-the-encoded-body-is-the-bytes-the-client-sends.yaml
+- responses/scenarios/wire-an-unset-output-bound-is-absent-from-the-body.yaml
+- responses/scenarios/wire-a-conversation-sends-its-cache-key-and-identity-headers.yaml
+- responses/scenarios/wire-a-conversation-without-an-originator-names-none.yaml
+- responses/scenarios/wire-a-successful-string-tool-result-travels-inside-the-envelope.yaml
+- responses/scenarios/wire-an-unknown-output-item-is-preserved-with-a-warning.yaml
+- responses/scenarios/wire-a-streamed-unknown-output-item-is-preserved-with-a-warning.yaml

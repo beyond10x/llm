@@ -1,0 +1,6 @@
+POST /v1/responses HTTP/1.1
+accept: text/event-stream
+authorization: <credential omitted>
+content-length: 905
+content-type: application/json
+host: <local address>

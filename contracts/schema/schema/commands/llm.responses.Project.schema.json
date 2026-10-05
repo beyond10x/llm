@@ -13,6 +13,12 @@
     },
     "turn_json": {
       "type": "string"
+    },
+    "conversation_id": {
+      "type": "string"
+    },
+    "originator": {
+      "type": "string"
     }
   },
   "required": [
@@ -24,8 +30,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "aa9fe63a776ebd0a85be0e9fe39525f81d73a3be57f011a08cc57e1b3708c901",
-    "contract_digest": "slice-sha256/2:9e5153f09870b09e5383b9c5679ed97a4a7f8013b3463df93a352ce70a2eda80",
+    "source_digest": "d194b969981796d08cb0da1aa79de2f0ed77d01636c79409a1984b7693ca3b97",
+    "contract_digest": "slice-sha256/2:6e5f1561579dfec3c346b1a3f70205dca276376754dfc574b234b787d25e331c",
     "regenerate": "ess generate"
   }
 }

@@ -520,6 +520,13 @@
       "llm.responses/authored/the-text-and-tool-subset-round-trips",
       "llm.responses/authored/unbound-unattributed-state-is-refused-on-egress",
       "llm.responses/authored/vllm-reasoning-text-deltas-are-observed",
+      "llm.responses/authored/wire-a-conversation-sends-its-cache-key-and-identity-headers",
+      "llm.responses/authored/wire-a-conversation-without-an-originator-names-none",
+      "llm.responses/authored/wire-a-streamed-unknown-output-item-is-preserved-with-a-warning",
+      "llm.responses/authored/wire-a-successful-string-tool-result-travels-inside-the-envelope",
+      "llm.responses/authored/wire-an-unknown-output-item-is-preserved-with-a-warning",
+      "llm.responses/authored/wire-an-unset-output-bound-is-absent-from-the-body",
+      "llm.responses/authored/wire-the-encoded-body-is-the-bytes-the-client-sends",
       "llm.routing/authored/a-caller-attempt-bound-above-sixty-four-is-refused",
       "llm.routing/authored/a-caller-attempt-bound-of-zero-is-refused",
       "llm.routing/authored/a-named-tool-choice-that-is-not-published-is-refused",
@@ -3379,6 +3386,41 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/vllm-reasoning-text-deltas-are-observed"
       },
+      "responses/scenarios/wire-a-conversation-sends-its-cache-key-and-identity-headers.yaml": {
+        "digest": "sha256:2ff3066943ce4871f14375dfdf55f72d06dad82630ea9a4e040eff525decd8f5",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/wire-a-conversation-sends-its-cache-key-and-identity-headers"
+      },
+      "responses/scenarios/wire-a-conversation-without-an-originator-names-none.yaml": {
+        "digest": "sha256:08c5ebc61615e1c8793ae9f28618de0236042338147e934f7c216cb749dbe719",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/wire-a-conversation-without-an-originator-names-none"
+      },
+      "responses/scenarios/wire-a-streamed-unknown-output-item-is-preserved-with-a-warning.yaml": {
+        "digest": "sha256:e54eb5ae7190d40dce5e76a42dd036646871ff6de4ab1407fec1e5fc997ffa1e",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/wire-a-streamed-unknown-output-item-is-preserved-with-a-warning"
+      },
+      "responses/scenarios/wire-a-successful-string-tool-result-travels-inside-the-envelope.yaml": {
+        "digest": "sha256:6c0801ab3004cdd15b51e92da1705140471abb8eab6cd756f6611f23daa30f1a",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/wire-a-successful-string-tool-result-travels-inside-the-envelope"
+      },
+      "responses/scenarios/wire-an-unknown-output-item-is-preserved-with-a-warning.yaml": {
+        "digest": "sha256:778418da7716a2611b08fe747dd49ab0c85571e254c3063c2e95fcd678c19820",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/wire-an-unknown-output-item-is-preserved-with-a-warning"
+      },
+      "responses/scenarios/wire-an-unset-output-bound-is-absent-from-the-body.yaml": {
+        "digest": "sha256:81acdd86e78f165508712628d9571aad1bc5a2128bcba7401abdd1c3e1f9071c",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/wire-an-unset-output-bound-is-absent-from-the-body"
+      },
+      "responses/scenarios/wire-the-encoded-body-is-the-bytes-the-client-sends.yaml": {
+        "digest": "sha256:2fcdff576198003f09baf92f500eab26dd125e318bb8d4f64cdcf59be4800511",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/wire-the-encoded-body-is-the-bytes-the-client-sends"
+      },
       "routing/scenarios/a-caller-attempt-bound-above-sixty-four-is-refused.yaml": {
         "digest": "sha256:3f85f2ef7d4b446c5e1d1379061797659395bc42cb8f4a51e8fb3d1b62153bb5",
         "disposition": "accepted",
@@ -4691,7 +4733,7 @@
       }
     },
     "counts": {
-      "authored": 781,
+      "authored": 788,
       "generated": 26,
       "outside": 0,
       "refused": 0
@@ -4738,8 +4780,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "35f389ee4b0ee8deed9fcf8cbf6c7823729061c3b76be7949fdb23dd341253c4",
-    "spec_digest": "aa9fe63a776ebd0a85be0e9fe39525f81d73a3be57f011a08cc57e1b3708c901",
+    "contract_digest": "31cd70ef635f8b5e50a5895d9da1c05196ae4dc6fa7dd65ec086683923b07774",
+    "spec_digest": "d194b969981796d08cb0da1aa79de2f0ed77d01636c79409a1984b7693ca3b97",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -56471,6 +56513,14 @@
               "kind": "literal",
               "value": "binding_json"
             },
+            "conversation_id": {
+              "kind": "literal",
+              "value": "conversation_id"
+            },
+            "originator": {
+              "kind": "literal",
+              "value": "originator"
+            },
             "turn_json": {
               "kind": "literal",
               "value": "turn_json"
@@ -64648,6 +64698,742 @@
           },
           "step": "expect_view",
           "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/wire-a-conversation-sends-its-cache-key-and-identity-headers": {
+      "purpose": "an opted-in conversation sends its cache key and the three identity headers",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "conversation_id": {
+              "kind": "literal",
+              "value": "conv-1"
+            },
+            "originator": {
+              "kind": "literal",
+              "value": "b10x-harness"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"tools\":[]}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "body_fields": {
+                "kind": "literal",
+                "value": [
+                  "include",
+                  "input",
+                  "model",
+                  "prompt_cache_key",
+                  "store",
+                  "stream",
+                  "tools"
+                ]
+              },
+              "encoded_body": {
+                "kind": "literal",
+                "value": "{\"include\":[\"reasoning.encrypted_content\"],\"input\":[{\"content\":[{\"text\":\"Hi\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"model\":\"example/Small-Model\",\"prompt_cache_key\":\"conv-1\",\"store\":false,\"stream\":true,\"tools\":[]}"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "prompt_cache_key": {
+                "kind": "literal",
+                "value": "conv-1"
+              },
+              "request_headers": {
+                "kind": "literal",
+                "value": [
+                  "accept: text/event-stream",
+                  "content-type: application/json",
+                  "originator: b10x-harness",
+                  "session-id: conv-1",
+                  "x-client-request-id: conv-1-0"
+                ]
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
+    "llm.responses/authored/wire-a-conversation-without-an-originator-names-none": {
+      "purpose": "a conversation whose caller named no originator sends no originator header",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "conversation_id": {
+              "kind": "literal",
+              "value": "conv-1"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"tools\":[]}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "prompt_cache_key": {
+                "kind": "literal",
+                "value": "conv-1"
+              },
+              "request_headers": {
+                "kind": "literal",
+                "value": [
+                  "accept: text/event-stream",
+                  "content-type: application/json",
+                  "session-id: conv-1",
+                  "x-client-request-id: conv-1-0"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
+    "llm.responses/authored/wire-a-streamed-unknown-output-item-is-preserved-with-a-warning": {
+      "purpose": "an unknown output item streamed before an empty terminal output is kept and warned about once",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"web_search_call\",\"id\":\"ws_1\"}},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"opaque\",\"payload\":{\"id\":\"ws_1\",\"type\":\"web_search_call\"},\"provenance\":{\"account\":\"local\",\"binding_revision\":\"rev-1\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"protocol\":\"responses\",\"provider\":\"my-lab\"}}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "warning:unknown-output-item"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/wire-a-successful-string-tool-result-travels-inside-the-envelope": {
+      "purpose": "a successful string tool result travels inside the one envelope, not as plain text",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Read it\"},{\"kind\":\"assistant-text\",\"text\":\"Reading.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"file_read\",\"arguments\":{\"path\":\"README.md\"}},{\"kind\":\"tool-result\",\"call_id\":\"call-1\",\"output\":\"plain text\",\"failed\":false}],\"tools\":[{\"name\":\"file_read\",\"description\":\"Read one file\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_json": {
+                "kind": "literal",
+                "value": "[{\"content\":[{\"text\":\"Read it\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"},{\"content\":[{\"text\":\"Reading.\",\"type\":\"output_text\"}],\"role\":\"assistant\",\"type\":\"message\"},{\"arguments\":\"{\\\"path\\\":\\\"README.md\\\"}\",\"call_id\":\"call-1\",\"name\":\"file_read\",\"type\":\"function_call\"},{\"call_id\":\"call-1\",\"output\":\"{\\\"ok\\\":true,\\\"output\\\":\\\"plain text\\\"}\",\"type\":\"function_call_output\"}]"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
+    "llm.responses/authored/wire-an-unknown-output-item-is-preserved-with-a-warning": {
+      "purpose": "an unknown output item in the terminal output is kept as opaque state and warned about",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"web_search_call\",\"id\":\"ws_1\"}]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"opaque\",\"payload\":{\"id\":\"ws_1\",\"type\":\"web_search_call\"},\"provenance\":{\"account\":\"local\",\"binding_revision\":\"rev-1\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"protocol\":\"responses\",\"provider\":\"my-lab\"}}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "warning:unknown-output-item"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/wire-an-unset-output-bound-is-absent-from-the-body": {
+      "purpose": "an unset output bound is absent from the encoded body, not sent as null",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"tools\":[]}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "body_fields": {
+                "kind": "literal",
+                "value": [
+                  "include",
+                  "input",
+                  "model",
+                  "store",
+                  "stream",
+                  "tools"
+                ]
+              },
+              "encoded_body": {
+                "kind": "literal",
+                "value": "{\"include\":[\"reasoning.encrypted_content\"],\"input\":[{\"content\":[{\"text\":\"Hi\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"model\":\"example/Small-Model\",\"store\":false,\"stream\":true,\"tools\":[]}"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "max_output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "prompt_cache_key": {
+                "kind": "literal",
+                "value": null
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
+    "llm.responses/authored/wire-the-encoded-body-is-the-bytes-the-client-sends": {
+      "purpose": "the encoded body is the bytes the client sends, and no conversation sends no identity",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"small\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "body_fields": {
+                "kind": "literal",
+                "value": [
+                  "include",
+                  "input",
+                  "max_output_tokens",
+                  "model",
+                  "store",
+                  "stream",
+                  "tools"
+                ]
+              },
+              "encoded_body": {
+                "kind": "literal",
+                "value": "{\"include\":[\"reasoning.encrypted_content\"],\"input\":[{\"content\":[{\"text\":\"Keep instructions\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"Keep message\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"max_output_tokens\":128,\"model\":\"example/Small-Model\",\"store\":false,\"stream\":true,\"tools\":[]}"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "prompt_cache_key": {
+                "kind": "literal",
+                "value": null
+              },
+              "request_headers": {
+                "kind": "literal",
+                "value": [
+                  "accept: text/event-stream",
+                  "content-type: application/json"
+                ]
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
         }
       ]
     },

@@ -1,6 +1,12 @@
 //! One bound Responses endpoint, reached once per turn.
 
-use std::{sync::Arc, time::Instant};
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
+    time::Instant,
+};
 
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, MAX_REQUEST_BYTES, Model,
@@ -10,7 +16,9 @@ use llm_credentials::SecretResolver;
 use llm_http::{Framing, HeaderMap, HeaderName, HeaderValue, HttpClient, SseEvent};
 use serde_json::Value;
 
-use crate::{PROTOCOL, StreamDecoding, project_request, stream::Decoder};
+use crate::{
+    Conversation, PROTOCOL, StreamDecoding, encode_request, request_headers, stream::Decoder,
+};
 
 /// The stream events after which this wire sends nothing the decoder reads.
 ///
@@ -39,8 +47,13 @@ const LIFECYCLE_EVENTS: &[&str] = &[
 /// A turn projects the neutral request with [`project_request`], resolves the account's
 /// credential through the injected resolver, sends one streaming `POST {base_url}responses`
 /// through `llm-http`, and decodes what arrives with the decoder behind
-/// [`crate::decode_stream`]. The request carries the content headers and the authentication
-/// header the binding declares, and nothing else.
+/// [`crate::decode_stream`]. The body is [`encode_request`]'s bytes, serialised nowhere else. The
+/// request carries [`request_headers`] and the authentication header the binding declares, and
+/// nothing else: without a conversation that is the two content headers alone.
+///
+/// A client given a [`Conversation`] with [`ResponsesClient::with_conversation`] serves that
+/// conversation only, and every request it sends carries the conversation's cache key and
+/// identity headers, each with the next request number.
 ///
 /// It never retries, never refreshes a credential, never changes account or endpoint, and never
 /// falls back: those belong to routing and to the caller.
@@ -52,6 +65,9 @@ pub struct ResponsesClient {
     projection: crate::Binding,
     http: HttpClient,
     resolver: Arc<dyn SecretResolver>,
+    conversation: Option<Conversation>,
+    /// Requests sent so far, which numbers each request's `x-client-request-id`.
+    requests: AtomicU64,
 }
 
 impl ResponsesClient {
@@ -80,7 +96,17 @@ impl ResponsesClient {
             projection,
             http,
             resolver,
+            conversation: None,
+            requests: AtomicU64::new(0),
         })
+    }
+
+    /// Opts this client into one conversation: from now on every request it sends carries the
+    /// conversation's `prompt_cache_key` and identity headers. Without this it sends neither.
+    #[must_use]
+    pub fn with_conversation(mut self, conversation: Conversation) -> Self {
+        self.conversation = Some(conversation);
+        self
     }
 
     async fn run(
@@ -92,8 +118,7 @@ impl ResponsesClient {
         // Refused before any I/O, and before a credential is resolved: the neutral contract for
         // this binding, then the projection, then the bound the transport would refuse anyway.
         request.validate_for(self.binding.provenance(), self.binding.capabilities())?;
-        let body = serde_json::to_vec(&project_request(&self.projection, request)?)
-            .map_err(|_| Error::invalid("the projected request cannot be encoded"))?;
+        let body = encode_request(&self.projection, request, self.conversation.as_ref())?;
         if body.len() > MAX_REQUEST_BYTES {
             return Err(Error::too_large(
                 "the projected Responses request exceeds its bound",
@@ -108,8 +133,14 @@ impl ResponsesClient {
         )
         .await?;
         let (mut headers, _) = auth.into_parts();
-        set(&mut headers, "content-type", "application/json");
-        set(&mut headers, "accept", "text/event-stream");
+        let number = self.requests.fetch_add(1, Ordering::Relaxed);
+        for (name, value) in request_headers(self.conversation.as_ref(), number) {
+            // Every value is either fixed text or built from identifiers, which are printable
+            // ASCII, so this refusal is a guard rather than a reachable path.
+            let value = HeaderValue::try_from(value)
+                .map_err(|_| Error::invalid("a request header value is not sendable"))?;
+            headers.insert(HeaderName::from_static(name), value);
+        }
         let decoding = self.exchange(headers, body, sink, cancel, deadline).await?;
         // Every event before the terminal object was handed over while the stream arrived. What
         // is left was produced by deciding the turn, so the provider's counters are known: a
@@ -242,13 +273,6 @@ fn keep(error: Error, evidence: &TurnObservation) -> Error {
         return error;
     }
     error.with_observation(evidence.clone())
-}
-
-fn set(headers: &mut HeaderMap, name: &'static str, value: &'static str) {
-    headers.insert(
-        HeaderName::from_static(name),
-        HeaderValue::from_static(value),
-    );
 }
 
 /// Hands one event to the caller, unless the caller cancels first.

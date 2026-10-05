@@ -56,6 +56,24 @@
     "request_preserved": {
       "type": "boolean"
     },
+    "encoded_body": {
+      "type": "string"
+    },
+    "body_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prompt_cache_key": {
+      "type": "string"
+    },
+    "request_headers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "state": {
       "$ref": "#/$defs/llm.responses.RequestProjection.State"
     }
@@ -67,14 +85,16 @@
     "tool_names",
     "sampling",
     "request_preserved",
+    "body_fields",
+    "request_headers",
     "state"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "aa9fe63a776ebd0a85be0e9fe39525f81d73a3be57f011a08cc57e1b3708c901",
-    "contract_digest": "slice-sha256/2:8ca614a810058ba0199886a978dd17f26c69c6c9208697803281542ffba0df24",
+    "source_digest": "d194b969981796d08cb0da1aa79de2f0ed77d01636c79409a1984b7693ca3b97",
+    "contract_digest": "slice-sha256/2:e4fde47d8fe10219f2cb0e81f4e614516460047a6ffd0e5a977f12627e97b646",
     "regenerate": "ess generate"
   },
   "$defs": {

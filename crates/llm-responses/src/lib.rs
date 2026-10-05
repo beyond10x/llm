@@ -29,13 +29,15 @@
 
 mod binding;
 mod client;
+mod conversation;
 mod request;
 mod stream;
 
 pub use binding::{Binding, PATH, PROTOCOL};
 pub use client::ResponsesClient;
+pub use conversation::{Conversation, request_headers};
 pub use request::{
-    ACCEPTED_BODY_FIELDS, CARRIED_ENTRY_TYPES, INCLUDE, TOOL_NAME_PATTERN, ingest_request,
-    project_request,
+    ACCEPTED_BODY_FIELDS, CARRIED_ENTRY_TYPES, INCLUDE, TOOL_NAME_PATTERN, encode_request,
+    ingest_request, project_request,
 };
 pub use stream::{ACCEPTED_STREAM_EVENTS, REASONING_DELTA_EVENTS, StreamDecoding, decode_stream};
