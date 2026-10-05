@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T09:25:15Z",
+  "actor": "human:timo",
+  "artifact": "story:public-docs",
+  "kind": "story",
+  "revision": 12,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "w36 integration gate on wave/2026-10-05-w36 after merging main f8cda77e: fmt 0, llm-docs 18 passed, generate --check 0, llm-credentials adversary2_codex 5 passed, ess validate 0, aep validate 0; no adversary pass (documentation unit)",
+    "reference": "wave/2026-10-05-w36"
+  }
+}

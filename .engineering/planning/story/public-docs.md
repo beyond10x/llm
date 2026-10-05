@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:public-docs
 kind: story
-status: active
+status: implemented
 title: llm documents itself on its own site, current to 0.1.7
 relations:
 - decomposes: epic:serving-split
@@ -26,10 +26,11 @@ scope:
   path: crates/llm-docs
 - confidence: inferred
   path: website
-revision: 12
+revision: 13
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T08:43:16Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-05T08:43:16Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T09:25:16Z", actor: "human:timo", revision: 13, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 

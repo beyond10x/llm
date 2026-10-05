@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T09:25:15Z",
+  "actor": "human:timo",
+  "artifact": "story:public-docs",
+  "kind": "story",
+  "revision": 12,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "phase 1: 7 llm-docs acceptance tests red on the base (no generator); unit gate green: fmt 0, clippy +1.98.0 0, cargo test --workspace 802 passed 0 failed, llm-docs generate --check 0, ess validate 0, conformance 823/823, site build 0 (broken links throw)",
+    "reference": "llm-public-docs/scratch/phase1-red.log, test.log, site.log"
+  }
+}
