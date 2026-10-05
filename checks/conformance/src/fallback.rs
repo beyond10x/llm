@@ -267,6 +267,22 @@ fn scripted_fleet(
     Ok(fleet)
 }
 
+/// The policy a program declares: its attempt bound, its deadline (already passed, or a number of
+/// milliseconds from now) and its retry policy.
+fn fallback_policy(program: &Program, retry: RetryPolicy) -> FallbackPolicy {
+    FallbackPolicy {
+        max_attempts: program
+            .max_attempts
+            .unwrap_or(FallbackPolicy::default().max_attempts),
+        deadline: program.deadline_passed.then(Instant::now).or_else(|| {
+            program
+                .deadline_in_ms
+                .map(|ms| Instant::now() + Duration::from_millis(ms))
+        }),
+        retry,
+    }
+}
+
 fn execute(input: &FallbackInput, facts: &mut Value) -> Result<(), Error> {
     if input.program_json.len() > MAX_PROGRAM_BYTES {
         return Err(Error::too_large("fallback program exceeds its bound"));
@@ -277,7 +293,6 @@ fn execute(input: &FallbackInput, facts: &mut Value) -> Result<(), Error> {
     let catalog = Catalog::parse(&input.catalog_toml)?;
     let document: TurnDocument = serde_json::from_str(&input.turn_json)
         .map_err(|_| Error::invalid("invalid turn envelope"))?;
-    let fleet = scripted_fleet(program.models, &catalog)?;
     let retry = program.retry.policy();
     facts["retry_policy"] = json!({
         "max_attempts": retry.max_attempts,
@@ -285,17 +300,8 @@ fn execute(input: &FallbackInput, facts: &mut Value) -> Result<(), Error> {
         "max_doublings": retry.max_doublings,
         "max_server_delay_ms": millis(retry.max_server_delay),
     });
-    let policy = FallbackPolicy {
-        max_attempts: program
-            .max_attempts
-            .unwrap_or(FallbackPolicy::default().max_attempts),
-        deadline: program.deadline_passed.then(Instant::now).or_else(|| {
-            program
-                .deadline_in_ms
-                .map(|ms| Instant::now() + Duration::from_millis(ms))
-        }),
-        retry,
-    };
+    let policy = fallback_policy(&program, retry);
+    let fleet = scripted_fleet(program.models, &catalog)?;
     let refused = program.refuse_admission;
     let mut admit = |selection: &Selection<'_>| {
         if refused.iter().any(|id| id == selection.target.id.as_str()) {
