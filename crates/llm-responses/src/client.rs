@@ -23,6 +23,14 @@ const FINAL_EVENTS: &[&str] = &[
     "error",
 ];
 
+/// The stream events that only report the response's lifecycle and carry no output. Any other
+/// event (an output item, a content part, a delta) means the turn has answered.
+const LIFECYCLE_EVENTS: &[&str] = &[
+    "response.created",
+    "response.in_progress",
+    "response.queued",
+];
+
 /// A single-attempt client for one bound Responses endpoint.
 ///
 /// A turn projects the neutral request with [`project_request`], resolves the account's
@@ -139,14 +147,23 @@ impl ResponsesClient {
             .await
             .map_err(|error| self.attach(error))?;
         let mut payloads = Vec::new();
+        // Whether the provider has produced any output yet. The stream is read whole before
+        // the caller sees an event, so routing cannot count what was produced; once the turn has
+        // answered, a cut is final rather than offered for another attempt that would answer
+        // again and bill again (Harness: a turn that had already answered is never retried).
+        let mut answered = false;
         // End of body ends the loop too. The decoder refuses unless a terminal object arrived.
-        while let Some(SseEvent::Payload { data, .. }) =
-            stream.next().await.map_err(|error| self.attach(error))?
-        {
-            let last = data
-                .get("type")
-                .and_then(Value::as_str)
-                .is_some_and(|kind| FINAL_EVENTS.contains(&kind));
+        while let Some(SseEvent::Payload { data, .. }) = stream.next().await.map_err(|error| {
+            let error = if answered {
+                error.with_retriable(false)
+            } else {
+                error
+            };
+            self.attach(error)
+        })? {
+            let kind = data.get("type").and_then(Value::as_str);
+            let last = kind.is_some_and(|kind| FINAL_EVENTS.contains(&kind));
+            answered |= !kind.is_some_and(|kind| LIFECYCLE_EVENTS.contains(&kind));
             payloads.push(data);
             if last {
                 break;

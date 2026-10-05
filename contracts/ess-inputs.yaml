@@ -725,3 +725,5 @@ scenarios:
 - routing/scenarios/retry-attempts-are-spent-on-one-target-then-the-route-falls-back.yaml
 - routing/scenarios/retry-the-default-policy-is-harnesss-and-a-cancellation-ends-its-wait.yaml
 - routing/scenarios/retry-the-default-server-delay-cap-is-thirty-seconds.yaml
+- routing/scenarios/retry-a-wait-past-the-deadline-falls-back.yaml
+- routing/scenarios/retry-a-wait-past-the-deadline-spends-the-only-target.yaml
