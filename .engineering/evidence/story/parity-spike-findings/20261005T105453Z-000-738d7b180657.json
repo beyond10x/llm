@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T10:54:53Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-spike-findings",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "phase 1 red: Messages delta does not extend its block (Protocol); mutant B (any block) and mutant A (opaque accepts absent signature) each fail a guard; conformance with the fix disabled 664/665, the new scenario failing",
+    "reference": "llm-parity-spike-findings/scratch/{phase1-red.log,mutant-*.log,conformance-without-fix.log}"
+  }
+}

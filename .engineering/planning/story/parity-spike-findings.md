@@ -2,22 +2,27 @@
 format: aep.planning-md/3
 id: story:parity-spike-findings
 kind: story
-status: active
+status: implemented
 title: The parity table records the two behaviours the Harness spike found
 relations:
 - decomposes: epic:serving-split
 - serves: vision:portable-model-inference
 scope:
 - confidence: inferred
+  path: contracts
+- confidence: inferred
   path: crates/llm-core
 - confidence: inferred
   path: crates/llm-messages
 - confidence: inferred
   path: docs/harness-parity.md
-revision: 6
+- confidence: inferred
+  path: docs/messages.md
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T10:42:25Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-05T10:42:25Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T10:54:53Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 

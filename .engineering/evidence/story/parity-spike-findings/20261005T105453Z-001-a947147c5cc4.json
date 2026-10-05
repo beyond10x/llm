@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T10:54:53Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-spike-findings",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "w43 gate: fmt 0, clippy +1.98.0 0, cargo test --workspace 603 passed 0 failed 3 ignored, llm-docs --check 0, ess validate 0, conformance 665/665 x3, site build 0; wave tree equals unit tree (main 995964ff)",
+    "reference": "wave/2026-10-05-w43"
+  }
+}
