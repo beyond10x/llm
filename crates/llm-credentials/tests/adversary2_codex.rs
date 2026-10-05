@@ -8,9 +8,9 @@ use std::{
     path::Path,
     sync::{
         Arc,
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
-    time::{Duration, SystemTime},
+    time::{Duration, Instant, SystemTime},
 };
 
 /// The caller's clock in most cases: 2026-10-03T00:00:00Z.
@@ -215,8 +215,9 @@ async fn an_atomic_replace_mid_stream_yields_one_whole_token_and_its_version() {
     assert_ne!(short_version, long_version);
 
     let stop = Arc::new(AtomicBool::new(false));
+    let replacements = Arc::new(AtomicUsize::new(0));
     let writer = {
-        let stop = stop.clone();
+        let (stop, replacements) = (stop.clone(), replacements.clone());
         let (path, stage) = (path.clone(), temp.path().join("auth.json.next"));
         let documents = [login(&short), login(&long)];
         std::thread::spawn(move || {
@@ -225,13 +226,22 @@ async fn an_atomic_replace_mid_stream_yields_one_whole_token_and_its_version() {
                 write_fixture(&stage, &documents[index % 2]);
                 fs::rename(&stage, &path).unwrap();
                 index += 1;
+                replacements.store(index, Ordering::Relaxed);
             }
             index
         })
     };
 
+    // Resolve in batches until the writer has replaced the file more than ten times, so the
+    // resolves overlap many replacements however fast the machine schedules the writer thread
+    // (a fixed 100 batches let a slow CI runner finish with only 6 replacements). At least 100
+    // batches, at most 30 s.
+    let deadline = Instant::now() + Duration::from_secs(30);
     let mut outcomes = Vec::new();
-    for _ in 0..100 {
+    let mut batches = 0;
+    while batches < 100 || (replacements.load(Ordering::Relaxed) <= 10 && Instant::now() < deadline)
+    {
+        batches += 1;
         let mut batch = tokio::task::JoinSet::new();
         for _ in 0..32 {
             let resolver = resolver.clone();
