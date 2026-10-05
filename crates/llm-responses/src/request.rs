@@ -5,7 +5,7 @@ use llm_core::{
 };
 use serde_json::{Map, Value, json};
 
-use crate::Binding;
+use crate::{Binding, Conversation};
 
 /// The character class this wire publishes a tool name in.
 ///
@@ -103,6 +103,30 @@ pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value
         body.insert("tool_choice".to_owned(), choice);
     }
     Ok(Value::Object(body))
+}
+
+/// The exact bytes of the request body the client sends for one turn.
+///
+/// The client sends what this returns and serialises the body nowhere else, so a caller or a test
+/// holding these bytes holds the request. Without a conversation they are [`project_request`]'s
+/// value, compactly encoded; with one, that value plus `prompt_cache_key` equal to the
+/// conversation's identifier.
+///
+/// # Errors
+/// Refuses exactly what [`project_request`] refuses, and a body that cannot be encoded.
+pub fn encode_request(
+    binding: &Binding,
+    request: &TurnRequest,
+    conversation: Option<&Conversation>,
+) -> Result<Vec<u8>, Error> {
+    let mut body = project_request(binding, request)?;
+    if let (Some(conversation), Value::Object(fields)) = (conversation, &mut body) {
+        fields.insert(
+            "prompt_cache_key".to_owned(),
+            json!(conversation.id().as_str()),
+        );
+    }
+    serde_json::to_vec(&body).map_err(|_| Error::invalid("the projected request cannot be encoded"))
 }
 
 /// Reads one wire request body back into a neutral turn, for a gateway ingress surface.

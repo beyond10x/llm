@@ -8,7 +8,10 @@ use ess_conformance::target::TargetError;
 use llm_core::{
     Error, Id, Item, Provenance, StopReason, StreamEvent, TurnDocument, TurnObservation,
 };
-use llm_responses::{Binding, PATH, decode_stream, ingest_request, project_request};
+use llm_responses::{
+    Binding, Conversation, PATH, decode_stream, encode_request, ingest_request, project_request,
+    request_headers,
+};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
@@ -37,6 +40,8 @@ struct ProjectInput {
     binding_json: String,
     upstream_model: String,
     turn_json: String,
+    conversation_id: Option<String>,
+    originator: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -74,7 +79,8 @@ fn project(input: &Value) -> Result<Observed, TargetError> {
         "accepted": false, "error_code": null, "path": null, "wire_model": null,
         "stream": null, "store": null, "include": [], "input_json": null,
         "tool_names": [], "tool_choice": null, "max_output_tokens": null,
-        "sampling": [], "request_preserved": false
+        "sampling": [], "request_preserved": false, "encoded_body": null, "body_fields": [],
+        "prompt_cache_key": null, "request_headers": []
     });
     if let Err(error) = projection(&input, &mut facts) {
         facts["error_code"] = json!(error.code);
@@ -91,8 +97,28 @@ fn projection(input: &ProjectInput, facts: &mut Value) -> Result<(), Error> {
     let binding = binding(&input.binding_json, &input.upstream_model)?;
     let document: TurnDocument = serde_json::from_str(&input.turn_json)
         .map_err(|_| Error::invalid("invalid turn envelope"))?;
-    let body = project_request(&binding, &document.request)?;
+    let conversation = conversation(input)?;
+    // The bytes the client would send, read back for every fact below: the projection's own
+    // value is never consulted beside them, so no fact can describe a body that was not encoded.
+    let encoded = encode_request(&binding, &document.request, conversation.as_ref())?;
+    let body: Value = serde_json::from_slice(&encoded)
+        .map_err(|_| Error::invalid("encoded request is not JSON"))?;
     facts["accepted"] = json!(true);
+    facts["encoded_body"] = json!(
+        String::from_utf8(encoded).map_err(|_| Error::invalid("encoded request is not UTF-8"))?
+    );
+    facts["body_fields"] = json!(
+        body.as_object()
+            .map(|fields| fields.keys().map(String::as_str).collect::<Vec<_>>())
+            .unwrap_or_default()
+    );
+    facts["prompt_cache_key"] = body.get("prompt_cache_key").cloned().unwrap_or(Value::Null);
+    facts["request_headers"] = json!(
+        request_headers(conversation.as_ref(), 0)
+            .into_iter()
+            .map(|(name, value)| format!("{name}: {value}"))
+            .collect::<Vec<_>>()
+    );
     facts["path"] = json!(PATH);
     facts["wire_model"] = body["model"].clone();
     facts["stream"] = body["stream"].clone();
@@ -133,6 +159,23 @@ fn projection(input: &ProjectInput, facts: &mut Value) -> Result<(), Error> {
     facts["request_preserved"] =
         json!(ingest_request(&binding, &body).is_ok_and(|returned| returned == document.request));
     Ok(())
+}
+
+/// The conversation the scenario opted the client into, built with the production constructors.
+fn conversation(input: &ProjectInput) -> Result<Option<Conversation>, Error> {
+    let identifier =
+        |value: &str| Id::new(value).map_err(|_| Error::invalid("invalid conversation identifier"));
+    match (&input.conversation_id, &input.originator) {
+        (None, None) => Ok(None),
+        (None, Some(_)) => Err(Error::invalid("an originator names no conversation")),
+        (Some(conversation), originator) => {
+            let mut conversation = Conversation::new(identifier(conversation)?);
+            if let Some(originator) = originator {
+                conversation = conversation.with_originator(identifier(originator)?);
+            }
+            Ok(Some(conversation))
+        }
+    }
 }
 
 fn ingest(input: &Value) -> Result<Observed, TargetError> {

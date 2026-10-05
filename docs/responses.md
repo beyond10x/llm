@@ -8,23 +8,28 @@ disagree about nothing.
 | function | direction |
 | --- | --- |
 | `project_request(&Binding, &TurnRequest) -> Result<Value, Error>` | neutral turn to wire body |
+| `encode_request(&Binding, &TurnRequest, Option<&Conversation>) -> Result<Vec<u8>, Error>` | neutral turn to the exact body bytes the client sends |
+| `request_headers(Option<&Conversation>, u64) -> Vec<(&str, String)>` | every non-secret header the client sets |
 | `ingest_request(&Binding, &Value) -> Result<TurnRequest, Error>` | wire body to neutral turn |
 | `decode_stream(&Binding, &[Value]) -> StreamDecoding` | wire stream to neutral outcome |
 | `ResponsesClient::new(llm_providers::Binding, HttpClient, Arc<dyn SecretResolver>)` | one bound endpoint as an `llm_core::Model` |
+| `ResponsesClient::with_conversation(Conversation)` | opts that client into one conversation |
 
 ## The client
 
 `ResponsesClient` is the only part of this crate that performs I/O. One turn:
 
-1. checks the request against the binding (`TurnRequest::validate_for`), projects it with
-   `project_request` and bounds the encoded body by `MAX_REQUEST_BYTES`, all before any I/O;
+1. checks the request against the binding (`TurnRequest::validate_for`), encodes it with
+   `encode_request`, the only place the body is serialised, and bounds the encoded body by
+   `MAX_REQUEST_BYTES`, all before any I/O;
 2. resolves the account's credential through the injected resolver, once, before anything is
    sent. A resolver failure is returned as `Unauthorized` or `Unavailable` with dispatch
    `not-sent`, and no connection is opened;
-3. sends one streaming `POST {base_url}responses` through `llm-http`, with `content-type`,
-   `accept` and the authentication header the binding declares, and no other header: no
-   originator, session or account header the caller did not declare. A success with no
-   `content-type` is read as the event stream the `accept` header asked for, which is how the
+3. sends one streaming `POST {base_url}responses` through `llm-http`, with the headers
+   `request_headers` lists and the authentication header the binding declares, and no other
+   header. Without a conversation that is `accept` and `content-type` alone: no originator,
+   session or account header ([Conversation identity](#conversation-identity)). A success with
+   no `content-type` is read as the event stream the `accept` header asked for, which is how the
    Codex backend answers; a success naming any other media type is `Protocol` with dispatch
    `accepted`;
 4. reads the stream up to its first terminal or failure event, decoding each payload as it
@@ -334,9 +339,38 @@ four are deliberate departures, each one a defect this repository exists to avoi
 | a whole `usage` object is discarded when `input_tokens` or `output_tokens` is missing | every counter is independently optional |
 | the provider's error message is formatted into the diagnostic | three fixed diagnostics |
 
-One further difference is not a defect: Harness sends `prompt_cache_key`, a per-conversation cache
-hint minted by its client. There is no session concept in this contract, and the same measurement
-run found vLLM documents the field as accepted and ignored, so it is not sent.
+Two further differences are choices, not defects. Harness sends a successful string tool result
+as plain text and a failure as `{"ok":false,"error":…}`; this crate sends every result in the one
+envelope [above](#items), for the round-trip reason given there. And Harness always
+sends a conversation's cache key and identity headers; here a route opts in (next section).
+
+## Conversation identity
+
+A client sends no conversation identity unless the caller opts in with
+`ResponsesClient::with_conversation(Conversation::new(id))`, optionally
+`.with_originator(name)`. Without it the request carries no `prompt_cache_key` and only
+`accept`, `content-type` and the authentication header. That is what the Codex backend accepted
+on the 2026-10-04 probe, and vLLM documents `prompt_cache_key` as accepted and ignored.
+
+A client given a conversation serves that conversation only. Every request it sends carries:
+
+| where | what |
+| --- | --- |
+| body | `prompt_cache_key`: the conversation's identifier |
+| header | `originator`: the name the caller gave, only when it gave one |
+| header | `session-id`: the identifier |
+| header | `x-client-request-id`: the identifier, `-`, and the number of requests that client sent before this one, so each attempt is a new request id |
+
+These are Harness's (`harness-responses/src/project.rs:360`, `lib.rs:289`-`297`). Harness keys the
+cache on the conversation because a prefix digest measured `cached_tokens: 0` where the
+conversation's id measured 85% cached.
+
+**Ingress does not read `prompt_cache_key`.** The neutral turn has no conversation to carry it,
+and reading a body without it would re-project a different body. So `ingest_request` refuses a
+body carrying one as a field outside the subset, and a projection with a conversation reports
+`request_preserved: false`. The consequence: a client opted into a conversation cannot send through
+this crate's own Responses gateway ingress. Leave the conversation unset on a route that ends at
+an llm gateway.
 
 ## What this does not establish
 
