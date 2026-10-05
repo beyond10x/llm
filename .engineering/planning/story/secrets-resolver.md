@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:secrets-resolver
 kind: story
-status: draft
+status: active
 title: Inference resolves credentials through the secrets library
 relations:
 - decomposes: epic:access
@@ -10,15 +10,24 @@ relations:
 - depends_on: story:secret-resolver
 - supersedes: story:connectors-secret-resolver
 scope:
+- confidence: inferred
+  path: Cargo.lock
+- confidence: inferred
+  path: contracts/secrets
 - confidence: cited
   path: contracts/secrets/scenarios
+- confidence: inferred
+  path: crates/llm-credentials
 - confidence: cited
   path: crates/llm-credentials/Cargo.toml
 - confidence: cited
   path: crates/llm-credentials/src/secrets.rs
-- confidence: cited
+- confidence: inferred
   path: spec/domains/secrets.yaml
-revision: 2
+revision: 8
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-05T11:13:05Z", actor: "human:timo", revision: 3}
+- {from: "proposed", to: "active", at: "2026-10-05T11:13:05Z", actor: "human:timo", revision: 4}
 ---
 ## Context
 
