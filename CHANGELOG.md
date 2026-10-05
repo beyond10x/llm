@@ -4,19 +4,54 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
-## [Unreleased]
+## [0.1.7] - 2026-10-05
+
+Harness parity: `docs/harness-parity.md` maps every public item and test-pinned behaviour of
+Harness's model crates to llm (146 rows: covered, partial, gap or deliberately different, each
+cited).
+
+### Added
+
+- `llm-credentials`: feature `environment` (`EnvironmentResolver`, caller-named variables only)
+  and feature `json-pointer` (`JsonPointerResolver`, RFC 6901 over another resolver). Refusals
+  carry the secret reference, never its path, variable or value; `SecretError::Malformed` for a
+  document that is not JSON or a target that is not a string.
+- `llm-credentials` feature `codex-renewal`: `CodexAuthFile::renew` and `RenewingCodexAuthFile`
+  renew a Codex login inside a 15-minute margin through one non-retried JSON POST
+  (`HttpClient::post_json`, bounded by `MAX_EXCHANGE_BYTES`), write the token fields back in place
+  through a same-directory temporary file with the original mode, refuse a file that changed during
+  renewal, a symlink or a hard-linked file, never re-send a refused or uncertain grant for an
+  unchanged file, and zeroize the request and the answer.
+- `llm-routing`: same-target retry before any visible output (`RetryPolicy`, default 4 attempts,
+  1/2/4/8 s back-off, server delay capped at 30 s), then fallback; a `turn-retried` warning before
+  each wait; the wait races cancellation; the caller's limit runs before every attempt.
+  `llm-core` `Error::retriable` and `may_retry`; `llm-http` marks 408, 429, 5xx, no response, a
+  body failing mid-stream and end of stream inside an event as retriable.
+- `llm-http`: `CONNECT_TIMEOUT` (15 s) and `HttpClient::with_connect_timeout`.
+- `llm-responses`: `encode_request` (the exact request bytes the client sends), opt-in
+  conversation identity (`Conversation`, `ResponsesClient::with_conversation`: `prompt_cache_key`,
+  `session-id`, `x-client-request-id`) and `request_headers`.
+- `llm-messages`: prompt-cache breakpoints on `system` and on the conversation tail; an unknown
+  stream event, delta or content block is kept as an opaque item with a warning.
+- New crate `b10x-llm-tool-call`: `call_tool` (one forced tool, returns its JSON input) and the
+  Codex Responses preset.
+- New crate `b10x-llm-blocking`: a blocking adapter over any `Model` for a synchronous loop.
 
 ### Changed
 
-- A misconfigured Codex login file is refused, not fallen back from. `CodexAuthFile` refuses a
-  login read whole that is not a Codex login document (not JSON, not an object, `tokens` named
-  twice, a token of the wrong JSON type), or whose access token has no readable integer `exp`, as
-  `SecretError::Malformed`. `llm-providers` refuses that as `Unauthorized`, which routing never
-  falls back from. A login that ends before its document does (an empty file included) stays
-  `Unavailable`, because a file being rewritten in place reads that way. The renewing resolver and
-  `renew` refuse the same files with the same kinds. Specified in `llm.secrets` (818 scenarios).
-- Breaking: `RenewalRefusal` (feature `codex-renewal`) has a new variant `Malformed` (code
-  `malformed`). An exhaustive `match` on it needs the new arm.
+- `ResponsesClient` hands each event to the caller as it arrives; text the caller was shown
+  through deltas stays in the turn when the terminal output omits it; `keepalive` is not an answer.
+- A failure after any Responses output was decoded is final (never replayed).
+- `Limits::default().idle` is 180 s (was 60 s).
+- `prepare_auth` strips exactly one trailing line terminator from a token, and its refusal names
+  the secret reference.
+- `FallbackPolicy::disabled()` means one attempt in total.
+- A misconfigured Codex login file is refused, not fallen back from: a login read whole that is not
+  a Codex login document, or whose access token has no readable integer `exp`, is
+  `SecretError::Malformed` (presented as `Unauthorized`, never falls back); a login that ends
+  before its document does stays `Unavailable`.
+- Breaking: `RenewalRefusal` has a new variant `Malformed` (code `malformed`).
+- The workspace lints clean on rustc 1.99 as well as the pinned 1.98.0.
 
 ## [0.1.6] - 2026-10-04
 

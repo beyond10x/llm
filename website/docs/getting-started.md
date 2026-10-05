@@ -72,7 +72,7 @@ building and running it locally to evaluate, review or verify it. Any other use 
 written agreement.
 :::
 
-Nothing is published to crates.io. The workspace is `publish = false` at version `0.1.6`. To try a
+Nothing is published to crates.io. The workspace is `publish = false` at version `0.1.7`. To try a
 crate from a scratch project, depend on it from Git and pin an exact revision, because nothing
 about the API is stable yet:
 
