@@ -23,4 +23,5 @@ toml.workspace = true
 sha2.workspace = true
 
 [dev-dependencies]
-llm-credentials = { workspace = true, features = ["json-pointer"] }
+llm-credentials = { workspace = true, features = ["codex-auth-file", "json-pointer"] }
+tokio.workspace = true

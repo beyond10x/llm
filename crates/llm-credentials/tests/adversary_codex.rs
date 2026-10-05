@@ -91,7 +91,7 @@ async fn a_relative_path_is_not_resolved_against_the_working_directory() {
 }
 
 /// docs/local-secrets.md: "a token whose `exp` is not after it is refused as `Expired`" and only
-/// "a token without an integer `exp` is `Unavailable`". -1 is an integer not after the clock.
+/// "a token without an integer `exp` is `Malformed`". -1 is an integer not after the clock.
 #[tokio::test]
 async fn a_negative_integer_exp_is_expired_as_the_docs_say() {
     let (_temp, path) = fixture_dir();
@@ -185,7 +185,7 @@ async fn jwt_edges_resolve_or_refuse_by_the_documented_rule() {
         SecretError::Expired
     );
 
-    // Not an integer `exp`, or not a JWT at all: `Unavailable`.
+    // Not an integer `exp`, or not a JWT at all: `Malformed`, which no fallback takes.
     let huge = "18446744073709551616";
     for claims in [
         format!(r#"{{"exp":"{}"}}"#, NOW + 3600),
@@ -197,7 +197,7 @@ async fn jwt_edges_resolve_or_refuse_by_the_documented_rule() {
         write_fixture(&path, &login(&jwt(&claims)));
         assert_eq!(
             resolver.resolve(&reference()).await.unwrap_err(),
-            SecretError::Unavailable,
+            SecretError::Malformed,
             "{claims}"
         );
     }
@@ -205,7 +205,7 @@ async fn jwt_edges_resolve_or_refuse_by_the_documented_rule() {
         write_fixture(&path, &login(token));
         assert_eq!(
             resolver.resolve(&reference()).await.unwrap_err(),
-            SecretError::Unavailable,
+            SecretError::Malformed,
             "{token}"
         );
     }
@@ -294,7 +294,7 @@ async fn no_message_carries_token_material() {
 
     for (token, kind) in [
         (&expired, SecretError::Expired),
-        (&unusable, SecretError::Unavailable),
+        (&unusable, SecretError::Malformed),
     ] {
         write_fixture(&path, &login(token));
         let refusal = resolver.read(&reference()).await.unwrap_err();

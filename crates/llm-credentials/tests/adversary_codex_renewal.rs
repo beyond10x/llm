@@ -534,8 +534,8 @@ async fn far_expiries_and_a_pre_epoch_clock_decide_without_overflow() {
 }
 
 /// A login that names `tokens` twice is refused before anything is sent, with the kind the read
-/// rule gives the same file (`Unavailable`: the document cannot be read), not `Missing` ("no
-/// access token ...; run `codex` to log in"), which this file does hold.
+/// rule gives the same file (`Malformed`: a document read whole that is not a Codex login), not
+/// `Missing` ("no access token ...; run `codex` to log in"), which this file does hold.
 #[tokio::test]
 async fn a_duplicated_key_is_refused_before_sending_with_the_read_rules_kind() {
     let dir = fixture_dir();
@@ -554,7 +554,7 @@ async fn a_duplicated_key_is_refused_before_sending_with_the_read_rules_kind() {
     assert_eq!(endpoint.requests(), 0);
     assert_eq!(fs::read_to_string(&path).unwrap(), before);
     let read = resolver(&path).read(&reference()).await.unwrap_err().kind();
-    assert_eq!(read, SecretError::Unavailable);
+    assert_eq!(read, SecretError::Malformed);
     assert_eq!(
         error.kind(),
         read,

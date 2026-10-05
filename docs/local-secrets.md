@@ -132,12 +132,27 @@ integer `exp` (negative included) is not after it, on either side of the Unix ep
 as `Expired`. A missing file or token, or another reference, is `Missing`; a file above 1 MiB is
 `TooLarge`. Anything but a regular file at the path (a FIFO, a device, a directory) is
 `Unavailable`; the file is opened without blocking, so a FIFO with no writer cannot stall the
-resolve. An unreadable document, a document or `tokens` that is not a JSON object, or a token whose
-`exp` is absent, whose JWT payload is not a JSON object, or whose `exp` is not an integer within
-the 64-bit range (a float, a string, `null`), is `Unavailable`. The signature is not verified: the issuer does that. `CodexAuthFile` itself never renews: running
+resolve. The signature is not verified: the issuer does that. `CodexAuthFile` itself never renews: running
 `codex` renews the login, `refresh` returns `RefreshUnsupported`, and renewal through the token
 endpoint is the separate, opt-in `codex-renewal` feature below. `CodexAuthFile::read` returns the same
 refusal with the file's path; its message names the file and says to run `codex`.
+
+A login file that can be opened but not used is either a configuration error or a read that may
+succeed in a moment, and the two refuse differently, because `llm-providers` refuses `Malformed` as
+`Unauthorized`, which routing never falls back from, and `Unavailable` as `unavailable`, which it
+does:
+
+| Case | Refusal | Why |
+| --- | --- | --- |
+| The whole file was read and is not JSON, not a JSON object, names `tokens` twice, or holds `tokens` or `/tokens/access_token` of the wrong JSON type | `Malformed` | A complete document in the wrong form stays wrong until someone fixes it, as for a JSON-pointer document that is not JSON. Falling back would hide the misconfiguration behind another account and its billing. |
+| The access token's `exp` cannot be read: not a JWT, a payload that is not base64url or not a JSON object, `exp` absent, or not an integer within the 64-bit range (a float, a string, `null`) | `Malformed` | The token comes from a document that was read whole, so it is complete. A token that cannot be dated is not sent, and waiting does not date it. |
+| The file ends before its document does, an empty file included | `Unavailable` | A file being rewritten in place, truncated and then written, reads exactly like this for a moment. The next read can succeed, so another target may answer this turn. |
+| The file changes length while it is read | `Unavailable` | Same: a concurrent rewrite. |
+| A path that is not absolute, anything but a regular file at the path, or an error from the operating system while opening or reading | `Unavailable` | Unchanged. These are about the path or the read, not the login's content, and are kept for now. |
+
+A file that stays truncated therefore falls back on every turn. That is the cost of not refusing
+a login that is only being rewritten. The renewing resolver and `renew` refuse the same files with
+the same kinds (a renewal reports `malformed` or `unavailable`).
 
 Unlike the `file` adapter, this one makes no permission or ownership checks. The Codex CLI owns
 the file and its protections, and this adapter only reads it.
@@ -158,7 +173,7 @@ before answering its token, one renewal at a time. The read-only resolver stays 
 
 - **When.** Renewal is due when the token's `exp` is at or before the clock plus the margin. A
   token whose `exp` cannot be read is `Undated`: nothing is sent or written, no refresh token is
-  spent, and the read rule still refuses it as `Unavailable`.
+  spent, and the read rule still refuses it as `Malformed`.
 - **The exchange.** One JSON POST of `client_id`, `grant_type: refresh_token` and the refresh
   token, without `scope`, through `HttpClient::post_json`: never retried, no redirect, no ambient
   proxy, an answer bounded at 64 KiB. No diagnostic quotes the answer or a token. An answer with an

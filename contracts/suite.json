@@ -653,6 +653,9 @@
       "llm.runpod/authored/the-orphan-sweep-never-selects-a-legacy-llmgw-pod",
       "llm.runpod/authored/the-orphan-sweep-terminates-only-this-controllers-unrecorded-pods",
       "llm.runpod/authored/the-resource-ceiling-refuses-a-second-model-before-anything-is-submitted",
+      "llm.secrets/authored/codex-read-a-login-that-is-not-json-is-malformed",
+      "llm.secrets/authored/codex-read-a-truncated-login-stays-unavailable",
+      "llm.secrets/authored/codex-read-an-undated-login-is-malformed",
       "llm.secrets/authored/codex-renewal-a-directory-at-the-login-path-is-refused",
       "llm.secrets/authored/codex-renewal-a-due-login-is-renewed-and-written-back-in-place",
       "llm.secrets/authored/codex-renewal-a-due-login-without-a-refresh-token-refuses-before-sending",
@@ -672,6 +675,7 @@
       "llm.secrets/authored/codex-renewal-a-repeated-value-is-replaced-only-at-its-pointer",
       "llm.secrets/authored/codex-renewal-a-server-failure-is-sent-once-and-not-retried",
       "llm.secrets/authored/codex-renewal-a-symlinked-login-is-refused-and-not-replaced",
+      "llm.secrets/authored/codex-renewal-a-truncated-login-is-refused-as-unavailable-before-sending",
       "llm.secrets/authored/codex-renewal-an-answer-without-a-refresh-token-keeps-the-one-on-disk",
       "llm.secrets/authored/codex-renewal-an-empty-access-token-refuses-before-writing",
       "llm.secrets/authored/codex-renewal-an-empty-refresh-token-refuses-before-writing",
@@ -4051,6 +4055,21 @@
         "disposition": "accepted",
         "scenario": "llm.runpod/authored/the-resource-ceiling-refuses-a-second-model-before-anything-is-submitted"
       },
+      "secrets/scenarios/codex-read-a-login-that-is-not-json-is-malformed.yaml": {
+        "digest": "sha256:87b2fae37dafdf52d9abcbc53aab50e986aa7b720bfbfc8edef8d6d9378d707a",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-read-a-login-that-is-not-json-is-malformed"
+      },
+      "secrets/scenarios/codex-read-a-truncated-login-stays-unavailable.yaml": {
+        "digest": "sha256:754ef58ad778fd7522b2e4c4419f0ab680d9c6f3282bd790a8b5198ed5e1c111",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-read-a-truncated-login-stays-unavailable"
+      },
+      "secrets/scenarios/codex-read-an-undated-login-is-malformed.yaml": {
+        "digest": "sha256:c821a2854faef8b44730aecbfea42fee2f83898bfb5ac5eda9f2b58e8d81041e",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-read-an-undated-login-is-malformed"
+      },
       "secrets/scenarios/codex-renewal-a-directory-at-the-login-path-is-refused.yaml": {
         "digest": "sha256:c8cfb5afb2a08e2928cac122dc3cff5092a695b4055eb36c17671a343052ab16",
         "disposition": "accepted",
@@ -4067,7 +4086,7 @@
         "scenario": "llm.secrets/authored/codex-renewal-a-due-login-without-a-refresh-token-refuses-before-sending"
       },
       "secrets/scenarios/codex-renewal-a-duplicated-key-is-refused-with-the-read-rules-kind.yaml": {
-        "digest": "sha256:a59581d9af2e585dfc333e44ea63e4735d6ec7128294267dc00bd0025cd8f756",
+        "digest": "sha256:15bf6e607ebd5bd038a6901bc33bff808def7d83eb723430bd60043a0a8ed6a6",
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/codex-renewal-a-duplicated-key-is-refused-with-the-read-rules-kind"
       },
@@ -4102,7 +4121,7 @@
         "scenario": "llm.secrets/authored/codex-renewal-a-login-outside-the-margin-is-neither-sent-nor-written"
       },
       "secrets/scenarios/codex-renewal-a-login-that-is-not-json-is-refused-before-sending.yaml": {
-        "digest": "sha256:5638d2cc3587bf34b0040ea79ab58a1d808a44498651d78e8780c07516f855eb",
+        "digest": "sha256:7883f27bcce5ca6f5f30828bcd4a1c9a902f54177cd6e003d57995ac38ed73d0",
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/codex-renewal-a-login-that-is-not-json-is-refused-before-sending"
       },
@@ -4146,6 +4165,11 @@
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/codex-renewal-a-symlinked-login-is-refused-and-not-replaced"
       },
+      "secrets/scenarios/codex-renewal-a-truncated-login-is-refused-as-unavailable-before-sending.yaml": {
+        "digest": "sha256:248392cb1daae1e8492b905ae7327fd2c9bd798277e7bbf842929f500e4b1298",
+        "disposition": "accepted",
+        "scenario": "llm.secrets/authored/codex-renewal-a-truncated-login-is-refused-as-unavailable-before-sending"
+      },
       "secrets/scenarios/codex-renewal-an-answer-without-a-refresh-token-keeps-the-one-on-disk.yaml": {
         "digest": "sha256:d38080ab776f078f4c7f551380b21e7eaa5014b6e969020f8fb38fe69105f9d4",
         "disposition": "accepted",
@@ -4182,7 +4206,7 @@
         "scenario": "llm.secrets/authored/codex-renewal-an-undated-login-is-left-alone"
       },
       "secrets/scenarios/codex-renewal-an-undated-login-is-still-refused-by-the-resolver.yaml": {
-        "digest": "sha256:335552ab189be7322982bfd7705edd531e571c223d33bd1fc165e6d2aae94b67",
+        "digest": "sha256:15d3085a0dbe6b6b8f836cba880e14a746c908d6730ed7166448e5c14985c8d7",
         "disposition": "accepted",
         "scenario": "llm.secrets/authored/codex-renewal-an-undated-login-is-still-refused-by-the-resolver"
       },
@@ -4733,7 +4757,7 @@
       }
     },
     "counts": {
-      "authored": 788,
+      "authored": 792,
       "generated": 26,
       "outside": 0,
       "refused": 0
@@ -4780,8 +4804,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "31cd70ef635f8b5e50a5895d9da1c05196ae4dc6fa7dd65ec086683923b07774",
-    "spec_digest": "d194b969981796d08cb0da1aa79de2f0ed77d01636c79409a1984b7693ca3b97",
+    "contract_digest": "50be19dce1d6d9782dfe56f0781bda06492c87007a75e1005ff5ea7347f3cac4",
+    "spec_digest": "01c0c02ac1ee8e5d2b3fbaaa0d9bd2bce6065646f8c596828eea234e9c8dbbba",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -79334,6 +79358,421 @@
         }
       ]
     },
+    "llm.secrets/authored/codex-read-a-login-that-is-not-json-is-malformed": {
+      "purpose": "the read-only resolver refuses a whole document that is not JSON as malformed, a configuration error no fallback takes",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalFixture"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "ReadOnlyResolver"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 3600.0
+            },
+            "fixture": {
+              "kind": "literal",
+              "value": "NotJson"
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolved_renewed_token": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "malformed"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-read-a-truncated-login-stays-unavailable": {
+      "purpose": "the read-only resolver refuses a login cut off mid-document as unavailable, since a file being rewritten in place reads that way",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalFixture"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "ReadOnlyResolver"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 3600.0
+            },
+            "fixture": {
+              "kind": "literal",
+              "value": "Truncated"
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolved_renewed_token": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "unavailable"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
+    "llm.secrets/authored/codex-read-an-undated-login-is-malformed": {
+      "purpose": "the read-only resolver refuses an access token whose exp cannot be read as malformed, a configuration error no fallback takes",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalFixture"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "ReadOnlyResolver"
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolved_renewed_token": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "malformed"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
     "llm.secrets/authored/codex-renewal-a-directory-at-the-login-path-is-refused": {
       "purpose": "a directory at the login path is refused as not a regular file and nothing is sent",
       "source": [
@@ -79766,7 +80205,7 @@
       ]
     },
     "llm.secrets/authored/codex-renewal-a-duplicated-key-is-refused-with-the-read-rules-kind": {
-      "purpose": "a document naming tokens twice is refused as unavailable, as the read rule refuses it, before sending",
+      "purpose": "a document naming tokens twice is refused as malformed, as the read rule refuses it, before sending",
       "source": [
         {
           "kind": "domain",
@@ -79881,7 +80320,7 @@
             "fields": {
               "error_code": {
                 "kind": "literal",
-                "value": "unavailable"
+                "value": "malformed"
               },
               "file_unchanged": {
                 "kind": "literal",
@@ -79893,7 +80332,7 @@
               },
               "resolver_error": {
                 "kind": "literal",
-                "value": "unavailable"
+                "value": "malformed"
               }
             }
           },
@@ -80729,7 +81168,7 @@
       ]
     },
     "llm.secrets/authored/codex-renewal-a-login-that-is-not-json-is-refused-before-sending": {
-      "purpose": "a document that is not JSON is refused as unavailable, nothing is sent and the file is kept",
+      "purpose": "a whole document that is not JSON is refused as malformed, nothing is sent and the file is kept",
       "source": [
         {
           "kind": "domain",
@@ -80844,7 +81283,7 @@
             "fields": {
               "error_code": {
                 "kind": "literal",
-                "value": "unavailable"
+                "value": "malformed"
               },
               "file_unchanged": {
                 "kind": "literal",
@@ -80856,7 +81295,7 @@
               },
               "resolver_error": {
                 "kind": "literal",
-                "value": "unavailable"
+                "value": "malformed"
               }
             }
           },
@@ -81969,6 +82408,143 @@
         }
       ]
     },
+    "llm.secrets/authored/codex-renewal-a-truncated-login-is-refused-as-unavailable-before-sending": {
+      "purpose": "a login cut off mid-document is refused as unavailable, as the read rule refuses it, nothing is sent and the file is kept",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.secrets"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.AuthLayout"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalEntry"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.RenewalFixture"
+        },
+        {
+          "kind": "type",
+          "name": "llm.secrets.TokenAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.secrets.RenewCodexLogin"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.secrets.LastRenewal"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.secrets.RenewCodexLogin",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Rotated"
+            },
+            "answer_status": {
+              "kind": "literal",
+              "value": 200.0
+            },
+            "concurrent_change": {
+              "kind": "literal",
+              "value": false
+            },
+            "entry": {
+              "kind": "literal",
+              "value": "Renew"
+            },
+            "expires_in_s": {
+              "kind": "literal",
+              "value": 60.0
+            },
+            "fixture": {
+              "kind": "literal",
+              "value": "Truncated"
+            },
+            "group_readable": {
+              "kind": "literal",
+              "value": false
+            },
+            "layout": {
+              "kind": "literal",
+              "value": "Codex"
+            },
+            "margin_s": {
+              "kind": "literal",
+              "value": 900.0
+            },
+            "refresh_token_present": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.secrets.RenewCodexLogin",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.secrets.LastRenewal"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "file_unchanged": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "resolver_error": {
+                "kind": "literal",
+                "value": "unavailable"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.secrets.LastRenewal"
+        }
+      ]
+    },
     "llm.secrets/authored/codex-renewal-an-answer-without-a-refresh-token-keeps-the-one-on-disk": {
       "purpose": "an answer carrying only an access token replaces it and leaves the refresh and id tokens as they were",
       "source": [
@@ -82913,7 +83489,7 @@
       ]
     },
     "llm.secrets/authored/codex-renewal-an-undated-login-is-still-refused-by-the-resolver": {
-      "purpose": "the renewing resolver leaves an undated token alone and still refuses to send it",
+      "purpose": "the renewing resolver leaves an undated token alone and still refuses to send it, as malformed",
       "source": [
         {
           "kind": "domain",
@@ -83032,7 +83608,7 @@
               },
               "resolver_error": {
                 "kind": "literal",
-                "value": "unavailable"
+                "value": "malformed"
               }
             }
           },

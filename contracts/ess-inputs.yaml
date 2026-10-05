@@ -789,3 +789,7 @@ scenarios:
 - responses/scenarios/wire-a-successful-string-tool-result-travels-inside-the-envelope.yaml
 - responses/scenarios/wire-an-unknown-output-item-is-preserved-with-a-warning.yaml
 - responses/scenarios/wire-a-streamed-unknown-output-item-is-preserved-with-a-warning.yaml
+- secrets/scenarios/codex-read-a-login-that-is-not-json-is-malformed.yaml
+- secrets/scenarios/codex-read-an-undated-login-is-malformed.yaml
+- secrets/scenarios/codex-read-a-truncated-login-stays-unavailable.yaml
+- secrets/scenarios/codex-renewal-a-truncated-login-is-refused-as-unavailable-before-sending.yaml
