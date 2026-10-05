@@ -55,6 +55,7 @@ while the versioned configuration surface and release prerequisites are complete
 | `responses-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Responses request, output and streaming projections. |
 | `responses-client` | Implemented, unreleased: `ResponsesClient`, a single-attempt `Model` over one bound Responses endpoint, tested against local sockets only. |
 | `call-tool-helper` | Implemented, unreleased: `llm-tool-call` offers `call_tool` (one forced tool on any `Model`, returning that call's JSON arguments or a typed `ModelError`) and the Codex Responses preset (`codex_model`, `codex_model_at`, `codex_auth_path`), moved from Loom's `intake-model` with its API and tests. Tested against local sockets and recorded models only; Loom switches after a release. |
+| `parity-blocking-adapters` | Implemented, unreleased: `llm-blocking` offers `BlockingModel`, a blocking turn adapter over any `Model` for a synchronous loop (own or borrowed multi-thread runtime, events to a `BlockingSink` as they arrive, cancellation from another thread, shared or forked for concurrent turns). Tested against local fake servers only. |
 | `messages-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Messages request, output and streaming projections. |
 | `chat-projection` | Implemented (story implemented in the AEP store, shipped in 0.1.0): Chat Completions projections and arbitrary compatible endpoints. |
 | `openai-access` | Pending: API and caller-managed subscription presentation and successful qualification. |

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T08:23:39Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-blocking-adapters",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base: blocking tests do not compile (empty crate); treatment 10 passed; six mutants each killed",
+    "reference": "phase1-red.log vs int-gate.log"
+  }
+}

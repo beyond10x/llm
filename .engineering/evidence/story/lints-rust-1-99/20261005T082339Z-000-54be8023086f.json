@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T08:23:39Z",
+  "actor": "human:timo",
+  "artifact": "story:lints-rust-1-99",
+  "kind": "story",
+  "revision": 10,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base 05d60bbd: workspace clippy on 1.99 exits 101 with 34 locations; treatment: exit 0 on 1.99 and 1.98.0, tests 774 unchanged",
+    "reference": "phase1-red.log vs int-gate.log"
+  }
+}
