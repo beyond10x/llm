@@ -14,6 +14,9 @@
     "error_code": {
       "type": "string"
     },
+    "error_message": {
+      "type": "string"
+    },
     "selected_target": {
       "type": "string"
     },
@@ -62,8 +65,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "f65b4e78c94db3ff29eebeaf3cbf9d712314e6c1413b7d0101a5b3034723195d",
-    "contract_digest": "slice-sha256/2:cd371c913325d5a03293bf588fbe4c3e222d9643bfeaa5b8c22734f634aa7154",
+    "source_digest": "f39883cd430129fe109619d74c2a771387b09afa5c7d8b44701d48bcc27a3f8d",
+    "contract_digest": "slice-sha256/2:334ac241c1d31ef15b68e8a077caa1e36fe142a7df75a45d54b1e3f6ffb7471e",
     "regenerate": "ess generate"
   },
   "$defs": {

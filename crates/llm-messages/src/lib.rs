@@ -7,8 +7,8 @@ mod codec;
 mod decode;
 mod usage;
 
-pub use client::{ANTHROPIC_VERSION, MessagesClient, VERSION_HEADER};
-pub use codec::{IngressRequest, decode_request, encode_request};
+pub use client::{ANTHROPIC_VERSION, BETA_HEADER, MessagesClient, OAUTH_BETA, VERSION_HEADER};
+pub use codec::{IngressRequest, SUBSCRIPTION_CLIENT_PREAMBLE, decode_request, encode_request};
 pub use decode::{StreamDecoder, decode_message, decode_stream};
 
 use llm_core::Error;

@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: a-subscription-token-billed-as-metered-sends-nothing
+summary: a subscription OAuth account declared with metered billing is refused before any credential is resolved or any request is sent, so no turn is silently billed as API use
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.messages.Present
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+    auth_kind: subscription-oauth
+    billing_kind: metered
+    turns: 1
+  outcome: observed
+assert:
+- view: llm.messages.LastPresentation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastPresentation
+  contains:
+    accepted: false
+    error_code: invalid-request
+    error_message: subscription OAuth accounts require subscription billing
+    resolved_references: []
+    requests: 0
+    request_headers: []
+    wire_request: null
+    presented_credentials: []

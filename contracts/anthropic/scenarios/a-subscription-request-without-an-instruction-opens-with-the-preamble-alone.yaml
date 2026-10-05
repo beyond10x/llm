@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: a-subscription-request-without-an-instruction-opens-with-the-preamble-alone
+summary: an empty instruction still sends the client preamble under a subscription token, alone and unmarked, and the rolling breakpoint stays on the conversation tail
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.messages.Present
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+    auth_kind: subscription-oauth
+    billing_kind: subscription
+    turns: 1
+  outcome: observed
+assert:
+- view: llm.messages.LastPresentation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastPresentation
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    wire_request: "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true,\"system\":[{\"text\":\"You are Claude Code, Anthropic's official CLI for Claude.\",\"type\":\"text\"}]}"
+    presented_credentials:
+      - 1

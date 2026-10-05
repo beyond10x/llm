@@ -39,6 +39,16 @@ domain: llm.routing
 # back exactly as before (not-sent or rejected dispatch with code transport, rate-limited or
 # unavailable), without a same-target retry. When the last target's attempts are spent the
 # final error is no longer retriable and its message names the count: `(after <n> attempts)`.
+#
+# Subscription tokens (story:anthropic-access). Catalog validation refuses, as `invalid-request`
+# before any I/O, a `subscription-oauth` account whose secret reference any other account also
+# names ("a subscription OAuth account cannot share its secret reference with another account"),
+# so the token is never presented by an account of another kind or billing; and a route with
+# `fallback_enabled` that holds a `subscription-oauth` target and any target whose account is not
+# billed as `subscription` ("a route with fallback cannot mix a subscription OAuth target with a
+# target under other billing"), in either order, so a turn never moves from the subscription to
+# metered or self-hosted billing. A route without fallback may hold both: only its first target is
+# ever selected.
 types:
   - name: llm.routing.RetryPolicy
     kind: struct
@@ -53,6 +63,8 @@ entities:
     fields: &observation
       - {name: catalog_valid, type: Boolean}
       - {name: error_code, type: Optional<String>}
+      # The refusal's fixed message, so a scenario can tell one catalog refusal from another.
+      - {name: error_message, type: Optional<String>}
       - {name: selected_target, type: Optional<String>}
       - {name: model, type: Optional<String>}
       - {name: url, type: Optional<String>}

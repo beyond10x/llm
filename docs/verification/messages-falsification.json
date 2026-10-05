@@ -4,7 +4,7 @@
   "case": "cargo test -p b10x-llm-messages --locked --no-fail-fast (and cargo test -p b10x-llm-http --locked --no-fail-fast for a mutation in that crate)",
   "scenario": "ess verify conform synthesize --path spec --suite-format 5 --target ir --scenarios contracts/messages/scenarios --out target/messages-suite.json, then cargo run --locked -p b10x-llm-conformance -- target/messages-suite.json target/messages-baseline.json target/messages-run local"
  },
- "measured": "2026-09-21; 2026-10-05 for the six mutations of wave 2026-10-05-w27",
+ "measured": "2026-09-21; 2026-10-05 for the six mutations of wave 2026-10-05-w27; 2026-10-05 for the five subscription-presentation mutations of wave 2026-10-05-w48",
  "mutations": [
   {
    "edits": [
@@ -1548,25 +1548,211 @@
    },
    "source": "crates/llm-messages/src/codec.rs",
    "source_before_sha256": "e6c1114ab512be3645179033a8fbb2af96676913d743edc52730401f04653c8f"
+  },
+  {
+   "edits": [
+    {
+     "after": "    \"You are Claude Code.\";",
+     "before": "    \"You are Claude Code, Anthropic's official CLI for Claude.\";"
+    }
+   ],
+   "failed_cases": [
+    "an_empty_instruction_under_a_subscription_opens_with_the_preamble_alone",
+    "a_subscription_turn_presents_the_token_as_a_bearer_with_the_oauth_beta_and_the_preamble",
+    "the_preamble_is_its_own_unmarked_block_before_the_marked_instruction",
+    "the_subscription_request_matches_its_pinned_fixture"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/a-subscription-request-without-an-instruction-opens-with-the-preamble-alone",
+    "llm.messages/authored/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble"
+   ],
+   "guards": [
+    "You are Claude Code, Anthropic's official CLI for Claude."
+   ],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "subscription-preamble-text-changed",
+   "restored": true,
+   "restored_sha256": "4d6fb0f000a7bbeb57d24591fc531f29424bdcca86f4512c951c6ebf41dc850a",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 2,
+    "passed": 684,
+    "skipped": 0,
+    "total": 686,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "4d6fb0f000a7bbeb57d24591fc531f29424bdcca86f4512c951c6ebf41dc850a"
+  },
+  {
+   "edits": [
+    {
+     "after": "    if binding.declaration().account.auth_kind != AuthKind::Anonymous {",
+     "before": "    if binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth {"
+    }
+   ],
+   "failed_cases": [
+    "a_bearer_turn_carries_neither_the_oauth_beta_nor_the_preamble",
+    "an_api_key_request_carries_no_preamble",
+    "a_tail_with_nothing_markable_carries_no_rolling_breakpoint",
+    "a_turn_presents_its_credential_at_request_time_and_streams_the_declared_subset",
+    "ingress_preserves_the_neutral_request_across_a_round_trip",
+    "ordered_roles_tools_and_thinking_project_onto_one_wire_request",
+    "the_pinned_fixture_is_the_api_key_request_plus_the_preamble_block",
+    "the_system_prompt_and_the_conversation_tail_carry_the_two_cache_breakpoints",
+    "thinking_survives_a_gateway_round_trip_only_through_the_callers_binding"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/a-bearer-request-carries-neither-the-oauth-beta-nor-the-client-preamble",
+    "llm.messages/authored/absent-output-bound-takes-the-binding-maximum",
+    "llm.messages/authored/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble",
+    "llm.messages/authored/a-tail-with-nothing-markable-carries-no-rolling-breakpoint",
+    "llm.messages/authored/cache-breakpoints-mark-the-system-prompt-and-the-conversation-tail",
+    "llm.messages/authored/request-preserves-roles-tools-and-thinking",
+    "llm.messages/authored/the-rolling-breakpoint-never-marks-replayed-thinking"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "subscription-preamble-sent-for-every-account",
+   "restored": true,
+   "restored_sha256": "4d6fb0f000a7bbeb57d24591fc531f29424bdcca86f4512c951c6ebf41dc850a",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 7,
+    "passed": 679,
+    "skipped": 0,
+    "total": 686,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "4d6fb0f000a7bbeb57d24591fc531f29424bdcca86f4512c951c6ebf41dc850a"
+  },
+  {
+   "edits": [
+    {
+     "after": "        system.push(json!({\"type\":\"text\",\"text\":SUBSCRIPTION_CLIENT_PREAMBLE,\"cache_control\":ephemeral()}));",
+     "before": "        system.push(json!({\"type\":\"text\",\"text\":SUBSCRIPTION_CLIENT_PREAMBLE}));"
+    }
+   ],
+   "failed_cases": [
+    "an_empty_instruction_under_a_subscription_opens_with_the_preamble_alone",
+    "a_subscription_turn_presents_the_token_as_a_bearer_with_the_oauth_beta_and_the_preamble",
+    "the_preamble_is_its_own_unmarked_block_before_the_marked_instruction",
+    "the_subscription_request_matches_its_pinned_fixture"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/a-subscription-request-without-an-instruction-opens-with-the-preamble-alone",
+    "llm.messages/authored/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "subscription-preamble-carries-the-breakpoint",
+   "restored": true,
+   "restored_sha256": "4d6fb0f000a7bbeb57d24591fc531f29424bdcca86f4512c951c6ebf41dc850a",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 2,
+    "passed": 684,
+    "skipped": 0,
+    "total": 686,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/codec.rs",
+   "source_before_sha256": "4d6fb0f000a7bbeb57d24591fc531f29424bdcca86f4512c951c6ebf41dc850a"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if self.binding.declaration().account.auth_kind != AuthKind::Anonymous {",
+     "before": "        if self.binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth {"
+    }
+   ],
+   "failed_cases": [
+    "a_bearer_turn_carries_neither_the_oauth_beta_nor_the_preamble"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/a-bearer-request-carries-neither-the-oauth-beta-nor-the-client-preamble",
+    "llm.messages/authored/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "oauth-beta-sent-for-every-account",
+   "restored": true,
+   "restored_sha256": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 2,
+    "passed": 684,
+    "skipped": 0,
+    "total": 686,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/client.rs",
+   "source_before_sha256": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a"
+  },
+  {
+   "edits": [
+    {
+     "after": "        if self.binding.declaration().account.auth_kind == AuthKind::Anonymous {",
+     "before": "        if self.binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth {"
+    }
+   ],
+   "failed_cases": [
+    "a_rotated_subscription_token_is_presented_on_the_next_turn",
+    "a_subscription_turn_presents_the_token_as_a_bearer_with_the_oauth_beta_and_the_preamble"
+   ],
+   "failed_scenarios": [
+    "llm.messages/authored/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble"
+   ],
+   "guards": [],
+   "killed_by": [
+    "scenario",
+    "case"
+   ],
+   "mutation": "oauth-beta-never-sent",
+   "restored": true,
+   "restored_sha256": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a",
+   "scenario_counts": {
+    "error": 0,
+    "failed": 1,
+    "passed": 685,
+    "skipped": 0,
+    "total": 686,
+    "unsupported": 0
+   },
+   "source": "crates/llm-messages/src/client.rs",
+   "source_before_sha256": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a"
   }
  ],
- "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not. Wave 2026-10-05-w27 (Harness parity M23, M36, M39): unknown stream events, deltas and blocks are now preserved with a warning, so unknown-stream-event-ignored was retired with the refusal it claimed; in-flight-content-block-bound-deleted was re-measured where the bound moved; and six mutations were run in a second pass against the tree named under `sources`, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- run <suite> <baseline> <out> <identity>`. Three of the claimed literals are fixed warnings rather than refusals: each mutation claiming one deletes the preservation that warning reports.",
+ "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not. Wave 2026-10-05-w27 (Harness parity M23, M36, M39): unknown stream events, deltas and blocks are now preserved with a warning, so unknown-stream-event-ignored was retired with the refusal it claimed; in-flight-content-block-bound-deleted was re-measured where the bound moved; and six mutations were run in a second pass against the tree named under `sources`, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- run <suite> <baseline> <out> <identity>`. Three of the claimed literals are fixed warnings rather than refusals: each mutation claiming one deletes the preservation that warning reports. Wave 2026-10-05-w48 (story:anthropic-access, Harness parity M5, M6): five mutations of the subscription presentation were run in a third pass with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- check`; the subscription client preamble is a fixed literal the route requires rather than a refusal, and the mutation claiming it changes its text.",
  "sources": {
   "crates/llm-http/src/transport.rs": "2d488d03ef7c914c2c75dc41e32fc217701dbf73f07623013ca87e67408d48be",
-  "crates/llm-messages/src/client.rs": "ea09c9f0686ee0e8f628e2d4f201a265d45e4cfe8f5098cd888f5d1f0e93bcec",
-  "crates/llm-messages/src/codec.rs": "e6c1114ab512be3645179033a8fbb2af96676913d743edc52730401f04653c8f",
+  "crates/llm-messages/src/client.rs": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a",
+  "crates/llm-messages/src/codec.rs": "4d6fb0f000a7bbeb57d24591fc531f29424bdcca86f4512c951c6ebf41dc850a",
   "crates/llm-messages/src/decode.rs": "e9882b5a36b8c28de68fc226b98e523e678347169098468a20a0a0fb6ca5eeb0",
   "crates/llm-messages/src/lib.rs": "3d487342c9c0b5e289f756baf04558666cf6c0f11c118b7fc7a34adcc32098e3",
   "crates/llm-messages/src/usage.rs": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
  },
  "summary": {
-  "diagnostics_claimed_by_a_mutation": 26,
-  "diagnostics_in_source": 91,
+  "diagnostics_claimed_by_a_mutation": 27,
+  "diagnostics_in_source": 92,
   "diagnostics_nothing_is_aimed_at": 65,
   "killed_by_a_case_only": 13,
   "killed_by_a_scenario_only": 4,
-  "killed_by_both_lanes": 29,
-  "mutations": 46,
+  "killed_by_both_lanes": 34,
+  "mutations": 51,
   "survivors": 0
  },
  "unaimed": [

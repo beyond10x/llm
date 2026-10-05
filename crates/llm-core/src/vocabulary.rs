@@ -15,6 +15,9 @@ pub enum AuthKind {
     Anonymous,
     Bearer,
     ApiKey,
+    /// A caller-supplied subscription token. Sent as a bearer, but only over Messages, where the
+    /// route adds its own subscription presentation; never billed as metered use.
+    SubscriptionOauth,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

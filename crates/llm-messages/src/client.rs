@@ -4,8 +4,8 @@ use http::{
     header::{ACCEPT, CONTENT_TYPE},
 };
 use llm_core::{
-    BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Model, Protocol, Provenance,
-    StreamSink, TurnOutcome, TurnRequest,
+    AuthKind, BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Model, Protocol,
+    Provenance, StreamSink, TurnOutcome, TurnRequest,
 };
 use llm_credentials::SecretResolver;
 use llm_http::{Framing, HttpClient};
@@ -23,6 +23,11 @@ use std::{
 pub const ANTHROPIC_VERSION: &str = "2023-06-01";
 /// Names the API version header.
 pub const VERSION_HEADER: &str = "anthropic-version";
+/// Names the beta-feature header.
+pub const BETA_HEADER: &str = "anthropic-beta";
+/// The beta this route requires before it accepts a subscription token as a bearer. Sent only
+/// for a `subscription-oauth` account; without it the route refuses the token as unauthenticated.
+pub const OAUTH_BETA: &str = "oauth-2025-04-20";
 
 /// One bound Messages endpoint.
 ///
@@ -100,6 +105,12 @@ impl MessagesClient {
             version_header(),
             HeaderValue::from_static(ANTHROPIC_VERSION),
         );
+        if self.binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth {
+            headers.insert(
+                HeaderName::from_static(BETA_HEADER),
+                HeaderValue::from_static(OAUTH_BETA),
+            );
+        }
         self.stream(headers, body, request, sink, cancel, deadline)
             .await
     }

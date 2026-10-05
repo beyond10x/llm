@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble
+summary: under an API-key account the key travels in its own header, with no OAuth beta header and no client preamble; the instruction is the one marked system block
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.messages.Present
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+    auth_kind: api-key
+    billing_kind: metered
+    turns: 1
+  outcome: observed
+assert:
+- view: llm.messages.LastPresentation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastPresentation
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    request_headers:
+      - "accept: text/event-stream"
+      - "anthropic-version: 2023-06-01"
+      - "content-type: application/json"
+      - "x-api-key: <credential>"
+    wire_request: "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true,\"system\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Stay terse\",\"type\":\"text\"}]}"
+    presented_credentials:
+      - 1

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PresentationObservation",
+  "x-ess-name": "llm.messages.PresentationObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "resolved_references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requests": {
+      "type": "integer"
+    },
+    "request_headers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "wire_request": {
+      "type": "string"
+    },
+    "presented_credentials": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.messages.PresentationObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "resolved_references",
+    "requests",
+    "request_headers",
+    "presented_credentials",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "f39883cd430129fe109619d74c2a771387b09afa5c7d8b44701d48bcc27a3f8d",
+    "contract_digest": "slice-sha256/2:461e7aeaa2cc42867e633b9c0b0151e852447bc0637d0fda589febc876337214",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.messages.PresentationObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.messages.PresentationObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

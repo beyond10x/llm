@@ -185,6 +185,9 @@ async fn protocol_provider_auth_and_billing_are_independent_dimensions() {
                         assert_eq!(headers["x-lab-key"], "example-credential");
                         assert_eq!(headers.len(), 1);
                     }
+                    // Deliberately not independent: tied to Messages and subscription billing,
+                    // and covered by tests/subscription_oauth.rs.
+                    AuthKind::SubscriptionOauth => unreachable!("not iterated here"),
                 }
                 assert_eq!(
                     resolver.calls.load(Ordering::SeqCst),

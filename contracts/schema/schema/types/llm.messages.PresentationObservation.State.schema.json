@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.messages.PresentationObservation.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "f39883cd430129fe109619d74c2a771387b09afa5c7d8b44701d48bcc27a3f8d",
+    "contract_digest": "slice-sha256/2:84afc837f94f19805c80908cd77536ef93ff7e5455feaa973073a60423728e48",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.messages.PresentationObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.messages.PresentationObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

@@ -1,0 +1,35 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble
+summary: under a subscription OAuth account the client sends the token as a bearer with the OAuth beta header, and system opens with the client preamble as its own unmarked block before the marked instruction
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.messages.Present
+  input:
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512}}"
+    auth_kind: subscription-oauth
+    billing_kind: subscription
+    turns: 1
+  outcome: observed
+assert:
+- view: llm.messages.LastPresentation
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastPresentation
+  contains:
+    accepted: true
+    error_code: null
+    error_message: null
+    resolved_references:
+      - messages-credential
+    requests: 1
+    request_headers:
+      - "accept: text/event-stream"
+      - "anthropic-beta: oauth-2025-04-20"
+      - "anthropic-version: 2023-06-01"
+      - "authorization: Bearer <credential>"
+      - "content-type: application/json"
+    wire_request: "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true,\"system\":[{\"text\":\"You are Claude Code, Anthropic's official CLI for Claude.\",\"type\":\"text\"},{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Stay terse\",\"type\":\"text\"}]}"
+    presented_credentials:
+      - 1
