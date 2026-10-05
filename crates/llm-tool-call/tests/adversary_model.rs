@@ -16,6 +16,7 @@ use llm_core::{
 use serde_json::{Value, json};
 use std::{
     ffi::OsStr,
+    fmt::Write as _,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -153,16 +154,15 @@ fn serve(listener: TcpListener, reply: Vec<u8>) -> JoinHandle<String> {
 
 /// Server-sent events, one per JSON object, each named by its `type`.
 fn sse(events: &[Value]) -> String {
-    events
-        .iter()
-        .map(|event| {
-            format!(
-                "event: {}\ndata: {}\n\n",
-                event["type"].as_str().expect("a typed event"),
-                event
-            )
-        })
-        .collect()
+    events.iter().fold(String::new(), |mut stream, event| {
+        let _ = write!(
+            stream,
+            "event: {}\ndata: {}\n\n",
+            event["type"].as_str().expect("a typed event"),
+            event
+        );
+        stream
+    })
 }
 
 fn function_call(id: &str, call_id: &str, arguments: &str) -> Value {
@@ -201,7 +201,7 @@ impl StreamSink for Discard {
 /// The request `call_tool` itself would send to a model named `model`.
 fn forced_request(model: &str) -> TurnRequest {
     let mut request = TurnRequest::new(model, items());
-    request.instructions = INSTRUCTIONS.to_owned();
+    INSTRUCTIONS.clone_into(&mut request.instructions);
     request.tools = vec![tool()];
     request.tool_choice = ToolChoice::Named(ToolName::new(TOOL).expect("tool name"));
     request
@@ -322,9 +322,10 @@ async fn every_unusable_login_is_refused_before_any_request_without_its_material
     };
     let mut oversized = format!("{{\"pad\":\"{SECRET}");
     oversized.push_str(&"x".repeat(1024 * 1024));
-    oversized.push_str(&format!(
+    let _ = write!(
+        oversized,
         "\",\"tokens\":{{\"access_token\":\"{VALID_JWT}\"}}}}"
-    ));
+    );
     let unusable: Vec<(&str, PathBuf)> = vec![
         ("a directory at the path", directory),
         ("CODEX_HOME naming a file", parent_is_a_file),
