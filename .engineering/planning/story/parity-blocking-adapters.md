@@ -2,12 +2,25 @@
 format: aep.planning-md/3
 id: story:parity-blocking-adapters
 kind: story
-status: draft
+status: active
 title: llm offers blocking Responses and Messages turn adapters for a synchronous loop
 relations:
 - decomposes: epic:serving-split
 - informed_by: story:harness-parity
-revision: 1
+- serves: vision:portable-model-inference
+scope:
+- confidence: inferred
+  path: Cargo.lock
+- confidence: inferred
+  path: Cargo.toml
+- confidence: inferred
+  path: crates/llm-blocking
+- confidence: inferred
+  path: docs/harness-parity.md
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-05T08:05:27Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-10-05T08:05:27Z", actor: "human:timo", revision: 3}
 ---
 ## Outcome
 
