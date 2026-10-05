@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:gateway-translation
 kind: story
-status: draft
+status: archived
 title: The gateway translates only the supported protocol subset
 relations:
 - decomposes: epic:gateway
@@ -16,7 +16,9 @@ scope:
   path: contracts/gateway
 - confidence: inferred
   path: crates/llm-gateway
-revision: 3
+revision: 5
+transitions:
+- {from: "draft", to: "archived", at: "2026-10-05T10:17:40Z", actor: "human:timo", revision: 5}
 ---
 ## Context
 
@@ -50,3 +52,9 @@ that read the request reinstates the laundering `story:unattributed-opaque-state
 minted under an earlier binding revision becomes sendable to the current one. The conformance
 adapter does exactly that for its round-trip scenario (`checks/conformance/src/responses.rs:186-192`).
 This story must decide which binding a gateway may bind carried state to, and refuse the rest.
+
+## Moved
+
+Moved to `beyond10x/llm-gateway` as `story:gateway-translation` on 2026-10-05 by story:serving-extraction, with
+the crates it describes (llm-gateway `be722b4`). Archived here; the work continues there. Its
+evidence records stay in this store.

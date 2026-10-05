@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:hosting-contract
 kind: story
-status: implemented
+status: archived
 title: Hosting has explicit owned-resource lifecycle semantics
 relations:
 - decomposes: epic:hosting
@@ -28,11 +28,12 @@ scope:
   path: spec/domains/catalog.yaml
 - confidence: cited
   path: spec/domains/hosting.yaml
-revision: 9
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-09-19T23:42:38Z", actor: "human:timo", revision: 6, imported: true}
 - {from: "proposed", to: "active", at: "2026-09-19T23:42:38Z", actor: "human:timo", revision: 7, imported: true}
 - {from: "active", to: "implemented", at: "2026-09-21T08:45:39Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"ess_conformance_coverage_v1":1}}, imported: true}
+- {from: "implemented", to: "archived", at: "2026-10-05T10:17:38Z", actor: "human:timo", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Context
 
@@ -73,3 +74,9 @@ Derived 2026-09-20 by `story-scoper`. Every bullet is **cited** (read from the a
 Confidence: **high** for the primary surface and the specification files — the artifact names them and `spec/domains/catalog.yaml:196-218` and `docs/design.md:82-83` are the exact sites. **Medium** for the conformance wiring and the document set, which are read off the established pattern (`183a8a1`, `15a6167`, `d36e4e1`, `21be009`) rather than out of this story.
 
 The dominant surface is `crates/llm-provision`, which nothing else in the candidate set touches. The risk is not there: it is the four files every domain-adding story must edit in common — `spec/system.yaml`, `checks/conformance/src/main.rs`, `checks/conformance/src/target.rs`, `checks/conformance/Cargo.toml` — plus `docs/design.md`, whose "Gateway and hosting" section is shared with the gateway work. Shared specification and workspace manifests are integration surfaces: coordinate changes through their owning story; do not infer parallel safety from different crate names.
+
+## Moved
+
+Moved to `beyond10x/llm-gateway` as `story:hosting-contract` on 2026-10-05 by story:serving-extraction, with
+the crates it describes (llm-gateway `be722b4`). Archived here; the work continues there. Its
+evidence records stay in this store.

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:runpod-hosting
 kind: story
-status: implemented
+status: archived
 title: Runpod provides recoverable vLLM deployments
 relations:
 - decomposes: epic:hosting
@@ -25,11 +25,12 @@ scope:
   path: docs/verification/runpod-falsification.json
 - confidence: cited
   path: docs/verification/runpod.md
-revision: 10
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-09-26T15:24:23Z", actor: "human:timo", revision: 6, imported: true}
 - {from: "proposed", to: "active", at: "2026-09-26T15:24:24Z", actor: "human:timo", revision: 7, imported: true}
 - {from: "active", to: "implemented", at: "2026-09-26T16:29:10Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":15}}, imported: true}
+- {from: "implemented", to: "archived", at: "2026-10-05T10:17:38Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"test_result":1,"review_outcome":15}}}
 ---
 ## Context
 
@@ -53,3 +54,9 @@ Retain commands and exact fixture/contract identities demonstrating the acceptan
 - inferred: `contracts/runpod` — planned implementation surface.
 
 Shared specification and workspace manifests are integration surfaces: coordinate changes through their owning story; do not infer parallel safety from different crate names.
+
+## Moved
+
+Moved to `beyond10x/llm-gateway` as `story:runpod-hosting` on 2026-10-05 by story:serving-extraction, with
+the crates it describes (llm-gateway `be722b4`). Archived here; the work continues there. Its
+evidence records stay in this store.

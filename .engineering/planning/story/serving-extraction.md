@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:serving-extraction
 kind: story
-status: active
+status: implemented
 title: The gateway, hosting and provisioning crates live in llm-gateway, not llm
 relations:
 - decomposes: epic:serving-split
@@ -38,10 +38,11 @@ scope:
   path: docs
 - confidence: inferred
   path: spec
-revision: 19
+revision: 20
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T09:59:35Z", actor: "human:timo", revision: 3}
 - {from: "proposed", to: "active", at: "2026-10-05T09:59:35Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-05T10:17:49Z", actor: "human:timo", revision: 20, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 

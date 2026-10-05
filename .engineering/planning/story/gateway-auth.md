@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:gateway-auth
 kind: story
-status: implemented
+status: archived
 title: The gateway admits one authenticated owner
 relations:
 - decomposes: epic:gateway
@@ -15,11 +15,12 @@ scope:
   path: docs/gateway.md
 - confidence: inferred
   path: docs/verification/gateway.md
-revision: 9
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-09-19T23:42:37Z", actor: "human:timo", revision: 6, imported: true}
 - {from: "proposed", to: "active", at: "2026-09-19T23:42:38Z", actor: "human:timo", revision: 7, imported: true}
 - {from: "active", to: "implemented", at: "2026-09-21T08:45:39Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"ess_conformance_coverage_v1":1}}, imported: true}
+- {from: "implemented", to: "archived", at: "2026-10-05T10:17:39Z", actor: "human:timo", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Context
 
@@ -68,3 +69,9 @@ Shared with other wave-1 candidates — these are the lines this section exists 
 - inferred: `spec/domains/catalog.yaml` — **avoidable, and should be avoided.** Route inspection reuses the existing `llm.catalog` entities unchanged, so this story should need no edit; it is listed only because `story:hosting-contract` claims this exact file and a stray gateway record added here is a silent conflict. Keep any new gateway record in `spec/domains/gateway.yaml`.
 
 Not in scope, checked and rejected: `crates/llm-routing` and `crates/llm-credentials` are consumed, not modified — inspection reads an existing `Catalog` and the credential *sources* are injected, while the inbound owner *verifier* is new code in `llm-gateway`. `checks/conformance/src/gate.rs` is domain-agnostic: it walks `spec/`, `contracts/` and hashes `crates`/`checks`, so a new domain needs no edit there.
+
+## Moved
+
+Moved to `beyond10x/llm-gateway` as `story:gateway-auth` on 2026-10-05 by story:serving-extraction, with
+the crates it describes (llm-gateway `be722b4`). Archived here; the work continues there. Its
+evidence records stay in this store.

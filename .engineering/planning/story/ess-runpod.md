@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ess-runpod
 kind: story
-status: implemented
+status: archived
 title: The Runpod adapter is specified in ESS
 relations:
 - decomposes: epic:contracts
@@ -14,11 +14,12 @@ scope:
   path: contracts/runpod/scenarios
 - confidence: cited
   path: spec/domains/runpod.yaml
-revision: 5
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-09-27T12:39:24Z", actor: "human:timo", revision: 3, imported: true}
 - {from: "proposed", to: "active", at: "2026-09-27T12:39:29Z", actor: "human:timo", revision: 4, imported: true}
 - {from: "active", to: "implemented", at: "2026-09-27T14:23:04Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}, imported: true}
+- {from: "implemented", to: "archived", at: "2026-10-05T10:17:39Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Context
 
@@ -43,3 +44,9 @@ Authored `ess-scenario/1` documents under the domain's scenario directory run th
 `checks/conformance` against the real crate, three runs with identical counts and zero failed,
 error, unsupported or skipped; every guarded behaviour has a falsification record. The whole
 repository `conformance -- check` stays green. No paid provider call in the default gate.
+
+## Moved
+
+Moved to `beyond10x/llm-gateway` as `story:ess-runpod` on 2026-10-05 by story:serving-extraction, with
+the crates it describes (llm-gateway `be722b4`). Archived here; the work continues there. Its
+evidence records stay in this store.

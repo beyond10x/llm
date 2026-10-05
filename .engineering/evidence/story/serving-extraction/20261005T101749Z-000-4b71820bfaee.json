@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T10:17:49Z",
+  "actor": "human:timo",
+  "artifact": "story:serving-extraction",
+  "kind": "story",
+  "revision": 19,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "w38 gate: llm fmt 0, clippy +1.98.0 0, test 600 passed, llm-docs --check 0, ess validate 0, conformance 664/664 x3, aep validate 0, site build 0; llm-gateway fmt 0, clippy 0, test 202 passed, ess validate 0, conformance 159/159 x3; wave tree equals unit tree (main unchanged at f04701bd); llm-gateway main be722b4",
+    "reference": "wave/2026-10-05-w38"
+  }
+}

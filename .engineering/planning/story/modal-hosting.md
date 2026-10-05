@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:modal-hosting
 kind: story
-status: draft
+status: archived
 title: Modal supplies the hosting contract without simulated capabilities
 relations:
 - decomposes: epic:hosting
@@ -13,7 +13,9 @@ scope:
   path: contracts/modal
 - confidence: inferred
   path: crates/llm-modal
-revision: 2
+revision: 4
+transitions:
+- {from: "draft", to: "archived", at: "2026-10-05T10:17:39Z", actor: "human:timo", revision: 4}
 ---
 ## Context
 
@@ -37,3 +39,9 @@ Retain commands and exact fixture/contract identities demonstrating the acceptan
 - inferred: `contracts/modal` — planned implementation surface.
 
 Shared specification and workspace manifests are integration surfaces: coordinate changes through their owning story; do not infer parallel safety from different crate names.
+
+## Moved
+
+Moved to `beyond10x/llm-gateway` as `story:modal-hosting` on 2026-10-05 by story:serving-extraction, with
+the crates it describes (llm-gateway `be722b4`). Archived here; the work continues there. Its
+evidence records stay in this store.
