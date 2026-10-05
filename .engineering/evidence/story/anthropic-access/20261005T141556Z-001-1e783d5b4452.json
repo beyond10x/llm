@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T14:15:56Z",
+  "actor": "human:timo",
+  "artifact": "story:anthropic-access",
+  "kind": "story",
+  "revision": 16,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "fixtures only: 24 red in phase 1 (no subscription-oauth kind); 8 guard mutants and 5 catalog mutants killed; adversary pass 1 found no red case, three findings fixed (docs, shared secret reference refused, mixed-billing fallback refused), one recorded (llm-gateway must not serve one subscription to many callers)",
+    "reference": "~/.cache/ga-wave-2026-10-05-w48/llm-anthropic-access/scratch"
+  }
+}

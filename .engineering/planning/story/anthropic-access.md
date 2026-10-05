@@ -12,20 +12,32 @@ relations:
 - serves: vision:portable-model-inference
 scope:
 - confidence: inferred
+  path: checks/conformance
+- confidence: inferred
   path: contracts/anthropic
 - confidence: inferred
   path: contracts/messages
+- confidence: inferred
+  path: crates/llm-core
 - confidence: inferred
   path: crates/llm-messages
 - confidence: inferred
   path: crates/llm-providers
 - confidence: inferred
+  path: crates/llm-routing
+- confidence: inferred
   path: docs/harness-parity.md
+- confidence: inferred
+  path: docs/implementation-status.md
+- confidence: inferred
+  path: docs/messages.md
+- confidence: inferred
+  path: docs/verification
 - confidence: inferred
   path: spec
 - confidence: inferred
   path: website/docs
-revision: 10
+revision: 16
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T13:03:52Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-10-05T13:03:52Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":1}}}

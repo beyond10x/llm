@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T14:15:57Z",
+  "actor": "human:timo",
+  "artifact": "story:anthropic-access",
+  "kind": "story",
+  "revision": 16,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "unit gate: fmt, clippy +1.98.0, cargo test --workspace 664 passed 0 failed, llm-docs --check, ess validate, conformance 691/691 x3, site build all exit 0",
+    "reference": "wave/2026-10-05-w48"
+  }
+}

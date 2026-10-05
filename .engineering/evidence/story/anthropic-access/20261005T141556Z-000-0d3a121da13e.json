@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-05T14:15:56Z",
+  "actor": "human:timo",
+  "artifact": "story:anthropic-access",
+  "kind": "story",
+  "revision": 16,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:adversary-w48-llm-anthropic-access-pass-1",
+    "review": "review-result:adversary-w48-llm-anthropic-access-pass-1",
+    "outcome": "fixed"
+  }
+}
