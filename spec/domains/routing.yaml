@@ -15,7 +15,8 @@ domain: llm.routing
 # never retried, whatever the class says); no event of that attempt reached the caller's sink;
 # the caller has not cancelled; the wait would end before the caller's deadline; and the
 # caller's limit decision admits the attempt (it is consulted before every attempt, retries
-# included). An attempt that showed any output is final; the run halts `visible-output`.
+# included). A wait that would end at or after the deadline leaves the target spent: no
+# warning, no wait, and the run falls back if a declared target can still start. An attempt that showed any output is final; the run halts `visible-output`.
 #
 # Back-off: the wait before attempt n+1 is `backoff_base * 2^min(n, max_doublings)`. A
 # server-requested delay (`retry_after_ms`) is honoured up to `max_server_delay` and never
@@ -133,6 +134,7 @@ commands:
       # each defaulting to the library's); `cancel_on_pause` cancels the run when the first
       # wait begins, through a pause port that then never ends by itself; `within_ms` asks
       # whether the run ended within that many milliseconds.
+      # `deadline_in_ms` sets the caller's deadline that many milliseconds after the run starts.
       - {name: program_json, type: String}
     outcomes:
       - name: observed

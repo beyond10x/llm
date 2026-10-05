@@ -268,9 +268,10 @@ fn the_default_policy_is_four_attempts_pausing_one_two_four_then_eight_seconds()
     assert_eq!(FallbackPolicy::default().retry, policy);
     assert_eq!(
         FallbackPolicy::disabled().retry,
-        policy,
-        "disabling fallback keeps retry"
+        RetryPolicy::disabled(),
+        "a disabled policy is one attempt in total"
     );
+    assert_eq!(RetryPolicy::disabled().max_attempts, 1);
     let waits: Vec<_> = [1, 2, 3, 4, 5, 99].map(|n| policy.backoff(n)).into();
     assert_eq!(
         waits,
@@ -603,7 +604,8 @@ fn admission_is_consulted_before_every_retry() {
     assert_eq!(admitted, 2);
 }
 
-/// No wait starts that would end at or after the caller's deadline.
+/// No wait starts that would end at or after the caller's deadline: the target counts as spent.
+/// With no other target the run is exhausted, and the failure goes up final.
 #[test]
 fn a_back_off_that_would_pass_the_deadline_is_not_waited() {
     let catalog = catalog(false);
@@ -618,9 +620,54 @@ fn a_back_off_that_would_pass_the_deadline_is_not_waited() {
         ..FallbackPolicy::default()
     };
     let outcome = run(&catalog, policy, &models);
-    assert_eq!(outcome.run.halt, Halt::Deadline);
+    assert_eq!(outcome.run.halt, Halt::Exhausted);
     assert_eq!(attempted(&outcome.run), ["coding-primary"]);
     assert_eq!(outcome.waits, [] as [Duration; 0]);
+    assert_eq!(outcome.warnings, [] as [(String, String); 0]);
+    let error = outcome.run.result.unwrap_err();
+    assert!(!error.retriable);
+    assert_eq!(error.message, "scripted failure (after 1 attempt)");
+}
+
+/// The same rule with a declared alternative: the run falls back at once instead of waiting.
+#[test]
+fn a_back_off_that_would_pass_the_deadline_falls_back() {
+    let catalog = catalog(true);
+    let models = Fleet::new(
+        &catalog,
+        Some(failure(ErrorCode::Transport, Dispatch::Unknown)),
+        None,
+        0,
+    );
+    let policy = FallbackPolicy {
+        deadline: Some(Instant::now() + Duration::from_millis(200)),
+        ..FallbackPolicy::default()
+    };
+    let outcome = run(&catalog, policy, &models);
+    assert_eq!(outcome.run.halt, Halt::Succeeded);
+    assert_eq!(
+        attempted(&outcome.run),
+        ["coding-primary", "coding-secondary"]
+    );
+    assert_eq!(outcome.waits, [] as [Duration; 0]);
+}
+
+/// A disabled policy is one attempt in total: no same-target retry and no fallback, even for a
+/// retriable class.
+#[test]
+fn a_disabled_policy_makes_exactly_one_attempt() {
+    let catalog = catalog(true);
+    let models = Fleet::new(
+        &catalog,
+        Some(failure(ErrorCode::RateLimited, Dispatch::Rejected)),
+        None,
+        0,
+    );
+    let outcome = run(&catalog, FallbackPolicy::disabled(), &models);
+    assert_eq!(attempted(&outcome.run), ["coding-primary"]);
+    assert_eq!(outcome.run.halt, Halt::AttemptBound);
+    assert_eq!(outcome.waits, [] as [Duration; 0]);
+    assert_eq!(models.calls("remote-large"), 0);
 }
 
 /// The retry bound is one through sixteen; anything else is refused before any attempt.

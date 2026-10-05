@@ -92,7 +92,18 @@ classes, and it never assumes the attempt was free. Each attempt is recorded wit
 evidence, so a possibly billed attempt stays `unknown` and its spend is recorded, and the caller's
 limit decision is consulted before every attempt, retries included. A failure without the class
 keeps the earlier rule: it may fall back only with `not-sent` or `rejected` dispatch, and is
-never attempted again on the same target.
+never attempted again on the same target. A wait that would end at or after the caller's
+deadline is not taken: the target counts as spent and the run falls back if a declared target
+can still start. A caller that has cancelled is not told a retry is coming and no wait is asked
+for. `FallbackPolicy::disabled()` is one attempt in total, with neither fallback nor a
+same-target retry.
+
+"Visible" is what reached the caller's sink, so a client that reads its stream before handing
+events over must decide the class itself: the Responses client marks a cut stream final once the
+provider produced any output item or delta, whether or not the caller has seen it, and keeps it
+retriable only when nothing but lifecycle events (`response.created`, `response.in_progress`,
+`response.queued`) arrived. The Chat Completions and Messages clients hand each event over as
+it is decoded, so routing counts their output directly.
 
 ## Pricing
 

@@ -116,12 +116,14 @@ impl Default for FallbackPolicy {
 }
 
 impl FallbackPolicy {
-    /// Attempt only the first compatible target. Same-target retry stays on.
+    /// One attempt in total: the first compatible target only, with neither fallback nor a
+    /// same-target retry. To keep retry while disabling fallback, set `max_attempts: 1` on
+    /// [`FallbackPolicy::default`].
     pub const fn disabled() -> Self {
         Self {
             max_attempts: 1,
             deadline: None,
-            retry: RetryPolicy::DEFAULT,
+            retry: RetryPolicy::disabled(),
         }
     }
 
@@ -332,7 +334,6 @@ impl Catalog {
             }
             candidates.push((selection, model));
         }
-        let retry = policy.retry;
         let mut attempts = Vec::new();
         let mut last = Err(no_compatible_target(&explanation));
         let mut last_tries = 0;
@@ -358,13 +359,16 @@ impl Catalog {
                 let Err(error) = &result else {
                     return Ok(finish(explanation, attempts, Halt::Succeeded, result));
                 };
-                if !error.may_retry() || tries >= retry.max_attempts {
+                // No retry, or a wait that would pass the deadline: this target is spent, and the
+                // next one starts only if `may_start` still admits it.
+                let Some(wait) = retry_wait(&policy, tries, error) else {
                     last = result;
                     last_tries = tries;
                     break;
-                }
+                };
                 let waited = wait_to_retry(
                     &policy,
+                    wait,
                     tries,
                     error,
                     selection.target.id.as_str(),
@@ -425,25 +429,39 @@ struct Waiting<'w> {
     pause: Pause<'w>,
 }
 
-/// Waits before attempt `tries + 1` on `target` after `error`, stating the retry first. Refuses
-/// with the run's halt when the wait would pass the caller's deadline, the sink refuses the
-/// warning, or the caller cancels during the wait.
+/// The wait before another attempt on the same target, or `None` when there is none: the class
+/// may not be retried, the target's attempts are spent, or the wait would end at or after the
+/// caller's deadline. `None` leaves the target spent; the run may still fall back.
+fn retry_wait(policy: &FallbackPolicy, tries: u32, error: &Error) -> Option<Duration> {
+    if !error.may_retry() || tries >= policy.retry.max_attempts {
+        return None;
+    }
+    let wait = policy
+        .retry
+        .delay(tries, error.retry_after_ms.map(Duration::from_millis));
+    let passes_deadline = policy.deadline.is_some_and(|deadline| {
+        Instant::now()
+            .checked_add(wait)
+            .is_none_or(|end| end >= deadline)
+    });
+    (!passes_deadline).then_some(wait)
+}
+
+/// Waits `wait` before attempt `tries + 1` on `target` after `error`, stating the retry first.
+/// Refuses with the run's halt when the caller has cancelled, the sink refuses the warning, or
+/// the caller cancels during the wait.
 async fn wait_to_retry(
     policy: &FallbackPolicy,
+    wait: Duration,
     tries: u32,
     error: &Error,
     target: &str,
     ports: Waiting<'_>,
 ) -> Result<(), (Halt, Error)> {
-    let wait = policy
-        .retry
-        .delay(tries, error.retry_after_ms.map(Duration::from_millis));
-    if policy.deadline.is_some_and(|deadline| {
-        Instant::now()
-            .checked_add(wait)
-            .is_none_or(|end| end >= deadline)
-    }) {
-        return Err((Halt::Deadline, deadline_reached()));
+    // Harness decides another attempt only while the caller has not cancelled: a cancelled run
+    // is not told a retry is coming and asks for no wait.
+    if ports.cancel.is_cancelled() {
+        return Err((Halt::Cancelled, Error::cancelled()));
     }
     let warning = StreamEvent::Warning {
         code: RETRY_WARNING.to_owned(),

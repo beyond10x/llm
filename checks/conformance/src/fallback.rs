@@ -70,6 +70,9 @@ struct Program {
     max_attempts: Option<usize>,
     #[serde(default)]
     deadline_passed: bool,
+    /// A deadline this many milliseconds after the run starts.
+    #[serde(default)]
+    deadline_in_ms: Option<u64>,
     #[serde(default)]
     retry: RetryInput,
     #[serde(default)]
@@ -286,7 +289,11 @@ fn execute(input: &FallbackInput, facts: &mut Value) -> Result<(), Error> {
         max_attempts: program
             .max_attempts
             .unwrap_or(FallbackPolicy::default().max_attempts),
-        deadline: program.deadline_passed.then(Instant::now),
+        deadline: program.deadline_passed.then(Instant::now).or_else(|| {
+            program
+                .deadline_in_ms
+                .map(|ms| Instant::now() + Duration::from_millis(ms))
+        }),
         retry,
     };
     let refused = program.refuse_admission;
