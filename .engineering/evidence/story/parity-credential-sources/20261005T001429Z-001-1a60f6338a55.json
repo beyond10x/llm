@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T00:14:29Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-credential-sources",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base 83c5605a: line_terminator red, credentials tests do not compile (no environment/pointer/read), conformance 4 failed 12 unsupported; treatment aaefec5: line_terminator, environment, json_pointer, refusal_names_reference, credential_fallback green; conformance 718/718",
+    "reference": "phase1-red.log vs g3-*.log"
+  }
+}

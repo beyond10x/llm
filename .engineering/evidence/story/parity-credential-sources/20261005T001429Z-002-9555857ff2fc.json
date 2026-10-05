@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T00:14:29Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-credential-sources",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "fmt 0; clippy -p credentials/providers/conformance 0 and llm-routing own targets 0 (workspace clippy on rustc 1.99 fails only in pre-existing files, story:lints-rust-1-99); cargo test --workspace --no-fail-fast 618 passed 0 failed; credentials all-features 50; no-default-features check 0; ess validate 0; conformance 718/718. Integration tree a0586c9 equals the unit tree outside .engineering",
+    "reference": "wave/2026-10-05-w22 a0586c9"
+  }
+}

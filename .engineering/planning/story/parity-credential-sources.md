@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:parity-credential-sources
 kind: story
-status: active
+status: implemented
 title: llm-credentials reads every token source Harness reads
 relations:
 - decomposes: epic:serving-split
@@ -17,10 +17,11 @@ scope:
   path: docs/harness-parity.md
 - confidence: inferred
   path: spec
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-04T23:15:32Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-04T23:15:32Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T00:14:29Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Outcome
 
