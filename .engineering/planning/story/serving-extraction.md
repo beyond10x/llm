@@ -2,11 +2,46 @@
 format: aep.planning-md/3
 id: story:serving-extraction
 kind: story
-status: draft
+status: active
 title: The gateway, hosting and provisioning crates live in llm-gateway, not llm
 relations:
 - decomposes: epic:serving-split
-revision: 2
+- serves: vision:portable-model-inference
+scope:
+- confidence: inferred
+  path: .github/workflows
+- confidence: inferred
+  path: AGENTS.md
+- confidence: inferred
+  path: CHANGELOG.md
+- confidence: inferred
+  path: Cargo.lock
+- confidence: inferred
+  path: Cargo.toml
+- confidence: inferred
+  path: README.md
+- confidence: inferred
+  path: Taskfile.yml
+- confidence: inferred
+  path: checks/conformance
+- confidence: inferred
+  path: contracts
+- confidence: inferred
+  path: crates/llm-gateway
+- confidence: inferred
+  path: crates/llm-modal
+- confidence: inferred
+  path: crates/llm-provision
+- confidence: inferred
+  path: crates/llm-runpod
+- confidence: inferred
+  path: docs
+- confidence: inferred
+  path: spec
+revision: 19
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-05T09:59:35Z", actor: "human:timo", revision: 3}
+- {from: "proposed", to: "active", at: "2026-10-05T09:59:35Z", actor: "human:timo", revision: 4}
 ---
 ## Outcome
 
