@@ -70,6 +70,9 @@ pub struct StreamDecoding {
 ///
 /// Terminal truth comes from a `response.completed` or `response.incomplete` object and from
 /// nothing else: not from end of stream, not from a sentinel, not from the last delta seen.
+///
+/// This is the incremental decoder the client drives payload by payload, fed the whole
+/// sequence at once: the events and the result are the ones a live caller would get.
 pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
     let mut decoder = Decoder::new(binding);
     for payload in payloads {
@@ -83,9 +86,18 @@ pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
     decoder.finish()
 }
 
-struct Decoder<'a> {
+/// One stream decoded payload by payload.
+///
+/// [`Decoder::apply`] reads one payload and [`Decoder::take_events`] hands over the events it
+/// produced, so a caller can be shown each one before the next payload is read. A refusal from
+/// `apply` ends the stream; [`Decoder::finish`] decides the turn from what was read.
+pub(crate) struct Decoder<'a> {
     binding: &'a Binding,
     events: Vec<StreamEvent>,
+    /// Text the caller was shown through `response.output_text.delta`, one entry per output item
+    /// the deltas named, in order of first delta. Kept in the turn when its items carry no
+    /// assistant text (row R36).
+    shown: Vec<ShownText>,
     /// `item_id` -> `call_id`, so an arguments delta can name the call a reader is watching.
     calls: BTreeMap<String, CallId>,
     /// Every call the caller was told about, in announcement order. The outcome must carry each
@@ -116,11 +128,19 @@ struct Terminal {
     response: Value,
 }
 
+/// The text deltas of one output item, as the caller was shown them.
+struct ShownText {
+    item_id: Option<String>,
+    output_index: Option<u64>,
+    text: String,
+}
+
 impl<'a> Decoder<'a> {
-    fn new(binding: &'a Binding) -> Self {
+    pub(crate) fn new(binding: &'a Binding) -> Self {
         Self {
             binding,
             events: Vec::new(),
+            shown: Vec::new(),
             calls: BTreeMap::new(),
             announced: Vec::new(),
             streamed: Vec::new(),
@@ -130,10 +150,12 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn apply(&mut self, event: &Value) -> Result<(), Error> {
+    /// Reads one payload. A refusal ends the stream: nothing after it is read.
+    pub(crate) fn apply(&mut self, event: &Value) -> Result<(), Error> {
         match event.get("type").and_then(Value::as_str) {
             Some("response.output_text.delta") => {
                 if let Some(text) = string(event.get("delta")) {
+                    self.show(event, text);
                     self.events.push(StreamEvent::TextDelta {
                         text: text.to_owned(),
                     });
@@ -205,11 +227,62 @@ impl<'a> Decoder<'a> {
         Ok(())
     }
 
-    fn finish(mut self) -> StreamDecoding {
+    /// The events produced since the last call, in the order they were produced.
+    pub(crate) fn take_events(&mut self) -> Vec<StreamEvent> {
+        std::mem::take(&mut self.events)
+    }
+
+    /// Decides the turn from everything read. The events are the ones produced since the last
+    /// [`Decoder::take_events`], deciding the turn included.
+    pub(crate) fn finish(mut self) -> StreamDecoding {
         let result = self.terminate();
         StreamDecoding {
             events: self.events,
             result,
+        }
+    }
+
+    /// Records text the caller is being shown, under the output item the delta names.
+    fn show(&mut self, event: &Value, text: &str) {
+        let item_id = string(event.get("item_id"));
+        if let Some(shown) = self
+            .shown
+            .iter_mut()
+            .find(|shown| shown.item_id.as_deref() == item_id)
+        {
+            shown.text.push_str(text);
+            return;
+        }
+        self.shown.push(ShownText {
+            item_id: item_id.map(str::to_owned),
+            output_index: event.get("output_index").and_then(Value::as_u64),
+            text: text.to_owned(),
+        });
+    }
+
+    /// Keeps the text the caller was shown when the turn's items carry none (row R36).
+    ///
+    /// The terminal object is authoritative for what the turn carries, but a server that
+    /// streams a message only as deltas and then completes with an empty `output`, as the
+    /// Codex backend can, would otherwise hand the caller a turn without the answer it just
+    /// watched arrive. A message the items do carry outranks the deltas, which are then only
+    /// what was shown on the way.
+    fn keep_shown_text(&mut self, items: &mut Vec<Item>) {
+        if items
+            .iter()
+            .any(|item| matches!(item, Item::AssistantText { .. }))
+        {
+            return;
+        }
+        for shown in std::mem::take(&mut self.shown) {
+            if shown.text.is_empty() {
+                continue;
+            }
+            let at = shown
+                .output_index
+                .and_then(|index| usize::try_from(index).ok())
+                .map_or(items.len(), |index| index.min(items.len()));
+            items.insert(at, Item::assistant(shown.text));
         }
     }
 
@@ -252,7 +325,7 @@ impl<'a> Decoder<'a> {
             Some(output) if !output.is_empty() || self.streamed.is_empty() => {
                 let mut decoded = Vec::with_capacity(output.len());
                 for value in output {
-                    decoded.push(self.output_item(value).map_err(&retain)?);
+                    decoded.push(self.output_item(value).map_err(retain)?);
                 }
                 decoded
             }
@@ -263,6 +336,7 @@ impl<'a> Decoder<'a> {
                 items.push(item);
             }
         }
+        self.keep_shown_text(&mut items);
         if items.len() > MAX_ITEMS {
             return Err(retain(
                 Error::too_large("model output exceeds its bound")

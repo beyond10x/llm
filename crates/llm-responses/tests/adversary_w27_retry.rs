@@ -2,10 +2,12 @@
 //! already answered. Local sockets only; no provider is contacted.
 //!
 //! Routing retries a failure when `Error::may_retry` holds and no event of the attempt reached
-//! the caller's sink (`crates/llm-routing/src/fallback.rs`, `settle`). `ResponsesClient` reads
-//! the whole stream before it emits a single event (`crates/llm-responses/src/client.rs`, `run`),
-//! so a stream that streamed its answer and was then cut reaches routing with nothing emitted.
-//! Harness's own emulated run says that turn is final:
+//! the caller's sink (`crates/llm-routing/src/fallback.rs`, `settle`). When this case was
+//! written `ResponsesClient` read the whole stream before it emitted a single event, so a stream
+//! that streamed its answer and was then cut reached routing with nothing emitted. It now hands
+//! each event over as it arrives (`spec/domains/responses.yaml`, "Live delivery"), and the
+//! assertion holds either way: the answer was shown, or the failure is final. Harness's own
+//! emulated run says that turn is final:
 //! `a_turn_that_had_already_answered_is_never_retried`
 //! (`harness-responses/tests/provider_emulated.rs:521`), the row R42 marks covered.
 

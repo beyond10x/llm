@@ -263,18 +263,32 @@ fn assert_valid_failure(error: &Error, target: &Provenance, dispatch: Dispatch, 
 // Billed evidence on a failure after the stream completed.
 // ---------------------------------------------------------------------------------------------
 
-/// The decoder reads the whole stream before a single event reaches the sink, so when the sink
-/// refuses, the provider has already reported the turn's final counters. `MessagesClient` and the
-/// Chat client attach their last valid usage snapshot to a sink failure; routing's fallback
-/// records `error.observation` as the attempt's evidence (`fallback.rs`, `failed`). A sink that
-/// refuses after its bound — `llm_core::VecSink` does exactly that — must not erase the 20 in /
-/// 9 out the attempt was billed for.
+/// A call answered with nothing streamed before the terminal object, which also carries two
+/// output items outside the pinned subset. Deciding the turn warns `unknown-output-item` once
+/// for each, so both events reach the sink after the terminal counters (20 in / 9 out) were read.
+const SETTLED_STREAM: &str = "event: response.created\n\
+data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\",\"status\":\"in_progress\"}}\n\n\
+event: response.completed\n\
+data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"model\":\"example/Small-Model\",\"status\":\"completed\",\"output\":[{\"type\":\"function_call\",\"id\":\"fc_1\",\"call_id\":\"call_1\",\"name\":\"file_read\",\"arguments\":\"{\\\"path\\\":\\\"README.md\\\"}\",\"status\":\"completed\"},{\"type\":\"web_search_call\",\"id\":\"ws_1\",\"status\":\"completed\"},{\"type\":\"web_search_call\",\"id\":\"ws_2\",\"status\":\"completed\"}],\"usage\":{\"input_tokens\":20,\"output_tokens\":9}}}\n\n";
+
+/// When the sink refuses an event handed over after the terminal object was decoded, the
+/// provider has already reported the turn's final counters. `MessagesClient` and the Chat client
+/// attach their last valid usage snapshot to a sink failure; routing's fallback records
+/// `error.observation` as the attempt's evidence (`fallback.rs`, `failed`). A sink that refuses
+/// after its bound — `llm_core::VecSink` does exactly that — must not erase the 20 in / 9 out
+/// the attempt was billed for.
+///
+/// The events here are the ones deciding the turn produces ([`SETTLED_STREAM`]). Events streamed
+/// before the terminal object are handed over live, before any counter was read
+/// (`spec/domains/responses.yaml`, "Live delivery"), so a refusal of one of those carries the
+/// binding and no counters; `live_stream.rs` checks that case. This claim holds wherever the
+/// counters are known, and that is after the terminal object.
 #[tokio::test]
 async fn a_sink_refusal_after_the_stream_completed_keeps_the_billed_counters() {
     let (listener, url) = listener().await;
-    let server = serve_once(listener, SSE_HEAD, CALL_STREAM.as_bytes().to_vec());
+    let server = serve_once(listener, SSE_HEAD, SETTLED_STREAM.as_bytes().to_vec());
     let client = client(&url);
-    // One event accepted, the second refused: the fixture streams three.
+    // One event accepted, the second refused: deciding the turn produces two.
     let mut sink = VecSink::new(1, 4096);
     let error = client
         .turn(&forced_request(), &mut sink, &Cancel::new())
@@ -297,7 +311,10 @@ async fn a_sink_refusal_after_the_stream_completed_keeps_the_billed_counters() {
     );
 }
 
-/// The same, with the caller cancelling while events are being handed over.
+/// The same, with the caller cancelling while the events deciding the turn produced are handed
+/// over: the terminal counters were read before the first of them, so the cancel keeps them.
+/// A cancel while an earlier, live event is handed over ends the turn before any counter was
+/// read (`live_stream.rs`).
 #[tokio::test]
 async fn a_cancel_while_events_are_handed_over_keeps_the_billed_counters() {
     struct CancellingSink {
@@ -314,7 +331,7 @@ async fn a_cancel_while_events_are_handed_over_keeps_the_billed_counters() {
         }
     }
     let (listener, url) = listener().await;
-    let server = serve_once(listener, SSE_HEAD, CALL_STREAM.as_bytes().to_vec());
+    let server = serve_once(listener, SSE_HEAD, SETTLED_STREAM.as_bytes().to_vec());
     let client = client(&url);
     let cancel = Cancel::new();
     let mut sink = CancellingSink {
@@ -489,7 +506,7 @@ async fn every_unsent_refusal_is_a_valid_not_sent_failure() {
         assert_valid_failure(&error, &target, Dispatch::NotSent, "resolver");
     }
     assert_no_connection(&listener).await;
-    assert!(sink.events().is_empty());
+    assert_eq!(sink.events(), []);
 }
 
 /// Refusals raised after the request left, one server behaviour each.
