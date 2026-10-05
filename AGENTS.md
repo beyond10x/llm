@@ -8,7 +8,11 @@
 
 ## Boundaries
 
-This repository owns model inference and hosting, not agent loops or tool execution. Core types
+This repository owns the client side of model inference, not agent loops or tool execution, and
+not serving: the gateway and hosting crates (`b10x-llm-gateway`, `b10x-llm-provision`,
+`b10x-llm-runpod`, `b10x-llm-modal`) and the `llm.gateway`, `llm.hosting` and `llm.runpod` ESS
+domains live in [beyond10x/llm-gateway](https://github.com/beyond10x/llm-gateway); change them
+there. Core types
 perform no I/O, carry no execution permission and depend on no consumer repository. Protocol,
 provider/account, credential source, model and hosting provider remain distinct concepts.
 

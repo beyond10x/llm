@@ -11,9 +11,9 @@ unknown usage count into a zero.
 **Status: 0.1.7, libraries tested against fixtures; no provider route qualified.** The clients,
 credential adapters, routing with same-target retry and ordered fallback, the `call_tool` and
 blocking helpers, and usage pricing ship and are tested in the gate against recorded responses,
-loopback sockets and in-process fakes. The gateway and hosting crates (`b10x-llm-gateway`,
-`b10x-llm-provision`, `b10x-llm-runpod`, `b10x-llm-modal`) are moving to
-[llm-gateway](https://github.com/beyond10x/llm-gateway). The
+loopback sockets and in-process fakes. llm is the client side: the gateway and hosting crates
+(`b10x-llm-gateway`, `b10x-llm-provision`, `b10x-llm-runpod`, `b10x-llm-modal`) moved to
+[llm-gateway](https://github.com/beyond10x/llm-gateway), which serves what these clients call. The
 [status page](https://beyond10x.github.io/llm/docs/status) lists every capability.
 
 ## Crates
@@ -29,7 +29,7 @@ loopback sockets and in-process fakes. The gateway and hosting crates (`b10x-llm
 | `b10x-llm-cost` | Usage pricing and the optional spending ledger |
 | `b10x-llm-tool-call` | `call_tool` and the Codex Responses preset |
 | `b10x-llm-blocking` | A blocking adapter for a synchronous loop |
-| `b10x-llm-gateway`, `b10x-llm-provision`, `b10x-llm-runpod`, `b10x-llm-modal`, `b10x-llm-cli` | Moving to llm-gateway, or not yet built |
+| `b10x-llm-cli` | Not yet built |
 | `llm-docs` | Generates and checks the site's derived pages |
 
 The [crate reference](https://beyond10x.github.io/llm/docs/reference/crates) is generated from

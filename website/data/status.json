@@ -46,7 +46,7 @@
     },
     {
       "area": "Transport",
-      "detail": "The transport, providers, gateway and Runpod adapter joined the other domains in 0.1.3; the conformance runner runs 823 scenarios against the real crates three times.",
+      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner runs 664 scenarios against the real crates three times.",
       "label": "Every library crate is specified in ESS",
       "status": "shipped"
     },
@@ -207,61 +207,19 @@
       "status": "shipped"
     },
     {
-      "area": "Gateway and hosting (moving to llm-gateway)",
-      "detail": "Probes and a read-only route inventory for one owner; it translates no protocol and proxies no model call.",
-      "label": "An authenticated single-owner gateway",
+      "area": "Serving",
+      "detail": "b10x-llm-gateway, b10x-llm-provision, b10x-llm-runpod and b10x-llm-modal moved with their tests and their ESS domains to their own repository; its status covers the gateway, the hosting contract, the Runpod adapter and their pending work, and llm keeps the client side.",
+      "label": "The gateway and hosting crates live in llm-gateway",
       "status": "shipped"
     },
     {
-      "area": "Gateway and hosting (moving to llm-gateway)",
-      "detail": "Resource identity with incarnation, requested state apart from observed state, leases, and stop obligations that only evidence discharges.",
-      "label": "The hosting lifecycle contract",
-      "status": "shipped"
-    },
-    {
-      "area": "Gateway and hosting (moving to llm-gateway)",
-      "detail": "Single-flight start, ordered GPU fallback, crash recovery and ownership-safe cleanup, verified against the in-process EmulatedRunpod only.",
-      "label": "A Runpod vLLM adapter, against an emulator",
-      "status": "shipped"
-    },
-    {
-      "area": "Gateway and hosting (moving to llm-gateway)",
-      "detail": "b10x-llm-gateway, b10x-llm-provision, b10x-llm-runpod and b10x-llm-modal move to their own repository, and llm keeps the client side.",
-      "label": "The gateway and hosting crates move to llm-gateway",
-      "status": "planned"
-    },
-    {
-      "area": "Gateway and hosting (moving to llm-gateway)",
-      "detail": "The three ingress protocols over the supported subset, with streaming, tools and cancellation.",
-      "label": "Gateway protocol translation",
-      "status": "planned"
-    },
-    {
-      "area": "Gateway and hosting (moving to llm-gateway)",
-      "detail": "Only the in-process emulator exists.",
-      "label": "A production Runpod transport",
-      "status": "planned"
-    },
-    {
-      "area": "Gateway and hosting (moving to llm-gateway)",
-      "detail": "Orphan sweeps and inherited-pod terminations bypass the ledger today.",
-      "label": "Orphan terminations record a stop obligation",
-      "status": "planned"
-    },
-    {
-      "area": "Gateway and hosting (moving to llm-gateway)",
-      "detail": "b10x-llm-modal exports nothing; it needs a Modal account and a paid qualification run.",
-      "label": "A Modal hosting adapter",
-      "status": "planned"
-    },
-    {
-      "area": "Gateway and hosting (moving to llm-gateway)",
+      "area": "Serving",
       "detail": "A reversible cutover from the previous gateway to llm-gateway.",
       "label": "Deployments move from llmgw",
       "status": "planned"
     },
     {
-      "area": "Gateway and hosting (moving to llm-gateway)",
+      "area": "Serving",
       "detail": "Validate, inspect and run one configuration; b10x-llm-cli exports nothing yet.",
       "label": "An operator command line",
       "status": "planned"

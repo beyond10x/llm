@@ -11,8 +11,5 @@ domains:
   - llm.messages
   - llm.responses
   - llm.chat
-  - llm.hosting
-  - llm.runpod
-  - llm.gateway
   - llm.providers
   - llm.transport

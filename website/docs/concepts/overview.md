@@ -57,9 +57,9 @@ Each step is its own crate, and each one refuses on its own:
 4. **Accounting** prices what was actually reported, and a durable ledger admits or refuses spend.
 
 Two helpers sit on top of the port: `call_tool` forces one tool and returns its arguments, and
-`BlockingModel` runs a turn from a synchronous loop. The gateway and the hosting lifecycle sit
-beside the path, not on it, and are moving to their own repository; see [the gateway](gateway.md)
-and [hosting](hosting.md).
+`BlockingModel` runs a turn from a synchronous loop. The gateway and the hosting lifecycle are not
+on this path and not in llm: they live in llm-gateway
+([GitHub](https://github.com/beyond10x/llm-gateway)), which serves what these clients call.
 
 ## Which crate do I need?
 
@@ -85,5 +85,4 @@ permission to run anything. When a model asks for a tool call, the caller runs i
 result in the next request.
 
 Read on: [the neutral turn](neutral-boundary.md), [protocols](protocols.md),
-[credentials](credentials.md), [routing](routing.md), [accounting](accounting.md),
-[hosting](hosting.md), [the gateway](gateway.md).
+[credentials](credentials.md), [routing](routing.md), [accounting](accounting.md).

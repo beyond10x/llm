@@ -117,7 +117,7 @@
         },
         {
           "name": "llm-gateway",
-          "description": "The gateway and hosting crates, moving out of llm into their own repository; it serves llm's protocols to clients.",
+          "description": "The gateway and hosting crates, in their own repository; it serves llm's protocols to clients.",
           "href": "https://github.com/beyond10x/llm-gateway",
           "status": "planned"
         },

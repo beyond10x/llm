@@ -60,6 +60,10 @@ invoice. Product-level cheapest-model optimization is outside the first mileston
 
 ## Gateway and hosting
 
+This half of the design moved with its crates to
+[beyond10x/llm-gateway](https://github.com/beyond10x/llm-gateway) (operator, 2026-10-05); llm keeps
+the client side. The target below is unchanged and is kept here as the record it was accepted in.
+
 Serve one owner/trusted deployment with authenticated access. Translate only the published neutral
 subset across three protocol ingress surfaces; preserve streaming, tools, cancellation and failure
 semantics. Listing or explaining routes must not resolve secrets or provision resources.

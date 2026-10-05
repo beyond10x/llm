@@ -51,11 +51,12 @@ ess specify validate --path spec
 ```
 
 The [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) domains
-under `spec/domains/` give the repository's nouns typed homes. There are fourteen: `accounting`,
-`budget`, `catalog`, `chat`, `gateway`, `hosting`, `inference`, `messages`, `providers`,
-`responses`, `routing`, `runpod`, `secrets` and `transport`.
+under `spec/domains/` give the repository's nouns typed homes. There are eleven: `accounting`,
+`budget`, `catalog`, `chat`, `inference`, `messages`, `providers`, `responses`, `routing`,
+`secrets` and `transport`. The `gateway`, `hosting` and `runpod` domains moved with their crates
+to llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)).
 
-Thirteen have an authored scenario suite under `contracts/`. The exception is `catalog`, which
+Ten have an authored scenario suite under `contracts/`. The exception is `catalog`, which
 describes declaration records rather than observations. One naming trap is worth knowing before
 you go looking: the suite directory is `contracts/pricing/`, but the domain it exercises is
 `accounting`, whose file is `spec/domains/accounting.yaml`. **There is no `pricing` domain.**
