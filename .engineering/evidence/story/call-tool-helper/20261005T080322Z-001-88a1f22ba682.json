@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T08:03:22Z",
+  "actor": "human:timo",
+  "artifact": "story:call-tool-helper",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base: tests do not compile (empty crate); treatment 17 passed; 5 source mutants each killed",
+    "reference": "phase1-red.log vs int-gate.log"
+  }
+}

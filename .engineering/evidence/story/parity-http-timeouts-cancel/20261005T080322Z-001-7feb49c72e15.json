@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T08:03:22Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-http-timeouts-cancel",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base: connect_and_idle does not compile, 5 connect scenarios fail; treatment green; H25/H26/M32/M46 tests each red under a mutant",
+    "reference": "phase1-red.log vs int-gate.log"
+  }
+}

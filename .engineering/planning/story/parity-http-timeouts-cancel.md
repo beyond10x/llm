@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:parity-http-timeouts-cancel
 kind: story
-status: active
+status: implemented
 title: llm-http timeouts and cancellation are pinned as Harness pins them
 relations:
 - decomposes: epic:serving-split
@@ -11,10 +11,11 @@ relations:
 scope:
 - confidence: inferred
   path: crates/llm-http spec contracts docs/harness-parity.md
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T07:37:26Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-05T07:37:26Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T08:03:22Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 

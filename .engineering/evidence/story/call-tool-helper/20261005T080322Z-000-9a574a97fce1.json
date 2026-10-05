@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T08:03:22Z",
+  "actor": "human:timo",
+  "artifact": "story:call-tool-helper",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "w33 integration gate on clean packages: fmt 0, clippy +1.98.0 workspace 0, cargo test --workspace --no-fail-fast 774 passed 0 failed, credentials both feature sets 0, ess validate 0, conformance 823/823",
+    "reference": "wave/2026-10-05-w33 bd0abc2"
+  }
+}

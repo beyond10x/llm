@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:call-tool-helper
 kind: story
-status: active
+status: implemented
 title: llm offers call_tool and the Codex preset, replacing Loom's intake-model
 relations:
 - decomposes: epic:serving-split
@@ -10,10 +10,11 @@ relations:
 scope:
 - confidence: inferred
   path: crates/llm-tool-call Cargo.toml Cargo.lock docs
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T07:37:33Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-05T07:37:33Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T08:03:23Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 

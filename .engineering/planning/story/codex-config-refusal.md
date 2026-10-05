@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:codex-config-refusal
 kind: story
-status: active
+status: implemented
 title: A misconfigured Codex login file is refused, not fallen back from
 relations:
 - decomposes: epic:serving-split
@@ -10,10 +10,11 @@ relations:
 scope:
 - confidence: inferred
   path: crates/llm-credentials/src/codex.rs crates/llm-routing/tests spec contracts docs/local-secrets.md
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T07:37:30Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-05T07:37:30Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T08:03:22Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 
