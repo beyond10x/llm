@@ -161,6 +161,7 @@ fn run_with(
             admit: &mut admit,
             sink: &mut sink,
             cancel,
+            pause: &|_| Box::pin(std::future::ready(())),
         },
     ))
 }
@@ -200,7 +201,7 @@ fn adversary_a_cancelled_caller_starts_no_attempt() {
     cancel.cancel();
     let run = run_with(&catalog, &models, FallbackPolicy::default(), &cancel).unwrap();
     assert_eq!(run.halt, Halt::Cancelled);
-    assert!(run.attempts.is_empty());
+    assert_eq!(run.attempts, [] as [llm_routing::Attempt; 0]);
     assert_eq!(models.calls("local-small"), 0);
     assert_eq!(run.result.unwrap_err().code, ErrorCode::Cancelled);
 }
@@ -236,11 +237,13 @@ fn adversary_attempt_bound_accepts_the_route_maximum_and_refuses_one_more() {
     let at_max = FallbackPolicy {
         max_attempts: MAX_ROUTE_TARGETS,
         deadline: None,
+        retry: llm_routing::RetryPolicy::DEFAULT,
     };
     assert!(at_max.validate().is_ok());
     let over = FallbackPolicy {
         max_attempts: MAX_ROUTE_TARGETS + 1,
         deadline: None,
+        retry: llm_routing::RetryPolicy::DEFAULT,
     };
     assert_eq!(over.validate().unwrap_err().code, ErrorCode::InvalidRequest);
 }

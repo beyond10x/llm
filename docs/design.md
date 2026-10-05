@@ -42,6 +42,16 @@ alternative. Do not replay an ambiguously accepted request by assuming it was fr
 attempt and preserve unknown spend. No semantic downgrade, cross-account switch outside the named
 chain, or fallback after an exposed partial stream.
 
+One deliberate relaxation, matching Harness: a failure whose retry class is retriable (408, 429,
+5xx including 529, a request or body that failed in transit, a stream cut inside an event) and
+that put nothing on the caller's sink is retried on the same target before any output is
+visible, and then falls back, even though its dispatch is `unknown` or `accepted`. It is not
+assumed free: each attempt keeps its own dispatch evidence, a possibly billed attempt stays
+`unknown` with its spend recorded, and the caller's limit decision runs before every retry as
+before every first attempt. Unauthorized and refused failures, and anything after visible
+output, are never retried. The contract is in [contract-v1.md](contract-v1.md#validation-and-accounting)
+and `spec/domains/routing.yaml`.
+
 Account for tokens, cache reads/writes, reasoning usage where reported, and provisioned compute.
 Version price inputs; distinguish measured usage, estimates, subscription charges and unknowns.
 Unknown is never zero. Define budget scope, reservations/concurrency, restart policy and uncertain

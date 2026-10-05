@@ -421,8 +421,8 @@ fn an_attempt_that_showed_output_is_never_retried() {
     assert_eq!(outcome.run.halt, Halt::VisibleOutput);
     assert_eq!(attempted(&outcome.run), ["coding-primary"]);
     assert_eq!(outcome.run.attempts[0].visible_events, 1);
-    assert!(outcome.waits.is_empty());
-    assert!(outcome.warnings.is_empty());
+    assert_eq!(outcome.waits, [] as [Duration; 0]);
+    assert_eq!(outcome.warnings, [] as [(String, String); 0]);
     let error = outcome.run.result.unwrap_err();
     assert!(error.retriable);
     assert_eq!(error.message, "scripted failure");
@@ -470,8 +470,8 @@ fn final_classes_are_never_retried_even_when_marked() {
         let models = Fleet::new(&catalog, Some(failure(code, Dispatch::Rejected)), None, 0);
         let outcome = run(&catalog, FallbackPolicy::default(), &models);
         assert_eq!(attempted(&outcome.run), ["coding-primary"], "{code:?}");
-        assert!(outcome.waits.is_empty(), "{code:?}");
-        assert!(outcome.warnings.is_empty(), "{code:?}");
+        assert_eq!(outcome.waits, [] as [Duration; 0], "{code:?}");
+        assert_eq!(outcome.warnings, [] as [(String, String); 0], "{code:?}");
     }
 }
 
@@ -557,7 +557,7 @@ fn fallback_follows_the_retry_class_and_unmarked_failures_keep_todays_rules() {
         attempted(&outcome.run),
         ["coding-primary", "coding-secondary"]
     );
-    assert!(outcome.waits.is_empty());
+    assert_eq!(outcome.waits, [] as [Duration; 0]);
 
     let mut unsent = failure(ErrorCode::Transport, Dispatch::NotSent);
     unsent.retriable = false;
@@ -567,7 +567,8 @@ fn fallback_follows_the_retry_class_and_unmarked_failures_keep_todays_rules() {
         attempted(&outcome.run),
         ["coding-primary", "coding-secondary"]
     );
-    assert!(outcome.waits.is_empty() && outcome.warnings.is_empty());
+    assert_eq!(outcome.waits, [] as [Duration; 0]);
+    assert_eq!(outcome.warnings, [] as [(String, String); 0]);
 
     let mut ambiguous = failure(ErrorCode::Transport, Dispatch::Unknown);
     ambiguous.retriable = false;
@@ -619,7 +620,7 @@ fn a_back_off_that_would_pass_the_deadline_is_not_waited() {
     let outcome = run(&catalog, policy, &models);
     assert_eq!(outcome.run.halt, Halt::Deadline);
     assert_eq!(attempted(&outcome.run), ["coding-primary"]);
-    assert!(outcome.waits.is_empty(), "{:?}", outcome.waits);
+    assert_eq!(outcome.waits, [] as [Duration; 0]);
 }
 
 /// The retry bound is one through sixteen; anything else is refused before any attempt.
@@ -654,4 +655,47 @@ fn a_retry_bound_outside_one_through_sixteen_is_refused() {
             }
         }
     }
+}
+
+/// A sink that refuses the retry warning ends the run with the sink's own error: a retry is
+/// never made silently.
+#[test]
+fn a_sink_that_refuses_the_retry_warning_ends_the_run_with_its_error() {
+    let catalog = catalog(true);
+    let models = Fleet::new(
+        &catalog,
+        Some(failure(ErrorCode::Transport, Dispatch::Unknown)),
+        None,
+        0,
+    );
+    let cancel = Cancel::new();
+    let recorder = Recorder::default();
+    let pause = recorder.port();
+    // Accepts no event at all, so the first thing offered to it, the warning, is refused.
+    let mut sink = VecSink::new(0, 64 * 1024);
+    let run = block_on(catalog.run_turn(
+        &request(),
+        Some(100),
+        FallbackPolicy::default(),
+        Ports {
+            models: &models,
+            admit: &mut |_: &Selection<'_>| Ok(()),
+            sink: &mut sink,
+            cancel: &cancel,
+            pause: &pause,
+        },
+    ))
+    .unwrap();
+    assert_eq!(run.halt, Halt::SinkRefused);
+    assert_eq!(run.halt.label(), "sink-refused");
+    assert_eq!(attempted(&run), ["coding-primary"]);
+    assert_eq!(models.calls("remote-large"), 0);
+    assert_eq!(
+        recorder.waits(),
+        [] as [Duration; 0],
+        "waited after a refused warning"
+    );
+    let error = run.result.unwrap_err();
+    assert_eq!(error.code, ErrorCode::TooLarge);
+    assert_eq!(error.message, "stream sink event bound reached");
 }

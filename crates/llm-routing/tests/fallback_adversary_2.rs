@@ -170,6 +170,7 @@ fn recorded_observation(models: &Fleet, catalog: &Catalog) -> Option<TurnObserva
             admit: &mut admit,
             sink: &mut sink,
             cancel: &cancel,
+            pause: &|_| Box::pin(std::future::ready(())),
         },
     ))
     .unwrap();
@@ -243,11 +244,15 @@ fn adversary_an_incompatible_trailing_target_is_not_cut_by_the_bound() {
             admit: &mut admit,
             sink: &mut sink,
             cancel: &cancel,
+            pause: &|_| Box::pin(std::future::ready(())),
         },
     ))
     .unwrap();
     assert_eq!(run.attempts.len(), 1);
-    assert!(!run.explanation.targets[1].rejections.is_empty());
+    assert_ne!(
+        run.explanation.targets[1].rejections,
+        [] as [llm_routing::Rejection; 0]
+    );
     assert_eq!(
         run.halt,
         Halt::Exhausted,

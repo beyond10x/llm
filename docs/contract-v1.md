@@ -69,8 +69,30 @@ The core validates these values but cannot recover facts an adapter discarded.
 Errors distinguish invalid input, transport, protocol, authentication, rate limits, refusal,
 bounds, unsupported semantics, cancellation and deadlines. Dispatch evidence is independent:
 `not-sent`, `rejected`, `unknown`, or `accepted`. A transport failure after dispatch is unknown,
-not proof of a free retry. A server delay is a hint, not permission to retry. Error diagnostics
-never include authorization headers, request bodies or arbitrary upstream error text.
+not proof of a free retry. Error diagnostics never include authorization headers, request bodies
+or arbitrary upstream error text.
+
+Every error also carries a retry class, `retriable`, set by the producer that observed the
+failure and separate from dispatch: dispatch is never rewritten to make a failure retriable. The
+HTTP transport marks 408, 429 and 500-599 (529 included), a request that got no response, a body
+that failed while streaming, and an end of stream inside an event. Deadlines, cancellation,
+malformed frames, redirects and every other status (400, 401, 403 and 409 included) are final.
+`Error::may_retry` acts on the class only for transport, rate-limited, unavailable and protocol
+codes, so an unauthorized or refused failure is never retried whatever its mark says.
+
+Routing retries one target before any output is visible, and only then. A failure that
+`may_retry` and put nothing on the caller's sink is attempted again on the same target, by
+default up to four attempts with waits of 1, 2 and 4 s (8 s at most; `RetryPolicy`), each wait
+stated on the sink as a `turn-retried` warning and raced against cancellation. A server delay is
+honoured up to 30 s inside that wait and never shortens it; on its own it is never a reason to
+retry. Once the target's attempts are spent the run falls back to the next declared target, and
+the final error goes up no longer retriable, naming the attempt count. Such a retry or fallback
+may replay a request whose dispatch is `unknown` or `accepted`: that is deliberate for these
+classes, and it never assumes the attempt was free. Each attempt is recorded with its own dispatch
+evidence, so a possibly billed attempt stays `unknown` and its spend is recorded, and the caller's
+limit decision is consulted before every attempt, retries included. A failure without the class
+keeps the earlier rule: it may fall back only with `not-sent` or `rejected` dispatch, and is
+never attempted again on the same target.
 
 ## Pricing
 
@@ -118,8 +140,9 @@ qualification or a released artifact.
 Provider declarations use `llm.binding/1`; TOML catalogs use `llm.catalog/1`. Catalog selection
 requires an input-token upper bound supplied by the caller and valid for every candidate. Unknown
 input counts refuse admission. Fallback defaults off; opt-in permits local selection of the first
-compatible named target. Retrying after an HTTP failure and integrating pricing/budget admission
-with those attempts remain separate planned behavior. Explain exposes safe IDs, capabilities and refusal reasons;
+compatible named target. Same-target retry is on by default and described under errors above;
+integrating pricing/budget admission with those attempts remains separate planned behavior.
+Explain exposes safe IDs, capabilities and refusal reasons;
 it does not resolve secrets or include prompt/opaque payloads.
 
 Source port: `beyond10x/harness` commit `709a2ebadcc14602b82b6f3c240350e4ddc1c88c`,
@@ -127,4 +150,5 @@ Source port: `beyond10x/harness` commit `709a2ebadcc14602b82b6f3c240350e4ddc1c88
 `crates/harness-http/src/{sse,status,transport}.rs`. LLM preserves the validated identifier,
 field-bound, text/tool and terminal-truth semantics; it removes tool execution authority,
 replaces wire-only opaque provenance, preserves every unknown usage field, and exposes an async
-single-attempt transport instead of carrying the Harness retry policy into the new boundary.
+single-attempt transport. The Harness retry classes and retry policy (`harness-http/src/
+{status,retry,witness}.rs` at `2fd7235b`) live in routing instead of the transport.

@@ -183,6 +183,7 @@ fn run_route(store: Result<&'static [u8], SecretError>) -> (FallbackRun, usize, 
         admit: &mut admit,
         sink: &mut sink,
         cancel: &cancel,
+        pause: &|_| Box::pin(std::future::ready(())),
     };
     let run =
         block_on(catalog.run_turn(&request, Some(100), FallbackPolicy::default(), ports)).unwrap();

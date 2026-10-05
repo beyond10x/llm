@@ -11,5 +11,8 @@ mod selection;
 pub use catalog::{
     Catalog, CatalogDocument, MAX_CONFIG_BYTES, MAX_ROUTE_TARGETS, Route, RouteTarget,
 };
-pub use fallback::{Attempt, AttemptResult, FallbackPolicy, FallbackRun, Halt, Models, Ports};
+pub use fallback::{
+    Attempt, AttemptResult, FallbackPolicy, FallbackRun, Halt, MAX_RETRY_ATTEMPTS, Models, Pause,
+    Ports, RETRY_WARNING, RetryPolicy,
+};
 pub use selection::{Rejection, RouteExplanation, Selection, TargetExplanation};

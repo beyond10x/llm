@@ -28,7 +28,8 @@ domain: llm.routing
 #
 # Every retry states a warning on the caller's sink before its wait, code `turn-retried`,
 # message `attempt <n> of <max> on <target> failed before any output was visible (<code>) and
-# is retried after <ms> ms`. A warning is not output of an attempt.
+# is retried after <ms> ms`. A warning is not output of an attempt. A sink that refuses the
+# warning ends the run with the sink's own error, halt `sink-refused`, and nothing is waited.
 #
 # Fallback eligibility follows the same classes: a failure with no visible output whose class
 # is retriable falls back to the next declared target after its same-target attempts are spent,

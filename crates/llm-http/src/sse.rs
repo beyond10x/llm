@@ -165,8 +165,11 @@ impl SseDecoder {
             return Err(Error::protocol("SSE decoder previously failed"));
         }
         if self.saw_data || !self.line.is_empty() {
+            // Retriable, unlike every other framing refusal: nothing malformed arrived, the peer
+            // stopped mid-frame, which is what a dropped connection looks like from here.
             return Err(Error::protocol("SSE stream ended inside an event")
-                .with_dispatch(Dispatch::Unknown));
+                .with_dispatch(Dispatch::Unknown)
+                .with_retriable(true));
         }
         Ok(())
     }
