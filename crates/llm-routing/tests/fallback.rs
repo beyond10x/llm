@@ -198,6 +198,7 @@ fn run(
         admit,
         sink,
         cancel: &cancel,
+        pause: &|_| Box::pin(std::future::ready(())),
     };
     block_on(catalog.run_turn(turn, Some(100), policy, ports)).unwrap()
 }
@@ -423,7 +424,7 @@ fn a_refused_primary_admission_makes_no_attempt_at_all() {
         &mut sink,
     );
     assert_eq!(run.halt, Halt::LimitRefused);
-    assert!(run.attempts.is_empty());
+    assert_eq!(run.attempts, [] as [llm_routing::Attempt; 0]);
     assert_eq!(models.calls("local-small"), 0);
 }
 
@@ -513,7 +514,8 @@ fn the_route_and_the_caller_can_each_disable_fallback() {
     assert!(
         FallbackPolicy {
             max_attempts: 0,
-            deadline: None
+            deadline: None,
+            retry: llm_routing::RetryPolicy::DEFAULT,
         }
         .validate()
         .is_err()
@@ -540,7 +542,7 @@ fn a_passed_deadline_starts_no_attempt() {
         &mut sink,
     );
     assert_eq!(run.halt, Halt::Deadline);
-    assert!(run.attempts.is_empty());
+    assert_eq!(run.attempts, [] as [llm_routing::Attempt; 0]);
     assert_eq!(models.calls("local-small"), 0);
     assert_eq!(run.result.unwrap_err().code, ErrorCode::Deadline);
 }
@@ -566,6 +568,7 @@ fn a_model_that_does_not_serve_its_binding_is_refused_before_any_attempt() {
             admit: &mut admit_all(),
             sink: &mut sink,
             cancel: &cancel,
+            pause: &|_| Box::pin(std::future::ready(())),
         },
     ))
     .unwrap_err();
@@ -591,6 +594,7 @@ fn the_run_future_can_move_to_a_multithreaded_executor() {
             admit: &mut admit,
             sink: &mut sink,
             cancel: &cancel,
+            pause: &|_| Box::pin(std::future::ready(())),
         },
     );
     assert_send(&future);
@@ -658,12 +662,14 @@ fn a_target_the_run_could_attempt_still_needs_its_model_before_any_attempt() {
         FallbackPolicy {
             max_attempts: 2,
             deadline: None,
+            retry: llm_routing::RetryPolicy::DEFAULT,
         },
         Ports {
             models: &models,
             admit: &mut admit_all(),
             sink: &mut sink,
             cancel: &cancel,
+            pause: &|_| Box::pin(std::future::ready(())),
         },
     ))
     .unwrap_err();

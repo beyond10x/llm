@@ -313,6 +313,7 @@ fn refusal(facts: &mut Value, error: &Error) {
     facts["error_code"] = label(error.code);
     facts["dispatch"] = label(error.dispatch);
     facts["retry_after_ms"] = json!(error.retry_after_ms);
+    facts["retriable"] = json!(error.retriable);
     if format!("{error:?}{error}").contains(UNTRUSTED_BODY) {
         facts["diagnostics_safe"] = json!(false);
     }
@@ -460,7 +461,7 @@ async fn exchange(program: Program, facts: &mut Value, seen: &Arc<Seen>) -> Resu
 fn blank() -> Value {
     json!({
         "valid_program": false, "error_code": null, "dispatch": null, "retry_after_ms": null,
-        "events": [], "end": null, "sticky": null, "requests": 0, "redirected_requests": 0,
+        "retriable": null, "events": [], "end": null, "sticky": null, "requests": 0, "redirected_requests": 0,
         "request_line": null, "diagnostics_safe": true, "ended_within": null,
         "proxied_requests": null
     })

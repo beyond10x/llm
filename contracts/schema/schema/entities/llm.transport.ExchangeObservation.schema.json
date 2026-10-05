@@ -20,6 +20,9 @@
     "retry_after_ms": {
       "type": "integer"
     },
+    "retriable": {
+      "type": "boolean"
+    },
     "events": {
       "type": "array",
       "items": {
@@ -67,8 +70,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "5d5cd6dd56afb2cf2aff4fc0e24f44efa690cec66ad90ae589f90933cd079cd0",
-    "contract_digest": "slice-sha256/2:a2c996758ecf1301fa55b6fb7ad116062eaa73b3c9b9315074380c353d638974",
+    "source_digest": "061f88cc96a53e01334de711f34e0e80d38db479f6fbc43917f2b50195768168",
+    "contract_digest": "slice-sha256/2:cb03e5842a84cd7ad55b66e155feb142a7cc6b8b6176c710d3c3b988ade800a3",
     "regenerate": "ess generate"
   },
   "$defs": {

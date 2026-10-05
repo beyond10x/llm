@@ -50,6 +50,30 @@
     "delivered_text": {
       "type": "string"
     },
+    "retry_policy": {
+      "$ref": "#/$defs/llm.routing.RetryPolicy"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "paused_ms": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "retriable": {
+      "type": "boolean"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "ended_within": {
+      "type": "boolean"
+    },
     "state": {
       "$ref": "#/$defs/llm.routing.FallbackRun.State"
     }
@@ -62,14 +86,16 @@
     "visible_events",
     "attempt_usage",
     "rejections",
+    "warnings",
+    "paused_ms",
     "state"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "5d5cd6dd56afb2cf2aff4fc0e24f44efa690cec66ad90ae589f90933cd079cd0",
-    "contract_digest": "slice-sha256/2:1a3ce299c83bdf294d88c350b8560da516c9b39a8c4462bcba8df4ba80df8edd",
+    "source_digest": "061f88cc96a53e01334de711f34e0e80d38db479f6fbc43917f2b50195768168",
+    "contract_digest": "slice-sha256/2:a5cb53842dd13daee9a835b1dae60144ab698a59cdcfba3d0efd3bebbfaa1453",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -81,6 +107,33 @@
       "enum": [
         "Observed"
       ]
+    },
+    "llm.routing.RetryPolicy": {
+      "title": "RetryPolicy",
+      "x-ess-name": "llm.routing.RetryPolicy",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "max_attempts": {
+          "type": "integer"
+        },
+        "backoff_base_ms": {
+          "type": "integer"
+        },
+        "max_doublings": {
+          "type": "integer"
+        },
+        "max_server_delay_ms": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_attempts",
+        "backoff_base_ms",
+        "max_doublings",
+        "max_server_delay_ms"
+      ],
+      "additionalProperties": false
     }
   }
 }

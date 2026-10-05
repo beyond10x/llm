@@ -5,6 +5,47 @@ domain: llm.routing
 # routing job or an inference attempt. The conformance adapter retains the actual
 # returned values until the next evaluation in that scenario. It neither chooses
 # expected outcomes from input predicates nor simulates provider calls.
+#
+# Same-target retry (Harness harness-http/src/retry.rs, witness.rs, transport.rs:169-217).
+# A run attempts each compatible target up to the retry policy's `max_attempts` times, the
+# first included, before it considers the next declared target. Another attempt on the same
+# target is made only when all of these hold: the failure's retry class is retriable
+# (llm.transport `retriable`); its code is transport, rate-limited, unavailable or protocol
+# (unauthorized, refused, invalid-request, unsupported, too-large, cancelled and deadline are
+# never retried, whatever the class says); no event of that attempt reached the caller's sink;
+# the caller has not cancelled; the wait would end before the caller's deadline; and the
+# caller's limit decision admits the attempt (it is consulted before every attempt, retries
+# included). An attempt that showed any output is final; the run halts `visible-output`.
+#
+# Back-off: the wait before attempt n+1 is `backoff_base * 2^min(n, max_doublings)`. A
+# server-requested delay (`retry_after_ms`) is honoured up to `max_server_delay` and never
+# shortens that local wait. The run awaits the wait through the caller's pause port and races
+# it against cancellation, so a cancellation ends the wait at once and the run halts
+# `cancelled`. The default policy is Harness's: four attempts, base 500 ms, four doublings
+# (waits of 1 s, 2 s, 4 s, then 8 s), server delays capped at 30 s. `max_attempts` is one
+# through sixteen; one disables same-target retry. Fallback's own attempt bound still counts
+# targets.
+#
+# Every retry states a warning on the caller's sink before its wait, code `turn-retried`,
+# message `attempt <n> of <max> on <target> failed before any output was visible (<code>) and
+# is retried after <ms> ms`. A warning is not output of an attempt. A sink that refuses the
+# warning ends the run with the sink's own error, halt `sink-refused`, and nothing is waited.
+#
+# Fallback eligibility follows the same classes: a failure with no visible output whose class
+# is retriable falls back to the next declared target after its same-target attempts are spent,
+# whatever its dispatch evidence says; the attempt record keeps that dispatch, so a possibly
+# billed attempt is recorded, not assumed free. A failure whose class is not retriable falls
+# back exactly as before (not-sent or rejected dispatch with code transport, rate-limited or
+# unavailable), without a same-target retry. When the last target's attempts are spent the
+# final error is no longer retriable and its message names the count: `(after <n> attempts)`.
+types:
+  - name: llm.routing.RetryPolicy
+    kind: struct
+    fields:
+      - {name: max_attempts, type: Integer}
+      - {name: backoff_base_ms, type: Integer}
+      - {name: max_doublings, type: Integer}
+      - {name: max_server_delay_ms, type: Integer}
 entities:
   - name: llm.routing.Evaluation
     identity: {name: evaluation_id, type: String}
@@ -43,6 +84,18 @@ entities:
       - {name: attempt_usage, type: List<String>}
       - {name: rejections, type: List<String>}
       - {name: delivered_text, type: Optional<String>}
+      # The retry policy the run used.
+      - {name: retry_policy, type: Optional<llm.routing.RetryPolicy>}
+      # Every warning the caller's sink received, in order, as `code: message`.
+      - {name: warnings, type: List<String>}
+      # Every wait the run asked of the caller's pause port, in milliseconds, in order.
+      - {name: paused_ms, type: List<Integer>}
+      # The final failure's retry class and message; absent when the run succeeded.
+      - {name: retriable, type: Optional<Boolean>}
+      - {name: error_message, type: Optional<String>}
+      # Whether the run ended within the program's `within_ms` of its start; absent when the
+      # program asks nothing.
+      - {name: ended_within, type: Optional<Boolean>}
     lifecycle:
       initial: Observed
       states: [Observed]
@@ -74,6 +127,12 @@ commands:
       # Per serving model: events to emit, then success or a typed failure with dispatch
       # evidence; also the targets the caller's limit decision refuses, the caller's attempt
       # bound and whether the caller's deadline has already passed.
+      # A failure may carry `retriable` and `retry_after_ms`, and `fail_times` makes a model
+      # fail only its first n attempts and succeed after. `retry` sets the caller's retry
+      # policy (`max_attempts`, `backoff_base_ms`, `max_doublings`, `max_server_delay_ms`,
+      # each defaulting to the library's); `cancel_on_pause` cancels the run when the first
+      # wait begins, through a pause port that then never ends by itself; `within_ms` asks
+      # whether the run ended within that many milliseconds.
       - {name: program_json, type: String}
     outcomes:
       - name: observed

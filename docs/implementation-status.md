@@ -11,7 +11,9 @@ turns, text/tools, bounded streaming, cancellation, bound success/failure observ
 continuation state bound to its exact protocol/provider/account/endpoint/model/binding revision. Credentials are
 injected and resolved on each request; concurrent renewal is coordinated without owning a login
 or persistent credential store. The HTTP transport streams bounded SSE with explicit deadlines,
-no redirects, no automatic retries, and failure after partial output preserved.
+no redirects, a single attempt per call with a retry class on every refusal, and failure after
+partial output preserved. Routing retries a retriable failure on the same target before any
+output is visible (Harness policy by default), then falls back.
 
 Optional local secret adapters now read explicitly mapped protected files on Linux or an injected
 keychain store. Native constructors select Linux Secret Service, macOS Keychain or Windows
@@ -45,7 +47,7 @@ while the versioned configuration surface and release prerequisites are complete
 | --- | --- |
 | `runtime-contracts` | Unreleased turn v2/outcome v3, usage/cost v2, binding/catalog v1 and ESS verification implemented; release/common Gates setup remains. |
 | `neutral-inference` | Public async port, bounded data, tool round trip, cancellation and embedding example implemented and tested. |
-| `http-streaming` | Bounded single-attempt HTTP/SSE, terminal truth, cancellation, deadline and retry-hint fixtures pass. |
+| `http-streaming` | Bounded single-attempt HTTP/SSE, terminal truth, cancellation, deadline, retry-class and retry-hint fixtures pass; same-target retry before visible output is in routing. |
 | `secret-resolver` | Injected arbitrary secret references, redacted/zeroized material and coordinated caller-owned renewal implemented and tested. |
 | `provider-accounts` | Validated bindings, arbitrary endpoint URLs and selected-reference request-time auth implemented; live access qualification is separate. |
 | `local-secret-adapters` | Explicit file/keychain adapters implemented; Linux file protections, exact mock-store lookup, rotation and fixed errors tested. Native OS-service availability is not established by mock tests or compilation. |

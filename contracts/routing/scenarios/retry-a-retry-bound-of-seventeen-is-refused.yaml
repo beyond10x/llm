@@ -1,0 +1,128 @@
+type: ess-scenario/1
+domain: llm.routing
+scenario: retry-a-retry-bound-of-seventeen-is-refused
+summary: a retry policy allowing seventeen attempts on one target is refused before any attempt
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.routing.Fallback
+  input:
+    catalog_toml: |
+      # Illustrative declarations, not qualification of a particular model or deployment.
+      # Replace the endpoint, upstream model name and capabilities with your deployment's facts.
+      format = "llm.catalog/1"
+
+      [[providers]]
+      id = "my-lab"
+      category = "self-hosted"
+
+      [[accounts]]
+      id = "local"
+      provider_id = "my-lab"
+      auth_kind = "anonymous"
+      billing_kind = "self-hosted"
+
+      [[accounts]]
+      id = "remote"
+      provider_id = "my-lab"
+      auth_kind = "bearer"
+      billing_kind = "metered"
+      secret_reference_id = "lab-llm-token"
+
+      [[endpoints]]
+      id = "local-vllm"
+      account_id = "local"
+      base_url = "http://127.0.0.1:8000/v1"
+
+      [[endpoints]]
+      id = "remote-models"
+      account_id = "remote"
+      base_url = "https://models.example.invalid/v1"
+
+      [[models]]
+      id = "small"
+      upstream_name = "example/Small-Model"
+
+      [[models]]
+      id = "large"
+      upstream_name = "example/Large-Model"
+
+      [[serving_models]]
+      id = "local-small"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[serving_models]]
+      id = "remote-large"
+      endpoint_id = "remote-models"
+      model_id = "large"
+      protocol = "responses"
+      [serving_models.capabilities]
+      tools = true
+      tool_choice = true
+      temperature = true
+      top_p = true
+      reasoning_efforts = ["medium", "high"]
+      context_window = 32768
+      max_output_tokens = 8192
+
+      [[serving_models]]
+      id = "local-tiny"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 128
+      max_output_tokens = 128
+
+      [[routes]]
+      id = "coding"
+      alias = "code"
+      # Omission is false. Set true to permit selection from the explicitly named alternatives.
+      fallback_enabled = true
+
+      [[targets]]
+      id = "coding-primary"
+      route_id = "coding"
+      serving_model_id = "local-small"
+      position = 0
+
+      [[targets]]
+      id = "coding-secondary"
+      route_id = "coding"
+      serving_model_id = "remote-large"
+      position = 2
+
+      [[targets]]
+      id = "coding-middle"
+      route_id = "coding"
+      serving_model_id = "local-tiny"
+      position = 1
+    turn_json: '{"format":"llm.turn/3","request":{"model":"code","instructions":"","items":[{"kind":"user-text","text":"hello"}],"tools":[],"max_output_tokens":128}}'
+    input_tokens: 100
+    program_json: '{"models":{"local-small":{"emits":0,"fail":{"code":"transport","dispatch":"unknown","retriable":true}},"remote-large":{"emits":1}},"retry":{"max_attempts":17,"backoff_base_ms":0}}'
+  outcome: observed
+assert:
+- view: llm.routing.LastFallback
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routing.LastFallback
+  contains:
+    valid_program: true
+    error_code: invalid-request
+    halt: null
+    attempted: []

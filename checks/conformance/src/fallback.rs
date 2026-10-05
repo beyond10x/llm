@@ -1,11 +1,18 @@
 //! Ordered-fallback conformance observations.
 //!
-//! This module drives the real `Catalog::run_turn` over in-process scripted `Model`s and reports
-//! what the library returned. The scripted models only replay the authored failure or success;
-//! every attempt, halt, refusal and evidence line below comes back out of the library. It reads no
-//! suite and branches on no scenario name.
+//! This module drives the real `Catalog::run_turn` over in-process scripted `Model`s, a real pause
+//! port and a bounded sink, and reports what the library returned. The scripted models only replay
+//! the authored failure or success; every attempt, wait, warning, halt, refusal and evidence line
+//! below comes back out of the library. It reads no suite and branches on no scenario name.
 
-use std::{collections::BTreeMap, time::Instant};
+use std::{
+    collections::BTreeMap,
+    sync::{
+        Mutex,
+        atomic::{AtomicUsize, Ordering},
+    },
+    time::{Duration, Instant},
+};
 
 use ess_conformance::target::TargetError;
 use llm_core::{
@@ -13,7 +20,9 @@ use llm_core::{
     StopReason, StreamEvent, StreamSink, TurnDocument, TurnObservation, TurnOutcome, TurnRequest,
     Usage, VecSink,
 };
-use llm_routing::{AttemptResult, Catalog, FallbackPolicy, FallbackRun, Models, Ports, Selection};
+use llm_routing::{
+    AttemptResult, Catalog, FallbackPolicy, FallbackRun, Models, Ports, RetryPolicy, Selection,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -26,6 +35,8 @@ const MAX_PROGRAM_BYTES: usize = 64 * 1024;
 const MAX_EMITS: usize = 64;
 const MAX_SINK_EVENTS: usize = 256;
 const MAX_SINK_BYTES: usize = 64 * 1024;
+/// Ends a run whose pause port was told to hang and whose cancellation was ignored.
+const BACKSTOP: Duration = Duration::from_secs(30);
 
 /// Observe one command of this domain, or `None` when the command belongs to another.
 pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetError>> {
@@ -59,6 +70,12 @@ struct Program {
     max_attempts: Option<usize>,
     #[serde(default)]
     deadline_passed: bool,
+    #[serde(default)]
+    retry: RetryInput,
+    #[serde(default)]
+    cancel_on_pause: bool,
+    #[serde(default)]
+    within_ms: Option<u64>,
 }
 
 #[derive(Deserialize)]
@@ -69,6 +86,8 @@ struct Script {
     #[serde(default)]
     fail: Option<Failure>,
     #[serde(default)]
+    fail_times: Option<usize>,
+    #[serde(default)]
     input_tokens: Option<u64>,
 }
 
@@ -77,15 +96,52 @@ struct Script {
 struct Failure {
     code: ErrorCode,
     dispatch: Dispatch,
+    #[serde(default)]
+    retriable: bool,
+    #[serde(default)]
+    retry_after_ms: Option<u64>,
 }
 
-/// Replays one authored script. It chooses nothing about fallback.
+/// The caller's retry policy; every absent field is the library default.
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields, default)]
+struct RetryInput {
+    max_attempts: Option<u32>,
+    backoff_base_ms: Option<u64>,
+    max_doublings: Option<u32>,
+    max_server_delay_ms: Option<u64>,
+}
+
+impl RetryInput {
+    fn policy(&self) -> RetryPolicy {
+        let default = RetryPolicy::DEFAULT;
+        RetryPolicy {
+            max_attempts: self.max_attempts.unwrap_or(default.max_attempts),
+            backoff_base: self
+                .backoff_base_ms
+                .map_or(default.backoff_base, Duration::from_millis),
+            max_doublings: self.max_doublings.unwrap_or(default.max_doublings),
+            max_server_delay: self
+                .max_server_delay_ms
+                .map_or(default.max_server_delay, Duration::from_millis),
+        }
+    }
+}
+
+fn millis(duration: Duration) -> u64 {
+    u64::try_from(duration.as_millis()).unwrap_or(u64::MAX)
+}
+
+/// Replays one authored script. It chooses nothing about fallback or retry.
 struct Scripted {
     provenance: Provenance,
     capabilities: Capabilities,
     emits: usize,
     fail: Option<Failure>,
+    /// Fails only the first n attempts, then succeeds; every attempt when absent.
+    fail_times: Option<usize>,
     input_tokens: Option<u64>,
+    calls: AtomicUsize,
 }
 
 impl Model for Scripted {
@@ -102,6 +158,10 @@ impl Model for Scripted {
         _: &'a Cancel,
     ) -> BoxFuture<'a, Result<TurnOutcome, Error>> {
         Box::pin(async move {
+            let call = self.calls.fetch_add(1, Ordering::SeqCst);
+            let fail = self
+                .fail
+                .filter(|_| self.fail_times.is_none_or(|times| call < times));
             for _ in 0..self.emits {
                 sink.emit(StreamEvent::TextDelta {
                     text: format!("from {};", self.provenance.endpoint.as_str()),
@@ -113,7 +173,7 @@ impl Model for Scripted {
                 input_tokens: Some(input),
                 ..Usage::default()
             });
-            match self.fail {
+            match fail {
                 None => {
                     observation.final_usage = true;
                     Ok(TurnOutcome {
@@ -123,8 +183,10 @@ impl Model for Scripted {
                     })
                 }
                 Some(failure) => {
-                    let error = Error::new(failure.code, "scripted failure")
-                        .with_dispatch(failure.dispatch);
+                    let mut error = Error::new(failure.code, "scripted failure")
+                        .with_dispatch(failure.dispatch)
+                        .with_retriable(failure.retriable);
+                    error.retry_after_ms = failure.retry_after_ms;
                     Err(if failure.dispatch == Dispatch::NotSent {
                         error
                     } else {
@@ -151,10 +213,11 @@ fn exercise(input: &Value) -> Result<Observed, TargetError> {
     let mut facts = json!({
         "valid_program": false, "error_code": null, "halt": null, "attempted": [],
         "attempt_results": [], "visible_events": [], "attempt_usage": [], "rejections": [],
-        "delivered_text": null
+        "delivered_text": null, "retry_policy": null, "warnings": [], "paused_ms": [],
+        "retriable": null, "error_message": null, "ended_within": null
     });
     if let Err(error) = execute(&request, &mut facts) {
-        facts["error_code"] = json!(error.code);
+        failure_facts(&error, &mut facts);
     }
     Ok(Observed {
         facts,
@@ -171,18 +234,13 @@ fn label(value: impl Serialize) -> String {
         .unwrap_or_default()
 }
 
-fn execute(input: &FallbackInput, facts: &mut Value) -> Result<(), Error> {
-    if input.program_json.len() > MAX_PROGRAM_BYTES {
-        return Err(Error::too_large("fallback program exceeds its bound"));
-    }
-    let program: Program = serde_json::from_str(&input.program_json)
-        .map_err(|_| Error::invalid("invalid fallback program"))?;
-    facts["valid_program"] = json!(true);
-    let catalog = Catalog::parse(&input.catalog_toml)?;
-    let document: TurnDocument = serde_json::from_str(&input.turn_json)
-        .map_err(|_| Error::invalid("invalid turn envelope"))?;
+/// One scripted model per authored serving model, each bound to its declared binding.
+fn scripted_fleet(
+    models: BTreeMap<String, Script>,
+    catalog: &Catalog,
+) -> Result<BTreeMap<Id, Scripted>, Error> {
     let mut fleet = BTreeMap::new();
-    for (serving, script) in program.models {
+    for (serving, script) in models {
         if script.emits > MAX_EMITS {
             return Err(Error::too_large("scripted emission exceeds its bound"));
         }
@@ -197,15 +255,39 @@ fn execute(input: &FallbackInput, facts: &mut Value) -> Result<(), Error> {
                 capabilities: binding.capabilities().clone(),
                 emits: script.emits,
                 fail: script.fail,
+                fail_times: script.fail_times,
                 input_tokens: script.input_tokens,
+                calls: AtomicUsize::new(0),
             },
         );
     }
+    Ok(fleet)
+}
+
+fn execute(input: &FallbackInput, facts: &mut Value) -> Result<(), Error> {
+    if input.program_json.len() > MAX_PROGRAM_BYTES {
+        return Err(Error::too_large("fallback program exceeds its bound"));
+    }
+    let program: Program = serde_json::from_str(&input.program_json)
+        .map_err(|_| Error::invalid("invalid fallback program"))?;
+    facts["valid_program"] = json!(true);
+    let catalog = Catalog::parse(&input.catalog_toml)?;
+    let document: TurnDocument = serde_json::from_str(&input.turn_json)
+        .map_err(|_| Error::invalid("invalid turn envelope"))?;
+    let fleet = scripted_fleet(program.models, &catalog)?;
+    let retry = program.retry.policy();
+    facts["retry_policy"] = json!({
+        "max_attempts": retry.max_attempts,
+        "backoff_base_ms": millis(retry.backoff_base),
+        "max_doublings": retry.max_doublings,
+        "max_server_delay_ms": millis(retry.max_server_delay),
+    });
     let policy = FallbackPolicy {
         max_attempts: program
             .max_attempts
             .unwrap_or(FallbackPolicy::default().max_attempts),
         deadline: program.deadline_passed.then(Instant::now),
+        retry,
     };
     let refused = program.refuse_admission;
     let mut admit = |selection: &Selection<'_>| {
@@ -218,23 +300,78 @@ fn execute(input: &FallbackInput, facts: &mut Value) -> Result<(), Error> {
     let models = Fleet(fleet);
     let mut sink = VecSink::new(MAX_SINK_EVENTS, MAX_SINK_BYTES);
     let cancel = Cancel::new();
+    let paused = Mutex::new(Vec::new());
+    let cancel_on_pause = program.cancel_on_pause;
+    // A real wait. With `cancel_on_pause` the port cancels the run and then never ends by itself,
+    // so only the library's own race against cancellation can end the run before the backstop.
+    let pause = |wait: Duration| -> BoxFuture<'static, ()> {
+        if let Ok(mut paused) = paused.lock() {
+            paused.push(millis(wait));
+        }
+        if cancel_on_pause {
+            cancel.cancel();
+            Box::pin(std::future::pending())
+        } else {
+            Box::pin(tokio::time::sleep(wait))
+        }
+    };
+    let started = Instant::now();
     let run = tokio::runtime::Builder::new_current_thread()
+        .enable_time()
         .build()
         .map_err(|_| Error::new(ErrorCode::Unavailable, "no local runtime"))?
-        .block_on(catalog.run_turn(
-            &document.request,
-            input.input_tokens,
-            policy,
-            Ports {
-                models: &models,
-                admit: &mut admit,
-                sink: &mut sink,
-                cancel: &cancel,
-            },
-        ))?;
+        // The backstop's timer is created inside the runtime, not while building its argument.
+        .block_on(async {
+            tokio::time::timeout(
+                BACKSTOP,
+                catalog.run_turn(
+                    &document.request,
+                    input.input_tokens,
+                    policy,
+                    Ports {
+                        models: &models,
+                        admit: &mut admit,
+                        sink: &mut sink,
+                        cancel: &cancel,
+                        pause: &pause,
+                    },
+                ),
+            )
+            .await
+        });
+    let elapsed = started.elapsed();
+    if let Some(within) = program.within_ms {
+        facts["ended_within"] = json!(elapsed <= Duration::from_millis(within));
+    }
+    facts["paused_ms"] = json!(
+        paused
+            .lock()
+            .map(|paused| paused.clone())
+            .unwrap_or_default()
+    );
+    let Ok(run) = run else {
+        facts["error_code"] = json!("fixture:backstop");
+        return Ok(());
+    };
+    let run = run?;
     record(&run, facts);
     facts["delivered_text"] = json!(sink.text());
+    facts["warnings"] = json!(
+        sink.events()
+            .iter()
+            .filter_map(|event| match event {
+                StreamEvent::Warning { code, message } => Some(format!("{code}: {message}")),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+    );
     Ok(())
+}
+
+fn failure_facts(error: &Error, facts: &mut Value) {
+    facts["error_code"] = json!(error.code);
+    facts["retriable"] = json!(error.retriable);
+    facts["error_message"] = json!(error.message);
 }
 
 fn record(run: &FallbackRun, facts: &mut Value) {
@@ -291,6 +428,6 @@ fn record(run: &FallbackRun, facts: &mut Value) {
             .collect::<Vec<_>>()
     );
     if let Err(error) = &run.result {
-        facts["error_code"] = json!(error.code);
+        failure_facts(error, facts);
     }
 }

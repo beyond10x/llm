@@ -24,6 +24,17 @@ domain: llm.transport
 # seconds. An HTTP-date `Retry-After` is the time until that date, so a date already past is a
 # zero hint whatever the wall clock reads (transport.rs retry_after). A hint never causes a
 # second attempt.
+#
+# Retry class (Harness harness-http/src/status.rs:28-34, sse.rs:142-148). Every refusal says
+# whether another identical attempt may answer: `retriable`. Dispatch stays the evidence of
+# what the far side may have done and is not rewritten to make a refusal retriable; the class
+# is a separate fact. Retriable: 408, 429 and every status from 500 to 599 inclusive (529
+# included), a request that failed before any response arrived, a response body that failed
+# while streaming, and an end of stream inside an event. Final: 401 and 403, 300 to 399, every
+# other status (400 and 409 included), a frame that is not JSON, a line or stream over its
+# bound, cancellation and every deadline. The transport itself still sends exactly once;
+# whether another attempt is made, and only before any output is visible, is routing's
+# decision (llm.routing).
 types:
   - name: llm.transport.Framing
     kind: enum
@@ -46,6 +57,9 @@ entities:
       - {name: error_code, type: 'Optional<String>'}
       - {name: dispatch, type: 'Optional<String>'}
       - {name: retry_after_ms, type: 'Optional<Integer>'}
+      # The refusal's retry class: true when another identical attempt may answer. Absent when
+      # nothing was refused.
+      - {name: retriable, type: 'Optional<Boolean>'}
       # Every event the stream yielded, in order: `done`, or `payload:<event name or ->:<data>`.
       - {name: events, type: 'List<String>'}
       # How the stream ended: `end` for a clean end of stream, `error` for a refusal; absent

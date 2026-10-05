@@ -567,6 +567,22 @@
       "llm.routing/authored/protocol-responses-independent-of-provider",
       "llm.routing/authored/repointed-endpoint-refuses-opaque-state",
       "llm.routing/authored/repointed-model-refuses-opaque-state",
+      "llm.routing/authored/retry-a-cut-stream-that-showed-nothing-is-retried",
+      "llm.routing/authored/retry-a-refused-failure-is-never-retried-even-when-marked",
+      "llm.routing/authored/retry-a-retriable-failure-is-retried-on-the-same-target-before-output",
+      "llm.routing/authored/retry-a-retriable-failure-with-unknown-dispatch-falls-back",
+      "llm.routing/authored/retry-a-retry-bound-of-seventeen-is-refused",
+      "llm.routing/authored/retry-a-retry-bound-of-sixteen-is-accepted",
+      "llm.routing/authored/retry-a-retry-bound-of-zero-is-refused",
+      "llm.routing/authored/retry-a-server-delay-is-capped-and-waited-inside-the-retry",
+      "llm.routing/authored/retry-a-server-delay-never-shortens-the-local-back-off",
+      "llm.routing/authored/retry-an-attempt-that-showed-output-is-never-retried",
+      "llm.routing/authored/retry-an-exhausted-retry-goes-up-final-naming-its-count",
+      "llm.routing/authored/retry-an-unauthorized-failure-is-never-retried-even-when-marked",
+      "llm.routing/authored/retry-an-unmarked-failure-falls-back-without-a-same-target-retry",
+      "llm.routing/authored/retry-attempts-are-spent-on-one-target-then-the-route-falls-back",
+      "llm.routing/authored/retry-the-default-policy-is-harnesss-and-a-cancellation-ends-its-wait",
+      "llm.routing/authored/retry-the-default-server-delay-cap-is-thirty-seconds",
       "llm.routing/authored/subscription-billing-independent-of-protocol",
       "llm.routing/authored/the-configuration-digest-ignores-declaration-order-and-comments",
       "llm.routing/authored/the-configuration-digest-is-pinned",
@@ -698,6 +714,20 @@
       "llm.transport/authored/an-unrunnable-program-exchanges-nothing",
       "llm.transport/authored/keepalives-cannot-outlast-the-total-bound",
       "llm.transport/authored/payloads-only-framing-does-not-recognise-a-sentinel",
+      "llm.transport/authored/retry-class-a-bad-request-is-final",
+      "llm.transport/authored/retry-class-a-clean-stream-has-no-retry-class",
+      "llm.transport/authored/retry-class-a-conflict-is-final",
+      "llm.transport/authored/retry-class-a-cut-after-a-whole-event-is-still-retriable",
+      "llm.transport/authored/retry-class-a-forbidden-status-is-final",
+      "llm.transport/authored/retry-class-a-frame-that-is-not-json-is-final",
+      "llm.transport/authored/retry-class-a-rate-limit-is-retriable",
+      "llm.transport/authored/retry-class-a-redirect-status-is-final",
+      "llm.transport/authored/retry-class-a-request-timeout-is-retriable",
+      "llm.transport/authored/retry-class-a-server-failure-is-retriable",
+      "llm.transport/authored/retry-class-a-stream-cut-inside-its-first-event-is-retriable",
+      "llm.transport/authored/retry-class-an-overloaded-status-529-is-retriable",
+      "llm.transport/authored/retry-class-an-unauthorized-status-is-final",
+      "llm.transport/authored/retry-class-an-unavailable-gateway-is-retriable",
       "llm.transport/authored/silence-past-the-idle-bound-ends-the-stream",
       "llm.transport/authored/sixty-five-request-headers-are-refused-before-sending",
       "llm.transport/authored/sixty-four-request-headers-are-sent",
@@ -3535,6 +3565,86 @@
         "disposition": "accepted",
         "scenario": "llm.routing/authored/repointed-model-refuses-opaque-state"
       },
+      "routing/scenarios/retry-a-cut-stream-that-showed-nothing-is-retried.yaml": {
+        "digest": "sha256:0698a5078573bf123c40e80c43de9206dc84402b890dda6fc022fe021fd36f18",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-cut-stream-that-showed-nothing-is-retried"
+      },
+      "routing/scenarios/retry-a-refused-failure-is-never-retried-even-when-marked.yaml": {
+        "digest": "sha256:fc6a6ba2747156a2b6bfbcfcfc0e38f66d47903d18737e062a7f7823a0c1ad44",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-refused-failure-is-never-retried-even-when-marked"
+      },
+      "routing/scenarios/retry-a-retriable-failure-is-retried-on-the-same-target-before-output.yaml": {
+        "digest": "sha256:74a5eed6759192a7929ea4f7a2a60e48978544c0e07ead7f4f8311ac238d1f3b",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-retriable-failure-is-retried-on-the-same-target-before-output"
+      },
+      "routing/scenarios/retry-a-retriable-failure-with-unknown-dispatch-falls-back.yaml": {
+        "digest": "sha256:42bfd6c671e81142f3f9adc76791f71225942d3fd3f679cb3c0e3a9b571acf30",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-retriable-failure-with-unknown-dispatch-falls-back"
+      },
+      "routing/scenarios/retry-a-retry-bound-of-seventeen-is-refused.yaml": {
+        "digest": "sha256:a8c98f19f1bdedf009b660fc2f603e9342902a52c5dd4cffaee2157479454520",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-retry-bound-of-seventeen-is-refused"
+      },
+      "routing/scenarios/retry-a-retry-bound-of-sixteen-is-accepted.yaml": {
+        "digest": "sha256:f52bbbc17149f1cb70058ca952f76f991be9c5047dc4493aa91b1ba6e87c6035",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-retry-bound-of-sixteen-is-accepted"
+      },
+      "routing/scenarios/retry-a-retry-bound-of-zero-is-refused.yaml": {
+        "digest": "sha256:106ddfe5191f908678636dd9506131ec16562234e15524e71774341fdc4d79f9",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-retry-bound-of-zero-is-refused"
+      },
+      "routing/scenarios/retry-a-server-delay-is-capped-and-waited-inside-the-retry.yaml": {
+        "digest": "sha256:3ebc78983c0df8fd11ec17069974988b11f7b1e4edacb4e3cfc9b53635cb96c3",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-server-delay-is-capped-and-waited-inside-the-retry"
+      },
+      "routing/scenarios/retry-a-server-delay-never-shortens-the-local-back-off.yaml": {
+        "digest": "sha256:5c7775b1c2ebe66f39ddff9eb6fc72fba742d19e434f39c9282019c432fd47bb",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-a-server-delay-never-shortens-the-local-back-off"
+      },
+      "routing/scenarios/retry-an-attempt-that-showed-output-is-never-retried.yaml": {
+        "digest": "sha256:37d9adc4692b70b4bf68fdde1cc6fb668eadc531ca01b34d259e78f4ec6358af",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-an-attempt-that-showed-output-is-never-retried"
+      },
+      "routing/scenarios/retry-an-exhausted-retry-goes-up-final-naming-its-count.yaml": {
+        "digest": "sha256:1c3094eeef629f55369b52ca05b248fbdd8356cb23d93add5c09fe366b3bdbd8",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-an-exhausted-retry-goes-up-final-naming-its-count"
+      },
+      "routing/scenarios/retry-an-unauthorized-failure-is-never-retried-even-when-marked.yaml": {
+        "digest": "sha256:7d2ad3e72f9e5ca884870247b97d04a14e4ae343f7b47f96b23d6513b20a3557",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-an-unauthorized-failure-is-never-retried-even-when-marked"
+      },
+      "routing/scenarios/retry-an-unmarked-failure-falls-back-without-a-same-target-retry.yaml": {
+        "digest": "sha256:a83aecffbec451adfc9e396e3c65918b15bd5142019d0d4d97e6a31e0b3b89e6",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-an-unmarked-failure-falls-back-without-a-same-target-retry"
+      },
+      "routing/scenarios/retry-attempts-are-spent-on-one-target-then-the-route-falls-back.yaml": {
+        "digest": "sha256:10b6d9714f18e68a02036c341d5e88fa90a2398dcaa4b5e57d617e8b13f115d2",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-attempts-are-spent-on-one-target-then-the-route-falls-back"
+      },
+      "routing/scenarios/retry-the-default-policy-is-harnesss-and-a-cancellation-ends-its-wait.yaml": {
+        "digest": "sha256:deb75a59c06fe9acabf8654a9446cffed7a1a582260488b50d189bbc95b2b51b",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-the-default-policy-is-harnesss-and-a-cancellation-ends-its-wait"
+      },
+      "routing/scenarios/retry-the-default-server-delay-cap-is-thirty-seconds.yaml": {
+        "digest": "sha256:432834e9badc18d2671495bc2e60066ca8bb6ff214b2f2fa3fb3130578d30e9c",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/retry-the-default-server-delay-cap-is-thirty-seconds"
+      },
       "routing/scenarios/subscription-billing-independent-of-protocol.yaml": {
         "digest": "sha256:2e6ec012258fe705f6655b19947eeaf449e68286e6ebed0d383445c831d313e6",
         "disposition": "accepted",
@@ -4170,6 +4280,76 @@
         "disposition": "accepted",
         "scenario": "llm.transport/authored/payloads-only-framing-does-not-recognise-a-sentinel"
       },
+      "transport/scenarios/retry-class-a-bad-request-is-final.yaml": {
+        "digest": "sha256:69d3bddded96939cae11fb4c19408172cec1a07cb898a28e46793c24ec9adf15",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-bad-request-is-final"
+      },
+      "transport/scenarios/retry-class-a-clean-stream-has-no-retry-class.yaml": {
+        "digest": "sha256:fec9f4d60d58374dfa5677f584291acf292abf124d1d05f07a1aa24202854684",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-clean-stream-has-no-retry-class"
+      },
+      "transport/scenarios/retry-class-a-conflict-is-final.yaml": {
+        "digest": "sha256:9630c0834d48857a1a133ae895728c63791a46a91aa4a51c8e5b0bfcacb58a17",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-conflict-is-final"
+      },
+      "transport/scenarios/retry-class-a-cut-after-a-whole-event-is-still-retriable.yaml": {
+        "digest": "sha256:3d776315cf17fc4f53a2ae93775790df0d493872b072cb4445263903bfbde7ce",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-cut-after-a-whole-event-is-still-retriable"
+      },
+      "transport/scenarios/retry-class-a-forbidden-status-is-final.yaml": {
+        "digest": "sha256:d2a5e4d19dcbe099c13eea9c2b1b5009745a498faf9a69aa2d089e11000848a7",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-forbidden-status-is-final"
+      },
+      "transport/scenarios/retry-class-a-frame-that-is-not-json-is-final.yaml": {
+        "digest": "sha256:b8f6f6b4408da60b65b46aedf5079f59329101e6f8147f0f2a3b666c99f4cf1f",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-frame-that-is-not-json-is-final"
+      },
+      "transport/scenarios/retry-class-a-rate-limit-is-retriable.yaml": {
+        "digest": "sha256:5551c9babf10003a3e0d0140d0d62901cb17a20803e5dd5924cfecc771a24595",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-rate-limit-is-retriable"
+      },
+      "transport/scenarios/retry-class-a-redirect-status-is-final.yaml": {
+        "digest": "sha256:6b26ebdad6b754e30e89bb44b115195732e2f20bbcc6990c6467cfab263a53ff",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-redirect-status-is-final"
+      },
+      "transport/scenarios/retry-class-a-request-timeout-is-retriable.yaml": {
+        "digest": "sha256:b121df4104547d575284b77146af7e5b3d3031fed98c0197ae6202345cb16aab",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-request-timeout-is-retriable"
+      },
+      "transport/scenarios/retry-class-a-server-failure-is-retriable.yaml": {
+        "digest": "sha256:f94a5685d2fbe1c3476016aa54f3538ac2935f761ec7cd4683b4e59a0f2057dc",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-server-failure-is-retriable"
+      },
+      "transport/scenarios/retry-class-a-stream-cut-inside-its-first-event-is-retriable.yaml": {
+        "digest": "sha256:79fbb3c664b117eef711001532df7f9684528b4ab7736f17c456c2d5f96b37dd",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-a-stream-cut-inside-its-first-event-is-retriable"
+      },
+      "transport/scenarios/retry-class-an-overloaded-status-529-is-retriable.yaml": {
+        "digest": "sha256:a99731fa40a70a3b1420bd00ab5d0647fac7e91ac5d13886ec7be1212007ac83",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-an-overloaded-status-529-is-retriable"
+      },
+      "transport/scenarios/retry-class-an-unauthorized-status-is-final.yaml": {
+        "digest": "sha256:179c3c089a0a22d47f586be67e72655969f364fa6d64e0b562b7269465f8682f",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-an-unauthorized-status-is-final"
+      },
+      "transport/scenarios/retry-class-an-unavailable-gateway-is-retriable.yaml": {
+        "digest": "sha256:b7cd5cb40754bd300eda0808e422dd35914519dc39a48e31e8136cf3e429d7a0",
+        "disposition": "accepted",
+        "scenario": "llm.transport/authored/retry-class-an-unavailable-gateway-is-retriable"
+      },
       "transport/scenarios/silence-past-the-idle-bound-ends-the-stream.yaml": {
         "digest": "sha256:25f2649df974687b2b80b559335d93ad0e47ed2591ac82d3d85921e42014546a",
         "disposition": "accepted",
@@ -4217,7 +4397,7 @@
       }
     },
     "counts": {
-      "authored": 702,
+      "authored": 732,
       "generated": 24,
       "outside": 0,
       "refused": 0
@@ -4262,8 +4442,8 @@
     }
   },
   "provenance": {
-    "contract_digest": "eda0075c7399419bb5fc65ae8e63c0b5d653a78c925b7a2f27d25e2d079c2c94",
-    "spec_digest": "5d5cd6dd56afb2cf2aff4fc0e24f44efa690cec66ad90ae589f90933cd079cd0",
+    "contract_digest": "4c985191d1ee4767d5f35020beedab1362bd5f4d5708bd26ad1c78fca7f22752",
+    "spec_digest": "061f88cc96a53e01334de711f34e0e80d38db479f6fbc43917f2b50195768168",
     "specification_version": "v1",
     "suite_version": "ess-conformance/5",
     "system": "llm"
@@ -63594,6 +63774,10 @@
           "name": "llm.routing"
         },
         {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
           "kind": "command",
           "name": "llm.routing.Fallback"
         },
@@ -63697,6 +63881,10 @@
         {
           "kind": "domain",
           "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
         },
         {
           "kind": "command",
@@ -65496,6 +65684,10 @@
           "name": "llm.routing"
         },
         {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
           "kind": "command",
           "name": "llm.routing.Fallback"
         },
@@ -65991,6 +66183,10 @@
           "name": "llm.routing"
         },
         {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
           "kind": "command",
           "name": "llm.routing.Fallback"
         },
@@ -66306,6 +66502,10 @@
           "name": "llm.routing"
         },
         {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
           "kind": "command",
           "name": "llm.routing.Fallback"
         },
@@ -66399,6 +66599,10 @@
         {
           "kind": "domain",
           "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
         },
         {
           "kind": "command",
@@ -66502,6 +66706,10 @@
         {
           "kind": "domain",
           "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
         },
         {
           "kind": "command",
@@ -66718,6 +66926,10 @@
           "name": "llm.routing"
         },
         {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
           "kind": "command",
           "name": "llm.routing.Fallback"
         },
@@ -66817,6 +67029,10 @@
         {
           "kind": "domain",
           "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
         },
         {
           "kind": "command",
@@ -66922,6 +67138,10 @@
         {
           "kind": "domain",
           "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
         },
         {
           "kind": "command",
@@ -67031,6 +67251,10 @@
           "name": "llm.routing"
         },
         {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
           "kind": "command",
           "name": "llm.routing.Fallback"
         },
@@ -67138,6 +67362,10 @@
           "name": "llm.routing"
         },
         {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
           "kind": "command",
           "name": "llm.routing.Fallback"
         },
@@ -67233,6 +67461,10 @@
           "name": "llm.routing"
         },
         {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
           "kind": "command",
           "name": "llm.routing.Fallback"
         },
@@ -67326,6 +67558,10 @@
         {
           "kind": "domain",
           "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
         },
         {
           "kind": "command",
@@ -68908,6 +69144,1785 @@
           },
           "step": "expect_view",
           "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-cut-stream-that-showed-nothing-is-retried": {
+      "purpose": "a stream cut before any output was shown is retriable although its dispatch is accepted, and the record keeps that dispatch",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"protocol\",\"dispatch\":\"accepted\",\"retriable\":true},\"fail_times\":1},\"remote-large\":{\"emits\":1}},\"retry\":{\"backoff_base_ms\":1}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:protocol:accepted",
+                  "coding-primary:succeeded"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-primary"
+                ]
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": [
+                  2.0
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-refused-failure-is-never-retried-even-when-marked": {
+      "purpose": "a refusal such as a 400 or a 409 is never attempted again, even when its producer marked it retriable",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"refused\",\"dispatch\":\"rejected\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"backoff_base_ms\":1}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "ineligible-failure"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": []
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-retriable-failure-is-retried-on-the-same-target-before-output": {
+      "purpose": "a retriable failure that showed nothing is attempted again on the same target, with a doubling wait and a stated warning each time",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\",\"retriable\":true},\"fail_times\":2},\"remote-large\":{\"emits\":1}},\"retry\":{\"backoff_base_ms\":1}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:rate-limited:rejected",
+                  "coding-primary:rate-limited:rejected",
+                  "coding-primary:succeeded"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-primary",
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": [
+                  2.0,
+                  4.0
+                ]
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": null
+              },
+              "visible_events": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:0",
+                  "coding-primary:0",
+                  "coding-primary:0"
+                ]
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": [
+                  "turn-retried: attempt 1 of 4 on coding-primary failed before any output was visible (rate-limited) and is retried after 2 ms",
+                  "turn-retried: attempt 2 of 4 on coding-primary failed before any output was visible (rate-limited) and is retried after 4 ms"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-retriable-failure-with-unknown-dispatch-falls-back": {
+      "purpose": "fallback follows the retry class whatever the dispatch, and one attempt per target disables same-target retry",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"unknown\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"max_attempts\":1}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:transport:unknown",
+                  "coding-secondary:succeeded"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-secondary"
+                ]
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": []
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-retry-bound-of-seventeen-is-refused": {
+      "purpose": "a retry policy allowing seventeen attempts on one target is refused before any attempt",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"unknown\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"max_attempts\":17,\"backoff_base_ms\":0}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": null
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-retry-bound-of-sixteen-is-accepted": {
+      "purpose": "the widest retry bound, sixteen attempts on one target, is accepted and spent in full",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"unknown\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"max_attempts\":16,\"backoff_base_ms\":0}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "scripted failure (after 16 attempts)"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "exhausted"
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-retry-bound-of-zero-is-refused": {
+      "purpose": "a retry policy allowing no attempt is refused before any attempt",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"unknown\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"max_attempts\":0}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": null
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-server-delay-is-capped-and-waited-inside-the-retry": {
+      "purpose": "a server-requested delay longer than the policy's cap is waited only up to the cap, inside the retry, and the warning states the wait",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\",\"retriable\":true,\"retry_after_ms\":60000},\"fail_times\":1},\"remote-large\":{\"emits\":1}},\"retry\":{\"backoff_base_ms\":1,\"max_server_delay_ms\":5}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-primary"
+                ]
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": [
+                  5.0
+                ]
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": [
+                  "turn-retried: attempt 1 of 4 on coding-primary failed before any output was visible (rate-limited) and is retried after 5 ms"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-a-server-delay-never-shortens-the-local-back-off": {
+      "purpose": "a server-requested delay shorter than the local back-off does not shorten it",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\",\"retriable\":true,\"retry_after_ms\":1},\"fail_times\":1},\"remote-large\":{\"emits\":1}},\"retry\":{\"backoff_base_ms\":4}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-primary"
+                ]
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": [
+                  8.0
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-an-attempt-that-showed-output-is-never-retried": {
+      "purpose": "once an attempt put anything on the caller's sink its failure is final for the run, though its class stays honest for a caller that owns the transcript",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":1,\"fail\":{\"code\":\"transport\",\"dispatch\":\"rejected\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"backoff_base_ms\":1}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "scripted failure"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "visible-output"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": []
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              },
+              "visible_events": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:1"
+                ]
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-an-exhausted-retry-goes-up-final-naming-its-count": {
+      "purpose": "when the last target's attempts are spent the failure is no longer retriable and its message names how many attempts were made",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"unknown\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"backoff_base_ms\":1}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-primary",
+                  "coding-primary",
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "scripted failure (after 4 attempts)"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "exhausted"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": [
+                  2.0,
+                  4.0,
+                  8.0
+                ]
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-an-unauthorized-failure-is-never-retried-even-when-marked": {
+      "purpose": "an unauthorized failure is never attempted again, even when its producer marked it retriable",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"unauthorized\",\"dispatch\":\"rejected\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"backoff_base_ms\":1}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "ineligible-failure"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": []
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-an-unmarked-failure-falls-back-without-a-same-target-retry": {
+      "purpose": "a failure whose class is not retriable falls back exactly as before, with no same-target retry, no wait and no warning",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"not-sent\"}},\"remote-large\":{\"emits\":1}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-secondary"
+                ]
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": []
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-attempts-are-spent-on-one-target-then-the-route-falls-back": {
+      "purpose": "a retriable failure is retried on its target up to the policy's count, then the route falls back to the next declared compatible target",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"unknown\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"retry\":{\"max_attempts\":3,\"backoff_base_ms\":1}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:transport:unknown",
+                  "coding-primary:transport:unknown",
+                  "coding-primary:transport:unknown",
+                  "coding-secondary:succeeded"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-primary",
+                  "coding-primary",
+                  "coding-secondary"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": [
+                  2.0,
+                  4.0
+                ]
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": [
+                  "turn-retried: attempt 1 of 3 on coding-primary failed before any output was visible (transport) and is retried after 2 ms",
+                  "turn-retried: attempt 2 of 3 on coding-primary failed before any output was visible (transport) and is retried after 4 ms"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-the-default-policy-is-harnesss-and-a-cancellation-ends-its-wait": {
+      "purpose": "retry is on by default with Harness's policy (four attempts, a first wait of one second), and a cancellation during the wait ends the run at once",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"transport\",\"dispatch\":\"unknown\",\"retriable\":true}},\"remote-large\":{\"emits\":1}},\"cancel_on_pause\":true,\"within_ms\":500}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "ended_within": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "cancelled"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "cancelled"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": [
+                  1000.0
+                ]
+              },
+              "retry_policy": {
+                "kind": "literal",
+                "value": {
+                  "backoff_base_ms": 500.0,
+                  "max_attempts": 4.0,
+                  "max_doublings": 4.0,
+                  "max_server_delay_ms": 30000.0
+                }
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": [
+                  "turn-retried: attempt 1 of 4 on coding-primary failed before any output was visible (transport) and is retried after 1000 ms"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/retry-the-default-server-delay-cap-is-thirty-seconds": {
+      "purpose": "under the default policy a server delay of a minute is honoured only up to thirty seconds",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"local-tiny\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 128\nmax_output_tokens = 128\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 2\n\n[[targets]]\nid = \"coding-middle\"\nroute_id = \"coding\"\nserving_model_id = \"local-tiny\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\",\"retriable\":true,\"retry_after_ms\":60000}},\"remote-large\":{\"emits\":1}},\"cancel_on_pause\":true,\"within_ms\":500}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "ended_within": {
+                "kind": "literal",
+                "value": true
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "cancelled"
+              },
+              "paused_ms": {
+                "kind": "literal",
+                "value": [
+                  30000.0
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
         }
       ]
     },
@@ -82858,6 +84873,1222 @@
               "events": {
                 "kind": "literal",
                 "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-bad-request-is-final": {
+      "purpose": "400 is a refusal the identical request meets again, so it is final",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":400}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "rejected"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-clean-stream-has-no-retry-class": {
+      "purpose": "an exchange that refused nothing reports no retry class",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"chunks\":[\"data: {\\\"n\\\":1}\\n\\n\"]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "end": {
+                "kind": "literal",
+                "value": "end"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-conflict-is-final": {
+      "purpose": "409 is a disagreement about state that the identical request meets again, so it is final",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":409}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "rejected"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-cut-after-a-whole-event-is-still-retriable": {
+      "purpose": "the class says what was observed, not whether anything was shown; a cut after a whole event is retriable and routing decides on visibility",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"chunks\":[\"data: {\\\"text\\\":\\\"prefix\\\"}\\n\\n\",\"data: {\\\"partial\\\":\"]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "end": {
+                "kind": "literal",
+                "value": "error"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "events": {
+                "kind": "literal",
+                "value": [
+                  "payload:-:{\"text\":\"prefix\"}"
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-forbidden-status-is-final": {
+      "purpose": "403 is unauthorized and final, like 401",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":403}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "rejected"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-frame-that-is-not-json-is-final": {
+      "purpose": "a malformed frame is a protocol refusal the identical request meets again, so unlike a cut stream it is final",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"chunks\":[\"data: not json\\n\\n\"]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "events": {
+                "kind": "literal",
+                "value": []
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-rate-limit-is-retriable": {
+      "purpose": "429 is retriable, rejected, and carries its server delay; the transport itself still sends once",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":429,\"retry_after\":\"7\"}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "rejected"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "rate-limited"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              },
+              "retry_after_ms": {
+                "kind": "literal",
+                "value": 7000.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-redirect-status-is-final": {
+      "purpose": "a redirect status is refused, never followed and final",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":302}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-request-timeout-is-retriable": {
+      "purpose": "408 is a retriable transport failure whose dispatch stays unknown, and the transport itself sends once",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":408}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-server-failure-is-retriable": {
+      "purpose": "500 is a retriable transport failure whose dispatch stays unknown, because the work may have run",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":500}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-a-stream-cut-inside-its-first-event-is-retriable": {
+      "purpose": "an end of stream inside the first event yields nothing and is a retriable protocol refusal; dispatch stays accepted and nothing is resent here",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"chunks\":[\"data: {\\\"partial\\\":\"]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "end": {
+                "kind": "literal",
+                "value": "error"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "events": {
+                "kind": "literal",
+                "value": []
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-an-overloaded-status-529-is-retriable": {
+      "purpose": "529, an unregistered overloaded status, lands with the 5xx range as a retriable transport failure",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":529}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-an-unauthorized-status-is-final": {
+      "purpose": "401 is unauthorized and final; another attempt with the same credential is refused the same way",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":401}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "rejected"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        }
+      ]
+    },
+    "llm.transport/authored/retry-class-an-unavailable-gateway-is-retriable": {
+      "purpose": "503, a gateway still starting a backend, is a retriable transport failure with dispatch unknown",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.transport"
+        },
+        {
+          "kind": "command",
+          "name": "llm.transport.Exchange"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.transport.LastExchange"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.transport.Exchange",
+          "input": {
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"server\":{\"status\":503}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.transport.Exchange",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.transport.LastExchange"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "dispatch": {
+                "kind": "literal",
+                "value": "unknown"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
               }
             }
           },

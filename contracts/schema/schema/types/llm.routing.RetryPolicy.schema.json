@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.routing.RetryPolicy",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "061f88cc96a53e01334de711f34e0e80d38db479f6fbc43917f2b50195768168",
+    "contract_digest": "slice-sha256/2:b289724b83793b1d2c03b3bde55918f3a001ea8c6d8791beab6430416c448775",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.routing.RetryPolicy": {
+      "title": "RetryPolicy",
+      "x-ess-name": "llm.routing.RetryPolicy",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "max_attempts": {
+          "type": "integer"
+        },
+        "backoff_base_ms": {
+          "type": "integer"
+        },
+        "max_doublings": {
+          "type": "integer"
+        },
+        "max_server_delay_ms": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_attempts",
+        "backoff_base_ms",
+        "max_doublings",
+        "max_server_delay_ms"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

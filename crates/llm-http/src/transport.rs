@@ -155,7 +155,7 @@ impl HttpClient {
             () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),
             reply = tokio::time::timeout_at(deadline.min(started + self.limits.response_headers), self.client.execute(request)) => {
                 reply.map_err(|_| Error::new(ErrorCode::Deadline, "HTTP response-header deadline exceeded").with_dispatch(Dispatch::Unknown))?
-                    .map_err(|_| Error::new(ErrorCode::Transport, "HTTP request failed").with_dispatch(Dispatch::Unknown))?
+                    .map_err(|_| Error::new(ErrorCode::Transport, "HTTP request failed").with_dispatch(Dispatch::Unknown).with_retriable(true))?
             }
         };
         if !response.status().is_success() {
@@ -244,7 +244,7 @@ impl SseStream {
                 () = self.cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
                 chunk = tokio::time::timeout_at(self.deadline.min(Instant::now() + self.idle), response.chunk()) => {
                     chunk.map_err(|_| Error::new(ErrorCode::Deadline, "HTTP idle or total deadline exceeded").with_dispatch(Dispatch::Accepted))?
-                        .map_err(|_| Error::new(ErrorCode::Transport, "HTTP response body failed").with_dispatch(Dispatch::Accepted))?
+                        .map_err(|_| Error::new(ErrorCode::Transport, "HTTP response body failed").with_dispatch(Dispatch::Accepted).with_retriable(true))?
                 }
             };
             if let Some(chunk) = chunk {
@@ -261,22 +261,28 @@ impl SseStream {
 }
 
 /// HTTP status evidence only. Arbitrary error-body text is never copied into a diagnostic.
+///
+/// 408, 429 and 500-599 (529 included) are retriable, as in Harness `status_error`: the far side
+/// did not get to answer. 409 and every other refusal are final: the identical request meets
+/// them again. A 5xx keeps dispatch `unknown`, because the work may have run.
 pub fn status_error(status: u16, headers: &HeaderMap, now: SystemTime) -> Error {
-    let (code, dispatch) = match status {
-        401 | 403 => (ErrorCode::Unauthorized, Dispatch::Rejected),
-        429 => (ErrorCode::RateLimited, Dispatch::Rejected),
-        408 | 500..=599 => (ErrorCode::Transport, Dispatch::Unknown),
-        300..=399 => (ErrorCode::Refused, Dispatch::Unknown),
-        _ => (ErrorCode::Refused, Dispatch::Rejected),
+    let (code, dispatch, retriable) = match status {
+        401 | 403 => (ErrorCode::Unauthorized, Dispatch::Rejected, false),
+        429 => (ErrorCode::RateLimited, Dispatch::Rejected, true),
+        408 | 500..=599 => (ErrorCode::Transport, Dispatch::Unknown, true),
+        300..=399 => (ErrorCode::Refused, Dispatch::Unknown, false),
+        _ => (ErrorCode::Refused, Dispatch::Rejected, false),
     };
-    let mut error =
-        Error::new(code, format!("HTTP endpoint returned status {status}")).with_dispatch(dispatch);
+    let mut error = Error::new(code, format!("HTTP endpoint returned status {status}"))
+        .with_dispatch(dispatch)
+        .with_retriable(retriable);
     error.retry_after_ms = retry_after(headers, now)
         .map(|duration| u64::try_from(duration.as_millis()).unwrap_or(u64::MAX));
     error
 }
 
-/// Parses Retry-After with a caller-supplied clock; a hint never authorizes another attempt.
+/// Parses Retry-After with a caller-supplied clock. A hint is a delay, never a reason to retry:
+/// routing waits on it, capped, only for a failure whose class is already retriable.
 pub fn retry_after(headers: &HeaderMap, now: SystemTime) -> Option<Duration> {
     let value = headers.get(RETRY_AFTER)?.to_str().ok()?.trim();
     if !value.is_empty() && value.bytes().all(|b| b.is_ascii_digit()) {

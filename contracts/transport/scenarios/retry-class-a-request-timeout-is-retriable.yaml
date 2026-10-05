@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: retry-class-a-request-timeout-is-retriable
+summary: 408 is a retriable transport failure whose dispatch stays unknown, and the transport itself sends once
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.transport.Exchange
+  input:
+    program_json: '{"server":{"status":408}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastExchange
+  contains:
+    error_code: transport
+    dispatch: unknown
+    retriable: true
+    requests: 1

@@ -28,7 +28,12 @@ pub enum ErrorCode {
     Unavailable,
 }
 
-/// Safe diagnostics and dispatch evidence; never automatic permission to resend a request.
+/// Safe diagnostics, dispatch evidence and a retry class.
+///
+/// Dispatch says what the far side may have done; `retriable` says whether another identical
+/// attempt may answer. They are separate facts: a stream cut inside an event keeps `accepted`
+/// dispatch and is retriable. Neither is permission to resend after output became visible;
+/// [`Error::may_retry`] is the whole class decision and the caller owns visibility.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, thiserror::Error)]
 #[serde(deny_unknown_fields)]
 #[error("{code:?}: {message}")]
@@ -38,6 +43,9 @@ pub struct Error {
     pub dispatch: Dispatch,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub retry_after_ms: Option<u64>,
+    /// Set by the producer that observed the failure; absent on the wire when false.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub retriable: bool,
     /// Last valid bound evidence, including partial usage from an interrupted stream.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub observation: Option<Box<TurnObservation>>,
@@ -51,6 +59,7 @@ impl Error {
             message: message.into(),
             dispatch: Dispatch::NotSent,
             retry_after_ms: None,
+            retriable: false,
             observation: None,
         }
     }
@@ -59,6 +68,28 @@ impl Error {
     pub const fn with_dispatch(mut self, dispatch: Dispatch) -> Self {
         self.dispatch = dispatch;
         self
+    }
+
+    /// States whether another identical attempt may answer.
+    #[must_use]
+    pub const fn with_retriable(mut self, retriable: bool) -> Self {
+        self.retriable = retriable;
+        self
+    }
+
+    /// Whether this failure may be attempted again before any output is visible: its producer
+    /// marked it retriable and its code is one Harness retries. Unauthorized, refused,
+    /// invalid-request, unsupported, too-large, cancelled and deadline failures never are,
+    /// whatever the mark says.
+    pub const fn may_retry(&self) -> bool {
+        self.retriable
+            && matches!(
+                self.code,
+                ErrorCode::Transport
+                    | ErrorCode::RateLimited
+                    | ErrorCode::Unavailable
+                    | ErrorCode::Protocol
+            )
     }
 
     #[must_use]

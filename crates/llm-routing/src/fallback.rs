@@ -1,26 +1,108 @@
-//! Explicit ordered fallback over single-attempt `Model` ports.
+//! Explicit ordered fallback over single-attempt `Model` ports, with same-target retry.
 //!
-//! Only the route's declared, compatible, admitted targets are attempted, in declared order, and
-//! only after a defined failure class that left nothing visible and was provably not accepted.
+//! Only the route's declared, compatible, admitted targets are attempted, in declared order.
+//! A target is attempted again, up to the retry policy's count, only after a failure whose class
+//! may be retried ([`Error::may_retry`]) and that left nothing visible. The run moves to the next
+//! target only after a failure that left nothing visible and is either such a class or was
+//! provably not accepted. Every attempt is recorded with its own dispatch evidence.
 
 use crate::{Catalog, MAX_ROUTE_TARGETS, RouteExplanation, Selection};
 use llm_core::{
     AuthKind, BillingKind, BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Model, Provenance,
     StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
 };
-use std::time::Instant;
+use std::{
+    future::{Future, poll_fn},
+    pin::pin,
+    task::Poll,
+    time::{Duration, Instant},
+};
 
 /// Supplies the single-attempt port that serves a declared serving model.
 pub trait Models: Sync {
     fn model(&self, serving_model_id: &Id) -> Option<&dyn Model>;
 }
 
-/// Caller-owned bounds. `max_attempts == 1` disables fallback regardless of the route.
+/// The widest same-target retry bound, the first attempt included.
+pub const MAX_RETRY_ATTEMPTS: u32 = 16;
+
+/// The warning code every same-target retry states on the caller's sink before its wait.
+pub const RETRY_WARNING: &str = "turn-retried";
+
+/// How many attempts one target gets and how the waits between them grow (Harness
+/// `RetryPolicy`, `harness-http/src/retry.rs`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RetryPolicy {
+    /// Attempts per target, the first included; one disables same-target retry.
+    pub max_attempts: u32,
+    /// Doubled once per attempt already made, so the wait before the second attempt is twice it.
+    pub backoff_base: Duration,
+    /// Doublings after which the wait stops growing.
+    pub max_doublings: u32,
+    /// The longest server-requested delay honoured.
+    pub max_server_delay: Duration,
+}
+
+impl RetryPolicy {
+    /// Harness's: four attempts, waiting 1 s, 2 s and 4 s (8 s at most), server delays capped
+    /// at 30 s.
+    pub const DEFAULT: Self = Self {
+        max_attempts: 4,
+        backoff_base: Duration::from_millis(500),
+        max_doublings: 4,
+        max_server_delay: Duration::from_secs(30),
+    };
+
+    /// One attempt per target.
+    pub const fn disabled() -> Self {
+        Self {
+            max_attempts: 1,
+            ..Self::DEFAULT
+        }
+    }
+
+    /// The local wait after `attempt` attempts were made, doubling and capped.
+    pub fn backoff(self, attempt: u32) -> Duration {
+        self.backoff_base
+            .saturating_mul(2_u32.saturating_pow(attempt.min(self.max_doublings)))
+    }
+
+    /// The wait after `attempt` attempts: a server delay is honoured up to the cap and never
+    /// shortens the local back-off.
+    pub fn delay(self, attempt: u32, server: Option<Duration>) -> Duration {
+        let local = self.backoff(attempt);
+        server.map_or(local, |requested| {
+            requested.min(self.max_server_delay).max(local)
+        })
+    }
+
+    /// # Errors
+    /// Refuses an attempt bound outside one through [`MAX_RETRY_ATTEMPTS`].
+    pub fn validate(&self) -> Result<(), Error> {
+        if self.max_attempts == 0 || self.max_attempts > MAX_RETRY_ATTEMPTS {
+            return Err(Error::invalid(
+                "retry attempt bound must be between one and 16",
+            ));
+        }
+        Ok(())
+    }
+}
+
+impl Default for RetryPolicy {
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
+
+/// Caller-owned bounds. `max_attempts == 1` disables fallback regardless of the route; it
+/// counts targets, and `retry` bounds the attempts on each.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FallbackPolicy {
     pub max_attempts: usize,
-    /// No attempt starts at or after this instant.
+    /// No attempt starts, and no retry wait begins that would end, at or after this instant.
     pub deadline: Option<Instant>,
+    /// Same-target retry; on by default with Harness's policy.
+    pub retry: RetryPolicy,
 }
 
 impl Default for FallbackPolicy {
@@ -28,28 +110,31 @@ impl Default for FallbackPolicy {
         Self {
             max_attempts: MAX_ROUTE_TARGETS,
             deadline: None,
+            retry: RetryPolicy::DEFAULT,
         }
     }
 }
 
 impl FallbackPolicy {
-    /// Attempt only the first compatible target.
+    /// Attempt only the first compatible target. Same-target retry stays on.
     pub const fn disabled() -> Self {
         Self {
             max_attempts: 1,
             deadline: None,
+            retry: RetryPolicy::DEFAULT,
         }
     }
 
     /// # Errors
-    /// Refuses an attempt bound outside one through the route target bound.
+    /// Refuses an attempt bound outside one through the route target bound, or an invalid retry
+    /// policy.
     pub fn validate(&self) -> Result<(), Error> {
         if self.max_attempts == 0 || self.max_attempts > MAX_ROUTE_TARGETS {
             return Err(Error::invalid(
                 "fallback attempt bound must be between one and 64",
             ));
         }
-        Ok(())
+        self.retry.validate()
     }
 }
 
@@ -98,6 +183,8 @@ pub enum Halt {
     Cancelled,
     /// The caller's attempt bound was reached.
     AttemptBound,
+    /// The caller's sink refused a retry warning; the run ends with the sink's error.
+    SinkRefused,
 }
 
 impl Halt {
@@ -112,6 +199,7 @@ impl Halt {
             Self::Deadline => "deadline",
             Self::Cancelled => "cancelled",
             Self::AttemptBound => "attempt-bound",
+            Self::SinkRefused => "sink-refused",
         }
     }
 }
@@ -145,13 +233,59 @@ const fn eligible(error: &Error) -> bool {
         )
 }
 
-/// The caller's side of a run: model ports, limit decision, output sink and cancellation.
+/// Waits the given duration; the run races it against cancellation itself.
+pub type Pause<'p> = &'p (dyn Fn(Duration) -> BoxFuture<'static, ()> + Sync);
+
+/// The caller's side of a run: model ports, limit decision, output sink, cancellation and the
+/// clock a retry waits on.
 pub struct Ports<'p> {
     pub models: &'p dyn Models,
-    /// The caller's limit decision, consulted before every attempt including the first.
+    /// The caller's limit decision, consulted before every attempt including the first and
+    /// every retry.
     pub admit: &'p mut (dyn FnMut(&Selection<'_>) -> Result<(), Error> + Send),
     pub sink: &'p mut dyn StreamSink,
     pub cancel: &'p Cancel,
+    /// Waits between attempts on one target. Routing owns no timer, so it runs on any executor;
+    /// a Tokio caller passes `&|wait| Box::pin(tokio::time::sleep(wait))`.
+    pub pause: Pause<'p>,
+}
+
+/// The kebab-case name of a failure code, as it appears on the wire.
+fn code_label(code: ErrorCode) -> String {
+    serde_json::to_value(code)
+        .ok()
+        .and_then(|value| value.as_str().map(str::to_owned))
+        .unwrap_or_default()
+}
+
+/// Waits `wait` through the caller's pause port unless the caller cancels first. Returns whether
+/// the caller cancelled.
+async fn pause_unless_cancelled(pause: Pause<'_>, wait: Duration, cancel: &Cancel) -> bool {
+    let mut waiting = pause(wait);
+    let mut cancelled = pin!(cancel.cancelled());
+    poll_fn(|context| {
+        if cancelled.as_mut().poll(context).is_ready() {
+            return Poll::Ready(true);
+        }
+        if waiting.as_mut().poll(context).is_ready() {
+            return Poll::Ready(false);
+        }
+        Poll::Pending
+    })
+    .await
+}
+
+/// Clears the class of a failure the run retried as far as it will, naming the count, so a
+/// caller's own loop does not multiply the attempts (Harness `RetryPolicy::exhausted`).
+fn exhausted(result: Result<TurnOutcome, Error>, tries: u32) -> Result<TurnOutcome, Error> {
+    result.map_err(|mut error| {
+        if error.may_retry() {
+            error.retriable = false;
+            let unit = if tries == 1 { "attempt" } else { "attempts" };
+            error.message = format!("{} (after {tries} {unit})", error.message);
+        }
+        error
+    })
 }
 
 impl Catalog {
@@ -172,6 +306,7 @@ impl Catalog {
             admit,
             sink,
             cancel,
+            pause,
         } = ports;
         policy.validate()?;
         let explanation = self.explain(request, input_tokens)?;
@@ -197,36 +332,52 @@ impl Catalog {
             }
             candidates.push((selection, model));
         }
+        let retry = policy.retry;
         let mut attempts = Vec::new();
         let mut last = Err(no_compatible_target(&explanation));
+        let mut last_tries = 0;
         for (selection, model) in candidates {
-            let refused = if cancel.is_cancelled() {
-                Some((Halt::Cancelled, Err(Error::cancelled())))
-            } else if policy
-                .deadline
-                .is_some_and(|deadline| Instant::now() >= deadline)
-            {
-                let error = Error::new(ErrorCode::Deadline, "fallback deadline reached");
-                Some((Halt::Deadline, Err(error)))
-            } else if let Err(error) = admit(&selection) {
-                Some((Halt::LimitRefused, Err(error)))
-            } else {
-                None
-            };
-            if let Some((halt, result)) = refused {
-                return Ok(finish(explanation, attempts, halt, result));
-            }
-            let mut counting = Counting {
-                inner: &mut *sink,
-                offered: 0,
-            };
-            let returned = model.turn(&selection.request, &mut counting, cancel).await;
-            let visible_events = counting.offered;
-            let (recorded, halt, result) = settle(returned, &selection, visible_events);
-            attempts.push(attempt(&selection, visible_events, recorded));
-            match halt {
-                Some(halt) => return Ok(finish(explanation, attempts, halt, result)),
-                None => last = result,
+            let mut tries: u32 = 0;
+            loop {
+                if let Err((halt, error)) = may_start(cancel, &policy, admit, &selection) {
+                    return Ok(finish(explanation, attempts, halt, Err(error)));
+                }
+                let mut counting = Counting {
+                    inner: &mut *sink,
+                    offered: 0,
+                };
+                let returned = model.turn(&selection.request, &mut counting, cancel).await;
+                let visible_events = counting.offered;
+                let (recorded, halt, result) = settle(returned, &selection, visible_events);
+                attempts.push(attempt(&selection, visible_events, recorded));
+                tries = tries.saturating_add(1);
+                if let Some(halt) = halt {
+                    return Ok(finish(explanation, attempts, halt, result));
+                }
+                // Only an eligible failure that showed nothing reaches here.
+                let Err(error) = &result else {
+                    return Ok(finish(explanation, attempts, Halt::Succeeded, result));
+                };
+                if !error.may_retry() || tries >= retry.max_attempts {
+                    last = result;
+                    last_tries = tries;
+                    break;
+                }
+                let waited = wait_to_retry(
+                    &policy,
+                    tries,
+                    error,
+                    selection.target.id.as_str(),
+                    Waiting {
+                        sink: &mut *sink,
+                        cancel,
+                        pause,
+                    },
+                )
+                .await;
+                if let Err((halt, error)) = waited {
+                    return Ok(finish(explanation, attempts, halt, Err(error)));
+                }
             }
         }
         let halt = if bounded {
@@ -234,8 +385,85 @@ impl Catalog {
         } else {
             Halt::Exhausted
         };
-        Ok(finish(explanation, attempts, halt, last))
+        Ok(finish(
+            explanation,
+            attempts,
+            halt,
+            exhausted(last, last_tries),
+        ))
     }
+}
+
+fn deadline_reached() -> Error {
+    Error::new(ErrorCode::Deadline, "fallback deadline reached")
+}
+
+/// The checks before every attempt, first or retry: cancellation, the caller's deadline, then
+/// the caller's limit decision.
+fn may_start(
+    cancel: &Cancel,
+    policy: &FallbackPolicy,
+    admit: &mut (dyn FnMut(&Selection<'_>) -> Result<(), Error> + Send),
+    selection: &Selection<'_>,
+) -> Result<(), (Halt, Error)> {
+    if cancel.is_cancelled() {
+        return Err((Halt::Cancelled, Error::cancelled()));
+    }
+    if policy
+        .deadline
+        .is_some_and(|deadline| Instant::now() >= deadline)
+    {
+        return Err((Halt::Deadline, deadline_reached()));
+    }
+    admit(selection).map_err(|error| (Halt::LimitRefused, error))
+}
+
+/// The caller's ports a retry wait uses.
+struct Waiting<'w> {
+    sink: &'w mut dyn StreamSink,
+    cancel: &'w Cancel,
+    pause: Pause<'w>,
+}
+
+/// Waits before attempt `tries + 1` on `target` after `error`, stating the retry first. Refuses
+/// with the run's halt when the wait would pass the caller's deadline, the sink refuses the
+/// warning, or the caller cancels during the wait.
+async fn wait_to_retry(
+    policy: &FallbackPolicy,
+    tries: u32,
+    error: &Error,
+    target: &str,
+    ports: Waiting<'_>,
+) -> Result<(), (Halt, Error)> {
+    let wait = policy
+        .retry
+        .delay(tries, error.retry_after_ms.map(Duration::from_millis));
+    if policy.deadline.is_some_and(|deadline| {
+        Instant::now()
+            .checked_add(wait)
+            .is_none_or(|end| end >= deadline)
+    }) {
+        return Err((Halt::Deadline, deadline_reached()));
+    }
+    let warning = StreamEvent::Warning {
+        code: RETRY_WARNING.to_owned(),
+        message: format!(
+            "attempt {tries} of {} on {target} failed before any output was visible ({}) and is \
+             retried after {} ms",
+            policy.retry.max_attempts,
+            code_label(error.code),
+            wait.as_millis()
+        ),
+    };
+    ports
+        .sink
+        .emit(warning)
+        .await
+        .map_err(|refusal| (Halt::SinkRefused, refusal))?;
+    if pause_unless_cancelled(ports.pause, wait, ports.cancel).await {
+        return Err((Halt::Cancelled, Error::cancelled()));
+    }
+    Ok(())
 }
 
 /// Classify one attempt's return. `None` permits trying the next declared target.
@@ -278,6 +506,11 @@ fn settle(
                 Some(Halt::AmbiguousDispatch)
             } else if visible_events > 0 {
                 Some(Halt::VisibleOutput)
+            } else if error.may_retry() {
+                // A retriable class showed nothing: retried on this target, then eligible for
+                // the next, whatever its dispatch. The record keeps that dispatch, so a possibly
+                // billed attempt is recorded rather than assumed free.
+                None
             } else if error.dispatch == Dispatch::Unknown {
                 Some(Halt::AmbiguousDispatch)
             } else if eligible(&error) {
