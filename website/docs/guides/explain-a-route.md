@@ -93,7 +93,8 @@ endpoint, and a `coding` route whose two targets are ordered.
   The route sets `fallback_enabled = false`, and omission is false. Turn it on and the same target
   becomes a named alternative.
 - **`auth_kind`** and **`billing_kind`** are independent. `anonymous` + `self-hosted` and
-  `bearer` + `metered` are both ordinary bindings.
+  `bearer` + `metered` are both ordinary bindings. The one exception is `subscription-oauth`,
+  which binds only with `subscription` billing on a Messages target.
 
 ## What the explanation is not
 

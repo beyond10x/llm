@@ -172,7 +172,7 @@
     },
     {
       "area": "Providers and routing",
-      "detail": "API and caller-managed subscription routes with recorded live evidence.",
+      "detail": "API and caller-managed subscription routes with recorded live evidence. The subscription presentation is built and fixture-checked: a subscription-oauth account resolves its token through its secret reference and Messages sends it as a bearer with the OAuth beta header and the client preamble; no live turn is recorded.",
       "label": "Anthropic access qualified",
       "status": "planned"
     },

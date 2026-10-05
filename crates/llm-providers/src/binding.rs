@@ -1,5 +1,5 @@
 use crate::{Account, Endpoint, Provider, ServedModel, ServingModel};
-use llm_core::{Capabilities, Error, Id, Provenance};
+use llm_core::{AuthKind, Capabilities, Error, Id, Protocol, Provenance};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -57,6 +57,15 @@ impl BindingDocument {
         }
         if self.serving.model_id != self.model.id {
             return Err(Error::invalid("serving model references a different model"));
+        }
+        // Only Messages adds the subscription presentation; elsewhere the token would travel as
+        // a plain bearer the route was never declared to accept.
+        if self.account.auth_kind == AuthKind::SubscriptionOauth
+            && self.serving.protocol != Protocol::Messages
+        {
+            return Err(Error::invalid(
+                "subscription OAuth accounts are served only over Messages",
+            ));
         }
         let provenance = Provenance {
             protocol: self.serving.protocol,

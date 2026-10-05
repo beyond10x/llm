@@ -25,6 +25,10 @@ const CONFIRMED: &[&str] = &[
     // and the two warning codes at `src/lib.rs:446` and `src/project.rs:345`.
     "cache_control",
     "ephemeral",
+    // Read at Harness `3169042f` for story:anthropic-access (parity M5): the beta header and the
+    // beta a subscription token requires, `crates/harness-messages/src/lib.rs:86` and `:93`.
+    "anthropic-beta",
+    "oauth-2025-04-20",
     "unknown-output-item",
     "unknown-stream-event",
     "any",

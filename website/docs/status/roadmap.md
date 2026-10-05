@@ -27,7 +27,9 @@ translation, the Modal adapter and a production Runpod transport are llm-gateway
 ### Subscription access
 
 Calling a model through a caller's subscription, rather than a metered API key, works mechanically:
-`codex_model` reads a Codex login, and `codex-renewal` renews it. It is not qualified for either
+`codex_model` reads a Codex login, and `codex-renewal` renews it; an Anthropic subscription token
+travels over Messages as a `subscription-oauth` account, resolved through its secret reference
+([credentials](../concepts/credentials.md)). It is not qualified for either
 provider. Holding a token is not evidence that a given use is supported: each provider's supported
 contract and permitted deployment context must be established first. The design is fixed in two
 ways: the caller owns credential acquisition, and llm never runs a login flow. A rejected

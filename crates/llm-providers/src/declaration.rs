@@ -141,7 +141,7 @@ impl Account {
                     ));
                 }
             }
-            AuthKind::Bearer | AuthKind::ApiKey => {
+            AuthKind::Bearer | AuthKind::ApiKey | AuthKind::SubscriptionOauth => {
                 if self.secret_reference_id.is_none() {
                     return Err(Error::invalid(
                         "authenticated accounts require a secret reference",
@@ -153,6 +153,14 @@ impl Account {
                     ));
                 }
             }
+        }
+        // A subscription token is never billed as metered API use.
+        if self.auth_kind == AuthKind::SubscriptionOauth
+            && self.billing_kind != BillingKind::Subscription
+        {
+            return Err(Error::invalid(
+                "subscription OAuth accounts require subscription billing",
+            ));
         }
         Ok(())
     }

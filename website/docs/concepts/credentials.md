@@ -42,6 +42,17 @@ Billing kind (metered, subscription or self-hosted) is independent of both proto
 authentication presentation. A rejected subscription credential never changes the billing kind or
 the account.
 
+## Anthropic subscription tokens
+
+`auth_kind = "subscription-oauth"` declares an account whose secret reference resolves to a
+subscription token the caller already holds. llm offers no login and reads no login file: the
+token is whatever the caller's resolver answers, such as the `secrets` library resolver below. The
+Messages client sends it as `authorization: Bearer` with `anthropic-beta: oauth-2025-04-20`, and
+opens `system` with the client preamble that route requires. The kind is the one exception to
+independence: a binding is refused unless its protocol is `messages` and its billing kind is
+`subscription`, so a subscription token is never billed as metered use. The route is built and
+checked against fixtures, but not qualified: no live turn has been recorded.
+
 ## Optional adapters
 
 The default feature set has no adapter at all. Each source is a feature of `b10x-llm-credentials`:

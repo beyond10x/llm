@@ -1,10 +1,15 @@
 use crate::{absent, fields, optional, string};
 use llm_core::{
-    CallId, Error, Item, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, Protocol, Provenance,
-    Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, exceeds,
+    AuthKind, CallId, Error, Item, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, Protocol,
+    Provenance, Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, exceeds,
 };
 use llm_providers::Binding;
 use serde_json::{Value, json};
+
+/// The block a subscription token's `system` opens with (Harness
+/// `harness-messages/src/project.rs:47`). Sent only for a `subscription-oauth` account.
+pub const SUBSCRIPTION_CLIENT_PREAMBLE: &str =
+    "You are Claude Code, Anthropic's official CLI for Claude.";
 
 #[derive(Debug)]
 pub struct IngressRequest {
@@ -136,9 +141,20 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
     // A block list rather than a string, so it can carry the breakpoint that caches the constant
     // head (tools, then system) of every turn. An empty instruction sends nothing to mark; the
     // rolling breakpoint below already covers the tools.
+    //
+    // A subscription token is served only when `system` opens with the client preamble as its
+    // own block, exactly and alone; any other shape is answered 429 without rate-limit headers.
+    // The preamble stays unmarked so the instruction, the last block, keeps the breakpoint that
+    // covers the whole constant head.
+    let mut system = Vec::with_capacity(2);
+    if binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth {
+        system.push(json!({"type":"text","text":SUBSCRIPTION_CLIENT_PREAMBLE}));
+    }
     if !request.instructions.is_empty() {
-        body["system"] =
-            json!([{"type":"text","text":request.instructions,"cache_control":ephemeral()}]);
+        system.push(json!({"type":"text","text":request.instructions,"cache_control":ephemeral()}));
+    }
+    if !system.is_empty() {
+        body["system"] = Value::Array(system);
     }
     if !tools.is_empty() {
         body["tools"] = json!(tools);

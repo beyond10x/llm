@@ -73,7 +73,9 @@ impl Binding {
         }
         let mut bytes = Zeroizing::new(Vec::with_capacity(material.len() + 7));
         let name = match account.auth_kind {
-            AuthKind::Bearer => {
+            // A subscription token is a bearer at this layer; Messages adds the rest of its
+            // presentation (the OAuth beta header and the client preamble).
+            AuthKind::Bearer | AuthKind::SubscriptionOauth => {
                 bytes.extend_from_slice(b"Bearer ");
                 AUTHORIZATION
             }
