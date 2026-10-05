@@ -37,7 +37,7 @@ scope:
   path: spec
 - confidence: inferred
   path: website/docs
-revision: 16
+revision: 17
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T13:03:52Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-10-05T13:03:52Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":1}}}
@@ -48,7 +48,7 @@ API access uses Messages. Caller-managed subscription is requested but must be i
 
 ## Acceptance
 
-Separate API and subscription reports each demonstrate a successful supported model turn, identify the exact endpoint/auth contract, verify protocol behavior and credential rotation, and name unsupported cases. Completion requires both reports; an unavailable subscription path leaves this story and foundation qualification incomplete with a named blocker. No API-billing substitution satisfies subscription qualification.
+A subscription report demonstrates a successful supported model turn over the operator's own subscription token (resolved through the secrets library), identifies the exact endpoint/auth contract, verifies protocol behaviour and credential rotation, and names unsupported cases. Operator, 2026-10-05: "i dont want to run with anthropic api key for now, but with claude sub"; the API-key report moved to story:anthropic-api-qualification (draft). Completion requires the subscription report; an unavailable subscription path leaves this story and foundation qualification incomplete with a named blocker. No API-billing substitution satisfies subscription qualification.
 
 ## Evidence
 
