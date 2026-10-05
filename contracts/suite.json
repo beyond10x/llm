@@ -273,6 +273,7 @@
       "llm.messages/authored/terminal-reason-contradicting-its-content-refused",
       "llm.messages/authored/the-previous-turn-version-is-refused",
       "llm.messages/authored/the-rolling-breakpoint-never-marks-replayed-thinking",
+      "llm.messages/authored/thinking-opened-without-a-signature-field-is-signed-by-its-delta",
       "llm.messages/authored/truncated-stream-retains-its-partial-usage",
       "llm.messages/authored/two-terminal-reasons-are-refused",
       "llm.messages/authored/unbound-thinking-is-refused-by-name",
@@ -1743,6 +1744,11 @@
         "digest": "sha256:63eafcd6bca12d40c11b25baa4208354f2a2155d0ffb8e49f5e791001f99df06",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/the-rolling-breakpoint-never-marks-replayed-thinking"
+      },
+      "messages/scenarios/thinking-opened-without-a-signature-field-is-signed-by-its-delta.yaml": {
+        "digest": "sha256:b583617ed1cac101e09a95860f84592225276f1d20a856d195edbd668bf463b8",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/thinking-opened-without-a-signature-field-is-signed-by-its-delta"
       },
       "messages/scenarios/truncated-stream-retains-its-partial-usage.yaml": {
         "digest": "sha256:0cfa2e5d819a15c9eba779580be531e9c2cbf7944281f547372612b0d291bbc0",
@@ -3851,7 +3857,7 @@
       }
     },
     "counts": {
-      "authored": 641,
+      "authored": 642,
       "generated": 23,
       "outside": 0,
       "refused": 0
@@ -37136,6 +37142,142 @@
               "wire_request": {
                 "kind": "literal",
                 "value": "{\"max_tokens\":2048,\"messages\":[{\"content\":[{\"text\":\"Summarise the log\",\"type\":\"text\"}],\"role\":\"user\"},{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Looking\",\"type\":\"text\"},{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}],\"role\":\"assistant\"}],\"model\":\"example/Model-Revision\",\"stream\":true}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/thinking-opened-without-a-signature-field-is-signed-by-its-delta": {
+      "purpose": "a thinking block whose start carries no signature field takes its signature from the signature delta and finishes as the same signed block",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"thinking\":\"\",\"type\":\"thinking\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"thinking\":\"weighing\",\"type\":\"thinking_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"signature\":\"sig-1\",\"type\":\"signature_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":1,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"text\":\"Done\",\"type\":\"text_delta\"},\"index\":1,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":1,\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":8}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "opaque:{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260\"}:{\"signature\":\"sig-1\",\"thinking\":\"weighing\",\"type\":\"thinking\"}",
+                  "assistant-text:Done"
+                ]
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": "weighing"
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": "Done"
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":8,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
               }
             }
           },

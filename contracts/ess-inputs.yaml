@@ -642,3 +642,4 @@ scenarios:
 - secrets/scenarios/codex-read-an-undated-login-is-malformed.yaml
 - secrets/scenarios/codex-read-a-truncated-login-stays-unavailable.yaml
 - secrets/scenarios/codex-renewal-a-truncated-login-is-refused-as-unavailable-before-sending.yaml
+- messages/scenarios/thinking-opened-without-a-signature-field-is-signed-by-its-delta.yaml

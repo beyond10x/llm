@@ -73,7 +73,9 @@ before the message started, a delta for a block that never started, two blocks a
 block still open at the terminal event, and a payload after it. Content is assembled in
 content-block **index** order, so two blocks stopped in the opposite order to their starts do not
 reverse the turn against the deltas the caller was already shown. A `ping` is
-accepted and changes nothing: its irrelevance is the route's own documentation.
+accepted and changes nothing: its irrelevance is the route's own documentation. A `thinking` block
+may open with `"signature": ""` or with no `signature` field at all, and its `signature_delta` signs
+it either way; a finished thinking block without a non-empty signature is still refused.
 
 **An event, delta or content block this subset does not model is preserved, not refused.** A route
 that adds an event type has not broken its stream, and ending the turn on it would refuse an answer

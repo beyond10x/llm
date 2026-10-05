@@ -486,8 +486,17 @@ impl StreamDecoder {
                 })
             }
             // Never shown: a signature is not reasoning, it is what the route verifies against.
+            // A thinking block may open with no `signature` field at all; its first delta begins
+            // it. The finished block is still refused unless it carries a signature.
             "signature_delta" => {
                 fields(delta, &["type", "signature"])?;
+                if block.value.get("type").and_then(Value::as_str) == Some("thinking")
+                    && let Some(opened) = block.value.as_object_mut()
+                {
+                    opened
+                        .entry("signature")
+                        .or_insert_with(|| Value::String(String::new()));
+                }
                 append(&mut block.value, "signature", string(delta, "signature")?)?;
                 None
             }
