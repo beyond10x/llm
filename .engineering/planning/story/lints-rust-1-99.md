@@ -2,11 +2,29 @@
 format: aep.planning-md/3
 id: story:lints-rust-1-99
 kind: story
-status: draft
+status: active
 title: The llm workspace lints clean on rustc 1.99
 relations:
 - serves: vision:portable-model-inference
-revision: 1
+scope:
+- confidence: inferred
+  path: crates/llm-chat/tests
+- confidence: inferred
+  path: crates/llm-gateway/tests
+- confidence: inferred
+  path: crates/llm-http/tests/framing.rs
+- confidence: inferred
+  path: crates/llm-provision/tests
+- confidence: inferred
+  path: crates/llm-responses/tests
+- confidence: inferred
+  path: crates/llm-routing/tests
+- confidence: inferred
+  path: crates/llm-runpod/src/pool.rs
+revision: 10
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-05T08:05:31Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-10-05T08:05:31Z", actor: "human:timo", revision: 3}
 ---
 ## Outcome
 
