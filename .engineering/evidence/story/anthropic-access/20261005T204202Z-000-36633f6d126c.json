@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T20:42:02Z",
+  "actor": "human:timo",
+  "artifact": "story:anthropic-access",
+  "kind": "story",
+  "revision": 17,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "live_subscription_turn --capture-response: HTTP 429; dispatch rejected; Retry-After 8877s; no Messages body; qualification remains blocked",
+    "reference": "~/.cache/ga-wave-2026-10-05-w53/resume-live-report-1.json"
+  }
+}

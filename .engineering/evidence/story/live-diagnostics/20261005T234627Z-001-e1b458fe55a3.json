@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T23:46:27Z",
+  "actor": "human:timo",
+  "artifact": "story:live-diagnostics",
+  "kind": "story",
+  "revision": 10,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "fmt, clippy +1.98.0 -D warnings, cargo test --workspace 676 passed, credentials all-features, llm-docs --check, ess validate, conformance 691/691 x3 (ess 0.52.0), aep validate all exit 0",
+    "reference": "impl/live-messages-fields"
+  }
+}

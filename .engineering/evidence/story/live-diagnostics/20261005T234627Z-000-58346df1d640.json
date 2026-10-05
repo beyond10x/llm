@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T23:46:27Z",
+  "actor": "human:timo",
+  "artifact": "story:live-diagnostics",
+  "kind": "story",
+  "revision": 10,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "red first: three refusal cases (no path), ResponseTap missing, capture flag missing; capture holds no authorization header or token (fixture test); live rerun 2026-10-05T23:46Z returned HTTP 200 and named message_start.message.container",
+    "reference": "~/.cache/ga-wave-2026-10-05-w53"
+  }
+}
