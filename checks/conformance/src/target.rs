@@ -162,6 +162,7 @@ impl ConformanceTarget for CatalogTarget {
         // so a new domain is a new file rather than an edit to this shared one.
         let owned = crate::messages::observe(&command, &input)
             .or_else(|| crate::secrets::observe_renewal(&command, &input))
+            .or_else(|| crate::secrets::observe_probe(&command, &input))
             .or_else(|| crate::responses::observe(&command, &input))
             .or_else(|| crate::chat::observe(&command, &input))
             .or_else(|| crate::fallback::observe(&command, &input))
@@ -188,30 +189,6 @@ impl ConformanceTarget for CatalogTarget {
                     "llm.routing.LastEvaluation",
                     "llm.routing.Evaluated",
                     "catalog_valid",
-                ),
-                "llm.secrets.ProbeFile" => (
-                    crate::secrets::file(input).map_err(unavailable)?,
-                    "llm.secrets.LastProbe",
-                    "llm.secrets.Probed",
-                    "diagnostics_safe",
-                ),
-                "llm.secrets.ProbeKeychain" => (
-                    crate::secrets::keychain(input).map_err(unavailable)?,
-                    "llm.secrets.LastProbe",
-                    "llm.secrets.Probed",
-                    "diagnostics_safe",
-                ),
-                "llm.secrets.ProbeEnvironment" => (
-                    crate::secrets::environment(&input).map_err(unavailable)?,
-                    "llm.secrets.LastProbe",
-                    "llm.secrets.Probed",
-                    "diagnostics_safe",
-                ),
-                "llm.secrets.ProbePointer" => (
-                    crate::secrets::pointer(input).map_err(unavailable)?,
-                    "llm.secrets.LastProbe",
-                    "llm.secrets.Probed",
-                    "diagnostics_safe",
                 ),
                 "llm.accounting.Quote" => (
                     crate::pricing::observe(&serde_json::from_value(input).map_err(unavailable)?),

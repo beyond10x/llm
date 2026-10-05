@@ -262,6 +262,7 @@ version = "0.2.0"
 name = "b10x-llm-conformance"
 version = "0.2.0"
 dependencies = [
+ "async-trait",
  "b10x-llm-chat",
  "b10x-llm-core",
  "b10x-llm-cost",
@@ -314,17 +315,21 @@ name = "b10x-llm-credentials"
 version = "0.2.0"
 dependencies = [
  "apple-native-keyring-store",
+ "async-trait",
  "b10x-llm-core",
  "b10x-llm-http",
  "base64",
  "keyring-core",
  "rustix",
+ "secrets-core",
+ "secrets-keychain",
  "serde",
  "serde_json",
  "sha2",
  "tempfile",
  "thiserror",
  "tokio",
+ "toml",
  "windows-native-keyring-store",
  "zbus-secret-service-keyring-store",
  "zeroize",
@@ -1869,6 +1874,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "secrets-core"
+version = "0.5.0"
+source = "git+https://github.com/beyond10x/secrets?tag=v0.5.0#8c4eabb15e719fea1a770898bd6852e381900fb0"
+dependencies = [
+ "async-trait",
+ "base64",
+ "serde",
+ "thiserror",
+ "uuid",
+ "zeroize",
+]
+
+[[package]]
+name = "secrets-keychain"
+version = "0.5.0"
+source = "git+https://github.com/beyond10x/secrets?tag=v0.5.0#8c4eabb15e719fea1a770898bd6852e381900fb0"
+dependencies = [
+ "async-trait",
+ "keyring-core",
+ "secrets-core",
+ "tokio",
+ "uuid",
+ "zeroize",
+]
+
+[[package]]
 name = "security-framework"
 version = "3.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2170,6 +2201,7 @@ dependencies = [
  "libc",
  "mio",
  "pin-project-lite",
+ "signal-hook-registry",
  "socket2",
  "tokio-macros",
  "windows-sys 0.61.2",
@@ -2406,6 +2438,7 @@ version = "1.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ef6dac1e96601b4fb3acccccff2139741fcb757cb9a36089bf5be91cfb285ce"
 dependencies = [
+ "getrandom 0.4.3",
  "js-sys",
  "serde_core",
  "wasm-bindgen",
@@ -2775,6 +2808,20 @@ name = "zeroize"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e"
+dependencies = [
+ "zeroize_derive",
+]
+
+[[package]]
+name = "zeroize_derive"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
 
 [[package]]
 name = "zerotrie"

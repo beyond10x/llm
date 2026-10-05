@@ -3,7 +3,7 @@ title: Credentials
 sidebar_position: 4
 description: An opaque reference, resolution at request time, coordinated renewal, and optional adapters for files, keychains, environment variables, JSON documents and a Codex login.
 lede: A catalog names a reference, the embedding injects the resolver, and every source llm can read is an opt-in feature that reads only what the caller named.
-source: crates/llm-credentials (lib.rs, file.rs, keychain.rs, environment.rs, pointer.rs, codex.rs, codex/renewal.rs), CHANGELOG.md 0.1.5–0.1.7
+source: crates/llm-credentials (lib.rs, file.rs, keychain.rs, environment.rs, pointer.rs, codex.rs, codex/renewal.rs, secrets.rs), CHANGELOG.md 0.1.5–0.1.7
 ---
 
 # Credentials
@@ -55,11 +55,19 @@ The default feature set has no adapter at all. Each source is a feature of `b10x
 | `json-pointer` | `pointer::JsonPointerResolver` | The JSON string at an RFC 6901 pointer in a document another resolver returns |
 | `codex-auth-file` | `codex::CodexAuthFile` | The access token of a Codex login's `auth.json` at an explicit absolute path |
 | `codex-renewal` | `CodexAuthFile::renewing` | The same, renewing the login when it is due; includes `codex-auth-file` |
+| `secrets` | `secrets::SecretsResolver` | The reference as a name in one configured scope of the `secrets` library's storage (v0.5.0); `SecretsResolver::keychain` is its keychain backend behind its local authorizer |
 
 All but `codex-renewal` are **read-only**: they never create an entry, refresh a token or write a
 file, so they return `RefreshUnsupported`, and independently replaced bytes are visible on the next
 resolve. A document that is not JSON, or a pointer target that is not a string, is
 `SecretError::Malformed`: a configuration error, refused like a missing credential.
+
+`secrets` is read-only too, but its `refresh` re-reads rather than returning `RefreshUnsupported`:
+the backend's version is the credential's version, so every write is a new one, and
+`refresh` is `RefreshRejected` while it is unchanged. A missing name is `Missing`, a
+scope the authorizer denies `UnsafeSource`, a backend without read `UnsupportedPlatform`, a
+reference that is not a secrets name `InvalidReference`, and every backend fault `Unavailable`,
+without the backend's own text.
 
 [Resolve a local secret](../guides/resolve-a-local-secret.md) shows each adapter in use.
 

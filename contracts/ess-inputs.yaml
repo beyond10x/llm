@@ -534,6 +534,14 @@ scenarios:
 - secrets/scenarios/pointer-empty-string.yaml
 - secrets/scenarios/pointer-not-json.yaml
 - secrets/scenarios/pointer-unbound-reference.yaml
+- secrets/scenarios/secrets-library-backend-error-redacted.yaml
+- secrets/scenarios/secrets-library-denied-scope.yaml
+- secrets/scenarios/secrets-library-invalid-name.yaml
+- secrets/scenarios/secrets-library-missing.yaml
+- secrets/scenarios/secrets-library-rereads-rotation.yaml
+- secrets/scenarios/secrets-library-route-reference-resolves.yaml
+- secrets/scenarios/secrets-library-same-value-is-a-new-version.yaml
+- secrets/scenarios/secrets-library-unsupported-read.yaml
 - providers/scenarios/a-credential-ending-in-a-newline-is-presented-without-it.yaml
 - providers/scenarios/a-credential-ending-in-crlf-is-presented-without-it.yaml
 - providers/scenarios/a-credential-ending-in-two-newlines-is-refused.yaml

@@ -23,6 +23,7 @@ file = ["dep:rustix", "dep:sha2"]
 json-pointer = ["dep:serde_json", "dep:sha2"]
 keychain = ["dep:keyring-core", "dep:sha2"]
 native-keychain = ["keychain", "dep:zbus-secret-service-keyring-store", "dep:apple-native-keyring-store", "dep:windows-native-keyring-store"]
+secrets = ["dep:secrets-core", "dep:secrets-keychain", "dep:keyring-core", "dep:sha2"]
 
 [dependencies]
 llm-core.workspace = true
@@ -36,6 +37,8 @@ serde_json = { workspace = true, optional = true, features = ["raw_value"] }
 keyring-core = { version = "1.0.0", optional = true }
 llm-http = { workspace = true, optional = true }
 tempfile = { version = "3.27", optional = true }
+secrets-core = { git = "https://github.com/beyond10x/secrets", tag = "v0.5.0", optional = true }
+secrets-keychain = { git = "https://github.com/beyond10x/secrets", tag = "v0.5.0", optional = true }
 
 [target.'cfg(unix)'.dependencies]
 rustix = { version = "1.1.5", optional = true, default-features = false, features = ["std", "fs", "process"] }
@@ -50,5 +53,7 @@ apple-native-keyring-store = { version = "1.0.2", optional = true, features = ["
 windows-native-keyring-store = { version = "1.1.0", optional = true }
 
 [dev-dependencies]
+async-trait = "0.1"
+toml.workspace = true
 serde_json.workspace = true
 tempfile = "3.27"

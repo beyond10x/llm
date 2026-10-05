@@ -42,5 +42,6 @@ Every feature is off by default unless the package lists it as a default. A feat
 | `b10x-llm-credentials` | `json-pointer` | — | `serde_json`, `sha2` |
 | `b10x-llm-credentials` | `keychain` | — | `keyring-core`, `sha2` |
 | `b10x-llm-credentials` | `native-keychain` | `keychain` | `zbus-secret-service-keyring-store`, `apple-native-keyring-store`, `windows-native-keyring-store` |
+| `b10x-llm-credentials` | `secrets` | — | `secrets-core`, `secrets-keychain`, `keyring-core`, `sha2` |
 
 No package turns on a feature by default.
