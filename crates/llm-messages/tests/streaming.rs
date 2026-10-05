@@ -175,6 +175,94 @@ async fn a_streamed_turn_preserves_text_thinking_tools_and_terminal_usage() {
     );
 }
 
+/// The thinking block exactly as Harness's emulator opens it (`crates/harness-cli/tests/fixtures/
+/// fake_messages.py` `thinking_events`, and Harness's pinned `anthropic-messages/2026-08-29`
+/// through `2026-08-30.1` stream fixtures): no `signature` field on `content_block_start`, the
+/// signature arriving whole in a `signature_delta`. The finished block is the same one a start
+/// carrying `"signature": ""` produces (`docs/harness-parity.md` row M47).
+#[tokio::test]
+async fn a_thinking_block_that_opens_without_a_signature_field_takes_it_from_its_delta() {
+    let events = vec![
+        message_start(json!({"input_tokens":11,"output_tokens":1})),
+        json!({"type":"content_block_start","index":0,
+            "content_block":{"type":"thinking","thinking":""}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"thinking_delta","thinking":"OPAQUE-REASONING-BLOB"}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"signature_delta","signature":"OPAQUE-SIGNATURE"}}),
+        json!({"type":"content_block_stop","index":0}),
+        json!({"type":"content_block_start","index":1,
+            "content_block":{"type":"tool_use","id":"call-1","name":"lookup","input":{}}}),
+        json!({"type":"content_block_delta","index":1,
+            "delta":{"type":"input_json_delta","partial_json":"{}"}}),
+        json!({"type":"content_block_stop","index":1}),
+        message_delta(json!("tool_use"), json!({"output_tokens":9})),
+        json!({"type":"message_stop"}),
+    ];
+    let (outcome, sink) = decode(&events).await;
+    let outcome = outcome.expect("a block opened without a signature field is signed by its delta");
+    assert_eq!(
+        outcome.items[0],
+        Item::Opaque {
+            provenance: binding().provenance().clone(),
+            payload: json!({"type":"thinking","thinking":"OPAQUE-REASONING-BLOB",
+                "signature":"OPAQUE-SIGNATURE"}),
+        }
+    );
+    assert_eq!(
+        sink.events()[0],
+        StreamEvent::ReasoningDelta {
+            text: "OPAQUE-REASONING-BLOB".to_owned()
+        }
+    );
+}
+
+/// The other half of the same rule: a block that opened without a signature field and never
+/// received one is still unsigned thinking, refused rather than replayed.
+#[tokio::test]
+async fn a_thinking_block_that_never_receives_a_signature_is_still_refused() {
+    let events = vec![
+        message_start(json!({"input_tokens":11,"output_tokens":1})),
+        json!({"type":"content_block_start","index":0,
+            "content_block":{"type":"thinking","thinking":""}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"thinking_delta","thinking":"weighing"}}),
+        json!({"type":"content_block_stop","index":0}),
+        json!({"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}),
+        json!({"type":"content_block_delta","index":1,
+            "delta":{"type":"text_delta","text":"Done"}}),
+        json!({"type":"content_block_stop","index":1}),
+        message_delta(json!("end_turn"), json!({"output_tokens":9})),
+        json!({"type":"message_stop"}),
+    ];
+    let error = decode(&events)
+        .await
+        .0
+        .expect_err("a thinking block with no signature at all");
+    assert_eq!(error.code, ErrorCode::Protocol, "{error:?}");
+}
+
+/// Only a thinking block begins a signature it was opened without: a `signature_delta` into a
+/// text block still does not extend its block.
+#[tokio::test]
+async fn a_signature_delta_into_a_text_block_is_still_refused() {
+    let events = vec![
+        message_start(json!({"input_tokens":11,"output_tokens":1})),
+        json!({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"signature_delta","signature":"OPAQUE-SIGNATURE"}}),
+        json!({"type":"content_block_stop","index":0}),
+        message_delta(json!("end_turn"), json!({"output_tokens":9})),
+        json!({"type":"message_stop"}),
+    ];
+    let error = decode(&events)
+        .await
+        .0
+        .expect_err("a signature delta against a text block");
+    assert_eq!(error.code, ErrorCode::Protocol, "{error:?}");
+    assert_eq!(error.message, "Messages delta does not extend its block");
+}
+
 #[tokio::test]
 async fn a_tool_call_is_announced_when_its_block_opens_even_before_any_argument() {
     let events = vec![
