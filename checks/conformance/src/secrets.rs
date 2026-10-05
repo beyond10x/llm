@@ -821,7 +821,6 @@ async fn start_endpoint(
     Ok((url, seen))
 }
 
-/// Dispatches `llm.secrets.RenewCodexLogin`; `None` for any other command.
 /// Every `llm.secrets.Probe*` command, observed into `llm.secrets.LastProbe`; `None` for any
 /// other command.
 pub fn observe_probe(
@@ -853,6 +852,7 @@ pub fn observe_probe(
     )
 }
 
+/// Dispatches `llm.secrets.RenewCodexLogin`; `None` for any other command.
 pub fn observe_renewal(
     command: &str,
     input: &Value,

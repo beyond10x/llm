@@ -8,8 +8,10 @@
 //! [`SecretError::Missing`], `denied` is [`SecretError::UnsafeSource`], `unsupported` is
 //! [`SecretError::UnsupportedPlatform`], `invalid-name` is [`SecretError::InvalidReference`],
 //! `too-large` is [`SecretError::TooLarge`], and every other code is
-//! [`SecretError::Unavailable`]. A reference that is not a secrets name is refused before any
-//! backend is asked. The port's codes carry no backend text, so neither does a refusal here.
+//! [`SecretError::Unavailable`]. A backend whose capabilities lack read is
+//! [`SecretError::UnsupportedPlatform`] and is never called. A reference that is not a secrets
+//! name is refused before any backend is asked. The port's codes carry no backend text, so
+//! neither does a refusal here.
 //!
 //! The version is the backend's, so every write, also of the same bytes, is a new version. A
 //! backend that gives no version gets content identity, as the read-only local adapters do.
@@ -28,7 +30,7 @@ use std::{fmt, fmt::Write, sync::Arc};
 pub use secrets_core::{authorize, storage};
 pub use secrets_keychain as keychain;
 
-use storage::{Address, Scope, SecretName, SecretStorage, StorageError, Target};
+use storage::{Address, Capability, Scope, SecretName, SecretStorage, StorageError, Target};
 
 /// A port refusal as the existing [`SecretError`] code. The match has no wildcard.
 fn failure(error: StorageError) -> SecretError {
@@ -90,6 +92,11 @@ impl SecretsResolver {
 
     async fn read(&self, reference: &SecretRef) -> Result<ResolvedSecret, SecretError> {
         let target = self.target(reference)?;
+        // As the library's mount routing does (`secrets-federation`, `require`): a backend that
+        // does not offer read is refused before it is called.
+        if !self.storage.capabilities().contains(&Capability::Read) {
+            return Err(SecretError::UnsupportedPlatform);
+        }
         let revealed = self.storage.read(&target).await.map_err(failure)?;
         let secret = Secret::new(revealed.value.expose().to_vec())?;
         let version = match &revealed.version {

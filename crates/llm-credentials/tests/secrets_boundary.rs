@@ -1,15 +1,21 @@
-//! story:secrets-resolver: core crates gain no dependency on the `secrets` library. Its crates
-//! are reached only through `b10x-llm-credentials` feature `secrets`, optional, off by default,
-//! pinned to one release tag whose commit the lockfile records. Read from the manifests at run
+//! story:secrets-resolver: core crates gain no dependency on the `secrets` library. Every crate
+//! from its git source is reached only through `b10x-llm-credentials` feature `secrets`,
+//! optional, off by default, pinned to one release tag whose commit the lockfile records, and no
+//! core crate forwards that feature from its own `[features]`. Read from the manifests at run
 //! time; each rule has a mutant below that shows it can fail.
 use std::{
+    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
 };
 use toml::{Table, Value};
 
+/// The library crates `b10x-llm-credentials` declares. A crate counts as the library's when its
+/// git source is the library repository in any spelling, or when it carries one of these names.
 const LIBRARY_CRATES: [&str; 2] = ["secrets-core", "secrets-keychain"];
 const SOURCE: &str = "https://github.com/beyond10x/secrets";
+/// The repository path every spelling of the library source reduces to.
+const REPOSITORY: &str = "beyond10x/secrets";
 const TAG: &str = "v0.5.0";
 const REVISION: &str = "8c4eabb15e719fea1a770898bd6852e381900fb0";
 const OWNER: &str = "crates/llm-credentials";
@@ -49,20 +55,44 @@ fn dependency_tables(manifest: &Table) -> Vec<(String, &Table)> {
     tables
 }
 
+/// The workspace entry a `workspace = true` entry inherits, or the entry itself.
+fn inherited<'a>(key: &str, entry: &'a Value, workspace: &'a Table) -> &'a Value {
+    if entry.get("workspace").and_then(Value::as_bool) == Some(true) {
+        workspace.get(key).unwrap_or(entry)
+    } else {
+        entry
+    }
+}
+
 /// The package a dependency entry names: its `package` key, or the workspace entry's, or its key.
 fn package<'a>(key: &'a str, entry: &'a Value, workspace: &'a Table) -> &'a str {
-    if let Some(package) = entry.get("package").and_then(Value::as_str) {
-        return package;
-    }
-    if entry.get("workspace").and_then(Value::as_bool) == Some(true)
-        && let Some(package) = workspace
-            .get(key)
-            .and_then(|entry| entry.get("package"))
-            .and_then(Value::as_str)
-    {
-        return package;
-    }
-    key
+    entry
+        .get("package")
+        .or_else(|| inherited(key, entry, workspace).get("package"))
+        .and_then(Value::as_str)
+        .unwrap_or(key)
+}
+
+/// Whether a git URL names the library repository, in any spelling: `https://`, `ssh://git@`,
+/// `git@host:`, with or without `.git`, a trailing `/` or a different case.
+fn is_library_source(url: &str) -> bool {
+    let url = url.trim().to_ascii_lowercase();
+    let url = url.split(['?', '#']).next().unwrap_or_default();
+    let Some((_, path)) = url.split_once("github.com") else {
+        return false;
+    };
+    let path = path.trim_start_matches([':', '/']).trim_end_matches('/');
+    path.strip_suffix(".git").unwrap_or(path) == REPOSITORY
+}
+
+/// The library crate a dependency entry reaches, if it reaches one.
+fn library_crate<'a>(key: &'a str, entry: &'a Value, workspace: &'a Table) -> Option<&'a str> {
+    let name = package(key, entry, workspace);
+    let from_source = inherited(key, entry, workspace)
+        .get("git")
+        .and_then(Value::as_str)
+        .is_some_and(is_library_source);
+    (from_source || LIBRARY_CRATES.contains(&name)).then_some(name)
 }
 
 fn enables_secrets(entry: &Value) -> bool {
@@ -84,11 +114,10 @@ fn violations(root: &Path) -> Vec<String> {
         .unwrap_or_default();
     let empty = Table::new();
     for (key, entry) in &shared {
-        let name = package(key, entry, &empty);
-        if LIBRARY_CRATES.contains(&name) {
+        if let Some(name) = library_crate(key, entry, &empty) {
             found.push(format!("workspace.dependencies names {name}"));
         }
-        if name == CREDENTIALS && enables_secrets(entry) {
+        if package(key, entry, &empty) == CREDENTIALS && enables_secrets(entry) {
             found.push("workspace.dependencies enables llm-credentials feature secrets".into());
         }
     }
@@ -101,48 +130,64 @@ fn violations(root: &Path) -> Vec<String> {
     if !members.contains(&OWNER) {
         found.push(format!("{OWNER} is not a workspace member"));
     }
-    let mut pinned = 0;
+    // The owner's library dependencies: their keys (what a feature item names) and crates.
+    let mut declared_keys = BTreeSet::new();
+    let mut declared = BTreeSet::new();
     for member in &members {
         let manifest = read(&root.join(member).join("Cargo.toml"));
+        let mut credential_keys = Vec::new();
         for (table_name, table) in dependency_tables(&manifest) {
             for (key, entry) in table {
-                let name = package(key, entry, &shared);
-                if LIBRARY_CRATES.contains(&name) {
-                    if *member != OWNER {
-                        found.push(format!("{member} [{table_name}] depends on {name}"));
-                        continue;
+                if package(key, entry, &shared) == CREDENTIALS {
+                    credential_keys.push(key.clone());
+                    if enables_secrets(entry) && !FEATURE_USERS.contains(member) {
+                        found.push(format!(
+                            "{member} [{table_name}] enables llm-credentials feature secrets"
+                        ));
                     }
-                    if table_name != "dependencies" {
-                        found.push(format!("{member} names {name} in [{table_name}]"));
-                        continue;
-                    }
-                    if entry.get("optional").and_then(Value::as_bool) != Some(true) {
-                        found.push(format!("{member}: {name} is not optional"));
-                    }
-                    if entry.get("git").and_then(Value::as_str) != Some(SOURCE)
-                        || entry.get("tag").and_then(Value::as_str) != Some(TAG)
-                        || entry.get("rev").is_some()
-                        || entry.get("branch").is_some()
-                    {
-                        found.push(format!("{member}: {name} is not pinned to {SOURCE} {TAG}"));
-                    }
-                    pinned += 1;
                 }
-                if name == CREDENTIALS && enables_secrets(entry) && !FEATURE_USERS.contains(member)
+                let Some(name) = library_crate(key, entry, &shared) else {
+                    continue;
+                };
+                if *member != OWNER {
+                    found.push(format!("{member} [{table_name}] depends on {name}"));
+                    continue;
+                }
+                if table_name != "dependencies" {
+                    found.push(format!("{member} names {name} in [{table_name}]"));
+                    continue;
+                }
+                if entry.get("optional").and_then(Value::as_bool) != Some(true) {
+                    found.push(format!("{member}: {name} is not optional"));
+                }
+                if entry.get("git").and_then(Value::as_str) != Some(SOURCE)
+                    || entry.get("tag").and_then(Value::as_str) != Some(TAG)
+                    || entry.get("rev").is_some()
+                    || entry.get("branch").is_some()
                 {
-                    found.push(format!(
-                        "{member} [{table_name}] enables llm-credentials feature secrets"
-                    ));
+                    found.push(format!("{member}: {name} is not pinned to {SOURCE} {TAG}"));
                 }
+                declared_keys.insert(key.clone());
+                declared.insert(name.to_owned());
             }
         }
         if *member == OWNER {
-            check_features(&manifest, &mut found);
+            check_features(&manifest, &declared_keys, &mut found);
+        } else if !FEATURE_USERS.contains(member) {
+            check_forwarding(member, &manifest, &credential_keys, &mut found);
         }
     }
-    if pinned != LIBRARY_CRATES.len() {
+    for name in &declared {
+        if !LIBRARY_CRATES.contains(&name.as_str()) {
+            found.push(format!(
+                "{OWNER} declares {name}, which is not one of {LIBRARY_CRATES:?}"
+            ));
+        }
+    }
+    if declared.len() != LIBRARY_CRATES.len() {
         found.push(format!(
-            "{OWNER} declares {pinned} of the {} library crates",
+            "{OWNER} declares {} of the {} library crates",
+            declared.len(),
             LIBRARY_CRATES.len()
         ));
     }
@@ -150,8 +195,35 @@ fn violations(root: &Path) -> Vec<String> {
     found
 }
 
+/// A core crate's own feature that turns on `llm-credentials/secrets`, also weakly (`?/`).
+fn check_forwarding(
+    member: &str,
+    manifest: &Table,
+    credential_keys: &[String],
+    found: &mut Vec<String>,
+) {
+    let Some(features) = manifest.get("features").and_then(Value::as_table) else {
+        return;
+    };
+    for (feature, items) in features {
+        for item in items
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+        {
+            let forwards = credential_keys
+                .iter()
+                .any(|key| item == format!("{key}/secrets") || item == format!("{key}?/secrets"));
+            if forwards {
+                found.push(format!("{member} feature {feature} forwards {item}"));
+            }
+        }
+    }
+}
+
 /// `secrets` enables exactly the library crates; no other feature and not `default` does.
-fn check_features(manifest: &Table, found: &mut Vec<String>) {
+fn check_features(manifest: &Table, declared: &BTreeSet<String>, found: &mut Vec<String>) {
     let features = manifest
         .get("features")
         .and_then(Value::as_table)
@@ -186,11 +258,9 @@ fn check_features(manifest: &Table, found: &mut Vec<String>) {
             continue;
         }
         for item in list(feature) {
-            if LIBRARY_CRATES
-                .iter()
-                .any(|crate_name| item.trim_start_matches("dep:").starts_with(crate_name))
-                || item == "secrets"
-            {
+            let target = item.trim_start_matches("dep:");
+            let target = target.split(['/', '?']).next().unwrap_or_default();
+            if declared.contains(target) || item == "secrets" {
                 found.push(format!(
                     "feature {feature} reaches the library through {item}"
                 ));
@@ -199,25 +269,26 @@ fn check_features(manifest: &Table, found: &mut Vec<String>) {
     }
 }
 
-/// The lockfile records every library crate at the tag's own commit.
+/// The lockfile records every package from the library source at the tag's own commit, and
+/// holds each declared crate.
 fn check_lock(root: &Path, found: &mut Vec<String>) {
     let lock = read(&root.join("Cargo.lock"));
     let expected = format!("git+{SOURCE}?tag={TAG}#{REVISION}");
+    let packages = lock["package"].as_array().unwrap();
     for crate_name in LIBRARY_CRATES {
-        let sources: Vec<&str> = lock["package"]
-            .as_array()
-            .unwrap()
+        if !packages
             .iter()
-            .filter(|package| package["name"].as_str() == Some(crate_name))
-            .map(|package| package.get("source").and_then(Value::as_str).unwrap_or(""))
-            .collect();
-        if sources.is_empty() {
+            .any(|package| package["name"].as_str() == Some(crate_name))
+        {
             found.push(format!("Cargo.lock has no {crate_name}"));
         }
-        for source in sources {
-            if source != expected {
-                found.push(format!("Cargo.lock records {crate_name} from {source}"));
-            }
+    }
+    for package in packages {
+        let name = package["name"].as_str().unwrap_or_default();
+        let source = package.get("source").and_then(Value::as_str).unwrap_or("");
+        let from_library = source.strip_prefix("git+").is_some_and(is_library_source);
+        if (from_library || LIBRARY_CRATES.contains(&name)) && source != expected {
+            found.push(format!("Cargo.lock records {name} from {source}"));
         }
     }
 }
@@ -226,6 +297,28 @@ fn check_lock(root: &Path, found: &mut Vec<String>) {
 fn the_secrets_library_is_reached_only_through_the_credentials_feature() {
     let found = violations(&root());
     assert!(found.is_empty(), "{found:#?}");
+}
+
+#[test]
+fn every_spelling_of_the_library_source_is_recognised() {
+    for url in [
+        "https://github.com/beyond10x/secrets",
+        "https://github.com/beyond10x/secrets.git",
+        "https://github.com/beyond10x/secrets/",
+        "https://GitHub.com/Beyond10x/Secrets",
+        "ssh://git@github.com/beyond10x/secrets",
+        "git@github.com:beyond10x/secrets.git",
+        "https://github.com/beyond10x/secrets?tag=v0.5.0#8c4eabb1",
+    ] {
+        assert!(is_library_source(url), "{url}");
+    }
+    for url in [
+        "https://github.com/beyond10x/secrets-fork",
+        "https://github.com/beyond10x/llm",
+        "https://example.invalid/beyond10x/secrets",
+    ] {
+        assert!(!is_library_source(url), "{url}");
+    }
 }
 
 /// A copy of every manifest and the lockfile, for one mutant.
@@ -343,4 +436,128 @@ fn a_default_on_feature_is_named() {
         "default = [\"secrets\"]",
     );
     assert_named(&root, "feature secrets is on by default");
+}
+
+#[test]
+fn a_core_crate_on_another_library_crate_is_named() {
+    let root = copy("other-library-crate");
+    mutate(
+        &root,
+        "crates/llm-providers/Cargo.toml",
+        "[dependencies]\n",
+        "[dependencies]\nsecrets-client = { git = \"https://github.com/beyond10x/secrets\", tag = \"v0.5.0\" }\n",
+    );
+    assert_named(
+        &root,
+        "crates/llm-providers [dependencies] depends on secrets-client",
+    );
+}
+
+#[test]
+fn a_renamed_library_crate_under_another_spelling_of_the_source_is_named() {
+    let root = copy("renamed-spelling");
+    mutate(
+        &root,
+        "crates/llm-routing/Cargo.toml",
+        "[dependencies]\n",
+        "[dependencies]\nvault = { package = \"secrets-remote\", git = \"ssh://git@github.com/Beyond10x/secrets.git\", tag = \"v0.5.0\" }\n",
+    );
+    assert_named(
+        &root,
+        "crates/llm-routing [dependencies] depends on secrets-remote",
+    );
+}
+
+#[test]
+fn a_core_crate_inheriting_a_library_crate_from_the_workspace_is_named() {
+    let root = copy("workspace-inherited");
+    mutate(
+        &root,
+        "Cargo.toml",
+        "[workspace.dependencies]\n",
+        "[workspace.dependencies]\nsecrets-federation = { git = \"https://github.com/beyond10x/secrets\", tag = \"v0.5.0\" }\n",
+    );
+    mutate(
+        &root,
+        "crates/llm-chat/Cargo.toml",
+        "[dependencies]\n",
+        "[dependencies]\nsecrets-federation.workspace = true\n",
+    );
+    assert_named(&root, "workspace.dependencies names secrets-federation");
+    assert_named(
+        &root,
+        "crates/llm-chat [dependencies] depends on secrets-federation",
+    );
+}
+
+#[test]
+fn a_library_crate_in_a_target_table_of_a_core_crate_is_named() {
+    let root = copy("target-table");
+    mutate(
+        &root,
+        "crates/llm-core/Cargo.toml",
+        "[dependencies]\n",
+        "[target.'cfg(unix)'.dev-dependencies]\nsecrets-app = { git = \"https://github.com/beyond10x/secrets\", tag = \"v0.5.0\" }\n\n[dependencies]\n",
+    );
+    assert_named(
+        &root,
+        "crates/llm-core [target.cfg(unix).dev-dependencies] depends on secrets-app",
+    );
+}
+
+#[test]
+fn a_core_crate_forwarding_the_feature_is_named() {
+    let root = copy("forwarded");
+    mutate(
+        &root,
+        "crates/llm-providers/Cargo.toml",
+        "[lints]",
+        "[features]\nsecrets = [\"llm-credentials/secrets\"]\n\n[lints]",
+    );
+    assert_named(
+        &root,
+        "crates/llm-providers feature secrets forwards llm-credentials/secrets",
+    );
+}
+
+#[test]
+fn a_core_crate_forwarding_the_feature_weakly_is_named() {
+    let root = copy("forwarded-weakly");
+    mutate(
+        &root,
+        "crates/llm-messages/Cargo.toml",
+        "[lints]",
+        "[features]\nvault = [\"llm-credentials?/secrets\"]\n\n[lints]",
+    );
+    assert_named(
+        &root,
+        "crates/llm-messages feature vault forwards llm-credentials?/secrets",
+    );
+}
+
+#[test]
+fn an_extra_library_crate_in_the_credentials_crate_is_named() {
+    let root = copy("owner-extra");
+    mutate(
+        &root,
+        "crates/llm-credentials/Cargo.toml",
+        "[dependencies]\n",
+        "[dependencies]\nsecrets-client = { git = \"https://github.com/beyond10x/secrets\", tag = \"v0.5.0\", optional = true }\n",
+    );
+    assert_named(&root, "declares secrets-client, which is not one of");
+}
+
+#[test]
+fn another_feature_reaching_a_library_crate_is_named() {
+    let root = copy("other-feature");
+    mutate(
+        &root,
+        "crates/llm-credentials/Cargo.toml",
+        "default = []",
+        "default = []\nvault = [\"secrets-keychain/native-keychain\"]",
+    );
+    assert_named(
+        &root,
+        "feature vault reaches the library through secrets-keychain/native-keychain",
+    );
 }
