@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T07:35:04Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-codex-renewal",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base: codex_renewal and json_exchange do not compile, 31 scenarios unsupported; treatment: 800/800 in unit, C14 and C19 mutants killed, adversary 10/10",
+    "reference": "phase1-red.log vs int-gate.log"
+  }
+}

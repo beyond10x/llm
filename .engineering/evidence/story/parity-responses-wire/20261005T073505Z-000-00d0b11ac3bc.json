@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T07:35:05Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-responses-wire",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "integration gate on clean packages: fmt 0, clippy +1.98.0 workspace 0, cargo test --workspace --no-fail-fast 746 passed 0 failed, credentials both feature sets 0, ess validate 0, conformance 814/814",
+    "reference": "wave/2026-10-05-w31 30b36f8"
+  }
+}

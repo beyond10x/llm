@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:parity-codex-renewal
 kind: story
-status: active
+status: implemented
 title: llm renews a Codex login and writes it back atomically
 relations:
 - decomposes: epic:serving-split
@@ -19,10 +19,11 @@ scope:
   path: docs/harness-parity.md
 - confidence: inferred
   path: spec
-revision: 8
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-05T02:15:21Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-05T02:15:21Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-05T07:35:04Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Outcome
 

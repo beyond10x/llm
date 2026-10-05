@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T07:35:04Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-responses-live-stream",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base: 8 live_stream/kept-text tests red, 4 scenarios failed; treatment green, mutant on kept text killed; adversary cases 4 green",
+    "reference": "phase1-red.log vs int-gate.log"
+  }
+}

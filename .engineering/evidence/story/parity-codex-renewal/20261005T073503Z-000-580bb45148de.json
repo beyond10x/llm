@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-05T07:35:03Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-codex-renewal",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:adversary-w31-llm-parity-codex-renewal-pass-1",
+    "review": "review-result:adversary-w31-llm-parity-codex-renewal-pass-1",
+    "outcome": "fixed"
+  }
+}

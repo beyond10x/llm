@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-05T07:35:04Z",
+  "actor": "human:timo",
+  "artifact": "story:parity-responses-wire",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "base: request_bytes and conversation_identity do not compile, 5 scenarios fail or error; treatment green, 9 mutants killed",
+    "reference": "phase1-red.log vs int-gate.log"
+  }
+}
