@@ -6,6 +6,12 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Changed
+
+- ESS moves to 0.52.0: CI installs the `ess` 0.52.0 release asset after checking it against the
+  release's `SHA256SUMS`, and the conformance runner takes `ess-conformance` and `ess-primitives` at
+  tag `0.52.0`. The regenerated suite (665 scenarios) and schemas are byte-identical.
+
 ## [0.2.0] - 2026-10-05
 
 The serving side leaves llm: llm is the client libraries, and serving lives in
