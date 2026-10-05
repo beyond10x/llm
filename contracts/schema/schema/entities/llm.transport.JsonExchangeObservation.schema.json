@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JsonExchangeObservation",
+  "x-ess-name": "llm.transport.JsonExchangeObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "valid_program": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "retriable": {
+      "type": "boolean"
+    },
+    "requests": {
+      "type": "integer"
+    },
+    "redirected_requests": {
+      "type": "integer"
+    },
+    "request_content_type": {
+      "type": "string"
+    },
+    "answer_matches": {
+      "type": "boolean"
+    },
+    "diagnostics_safe": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.transport.JsonExchangeObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "valid_program",
+    "requests",
+    "redirected_requests",
+    "diagnostics_safe",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "aa9fe63a776ebd0a85be0e9fe39525f81d73a3be57f011a08cc57e1b3708c901",
+    "contract_digest": "slice-sha256/2:829e333e4f65b0b7248fa47176607ad32b11550344f306ae943e2e86dac4af42",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.transport.JsonExchangeObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.transport.JsonExchangeObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

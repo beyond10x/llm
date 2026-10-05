@@ -304,6 +304,7 @@ version = "0.1.6"
 dependencies = [
  "apple-native-keyring-store",
  "b10x-llm-core",
+ "b10x-llm-http",
  "base64",
  "keyring-core",
  "rustix",
@@ -327,10 +328,12 @@ name = "b10x-llm-http"
 version = "0.1.6"
 dependencies = [
  "b10x-llm-core",
+ "bytes",
  "httpdate",
  "reqwest",
  "serde_json",
  "tokio",
+ "zeroize",
 ]
 
 [[package]]

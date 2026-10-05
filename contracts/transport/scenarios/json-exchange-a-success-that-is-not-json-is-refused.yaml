@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.transport
+scenario: json-exchange-a-success-that-is-not-json-is-refused
+summary: a 200 whose body is not JSON is a protocol refusal with dispatch accepted that quotes no body
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.transport.PostJson
+  input:
+    program_json: '{"server":{"body":"not json"}}'
+  outcome: observed
+assert:
+- view: llm.transport.LastJsonExchange
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.transport.LastJsonExchange
+  contains:
+    error_code: protocol
+    dispatch: accepted
+    retriable: false
+    diagnostics_safe: true

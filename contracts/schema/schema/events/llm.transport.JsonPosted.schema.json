@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JsonPosted payload",
+  "x-ess-name": "llm.transport.JsonPosted",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "valid_program": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "valid_program"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "aa9fe63a776ebd0a85be0e9fe39525f81d73a3be57f011a08cc57e1b3708c901",
+    "contract_digest": "slice-sha256/2:b70b021d92c148260418492a167f4e8144a7c57ff854a64bd5b0a813279e300b",
+    "regenerate": "ess generate"
+  }
+}

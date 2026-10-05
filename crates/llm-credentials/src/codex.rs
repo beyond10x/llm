@@ -3,7 +3,7 @@
 //! The resolver is read-only: it never writes, refreshes or caches the file. Each request reads
 //! `/tokens/access_token` again and judges its JWT `exp` claim against the caller's clock. An
 //! expired or absent token is refused; the caller renews the login by running `codex`, which owns
-//! the file.
+//! the file, or opts in to renewal (feature `codex-renewal`, `CodexAuthFile::renew`).
 //!
 //! There is no default location. The caller passes an absolute path; Codex keeps the file at
 //! `~/.codex/auth.json`, and expanding that is the embedding application's job, so this crate
@@ -315,6 +315,15 @@ fn expiry(token: &str) -> Result<i128, SecretError> {
         .or_else(|| exp.as_i64().map(i128::from))
         .ok_or(SecretError::Unavailable)
 }
+
+// Opt-in renewal, declared after the read-only code it extends.
+#[cfg(feature = "codex-renewal")]
+mod renewal;
+#[cfg(feature = "codex-renewal")]
+pub use renewal::{
+    CODEX_CLIENT_ID, CODEX_TOKEN_URL, CodexRenewal, CodexRenewalError, DEFAULT_RENEWAL_MARGIN,
+    Renewal, RenewalRefusal, Renewed, RenewingCodexAuthFile,
+};
 
 #[cfg(test)]
 mod tests {

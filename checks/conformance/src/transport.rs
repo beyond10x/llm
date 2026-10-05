@@ -31,7 +31,10 @@ use tokio::{
 use crate::target::Observed;
 
 /// Every view name this domain answers through `query_view`.
-pub const VIEWS: &[&str] = &["llm.transport.LastExchange"];
+pub const VIEWS: &[&str] = &[
+    "llm.transport.LastExchange",
+    "llm.transport.LastJsonExchange",
+];
 
 const MAX_PROGRAM_BYTES: usize = 64 * 1024;
 const MAX_CHUNKS: usize = 64;
@@ -52,10 +55,11 @@ const BACKSTOP: Duration = Duration::from_secs(30);
 
 /// Observe one command of this domain, or `None` when the command belongs to another.
 pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetError>> {
-    if command != "llm.transport.Exchange" {
-        return None;
+    match command {
+        "llm.transport.Exchange" => Some(exercise(input)),
+        "llm.transport.PostJson" => Some(post_json(input)),
+        _ => None,
     }
-    Some(exercise(input))
 }
 
 fn unavailable(error: impl std::fmt::Display) -> TargetError {
@@ -606,5 +610,252 @@ fn in_child(program_json: &str) -> Value {
         None => facts["error_code"] = json!("fixture:child"),
     }
     facts["proxied_requests"] = json!(proxied);
+    facts
+}
+
+// One JSON document exchange (`HttpClient::post_json`) against a scripted local server.
+
+/// A marker only the request body of a JSON exchange carries.
+const JSON_REQUEST_MARKER: &str = "llm-fixture-json-request-private-marker";
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JsonProgram {
+    server: JsonServer,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields, default)]
+struct JsonServer {
+    listening: bool,
+    status: u16,
+    content_type: Option<String>,
+    body: Option<String>,
+    body_bytes: Option<usize>,
+    redirect: bool,
+}
+
+impl Default for JsonServer {
+    fn default() -> Self {
+        Self {
+            listening: true,
+            status: 200,
+            content_type: Some("application/json".to_owned()),
+            body: None,
+            body_bytes: None,
+            redirect: false,
+        }
+    }
+}
+
+impl JsonServer {
+    /// The answer body: a failing status carries the untrusted marker; a success carries `body`
+    /// or a JSON string literal of exactly `body_bytes` bytes.
+    fn answer(&self) -> Vec<u8> {
+        if !(200..300).contains(&self.status) {
+            return format!(r#"{{"error":"{UNTRUSTED_BODY}"}}"#).into_bytes();
+        }
+        match (self.body_bytes, &self.body) {
+            (Some(total), _) if total >= 2 => format!("\"{}\"", "x".repeat(total - 2)).into_bytes(),
+            (Some(total), _) => vec![b'x'; total],
+            (None, Some(body)) => body.clone().into_bytes(),
+            (None, None) => b"{}".to_vec(),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PostJsonInput {
+    program_json: String,
+}
+
+fn post_json(input: &Value) -> Result<Observed, TargetError> {
+    let request: PostJsonInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
+    Ok(Observed {
+        facts: run_json(&request.program_json),
+        view: "llm.transport.LastJsonExchange",
+        event: "llm.transport.JsonPosted",
+        field: "valid_program",
+    })
+}
+
+fn json_blank() -> Value {
+    json!({
+        "valid_program": false, "error_code": null, "dispatch": null, "retriable": null,
+        "requests": 0, "redirected_requests": 0, "request_content_type": null,
+        "answer_matches": null, "diagnostics_safe": true
+    })
+}
+
+/// Reads one request head and its declared body; returns the `content-type` it named.
+async fn read_json_request(socket: &mut TcpStream) -> Option<Option<String>> {
+    let mut bytes = Vec::new();
+    let mut buffer = vec![0_u8; 16 * 1024];
+    let end = loop {
+        if let Some(end) = bytes.windows(4).position(|window| window == b"\r\n\r\n") {
+            break end;
+        }
+        if bytes.len() > MAX_REQUEST_HEAD {
+            return None;
+        }
+        let read = socket.read(&mut buffer).await.ok()?;
+        if read == 0 {
+            return None;
+        }
+        bytes.extend_from_slice(buffer.get(..read)?);
+    };
+    let head = String::from_utf8_lossy(bytes.get(..end)?).into_owned();
+    let header = |wanted: &str| {
+        head.lines().find_map(|line| {
+            let (name, value) = line.split_once(':')?;
+            name.trim()
+                .eq_ignore_ascii_case(wanted)
+                .then(|| value.trim().to_owned())
+        })
+    };
+    let length: usize = header("content-length")
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(0);
+    let mut read_body = bytes.len().saturating_sub(end + 4);
+    while read_body < length {
+        let read = socket.read(&mut buffer).await.ok()?;
+        if read == 0 {
+            return None;
+        }
+        read_body += read;
+    }
+    Some(header("content-type"))
+}
+
+async fn json_exchange(
+    server: JsonServer,
+    facts: &mut Value,
+    seen: &Arc<Seen>,
+) -> Result<(), String> {
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .map_err(|_| "fixture:bind")?;
+    let address = listener.local_addr().map_err(|_| "fixture:bind")?;
+    let target = TcpListener::bind("127.0.0.1:0")
+        .await
+        .map_err(|_| "fixture:bind")?;
+    let location = format!(
+        "http://{}/elsewhere",
+        target.local_addr().map_err(|_| "fixture:bind")?
+    );
+    tokio::spawn(count(target, seen.clone()));
+    let content_type: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    if server.listening {
+        let (seen, content_type) = (seen.clone(), content_type.clone());
+        let answer = server.answer();
+        let (status, media, redirect) =
+            (server.status, server.content_type.clone(), server.redirect);
+        tokio::spawn(async move {
+            while let Ok((mut socket, _)) = listener.accept().await {
+                seen.accepted.fetch_add(1, Ordering::SeqCst);
+                let Some(received) = read_json_request(&mut socket).await else {
+                    continue;
+                };
+                *content_type.lock().unwrap_or_else(PoisonError::into_inner) = received;
+                let mut head = format!("HTTP/1.1 {status} Fixture\r\n");
+                if redirect {
+                    let _ = write!(head, "location: {location}\r\n");
+                }
+                if let Some(media) = &media {
+                    let _ = write!(head, "content-type: {media}\r\n");
+                }
+                let _ = write!(
+                    head,
+                    "content-length: {}\r\nconnection: close\r\n\r\n",
+                    answer.len()
+                );
+                let _ = socket.write_all(head.as_bytes()).await;
+                let _ = socket.write_all(&answer).await;
+                let _ = socket.shutdown().await;
+            }
+        });
+    } else {
+        drop(listener);
+    }
+    let client = HttpClient::new(Limits {
+        response_headers: Duration::from_secs(30),
+        idle: Duration::from_secs(30),
+        total: Duration::from_secs(30),
+    })
+    .map_err(|_| "fixture:client")?;
+    let body =
+        serde_json::to_vec(&json!({"secret": JSON_REQUEST_MARKER})).map_err(|_| "fixture:body")?;
+    let outcome = client
+        .post_json(
+            &format!("http://{address}/oauth/token"),
+            HeaderMap::new(),
+            body,
+            &Cancel::new(),
+        )
+        .await;
+    match outcome {
+        Ok(document) => {
+            let sent: Option<Value> = serde_json::from_slice(&server.answer()).ok();
+            facts["answer_matches"] = json!(sent.as_ref() == Some(&document));
+        }
+        Err(error) => {
+            facts["error_code"] = label(error.code);
+            facts["dispatch"] = label(error.dispatch);
+            facts["retriable"] = json!(error.retriable);
+            let rendered = format!("{error:?}{error}");
+            if rendered.contains(UNTRUSTED_BODY) || rendered.contains(JSON_REQUEST_MARKER) {
+                facts["diagnostics_safe"] = json!(false);
+            }
+        }
+    }
+    facts["request_content_type"] = json!(
+        content_type
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
+    );
+    Ok(())
+}
+
+/// Observe one JSON exchange program.
+fn run_json(program_json: &str) -> Value {
+    let mut facts = json_blank();
+    if program_json.len() > MAX_PROGRAM_BYTES {
+        return facts;
+    }
+    let Ok(program) = serde_json::from_str::<JsonProgram>(program_json) else {
+        return facts;
+    };
+    if program
+        .server
+        .body_bytes
+        .is_some_and(|bytes| bytes > MAX_FIXTURE_BODY)
+    {
+        return facts;
+    }
+    facts["valid_program"] = json!(true);
+    let Ok(runtime) = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+    else {
+        facts["error_code"] = json!("fixture:no-runtime");
+        return facts;
+    };
+    let seen = Arc::new(Seen::default());
+    let outcome = runtime.block_on(async {
+        let outcome =
+            tokio::time::timeout(BACKSTOP, json_exchange(program.server, &mut facts, &seen)).await;
+        tokio::time::sleep(RESEND_GRACE).await;
+        outcome
+    });
+    match outcome {
+        Ok(Ok(())) => {}
+        Ok(Err(code)) => facts["error_code"] = json!(code),
+        Err(_) => facts["error_code"] = json!("fixture:backstop"),
+    }
+    facts["requests"] = json!(seen.accepted.load(Ordering::SeqCst));
+    facts["redirected_requests"] = json!(seen.redirected.load(Ordering::SeqCst));
+    drop(runtime);
     facts
 }

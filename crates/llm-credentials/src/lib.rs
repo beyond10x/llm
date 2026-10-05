@@ -2,9 +2,9 @@
 
 //! Injected secret resolution and caller-managed credential refresh; optional backend adapters.
 //!
-//! Secret references and caller-injected custody. No login or persistent writes, and no lookup
-//! the caller did not name: every path, variable and pointer an adapter reads is bound by the
-//! caller to one reference.
+//! Secret references and caller-injected custody. No login, no lookup the caller did not name
+//! (every path, variable and pointer is bound to one reference), and no persistent write except
+//! the opt-in Codex login renewal (feature `codex-renewal`), which rewrites only token values.
 
 #[cfg(feature = "codex-auth-file")]
 pub mod codex;

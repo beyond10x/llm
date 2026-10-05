@@ -13,7 +13,7 @@ workspace = true
 llm-core.workspace = true
 llm-cost = { package = "b10x-llm-cost", path = "../../crates/llm-cost", features = ["sqlite"] }
 rusqlite = { version = "0.40.2", features = ["bundled"] }
-llm-credentials = { workspace = true, features = ["environment", "file", "json-pointer", "keychain"] }
+llm-credentials = { workspace = true, features = ["codex-renewal", "environment", "file", "json-pointer", "keychain"] }
 keyring-core = "1.0.0"
 tempfile = "3.27"
 tokio.workspace = true
