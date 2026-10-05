@@ -6,6 +6,38 @@ domain: llm.responses
 # provider that was reached. The conformance adapter retains the actual returned values until
 # the next observation in that scenario. It neither chooses expected outcomes from input
 # predicates nor simulates a provider.
+#
+# Live delivery (Harness harness-responses/src/lib.rs:353-359, harness-loop/src/lib.rs:1802).
+# The Responses client decodes each server-sent-event payload as it arrives and hands the
+# stream events that payload produced to the caller's sink before it reads the next payload, as
+# the Messages client does. The events reach the sink in wire order, the same sequence
+# `DecodeStream` reports as `stream_events` for the whole stream, and reading stops at the
+# first `response.completed`, `response.incomplete`, `response.failed` or `error` payload. The
+# transport's bounds (bytes per event, bytes and events per stream, the turn's total limit)
+# hold while events are handed over: a payload over a bound ends the turn after the events of
+# the payloads before it were shown, and nothing after it is shown.
+#
+# A sink refusal, a cancellation or the turn deadline while an event is handed over ends the
+# turn at once: nothing more is read, the failure has dispatch `accepted`, and it carries the
+# evidence decoded up to that point, which is the serving binding and, only when a terminal
+# object had already been decoded, that object's counters. Counters that were not read stay
+# absent, never zero.
+#
+# Retry agreement (wave 2026-10-05-w27). A transport failure while reading the stream, such
+# as a cut connection, after any payload other than `response.created`,
+# `response.in_progress` or `response.queued` arrived is final: its retry class is not
+# retriable. Routing's own rule, that an attempt which showed any event on
+# the caller's sink is never retried, sees the same events live; the client's rule is the
+# stricter of the two and covers a payload that produced output without a visible event.
+#
+# Kept text (row R36). When the items a turn carries hold no assistant text, but the caller
+# was shown text through `response.output_text.delta`, the turn keeps that text: one assistant
+# message per output item the deltas named by `item_id`, its text the item's deltas in arrival
+# order, placed at the `output_index` of its first delta (or after every other item when the
+# delta names none, or names an index past the end). This holds whether the terminal `output`
+# was empty, absent, or carried only other items, and for `response.incomplete` as for
+# `response.completed`. When the items do carry assistant text the terminal object stays
+# authoritative and no delta text is added.
 entities:
   - name: llm.responses.RequestProjection
     identity: {name: projection_id, type: String}
@@ -41,9 +73,11 @@ entities:
       - {name: dispatch, type: Optional<String>}
       - {name: stop_reason, type: Optional<String>}
       - {name: incomplete_reason, type: Optional<String>}
-      # The decoded neutral items, compactly encoded.
+      # The decoded neutral items, compactly encoded. They include the text a caller was shown
+      # and the terminal object omitted (kept text, above).
       - {name: items_json, type: Optional<String>}
-      # What a caller watching the stream would have been shown, in order.
+      # What a caller watching the stream would have been shown, in order. The client shows
+      # each one as the payload that produced it arrives (live delivery, above).
       - {name: stream_events, type: List<String>}
       - {name: upstream_model, type: Optional<String>}
       - {name: response_id, type: Optional<String>}

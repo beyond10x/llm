@@ -333,10 +333,9 @@ fn a_call_streamed_twice_does_not_become_a_turn() {
 
 /// The caller was shown text (`output_text.delta`) and the server then completed with an empty
 /// `output` and no `output_item.done`. The decoder keeps the "the caller already saw it" rule
-/// for calls (`announced`); for text it returns an `EndTurn` turn with no items, so the answer
-/// the caller watched stream is not in the turn it gets back.
+/// for calls (`announced`), and `spec/domains/responses.yaml` ("Kept text", row R36) extends it
+/// to text: the answer the caller watched stream is in the turn it gets back.
 #[test]
-#[ignore = "declined in wave 2026-10-04-w18: pre-existing, unreachable (text deltas without output_item.done); recorded on story:codex-stream"]
 fn text_the_caller_was_shown_is_not_dropped_from_the_turn() {
     let payloads = vec![
         json!({"type": "response.output_text.delta", "item_id": "msg_fixture_0001",

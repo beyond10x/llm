@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: kept-text-shown-before-an-incomplete-end-stays-in-the-turn
+summary: text shown before an incomplete end with an empty output stays in the turn
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":"A long answer that"},{"type":"response.incomplete","response":{"status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"output":[]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stop_reason: max-output-tokens
+    items_json: '[{"kind":"assistant-text","text":"A long answer that"}]'
+    stream_events:
+    - text-delta:A long answer that

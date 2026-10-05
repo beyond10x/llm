@@ -503,6 +503,11 @@
       "llm.responses/authored/ingress-refuses-reasoning-that-is-not-an-object",
       "llm.responses/authored/ingress-refuses-reasoning-with-a-field-beside-effort",
       "llm.responses/authored/ingress-under-a-repointed-binding-does-not-reinstate-opaque-state",
+      "llm.responses/authored/kept-text-a-terminal-message-outranks-the-shown-deltas",
+      "llm.responses/authored/kept-text-of-two-shown-messages-stays-two-messages",
+      "llm.responses/authored/kept-text-shown-before-an-incomplete-end-stays-in-the-turn",
+      "llm.responses/authored/kept-text-shown-beside-a-terminal-call-stays-ahead-of-it",
+      "llm.responses/authored/kept-text-the-caller-was-shown-stays-in-the-turn",
       "llm.responses/authored/matching-opaque-state-is-carried-out-verbatim",
       "llm.responses/authored/message-content-outside-the-subset-is-refused-not-emptied",
       "llm.responses/authored/openai-reasoning-summary-deltas-are-observed",
@@ -3247,6 +3252,31 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/ingress-under-a-repointed-binding-does-not-reinstate-opaque-state"
       },
+      "responses/scenarios/kept-text-a-terminal-message-outranks-the-shown-deltas.yaml": {
+        "digest": "sha256:19af5b85470ad366fb96df4cccee16ff4f9b98b95adeda62af5c2bc607c01cc4",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-a-terminal-message-outranks-the-shown-deltas"
+      },
+      "responses/scenarios/kept-text-of-two-shown-messages-stays-two-messages.yaml": {
+        "digest": "sha256:68b6d0f61e951d26eaa77ad0bc29e42eb7a012542a4a14f1afe02f1fec6bf5d6",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-of-two-shown-messages-stays-two-messages"
+      },
+      "responses/scenarios/kept-text-shown-before-an-incomplete-end-stays-in-the-turn.yaml": {
+        "digest": "sha256:40f54a2b9c4ada391b1cfce76ace59f7a87f51c424e1fb1f324db205f42a8a18",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-shown-before-an-incomplete-end-stays-in-the-turn"
+      },
+      "responses/scenarios/kept-text-shown-beside-a-terminal-call-stays-ahead-of-it.yaml": {
+        "digest": "sha256:eb779bc98e5bf1e0eea6d6008509f861ac4f4867e8054263b7815f3cb588a019",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-shown-beside-a-terminal-call-stays-ahead-of-it"
+      },
+      "responses/scenarios/kept-text-the-caller-was-shown-stays-in-the-turn.yaml": {
+        "digest": "sha256:2b3fcbe53eeaced5671636168b30ad3a9c2751476eb57bd6e6e9ed164fbe889d",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-the-caller-was-shown-stays-in-the-turn"
+      },
       "responses/scenarios/matching-opaque-state-is-carried-out-verbatim.yaml": {
         "digest": "sha256:56fb9c191a131c3452f47314252923d0f29353a6d4b1a5b37d7e38a0e3695ef1",
         "disposition": "accepted",
@@ -4409,7 +4439,7 @@
       }
     },
     "counts": {
-      "authored": 734,
+      "authored": 739,
       "generated": 24,
       "outside": 0,
       "refused": 0
@@ -62425,6 +62455,506 @@
           },
           "step": "expect_view",
           "view": "llm.responses.LastIngestion"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-a-terminal-message-outranks-the-shown-deltas": {
+      "purpose": "a terminal message stays authoritative and no shown delta text is added beside it",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"a draft\"},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"the final text\"}]}]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"the final text\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:a draft"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-of-two-shown-messages-stays-two-messages": {
+      "purpose": "two messages shown through deltas and omitted from the output stay two messages",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_a\",\"output_index\":0,\"content_index\":0,\"delta\":\"Fir\"},{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_a\",\"output_index\":0,\"content_index\":0,\"delta\":\"st\"},{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_b\",\"output_index\":1,\"content_index\":0,\"delta\":\"Second\"},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"First\"},{\"kind\":\"assistant-text\",\"text\":\"Second\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:Fir",
+                  "text-delta:st",
+                  "text-delta:Second"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-shown-before-an-incomplete-end-stays-in-the-turn": {
+      "purpose": "text shown before an incomplete end with an empty output stays in the turn",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"A long answer that\"},{\"type\":\"response.incomplete\",\"response\":{\"status\":\"incomplete\",\"incomplete_details\":{\"reason\":\"max_output_tokens\"},\"output\":[]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"A long answer that\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "max-output-tokens"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:A long answer that"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-shown-beside-a-terminal-call-stays-ahead-of-it": {
+      "purpose": "shown text the terminal output omits beside a call is kept at its output index",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"Reading it.\"},{\"type\":\"response.output_item.added\",\"output_index\":1,\"item\":{\"type\":\"function_call\",\"id\":\"fc_1\",\"call_id\":\"call-1\",\"name\":\"file_read\"}},{\"type\":\"response.function_call_arguments.delta\",\"item_id\":\"fc_1\",\"delta\":\"{\\\"path\\\":\\\"README.md\\\"}\"},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"function_call\",\"call_id\":\"call-1\",\"name\":\"file_read\",\"arguments\":\"{\\\"path\\\":\\\"README.md\\\"}\"}]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"Reading it.\"},{\"arguments\":{\"path\":\"README.md\"},\"call_id\":\"call-1\",\"kind\":\"tool-call\",\"name\":\"file_read\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "tool-calls"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:Reading it.",
+                  "tool-call-started:call-1:file_read",
+                  "tool-arguments-delta:call-1:{\"path\":\"README.md\"}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-the-caller-was-shown-stays-in-the-turn": {
+      "purpose": "text the caller was shown stays in the turn when the terminal output is empty",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\",\"status\":\"in_progress\",\"output\":[]}},{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"The answer \"},{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"is 42.\"},{\"type\":\"response.output_text.done\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"text\":\"The answer is 42.\"},{\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\",\"model\":\"example/Small-Model\",\"output\":[],\"usage\":{\"input_tokens\":92,\"output_tokens\":60}}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": "92"
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"The answer is 42.\"}]"
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": "60"
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "resp_1"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:The answer ",
+                  "text-delta:is 42."
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
         }
       ]
     },

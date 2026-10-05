@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: kept-text-shown-beside-a-terminal-call-stays-ahead-of-it
+summary: shown text the terminal output omits beside a call is kept at its output index
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":"Reading it."},{"type":"response.output_item.added","output_index":1,"item":{"type":"function_call","id":"fc_1","call_id":"call-1","name":"file_read"}},{"type":"response.function_call_arguments.delta","item_id":"fc_1","delta":"{\"path\":\"README.md\"}"},{"type":"response.completed","response":{"status":"completed","output":[{"type":"function_call","call_id":"call-1","name":"file_read","arguments":"{\"path\":\"README.md\"}"}]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stop_reason: tool-calls
+    stream_events:
+    - text-delta:Reading it.
+    - tool-call-started:call-1:file_read
+    - 'tool-arguments-delta:call-1:{"path":"README.md"}'
+    items_json: '[{"kind":"assistant-text","text":"Reading it."},{"arguments":{"path":"README.md"},"call_id":"call-1","kind":"tool-call","name":"file_read"}]'

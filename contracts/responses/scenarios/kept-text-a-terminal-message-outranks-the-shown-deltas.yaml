@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: kept-text-a-terminal-message-outranks-the-shown-deltas
+summary: a terminal message stays authoritative and no shown delta text is added beside it
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":"a draft"},{"type":"response.completed","response":{"status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"the final text"}]}]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stop_reason: end-turn
+    items_json: '[{"kind":"assistant-text","text":"the final text"}]'
+    stream_events:
+    - text-delta:a draft

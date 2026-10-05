@@ -1,0 +1,30 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: kept-text-the-caller-was-shown-stays-in-the-turn
+summary: text the caller was shown stays in the turn when the terminal output is empty
+timeline:
+- at: '2026-10-05T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.created","response":{"id":"resp_1","status":"in_progress","output":[]}},{"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":"The answer "},{"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":"is 42."},{"type":"response.output_text.done","item_id":"msg_1","output_index":0,"content_index":0,"text":"The answer is 42."},{"type":"response.completed","response":{"id":"resp_1","status":"completed","model":"example/Small-Model","output":[],"usage":{"input_tokens":92,"output_tokens":60}}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    error_code: null
+    stop_reason: end-turn
+    items_json: '[{"kind":"assistant-text","text":"The answer is 42."}]'
+    stream_events:
+    - 'text-delta:The answer '
+    - text-delta:is 42.
+    response_id: resp_1
+    final_usage: true
+    input_tokens: '92'
+    output_tokens: '60'
