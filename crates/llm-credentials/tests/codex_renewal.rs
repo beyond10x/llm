@@ -822,3 +822,75 @@ async fn no_renewal_diagnostic_carries_a_token() {
         &[&stale, &fresh, OLD_REFRESH, NEW_REFRESH, OLD_ID, NEW_ID],
     );
 }
+
+/// F6: a login with a second name (a hard link) is refused before anything is sent, as the `file`
+/// adapter refuses one: the rename would split it and leave the other name holding a refresh token
+/// the endpoint retired.
+#[tokio::test]
+async fn a_hard_linked_login_is_refused_before_sending() {
+    let dir = fixture_dir();
+    let path = dir.path().join("auth.json");
+    let before = layout(
+        OLD_ID,
+        &token(at(60), "stale"),
+        OLD_REFRESH,
+        "2026-10-01T00:00:00Z",
+    );
+    write_fixture(&path, &before, 0o600);
+    fs::hard_link(&path, dir.path().join("second-name.json")).unwrap();
+    let endpoint =
+        Endpoint::answering("200 OK", json!({"access_token": token(at(3600), "fresh")})).await;
+    let error = resolver(&path)
+        .renew(&renewal(&endpoint.url), &Cancel::new())
+        .await
+        .unwrap_err();
+    assert_eq!(error.refusal(), RenewalRefusal::MultipleLinks, "{error}");
+    assert_eq!(error.refusal().code(), "multiple-links");
+    assert_eq!(error.kind(), SecretError::UnsafeSource);
+    assert_eq!(endpoint.requests(), 0);
+    assert_eq!(fs::read_to_string(&path).unwrap(), before);
+}
+
+/// F1: a grant the endpoint refused is bound to the bytes it was read from, and a changed file
+/// lifts it: after the owner logs in again, the renewing resolver renews the new login.
+#[tokio::test]
+async fn a_refused_grant_is_lifted_when_the_login_changes() {
+    let dir = fixture_dir();
+    let path = dir.path().join("auth.json");
+    let refused = Endpoint::answering("400 Bad Request", json!({"error": "invalid_grant"})).await;
+    write_fixture(
+        &path,
+        &layout(
+            OLD_ID,
+            &token(at(-60), "expired"),
+            OLD_REFRESH,
+            "2026-10-01T00:00:00Z",
+        ),
+        0o600,
+    );
+    let renewing = resolver(&path).renewing(renewal(&refused.url));
+    for _ in 0..3 {
+        assert_eq!(
+            renewing.resolve(&reference()).await.unwrap_err(),
+            SecretError::RefreshRejected
+        );
+    }
+    assert_eq!(refused.requests(), 1, "a refused grant was presented again");
+
+    // The owner logs in again: a new refresh token, still expired, is presented once.
+    write_fixture(
+        &path,
+        &layout(
+            OLD_ID,
+            &token(at(-30), "relogged"),
+            NEW_REFRESH,
+            "2026-10-02T00:00:00Z",
+        ),
+        0o600,
+    );
+    assert_eq!(
+        renewing.resolve(&reference()).await.unwrap_err(),
+        SecretError::RefreshRejected
+    );
+    assert_eq!(refused.requests(), 2, "a changed login was not renewed");
+}

@@ -764,3 +764,14 @@ scenarios:
 - transport/scenarios/json-exchange-an-answer-one-byte-over-the-bound-is-refused.yaml
 - transport/scenarios/json-exchange-a-success-that-is-not-json-is-refused.yaml
 - transport/scenarios/json-exchange-nothing-listening-is-a-final-transport-failure.yaml
+- secrets/scenarios/codex-renewal-a-relative-path-is-refused-before-anything-is-opened.yaml
+- secrets/scenarios/codex-renewal-a-missing-login-is-refused-before-sending.yaml
+- secrets/scenarios/codex-renewal-a-login-that-is-not-json-is-refused-before-sending.yaml
+- secrets/scenarios/codex-renewal-a-duplicated-key-is-refused-with-the-read-rules-kind.yaml
+- secrets/scenarios/codex-renewal-an-oversized-login-is-refused-before-sending.yaml
+- secrets/scenarios/codex-renewal-a-symlinked-login-is-refused-and-not-replaced.yaml
+- secrets/scenarios/codex-renewal-a-directory-at-the-login-path-is-refused.yaml
+- secrets/scenarios/codex-renewal-a-hard-linked-login-is-refused-before-sending.yaml
+- secrets/scenarios/codex-renewal-an-unwritable-directory-refuses-uncertain-and-leaves-the-login.yaml
+- secrets/scenarios/codex-renewal-a-refused-grant-is-not-presented-again-for-the-same-login.yaml
+- secrets/scenarios/codex-renewal-an-uncertain-grant-is-not-presented-again-for-the-same-login.yaml

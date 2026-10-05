@@ -306,6 +306,8 @@ impl HttpClient {
     /// read up to [`MAX_EXCHANGE_BYTES`] inclusive. Every refusal is final (`retriable` false),
     /// whatever the status table says for a turn: the body may be a non-idempotent document such
     /// as a refresh grant. Neither the request body nor the answer body reaches a diagnostic.
+    /// The request body is zeroized when the client drops it and the answer bytes after parsing;
+    /// copies inside the HTTP and TLS stack, and the returned document, are not.
     ///
     /// # Errors
     /// Refuses invalid URLs and bounds, cancellation, deadlines, transport failures, a failing
@@ -345,7 +347,9 @@ impl HttpClient {
             .client
             .post(url)
             .headers(headers)
-            .body(body)
+            .body(reqwest::Body::from(bytes::Bytes::from_owner(
+                zeroize::Zeroizing::new(body),
+            )))
             .build()
             .map_err(|_| Error::invalid("HTTP request could not be constructed"))?;
         let mut response = tokio::select! {
@@ -376,7 +380,8 @@ impl HttpClient {
         {
             return Err(too_large());
         }
-        let mut answer = Vec::new();
+        // Allocated once at the bound, so it is never reallocated and every byte is zeroized.
+        let mut answer = zeroize::Zeroizing::new(Vec::with_capacity(MAX_EXCHANGE_BYTES));
         loop {
             let chunk = tokio::select! {
                 biased;

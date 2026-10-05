@@ -20,3 +20,5 @@ serde_json.workspace = true
 reqwest.workspace = true
 tokio.workspace = true
 httpdate.workspace = true
+bytes = "1.12"
+zeroize.workspace = true

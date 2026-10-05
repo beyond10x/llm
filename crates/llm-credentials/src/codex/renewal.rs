@@ -20,7 +20,19 @@
 //! document is parsed back and checked before it is written. It is written to a new file in the
 //! same directory with the original's mode, flushed, and renamed over the original only when the
 //! original still holds exactly the bytes the renewal read. A symlink at the path is refused rather
-//! than replaced by a file.
+//! than replaced by a file, and so is a file with more than one name (a hard link), which the
+//! rename would split, leaving the other name holding a refresh token the endpoint has retired.
+//!
+//! **Not repeating a grant.** [`RenewingCodexAuthFile`] records the login's bytes before it
+//! presents a refresh token. A grant the endpoint refused, or one whose outcome is uncertain
+//! (including a resolve dropped while the grant was in flight), is not presented again while the
+//! file holds the same bytes: the next resolve refuses with the same kind, as
+//! [`crate::CoordinatedResolver::refresh`] does for a rejected generation. Any change to the file,
+//! such as `codex` logging in again, lifts it.
+//!
+//! **Secret copies.** The request body is zeroized when the HTTP client drops it, and every string
+//! of the answer is zeroized after the tokens are taken from it. Copies inside the HTTP and TLS
+//! stack and the JSON parser's scratch buffers are not covered.
 use super::{CodexAuthError, CodexAuthFile, expiry, open, read_exact, unix_seconds};
 use crate::{MAX_SECRET_BYTES, ResolvedSecret, SecretError, SecretRef, SecretResolver, local};
 use llm_core::{BoxFuture, Cancel, Dispatch};
@@ -30,6 +42,7 @@ use serde::{
     de::{Error as _, MapAccess, Visitor},
 };
 use serde_json::value::RawValue;
+use sha2::{Digest as _, Sha256};
 use std::{
     fmt, fs,
     io::Write as _,
@@ -37,7 +50,7 @@ use std::{
     path::{Path, PathBuf},
     time::{Duration, SystemTime},
 };
-use zeroize::Zeroizing;
+use zeroize::{Zeroize as _, Zeroizing};
 
 /// The token endpoint the Codex CLI itself presents its refresh token to (Harness
 /// `harness-cli/src/provider.rs:224`-`228`).
@@ -154,6 +167,8 @@ pub enum RenewalRefusal {
     TooLarge,
     /// A symlink or anything but a regular file is at the path, which a renewal would replace.
     NotARegularFile,
+    /// The file has more than one name (a hard link), which the rename would split.
+    MultipleLinks,
     /// Due, but nothing usable at `/tokens/refresh_token`; nothing was sent.
     NoRefreshToken,
     /// The exchange refused; [`CodexRenewalError::exchange`] carries its error.
@@ -179,6 +194,7 @@ impl RenewalRefusal {
             Self::Unavailable => "unavailable",
             Self::TooLarge => "too-large",
             Self::NotARegularFile => "not-a-regular-file",
+            Self::MultipleLinks => "multiple-links",
             Self::NoRefreshToken => "no-refresh-token",
             Self::ExchangeFailed => "exchange-failed",
             Self::AnswerWithoutAccessToken => "answer-without-access-token",
@@ -230,6 +246,7 @@ impl CodexRenewalError {
             RenewalRefusal::NotAbsolute
             | RenewalRefusal::Unavailable
             | RenewalRefusal::NotARegularFile => SecretError::Unavailable,
+            RenewalRefusal::MultipleLinks => SecretError::UnsafeSource,
             RenewalRefusal::Missing | RenewalRefusal::NoRefreshToken => SecretError::Missing,
             RenewalRefusal::TooLarge => SecretError::TooLarge,
             RenewalRefusal::ExchangeFailed => match self.exchange.as_ref().map(|e| e.dispatch) {
@@ -267,6 +284,10 @@ impl fmt::Display for CodexRenewalError {
             RenewalRefusal::NotARegularFile => write!(
                 f,
                 "the Codex login {path} is not a regular file, so a renewal does not replace it"
+            ),
+            RenewalRefusal::MultipleLinks => write!(
+                f,
+                "the Codex login {path} has more than one name (a hard link), so a renewal, which replaces the file, does not split it"
             ),
             RenewalRefusal::NoRefreshToken => write!(
                 f,
@@ -308,9 +329,12 @@ impl fmt::Display for CodexRenewalError {
 
 impl std::error::Error for CodexRenewalError {}
 
-/// A due login, read once: the text, where each value lives in it, and the refresh token.
+/// A due login, read once: the text and its generation, where each value lives in it, the refresh
+/// token, and the clock it was judged against.
 struct Due {
     text: Zeroizing<String>,
+    generation: [u8; 32],
+    now: SystemTime,
     access: Range<usize>,
     refresh: Range<usize>,
     refresh_token: Zeroizing<String>,
@@ -331,6 +355,23 @@ struct RefreshRequest<'a> {
     refresh_token: &'a str,
 }
 
+/// The endpoint's answer, every string of which is zeroized when it is dropped.
+struct Answer(serde_json::Value);
+
+impl Drop for Answer {
+    fn drop(&mut self) {
+        fn scrub(value: &mut serde_json::Value) {
+            match value {
+                serde_json::Value::String(text) => text.zeroize(),
+                serde_json::Value::Array(items) => items.iter_mut().for_each(scrub),
+                serde_json::Value::Object(members) => members.values_mut().for_each(scrub),
+                _ => {}
+            }
+        }
+        scrub(&mut self.0);
+    }
+}
+
 impl CodexAuthFile {
     /// Renews this login when it is due, and writes it back. See the module documentation.
     ///
@@ -341,73 +382,112 @@ impl CodexAuthFile {
         renewal: &CodexRenewal,
         cancel: &Cancel,
     ) -> Result<Renewal, CodexRenewalError> {
-        let refused = |refusal| CodexRenewalError {
+        match self.plan_renewal(renewal).await? {
+            Plan::NotDue => Ok(Renewal::NotDue),
+            Plan::Undated => Ok(Renewal::Undated),
+            Plan::Due(due) => self
+                .complete_renewal(renewal, due, cancel)
+                .await
+                .map(Renewal::Renewed),
+        }
+    }
+
+    fn refused(&self, refusal: RenewalRefusal) -> CodexRenewalError {
+        CodexRenewalError {
             refusal,
             path: self.path.clone(),
             exchange: None,
-        };
+        }
+    }
+
+    /// Reads the login and decides whether it is due. Sends nothing.
+    async fn plan_renewal(&self, renewal: &CodexRenewal) -> Result<Plan, CodexRenewalError> {
         if !self.path.is_absolute() {
-            return Err(refused(RenewalRefusal::NotAbsolute));
+            return Err(self.refused(RenewalRefusal::NotAbsolute));
         }
         let (path, now, margin) = (self.path.clone(), (self.clock)(), renewal.margin);
-        let due = match local::blocking(self.permits.clone(), move || Ok(plan(&path, now, margin)))
+        local::blocking(self.permits.clone(), move || Ok(plan(&path, now, margin)))
             .await
             .unwrap_or(Err(RenewalRefusal::Unavailable))
-            .map_err(refused)?
-        {
-            Plan::NotDue => return Ok(Renewal::NotDue),
-            Plan::Undated => return Ok(Renewal::Undated),
-            Plan::Due(due) => due,
-        };
+            .map_err(|refusal| self.refused(refusal))
+    }
 
-        let body = serde_json::to_vec(&RefreshRequest {
-            client_id: &renewal.client_id,
-            grant_type: "refresh_token",
-            refresh_token: due.refresh_token.as_str(),
-        })
-        .map_err(|_| refused(RenewalRefusal::Unavailable))?;
-        let answer = renewal
-            .client
-            .post_json(&renewal.url, HeaderMap::new(), body, cancel)
-            .await
-            .map_err(|error| CodexRenewalError {
-                refusal: RenewalRefusal::ExchangeFailed,
-                path: self.path.clone(),
-                exchange: Some(error),
-            })?;
+    /// Presents the refresh token of a due login once and writes the answer back.
+    async fn complete_renewal(
+        &self,
+        renewal: &CodexRenewal,
+        due: Due,
+        cancel: &Cancel,
+    ) -> Result<Renewed, CodexRenewalError> {
+        // Room for the worst-case escaping up front, so the buffer is never reallocated. It moves
+        // into the HTTP client, which zeroizes it when it drops the request body.
+        let mut body = Zeroizing::new(Vec::with_capacity(
+            64 + 6 * (renewal.client_id.len() + due.refresh_token.len()),
+        ));
+        serde_json::to_writer(
+            &mut *body,
+            &RefreshRequest {
+                client_id: &renewal.client_id,
+                grant_type: "refresh_token",
+                refresh_token: due.refresh_token.as_str(),
+            },
+        )
+        .map_err(|_| self.refused(RenewalRefusal::Unavailable))?;
+        let answer = Answer(
+            renewal
+                .client
+                .post_json(
+                    &renewal.url,
+                    HeaderMap::new(),
+                    std::mem::take(&mut *body),
+                    cancel,
+                )
+                .await
+                .map_err(|error| CodexRenewalError {
+                    refusal: RenewalRefusal::ExchangeFailed,
+                    path: self.path.clone(),
+                    exchange: Some(error),
+                })?,
+        );
 
         let access = answer
+            .0
             .get("access_token")
             .and_then(serde_json::Value::as_str)
             .filter(|token| !token.is_empty())
-            .ok_or_else(|| refused(RenewalRefusal::AnswerWithoutAccessToken))?;
-        let refresh = issued(&answer, "refresh_token")
-            .map_err(|()| refused(RenewalRefusal::AnswerInvalidRefreshToken))?;
-        let id = issued(&answer, "id_token")
-            .map_err(|()| refused(RenewalRefusal::AnswerInvalidIdToken))?;
+            .map(owned)
+            .ok_or_else(|| self.refused(RenewalRefusal::AnswerWithoutAccessToken))?;
+        let refresh = issued(&answer.0, "refresh_token")
+            .map_err(|()| self.refused(RenewalRefusal::AnswerInvalidRefreshToken))?
+            .map(owned);
+        let id = issued(&answer.0, "id_token")
+            .map_err(|()| self.refused(RenewalRefusal::AnswerInvalidIdToken))?
+            .map(owned);
+        drop(answer);
 
-        let mut edits = vec![(due.access.clone(), &ACCESS[..], owned(access))];
+        let renewed = Renewed {
+            expires_unix: expiry(&access).ok(),
+            refresh_token_rotated: refresh
+                .as_ref()
+                .is_some_and(|new| new.as_str() != due.refresh_token.as_str()),
+        };
+        let mut edits = vec![(due.access.clone(), &ACCESS[..], access)];
         if let Some(refresh) = refresh {
-            edits.push((due.refresh.clone(), &REFRESH[..], owned(refresh)));
+            edits.push((due.refresh.clone(), &REFRESH[..], refresh));
         }
         if let (Some(span), Some(id)) = (&due.id, id) {
-            edits.push((span.clone(), &ID[..], owned(id)));
+            edits.push((span.clone(), &ID[..], id));
         }
         if let Some(span) = &due.last_refresh {
             edits.push((
                 span.clone(),
                 &LAST_REFRESH[..],
-                Zeroizing::new(rfc3339(now)),
+                Zeroizing::new(rfc3339(due.now)),
             ));
         }
         let rewritten =
-            splice(&due.text, &edits).ok_or_else(|| refused(RenewalRefusal::WriteFailed))?;
-        let renewed = Renewed {
-            expires_unix: expiry(access).ok(),
-            refresh_token_rotated: refresh.is_some_and(|new| new != due.refresh_token.as_str()),
-        };
+            splice(&due.text, &edits).ok_or_else(|| self.refused(RenewalRefusal::WriteFailed))?;
         drop(edits);
-        drop(answer);
 
         let path = self.path.clone();
         local::blocking(self.permits.clone(), move || {
@@ -419,8 +499,8 @@ impl CodexAuthFile {
         })
         .await
         .unwrap_or(Err(RenewalRefusal::WriteFailed))
-        .map_err(refused)?;
-        Ok(Renewal::Renewed(renewed))
+        .map_err(|refusal| self.refused(refusal))?;
+        Ok(renewed)
     }
 
     /// A resolver that renews this login when it is due before answering its access token.
@@ -428,7 +508,7 @@ impl CodexAuthFile {
         RenewingCodexAuthFile {
             file: self,
             renewal,
-            renewals: tokio::sync::Mutex::new(()),
+            bound: tokio::sync::Mutex::new(None),
         }
     }
 }
@@ -445,31 +525,76 @@ fn issued<'a>(answer: &'a serde_json::Value, key: &str) -> Result<Option<&'a str
     }
 }
 
+/// A grant that must not be presented again while the login holds the same bytes.
+#[derive(Clone, Copy)]
+struct Bound {
+    generation: [u8; 32],
+    kind: SecretError,
+}
+
 /// Resolves a Codex login's access token, renewing the login first when it is due.
 ///
 /// Renewals through one resolver are serialised, so concurrent resolves renew once. A refused
 /// renewal refuses the resolve with [`CodexRenewalError::kind`] rather than answering a token the
-/// renewal established is about to expire. `Debug` shows the file and the renewal, never a token.
+/// renewal established is about to expire. A grant the endpoint refused (`RefreshRejected`), or
+/// whose outcome is uncertain (`RefreshUncertain`, including a resolve dropped while its grant was
+/// in flight), is not presented again while the file holds the same bytes; the next resolve
+/// refuses with that kind until the file changes. `Debug` shows the file and the renewal, never a
+/// token.
 pub struct RenewingCodexAuthFile {
     file: CodexAuthFile,
     renewal: CodexRenewal,
-    renewals: tokio::sync::Mutex<()>,
+    bound: tokio::sync::Mutex<Option<Bound>>,
 }
 
 impl RenewingCodexAuthFile {
     /// Renews when due and reads the access token, with refusals that name the file.
     ///
     /// # Errors
-    /// The renewal's refusal kind, or the read-only resolver's.
+    /// The renewal's refusal kind, a bound grant's kind, or the read-only resolver's.
     pub async fn resolve_now(&self, reference: &SecretRef) -> Result<ResolvedSecret, SecretError> {
         if *reference != self.file.reference {
             return Err(SecretError::Missing);
         }
-        let _renewing = self.renewals.lock().await;
-        self.file
-            .renew(&self.renewal, &Cancel::new())
+        let mut bound = self.bound.lock().await;
+        match self
+            .file
+            .plan_renewal(&self.renewal)
             .await
-            .map_err(|error| error.kind())?;
+            .map_err(|error| error.kind())?
+        {
+            Plan::NotDue | Plan::Undated => *bound = None,
+            Plan::Due(due) => {
+                let generation = due.generation;
+                if let Some(previous) = *bound
+                    && previous.generation == generation
+                {
+                    return Err(previous.kind);
+                }
+                // Recorded before the grant is awaited: a resolve dropped from here on leaves the
+                // outcome uncertain, and the next resolve must not present the same token again.
+                *bound = Some(Bound {
+                    generation,
+                    kind: SecretError::RefreshUncertain,
+                });
+                match self
+                    .file
+                    .complete_renewal(&self.renewal, due, &Cancel::new())
+                    .await
+                {
+                    Ok(_) => *bound = None,
+                    Err(error) => {
+                        let kind = error.kind();
+                        *bound = matches!(
+                            kind,
+                            SecretError::RefreshRejected | SecretError::RefreshUncertain
+                        )
+                        .then_some(Bound { generation, kind });
+                        return Err(kind);
+                    }
+                }
+            }
+        }
         self.file
             .read(reference)
             .await
@@ -512,6 +637,11 @@ fn plan(path: &Path, now: SystemTime, margin: Duration) -> Result<Plan, RenewalR
     if !metadata.is_file() {
         return Err(RenewalRefusal::NotARegularFile);
     }
+    // A second name would keep the old document, and its retired refresh token, after the rename.
+    #[cfg(unix)]
+    if std::os::unix::fs::MetadataExt::nlink(&metadata) != 1 {
+        return Err(RenewalRefusal::MultipleLinks);
+    }
     let size = usize::try_from(metadata.len())
         .ok()
         .filter(|size| *size <= MAX_SECRET_BYTES)
@@ -525,7 +655,9 @@ fn plan(path: &Path, now: SystemTime, margin: Duration) -> Result<Plan, RenewalR
     drop(bytes);
 
     let root: &RawValue = serde_json::from_str(&text).map_err(|_| RenewalRefusal::Unavailable)?;
-    let access_raw = at(root, &ACCESS).ok_or(RenewalRefusal::Missing)?;
+    let access_raw = lookup(root, &ACCESS)
+        .map_err(|()| RenewalRefusal::Unavailable)?
+        .ok_or(RenewalRefusal::Missing)?;
     let access = string(access_raw).ok_or(RenewalRefusal::Unavailable)?;
     if access.is_empty() {
         return Err(RenewalRefusal::Missing);
@@ -536,7 +668,9 @@ fn plan(path: &Path, now: SystemTime, margin: Duration) -> Result<Plan, RenewalR
     if !is_due(expires, now, margin) {
         return Ok(Plan::NotDue);
     }
-    let refresh_raw = at(root, &REFRESH).ok_or(RenewalRefusal::NoRefreshToken)?;
+    let refresh_raw = lookup(root, &REFRESH)
+        .map_err(|()| RenewalRefusal::Unavailable)?
+        .ok_or(RenewalRefusal::NoRefreshToken)?;
     let refresh_token = string(refresh_raw)
         .filter(|token| !token.is_empty())
         .ok_or(RenewalRefusal::NoRefreshToken)?;
@@ -548,8 +682,11 @@ fn plan(path: &Path, now: SystemTime, margin: Duration) -> Result<Plan, RenewalR
     let last_refresh = at(root, &LAST_REFRESH)
         .filter(|raw| string(raw).is_some())
         .map(|raw| span(&text, raw));
+    let generation = Sha256::digest(text.as_bytes()).into();
     Ok(Plan::Due(Due {
         text,
+        generation,
+        now,
         access,
         refresh,
         refresh_token,
@@ -592,14 +729,27 @@ fn owned(value: &str) -> Zeroizing<String> {
     Zeroizing::new(value.to_owned())
 }
 
-/// The value at an object-key path, borrowed from the original text.
-fn at<'a>(root: &'a RawValue, path: &[&str]) -> Option<&'a RawValue> {
-    path.iter().try_fold(root, |current, key| {
-        members(current)?
+/// The value at an object-key path, borrowed from the original text: `Ok(None)` when a key is
+/// absent, `Err` when the path crosses anything but an object or an object naming a key twice, as
+/// the read rule refuses the same document.
+fn lookup<'a>(root: &'a RawValue, path: &[&str]) -> Result<Option<&'a RawValue>, ()> {
+    let mut current = root;
+    for key in path {
+        match members(current)
+            .ok_or(())?
             .into_iter()
             .find(|(name, _)| name == key)
-            .map(|(_, value)| value)
-    })
+        {
+            Some((_, value)) => current = value,
+            None => return Ok(None),
+        }
+    }
+    Ok(Some(current))
+}
+
+/// The value at an object-key path, when the path leads to one.
+fn at<'a>(root: &'a RawValue, path: &[&str]) -> Option<&'a RawValue> {
+    lookup(root, path).ok().flatten()
 }
 
 /// The JSON string a raw value holds, unescaped.
@@ -664,6 +814,10 @@ fn write_if_unchanged(path: &Path, expected: &[u8], contents: &[u8]) -> Result<(
     // window in which another writer can be overwritten is as short as this process can make it.
     let link = fs::symlink_metadata(path).map_err(|_| RenewalRefusal::ChangedDuringRenewal)?;
     if !link.is_file() {
+        return Err(RenewalRefusal::ChangedDuringRenewal);
+    }
+    #[cfg(unix)]
+    if std::os::unix::fs::MetadataExt::nlink(&link) != 1 {
         return Err(RenewalRefusal::ChangedDuringRenewal);
     }
     let current = Zeroizing::new(fs::read(path).map_err(|_| RenewalRefusal::ChangedDuringRenewal)?);

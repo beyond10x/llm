@@ -506,6 +506,23 @@ struct RenewInput {
     answer_status: f64,
     answer: TokenAnswer,
     concurrent_change: bool,
+    #[serde(default)]
+    fixture: Option<RenewalFixture>,
+    #[serde(default)]
+    resolve_twice: Option<bool>,
+}
+/// One departure from an ordinary readable login, applied after it is written.
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq)]
+enum RenewalFixture {
+    RelativePath,
+    MissingFile,
+    NotJson,
+    DuplicateKey,
+    Oversized,
+    Symlink,
+    Directory,
+    HardLink,
+    UnwritableDirectory,
 }
 
 /// An exact integer from an ESS number, which may arrive as `60.0`.
@@ -710,10 +727,50 @@ fn renew(input: Value) -> Result<Value, Box<dyn Error>> {
         Some("concurrent-refresh"),
         "2026-10-02T23:59:00Z",
     );
-    let last_written = if input.concurrent_change {
-        concurrent.clone()
+    let directory = path
+        .parent()
+        .ok_or("fixture path has no parent")?
+        .to_path_buf();
+    let mut resolver_path = path.clone();
+    let mut rewritten: Option<Vec<u8>> = None;
+    match input.fixture {
+        None => {}
+        Some(RenewalFixture::RelativePath) => {
+            resolver_path = std::path::PathBuf::from("relative-fixture/auth.json");
+        }
+        Some(RenewalFixture::MissingFile) => fs::remove_file(&path)?,
+        Some(RenewalFixture::NotJson) => rewritten = Some(b"not json".to_vec()),
+        Some(RenewalFixture::DuplicateKey) => {
+            let tokens =
+                format!("{{\"access_token\": \"{stale}\", \"refresh_token\": \"{OLD_REFRESH}\"}}");
+            rewritten =
+                Some(format!("{{\"tokens\": {tokens}, \"tokens\": {tokens}}}").into_bytes());
+        }
+        // Authored 1 MiB boundary plus one, independent of the exported bound.
+        Some(RenewalFixture::Oversized) => rewritten = Some(vec![b' '; 1_048_577]),
+        Some(RenewalFixture::Symlink) => {
+            let real = directory.join("real.json");
+            fs::rename(&path, &real)?;
+            symlink(&real, &path)?;
+        }
+        Some(RenewalFixture::Directory) => {
+            fs::remove_file(&path)?;
+            fs::create_dir(&path)?;
+        }
+        Some(RenewalFixture::HardLink) => fs::hard_link(&path, directory.join("second.json"))?,
+        Some(RenewalFixture::UnwritableDirectory) => {
+            fs::set_permissions(&directory, fs::Permissions::from_mode(0o500))?;
+        }
+    }
+    if let Some(bytes) = &rewritten {
+        fs::write(&path, bytes)?;
+    }
+    let last_written = if let Some(bytes) = rewritten {
+        bytes
+    } else if input.concurrent_change {
+        concurrent.clone().into_bytes()
     } else {
-        before.clone()
+        before.clone().into_bytes()
     };
 
     let answer = if (200..300).contains(&status) {
@@ -757,7 +814,7 @@ fn renew(input: Value) -> Result<Value, Box<dyn Error>> {
     let renewal = CodexRenewal::new()?
         .with_endpoint(url, RENEWAL_CLIENT)
         .with_margin(margin);
-    let file = CodexAuthFile::new(SecretRef::new("selected")?, &path).with_clock(|| {
+    let file = CodexAuthFile::new(SecretRef::new("selected")?, &resolver_path).with_clock(|| {
         std::time::SystemTime::UNIX_EPOCH
             + std::time::Duration::from_secs(RENEWAL_NOW.unsigned_abs())
     });
@@ -801,13 +858,22 @@ fn renew(input: Value) -> Result<Value, Box<dyn Error>> {
         RenewalEntry::RenewingResolver => {
             let renewing = file.renewing(renewal);
             write!(diagnostics, "{renewing:?}")?;
-            match runtime.block_on(renewing.resolve(&reference)) {
-                Ok(resolved) => {
-                    write!(diagnostics, "{resolved:?}")?;
-                    facts["resolved_renewed_token"] =
-                        json!(resolved.secret.expose() == fresh.as_bytes());
+            let attempts = if input.resolve_twice == Some(true) {
+                2
+            } else {
+                1
+            };
+            for _ in 0..attempts {
+                facts["resolver_error"] = Value::Null;
+                facts["resolved_renewed_token"] = Value::Null;
+                match runtime.block_on(renewing.resolve(&reference)) {
+                    Ok(resolved) => {
+                        write!(diagnostics, "{resolved:?}")?;
+                        facts["resolved_renewed_token"] =
+                            json!(resolved.secret.expose() == fresh.as_bytes());
+                    }
+                    Err(error) => facts["resolver_error"] = json!(code(error)),
                 }
-                Err(error) => facts["resolver_error"] = json!(code(error)),
             }
         }
         RenewalEntry::ReadOnlyResolver => {
@@ -841,9 +907,12 @@ fn renew(input: Value) -> Result<Value, Box<dyn Error>> {
             json!(json_body && serde_json::from_slice::<Value>(body).ok() == Some(grant));
     }
     drop(runtime);
+    if input.fixture == Some(RenewalFixture::UnwritableDirectory) {
+        fs::set_permissions(&directory, fs::Permissions::from_mode(0o700))?;
+    }
 
     let after = fs::read(&path).ok();
-    facts["file_unchanged"] = json!(after.as_deref() == Some(last_written.as_bytes()));
+    facts["file_unchanged"] = json!(after.as_deref() == Some(last_written.as_slice()));
     facts["file_spliced"] = json!(after.as_deref() == Some(spliced.as_bytes()));
     facts["mode_kept"] = json!(
         fs::metadata(&path).is_ok_and(|metadata| metadata.permissions().mode() & 0o7777 == mode)

@@ -169,11 +169,25 @@ before answering its token, one renewal at a time. The read-only resolver stays 
   and the key order survive. The result goes to a new file in the same directory with the
   original's mode, is flushed, and is renamed over the original only when the original still
   holds the bytes the renewal read; otherwise the newer file is kept and the renewal refuses
-  `ChangedDuringRenewal`. A symlink at the path is refused rather than replaced.
+  `ChangedDuringRenewal`. A symlink at the path is refused rather than replaced, and so is a
+  file with a second hard link (`MultipleLinks`), as the `file` adapter refuses one: the rename
+  would split it, leaving the other name holding a refresh token the endpoint has retired.
+- **Bind mounts.** A login mounted into a container as a single file cannot be renamed over: the
+  rename fails (`EBUSY` on Linux) after the endpoint has answered, so the renewal refuses
+  `WriteFailed`, the file keeps its old tokens, and the refresh token on disk may already be
+  retired. Mount the directory that holds `auth.json`, not the file.
 - **Refusals as a resolver sees them.** A refusal before anything is sent keeps its read kind (no
   refresh token is `Missing`); a refusal status from the endpoint is `RefreshRejected`; a refusal
   after the endpoint may have issued tokens is `RefreshUncertain`, because the refresh token on
   disk may have been retired. Run `codex` to log in again.
+- **Not repeating a grant.** The renewing resolver records the login's bytes before it presents a
+  refresh token. A grant the endpoint refused, or one whose outcome is uncertain (a resolve
+  dropped while its grant was in flight included), is not presented again while the file holds
+  the same bytes: the next resolve refuses with the same kind. Any change to the file, such as
+  `codex` logging in again, lifts it.
+- **Secret copies.** The request body is zeroized when the HTTP client drops it, the answer's
+  bytes after parsing, and every string of the parsed answer once the tokens are taken from it.
+  Copies inside the HTTP and TLS stack and the JSON parser's scratch buffers are not covered.
 
 ## Bind a reference to a caller-named environment variable
 
