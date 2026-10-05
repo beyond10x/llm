@@ -314,6 +314,8 @@ async fn every_pre_flight_refusal_is_reached_through_the_client_before_anything_
     long.tools = vec![tool(&"t".repeat(129))];
     let mut opens_with_the_model = request();
     opens_with_the_model.items = vec![Item::assistant("Looking"), Item::user("Go on")];
+    let mut empty = request();
+    empty.items.clear();
     let mut hot = request();
     hot.sampling.temperature = Some(1.5);
     let cases = [
@@ -330,6 +332,11 @@ async fn every_pre_flight_refusal_is_reached_through_the_client_before_anything_
         (
             "M21: a conversation that opens with the model",
             opens_with_the_model,
+            "Messages requires an initial user message",
+        ),
+        (
+            "M21: a conversation with nothing in it",
+            empty,
             "Messages requires an initial user message",
         ),
         (

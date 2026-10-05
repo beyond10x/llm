@@ -37,10 +37,22 @@ resolves to the binding's declared maximum — the only value in the system that
 statement rather than a guess. Temperature above `1.0` is refused: this route's range is not the
 neutral one. A reasoning effort travels in `output_config.effort`.
 
+**The projection places two prompt-cache breakpoints.** The caller replays the whole transcript on
+every turn, so without them each turn pays the full input rate for everything it resends. A
+non-empty instruction travels as one `system` text block marked `cache_control: {type: ephemeral}`,
+which caches the constant head (tools, then system). A second, rolling marker goes on the last
+`text` or `tool_result` block of the last message, so each turn writes the prefix the next one
+reads back. Nothing else is marked: a replayed `thinking` or `redacted_thinking` block is sent byte
+for byte, because its signature covers it as produced, and a tail with nothing markable carries no
+rolling marker. An empty instruction sends no `system` at all; the rolling marker already covers
+the tools.
+
 Everything else is refused, not dropped: unknown request fields, image, document, search-result and
 server-tool content, citations, cache-control on a block, a `none` tool choice, a system prompt that
 is not one text block, and a role outside user/assistant. A translation that silently loses a field
-is a translation that appeared to succeed.
+is a translation that appeared to succeed. Ingress still refuses `cache_control` even though the
+projection now sends it: a caller's own breakpoint has no neutral field to travel in, and dropping it
+would hide a billing decision. So a body this projection sends is not itself valid ingress input.
 
 An optional field spelled as an explicit `null` means absent, on both sides of the codec. The
 producer writes `"stop_reason": null` for a message that has not stopped, and a caller may write
@@ -61,8 +73,19 @@ before the message started, a delta for a block that never started, two blocks a
 block still open at the terminal event, and a payload after it. Content is assembled in
 content-block **index** order, so two blocks stopped in the opposite order to their starts do not
 reverse the turn against the deltas the caller was already shown. A `ping` is
-accepted and changes nothing: its irrelevance is the route's own documentation. Any other event type
-is refused rather than preserved as unknown state. Streamed tool arguments are bounded while they
+accepted and changes nothing: its irrelevance is the route's own documentation.
+
+**An event, delta or content block this subset does not model is preserved, not refused.** A route
+that adds an event type has not broken its stream, and ending the turn on it would refuse an answer
+still arriving. The decoder keeps it whole as an `Item::Opaque` bound to the serving binding and
+tells the caller with a `StreamEvent::Warning` whose text is fixed: `unknown-stream-event` for an
+event or a delta (the whole event is kept; the block it names still assembles from the deltas
+around it), `unknown-output-item` for a content block, warned about when it opens and kept at its
+index. A kept event sits after every block that had started when it arrived, and kept events count
+against the same in-flight content bound as blocks. A delta for a block that never started is still
+refused: that contradicts the stream's own numbering rather than extending it. `decode_message` has
+no stream to warn on, so a complete response still refuses an unknown content block, and egress
+still refuses to send such an item back. Streamed tool arguments are bounded while they
 accumulate and parsed once when the block closes, so half an argument object never reaches a caller.
 A `tool_use` block is announced as `StreamEvent::ToolCallStarted` when it opens, with the `id` and
 `name` of its `content_block_start` and before any of its argument fragments; a name the codec
@@ -101,13 +124,15 @@ the check travels with the accept list itself rather than sitting beside one use
 accepted names, `citations` on a text block and `caller` on a tool call, are held to something
 stricter still: any value at all is outside the declared subset and is refused outright.
 
-**Fourteen of the eighty-one producer names this projection speaks are carried, not read.**
+**Fourteen of the eighty-five producer names this projection speaks are carried, not read.**
 A name is not a behaviour — the behaviour around each is tested — but a wrong name is a field
 silently never seen, or an accepted field refused, and no fixture written from the same wrong name
 can notice. Sixty-seven were read from the extraction provenance the implementation
 contract names, `harness-messages` at `709a2eb`; two of those — `anthropic-version` and the pinned
 `2023-06-01` it carries — are sent on every single request and were invisible to this check until
-its scan admitted a hyphen and a leading digit. The remaining fourteen arrived with the carried
+its scan admitted a hyphen and a leading digit. Four more — `cache_control`, `ephemeral` and the
+warning codes `unknown-stream-event` and `unknown-output-item` — were read from the same crate at
+`2fd7235b` for the Harness parity rows. The remaining fourteen arrived with the carried
 draft and nothing read in this session supports them: `auto`, `cache_creation`,
 `ephemeral_1h_input_tokens`, `ephemeral_5m_input_tokens`, `caller`, `citations`, `inference_geo`,
 `output_tokens_details`, `thinking_tokens`, `rate_limit_error`, `service_tier`, `timeout_error`,

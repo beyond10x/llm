@@ -20,6 +20,13 @@ const CONFIRMED: &[&str] = &[
     // admitted a hyphen and a leading digit.
     "2023-06-01",
     "anthropic-version",
+    // Read at Harness `2fd7235bdef80be1f708af0b4e95a10ef091535d` for parity wave 2026-10-05-w27:
+    // the prompt-cache breakpoint at `crates/harness-messages/src/project.rs:298` and `:538`,
+    // and the two warning codes at `src/lib.rs:446` and `src/project.rs:345`.
+    "cache_control",
+    "ephemeral",
+    "unknown-output-item",
+    "unknown-stream-event",
     "any",
     "api_error",
     "assistant",
