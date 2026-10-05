@@ -740,3 +740,5 @@ scenarios:
 - responses/scenarios/kept-text-shown-before-an-incomplete-end-stays-in-the-turn.yaml
 - responses/scenarios/kept-text-of-two-shown-messages-stays-two-messages.yaml
 - responses/scenarios/kept-text-a-terminal-message-outranks-the-shown-deltas.yaml
+- responses/scenarios/kept-text-a-second-message-shown-only-as-deltas-is-kept.yaml
+- responses/scenarios/a-payload-after-the-terminal-object-is-not-read.yaml

@@ -72,7 +72,8 @@ pub struct StreamDecoding {
 /// nothing else: not from end of stream, not from a sentinel, not from the last delta seen.
 ///
 /// This is the incremental decoder the client drives payload by payload, fed the whole
-/// sequence at once: the events and the result are the ones a live caller would get.
+/// sequence at once: the events and the result are the ones a live caller would get. Like the
+/// client, it reads nothing after the first terminal object.
 pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
     let mut decoder = Decoder::new(binding);
     for payload in payloads {
@@ -81,6 +82,9 @@ pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
                 events: decoder.events,
                 result: Err(error),
             };
+        }
+        if decoder.is_terminal() {
+            break;
         }
     }
     decoder.finish()
@@ -95,9 +99,11 @@ pub(crate) struct Decoder<'a> {
     binding: &'a Binding,
     events: Vec<StreamEvent>,
     /// Text the caller was shown through `response.output_text.delta`, one entry per output item
-    /// the deltas named, in order of first delta. Kept in the turn when its items carry no
-    /// assistant text (row R36).
+    /// the deltas named, in order of first delta. Each is kept in the turn when no message the
+    /// turn carries can be that output item (row R36).
     shown: Vec<ShownText>,
+    /// The `id` of every message among `streamed`, absent where the message named none.
+    streamed_messages: Vec<Option<String>>,
     /// `item_id` -> `call_id`, so an arguments delta can name the call a reader is watching.
     calls: BTreeMap<String, CallId>,
     /// Every call the caller was told about, in announcement order. The outcome must carry each
@@ -144,6 +150,7 @@ impl<'a> Decoder<'a> {
             calls: BTreeMap::new(),
             announced: Vec::new(),
             streamed: Vec::new(),
+            streamed_messages: Vec::new(),
             unmodelled: Vec::new(),
             terminal: None,
             deferred: None,
@@ -186,6 +193,9 @@ impl<'a> Decoder<'a> {
                             if matches!(decoded, Item::Opaque { .. }) {
                                 self.unmodelled.push(decoded.clone());
                             }
+                            if matches!(decoded, Item::AssistantText { .. }) {
+                                self.streamed_messages.push(message_id(item));
+                            }
                             if let Err(error) = self.push_streamed(decoded) {
                                 self.defer(error);
                             }
@@ -227,6 +237,11 @@ impl<'a> Decoder<'a> {
         Ok(())
     }
 
+    /// Whether a terminal object has been read; nothing after it belongs to the turn.
+    pub(crate) const fn is_terminal(&self) -> bool {
+        self.terminal.is_some()
+    }
+
     /// The events produced since the last call, in the order they were produced.
     pub(crate) fn take_events(&mut self) -> Vec<StreamEvent> {
         std::mem::take(&mut self.events)
@@ -260,24 +275,32 @@ impl<'a> Decoder<'a> {
         });
     }
 
-    /// Keeps the text the caller was shown when the turn's items carry none (row R36).
+    /// Keeps the text the caller was shown of every output item the turn does not carry (R36).
     ///
     /// The terminal object is authoritative for what the turn carries, but a server that
     /// streams a message only as deltas and then completes with an empty `output`, as the
     /// Codex backend can, would otherwise hand the caller a turn without the answer it just
-    /// watched arrive. A message the items do carry outranks the deltas, which are then only
-    /// what was shown on the way.
-    fn keep_shown_text(&mut self, items: &mut Vec<Item>) {
-        if items
-            .iter()
-            .any(|item| matches!(item, Item::AssistantText { .. }))
-        {
-            return;
-        }
-        for shown in std::mem::take(&mut self.shown) {
-            if shown.text.is_empty() {
-                continue;
-            }
+    /// watched arrive. A message the turn carries for the same output item outranks that item's
+    /// deltas, which are then only what was shown on the way. `carried` holds the `id` of every
+    /// message in `items`; a message or a delta that names no item cannot be told apart from
+    /// any other, so it counts as the same item.
+    ///
+    /// Kept messages are placed by `output_index`, ascending and stable among equal indexes,
+    /// whatever order their first deltas arrived in; one without an index goes after every
+    /// other item.
+    fn keep_shown_text(&mut self, items: &mut Vec<Item>, carried: &[Option<String>]) {
+        let mut kept: Vec<ShownText> = std::mem::take(&mut self.shown)
+            .into_iter()
+            .filter(|shown| {
+                !shown.text.is_empty()
+                    && !carried.iter().any(|id| match (id, &shown.item_id) {
+                        (Some(id), Some(item_id)) => id == item_id,
+                        _ => true,
+                    })
+            })
+            .collect();
+        kept.sort_by_key(|shown| shown.output_index.unwrap_or(u64::MAX));
+        for shown in kept {
             let at = shown
                 .output_index
                 .and_then(|index| usize::try_from(index).ok())
@@ -321,22 +344,30 @@ impl<'a> Decoder<'a> {
         // The terminal object is authoritative when it carries output; the streamed items are the
         // fallback for a server that reports completion without repeating them, whether it omits
         // `output` or, as the Codex backend does, sends it empty after streaming the items.
-        let mut items = match terminal.response.get("output").and_then(Value::as_array) {
+        let (mut items, carried) = match terminal.response.get("output").and_then(Value::as_array) {
             Some(output) if !output.is_empty() || self.streamed.is_empty() => {
                 let mut decoded = Vec::with_capacity(output.len());
+                let mut carried = Vec::new();
                 for value in output {
-                    decoded.push(self.output_item(value).map_err(retain)?);
+                    let item = self.output_item(value).map_err(retain)?;
+                    if matches!(item, Item::AssistantText { .. }) {
+                        carried.push(message_id(value));
+                    }
+                    decoded.push(item);
                 }
-                decoded
+                (decoded, carried)
             }
-            _ => std::mem::take(&mut self.streamed),
+            _ => (
+                std::mem::take(&mut self.streamed),
+                std::mem::take(&mut self.streamed_messages),
+            ),
         };
         for item in std::mem::take(&mut self.unmodelled) {
             if !items.contains(&item) {
                 items.push(item);
             }
         }
-        self.keep_shown_text(&mut items);
+        self.keep_shown_text(&mut items, &carried);
         if items.len() > MAX_ITEMS {
             return Err(retain(
                 Error::too_large("model output exceeds its bound")
@@ -549,6 +580,11 @@ impl<'a> Decoder<'a> {
             .and_then(|item_id| self.calls.get(item_id))
             .cloned()
     }
+}
+
+/// The `id` an output message names, which its text deltas name as `item_id`.
+fn message_id(value: &Value) -> Option<String> {
+    string(value.get("id")).map(str::to_owned)
 }
 
 /// A protocol refusal observed after the request was accepted, not before it was sent.

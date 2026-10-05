@@ -23,9 +23,12 @@ const FINAL_EVENTS: &[&str] = &[
     "error",
 ];
 
-/// The stream events that only report the response's lifecycle and carry no output. Any other
-/// event (an output item, a content part, a delta) means the turn has answered.
+/// The stream events that only report the response's lifecycle, or that it is still alive, and
+/// carry no output. Any other event (an output item, a content part, a delta) means the turn has
+/// answered. A `keepalive` advances no turn, as in Harness (`harness-responses/src/lib.rs:421`),
+/// so a cut after nothing but these stays retriable.
 const LIFECYCLE_EVENTS: &[&str] = &[
+    "keepalive",
     "response.created",
     "response.in_progress",
     "response.queued",

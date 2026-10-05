@@ -49,9 +49,12 @@ raised before anything was sent carries no observation, so `Error::validate_for`
 A turn's stream events reach the caller's sink as each payload arrives, as the Messages client's
 do. The transport's bounds (bytes per event, bytes and events per stream, the `total` limit) still
 hold: a payload over a bound ends the turn after the events before it were shown. A cut after any
-payload other than `response.created`, `response.in_progress` or `response.queued` is final, not
-retriable; routing's rule that an attempt which showed an event is never retried sees the same
-events, and the client's rule also covers output that produced no visible event.
+payload other than `response.created`, `response.in_progress`, `response.queued` or `keepalive`
+is final, not retriable; a cut after nothing but those keeps the transport's retry class, since a
+`keepalive` advances no turn. Routing's rule that an attempt which showed an event is never
+retried sees the same events, and the client's rule also covers output that produced no visible
+event. `decode_stream` reads nothing after the first terminal object either, so it reports the
+events and the turn the client does.
 
 A `Binding` is a `Provenance` — protocol, provider, account, endpoint, model, binding revision —
 plus the **upstream model name** that binding is configured to send. The two are separate because
@@ -260,13 +263,15 @@ none — `output` absent, or an empty array after items were streamed through
 An empty `output` with nothing streamed stays an empty turn, and a forced tool that was never
 called is then refused by `TurnOutcome::validate_for`.
 
-**Text the caller was shown stays in the turn.** When the turn's items carry no assistant text but
-the caller was shown text through `response.output_text.delta`, the turn keeps it: one assistant
-message per output item the deltas named by `item_id`, its text the deltas in arrival order, placed
-at the `output_index` of its first delta (after every other item when there is none, or it lies
-past the end). A server that streams a message only as deltas and completes with an empty `output`
-would otherwise return a turn without the answer the caller just watched arrive. When the items do
-carry assistant text, the terminal object stays authoritative and no delta text is added.
+**Text the caller was shown stays in the turn.** Text shown through `response.output_text.delta`
+belongs to the output item its `item_id` names. Each such item's text is kept as one assistant
+message, its deltas in arrival order, whenever no message the turn carries is that item. A message
+the turn carries under the same `id`, from the terminal `output` or the streamed items, outranks
+its deltas; a message or a delta that names no item counts as the same item as any other. Kept
+messages are placed by the `output_index` of their first delta, ascending and stable among equal
+indexes, whatever order they arrived in; one without an index, or with one past the end, goes last.
+A server that streams a message only as deltas and completes with an empty `output` would
+otherwise return a turn without the answer the caller just watched arrive.
 
 `final_usage` is true only for a terminal or failed response object: it says the reported counters
 are terminal, not that every count is known. A stream that ends without one refuses with `Protocol`

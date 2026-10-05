@@ -351,16 +351,17 @@ fn text_the_caller_was_shown_is_not_dropped_from_the_turn() {
             text: "The answer is 42.".to_owned()
         }]
     );
-    if let Ok(outcome) = decoding.result {
-        assert!(
-            outcome
-                .items
-                .contains(&Item::assistant("The answer is 42.")),
-            "the caller was shown text the turn does not carry: {:?} {:?}",
-            outcome.stop_reason,
-            outcome.items
-        );
-    }
+    let outcome = decoding
+        .result
+        .expect("a completed stream with an empty output is a turn, not a refusal");
+    assert!(
+        outcome
+            .items
+            .contains(&Item::assistant("The answer is 42.")),
+        "the caller was shown text the turn does not carry: {:?} {:?}",
+        outcome.stop_reason,
+        outcome.items
+    );
 }
 
 // ---------------------------------------------------------------------------------------------
