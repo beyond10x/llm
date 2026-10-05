@@ -6,6 +6,11 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-05
+
+The serving side leaves llm: llm is the client libraries, and serving lives in
+[beyond10x/llm-gateway](https://github.com/beyond10x/llm-gateway).
+
 ### Removed
 
 - The serving crates moved to [beyond10x/llm-gateway](https://github.com/beyond10x/llm-gateway),
@@ -13,7 +18,20 @@ are source releases at bare-version tags.
   `b10x-llm-modal`. The `llm.gateway`, `llm.hosting` and `llm.runpod` ESS domains, their 156
   authored scenarios, `docs/gateway.md`, `docs/hosting.md` and their verification records moved
   with them. llm is the client side; none of its client crates depended on the serving crates, so
-  no client API changes. The conformance suite runs 664 scenarios (was 823), and its floor is 664.
+  no client API changes. The conformance suite ran 664 scenarios after the move (was 823); its floor is 664.
+
+### Fixed
+
+- `llm-messages`: a `thinking` block whose `content_block_start` carries no `signature` field is
+  signed by its `signature_delta`, as Harness accepted; a block never signed and a signature delta
+  into any other block are still refused. Found by building Harness on llm 0.1.7; one conformance
+  scenario added (665).
+
+### Documentation
+
+- `docs/harness-parity.md`: rows R45 (a forced tool choice answered in prose stays refused,
+  deliberately) and M47; row C1 is not needed (credentials come from the secrets library, no token
+  files); the subscription rows name the decision to build Anthropic subscription access.
 
 ## [0.1.7] - 2026-10-05
 
