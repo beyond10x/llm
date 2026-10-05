@@ -6,7 +6,7 @@
 | llm commit | `aaf21d41df7041187b8b4258631ddfe681ccea42` (base of `wave/2026-10-05-w20`) |
 | Date | 2026-10-05 |
 | Story | `story:harness-parity` (decomposes `epic:serving-split`) |
-| Rows | 146: 86 covered, 33 partial, 21 gap, 6 not needed |
+| Rows | 146: 103 covered, 21 partial, 16 gap, 6 not needed |
 
 **How the rows were found.** Every file of `crates/harness-{http,credential,responses,messages}`
 was read in full at the Harness commit with `git archive origin/main` (sources, unit tests and
@@ -270,9 +270,9 @@ One line per `gap` or `partial` row, phrased as a story title.
 
 | Status | Rows |
 | --- | --- |
-| covered | 86 |
-| partial | 33 |
-| gap | 21 |
+| covered | 103 |
+| partial | 21 |
+| gap | 16 |
 | not needed | 6 |
 | total | 146 |
 
