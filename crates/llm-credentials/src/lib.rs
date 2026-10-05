@@ -80,9 +80,12 @@ pub enum SecretError {
     UnsafeSource,
     #[error("secret adapter is unsupported on this platform")]
     UnsupportedPlatform,
-    /// The source answered, but not in the form its binding declares (a JSON pointer whose
-    /// document is not JSON or whose target is not a string). A configuration error: retrying
-    /// or choosing another target does not fix it.
+    /// The source answered, but not in the form its binding declares: a JSON pointer whose
+    /// document is not JSON or whose target is not a string, or a Codex login read whole that is
+    /// not a Codex login document or whose access token has no readable integer `exp`. A
+    /// configuration error: retrying or choosing another target does not fix it. A Codex login
+    /// that ends before its document does is `Unavailable` instead, since that is what a reader
+    /// sees while the file is rewritten in place.
     #[error("secret source does not hold a credential in its declared form")]
     Malformed,
 }

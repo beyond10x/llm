@@ -75,9 +75,11 @@ impl CodexAuthFile {
     ///
     /// # Errors
     /// `Missing` for another reference, an absent file or an absent token; `Expired` when the
-    /// token's integer `exp` is not after the clock; `TooLarge` above 1 MiB; `Unavailable` for a
-    /// path that is not absolute (nothing is opened), anything but a regular file at the path (a
-    /// FIFO is opened without blocking and not read), or an unreadable file, document or token.
+    /// token's integer `exp` is not after the clock; `TooLarge` above 1 MiB; `Malformed` for a file
+    /// read whole that is not a Codex login or whose token has no readable `exp`; `Unavailable` for
+    /// a path that is not absolute (nothing is opened), anything but a regular file at the path (a
+    /// FIFO is opened without blocking and not read), a file that cannot be read or changes length
+    /// while it is read, or a document that ends early, as one being rewritten in place does.
     pub async fn read(&self, reference: &SecretRef) -> Result<ResolvedSecret, CodexAuthError> {
         let refusal = |kind| CodexAuthError {
             kind,
@@ -227,7 +229,7 @@ fn read(path: &Path, now: SystemTime) -> Result<ResolvedSecret, SecretError> {
         .ok_or(SecretError::TooLarge)?;
     let bytes = read_exact(&file, size)?;
     let Object(document) = serde_json::from_slice::<Object<Document<'_>>>(&bytes)
-        .map_err(|_| SecretError::Unavailable)?;
+        .map_err(|error| document_error(&error))?;
     let token = document
         .tokens
         .and_then(|Object(tokens)| tokens.access_token)
@@ -238,6 +240,19 @@ fn read(path: &Path, now: SystemTime) -> Result<ResolvedSecret, SecretError> {
         return Err(SecretError::Expired);
     }
     local::resolved(Secret::new(token.as_bytes().to_vec())?)
+}
+
+/// A login document that failed to parse. One that ends early (an empty file included) is what a
+/// reader sees while the file is rewritten in place, truncated and then written, so it is
+/// `Unavailable` and the next read may succeed. Any other failure is a complete document that is
+/// not a Codex login (not JSON, not an object, a key named twice, a value of the wrong type):
+/// `Malformed`, a configuration error that waiting does not fix.
+pub(crate) fn document_error(error: &serde_json::Error) -> SecretError {
+    if error.is_eof() {
+        SecretError::Unavailable
+    } else {
+        SecretError::Malformed
+    }
 }
 
 /// Opens `path` for reading without blocking, so a FIFO or a device at the path cannot stall the
@@ -299,21 +314,22 @@ fn read_exact(mut source: impl Read, size: usize) -> Result<Zeroizing<Vec<u8>>, 
 
 /// The `exp` claim of a JWT, in seconds since the Unix epoch: any JSON integer, negative ones
 /// included. A float, a string, `null`, an absent claim or an integer outside `i64` and `u64` is
-/// `Unavailable`. The signature is not checked: the issuer does that, and this only decides
-/// whether sending the token is pointless.
+/// `Malformed`: the token comes from a document read whole, so waiting does not date it. The
+/// signature is not checked: the issuer does that, and this only decides whether sending the
+/// token is pointless.
 fn expiry(token: &str) -> Result<i128, SecretError> {
-    let payload = token.split('.').nth(1).ok_or(SecretError::Unavailable)?;
+    let payload = token.split('.').nth(1).ok_or(SecretError::Malformed)?;
     let claims = Zeroizing::new(
         URL_SAFE_NO_PAD
             .decode(payload.trim_end_matches('='))
-            .map_err(|_| SecretError::Unavailable)?,
+            .map_err(|_| SecretError::Malformed)?,
     );
     let Object(Claims { exp }) =
-        serde_json::from_slice(&claims).map_err(|_| SecretError::Unavailable)?;
+        serde_json::from_slice(&claims).map_err(|_| SecretError::Malformed)?;
     exp.as_u64()
         .map(i128::from)
         .or_else(|| exp.as_i64().map(i128::from))
-        .ok_or(SecretError::Unavailable)
+        .ok_or(SecretError::Malformed)
 }
 
 // Opt-in renewal, declared after the read-only code it extends.
@@ -356,17 +372,17 @@ mod tests {
             (r#"{"exp":18446744073709551615}"#, Ok(i128::from(u64::MAX))),
             (
                 r#"{"exp":18446744073709551616}"#,
-                Err(SecretError::Unavailable),
+                Err(SecretError::Malformed),
             ),
             (
                 r#"{"exp":-9223372036854775809}"#,
-                Err(SecretError::Unavailable),
+                Err(SecretError::Malformed),
             ),
-            (r#"{"exp":1.0}"#, Err(SecretError::Unavailable)),
-            (r#"{"exp":1e3}"#, Err(SecretError::Unavailable)),
-            (r#"{"exp":"1"}"#, Err(SecretError::Unavailable)),
-            (r#"{"exp":null}"#, Err(SecretError::Unavailable)),
-            ("{}", Err(SecretError::Unavailable)),
+            (r#"{"exp":1.0}"#, Err(SecretError::Malformed)),
+            (r#"{"exp":1e3}"#, Err(SecretError::Malformed)),
+            (r#"{"exp":"1"}"#, Err(SecretError::Malformed)),
+            (r#"{"exp":null}"#, Err(SecretError::Malformed)),
+            ("{}", Err(SecretError::Malformed)),
         ] {
             assert_eq!(expiry(&token(claims)), exp, "{claims}");
         }

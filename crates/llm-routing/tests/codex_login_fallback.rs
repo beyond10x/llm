@@ -233,7 +233,7 @@ async fn a_misconfigured_codex_login_is_unauthorized_and_never_falls_back() {
             "tokens-not-an-object",
             format!(r#"{{"tokens":["{token}"]}}"#),
         ),
-        ("document-not-an-object", format!(r#"[{tokens}]"#)),
+        ("document-not-an-object", format!("[{tokens}]")),
         ("token-not-a-string", login(&serde_json::json!(17))),
         (
             "token-not-a-jwt",

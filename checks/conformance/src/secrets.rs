@@ -523,6 +523,7 @@ enum RenewalFixture {
     Directory,
     HardLink,
     UnwritableDirectory,
+    Truncated,
 }
 
 /// An exact integer from an ESS number, which may arrive as `60.0`.
@@ -760,6 +761,11 @@ fn renew(input: Value) -> Result<Value, Box<dyn Error>> {
         Some(RenewalFixture::HardLink) => fs::hard_link(&path, directory.join("second.json"))?,
         Some(RenewalFixture::UnwritableDirectory) => {
             fs::set_permissions(&directory, fs::Permissions::from_mode(0o500))?;
+        }
+        // Cut inside the access token, as a reader sees a login being rewritten in place.
+        Some(RenewalFixture::Truncated) => {
+            let cut = before.find(&stale).ok_or("fixture holds no access token")? + stale.len() / 2;
+            rewritten = Some(before.as_bytes()[..cut].to_vec());
         }
     }
     if let Some(bytes) = &rewritten {

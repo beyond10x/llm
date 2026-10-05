@@ -4,6 +4,20 @@ All notable changes to this component are recorded here. Versions are component-
 under bare-version tags such as `0.1.0`. The workspace is `publish = false`; releases
 are source releases at bare-version tags.
 
+## [Unreleased]
+
+### Changed
+
+- A misconfigured Codex login file is refused, not fallen back from. `CodexAuthFile` refuses a
+  login read whole that is not a Codex login document (not JSON, not an object, `tokens` named
+  twice, a token of the wrong JSON type), or whose access token has no readable integer `exp`, as
+  `SecretError::Malformed`. `llm-providers` refuses that as `Unauthorized`, which routing never
+  falls back from. A login that ends before its document does (an empty file included) stays
+  `Unavailable`, because a file being rewritten in place reads that way. The renewing resolver and
+  `renew` refuse the same files with the same kinds. Specified in `llm.secrets` (818 scenarios).
+- Breaking: `RenewalRefusal` (feature `codex-renewal`) has a new variant `Malformed` (code
+  `malformed`). An exhaustive `match` on it needs the new arm.
+
 ## [0.1.6] - 2026-10-04
 
 ### Fixed
