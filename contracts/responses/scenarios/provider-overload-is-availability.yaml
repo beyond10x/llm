@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: provider-overload-is-availability
+summary: A top-level provider overload is availability rather than a refusal
+timeline:
+- at: '2026-10-07T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"error","code":"server_is_overloaded","message":"SECRET-UPSTREAM-TEXT"}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: false
+    error_code: unavailable
+    error_message: the provider is temporarily overloaded
+    dispatch: accepted
+    final_usage: false

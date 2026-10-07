@@ -35,6 +35,13 @@ domain: llm.responses
 # the caller's sink is never retried, sees the same events live; the client's rule is the
 # stricter of the two and covers a payload that produced output without a visible event.
 #
+# Provider overload. The exact machine code `server_is_overloaded`, whether on a top-level
+# `error` or inside `response.failed`, is `unavailable`, with accepted dispatch and no provider
+# prose in its diagnostic. It permits another identical attempt only before output: the client
+# clears retriability after any prior payload outside the lifecycle-only set above, including an
+# opening item that emits no sink event. Unknown codes and actual refusals remain non-retriable.
+# The client still makes one attempt; routing or the caller owns any bounded retry policy.
+#
 # Kept text (row R36). The caller was shown text through `response.output_text.delta`, one
 # output item per `item_id`. The text of each such item is kept in the turn whenever no message
 # the turn carries is that item: one assistant message, its text the item's deltas in arrival

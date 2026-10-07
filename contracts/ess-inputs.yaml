@@ -250,6 +250,7 @@ scenarios:
 - responses/scenarios/a-named-tool-choice-names-the-published-tool.yaml
 - responses/scenarios/a-rate-limited-failure-keeps-its-class-when-its-counters-disagree.yaml
 - responses/scenarios/a-rate-limited-response-is-its-own-class.yaml
+- responses/scenarios/provider-overload-is-availability.yaml
 - responses/scenarios/a-refused-projection-addresses-no-endpoint.yaml
 - responses/scenarios/a-refused-request-is-not-widened-to-a-retriable-class.yaml
 - responses/scenarios/a-refused-terminal-object-still-reports-its-counters.yaml
