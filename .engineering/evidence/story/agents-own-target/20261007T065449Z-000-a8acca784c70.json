@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T06:54:49Z",
+  "actor": "human:timo",
+  "artifact": "story:agents-own-target",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "Gate run 37583491897 on PR 23 head 0aee201f: every job passed; Shared source gates 37583492405 and Documentation validation 37583491878 pass",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/37583491897"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T06:54:48Z",
+  "actor": "human:timo",
+  "artifact": "story:agents-own-target",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "0aee201f: task check exit 0 with ess 0.55.0; 828 tests passed, 0 failed; conformance 691/691 x3; plan valid; grep finds no CARGO_TARGET_DIR instruction outside historical docs/plan wave records",
+    "reference": "task check on wave/2026-10-07-w03 0aee201f"
+  }
+}
