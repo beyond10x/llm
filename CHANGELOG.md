@@ -6,8 +6,30 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-07
+
+Anthropic subscription access over Messages, and credentials resolved through the secrets library.
+No provider route is qualified yet; every guarantee is still held against fixtures.
+
 ### Added
 
+- Anthropic subscription access over Messages. `llm-core`'s `AuthKind` gains `SubscriptionOauth`
+  (`subscription-oauth`): the caller's own subscription token, resolved through the account's
+  `SecretRef` on every turn and never read from a file, presented as a sensitive bearer. A binding
+  refuses it on any billing but subscription and any protocol but Messages. For this kind only,
+  `llm-messages` sends `anthropic-beta: oauth-2025-04-20` and opens `system` with the subscription
+  client preamble (`docs/messages.md`). Parity rows C8, C21, M5, M6 and M44 are covered.
+- `llm-routing`: a catalog refuses a secret reference shared between a subscription-oauth account
+  and any other account, and a route with fallback that mixes a subscription target with a target
+  under other billing, in either order; a subscription token is never presented as a metered
+  bearer, and a turn never moves from subscription to metered billing.
+- `llm-credentials` feature `secrets`: `SecretsResolver` resolves references by name in one scope
+  of a `secrets` v0.5.0 storage (`SecretsResolver::new`) or of its keychain backend
+  (`SecretsResolver::keychain`). Every storage error code maps to an existing `SecretError`; the
+  version is the backend's version, hashed, or a content hash; a refresh re-reads and is
+  `RefreshRejected` while the version is unchanged; a backend without `Read` is
+  `UnsupportedPlatform` and is never read. No core crate depends on the library, and the boundary
+  tests treat any crate from the secrets source as the library's.
 - `llm-credentials`: the example `live_subscription_turn` (features `secrets` and
   `native-keychain`) runs one Messages turn over the operator's own subscription token, read from
   the platform keychain through the secrets library where `secretsctl put` stores it, and prints a
@@ -24,12 +46,23 @@ are source releases at bare-version tags.
 
 ### Changed
 
+- `AuthKind` is not `#[non_exhaustive]`, so an exhaustive `match` on it needs a
+  `SubscriptionOauth` arm.
 - `llm-messages`: a field outside the declared subset is refused with its path, for example
   `Messages field is outside the declared subset: message_start.message.usage.<name>`. The
   name is copied only when it is a bounded name (`?` otherwise); a value never is.
 - ESS moves to 0.52.0: CI installs the `ess` 0.52.0 release asset after checking it against the
   release's `SHA256SUMS`, and the conformance runner takes `ess-conformance` and `ess-primitives` at
-  tag `0.52.0`. The regenerated suite (665 scenarios) and schemas are byte-identical.
+  tag `0.52.0`. The regenerated suite (665 scenarios) and schemas are byte-identical. The
+  conformance suite now runs 691 scenarios (secrets resolver, subscription access and its catalog
+  refusals).
+- `task rust` also runs clippy on the pinned 1.98.0, the toolchain CI uses.
+
+### Documentation
+
+- The documentation site publishes from this repository at `/llm/` (`pages.yml`,
+  `b10x-docs-site.yml`); the generated unified-site bundle, check and redirect workflows and
+  `b10x.docs.yaml` are gone.
 
 ## [0.2.0] - 2026-10-05
 
