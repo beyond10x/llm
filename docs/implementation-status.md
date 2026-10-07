@@ -15,7 +15,7 @@ out of the text, which is public.
 
 ## Evidence
 
-The unreleased Responses overload correction recognizes `server_is_overloaded` as availability.
+The Responses overload correction in 0.3.1 recognizes `server_is_overloaded` as availability.
 Loopback tests pin retry eligibility before output and finality after visible or silent output;
 the default gate remains independent of live provider availability.
 
@@ -41,7 +41,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 (`harness-builds-on-llm`). The previous gateway, llmgw, stays in service until its reversible
 cutover.
 
-## Status at 0.3.0 (2026-10-07)
+## Status at 0.3.1 (2026-10-07)
 
 ### Neutral turn
 

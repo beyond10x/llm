@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T13:54:13Z",
+  "actor": "human:timo",
+  "artifact": "release-plan:llm-0-3-1",
+  "kind": "release-plan",
+  "revision": 2,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "npm ci and website build exited 0; release metadata and lockfile inspected; no dependency changes beyond workspace 0.3.1",
+    "reference": ".engineering/drafts/release-031/website.log"
+  }
+}

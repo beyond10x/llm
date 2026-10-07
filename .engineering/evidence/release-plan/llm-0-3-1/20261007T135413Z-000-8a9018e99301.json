@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T13:54:13Z",
+  "actor": "human:timo",
+  "artifact": "release-plan:llm-0-3-1",
+  "kind": "release-plan",
+  "revision": 2,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 task check exited 0; 833 test executions and 692 ESS scenarios passed three times; strict Clippy, format, docs drift and planning validation passed",
+    "reference": ".engineering/drafts/release-031/check.log"
+  }
+}
