@@ -64,7 +64,7 @@ RUSTUP_TOOLCHAIN=1.98.0 task check
 
 | Step | Alone |
 | --- | --- |
-| Workspace tests; `b10x-llm-credentials` and `b10x-llm-cost` with all features and checked with none; `cargo fmt --all --check`; Clippy on all targets and features with `-D warnings` | `task rust` |
+| Workspace tests; `b10x-llm-credentials` and `b10x-llm-cost` with all features and checked with none; `cargo fmt --all --check`; Clippy on all targets and features with `-D warnings`, on the default toolchain and on 1.98.0 | `task rust` |
 | Generated pages and quoted guide programs are current | `task docs` (`cargo run --locked -p llm-docs -- generate --check`) |
 | The ESS specification validates | `ess specify validate --path spec` |
 | Suite and schema projections match `contracts/`, then the suite runs three times against `contracts/baseline.json` | `task conformance` (`cargo run --locked -p b10x-llm-conformance -- check`, from the repository root) |
@@ -75,9 +75,11 @@ tests and lints `b10x-llm-credentials` and `b10x-llm-cost` with all features on 
 a native keychain change cannot be checked on Linux alone. `.github/workflows/shared-gates.yml`
 runs the organisation's common Gates checks on pull requests, `main` and tags.
 
-Build with `CARGO_TARGET_DIR=~/.cache/b10x-target/<name>`, one directory per worktree when a gate's
-result is evidence. The conformance runner writes its projections and reports to
-`target/conformance/` under the repository root regardless of `CARGO_TARGET_DIR`.
+Build into the worktree's own `target/` and never set `CARGO_TARGET_DIR`. Let cargo create
+`target/`: one made by hand before the first build has no `CACHEDIR.TAG`, and
+`worktree discard-cache` then keeps the whole build as unrecognised. End every tree with
+`worktree finish --discard-cache --archive <tree>`. The conformance runner writes its projections
+and reports to `target/conformance/` under the repository root.
 
 ## Generated files
 
