@@ -6,6 +6,14 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Changed
+
+- ESS moves to 0.55.0: CI installs the `ess` 0.55.0 release asset after checking it against the
+  release's `SHA256SUMS`, and the conformance runner takes `ess-conformance` and `ess-primitives` at
+  tag `0.55.0`. The regenerated suite differs only in its provenance (`suite_version`
+  `ess-conformance/35`, `scenario_initial_state: empty`); its 691 scenarios, its coverage and the
+  schemas are byte-identical.
+
 ## [0.3.0] - 2026-10-07
 
 Anthropic subscription access over Messages, and credentials resolved through the secrets library.
