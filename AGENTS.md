@@ -70,7 +70,7 @@ RUSTUP_TOOLCHAIN=1.98.0 task check
 | Suite and schema projections match `contracts/`, then the suite runs three times against `contracts/baseline.json` | `task conformance` (`cargo run --locked -p b10x-llm-conformance -- check`, from the repository root) |
 | The planning store validates | `aep plan artifact validate` |
 
-CI installs `ess` 0.52.0 and `aep` 0.68.0 (pinned by revision in `gate.yml`). A second CI job
+CI installs `ess` 0.55.0 and `aep` 0.68.0 (pinned by revision in `gate.yml`). A second CI job
 tests and lints `b10x-llm-credentials` and `b10x-llm-cost` with all features on macOS and Windows;
 a native keychain change cannot be checked on Linux alone. `.github/workflows/shared-gates.yml`
 runs the organisation's common Gates checks on pull requests, `main` and tags.
