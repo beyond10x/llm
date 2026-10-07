@@ -12,6 +12,9 @@ visible, and never turns an unknown usage count into a zero.
 planned, and [Limitations](https://beyond10x.github.io/llm/docs/status/limitations) says what is
 missing.
 
+On main, Responses overloads are classified as temporary availability, eligible for caller-owned
+retries before output. See the [Responses contract](docs/responses.md#terminal-truth-and-failure).
+
 ## What it is not
 
 - **Not an agent loop.** llm never runs a tool. A caller such as

@@ -415,6 +415,7 @@
       "llm.responses/authored/message-content-outside-the-subset-is-refused-not-emptied",
       "llm.responses/authored/openai-reasoning-summary-deltas-are-observed",
       "llm.responses/authored/present-sampling-reaches-the-wire",
+      "llm.responses/authored/provider-overload-is-availability",
       "llm.responses/authored/text-turn-projects-the-pinned-body",
       "llm.responses/authored/the-previous-turn-version-is-refused",
       "llm.responses/authored/the-terminal-event-name-decides-incompleteness",
@@ -2764,6 +2765,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/present-sampling-reaches-the-wire"
       },
+      "responses/scenarios/provider-overload-is-availability.yaml": {
+        "digest": "sha256:f3477abfdd692da2e93a8efb578107efdce9e033365fc65cba19c67b6e295d73",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/provider-overload-is-availability"
+      },
       "responses/scenarios/text-turn-projects-the-pinned-body.yaml": {
         "digest": "sha256:e764d419444447fd96e42efef91865c6aee124f0e9f1cf4be9e9ba5cf1328468",
         "disposition": "accepted",
@@ -4001,7 +4007,7 @@
       }
     },
     "counts": {
-      "authored": 666,
+      "authored": 667,
       "generated": 25,
       "outside": 0,
       "refused": 0
@@ -53818,6 +53824,103 @@
           },
           "step": "expect_view",
           "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
+    "llm.responses/authored/provider-overload-is-availability": {
+      "purpose": "A top-level provider overload is availability rather than a refusal",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"error\",\"code\":\"server_is_overloaded\",\"message\":\"SECRET-UPSTREAM-TEXT\"}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the provider is temporarily overloaded"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
         }
       ]
     },
