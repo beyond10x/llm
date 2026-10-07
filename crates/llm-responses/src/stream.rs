@@ -15,6 +15,15 @@ use serde_json::Value;
 
 use crate::Binding;
 
+/// Payloads that have not answered the turn. Every other payload, including a silent opening
+/// item, ends retry eligibility for subsequent failures in both the decoder and live client.
+const LIFECYCLE_EVENTS: &[&str] = &[
+    "keepalive",
+    "response.created",
+    "response.in_progress",
+    "response.queued",
+];
+
 /// Every stream event discriminator this decoder interprets rather than preserving as unknown.
 ///
 /// The two reasoning families are both here because two servers speaking this protocol disagree.
@@ -97,6 +106,7 @@ pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
 /// `apply` ends the stream; [`Decoder::finish`] decides the turn from what was read.
 pub(crate) struct Decoder<'a> {
     binding: &'a Binding,
+    answered: bool,
     events: Vec<StreamEvent>,
     /// Text the caller was shown through `response.output_text.delta`, one entry per output item
     /// the deltas named, in order of first delta. Each is kept in the turn when no message the
@@ -145,6 +155,7 @@ impl<'a> Decoder<'a> {
     pub(crate) fn new(binding: &'a Binding) -> Self {
         Self {
             binding,
+            answered: false,
             events: Vec::new(),
             shown: Vec::new(),
             calls: BTreeMap::new(),
@@ -159,7 +170,8 @@ impl<'a> Decoder<'a> {
 
     /// Reads one payload. A refusal ends the stream: nothing after it is read.
     pub(crate) fn apply(&mut self, event: &Value) -> Result<(), Error> {
-        match event.get("type").and_then(Value::as_str) {
+        let kind = event.get("type").and_then(Value::as_str);
+        match kind {
             Some("response.output_text.delta") => {
                 if let Some(text) = string(event.get("delta")) {
                     self.show(event, text);
@@ -234,7 +246,13 @@ impl<'a> Decoder<'a> {
                 }
             }
         }
+        self.answered |= !kind.is_some_and(|kind| LIFECYCLE_EVENTS.contains(&kind));
         Ok(())
+    }
+
+    /// Whether any prior payload produced output, including output with no sink event.
+    pub(crate) const fn has_answered(&self) -> bool {
+        self.answered
     }
 
     /// Whether a terminal object has been read; nothing after it belongs to the turn.
@@ -440,6 +458,10 @@ impl<'a> Decoder<'a> {
             .and_then(|error| string(error.get("code")))
             .or_else(|| string(source.get("code")));
         let (class, message) = match code {
+            Some("server_is_overloaded") => (
+                ErrorCode::Unavailable,
+                "the provider is temporarily overloaded",
+            ),
             Some("server_error") => (
                 ErrorCode::Unavailable,
                 "the provider failed this response on its own account",
@@ -450,7 +472,9 @@ impl<'a> Decoder<'a> {
             ),
             _ => (ErrorCode::Refused, "the provider refused this request"),
         };
-        let error = Error::new(class, message).with_dispatch(Dispatch::Accepted);
+        let error = Error::new(class, message)
+            .with_dispatch(Dispatch::Accepted)
+            .with_retriable(code == Some("server_is_overloaded") && !self.answered);
         // **Classified first, evidence attached second.** The provider said what kind of failure
         // this was, and that answer is kept; counters that disagree with themselves narrow what
         // the refusal can carry rather than overwriting it. Reporting a rate limit as a

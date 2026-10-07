@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T12:55:00Z",
+  "actor": "human:timo",
+  "artifact": "story:responses-overload",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "Red regression: real ResponsesClient loopback retry_class, 3 passed and 2 failed with Refused instead of Unavailable",
+    "reference": ".engineering/drafts/overload/red.log"
+  }
+}

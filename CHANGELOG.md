@@ -6,6 +6,13 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Fixed
+
+- Responses `server_is_overloaded` errors are temporary `Unavailable` failures eligible for
+  caller-owned retries before output, instead of request refusals. Any prior output payload makes
+  the failure final, including an opening item without a visible event. Unknown error codes and
+  actual refusals remain final; provider prose is never included in diagnostics.
+
 ### Changed
 
 - ESS moves to 0.55.0: CI installs the `ess` 0.55.0 release asset after checking it against the

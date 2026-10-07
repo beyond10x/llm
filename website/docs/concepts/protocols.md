@@ -58,6 +58,9 @@ It never retries; [routing](routing.md#same-target-retry) decides whether anothe
   is not a terminal answer. If a terminal `output` is empty after items were streamed, the streamed
   items stand.
 - A failure after any output was decoded is final: the turn is never replayed.
+- `server_is_overloaded` is temporary availability rather than a request refusal. Before output,
+  it is eligible for a bounded retry owned by routing or the caller; the client makes one attempt.
+  Provider error prose never enters diagnostics, and unknown codes remain refusals.
 - Every request asks for `reasoning.encrypted_content`. Reasoning entries a client sends in are
   carried unattributed, like Messages thinking.
 - OpenAI streams reasoning as `response.reasoning_summary_*` events and vLLM as

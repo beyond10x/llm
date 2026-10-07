@@ -15,6 +15,10 @@ out of the text, which is public.
 
 ## Evidence
 
+The unreleased Responses overload correction recognizes `server_is_overloaded` as availability.
+Loopback tests pin retry eligibility before output and finality after visible or silent output;
+the default gate remains independent of live provider availability.
+
 Every shipped row is tested in the repository gate against recorded response bytes, loopback
 sockets and in-process fakes; the gate makes no paid provider call and provisions nothing. ESS
 suites run the real crates three times, and `docs/verification/*-falsification.json` records the

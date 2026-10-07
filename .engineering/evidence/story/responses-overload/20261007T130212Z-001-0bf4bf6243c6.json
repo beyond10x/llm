@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T13:02:12Z",
+  "actor": "human:timo",
+  "artifact": "story:responses-overload",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "ESS validates; provider overload classification fixture red then green; website npm ci and npm run build exited 0; independent review resolved decoder/client finality mismatch",
+    "reference": ".engineering/drafts/overload/post-review-responses.log"
+  }
+}

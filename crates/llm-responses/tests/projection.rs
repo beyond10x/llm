@@ -29,6 +29,50 @@ fn binding() -> Binding {
     Binding::new(provenance(), id("example/Small-Model"))
 }
 
+#[test]
+fn decoded_overload_has_the_same_output_retry_boundary_as_the_client() {
+    for prelude in [
+        json!({"type": "response.created"}),
+        json!({"type": "response.output_item.added", "item": {"type": "message"}}),
+        json!({"type": "response.output_text.delta", "delta": "hello"}),
+    ] {
+        let retryable = prelude["type"] == "response.created";
+        let payloads = [
+            prelude,
+            json!({"type": "error", "code": "server_is_overloaded"}),
+        ];
+        let result = decode_stream(&binding(), &payloads);
+        let error = result.result.expect_err("overload is a failed attempt");
+        assert_eq!(error.code, ErrorCode::Unavailable);
+        assert_eq!(error.may_retry(), retryable, "{error:?}");
+    }
+}
+
+#[test]
+fn a_nested_overload_keeps_terminal_usage_and_retry_eligibility() {
+    let payloads = [json!({"type": "response.failed", "response": {
+        "id": "resp_overload", "model": "example/Small-Model", "status": "failed",
+        "error": {"code": "server_is_overloaded", "message": "SECRET-UPSTREAM-TEXT"},
+        "usage": {"input_tokens": 10, "output_tokens": 3}
+    }})];
+    let error = decode_stream(&binding(), &payloads)
+        .result
+        .expect_err("overload is a failed attempt");
+    assert_eq!(error.code, ErrorCode::Unavailable);
+    assert_eq!(error.dispatch, Dispatch::Accepted);
+    assert!(error.may_retry());
+    assert_eq!(error.message, "the provider is temporarily overloaded");
+    let observation = error.observation.expect("reported evidence retained");
+    assert!(observation.final_usage);
+    assert_eq!(
+        observation.response_id.as_ref().map(Id::as_str),
+        Some("resp_overload")
+    );
+    let usage = observation.usage.expect("reported usage retained");
+    assert_eq!(usage.input_tokens, Some(10));
+    assert_eq!(usage.output_tokens, Some(3));
+}
+
 fn text_request() -> TurnRequest {
     TurnRequest {
         model: "small".to_owned(),

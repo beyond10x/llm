@@ -164,3 +164,69 @@ async fn a_cut_after_an_output_item_is_final() {
         "an output item was produced, so the turn had answered: {error:?}"
     );
 }
+
+fn failure_event(code: &str, nested: bool) -> String {
+    let error = serde_json::json!({"code": code, "message": "SECRET-UPSTREAM-TEXT"});
+    let payload = if nested {
+        serde_json::json!({"type": "response.failed", "response": {
+            "id": "resp_1", "status": "failed", "error": error
+        }})
+    } else {
+        serde_json::json!({"type": "error", "code": code, "message": "SECRET-UPSTREAM-TEXT"})
+    };
+    format!("data: {payload}\n\n")
+}
+
+#[tokio::test]
+async fn overload_before_output_is_retryable_availability_without_provider_prose() {
+    for nested in [false, true] {
+        let (error, sink) = cut_turn(format!(
+            "{CREATED}{}",
+            failure_event("server_is_overloaded", nested)
+        ))
+        .await;
+        assert_eq!(error.code, ErrorCode::Unavailable);
+        assert_eq!(error.dispatch, Dispatch::Accepted);
+        assert!(error.may_retry(), "{error:?}");
+        assert_eq!(sink.events(), []);
+        assert_eq!(error.message, "the provider is temporarily overloaded");
+        let observation = error.observation.expect("serving binding retained");
+        assert!(observation.usage.is_none());
+        assert!(!format!("{observation:?}").contains("SECRET-UPSTREAM-TEXT"));
+    }
+}
+
+#[tokio::test]
+async fn overload_after_visible_or_silent_output_is_final() {
+    let delta = "data: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"delta\":\"hello\"}\n\n";
+    for (output, visible) in [(ITEM_ADDED, false), (delta, true)] {
+        for nested in [false, true] {
+            let (error, sink) = cut_turn(format!(
+                "{CREATED}{output}{}",
+                failure_event("server_is_overloaded", nested)
+            ))
+            .await;
+            assert_eq!(error.code, ErrorCode::Unavailable);
+            assert_eq!(error.dispatch, Dispatch::Accepted);
+            assert_eq!(!sink.events().is_empty(), visible);
+            assert!(
+                !error.may_retry(),
+                "an answered attempt cannot replay: {error:?}"
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn unknown_codes_and_actual_refusals_are_never_retryable() {
+    for code in [
+        "policy_violation",
+        "unknown_failure",
+        "SERVER_IS_OVERLOADED",
+    ] {
+        let (error, _) = cut_turn(failure_event(code, false)).await;
+        assert_eq!(error.code, ErrorCode::Refused);
+        assert!(!error.may_retry());
+        assert_eq!(error.message, "the provider refused this request");
+    }
+}

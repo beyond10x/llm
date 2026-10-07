@@ -31,17 +31,6 @@ const FINAL_EVENTS: &[&str] = &[
     "error",
 ];
 
-/// The stream events that only report the response's lifecycle, or that it is still alive, and
-/// carry no output. Any other event (an output item, a content part, a delta) means the turn has
-/// answered. A `keepalive` advances no turn, as in Harness (`harness-responses/src/lib.rs:421`),
-/// so a cut after nothing but these stays retriable.
-const LIFECYCLE_EVENTS: &[&str] = &[
-    "keepalive",
-    "response.created",
-    "response.in_progress",
-    "response.queued",
-];
-
 /// A single-attempt client for one bound Responses endpoint.
 ///
 /// A turn projects the neutral request with [`project_request`], resolves the account's
@@ -193,10 +182,9 @@ impl ResponsesClient {
         // rule sees every event the sink was shown; this one also covers a payload that produced
         // output without a visible event (an opening item, a content part), so it is the
         // stricter of the two and they never disagree about an attempt that showed something.
-        let mut answered = false;
         // End of body ends the loop too. The decoder refuses unless a terminal object arrived.
         while let Some(SseEvent::Payload { data, .. }) = stream.next().await.map_err(|error| {
-            let error = if answered {
+            let error = if decoder.has_answered() {
                 error.with_retriable(false)
             } else {
                 error
@@ -205,7 +193,6 @@ impl ResponsesClient {
         })? {
             let kind = data.get("type").and_then(Value::as_str);
             let last = kind.is_some_and(|kind| FINAL_EVENTS.contains(&kind));
-            answered |= !kind.is_some_and(|kind| LIFECYCLE_EVENTS.contains(&kind));
             let applied = decoder.apply(&data);
             // A provider failure carries the counters its own object reported; anything else
             // handed over before the terminal object carries the binding alone.
