@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T06:18:03Z",
+  "actor": "human:timo",
+  "artifact": "story:ess-0-55",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "Gate run 37567743697 on PR 22 head 7ac986ed (CI installs ess 0.55.0, SHA256 1d2c0f0a...6a8c): libraries-and-plan and both native-adapter-builds pass; Shared source gates 37567744102 and Documentation validation 37567743698 pass",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/37567743697"
+  }
+}

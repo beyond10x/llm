@@ -4048,9 +4048,10 @@
   },
   "provenance": {
     "contract_digest": "a1bd875ae5912cece62b217b5948bb3a4efd85c941e5a13c1cf5b4286b2a411c",
+    "scenario_initial_state": "empty",
     "spec_digest": "f39883cd430129fe109619d74c2a771387b09afa5c7d8b44701d48bcc27a3f8d",
     "specification_version": "v1",
-    "suite_version": "ess-conformance/5",
+    "suite_version": "ess-conformance/35",
     "system": "llm"
   },
   "scenarios": {
