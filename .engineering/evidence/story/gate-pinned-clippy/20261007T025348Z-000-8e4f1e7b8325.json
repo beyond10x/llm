@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T02:53:48Z",
+  "actor": "human:timo",
+  "artifact": "story:gate-pinned-clippy",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "base d8ab3691: clippy 1.98.0 exits 101 at crates/llm-http/tests/transport.rs:546, clippy 1.99.0 at six assert_is_empty sites; treatment 080ffb0d: task check rust step 828 passed 0 failed, clippy exit 0 on 1.98.0 and 1.99.0, docs current, plan valid; conformance 691/691 x3 with the pinned ess 0.52.0",
+    "reference": "task check on wave/2026-10-07-w01 080ffb0d"
+  }
+}

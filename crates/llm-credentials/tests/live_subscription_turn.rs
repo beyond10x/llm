@@ -156,7 +156,7 @@ fn the_defaults_name_the_entry_the_operator_steps_store_and_the_public_endpoint(
     assert_eq!(defaults.name, "anthropic-subscription");
     assert_eq!(defaults.endpoint, "https://api.anthropic.com");
     assert_eq!(defaults.model, "claude-haiku-4-5");
-    assert!(!defaults.prompt.is_empty());
+    assert_ne!(defaults.prompt, "");
     assert!(!defaults.rotate_check);
 
     // The operator steps store the token exactly where the defaults look for it.
@@ -358,7 +358,10 @@ async fn a_keychain_that_cannot_be_opened_is_refused_before_any_request() {
     assert!(!report.succeeded(), "{text}");
     assert_eq!(report_json["refused"]["code"], "unavailable");
     assert_eq!(report_json["refused"]["dispatch"], "not-sent");
-    assert!(report_json["turns"].as_array().unwrap().is_empty());
+    assert_eq!(
+        report_json["turns"].as_array().unwrap().as_slice(),
+        [] as [Value; 0]
+    );
 }
 
 /// `--capture-response` keeps what the route sent back, so a refusal of the live stream can be
@@ -455,6 +458,9 @@ async fn capture_response_to_an_existing_file_is_refused_before_any_request() {
     );
     assert!(!report.succeeded(), "{text}");
     assert_eq!(report_json["refused"]["code"], "invalid-request");
-    assert!(report_json["turns"].as_array().unwrap().is_empty());
+    assert_eq!(
+        report_json["turns"].as_array().unwrap().as_slice(),
+        [] as [Value; 0]
+    );
     assert_eq!(std::fs::read(&capture).unwrap(), b"kept");
 }
