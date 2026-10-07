@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T06:18:03Z",
+  "actor": "human:timo",
+  "artifact": "story:ess-0-55",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "base f7f4f759 with ess 0.55.0: task check stops at conformance, suite drift (provenance only). Treatment 7ac986ed with ess 0.55.0: task check exit 0; 828 tests passed, 0 failed; ess specify validate valid; conformance 691/691 x3, no suite or schema drift; plan valid",
+    "reference": "task check on wave/2026-10-07-w02 7ac986ed"
+  }
+}
