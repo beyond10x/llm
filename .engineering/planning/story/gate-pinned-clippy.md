@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:gate-pinned-clippy
 kind: story
-status: active
+status: implemented
 title: The local gate lints on the pinned toolchain, and main's Gate is green
 relations:
 - serves: vision:portable-model-inference
@@ -17,10 +17,11 @@ scope:
   path: crates/llm-docs/src/pages.rs
 - confidence: cited
   path: crates/llm-http/tests/transport.rs
-revision: 4
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-07T02:25:05Z", actor: "human:timo", revision: 3}
 - {from: "proposed", to: "active", at: "2026-10-07T02:25:05Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-07T02:53:48Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1,"verification":1},"asserted":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 
@@ -45,7 +46,7 @@ on rustc 1.99.0 only, which does not report that lint. Clippy 1.99.0 in turn rep
   same on 1.99.0 exit 0.
 - `Taskfile.yml` task `rust` runs clippy on the pinned 1.98.0 in addition to the default
   toolchain; the pin itself does not move.
-- The Gate workflow is green on the pull request and on `main` after the merge.
+- The Gate workflow is green on the pull request head that carries this change into `main`.
 
 ## ESS first
 

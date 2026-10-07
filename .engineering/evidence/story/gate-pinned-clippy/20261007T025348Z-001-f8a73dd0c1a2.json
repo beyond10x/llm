@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-07T02:53:48Z",
+  "actor": "human:timo",
+  "artifact": "story:gate-pinned-clippy",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "Gate run 37563379855 on PR 20 head 080ffb0d: libraries-and-plan and both native-adapter-builds pass; Shared source gates and Documentation site pass",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/37563379855"
+  }
+}
