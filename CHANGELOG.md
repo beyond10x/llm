@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-07
+
 ### Fixed
 
 - Responses `server_is_overloaded` errors are temporary `Unavailable` failures eligible for
