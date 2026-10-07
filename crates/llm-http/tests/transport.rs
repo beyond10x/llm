@@ -543,9 +543,8 @@ async fn adversary_refused_response_tap_records_head_but_never_body() {
                 &Cancel::new(),
             )
             .await;
-        let error = match result {
-            Ok(_) => panic!("a refused response became a stream"),
-            Err(error) => error,
+        let Err(error) = result else {
+            panic!("a refused response became a stream")
         };
         worker.await.unwrap();
         assert_eq!(error.code, expected);

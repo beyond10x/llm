@@ -471,7 +471,7 @@ fn a_core_crate_on_another_library_crate_is_a_breach() {
         "[dependencies]\n",
         "[dependencies]\nsecrets-client = { git = \"https://github.com/beyond10x/secrets\", tag = \"v0.5.0\" }\n",
     );
-    assert!(!boundary_breaches(&root).is_empty());
+    assert_ne!(boundary_breaches(&root), [] as [String; 0]);
 }
 
 /// The rule above can fail: a core crate forwarding the feature from its own `[features]`.
@@ -483,5 +483,5 @@ fn a_core_crate_forwarding_the_feature_is_a_breach() {
         "[lints]",
         "[features]\nsecrets = [\"llm-credentials/secrets\"]\n\n[lints]",
     );
-    assert!(!boundary_breaches(&root).is_empty());
+    assert_ne!(boundary_breaches(&root), [] as [String; 0]);
 }

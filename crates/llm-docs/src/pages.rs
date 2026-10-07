@@ -153,7 +153,10 @@ mod tests {
         fs::write(root.join(EXAMPLES).join("a.rs"), "fn main() {}\n").unwrap();
         let page =
             |body: &str| format!("# Guide\n\n```rust title=\"{EXAMPLES}a.rs\"\n{body}\n```\n");
-        assert!(page_problems(&root, "g.md", &page("fn main() {}")).is_empty());
+        assert_eq!(
+            page_problems(&root, "g.md", &page("fn main() {}")),
+            [] as [String; 0]
+        );
         let edited = page_problems(&root, "g.md", &page("fn main() { edited }"));
         assert_eq!(
             edited,
