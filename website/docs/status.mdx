@@ -1,8 +1,8 @@
 ---
 title: Status
 sidebar_position: 1
-description: "What llm 0.3.1 ships and what is planned, capability by capability."
-lede: "30 capabilities ship in llm 0.3.1; 9 are planned. The landing page reads the same file."
+description: "What llm 0.4.0 ships and what is planned, capability by capability."
+lede: "30 capabilities ship in llm 0.4.0; 9 are planned. The landing page reads the same file."
 source: "docs/implementation-status.md, generated into website/data/status.json"
 source_url: https://github.com/beyond10x/llm/blob/main/docs/implementation-status.md
 custom_edit_url: null
@@ -12,6 +12,6 @@ custom_edit_url: null
 
 import status from '@site/data/status.json';
 
-**Shipped** means in llm's libraries at 0.3.1, tested in the repository gate. **Planned** means on the plan and not built. The gate runs against recorded response bytes, loopback sockets and in-process fakes, and makes no paid provider call, so *shipped* is not the same as *qualified against a live provider*: [Limitations](./status/limitations.md) says what the evidence does not establish, and [Not yet](./status/roadmap.md) what each planned item waits for.
+**Shipped** means in llm's libraries at 0.4.0, tested in the repository gate. **Planned** means on the plan and not built. The gate runs against recorded response bytes, loopback sockets and in-process fakes, and makes no paid provider call, so *shipped* is not the same as *qualified against a live provider*: [Limitations](./status/limitations.md) says what the evidence does not establish, and [Not yet](./status/roadmap.md) what each planned item waits for.
 
 <StatusTable data={status} />

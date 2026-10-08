@@ -5,7 +5,7 @@ sidebar_label: Overview
 sidebar_position: 1
 description: What llm is, what it is not, and where it sits among its neighbours.
 lede: llm is a set of Rust libraries for calling language models through one neutral turn, with credentials, routes, retries and costs kept explicit.
-source: crates/ in the llm repository at 0.3.1, CHANGELOG.md
+source: crates/ in the llm repository at 0.4.0, CHANGELOG.md
 ---
 
 # LLM
