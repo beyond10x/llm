@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-08
+
 ### Added
 
 - `b10x-llm-models`: `port` builds the `Model` a catalog serving model declares, the binding's
@@ -14,6 +16,10 @@ are source releases at bare-version tags.
   I/O. `CatalogModels` builds every serving model's port and implements `llm_routing::Models`.
   `Catalog::bindings` lists the validated bindings. ESS domain `llm.models`, ten new conformance
   cases (702 in all; baseline floor 684).
+
+### Changed
+
+- ESS 0.56.0: the CI `ess` pin and the `ess-conformance` and `ess-primitives` crates.
 
 ## [0.3.1] - 2026-10-07
 
