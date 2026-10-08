@@ -7,7 +7,7 @@ visible, and never turns an unknown usage count into a zero.
 
 **Documentation: <https://beyond10x.github.io/llm/>**
 
-**Status: 0.5.0. Libraries tested against fixtures; no provider route is qualified yet.** The
+**Status: 0.5.1. Libraries tested against fixtures; no provider route is qualified yet.** The
 [status page](https://beyond10x.github.io/llm/docs/status) lists every capability as shipped or
 planned, and [Limitations](https://beyond10x.github.io/llm/docs/status/limitations) says what is
 missing.
@@ -30,8 +30,8 @@ Nothing is published to crates.io. Depend on a crate from Git at a release tag:
 
 ```toml
 [dependencies]
-llm-core = { package = "b10x-llm-core", git = "https://github.com/beyond10x/llm", tag = "0.5.0" }
-llm-responses = { package = "b10x-llm-responses", git = "https://github.com/beyond10x/llm", tag = "0.5.0" }
+llm-core = { package = "b10x-llm-core", git = "https://github.com/beyond10x/llm", tag = "0.5.1" }
+llm-responses = { package = "b10x-llm-responses", git = "https://github.com/beyond10x/llm", tag = "0.5.1" }
 ```
 
 Package names start with `b10x-`; library names do not, so the code says `use llm_core::…`. The

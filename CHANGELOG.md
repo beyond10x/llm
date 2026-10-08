@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-08
+
 ### Documentation
 
 - The status page lists the Secrets resolver (0.3.0), the catalog model port (0.4.0), the provider
