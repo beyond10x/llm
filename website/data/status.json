@@ -148,6 +148,12 @@
     },
     {
       "area": "Providers and routing",
+      "detail": "b10x-llm-providers: ProviderDescription parses llm.provider-description/1, an inference URL template filled only by a 1-48 byte [a-z0-9] instance, its wires and authentication, and a pinned control plane (OpenAPI URL and SHA-256, HTTPS server, four operation IDs), with no I/O. Runpod's ships as descriptions::runpod(). Fixture evidence only; no live Runpod pod or control-plane call qualifies it. In the tree; not in a release yet.",
+      "label": "One provider description per provider",
+      "status": "planned"
+    },
+    {
+      "area": "Providers and routing",
       "detail": "Strict llm.catalog/1, a deterministic configuration digest, ordered opt-in selection, capability and input-token admission, and an explanation that resolves no secret.",
       "label": "TOML catalogs, selection and explanation",
       "status": "shipped"

@@ -5,6 +5,10 @@
 //! the fixture chooses. It reports what the crate returned and never the credential value: only
 //! whether the header is the declared presentation of the fixture material. It reads no suite
 //! and branches on no scenario name.
+//!
+//! `llm.providers.Describe` parses a provider description, authored or shipped, with the real
+//! `ProviderDescriptionDocument::parse` and `validate`, and fills its template with the given
+//! instance through `inference_base_url`.
 
 use std::{
     fmt::Write,
@@ -16,14 +20,20 @@ use llm_core::{BoxFuture, Cancel, Error};
 use llm_credentials::{
     ResolvedSecret, Secret, SecretError, SecretRef, SecretResolver, SecretVersion,
 };
-use llm_providers::{ApiKeyHeader, BaseUrl, BindingDocument};
+use llm_providers::{
+    ApiKeyHeader, BaseUrl, BindingDocument, ProviderDescription, ProviderDescriptionDocument,
+    descriptions,
+};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
 use crate::target::{Observed, token_bound};
 
 /// Every view name this domain answers through `query_view`.
-pub const VIEWS: &[&str] = &["llm.providers.LastPreparation"];
+pub const VIEWS: &[&str] = &[
+    "llm.providers.LastPreparation",
+    "llm.providers.LastDescription",
+];
 
 const MAX_DOCUMENT_BYTES: usize = 64 * 1024;
 /// The largest fixture material this adapter will build.
@@ -33,10 +43,107 @@ const FILL: u8 = b'Q';
 
 /// Observe one command of this domain, or `None` when the command belongs to another.
 pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetError>> {
-    if command != "llm.providers.Prepare" {
-        return None;
+    match command {
+        "llm.providers.Prepare" => Some(exercise(input)),
+        "llm.providers.Describe" => Some(describe(input)),
+        _ => None,
     }
-    Some(exercise(input))
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Describe {
+    #[serde(default)]
+    description_toml: Option<String>,
+    #[serde(default)]
+    shipped: Option<String>,
+    #[serde(default)]
+    instance: Option<String>,
+}
+
+fn describe(input: &Value) -> Result<Observed, TargetError> {
+    let request: Describe = serde_json::from_value(input.clone()).map_err(unavailable)?;
+    let mut facts = json!({
+        "accepted": false, "error_code": null, "error_message": null, "provider_id": null,
+        "category": null, "base_url_template": null, "protocols": [],
+        "inference_auth_kind": null, "control_plane_present": false, "openapi_url": null,
+        "document_sha256": null, "server_url": null, "control_plane_auth_kind": null,
+        "operations": [], "base_url": null, "instance_error_code": null,
+        "instance_error_message": null
+    });
+    let described = match (&request.description_toml, &request.shipped) {
+        (Some(source), None) => match ProviderDescriptionDocument::parse(source) {
+            Err(error) => {
+                facts["error_code"] = json!("invalid-document");
+                facts["error_message"] = json!(error.message);
+                None
+            }
+            Ok(document) => match document.validate() {
+                Ok(description) => Some(description),
+                Err(error) => {
+                    facts["error_code"] = code(&error);
+                    facts["error_message"] = json!(error.message);
+                    None
+                }
+            },
+        },
+        (None, Some(name)) => Some(
+            descriptions::by_name(name)
+                .ok_or_else(|| unavailable("no shipped description has that name"))?,
+        ),
+        // Neither or both: nothing is described, and the observation says so.
+        _ => {
+            facts["error_code"] = json!("fixture:no-description");
+            None
+        }
+    };
+    if let Some(description) = described {
+        record(&description, request.instance.as_deref(), &mut facts);
+    }
+    Ok(Observed {
+        facts,
+        view: "llm.providers.LastDescription",
+        event: "llm.providers.Described",
+        field: "accepted",
+    })
+}
+
+fn wire<T: serde::Serialize>(value: &T) -> Value {
+    serde_json::to_value(value).unwrap_or(Value::Null)
+}
+
+fn record(description: &ProviderDescription, instance: Option<&str>, facts: &mut Value) {
+    facts["accepted"] = json!(true);
+    facts["provider_id"] = json!(description.provider().id.as_str());
+    facts["category"] = json!(description.provider().category.as_str());
+    let inference = description.inference();
+    facts["base_url_template"] = json!(inference.base_url_template());
+    facts["protocols"] = Value::Array(inference.protocols().iter().map(wire).collect());
+    facts["inference_auth_kind"] = wire(&inference.auth_kind());
+    if let Some(plane) = description.control_plane() {
+        facts["control_plane_present"] = json!(true);
+        facts["openapi_url"] = json!(plane.openapi_url());
+        facts["document_sha256"] = json!(plane.document_sha256());
+        facts["server_url"] = json!(plane.server_url());
+        facts["control_plane_auth_kind"] = wire(&plane.auth_kind());
+        facts["operations"] = json!(
+            plane
+                .operations()
+                .roles()
+                .iter()
+                .map(|(role, operation)| format!("{role}={operation}"))
+                .collect::<Vec<_>>()
+        );
+    }
+    if let Some(instance) = instance {
+        match description.inference_base_url(instance) {
+            Ok(url) => facts["base_url"] = json!(url.as_str()),
+            Err(error) => {
+                facts["instance_error_code"] = code(&error);
+                facts["instance_error_message"] = json!(error.message);
+            }
+        }
+    }
 }
 
 fn unavailable(error: impl std::fmt::Display) -> TargetError {

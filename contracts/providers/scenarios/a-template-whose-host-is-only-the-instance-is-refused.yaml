@@ -1,0 +1,46 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: a-template-whose-host-is-only-the-instance-is-refused
+summary: a template whose host is the instance alone would let an instance name any single-label host
+timeline:
+- at: '2026-10-08T12:00:00Z'
+  command: llm.providers.Describe
+  input:
+    description_toml: |
+      format = "llm.provider-description/1"
+
+      [provider]
+      id = "my-cloud"
+      category = "gpu-cloud"
+
+      [inference]
+      base_url_template = "https://{instance}/v1/"
+      protocols = ["chat-completions"]
+      auth_kind = "bearer"
+
+      [control_plane]
+      openapi_url = "https://api.example.test/openapi.json"
+      document_sha256 = "9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db"
+      server_url = "https://api.example.test/v1"
+      auth_kind = "bearer"
+
+      [control_plane.operations]
+      create_instance = "CreateInstance"
+      list_instances = "ListInstances"
+      get_instance = "GetInstance"
+      delete_instance = "DeleteInstance"
+    shipped: null
+    instance: null
+  outcome: observed
+assert:
+- view: llm.providers.LastDescription
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastDescription
+  contains:
+    accepted: false
+    error_code: invalid-request
+    provider_id: null
+    control_plane_present: false
+    error_message: "base URL template must keep a fixed domain after the instance's label"
