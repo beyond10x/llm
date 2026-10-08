@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-w16-llm-responses-client-pass-2
 kind: review-result
-status: active
+status: archived
 title: Wave 2026-10-04-w16 adversary, llm story:responses-client, pass 2
 relations:
 - reviews: story:responses-client
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:37Z", actor: "human:timo", revision: 2}
 ---
 ## Adversary pass 2 — llm story:responses-client
 

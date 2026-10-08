@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-runpod-pass-2
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, Runpod hosting, pass 2: takeover leaves an inherited pod billing, a not-ready pod outlives its deadline, request ids overflow'
 relations:
 - reviews: story:runpod-hosting
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:36Z", actor: "human:timo", revision: 2}
 ---
 ```
 unit: story:runpod-hosting (impl/runpod-hosting, base d5c73e8), uncommitted working tree at home-path:sha256:47b2652f354c9f6005baff67b7df8fc51fc511b454cf4e2b61d9482f3990d8b6 after correction round 1

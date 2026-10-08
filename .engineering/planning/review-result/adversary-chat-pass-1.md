@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-chat-pass-1
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, chat projection, pass 1: needs-change on two blockers and a false coverage claim'
 relations:
 - reviews: story:chat-projection
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:34Z", actor: "human:timo", revision: 2}
 ---
 ## The pass
 

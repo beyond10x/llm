@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:responses-overload-review
 kind: review-result
-status: active
+status: archived
 title: Independent review of Responses overload classification
 relations:
 - reviews: story:responses-overload
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:38Z", actor: "human:timo", revision: 2}
 ---
 Independent review by the overload_review agent found one correctness issue in the first
 implementation: raw decode_stream could still offer an overload for retry after visible or

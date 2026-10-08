@@ -9,7 +9,6 @@ relations:
 - depends_on: story:runtime-contracts
 - depends_on: story:openai-access
 - depends_on: story:anthropic-access
-- depends_on: story:operator-cli
 scope:
 - confidence: inferred
   path: .github/workflows

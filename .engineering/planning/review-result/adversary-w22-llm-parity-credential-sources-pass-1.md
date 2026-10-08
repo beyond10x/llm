@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-w22-llm-parity-credential-sources-pass-1
 kind: review-result
-status: active
+status: archived
 title: Wave 2026-10-05-w22 adversary, llm story:parity-credential-sources, pass 1
 relations:
 - reviews: story:parity-credential-sources
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:37Z", actor: "human:timo", revision: 2}
 ---
 ```
 unit: llm/parity-credential-sources, phase 1 7c737519 plus the uncommitted phase 2 in ~/.local/state/worktree/trees/b10x/llm/llm-w22-parity-credential-sources

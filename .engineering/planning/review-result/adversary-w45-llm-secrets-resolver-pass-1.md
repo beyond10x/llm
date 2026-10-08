@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-w45-llm-secrets-resolver-pass-1
 kind: review-result
-status: active
+status: archived
 title: Wave 2026-10-05-w45 adversary, llm story:secrets-resolver, pass 1
 relations:
 - reviews: story:secrets-resolver
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:38Z", actor: "human:timo", revision: 2}
 ---
 ```
 unit: beyond10x/llm story:secrets-resolver, worktree llm-w45b-secrets-resolver at 72973b2c (impl/secrets-resolver), plus the untracked adversary file

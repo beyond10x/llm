@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:operator-cli
 kind: story
-status: draft
+status: archived
 title: Operators validate, inspect and run one LLM configuration
 relations:
 - decomposes: epic:gateway
@@ -13,7 +13,9 @@ scope:
   path: crates/llm-cli
 - confidence: inferred
   path: docs/examples
-revision: 2
+revision: 3
+transitions:
+- {from: "draft", to: "archived", at: "2026-10-08T10:43:39Z", actor: "human:timo", revision: 3}
 ---
 ## Context
 

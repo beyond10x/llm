@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: review-result:llm-parallel-safety-round-2
 kind: review-result
-status: active
+status: archived
 title: LLM parallel-safety critic, round 2
 relations:
 - reviews: architecture-design:llm-boundaries
@@ -41,7 +41,9 @@ relations:
 - reviews: story:spending-limits
 - reviews: story:usage-pricing
 - reviews: vision:portable-model-inference
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:39Z", actor: "human:timo", revision: 2}
 ---
 approve
 

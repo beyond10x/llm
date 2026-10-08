@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-opaque-pass-2
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, unattributed opaque state, pass 2: routing refusal not distinct from foreign state; caller-side binding carries the laundering risk'
 relations:
 - reviews: story:unattributed-opaque-state
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:35Z", actor: "human:timo", revision: 2}
 ---
 unit: story:unattributed-opaque-state, pass 2, uncommitted working tree `home-path:sha256:0139ae4d6d571aa8e182d6fc29852675a3af0fa3a87db678341fc52f854f8004` on base `6ce4253`
 verdict: CONFIRMED (1 red case, warning; no blocker)

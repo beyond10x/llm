@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-public-surface-pass-2
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, public surface, pass 2: pages true here and false in the wave, plus three operator blockers'
 relations:
 - reviews: story:public-surface
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:36Z", actor: "human:timo", revision: 2}
 ---
 ## The pass
 

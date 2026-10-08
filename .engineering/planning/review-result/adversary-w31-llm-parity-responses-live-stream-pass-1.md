@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-w31-llm-parity-responses-live-stream-pass-1
 kind: review-result
-status: active
+status: archived
 title: Wave 2026-10-05-w31 adversary, llm story:parity-responses-live-stream, pass 1
 relations:
 - reviews: story:parity-responses-live-stream
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:38Z", actor: "human:timo", revision: 2}
 ---
 ```
 unit: llm/parity-responses-live-stream, working tree at 09f60a5 plus one untracked test file

@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-hosting-pass-2
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, hosting contract, pass 2: the ownership defect survived its fix through the reason slot'
 relations:
 - reviews: story:hosting-contract
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:35Z", actor: "human:timo", revision: 2}
 ---
 ## The pass
 

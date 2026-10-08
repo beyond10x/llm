@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-w27-llm-parity-retry-classes-pass-1
 kind: review-result
-status: active
+status: archived
 title: Wave 2026-10-05-w27 adversary, llm story:parity-retry-classes, pass 1
 relations:
 - reviews: story:parity-retry-classes
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:37Z", actor: "human:timo", revision: 2}
 ---
 ```
 unit: llm/parity-retry-classes, findings cover 83a0903 plus 2 untracked adversary test files

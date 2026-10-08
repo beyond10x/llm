@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-responses-pass-2
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, responses projection, pass 2: the first correction was unreachable by fixture'
 relations:
 - reviews: story:responses-projection
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:36Z", actor: "human:timo", revision: 2}
 ---
 ## The pass
 

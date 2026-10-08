@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-fallback-pass-2
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, ordered fallback, pass 2: three surviving mutants now guarded by green cases, one judgement on dispatch classification'
 relations:
 - reviews: story:ordered-fallback
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:34Z", actor: "human:timo", revision: 2}
 ---
 unit: story:ordered-fallback, second and last pass, on the uncommitted working tree at base `d5c73e8` (`home-path:sha256:dbeab428e61fbbf75927badff457a86620c369c7f5190943d59e233d935bc12c`)
 verdict: CONFIRMED (3 mutants survive all 21 existing fallback cases; no case is red against the tree)
