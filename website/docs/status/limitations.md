@@ -22,8 +22,8 @@ Treat the clients as ready to try against your own endpoint, not as qualified.
 
 ## No serving here
 
-llm serves nothing and provisions nothing. Serving and its limits are
-[llm-gateway](https://beyond10x.github.io/llm-gateway/) ([GitHub](https://github.com/beyond10x/llm-gateway))'s to state.
+llm serves nothing and provisions nothing. Serving and its limits are stated by
+llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)).
 
 llm calls no cloud control plane. A provider description names one, as data only. The budget ledger's stop obligations record that a
 resource *must* be stopped; they cannot turn a GPU off, and they never prove that provider billing

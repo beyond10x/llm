@@ -118,7 +118,7 @@
         {
           "name": "llm-gateway",
           "description": "Serves models to clients. It reads Runpod's provider description from llm's providers crate at a release tag.",
-          "href": "https://beyond10x.github.io/llm-gateway/",
+          "href": "https://github.com/beyond10x/llm-gateway",
           "status": "shipped"
         },
         {

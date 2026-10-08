@@ -10,8 +10,8 @@ source: docs/implementation-status.md, docs/design.md
 
 These are not implemented. Each entry says what is missing and what it waits for. The
 [Status](/docs/status) page lists the same items among everything that ships. Serving and hosting
-work is [llm-gateway](https://beyond10x.github.io/llm-gateway/)'s
-([GitHub](https://github.com/beyond10x/llm-gateway)) and is not listed here.
+work belongs to llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) and is not listed
+here.
 
 | Item | State | Waits for |
 | --- | --- | --- |

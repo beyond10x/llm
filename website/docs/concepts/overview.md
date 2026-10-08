@@ -58,7 +58,7 @@ Each step is its own crate, and each one refuses on its own:
 
 Two helpers sit on top of the port: `call_tool` forces one tool and returns its arguments, and
 `BlockingModel` runs a turn from a synchronous loop. Serving is not on this path and not in llm:
-[llm-gateway](https://beyond10x.github.io/llm-gateway/) ([GitHub](https://github.com/beyond10x/llm-gateway)) serves models.
+llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) serves models.
 
 
 ## Which crate do I need?

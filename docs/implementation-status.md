@@ -39,8 +39,7 @@ provider call and provisions no external resource.
 
 Consumers pin a release tag: Loom depends on llm's client crates by tag, and Harness plans to
 (`harness-builds-on-llm`). Serving, hosting and their qualification are llm-gateway's
-([documentation](https://beyond10x.github.io/llm-gateway/),
-[GitHub](https://github.com/beyond10x/llm-gateway)).
+([GitHub](https://github.com/beyond10x/llm-gateway)).
 
 ## Status at 0.5.0 (2026-10-08)
 

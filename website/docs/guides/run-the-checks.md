@@ -54,7 +54,7 @@ The [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond1
 under `spec/domains/` give the repository's nouns typed homes. There are twelve: `accounting`,
 `budget`, `catalog`, `chat`, `inference`, `messages`, `models`, `providers`, `responses`,
 `routing`, `secrets` and `transport`. The serving domains moved with their crates to
-[llm-gateway](https://beyond10x.github.io/llm-gateway/) ([GitHub](https://github.com/beyond10x/llm-gateway)).
+llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)).
 
 Eleven have an authored scenario suite under `contracts/`. The exception is `catalog`, which
 describes declaration records rather than observations. `contracts/anthropic/` holds the
