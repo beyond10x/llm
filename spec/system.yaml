@@ -4,6 +4,7 @@ version: v1
 domains:
   - llm.catalog
   - llm.routing
+  - llm.models
   - llm.secrets
   - llm.accounting
   - llm.budget

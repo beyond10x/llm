@@ -2,36 +2,23 @@
 //!
 //! Start a vLLM-compatible server on `127.0.0.1:8000`, then run
 //! `cargo run --locked -p llm-docs --example local_endpoint` from the repository root.
-use llm_chat::ChatClient;
-use llm_core::{BoxFuture, Cancel, Id, Item, Model, TurnRequest, VecSink};
-use llm_credentials::{ResolvedSecret, SecretError, SecretRef, SecretResolver};
+use llm_core::{Cancel, Id, Item, Model, TurnRequest, VecSink};
+use llm_credentials::SecretResolver;
 use llm_http::{HttpClient, Limits};
 use llm_routing::Catalog;
-use std::sync::Arc;
-
-/// The local target is anonymous, so nothing is ever resolved.
-struct NoSecrets;
-impl SecretResolver for NoSecrets {
-    fn resolve<'a>(
-        &'a self,
-        _reference: &'a SecretRef,
-    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
-        Box::pin(async { Err(SecretError::Missing) })
-    }
-}
+use std::{collections::BTreeMap, sync::Arc};
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let catalog = Catalog::parse(&std::fs::read_to_string("examples/catalog.toml")?)?;
-    let binding = catalog
-        .binding(&Id::new("local-small")?)
-        .ok_or("no such serving model")?
-        .clone();
-    let client = ChatClient::new(
-        binding,
+    // The local account is anonymous, so the caller supplies no resolver for it.
+    let resolvers: BTreeMap<Id, Arc<dyn SecretResolver>> = BTreeMap::new();
+    let client = llm_models::port(
+        &catalog,
+        &Id::new("local-small")?,
         HttpClient::new(Limits::default())?,
-        Arc::new(NoSecrets),
-    );
+        &resolvers,
+    )?;
 
     let request = TurnRequest::new("small", vec![Item::user("Hallo")]);
     let mut sink = VecSink::new(64, 64 * 1024);

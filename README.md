@@ -65,6 +65,7 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 | `b10x-llm-credentials` | Injected secret resolution; opt-in file, keychain, environment, JSON pointer, Codex login and `secrets` adapters |
 | `b10x-llm-providers` | Provider, account and endpoint bindings, independent of protocol |
 | `b10x-llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
+| `b10x-llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account |
 | `b10x-llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |
 | `b10x-llm-tool-call` | `call_tool` (one forced tool, its JSON input back) and the Codex Responses preset |
 | `b10x-llm-blocking` | A blocking adapter over any `Model` for a synchronous loop |
@@ -81,7 +82,7 @@ task check
 ```
 
 `task check` is the full gate. Besides Rust it needs [Task](https://taskfile.dev),
-[ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.55.0 and
+[ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.56.0 and
 [AEP](https://beyond10x.github.io/ecosystem/aep/) ([GitHub](https://github.com/beyond10x/aep))
 0.68.0; [Run the checks](https://beyond10x.github.io/llm/docs/guides/run-the-checks) says what it
 proves and what it does not. The site builds with

@@ -9,7 +9,7 @@ custom_edit_url: null
 
 # Crates
 
-The workspace holds 14 packages at version `0.3.1`. None is published to a registry: a project depends on them from Git at a release tag. Package names start with `b10x-`; library names do not, so `b10x-llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
+The workspace holds 15 packages at version `0.3.1`. None is published to a registry: a project depends on them from Git at a release tag. Package names start with `b10x-`; library names do not, so `b10x-llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
 
 | Package | Library | Directory | What it is |
 | --- | --- | --- | --- |
@@ -23,6 +23,7 @@ The workspace holds 14 packages at version `0.3.1`. None is published to a regis
 | `llm-docs` | binary `llm-docs` | `crates/llm-docs` | Generates and drift-checks the derived pages of the llm documentation site, and holds the programs its guides quote. |
 | `b10x-llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |
 | `b10x-llm-messages` | `llm_messages` | `crates/llm-messages` | Messages protocol projection and gateway ingress for the declared supported subset. |
+| `b10x-llm-models` | `llm_models` | `crates/llm-models` | Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account. |
 | `b10x-llm-providers` | `llm_providers` | `crates/llm-providers` | Provider/account and authentication bindings independent of protocol selection. |
 | `b10x-llm-responses` | `llm_responses` | `crates/llm-responses` | Responses protocol projection, gateway ingress and a single-attempt client for the declared supported subset. |
 | `b10x-llm-routing` | `llm_routing` | `crates/llm-routing` | TOML catalogs, capability-aware resolution and explicit ordered fallback. |

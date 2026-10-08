@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Built payload",
+  "x-ess-name": "llm.models.Built",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "built": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "built"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cf4a18118e40c0d20963b4691bfdfdf16e2d4ee2cbdff372e018969151dc6270",
+    "contract_digest": "slice-sha256/2:4ae8a2ff17796306cc354f79ed1aa49237fa818008332dde885ad2917adfae50",
+    "regenerate": "ess generate"
+  }
+}

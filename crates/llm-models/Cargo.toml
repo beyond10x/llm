@@ -1,0 +1,25 @@
+[package]
+name = "b10x-llm-models"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account."
+
+[lints]
+workspace = true
+
+[lib]
+name = "llm_models"
+
+[dependencies]
+llm-core.workspace = true
+llm-credentials.workspace = true
+llm-http.workspace = true
+llm-providers.workspace = true
+llm-routing = { package = "b10x-llm-routing", path = "../llm-routing" }
+llm-chat = { package = "b10x-llm-chat", path = "../llm-chat" }
+llm-responses = { package = "b10x-llm-responses", path = "../llm-responses" }
+llm-messages = { package = "b10x-llm-messages", path = "../llm-messages" }
