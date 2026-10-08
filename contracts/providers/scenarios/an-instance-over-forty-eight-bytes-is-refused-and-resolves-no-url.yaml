@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: an-instance-over-forty-eight-bytes-is-refused-and-resolves-no-url
+summary: an instance one byte over the 48-byte bound is refused
+timeline:
+- at: '2026-10-08T12:00:00Z'
+  command: llm.providers.Describe
+  input:
+    description_toml: null
+    shipped: runpod
+    instance: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  outcome: observed
+assert:
+- view: llm.providers.LastDescription
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastDescription
+  contains:
+    accepted: true
+    base_url: null
+    instance_error_code: invalid-request
+    instance_error_message: instance must be 1-48 bytes of lower-case ASCII letters and digits

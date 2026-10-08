@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: a-runpod-instance-resolves-to-its-proxy-url
+summary: a Runpod instance fills the template's host label and gives the pod's proxy base URL
+timeline:
+- at: '2026-10-08T12:00:00Z'
+  command: llm.providers.Describe
+  input:
+    description_toml: null
+    shipped: runpod
+    instance: abc123xyz
+  outcome: observed
+assert:
+- view: llm.providers.LastDescription
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastDescription
+  contains:
+    accepted: true
+    base_url: 'https://abc123xyz-8000.proxy.runpod.net/v1/'
+    instance_error_code: null

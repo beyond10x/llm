@@ -1,0 +1,39 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: a-description-without-a-control-plane-is-accepted
+summary: the control plane is optional; the inference half alone is a description
+timeline:
+- at: '2026-10-08T12:00:00Z'
+  command: llm.providers.Describe
+  input:
+    description_toml: |
+      format = "llm.provider-description/1"
+
+      [provider]
+      id = "my-cloud"
+      category = "gpu-cloud"
+
+      [inference]
+      base_url_template = "https://{instance}.gpu.example.test/v1/"
+      protocols = ["chat-completions"]
+      auth_kind = "bearer"
+
+    shipped: null
+    instance: null
+  outcome: observed
+assert:
+- view: llm.providers.LastDescription
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastDescription
+  contains:
+    accepted: true
+    error_code: null
+    provider_id: my-cloud
+    category: gpu-cloud
+    protocols: [chat-completions]
+    inference_auth_kind: bearer
+    control_plane_present: false
+    openapi_url: null
+    operations: []

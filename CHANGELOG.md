@@ -6,6 +6,18 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `b10x-llm-providers`: provider descriptions, format `llm.provider-description/1` (TOML, at most
+  64 KiB, unknown fields refused). `ProviderDescription::parse` reads a provider, an inference
+  base-URL template holding `{instance}` once in the host's first label, followed by a fixed
+  domain, its wires and
+  authentication, and an optional control plane: a pinned OpenAPI document by HTTPS URL and
+  SHA-256 digest, an HTTPS server and four distinct operation IDs. `inference_base_url` refuses an
+  instance that is not 1-48 bytes of `[a-z0-9]` before substitution. Parsing does no I/O. Runpod's
+  description ships as `descriptions::runpod()`. ESS command `llm.providers.Describe` and 21 new
+  conformance scenarios (baseline floor 704).
+
 ## [0.4.0] - 2026-10-08
 
 ### Added

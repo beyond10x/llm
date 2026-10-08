@@ -48,7 +48,7 @@ story that says so.
 | Fallback tries only the declared compatible order | `crates/llm-routing/tests/fallback.rs::eligible_failure_before_output_attempts_only_the_declared_compatible_order` |
 | Credentials never reach a redirect target or an ambient proxy | `crates/llm-http/tests/transport.rs::redirect_never_sends_credentials_to_a_second_endpoint`, `crates/llm-http/tests/ambient_proxy.rs::ambient_proxy_environment_does_not_receive_caller_credentials` |
 | No `unsafe` code | `unsafe_code = "forbid"` in the root `Cargo.toml`; Clippy `all` and `pedantic` deny |
-| The conformance suite answers at least 684 scenarios and skips none | `contracts/baseline.json`, enforced by `b10x-llm-conformance check` |
+| The conformance suite answers at least 705 scenarios and skips none | `contracts/baseline.json`, enforced by `b10x-llm-conformance check` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.

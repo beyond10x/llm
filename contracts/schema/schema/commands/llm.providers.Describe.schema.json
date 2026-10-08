@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Describe input",
+  "x-ess-name": "llm.providers.Describe",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "description_toml": {
+      "type": "string"
+    },
+    "shipped": {
+      "type": "string"
+    },
+    "instance": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "56979a5df4140ee65f43b8382a9e3c8c0804e613f36463e8c4f915a5ad47b0b6",
+    "contract_digest": "slice-sha256/2:515d7a669a45a888eade568c0ec6439d63a78bdbb1c930f4ee059cd64d8c7341",
+    "regenerate": "ess generate"
+  }
+}

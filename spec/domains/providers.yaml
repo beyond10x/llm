@@ -96,6 +96,42 @@ entities:
       # Whether every Debug rendering and diagnostic is free of the fixture material.
       - {name: diagnostics_safe, type: Boolean}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # A provider description (`llm.provider-description/1`, TOML, crates/llm-providers): what
+  # every consumer reads about one provider. Its inference half is a base-URL template holding
+  # `{instance}` once in the host's first label, the wires served and the authentication; its
+  # optional control-plane half names a pinned OpenAPI document by URL and SHA-256 digest, its
+  # HTTPS server and the `operationId` of each of four fixed roles. Parsing performs no I/O: the
+  # document is never fetched and no secret is resolved. An instance is 1-48 bytes of
+  # `[a-z0-9]`, refused before substitution, so it can change neither host, path nor scheme.
+  # The observation is the real `ProviderDescription::parse` and `inference_base_url`, or the
+  # shipped description `llm_providers::descriptions::<name>()`.
+  - name: llm.providers.DescriptionObservation
+    identity: {name: observation_id, type: String}
+    fields: &description_facts
+      # Whether the document parsed and validated.
+      - {name: accepted, type: Boolean}
+      # The llm-core error code and the crate's fixed message; `invalid-document` when the
+      # document does not parse as `llm.provider-description/1`.
+      - {name: error_code, type: 'Optional<String>'}
+      - {name: error_message, type: 'Optional<String>'}
+      - {name: provider_id, type: 'Optional<String>'}
+      - {name: category, type: 'Optional<String>'}
+      - {name: base_url_template, type: 'Optional<String>'}
+      # The wire names in declared order.
+      - {name: protocols, type: 'List<String>'}
+      - {name: inference_auth_kind, type: 'Optional<String>'}
+      - {name: control_plane_present, type: Boolean}
+      - {name: openapi_url, type: 'Optional<String>'}
+      - {name: document_sha256, type: 'Optional<String>'}
+      - {name: server_url, type: 'Optional<String>'}
+      - {name: control_plane_auth_kind, type: 'Optional<String>'}
+      # `<role>=<operationId>` in the order create, list, get, delete.
+      - {name: operations, type: 'List<String>'}
+      # For an accepted description and a given instance: the filled base URL, or the refusal.
+      - {name: base_url, type: 'Optional<String>'}
+      - {name: instance_error_code, type: 'Optional<String>'}
+      - {name: instance_error_message, type: 'Optional<String>'}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
   - name: llm.providers.Prepare
     input:
@@ -113,13 +149,34 @@ commands:
           llm.providers.Prepared:
             diagnostics_safe: {generated: true}
         summary: Observe binding validation and request-time authentication with an injected resolver.
+  - name: llm.providers.Describe
+    input:
+      # The document, or the name of a shipped description (`runpod`); exactly one is given.
+      - {name: description_toml, type: 'Optional<String>'}
+      - {name: shipped, type: 'Optional<String>'}
+      # When present, `inference_base_url` is called with it on an accepted description.
+      - {name: instance, type: 'Optional<String>'}
+    outcomes:
+      - name: observed
+        emits: [llm.providers.Described]
+        payload:
+          llm.providers.Described:
+            accepted: {generated: true}
+        summary: Observe parsing and validation of a provider description and the inference URL it gives an instance.
 events:
   # Test-adapter notification only; there is no production notification transport.
   - name: llm.providers.Prepared
     fields:
       - {name: diagnostics_safe, type: Boolean}
+  - name: llm.providers.Described
+    fields:
+      - {name: accepted, type: Boolean}
 views:
   - name: llm.providers.LastPreparation
     source: llm.providers.PreparationObservation
     consistency: read_your_writes
     fields: *preparation_facts
+  - name: llm.providers.LastDescription
+    source: llm.providers.DescriptionObservation
+    consistency: read_your_writes
+    fields: *description_facts

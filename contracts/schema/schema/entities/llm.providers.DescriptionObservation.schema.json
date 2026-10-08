@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DescriptionObservation",
+  "x-ess-name": "llm.providers.DescriptionObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "provider_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "base_url_template": {
+      "type": "string"
+    },
+    "protocols": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inference_auth_kind": {
+      "type": "string"
+    },
+    "control_plane_present": {
+      "type": "boolean"
+    },
+    "openapi_url": {
+      "type": "string"
+    },
+    "document_sha256": {
+      "type": "string"
+    },
+    "server_url": {
+      "type": "string"
+    },
+    "control_plane_auth_kind": {
+      "type": "string"
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "base_url": {
+      "type": "string"
+    },
+    "instance_error_code": {
+      "type": "string"
+    },
+    "instance_error_message": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.providers.DescriptionObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "protocols",
+    "control_plane_present",
+    "operations",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "56979a5df4140ee65f43b8382a9e3c8c0804e613f36463e8c4f915a5ad47b0b6",
+    "contract_digest": "slice-sha256/2:3fc5ccfe5d770f6b03f16a078d112681588875eca832bcc8cc09009e630c1ae8",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.providers.DescriptionObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.providers.DescriptionObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}
