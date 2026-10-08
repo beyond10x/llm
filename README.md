@@ -22,8 +22,7 @@ missing.
   [Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets))
   library's storage.
 - **Not a server.** The gateway, hosting and provisioning crates moved to
-  [llm-gateway](https://beyond10x.github.io/llm-gateway/)
-  ([GitHub](https://github.com/beyond10x/llm-gateway)) in 0.2.0.
+  [llm-gateway](https://github.com/beyond10x/llm-gateway) in 0.2.0.
 
 ## Depend on it
 

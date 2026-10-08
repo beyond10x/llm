@@ -33,7 +33,7 @@ The gate makes no paid provider call and starts no GPU. No provider route is qua
   never runs a login flow, and reads a vendor's login file only where the caller points it. The one write it
   can make, renewing a Codex login, is opt-in.
 - **Not a gateway service.** llm serves nothing and provisions nothing.
-  [llm-gateway](https://beyond10x.github.io/llm-gateway/) ([GitHub](https://github.com/beyond10x/llm-gateway)) serves models; llm is the client side.
+  llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) serves models; llm is the client side.
 
 ## Where it sits
 
@@ -41,7 +41,7 @@ The gate makes no paid provider call and starts no GPU. No provider route is qua
 | --- | --- |
 | [Loom](https://beyond10x.github.io/loom/) ([GitHub](https://github.com/beyond10x/loom)) | Consumes llm: Loom's crates depend on llm's client crates at a release tag. |
 | [Harness](https://beyond10x.github.io/ecosystem/harness/) ([GitHub](https://github.com/beyond10x/harness)) | May build on llm in place of its own model wire crates; that move is planned. |
-| [llm-gateway](https://beyond10x.github.io/llm-gateway/) ([GitHub](https://github.com/beyond10x/llm-gateway)) | Serves models to clients; it reads Runpod's provider description from `b10x-llm-providers` at a release tag. |
+| llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) | Serves models to clients; it reads Runpod's provider description from `b10x-llm-providers` at a release tag. |
 | [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) | Specifies llm: every library crate has an ESS domain, run by the conformance suite. |
 | [Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets)) | A credential source: `b10x-llm-credentials` feature `secrets` resolves references by name in its storage. |
 

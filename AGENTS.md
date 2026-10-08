@@ -22,9 +22,8 @@ It does not own:
 - **Serving.** The gateway, hosting and provisioning crates (`b10x-llm-gateway`,
   `b10x-llm-provision`, `b10x-llm-runpod`, `b10x-llm-modal`) and the `llm.gateway`, `llm.hosting`
   and `llm.runpod` ESS domains live in [beyond10x/llm-gateway](https://github.com/beyond10x/llm-gateway)
-  since 0.2.0, documented at <https://beyond10x.github.io/llm-gateway/>. Change them there; their
-  archived stories stay in this store as history. This repository's site, README.md and status
-  record describe none of it: they link that site and repository.
+  since 0.2.0. Change them there; their archived stories stay in this store as history. This
+  repository's site, README.md and status record describe none of it: they link that repository.
 - **Agent loops, tool execution and approval.** A tool here is a name, a description and a JSON
   Schema. The caller runs it.
 - **Credential custody and login flows.** Secrets come from a resolver the caller injects.

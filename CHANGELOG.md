@@ -11,8 +11,8 @@ are source releases at bare-version tags.
 - The status page lists the Secrets resolver (0.3.0), the catalog model port (0.4.0), the provider
   description (0.5.0) and the written contract as shipped; it no longer lists the gateway cutover
   or an operator command line as llm's planned work.
-- Pages, README.md and AGENTS.md link llm-gateway's own documentation site and repository instead
-  of describing serving; the index and landing page name the catalog model port, provider
+- Pages, README.md and AGENTS.md link llm-gateway's repository instead of describing
+  serving; the index and landing page name the catalog model port, provider
   descriptions and the Secrets adapter; Harness and AEP links point at their ecosystem pages.
 
 ## [0.5.0] - 2026-10-08
