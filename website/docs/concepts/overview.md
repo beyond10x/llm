@@ -57,9 +57,9 @@ Each step is its own crate, and each one refuses on its own:
 4. **Accounting** prices what was actually reported, and a durable ledger admits or refuses spend.
 
 Two helpers sit on top of the port: `call_tool` forces one tool and returns its arguments, and
-`BlockingModel` runs a turn from a synchronous loop. The gateway and the hosting lifecycle are not
-on this path and not in llm: they live in llm-gateway
-([GitHub](https://github.com/beyond10x/llm-gateway)), which serves what these clients call.
+`BlockingModel` runs a turn from a synchronous loop. Serving is not on this path and not in llm:
+llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) serves models.
+
 
 ## Which crate do I need?
 

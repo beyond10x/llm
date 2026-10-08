@@ -12,9 +12,6 @@ visible, and never turns an unknown usage count into a zero.
 planned, and [Limitations](https://beyond10x.github.io/llm/docs/status/limitations) says what is
 missing.
 
-Responses overloads are classified as temporary availability, eligible for caller-owned
-retries before output. See the [Responses contract](docs/responses.md#terminal-truth-and-failure).
-
 ## What it is not
 
 - **Not an agent loop.** llm never runs a tool. A caller such as
@@ -25,8 +22,7 @@ retries before output. See the [Responses contract](docs/responses.md#terminal-t
   [Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets))
   library's storage.
 - **Not a server.** The gateway, hosting and provisioning crates moved to
-  [llm-gateway](https://github.com/beyond10x/llm-gateway) in 0.2.0; it has no documentation site
-  yet.
+  [llm-gateway](https://github.com/beyond10x/llm-gateway) in 0.2.0.
 
 ## Depend on it
 
@@ -63,7 +59,7 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 | `b10x-llm-http` | Bounded single-attempt HTTP and SSE transport |
 | `b10x-llm-responses`, `b10x-llm-messages`, `b10x-llm-chat` | One protocol each: projection both ways and a client |
 | `b10x-llm-credentials` | Injected secret resolution; opt-in file, keychain, environment, JSON pointer, Codex login and `secrets` adapters |
-| `b10x-llm-providers` | Provider, account and endpoint bindings, independent of protocol |
+| `b10x-llm-providers` | Provider, account and endpoint bindings, independent of protocol; provider descriptions (`llm.provider-description/1`), with Runpod's built in |
 | `b10x-llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
 | `b10x-llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account |
 | `b10x-llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |

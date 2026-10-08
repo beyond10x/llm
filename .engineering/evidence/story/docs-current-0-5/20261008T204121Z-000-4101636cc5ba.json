@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-08T20:41:21Z",
+  "actor": "human:timo",
+  "artifact": "story:docs-current-0-5",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "Gate run 37837432195 on PR 30 head 09a5ecac runs the full task check (libraries-and-plan, native-adapter-builds macOS and Windows) and passes; Documentation validation 37837432330 and Shared source gates 37837433203 pass; the follow-up 9e98eb56 changes only links and prose, llm-docs generate --check current and the site build exit 0 on it (https://github.com/beyond10x/llm/actions/runs/37837432195)"
+  }
+}

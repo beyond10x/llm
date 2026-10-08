@@ -51,13 +51,14 @@ ess specify validate --path spec
 ```
 
 The [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) domains
-under `spec/domains/` give the repository's nouns typed homes. There are eleven: `accounting`,
-`budget`, `catalog`, `chat`, `inference`, `messages`, `providers`, `responses`, `routing`,
-`secrets` and `transport`. The `gateway`, `hosting` and `runpod` domains moved with their crates
-to llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)).
+under `spec/domains/` give the repository's nouns typed homes. There are twelve: `accounting`,
+`budget`, `catalog`, `chat`, `inference`, `messages`, `models`, `providers`, `responses`,
+`routing`, `secrets` and `transport`. The serving domains moved with their crates to
+llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)).
 
-Ten have an authored scenario suite under `contracts/`. The exception is `catalog`, which
-describes declaration records rather than observations. One naming trap is worth knowing before
+Eleven have an authored scenario suite under `contracts/`. The exception is `catalog`, which
+describes declaration records rather than observations. `contracts/anthropic/` holds the
+subscription-access scenarios, which cross several domains. One naming trap is worth knowing before
 you go looking: the suite directory is `contracts/pricing/`, but the domain it exercises is
 `accounting`, whose file is `spec/domains/accounting.yaml`. **There is no `pricing` domain.**
 
@@ -90,12 +91,12 @@ implementation is testing nothing, so this is checked rather than asserted.
 aep plan artifact validate
 ```
 
-The [AEP](https://beyond10x.github.io/docs/aep/) ([GitHub](https://github.com/beyond10x/aep))
+The [AEP](https://beyond10x.github.io/ecosystem/aep/) ([GitHub](https://github.com/beyond10x/aep))
 store under `.engineering/planning/` owns lifecycle state. A story is not complete because the
 workspace builds.
 
 ## What a green gate does not establish
 
 It does not establish live provider access, a working subscription presentation, OS keychain
-service availability, hosting-provider qualification or a released artifact. Local fixture evidence
+service availability or a released artifact. Local fixture evidence
 is local fixture evidence. See [Limitations](../status/limitations.md).
