@@ -1,0 +1,46 @@
+type: ess-scenario/1
+domain: llm.providers
+scenario: an-openapi-digest-that-is-not-sixty-four-lower-case-hex-is-refused
+summary: the pinned document's digest is 64 lower-case hex digits; upper case is refused
+timeline:
+- at: '2026-10-08T12:00:00Z'
+  command: llm.providers.Describe
+  input:
+    description_toml: |
+      format = "llm.provider-description/1"
+
+      [provider]
+      id = "my-cloud"
+      category = "gpu-cloud"
+
+      [inference]
+      base_url_template = "https://{instance}.gpu.example.test/v1/"
+      protocols = ["chat-completions"]
+      auth_kind = "bearer"
+
+      [control_plane]
+      openapi_url = "https://api.example.test/openapi.json"
+      document_sha256 = "9500A8989878D53D8731F27BF8DBBD57801B328C760BDB32C38BA36D5CB580DB"
+      server_url = "https://api.example.test/v1"
+      auth_kind = "bearer"
+
+      [control_plane.operations]
+      create_instance = "CreateInstance"
+      list_instances = "ListInstances"
+      get_instance = "GetInstance"
+      delete_instance = "DeleteInstance"
+    shipped: null
+    instance: null
+  outcome: observed
+assert:
+- view: llm.providers.LastDescription
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.providers.LastDescription
+  contains:
+    accepted: false
+    error_code: invalid-request
+    provider_id: null
+    control_plane_present: false
+    error_message: OpenAPI digest must be 64 lower-case hex digits

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-08T12:56:52Z",
+  "actor": "human:timo",
+  "artifact": "story:runpod-provider-description",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo clippy -D warnings and cargo test on b10x-llm-providers (11 description tests) and b10x-llm-conformance, 0 failed; task conformance 724/724 three times with ess 0.56.0, 21 new llm.providers scenarios among them; task docs (package gates on impl/runpod-provider-description 473f4bb7)",
+    "reference": "473f4bb7"
+  }
+}

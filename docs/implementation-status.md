@@ -91,6 +91,7 @@ cutover.
 | Story | Capability |
 | --- | --- |
 | `provider-accounts` | **Bindings independent of protocol.** Provider, account, endpoint, model and serving declaration are separate choices; authentication and billing kind never follow from the protocol. |
+| `runpod-provider-description` | Pending: **One provider description per provider.** `b10x-llm-providers`: `ProviderDescription` parses `llm.provider-description/1`, an inference URL template filled only by a 1-48 byte `[a-z0-9]` instance, its wires and authentication, and a pinned control plane (OpenAPI URL and SHA-256, HTTPS server, four operation IDs), with no I/O. Runpod's ships as `descriptions::runpod()`. Fixture evidence only; no live Runpod pod or control-plane call qualifies it. In the tree; not in a release yet. |
 | `catalog-routing` | **TOML catalogs, selection and explanation.** Strict `llm.catalog/1`, a deterministic configuration digest, ordered opt-in selection, capability and input-token admission, and an explanation that resolves no secret. |
 | `ordered-fallback` | **Ordered fallback.** `Catalog::run_turn` tries a route's declared targets in order and stops on visible output, an ineligible failure, an ambiguous dispatch, the attempt bound, the deadline, cancellation or the caller's limit. |
 | `same-target-retry` | **Same-target retry before visible output.** `RetryPolicy`, on by default: four attempts per target with 1, 2 and 4 second waits, server delays honoured up to 30 seconds, a `turn-retried` warning before each wait, then fallback. |

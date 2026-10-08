@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-messages-pass-2
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, messages projection, pass 2: the turn deadline stops at the HTTP exchange, and nine of twelve mutations survived'
 relations:
 - reviews: story:messages-projection
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:35Z", actor: "human:timo", revision: 2}
 ---
 ## The pass
 

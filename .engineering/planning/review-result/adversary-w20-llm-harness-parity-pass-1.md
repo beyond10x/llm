@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-w20-llm-harness-parity-pass-1
 kind: review-result
-status: active
+status: archived
 title: Wave 2026-10-05-w20 adversary, llm story:harness-parity, pass 1
 relations:
 - reviews: story:harness-parity
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:37Z", actor: "human:timo", revision: 2}
 ---
 ```
 unit: llm/harness-parity — docs/harness-parity.md (untracked) in llm-w20-harness-parity, base aaf21d41, harness origin/main 2fd7235b

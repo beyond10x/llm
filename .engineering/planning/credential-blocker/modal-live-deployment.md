@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: credential-blocker:modal-live-deployment
 kind: credential-blocker
-status: open
+status: cleared
 title: Modal live deployment needs a Modal account and paid run
 relations:
 - blocks: story:modal-hosting
-revision: 2
+revision: 3
+transitions:
+- {from: "open", to: "cleared", at: "2026-10-08T10:43:39Z", actor: "human:timo", revision: 3}
 ---
 ## Context
 

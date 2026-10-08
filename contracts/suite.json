@@ -303,16 +303,23 @@
       "llm.providers/authored/a-cancellation-during-resolution-ends-preparation",
       "llm.providers/authored/a-cancellation-that-arrives-with-the-credential-discards-it",
       "llm.providers/authored/a-cancelled-caller-is-refused-before-the-resolver-is-called",
+      "llm.providers/authored/a-control-plane-over-plain-http-is-refused",
       "llm.providers/authored/a-credential-ending-in-a-newline-is-presented-without-it",
       "llm.providers/authored/a-credential-ending-in-crlf-is-presented-without-it",
       "llm.providers/authored/a-credential-ending-in-two-newlines-is-refused",
       "llm.providers/authored/a-credential-of-exactly-sixteen-kibibytes-is-presented",
       "llm.providers/authored/a-credential-one-byte-over-sixteen-kibibytes-is-refused",
       "llm.providers/authored/a-credential-with-a-space-is-not-a-bounded-http-token",
+      "llm.providers/authored/a-description-of-an-unknown-format-is-not-a-description",
+      "llm.providers/authored/a-description-with-a-repeated-protocol-is-refused",
+      "llm.providers/authored/a-description-with-an-unknown-field-is-not-a-description",
+      "llm.providers/authored/a-description-with-no-protocol-is-refused",
+      "llm.providers/authored/a-description-without-a-control-plane-is-accepted",
       "llm.providers/authored/a-malformed-secret-means-the-caller-is-unauthorized",
       "llm.providers/authored/a-messages-binding-addresses-the-messages-path",
       "llm.providers/authored/a-rejected-refresh-is-unavailable",
       "llm.providers/authored/a-responses-binding-addresses-the-responses-path",
+      "llm.providers/authored/a-runpod-instance-resolves-to-its-proxy-url",
       "llm.providers/authored/a-serving-model-of-another-model-is-refused",
       "llm.providers/authored/a-serving-model-on-another-endpoint-is-refused",
       "llm.providers/authored/a-subscription-oauth-account-billed-as-metered-is-refused",
@@ -320,15 +327,22 @@
       "llm.providers/authored/a-subscription-oauth-account-presents-its-token-once-as-a-sensitive-bearer-header",
       "llm.providers/authored/a-subscription-oauth-account-with-an-api-key-header-is-refused",
       "llm.providers/authored/a-subscription-oauth-account-without-a-reference-is-refused",
+      "llm.providers/authored/a-subscription-oauth-description-is-refused",
+      "llm.providers/authored/a-template-whose-host-is-only-the-instance-is-refused",
+      "llm.providers/authored/a-template-with-the-instance-placeholder-outside-the-host-is-refused",
+      "llm.providers/authored/a-template-with-the-instance-placeholder-twice-is-refused",
+      "llm.providers/authored/a-template-without-the-instance-placeholder-is-refused",
       "llm.providers/authored/adversary-w2-an-endpoint-url-with-a-fragment-is-refused",
       "llm.providers/authored/an-account-of-another-provider-is-refused",
       "llm.providers/authored/an-anonymous-account-prepares-no-header-and-never-consults-the-resolver",
       "llm.providers/authored/an-anonymous-account-that-names-a-credential-is-refused",
       "llm.providers/authored/an-api-key-account-presents-its-credential-in-its-own-header",
       "llm.providers/authored/an-api-key-account-without-a-header-is-refused",
+      "llm.providers/authored/an-api-key-description-without-a-header-is-refused",
       "llm.providers/authored/an-api-key-header-that-alters-request-semantics-is-refused",
       "llm.providers/authored/an-authenticated-account-without-a-reference-is-refused",
       "llm.providers/authored/an-empty-credential-is-not-a-bounded-http-token",
+      "llm.providers/authored/an-empty-instance-is-refused-and-resolves-no-url",
       "llm.providers/authored/an-endpoint-of-another-account-is-refused",
       "llm.providers/authored/an-endpoint-url-carrying-credentials-is-refused",
       "llm.providers/authored/an-endpoint-url-carrying-only-a-password-is-refused",
@@ -337,7 +351,12 @@
       "llm.providers/authored/an-endpoint-url-with-a-query-is-refused",
       "llm.providers/authored/an-endpoint-url-with-whitespace-is-refused",
       "llm.providers/authored/an-expired-secret-means-the-caller-is-unauthorized",
+      "llm.providers/authored/an-instance-carrying-a-dot-is-refused-and-resolves-no-url",
+      "llm.providers/authored/an-instance-carrying-a-slash-is-refused-and-resolves-no-url",
+      "llm.providers/authored/an-instance-carrying-an-upper-case-letter-is-refused-and-resolves-no-url",
+      "llm.providers/authored/an-instance-over-forty-eight-bytes-is-refused-and-resolves-no-url",
       "llm.providers/authored/an-invalid-reference-is-unavailable",
+      "llm.providers/authored/an-openapi-digest-that-is-not-sixty-four-lower-case-hex-is-refused",
       "llm.providers/authored/an-oversized-secret-is-unavailable",
       "llm.providers/authored/an-unavailable-source-is-unavailable",
       "llm.providers/authored/an-uncertain-refresh-is-unavailable",
@@ -347,7 +366,9 @@
       "llm.providers/authored/an-unsupported-refresh-is-unavailable",
       "llm.providers/authored/impossible-capability-limits-are-refused",
       "llm.providers/authored/missing-means-the-caller-is-unauthorized",
+      "llm.providers/authored/the-shipped-runpod-description-is-accepted-with-its-pinned-control-plane",
       "llm.providers/authored/too-many-references-is-unavailable",
+      "llm.providers/authored/two-roles-naming-one-operation-are-refused",
       "llm.responses/authored/a-binding-of-another-protocol-is-refused",
       "llm.responses/authored/a-failed-response-retains-its-terminal-usage",
       "llm.responses/authored/a-failed-tool-result-keeps-its-failure",
@@ -2238,6 +2259,11 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-cancelled-caller-is-refused-before-the-resolver-is-called"
       },
+      "providers/scenarios/a-control-plane-over-plain-http-is-refused.yaml": {
+        "digest": "sha256:a2747c037f00d8ce2a9f2a87aba201b24e422ddbdba91e1dd379096337d2eb7f",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-control-plane-over-plain-http-is-refused"
+      },
       "providers/scenarios/a-credential-ending-in-a-newline-is-presented-without-it.yaml": {
         "digest": "sha256:9c5426cbcde899acb4953ec741889f4a37cc44dcf4ffe9c7ff1866393f2d2de1",
         "disposition": "accepted",
@@ -2268,6 +2294,31 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-credential-with-a-space-is-not-a-bounded-http-token"
       },
+      "providers/scenarios/a-description-of-an-unknown-format-is-not-a-description.yaml": {
+        "digest": "sha256:4c778b209016b13cf9b298066d19cc55f7dc7749ad5618b6d834d770b55b6ca9",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-description-of-an-unknown-format-is-not-a-description"
+      },
+      "providers/scenarios/a-description-with-a-repeated-protocol-is-refused.yaml": {
+        "digest": "sha256:1fdb7e9d1be63be802317f6eda472cf8816917a9e39a3cc5b49f463cec53af8b",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-description-with-a-repeated-protocol-is-refused"
+      },
+      "providers/scenarios/a-description-with-an-unknown-field-is-not-a-description.yaml": {
+        "digest": "sha256:20b7f59cca1b12a9038174e7550828ea2b37cdfebc6e0d8fa0dd6a8ab070777d",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-description-with-an-unknown-field-is-not-a-description"
+      },
+      "providers/scenarios/a-description-with-no-protocol-is-refused.yaml": {
+        "digest": "sha256:6ebb4fa5d65a1fb620a6b268607c33b35cdbdfb564872b1de18aeadcee2032e0",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-description-with-no-protocol-is-refused"
+      },
+      "providers/scenarios/a-description-without-a-control-plane-is-accepted.yaml": {
+        "digest": "sha256:cda8da4fd605a9e44ae2cb27e2aa0e7456ee1dc078c6efb4cc8c74234b02a1e5",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-description-without-a-control-plane-is-accepted"
+      },
       "providers/scenarios/a-malformed-secret-means-the-caller-is-unauthorized.yaml": {
         "digest": "sha256:28cce091ce7d44e2c81dbbde18c8d810c086f5b25cd14329aa8756170276e306",
         "disposition": "accepted",
@@ -2288,6 +2339,11 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-responses-binding-addresses-the-responses-path"
       },
+      "providers/scenarios/a-runpod-instance-resolves-to-its-proxy-url.yaml": {
+        "digest": "sha256:030d8398527ce32eea017d69446b6f6d040d5f111ab96915c149c9efa4372b4c",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-runpod-instance-resolves-to-its-proxy-url"
+      },
       "providers/scenarios/a-serving-model-of-another-model-is-refused.yaml": {
         "digest": "sha256:27747f212a618a1bff80884a2395ef8fa161b3baa9b487907cb55f58d1b2c959",
         "disposition": "accepted",
@@ -2297,6 +2353,31 @@
         "digest": "sha256:2eed5fda49f0b5ba999b379ec2e46b33a167419fb1c08f991576959d6e2a67b8",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-serving-model-on-another-endpoint-is-refused"
+      },
+      "providers/scenarios/a-subscription-oauth-description-is-refused.yaml": {
+        "digest": "sha256:9ab3c1f82108859bb1fb5c73aff42dbd011ecd49c00f21f05a466db6cb0ec8bf",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-subscription-oauth-description-is-refused"
+      },
+      "providers/scenarios/a-template-whose-host-is-only-the-instance-is-refused.yaml": {
+        "digest": "sha256:29f12e0da8cfc6b5e53f444ab365d82280c2aa5344c234391a3683e60294cfd5",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-template-whose-host-is-only-the-instance-is-refused"
+      },
+      "providers/scenarios/a-template-with-the-instance-placeholder-outside-the-host-is-refused.yaml": {
+        "digest": "sha256:68bcde5191cc44f91f8fcb58727a0f14c0bdd97d19e52e66a5d9b226c32967fa",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-template-with-the-instance-placeholder-outside-the-host-is-refused"
+      },
+      "providers/scenarios/a-template-with-the-instance-placeholder-twice-is-refused.yaml": {
+        "digest": "sha256:8ff369d1d3445823d2eb286d9227cd2233d758d2034626b71d8a76e75dd0e5c9",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-template-with-the-instance-placeholder-twice-is-refused"
+      },
+      "providers/scenarios/a-template-without-the-instance-placeholder-is-refused.yaml": {
+        "digest": "sha256:2beb6178c5be938e3eee4877cd5e5ee340e751360b2df6e60bbfb654ab0d4425",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-template-without-the-instance-placeholder-is-refused"
       },
       "providers/scenarios/an-account-of-another-provider-is-refused.yaml": {
         "digest": "sha256:45292c26270b18f5718bc8d73452e88162c36ba3ae0d2560745830ca0a9fbbc4",
@@ -2323,6 +2404,11 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-api-key-account-without-a-header-is-refused"
       },
+      "providers/scenarios/an-api-key-description-without-a-header-is-refused.yaml": {
+        "digest": "sha256:a9d1037c48f6a3caf9a2b78ac6b5a771c319317a0648155d2dbc3cfe2c4a69f8",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/an-api-key-description-without-a-header-is-refused"
+      },
       "providers/scenarios/an-api-key-header-that-alters-request-semantics-is-refused.yaml": {
         "digest": "sha256:5aaac767bbce5e0ee611ee926ebf048e05fe0b7bff3ef62c70ca5cb5b7e32e16",
         "disposition": "accepted",
@@ -2337,6 +2423,11 @@
         "digest": "sha256:25c2038e5ebf396077695a70c86574604a891db5429ea13df06c7781a967479f",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-empty-credential-is-not-a-bounded-http-token"
+      },
+      "providers/scenarios/an-empty-instance-is-refused-and-resolves-no-url.yaml": {
+        "digest": "sha256:c588a9978c6c402721d868c762a408b305da31b70bfaa921c6c57f5a2427f054",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/an-empty-instance-is-refused-and-resolves-no-url"
       },
       "providers/scenarios/an-endpoint-of-another-account-is-refused.yaml": {
         "digest": "sha256:7848cf61299c57f7d62c38f88c7790fc52d4a4af6e527c24090d8f5e113c5a62",
@@ -2378,10 +2469,35 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-expired-secret-means-the-caller-is-unauthorized"
       },
+      "providers/scenarios/an-instance-carrying-a-dot-is-refused-and-resolves-no-url.yaml": {
+        "digest": "sha256:e86e5a3b17786e950f732c51204b92ead822d8d89f70063684941ce5c3f2571b",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/an-instance-carrying-a-dot-is-refused-and-resolves-no-url"
+      },
+      "providers/scenarios/an-instance-carrying-a-slash-is-refused-and-resolves-no-url.yaml": {
+        "digest": "sha256:892dd42609d493506296a9d26c3d5faa1f029559c70a925e8a8f353f43e5138a",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/an-instance-carrying-a-slash-is-refused-and-resolves-no-url"
+      },
+      "providers/scenarios/an-instance-carrying-an-upper-case-letter-is-refused-and-resolves-no-url.yaml": {
+        "digest": "sha256:bc4a2355697c7bb64fdc5fdc011899824894ca94a577a18f6327a01ac0f15cbe",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/an-instance-carrying-an-upper-case-letter-is-refused-and-resolves-no-url"
+      },
+      "providers/scenarios/an-instance-over-forty-eight-bytes-is-refused-and-resolves-no-url.yaml": {
+        "digest": "sha256:a2a78775a18833267c973214fc6681e96398d17b47b207aaf99b0622922c7c12",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/an-instance-over-forty-eight-bytes-is-refused-and-resolves-no-url"
+      },
       "providers/scenarios/an-invalid-reference-is-unavailable.yaml": {
         "digest": "sha256:5184137734a37d141ecb5fd1e405904bcbde87454aeb98d0f2d78440e5c3580e",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/an-invalid-reference-is-unavailable"
+      },
+      "providers/scenarios/an-openapi-digest-that-is-not-sixty-four-lower-case-hex-is-refused.yaml": {
+        "digest": "sha256:539b737bca7b6aad6e8e3ff5e17401a22750c8de70e0cd1c30e9b40cb91335ec",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/an-openapi-digest-that-is-not-sixty-four-lower-case-hex-is-refused"
       },
       "providers/scenarios/an-oversized-secret-is-unavailable.yaml": {
         "digest": "sha256:600258305ae709727693229d665a89fafad83865c0aa2f34e465cda70cf6e7cc",
@@ -2433,10 +2549,20 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/adversary-w2-an-endpoint-url-with-a-fragment-is-refused"
       },
+      "providers/scenarios/the-shipped-runpod-description-is-accepted-with-its-pinned-control-plane.yaml": {
+        "digest": "sha256:b50b3a1d91988d0b2cfff7e709c91f1b8790532969ab8594a74fa2112a3d15ac",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/the-shipped-runpod-description-is-accepted-with-its-pinned-control-plane"
+      },
       "providers/scenarios/too-many-references-is-unavailable.yaml": {
         "digest": "sha256:d112b0c7cba80855c060581443d3e504bd723bac527b7567d4593889cabcd7b6",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/too-many-references-is-unavailable"
+      },
+      "providers/scenarios/two-roles-naming-one-operation-are-refused.yaml": {
+        "digest": "sha256:034c11d7e00fe0e91207a7bec8e015fc4e9ad0f94df7d6e8a46c7354b19c389f",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/two-roles-naming-one-operation-are-refused"
       },
       "responses/scenarios/a-binding-of-another-protocol-is-refused.yaml": {
         "digest": "sha256:33ec6dc0b107208c0effdecfb72295a96bad931060faca05297e2c1d71c53793",
@@ -4055,8 +4181,8 @@
       }
     },
     "counts": {
-      "authored": 675,
-      "generated": 27,
+      "authored": 696,
+      "generated": 28,
       "outside": 0,
       "refused": 0
     },
@@ -4074,6 +4200,7 @@
       "llm.messages.Project/outcome/observed",
       "llm.models.Build/outcome/observed",
       "llm.models.BuildCatalog/outcome/observed",
+      "llm.providers.Describe/outcome/observed",
       "llm.providers.Prepare/outcome/observed",
       "llm.responses.DecodeStream/outcome/observed",
       "llm.responses.Ingest/outcome/observed",
@@ -4103,9 +4230,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "8820fcce5cf0771160dd5e3092cde71bbf54d2f398980892616744dd274337a1",
+    "contract_digest": "904d6e4793ba0d9a04772ccd94ff63d09f1c55d1fc1bbf8549a0053047960448",
     "scenario_initial_state": "empty",
-    "spec_digest": "cf4a18118e40c0d20963b4691bfdfdf16e2d4ee2cbdff372e018969151dc6270",
+    "spec_digest": "56979a5df4140ee65f43b8382a9e3c8c0804e613f36463e8c4f915a5ad47b0b6",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -4156,6 +4283,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -4256,6 +4387,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -11511,6 +11646,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -11604,6 +11743,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -18088,6 +18231,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -18184,6 +18331,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18270,6 +18421,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -18381,6 +18536,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18467,6 +18626,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -18582,6 +18745,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18668,6 +18835,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -18772,6 +18943,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -25951,6 +26126,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -26048,6 +26227,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -31015,6 +31198,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -31115,6 +31302,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -31201,6 +31392,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -31304,6 +31499,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -31390,6 +31589,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -31501,6 +31704,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -31587,6 +31794,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -31687,6 +31898,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -39933,6 +40148,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -40037,6 +40256,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -40123,6 +40346,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -40227,6 +40454,10 @@
         },
         {
           "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -41080,6 +41311,207 @@
         }
       ]
     },
+    "llm.providers.Describe/outcome/observed": {
+      "purpose": "`llm.providers.Describe` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "description_toml"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": "instance"
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": "shipped"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.providers.Described",
+          "shape": {
+            "accepted": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
     "llm.providers.Prepare/outcome/observed": {
       "purpose": "`llm.providers.Prepare` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -41133,6 +41565,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -41249,6 +41685,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -41863,6 +42303,103 @@
           },
           "step": "expect_view",
           "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-control-plane-over-plain-http-is-refused": {
+      "purpose": "the control-plane server must be HTTPS",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"http://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "control-plane server must be HTTPS with a host and no userinfo, query or fragment"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
         }
       ]
     },
@@ -42556,6 +43093,501 @@
         }
       ]
     },
+    "llm.providers/authored/a-description-of-an-unknown-format-is-not-a-description": {
+      "purpose": "a format other than llm.provider-description/1 is refused as an invalid document",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/2\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-document"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "invalid llm.provider-description/1 TOML document"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/a-description-with-a-repeated-protocol-is-refused": {
+      "purpose": "a wire is named once",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"messages\", \"messages\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider description names a protocol twice"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/a-description-with-an-unknown-field-is-not-a-description": {
+      "purpose": "an unknown field is refused as an invalid document",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\nregion = \"eu\"\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-document"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "invalid llm.provider-description/1 TOML document"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/a-description-with-no-protocol-is-refused": {
+      "purpose": "a description must serve at least one wire",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = []\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider description must name at least one protocol"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/a-description-without-a-control-plane-is-accepted": {
+      "purpose": "the control plane is optional; the inference half alone is a description",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "category": {
+                "kind": "literal",
+                "value": "gpu-cloud"
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "inference_auth_kind": {
+                "kind": "literal",
+                "value": "bearer"
+              },
+              "openapi_url": {
+                "kind": "literal",
+                "value": null
+              },
+              "operations": {
+                "kind": "literal",
+                "value": []
+              },
+              "protocols": {
+                "kind": "literal",
+                "value": [
+                  "chat-completions"
+                ]
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": "my-cloud"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
     "llm.providers/authored/a-malformed-secret-means-the-caller-is-unauthorized": {
       "purpose": "a resolver answering Malformed (a source not in its declared form) is refused as unauthorized, which no fallback takes, with its fixed diagnostic prefixed by the reference (auth.rs:108-126)",
       "source": [
@@ -43017,6 +44049,95 @@
           },
           "step": "expect_view",
           "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-runpod-instance-resolves-to-its-proxy-url": {
+      "purpose": "a Runpod instance fills the template's host label and gives the pod's proxy base URL",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": null
+            },
+            "instance": {
+              "kind": "literal",
+              "value": "abc123xyz"
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": "runpod"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "base_url": {
+                "kind": "literal",
+                "value": "https://abc123xyz-8000.proxy.runpod.net/v1/"
+              },
+              "instance_error_code": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
         }
       ]
     },
@@ -43847,6 +44968,491 @@
         }
       ]
     },
+    "llm.providers/authored/a-subscription-oauth-description-is-refused": {
+      "purpose": "a description is API access; subscription tokens stay a caller-managed account",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"subscription-oauth\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider descriptions describe API access, not subscription OAuth"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/a-template-whose-host-is-only-the-instance-is-refused": {
+      "purpose": "a template whose host is the instance alone would let an instance name any single-label host",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "base URL template must keep a fixed domain after the instance's label"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/a-template-with-the-instance-placeholder-outside-the-host-is-refused": {
+      "purpose": "an instance in the path would leave the host fixed and the path caller-chosen",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://pods.gpu.example.test/{instance}/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "base URL template must hold {instance} exactly once, inside the host's first label, and no other brace"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/a-template-with-the-instance-placeholder-twice-is-refused": {
+      "purpose": "a template naming the instance twice is ambiguous",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}-{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "base URL template must hold {instance} exactly once, inside the host's first label, and no other brace"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/a-template-without-the-instance-placeholder-is-refused": {
+      "purpose": "a template that names no instance cannot address one pod",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://pods.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "base URL template must hold {instance} exactly once, inside the host's first label, and no other brace"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
     "llm.providers/authored/adversary-w2-an-endpoint-url-with-a-fragment-is-refused": {
       "purpose": "a fragment in an endpoint URL is refused (declaration.rs:27); the authored set covers user, password, query, scheme and whitespace but not fragment",
       "source": [
@@ -44575,6 +46181,103 @@
         }
       ]
     },
+    "llm.providers/authored/an-api-key-description-without-a-header-is-refused": {
+      "purpose": "API-key authentication must name the header its key travels in",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"api-key\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "exactly API-key authentication requires an API-key header"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
     "llm.providers/authored/an-api-key-header-that-alters-request-semantics-is-refused": {
       "purpose": "an API-key header may not be a framing, routing or negotiation header",
       "source": [
@@ -44901,6 +46604,99 @@
           },
           "step": "expect_view",
           "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/an-empty-instance-is-refused-and-resolves-no-url": {
+      "purpose": "an empty instance would leave the host label incomplete, so it is refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": null
+            },
+            "instance": {
+              "kind": "literal",
+              "value": ""
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": "runpod"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "base_url": {
+                "kind": "literal",
+                "value": null
+              },
+              "instance_error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "instance_error_message": {
+                "kind": "literal",
+                "value": "instance must be 1-48 bytes of lower-case ASCII letters and digits"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
         }
       ]
     },
@@ -45836,6 +47632,378 @@
         }
       ]
     },
+    "llm.providers/authored/an-instance-carrying-a-dot-is-refused-and-resolves-no-url": {
+      "purpose": "an instance with a dot could reach another host, so it is refused before substitution",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": null
+            },
+            "instance": {
+              "kind": "literal",
+              "value": "abc.evil"
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": "runpod"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "base_url": {
+                "kind": "literal",
+                "value": null
+              },
+              "instance_error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "instance_error_message": {
+                "kind": "literal",
+                "value": "instance must be 1-48 bytes of lower-case ASCII letters and digits"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/an-instance-carrying-a-slash-is-refused-and-resolves-no-url": {
+      "purpose": "an instance with a slash could change the path, so it is refused before substitution",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": null
+            },
+            "instance": {
+              "kind": "literal",
+              "value": "abc/evil"
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": "runpod"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "base_url": {
+                "kind": "literal",
+                "value": null
+              },
+              "instance_error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "instance_error_message": {
+                "kind": "literal",
+                "value": "instance must be 1-48 bytes of lower-case ASCII letters and digits"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/an-instance-carrying-an-upper-case-letter-is-refused-and-resolves-no-url": {
+      "purpose": "an instance is lower-case letters and digits only",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": null
+            },
+            "instance": {
+              "kind": "literal",
+              "value": "Abc123"
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": "runpod"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "base_url": {
+                "kind": "literal",
+                "value": null
+              },
+              "instance_error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "instance_error_message": {
+                "kind": "literal",
+                "value": "instance must be 1-48 bytes of lower-case ASCII letters and digits"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
+    "llm.providers/authored/an-instance-over-forty-eight-bytes-is-refused-and-resolves-no-url": {
+      "purpose": "an instance one byte over the 48-byte bound is refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": null
+            },
+            "instance": {
+              "kind": "literal",
+              "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": "runpod"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "base_url": {
+                "kind": "literal",
+                "value": null
+              },
+              "instance_error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "instance_error_message": {
+                "kind": "literal",
+                "value": "instance must be 1-48 bytes of lower-case ASCII letters and digits"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
     "llm.providers/authored/an-invalid-reference-is-unavailable": {
       "purpose": "a resolver answering InvalidReference is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
@@ -45962,6 +48130,103 @@
           },
           "step": "expect_view",
           "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/an-openapi-digest-that-is-not-sixty-four-lower-case-hex-is-refused": {
+      "purpose": "the pinned document's digest is 64 lower-case hex digits; upper case is refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500A8989878D53D8731F27BF8DBBD57801B328C760BDB32C38BA36D5CB580DB\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"GetInstance\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "OpenAPI digest must be 64 lower-case hex digits"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
         }
       ]
     },
@@ -47106,6 +49371,148 @@
         }
       ]
     },
+    "llm.providers/authored/the-shipped-runpod-description-is-accepted-with-its-pinned-control-plane": {
+      "purpose": "the Runpod description shipped in the crate names its provider, three wires, bearer authentication, a pinned OpenAPI source and four operations",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": null
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": "runpod"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "base_url": {
+                "kind": "literal",
+                "value": null
+              },
+              "base_url_template": {
+                "kind": "literal",
+                "value": "https://{instance}-8000.proxy.runpod.net/v1/"
+              },
+              "category": {
+                "kind": "literal",
+                "value": "gpu-cloud"
+              },
+              "control_plane_auth_kind": {
+                "kind": "literal",
+                "value": "bearer"
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": true
+              },
+              "document_sha256": {
+                "kind": "literal",
+                "value": "9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "inference_auth_kind": {
+                "kind": "literal",
+                "value": "bearer"
+              },
+              "openapi_url": {
+                "kind": "literal",
+                "value": "https://rest.runpod.io/v1/openapi.json"
+              },
+              "operations": {
+                "kind": "literal",
+                "value": [
+                  "create_instance=CreatePod",
+                  "list_instances=ListPods",
+                  "get_instance=GetPod",
+                  "delete_instance=DeletePod"
+                ]
+              },
+              "protocols": {
+                "kind": "literal",
+                "value": [
+                  "chat-completions",
+                  "messages",
+                  "responses"
+                ]
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": "runpod"
+              },
+              "server_url": {
+                "kind": "literal",
+                "value": "https://rest.runpod.io/v1"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
     "llm.providers/authored/too-many-references-is-unavailable": {
       "purpose": "a resolver answering TooManyReferences is refused as unavailable with its fixed diagnostic, prefixed by the reference that refused (auth.rs:108-126)",
       "source": [
@@ -47235,6 +49642,103 @@
         }
       ]
     },
+    "llm.providers/authored/two-roles-naming-one-operation-are-refused": {
+      "purpose": "each control-plane role names its own operation",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Describe"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastDescription"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Describe",
+          "input": {
+            "description_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.provider-description/1\"\n\n[provider]\nid = \"my-cloud\"\ncategory = \"gpu-cloud\"\n\n[inference]\nbase_url_template = \"https://{instance}.gpu.example.test/v1/\"\nprotocols = [\"chat-completions\"]\nauth_kind = \"bearer\"\n\n[control_plane]\nopenapi_url = \"https://api.example.test/openapi.json\"\ndocument_sha256 = \"9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db\"\nserver_url = \"https://api.example.test/v1\"\nauth_kind = \"bearer\"\n\n[control_plane.operations]\ncreate_instance = \"CreateInstance\"\nlist_instances = \"ListInstances\"\nget_instance = \"ListInstances\"\ndelete_instance = \"DeleteInstance\"\n"
+            },
+            "instance": {
+              "kind": "literal",
+              "value": null
+            },
+            "shipped": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Describe",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastDescription"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "control_plane_present": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "two control-plane roles name the same operation"
+              },
+              "provider_id": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastDescription"
+        }
+      ]
+    },
     "llm.responses.DecodeStream/outcome/observed": {
       "purpose": "`llm.responses.DecodeStream` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -47280,6 +49784,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -47391,6 +49899,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -47473,6 +49985,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -47584,6 +50100,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -47666,6 +50186,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -47782,6 +50306,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -56785,6 +59313,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -56893,6 +59425,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -56975,6 +59511,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -57087,6 +59627,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -65894,6 +68438,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -66002,6 +68550,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -66092,6 +68644,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -66223,6 +68779,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -66305,6 +68865,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -66428,6 +68992,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -66514,6 +69082,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -66629,6 +69201,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -66715,6 +69291,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -66842,6 +69422,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -66940,6 +69524,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -67080,6 +69668,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {
@@ -77771,6 +80363,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -77871,6 +80467,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -77953,6 +80553,10 @@
         {
           "kind": "event",
           "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
         },
         {
           "kind": "event",
@@ -78053,6 +80657,10 @@
         },
         {
           "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
           "step": "expect_no_event"
         },
         {

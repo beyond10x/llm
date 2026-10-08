@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-toolname-pass-1
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, streamed tool-call name, pass 1: four red cases in the Chat re-emitter and Responses announcement checks'
 relations:
 - reviews: story:streamed-tool-call-name
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:36Z", actor: "human:timo", revision: 2}
 ---
 unit: story:streamed-tool-call-name, uncommitted working tree on base `d5c73e8` at `home-path:sha256:90565d86e56bca06ebdd3c698c6d35c296fb743ea706c48a4e4b129c7decd9fe`
 verdict: NEEDS-CHANGE

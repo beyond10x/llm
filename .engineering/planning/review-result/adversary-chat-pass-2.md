@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: review-result:adversary-chat-pass-2
 kind: review-result
-status: active
+status: archived
 title: 'Adversary, chat projection, pass 2: two blockers, the entry-point enumeration missed a third'
 relations:
 - reviews: story:chat-projection
-revision: 1
+revision: 2
+transitions:
+- {from: "active", to: "archived", at: "2026-10-08T10:43:34Z", actor: "human:timo", revision: 2}
 ---
 ## The pass
 
