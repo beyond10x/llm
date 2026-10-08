@@ -115,11 +115,3 @@ a login when its token expires within 15 minutes, before answering:
 - the request and the answer are zeroized after use.
 
 `CodexAuthFile::renew` renews once when the caller asks.
-
-:::info[Planned: resolution through the Secrets library]
-An optional resolver backed by the named storage of
-[Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets))
-is planned and **not implemented**. It waits for that library's release, and it must not change
-any route reference or add a dependency to the core crates. Until it exists, inject your own
-`SecretResolver` for any store the adapters above do not cover.
-:::

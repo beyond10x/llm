@@ -32,18 +32,18 @@ The gate makes no paid provider call and starts no GPU. No provider route is qua
 - **Not a credential store.** It resolves credentials through a resolver the embedding injects; it
   never runs a login flow, and reads a vendor's login file only where the caller points it. The one write it
   can make, renewing a Codex login, is opt-in.
-- **Not a gateway service.** The gateway and hosting crates live in their own repository,
-  llm-gateway. llm is the client side.
+- **Not a gateway service.** llm serves nothing and provisions nothing.
+  [llm-gateway](https://beyond10x.github.io/llm-gateway/) ([GitHub](https://github.com/beyond10x/llm-gateway)) serves models; llm is the client side.
 
 ## Where it sits
 
 | Neighbour | Relation |
 | --- | --- |
 | [Loom](https://beyond10x.github.io/loom/) ([GitHub](https://github.com/beyond10x/loom)) | Consumes llm: Loom's crates depend on llm's client crates at a release tag. |
-| [Harness](https://beyond10x.github.io/docs/harness/) ([GitHub](https://github.com/beyond10x/harness)) | May build on llm in place of its own model wire crates; that move is planned. |
-| llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) | Serves llm's protocols to clients: the gateway, the hosting contract and the Runpod and Modal adapters live there. It has no public documentation yet. |
+| [Harness](https://beyond10x.github.io/ecosystem/harness/) ([GitHub](https://github.com/beyond10x/harness)) | May build on llm in place of its own model wire crates; that move is planned. |
+| [llm-gateway](https://beyond10x.github.io/llm-gateway/) ([GitHub](https://github.com/beyond10x/llm-gateway)) | Serves models to clients; it reads Runpod's provider description from `b10x-llm-providers` at a release tag. |
 | [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) | Specifies llm: every library crate has an ESS domain, run by the conformance suite. |
-| [Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets)) | A planned credential source: an optional resolver over its named storage. |
+| [Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets)) | A credential source: `b10x-llm-credentials` feature `secrets` resolves references by name in its storage. |
 
 ## Why it exists
 
@@ -67,12 +67,16 @@ around refusing those guesses.
   any other `Model`. [Call a model with one forced tool](guides/call-a-model-with-one-forced-tool.md)
 - **Run turns from a synchronous loop**, on several threads at once.
   [Use llm from a synchronous loop](guides/use-llm-from-a-synchronous-loop.md)
+- **Build the client a catalog declares**: one call turns a serving model's binding into a
+  Chat Completions, Responses or Messages client. [Call a local endpoint](guides/call-a-local-endpoint.md)
+- **Read a provider description**: a provider's inference URL template, wires, authentication and
+  pinned control-plane operations, with Runpod's built in. [Formats](reference/formats.md)
 - **Declare routes in TOML** and ask which target a request would get and why every other target
   was rejected; no secret is resolved to answer. [Explain a route](guides/explain-a-route.md)
 - **Retry and fall back**: a retriable failure that showed nothing is retried on the same target,
   then the run moves to the next named target. [Routing](concepts/routing.md)
 - **Resolve credentials at request time** from a resolver you inject, a protected file, a keychain
-  entry, an environment variable, a JSON document or a Codex login.
+  entry, an environment variable, a JSON document, a Codex login or the Secrets library's storage.
   [Resolve a local secret](guides/resolve-a-local-secret.md)
 - **Price recorded usage** in exact decimals, and enforce a spending limit in a durable SQLite
   ledger. [Price recorded usage](guides/price-recorded-usage.md)

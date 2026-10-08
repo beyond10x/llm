@@ -41,7 +41,7 @@
         },
         {
           "title": "Credentials injected, never searched for",
-          "description": "A catalog names an opaque reference; the embedding supplies the resolver. Files, keychains, environment variables, JSON pointers and a Codex login are opt-in adapters.",
+          "description": "A catalog names an opaque reference; the embedding supplies the resolver. Files, keychains, environment variables, JSON pointers, a Codex login and the Secrets library are opt-in adapters.",
           "status": "shipped",
           "href": "/docs/concepts/credentials"
         },
@@ -112,14 +112,14 @@
         {
           "name": "Harness",
           "description": "The beyond10x agent loop. It may build on llm in place of its own model wire crates; that move is planned.",
-          "href": "https://beyond10x.github.io/docs/harness/",
+          "href": "https://beyond10x.github.io/ecosystem/harness/",
           "status": "planned"
         },
         {
           "name": "llm-gateway",
-          "description": "The gateway and hosting crates, in their own repository; it serves llm's protocols to clients.",
-          "href": "https://github.com/beyond10x/llm-gateway",
-          "status": "planned"
+          "description": "Serves models to clients. It reads Runpod's provider description from llm's providers crate at a release tag.",
+          "href": "https://beyond10x.github.io/llm-gateway/",
+          "status": "shipped"
         },
         {
           "id": "ess",
