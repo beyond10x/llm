@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-08
+
 ### Added
 
 - `b10x-llm-providers`: provider descriptions, format `llm.provider-description/1` (TOML, at most
