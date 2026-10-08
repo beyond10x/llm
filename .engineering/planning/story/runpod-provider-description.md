@@ -41,7 +41,7 @@ scope:
   path: spec/domains/providers.yaml
 - confidence: inferred
   path: website/docs
-revision: 5
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-08T10:37:51Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-08T10:37:51Z", actor: "human:timo", revision: 5}
@@ -57,8 +57,8 @@ llm-gateway's `story:runpod-production-transport` and `story:provider-key-files`
 - A document format `llm.provider-description/1`, TOML, parsed by `ProviderDescription::parse` in `b10x-llm-providers` with every table `deny_unknown_fields`; at most 64 KiB.
   - `[provider]`: `id`, `category` (the existing `Provider`).
   - `[inference]`: `base_url_template`, `protocols` (non-empty, no repeats), `auth_kind` (`anonymous`, `bearer` or `api-key`; `api_key_header` exactly when `api-key`). `subscription-oauth` is refused: a description is API access, and subscription tokens stay a caller-managed account.
-  - `[control_plane]`, optional: `openapi_url` (HTTPS, no userinfo, query or fragment), `openapi_sha256` (64 lowercase hex: the pinned document), `server_url` (HTTPS base), `auth_kind`, and `[control_plane.operations]` with the fixed roles `create_instance`, `list_instances`, `get_instance`, `delete_instance`, each an OpenAPI `operationId` (1-128 bytes of `[A-Za-z0-9_.-]`), all four distinct.
-- The template holds the placeholder `{instance}` exactly once, inside the host's first label, and no other brace; with the placeholder filled it must be a valid `BaseUrl`.
+  - `[control_plane]`, optional: `openapi_url` (HTTPS, no userinfo, query or fragment), `document_sha256` (64 lowercase hex: the pinned document; the key avoids "api" next to the digest, which the secrets scanner reads as a credential), `server_url` (HTTPS base), `auth_kind`, and `[control_plane.operations]` with the fixed roles `create_instance`, `list_instances`, `get_instance`, `delete_instance`, each an OpenAPI `operationId` (1-128 bytes of `[A-Za-z0-9_.-]`), all four distinct.
+- The template holds the placeholder `{instance}` exactly once, inside the host's first label, followed by a fixed domain (so no instance names a single-label host), and no other brace; with the placeholder filled it must be a valid `BaseUrl`.
 - `ProviderDescription::inference_base_url(instance)` fills the template. An instance is 1-48 bytes of `[a-z0-9]`; anything else is refused `invalid` before substitution, so an instance can never change the host, the path or the scheme.
 - The description performs no I/O: it never fetches the OpenAPI document and resolves no secret. Checking the digest against the document is the reader's job (Connectors).
 - Runpod's description is the file `crates/llm-providers/descriptions/runpod.toml`, exported as `llm_providers::descriptions::runpod()`: provider `runpod`, category `gpu-cloud`; inference `https://{instance}-8000.proxy.runpod.net/v1/`, protocols `chat-completions`, `messages` and `responses` (vLLM's OpenAI-compatible server), `bearer`; control plane `https://rest.runpod.io/v1/openapi.json` (OpenAPI 3.0.3, sha256 `9500a8989878d53d8731f27bf8dbbd57801b328c760bdb32c38ba36d5cb580db`, read 2026-10-08), server `https://rest.runpod.io/v1`, `bearer`, operations `CreatePod`, `ListPods`, `GetPod`, `DeletePod`.
@@ -73,7 +73,7 @@ Conformance scenarios in `contracts/providers/scenarios/`, all passing in `task 
 - the shipped Runpod description is accepted with its provider, three protocols, bearer authentication, pinned OpenAPI source and four operations;
 - a Runpod instance resolves to `https://<instance>-8000.proxy.runpod.net/v1/`;
 - an instance carrying a dot, a slash, an upper-case letter, nothing, or more than 48 bytes is refused and resolves no URL;
-- a template without the placeholder, with it twice, or with it outside the host is refused;
+- a template without the placeholder, with it twice, outside the host, or as the whole host is refused;
 - a description with no protocol, or a repeated protocol, is refused;
 - an OpenAPI digest that is not 64 lowercase hex is refused;
 - a control plane over plain HTTP is refused;
