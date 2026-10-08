@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-08T08:14:55Z",
+  "actor": "human:timo",
+  "artifact": "story:catalog-model-port",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "Gate run 37746597848 on PR 26 head 8f27cf43: libraries-and-plan, native-adapter-builds macOS and Windows pass; Documentation validation 37746597832 and Shared source gates 37746598554 pass",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/37746597848"
+  }
+}

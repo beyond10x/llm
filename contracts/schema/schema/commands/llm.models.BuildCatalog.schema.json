@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BuildCatalog input",
+  "x-ess-name": "llm.models.BuildCatalog",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "resolver_accounts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "probe_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "resolver_accounts",
+    "probe_ids"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cf4a18118e40c0d20963b4691bfdfdf16e2d4ee2cbdff372e018969151dc6270",
+    "contract_digest": "slice-sha256/2:45edd906249d0b739346e2efdbca25ed7f55d442c463b194c38be325e38a405e",
+    "regenerate": "ess generate"
+  }
+}

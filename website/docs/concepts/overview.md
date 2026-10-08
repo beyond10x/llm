@@ -72,6 +72,7 @@ on this path and not in llm: they live in llm-gateway
 | Force one tool and read its arguments | `b10x-llm-tool-call` |
 | Run turns from a synchronous loop | `b10x-llm-blocking` |
 | Declare routes in TOML, retry and fall back between targets | `b10x-llm-routing` |
+| Build the client a catalog serving model declares, whatever its protocol | `b10x-llm-models`, `b10x-llm-routing`, `b10x-llm-http` and `b10x-llm-credentials` |
 | Price usage, or limit spend | `b10x-llm-cost`, with `sqlite` for the ledger |
 
 [Crates](../reference/crates.md) lists every package with its library name and features.

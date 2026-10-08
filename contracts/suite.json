@@ -290,6 +290,14 @@
       "llm.messages/authored/unreported-upstream-model-stays-unknown",
       "llm.messages/authored/unstarted-content-block-delta-refused",
       "llm.messages/authored/usage-regression-refused",
+      "llm.models/authored/a-chat-completions-serving-model-builds-the-chat-port",
+      "llm.models/authored/a-credentialed-account-without-a-resolver-is-refused-unauthorized",
+      "llm.models/authored/a-messages-serving-model-builds-the-messages-port",
+      "llm.models/authored/a-responses-serving-model-builds-the-responses-port",
+      "llm.models/authored/an-anonymous-account-builds-without-any-resolver",
+      "llm.models/authored/an-unknown-serving-model-id-is-refused",
+      "llm.models/authored/the-catalog-builder-answers-every-declared-serving-model-and-no-other",
+      "llm.models/authored/the-catalog-builder-refuses-a-credentialed-account-without-a-resolver",
       "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header",
       "llm.providers/authored/a-bearer-account-with-an-api-key-header-is-refused",
       "llm.providers/authored/a-cancellation-during-resolution-ends-preparation",
@@ -1904,6 +1912,46 @@
         "digest": "sha256:92d5a21213ceee4e4d03b4d08ee643c28e8bee6697cfccd40c7e233296b23e50",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/usage-regression-refused"
+      },
+      "models/scenarios/a-chat-completions-serving-model-builds-the-chat-port.yaml": {
+        "digest": "sha256:e26c13151a22a43898e6f23adf0861e684b8a12a5594b4b654fa94843c5e6a63",
+        "disposition": "accepted",
+        "scenario": "llm.models/authored/a-chat-completions-serving-model-builds-the-chat-port"
+      },
+      "models/scenarios/a-credentialed-account-without-a-resolver-is-refused-unauthorized.yaml": {
+        "digest": "sha256:6a15762c45da9b0e1d438976c664589569f5054b511419c478da955acb8b2b2c",
+        "disposition": "accepted",
+        "scenario": "llm.models/authored/a-credentialed-account-without-a-resolver-is-refused-unauthorized"
+      },
+      "models/scenarios/a-messages-serving-model-builds-the-messages-port.yaml": {
+        "digest": "sha256:1e9301607c75cce58ad7673566303261e8fb44d4530bb422f12566de52bb4e6a",
+        "disposition": "accepted",
+        "scenario": "llm.models/authored/a-messages-serving-model-builds-the-messages-port"
+      },
+      "models/scenarios/a-responses-serving-model-builds-the-responses-port.yaml": {
+        "digest": "sha256:7f682327aee423e2222c2996f3f88da473cee1c66ac5d94d53ee9856910bc16a",
+        "disposition": "accepted",
+        "scenario": "llm.models/authored/a-responses-serving-model-builds-the-responses-port"
+      },
+      "models/scenarios/an-anonymous-account-builds-without-any-resolver.yaml": {
+        "digest": "sha256:c529931b7283df2db5b13c2d5bef6a65bcacc07511b14beb5284c400a64719a6",
+        "disposition": "accepted",
+        "scenario": "llm.models/authored/an-anonymous-account-builds-without-any-resolver"
+      },
+      "models/scenarios/an-unknown-serving-model-id-is-refused.yaml": {
+        "digest": "sha256:167804dfae93a18454e92f7d25d0461b9bc2212610fc20b6df82f048217f35cd",
+        "disposition": "accepted",
+        "scenario": "llm.models/authored/an-unknown-serving-model-id-is-refused"
+      },
+      "models/scenarios/the-catalog-builder-answers-every-declared-serving-model-and-no-other.yaml": {
+        "digest": "sha256:ce05da521c2c589990ee76c0186ce8982c2c10b6bf2a71b18a33c0b54aef9f89",
+        "disposition": "accepted",
+        "scenario": "llm.models/authored/the-catalog-builder-answers-every-declared-serving-model-and-no-other"
+      },
+      "models/scenarios/the-catalog-builder-refuses-a-credentialed-account-without-a-resolver.yaml": {
+        "digest": "sha256:49ab4eb07197f9166923bc064987fd26c777e9a47b264f6cba458fd24ac9cada",
+        "disposition": "accepted",
+        "scenario": "llm.models/authored/the-catalog-builder-refuses-a-credentialed-account-without-a-resolver"
       },
       "pricing/scenarios/a-price-source-of-the-maximum-length-is-accepted.yaml": {
         "digest": "sha256:daa5f71e6f8eb991b1bdfd3afe7ec77720454d6220a758f16952f696a456c61d",
@@ -4007,8 +4055,8 @@
       }
     },
     "counts": {
-      "authored": 667,
-      "generated": 25,
+      "authored": 675,
+      "generated": 27,
       "outside": 0,
       "refused": 0
     },
@@ -4024,6 +4072,8 @@
       "llm.messages.DecodeStream/outcome/observed",
       "llm.messages.Present/outcome/observed",
       "llm.messages.Project/outcome/observed",
+      "llm.models.Build/outcome/observed",
+      "llm.models.BuildCatalog/outcome/observed",
       "llm.providers.Prepare/outcome/observed",
       "llm.responses.DecodeStream/outcome/observed",
       "llm.responses.Ingest/outcome/observed",
@@ -4053,9 +4103,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "a1bd875ae5912cece62b217b5948bb3a4efd85c941e5a13c1cf5b4286b2a411c",
+    "contract_digest": "8820fcce5cf0771160dd5e3092cde71bbf54d2f398980892616744dd274337a1",
     "scenario_initial_state": "empty",
-    "spec_digest": "f39883cd430129fe109619d74c2a771387b09afa5c7d8b44701d48bcc27a3f8d",
+    "spec_digest": "cf4a18118e40c0d20963b4691bfdfdf16e2d4ee2cbdff372e018969151dc6270",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -4098,6 +4148,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -4190,6 +4248,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -11437,6 +11503,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -11522,6 +11596,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -17998,6 +18080,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -18086,6 +18176,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18164,6 +18262,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -18267,6 +18373,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18345,6 +18459,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -18452,6 +18574,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -18530,6 +18660,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -18626,6 +18764,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -25797,6 +25943,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -25886,6 +26040,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -30845,6 +31007,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -30937,6 +31107,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -31015,6 +31193,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -31110,6 +31296,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -31188,6 +31382,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -31291,6 +31493,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -31369,6 +31579,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -31461,6 +31679,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -39659,6 +39885,1201 @@
         }
       ]
     },
+    "llm.models.Build/outcome/observed": {
+      "purpose": "`llm.models.Build` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.models.Build"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.Build",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": []
+            },
+            "serving_model_id": {
+              "kind": "literal",
+              "value": "serving_model_id"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.models.Built",
+          "shape": {
+            "built": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.models.BuildCatalog/outcome/observed": {
+      "purpose": "`llm.models.BuildCatalog` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.models.BuildCatalog"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.BuildCatalog",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.BuildCatalog",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "probe_ids": {
+              "kind": "literal",
+              "value": []
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": []
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.BuildCatalog",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "shape": {
+            "built": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.models/authored/a-chat-completions-serving-model-builds-the-chat-port": {
+      "purpose": "a serving model declared over Chat Completions builds the Chat Completions client",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.models"
+        },
+        {
+          "kind": "command",
+          "name": "llm.models.Build"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.models.LastConstruction"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.Build",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[accounts]]\nid = \"keyed\"\nprovider_id = \"my-lab\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-key\"\napi_key_header = \"x-api-key\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[endpoints]]\nid = \"keyed-models\"\naccount_id = \"keyed\"\nbase_url = \"https://keyed.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"keyed-large\"\nendpoint_id = \"keyed-models\"\nmodel_id = \"large\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n"
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": [
+                "remote",
+                "keyed"
+              ]
+            },
+            "serving_model_id": {
+              "kind": "literal",
+              "value": "local-small"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "built": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "port": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "resolver_attached": {
+                "kind": "literal",
+                "value": false
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        }
+      ]
+    },
+    "llm.models/authored/a-credentialed-account-without-a-resolver-is-refused-unauthorized": {
+      "purpose": "a bearer account the caller supplies no resolver for is refused unauthorized before any resolution",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.models"
+        },
+        {
+          "kind": "command",
+          "name": "llm.models.Build"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.models.LastConstruction"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.Build",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[accounts]]\nid = \"keyed\"\nprovider_id = \"my-lab\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-key\"\napi_key_header = \"x-api-key\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[endpoints]]\nid = \"keyed-models\"\naccount_id = \"keyed\"\nbase_url = \"https://keyed.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"keyed-large\"\nendpoint_id = \"keyed-models\"\nmodel_id = \"large\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n"
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": [
+                "keyed"
+              ]
+            },
+            "serving_model_id": {
+              "kind": "literal",
+              "value": "remote-large"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "built": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "no credential resolver is supplied for account `remote`"
+              },
+              "port": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_attached": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        }
+      ]
+    },
+    "llm.models/authored/a-messages-serving-model-builds-the-messages-port": {
+      "purpose": "a serving model declared over Messages builds the Messages client with its account's resolver",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.models"
+        },
+        {
+          "kind": "command",
+          "name": "llm.models.Build"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.models.LastConstruction"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.Build",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[accounts]]\nid = \"keyed\"\nprovider_id = \"my-lab\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-key\"\napi_key_header = \"x-api-key\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[endpoints]]\nid = \"keyed-models\"\naccount_id = \"keyed\"\nbase_url = \"https://keyed.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"keyed-large\"\nendpoint_id = \"keyed-models\"\nmodel_id = \"large\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n"
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": [
+                "keyed"
+              ]
+            },
+            "serving_model_id": {
+              "kind": "literal",
+              "value": "keyed-large"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "built": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "port": {
+                "kind": "literal",
+                "value": "messages"
+              },
+              "resolver_attached": {
+                "kind": "literal",
+                "value": true
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        }
+      ]
+    },
+    "llm.models/authored/a-responses-serving-model-builds-the-responses-port": {
+      "purpose": "a serving model declared over Responses builds the Responses client with its account's resolver",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.models"
+        },
+        {
+          "kind": "command",
+          "name": "llm.models.Build"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.models.LastConstruction"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.Build",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[accounts]]\nid = \"keyed\"\nprovider_id = \"my-lab\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-key\"\napi_key_header = \"x-api-key\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[endpoints]]\nid = \"keyed-models\"\naccount_id = \"keyed\"\nbase_url = \"https://keyed.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"keyed-large\"\nendpoint_id = \"keyed-models\"\nmodel_id = \"large\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n"
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": [
+                "remote"
+              ]
+            },
+            "serving_model_id": {
+              "kind": "literal",
+              "value": "remote-large"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "built": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "port": {
+                "kind": "literal",
+                "value": "responses"
+              },
+              "resolver_attached": {
+                "kind": "literal",
+                "value": true
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        }
+      ]
+    },
+    "llm.models/authored/an-anonymous-account-builds-without-any-resolver": {
+      "purpose": "an anonymous account builds its port when the caller supplies no resolver at all",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.models"
+        },
+        {
+          "kind": "command",
+          "name": "llm.models.Build"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.models.LastConstruction"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.Build",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[accounts]]\nid = \"keyed\"\nprovider_id = \"my-lab\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-key\"\napi_key_header = \"x-api-key\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[endpoints]]\nid = \"keyed-models\"\naccount_id = \"keyed\"\nbase_url = \"https://keyed.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"keyed-large\"\nendpoint_id = \"keyed-models\"\nmodel_id = \"large\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n"
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": []
+            },
+            "serving_model_id": {
+              "kind": "literal",
+              "value": "local-small"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "built": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "port": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "resolver_attached": {
+                "kind": "literal",
+                "value": false
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        }
+      ]
+    },
+    "llm.models/authored/an-unknown-serving-model-id-is-refused": {
+      "purpose": "a serving model id the catalog does not declare builds nothing",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.models"
+        },
+        {
+          "kind": "command",
+          "name": "llm.models.Build"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.models.LastConstruction"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.Build",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[accounts]]\nid = \"keyed\"\nprovider_id = \"my-lab\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-key\"\napi_key_header = \"x-api-key\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[endpoints]]\nid = \"keyed-models\"\naccount_id = \"keyed\"\nbase_url = \"https://keyed.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"keyed-large\"\nendpoint_id = \"keyed-models\"\nmodel_id = \"large\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n"
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": [
+                "remote",
+                "keyed"
+              ]
+            },
+            "serving_model_id": {
+              "kind": "literal",
+              "value": "absent-model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.Build",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastConstruction"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "built": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "no such serving model in the catalog"
+              },
+              "port": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_attached": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastConstruction"
+        }
+      ]
+    },
+    "llm.models/authored/the-catalog-builder-answers-every-declared-serving-model-and-no-other": {
+      "purpose": "the catalog-wide builder answers a port for every declared serving model and none for an undeclared id",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.models"
+        },
+        {
+          "kind": "command",
+          "name": "llm.models.BuildCatalog"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.BuildCatalog",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.models.LastCatalogConstruction"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.BuildCatalog",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[accounts]]\nid = \"keyed\"\nprovider_id = \"my-lab\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-key\"\napi_key_header = \"x-api-key\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[endpoints]]\nid = \"keyed-models\"\naccount_id = \"keyed\"\nbase_url = \"https://keyed.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"keyed-large\"\nendpoint_id = \"keyed-models\"\nmodel_id = \"large\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n"
+            },
+            "probe_ids": {
+              "kind": "literal",
+              "value": [
+                "local-small",
+                "remote-large",
+                "keyed-large",
+                "absent-model"
+              ]
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": [
+                "remote",
+                "keyed"
+              ]
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.BuildCatalog",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastCatalogConstruction"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastCatalogConstruction"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastCatalogConstruction"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "local-small:chat-completions",
+                  "remote-large:responses",
+                  "keyed-large:messages",
+                  "absent-model:none"
+                ]
+              },
+              "built": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastCatalogConstruction"
+        }
+      ]
+    },
+    "llm.models/authored/the-catalog-builder-refuses-a-credentialed-account-without-a-resolver": {
+      "purpose": "the catalog-wide builder applies the same rule and refuses when one credentialed account has no resolver",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.models"
+        },
+        {
+          "kind": "command",
+          "name": "llm.models.BuildCatalog"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.models.BuildCatalog",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.models.LastCatalogConstruction"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.models.BuildCatalog",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[accounts]]\nid = \"keyed\"\nprovider_id = \"my-lab\"\nauth_kind = \"api-key\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-key\"\napi_key_header = \"x-api-key\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[endpoints]]\nid = \"keyed-models\"\naccount_id = \"keyed\"\nbase_url = \"https://keyed.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[serving_models]]\nid = \"keyed-large\"\nendpoint_id = \"keyed-models\"\nmodel_id = \"large\"\nprotocol = \"messages\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = false\nreasoning_efforts = []\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n"
+            },
+            "probe_ids": {
+              "kind": "literal",
+              "value": [
+                "local-small"
+              ]
+            },
+            "resolver_accounts": {
+              "kind": "literal",
+              "value": [
+                "remote"
+              ]
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.models.BuildCatalog",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastCatalogConstruction"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastCatalogConstruction"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.models.LastCatalogConstruction"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "built": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "no credential resolver is supplied for account `keyed`"
+              },
+              "resolver_calls": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.models.LastCatalogConstruction"
+        }
+      ]
+    },
     "llm.providers.Prepare/outcome/observed": {
       "purpose": "`llm.providers.Prepare` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -39704,6 +41125,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -39812,6 +41241,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -45838,6 +47275,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -45938,6 +47383,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -46012,6 +47465,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -46115,6 +47576,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -46189,6 +47658,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -46297,6 +47774,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -55292,6 +56777,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -55392,6 +56885,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -55466,6 +56967,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -55570,6 +57079,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -64369,6 +65886,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -64469,6 +65994,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -64551,6 +66084,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -64674,6 +66215,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -64748,6 +66297,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -64863,6 +66420,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -64941,6 +66506,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -65048,6 +66621,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -65126,6 +66707,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -65245,6 +66834,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -65335,6 +66932,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -65467,6 +67072,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {
@@ -76150,6 +77763,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
           "name": "llm.providers.Prepared"
         },
         {
@@ -76242,6 +77863,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.providers.Prepared",
           "step": "expect_no_event"
         },
@@ -76316,6 +77945,14 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
         },
         {
           "kind": "event",
@@ -76408,6 +78045,14 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
         {

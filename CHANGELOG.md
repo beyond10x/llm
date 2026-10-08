@@ -6,6 +6,15 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `b10x-llm-models`: `port` builds the `Model` a catalog serving model declares, the binding's
+  protocol selecting `ChatClient`, `ResponsesClient` or `MessagesClient` and the account selecting
+  the caller's resolver; a credentialed account without one is refused `unauthorized` before any
+  I/O. `CatalogModels` builds every serving model's port and implements `llm_routing::Models`.
+  `Catalog::bindings` lists the validated bindings. ESS domain `llm.models`, ten new conformance
+  cases (702 in all; baseline floor 684).
+
 ## [0.3.1] - 2026-10-07
 
 ### Fixed

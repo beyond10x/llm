@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Build input",
+  "x-ess-name": "llm.models.Build",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "serving_model_id": {
+      "type": "string"
+    },
+    "resolver_accounts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "serving_model_id",
+    "resolver_accounts"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cf4a18118e40c0d20963b4691bfdfdf16e2d4ee2cbdff372e018969151dc6270",
+    "contract_digest": "slice-sha256/2:340ec3e3c155ff78018103766ff4838a10204b02407a9b6152a577e2acc26359",
+    "regenerate": "ess generate"
+  }
+}

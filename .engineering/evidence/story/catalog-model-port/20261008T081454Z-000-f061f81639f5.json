@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-08T08:14:54Z",
+  "actor": "human:timo",
+  "artifact": "story:catalog-model-port",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "8f27cf43: cargo clippy -D warnings and cargo test on b10x-llm-models (8), b10x-llm-conformance, llm-docs (18), b10x-llm-routing (63), b10x-llm-core (28), 0 failed; task conformance 702/702 with ess 0.56.0, 8 llm.models scenarios among them",
+    "reference": "package gates on wave/2026-10-08-w04 8f27cf43"
+  }
+}

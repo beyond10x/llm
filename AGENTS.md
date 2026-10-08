@@ -12,9 +12,10 @@ failures), as `.engineering/planning/vision/portable-model-inference.md` records
 ## Owns, and does not own
 
 llm owns the client side of model inference: the neutral turn (`llm-core`), the transport, the
-three protocol crates, credentials, provider bindings, routing, pricing, `call_tool` and the
-blocking adapter. The accepted design is `docs/design.md`; per-protocol detail is in
-`docs/responses.md`, `docs/messages.md` and `docs/chat.md`.
+three protocol crates, credentials, provider bindings, routing, port construction from a catalog
+(`llm-models`), pricing, `call_tool` and the blocking adapter. The accepted design is
+`docs/design.md`; per-protocol detail is in `docs/responses.md`, `docs/messages.md` and
+`docs/chat.md`.
 
 It does not own:
 
@@ -37,7 +38,7 @@ story that says so.
 
 | Invariant | Held by |
 | --- | --- |
-| No workspace crate depends on a consumer; `b10x-llm-core` has no transport dependency | `crates/llm-core/tests/dependency_boundary.rs::inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transport` |
+| No workspace crate depends on a consumer; `b10x-llm-core` has no transport dependency; `b10x-llm-routing` depends on no protocol crate | `crates/llm-core/tests/dependency_boundary.rs::inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transport` |
 | The `secrets` library is reached only through `b10x-llm-credentials` feature `secrets`: optional, off by default, tag `v0.5.0` at the commit the lockfile records, forwarded by no core crate | `crates/llm-credentials/tests/secrets_boundary.rs::the_secrets_library_is_reached_only_through_the_credentials_feature` (moving the tag means moving `TAG` and `REVISION` there) |
 | Unknown usage stays unknown, never zero | `crates/llm-core/tests/embedding.rs::unknown_usage_stays_distinct_from_zero_and_invalid_subsets_refuse`, and per protocol `crates/llm-responses/tests/adversary.rs::an_unreported_input_count_stays_unknown_and_is_never_zero`, `crates/llm-messages/tests/streaming.rs::a_counter_the_route_never_reported_stays_unknown`, `crates/llm-chat/tests/incoming.rs::a_counter_a_present_usage_report_omits_stays_absent_and_never_becomes_zero` |
 | Secret material is never a configuration value | `crates/llm-credentials/tests/injected.rs::secret_material_is_not_a_config_value_and_binary_custody_is_supported`, `crates/llm-providers/tests/bindings.rs::binding_documents_have_strict_versions_and_no_literal_secret_fields` |
@@ -47,7 +48,7 @@ story that says so.
 | Fallback tries only the declared compatible order | `crates/llm-routing/tests/fallback.rs::eligible_failure_before_output_attempts_only_the_declared_compatible_order` |
 | Credentials never reach a redirect target or an ambient proxy | `crates/llm-http/tests/transport.rs::redirect_never_sends_credentials_to_a_second_endpoint`, `crates/llm-http/tests/ambient_proxy.rs::ambient_proxy_environment_does_not_receive_caller_credentials` |
 | No `unsafe` code | `unsafe_code = "forbid"` in the root `Cargo.toml`; Clippy `all` and `pedantic` deny |
-| The conformance suite answers at least 674 scenarios and skips none | `contracts/baseline.json`, enforced by `b10x-llm-conformance check` |
+| The conformance suite answers at least 684 scenarios and skips none | `contracts/baseline.json`, enforced by `b10x-llm-conformance check` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.
@@ -71,7 +72,7 @@ RUSTUP_TOOLCHAIN=1.98.0 task check
 | Suite and schema projections match `contracts/`, then the suite runs three times against `contracts/baseline.json` | `task conformance` (`cargo run --locked -p b10x-llm-conformance -- check`, from the repository root) |
 | The planning store validates | `aep plan artifact validate` |
 
-CI installs `ess` 0.55.0 and `aep` 0.68.0 (pinned by revision in `gate.yml`). A second CI job
+CI installs `ess` 0.56.0 and `aep` 0.68.0 (pinned by revision in `gate.yml`). A second CI job
 tests and lints `b10x-llm-credentials` and `b10x-llm-cost` with all features on macOS and Windows;
 a native keychain change cannot be checked on Linux alone. `.github/workflows/shared-gates.yml`
 runs the organisation's common Gates checks on pull requests, `main` and tags.

@@ -166,6 +166,12 @@
     },
     {
       "area": "Providers and routing",
+      "detail": "b10x-llm-models: port builds the Chat Completions, Responses or Messages client a catalog binding's protocol names, with the caller's resolver for its account, and refuses a credentialed account without one as unauthorized before any I/O; CatalogModels builds every serving model's port and is the Models ordered fallback takes. In the tree; not in a release yet.",
+      "label": "One function builds the port a serving model declares",
+      "status": "planned"
+    },
+    {
+      "area": "Providers and routing",
       "detail": "API and caller-managed subscription routes with recorded live evidence. A live probe of the Codex backend found the two incompatibilities 0.1.6 fixed; no route is qualified.",
       "label": "OpenAI access qualified",
       "status": "planned"
