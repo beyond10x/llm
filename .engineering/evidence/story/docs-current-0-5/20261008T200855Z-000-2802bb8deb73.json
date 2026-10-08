@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-08T20:08:55Z",
+  "actor": "human:timo",
+  "artifact": "story:docs-current-0-5",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "llm-docs generate --check (status.json, crates.md, status.mdx current; example blocks match), cargo test -p llm-docs 18 passed 0 failed, cargo run -p b10x-llm-core --example embedded as on the page, ess 0.56.0 specify validate valid, aep plan artifact validate valid, npm ci and docusaurus build exit 0 (impl/docs-current-0-5 86a5964b)"
+  }
+}

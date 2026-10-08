@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:docs-current-0-5
 kind: story
-status: active
+status: implemented
 title: llm's documentation describes 0.5.0 and links llm-gateway's own site
 relations:
 - decomposes: epic:serving-split
@@ -18,16 +18,17 @@ scope:
   path: docs/implementation-status.md
 - confidence: cited
   path: website
-revision: 4
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-08T20:02:33Z", actor: "human:timo", revision: 3}
 - {from: "proposed", to: "active", at: "2026-10-08T20:02:33Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-08T20:41:21Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Outcome
 
 llm's documentation describes 0.5.0: the site at `https://beyond10x.github.io/llm/`, README.md and
 AGENTS.md agree with the code and with every CHANGELOG entry since 0.3.0, and the site describes
-nothing of the gateway beyond linking llm-gateway's own documentation and repository.
+nothing of the gateway beyond linking llm-gateway's repository.
 
 ## Why
 
@@ -45,7 +46,8 @@ pages still call the Secrets resolver planned; llm-gateway now publishes its own
 - No hand-written page calls the Secrets resolver planned; the roadmap lists only llm's own open
   work.
 - Every mention of llm-gateway on the site, the landing page, README.md and AGENTS.md links
-  `https://beyond10x.github.io/llm-gateway/` and `https://github.com/beyond10x/llm-gateway`, and
-  says nothing about the gateway's internals.
+  `https://github.com/beyond10x/llm-gateway` and says nothing about the gateway's internals; no
+  page links `https://beyond10x.github.io/llm-gateway/` while it answers 404, and the site link
+  comes in a later docs pass once that site is live.
 - Harness links its ecosystem page, the page its own route redirects to.
 - `llm-docs generate --check`, `task check` and the site build exit 0.
