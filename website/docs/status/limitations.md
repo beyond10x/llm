@@ -20,13 +20,12 @@ streamed items), which 0.1.6 handles. A probe is not a qualification. Neither Op
 access, API or caller-managed subscription, is qualified, and no route has recorded live evidence.
 Treat the clients as ready to try against your own endpoint, not as qualified.
 
-## No gateway and no hosting here
+## No serving here
 
-llm serves nothing and provisions nothing. The gateway, the hosting contract and the Runpod and
-Modal adapters live in llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)), and their
-limits are that repository's to state.
+llm serves nothing and provisions nothing. Serving and its limits are
+[llm-gateway](https://beyond10x.github.io/llm-gateway/) ([GitHub](https://github.com/beyond10x/llm-gateway))'s to state.
 
-There is therefore no cloud control plane here. The budget ledger's stop obligations record that a
+llm calls no cloud control plane. A provider description names one, as data only. The budget ledger's stop obligations record that a
 resource *must* be stopped; they cannot turn a GPU off, and they never prove that provider billing
 stopped.
 

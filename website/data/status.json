@@ -28,9 +28,9 @@
     },
     {
       "area": "Neutral turn",
-      "detail": "The versioned envelopes (llm.turn/3, llm.outcome/4, llm.usage/2, llm.cost/2, llm.binding/1, llm.catalog/1) are implemented in the tree; a released contract with its compatibility policy is not.",
-      "label": "A published contract and compatibility policy",
-      "status": "planned"
+      "detail": "docs/contract-v1.md states turn ownership, validation, accounting, pricing, credentials and compatibility; the versioned envelopes (llm.turn/3, llm.outcome/4, llm.usage/2, llm.cost/2, llm.binding/1, llm.catalog/1) refuse unknown versions and fields.",
+      "label": "A written contract and compatibility policy",
+      "status": "shipped"
     },
     {
       "area": "Transport",
@@ -46,7 +46,7 @@
     },
     {
       "area": "Transport",
-      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner runs 664 scenarios against the real crates three times.",
+      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 705 scenarios against the real crates three times and skips none.",
       "label": "Every library crate is specified in ESS",
       "status": "shipped"
     },
@@ -136,9 +136,9 @@
     },
     {
       "area": "Credentials",
-      "detail": "Feature secrets: SecretsResolver reads a route's reference as a name in one configured scope of the Secrets library's storage (v0.5.0), over its keychain backend or any SecretStorage, with refusals mapped to the existing SecretError codes. In the tree; not in a release yet.",
+      "detail": "Feature secrets: SecretsResolver reads a route's reference as a name in one configured scope of the Secrets library's storage (v0.5.0), over its keychain backend or any SecretStorage, with refusals mapped to the existing SecretError codes.",
       "label": "Resolution through the Secrets library",
-      "status": "planned"
+      "status": "shipped"
     },
     {
       "area": "Providers and routing",
@@ -148,9 +148,9 @@
     },
     {
       "area": "Providers and routing",
-      "detail": "b10x-llm-providers: ProviderDescription parses llm.provider-description/1, an inference URL template filled only by a 1-48 byte [a-z0-9] instance, its wires and authentication, and a pinned control plane (OpenAPI URL and SHA-256, HTTPS server, four operation IDs), with no I/O. Runpod's ships as descriptions::runpod(). Fixture evidence only; no live Runpod pod or control-plane call qualifies it. In the tree; not in a release yet.",
+      "detail": "b10x-llm-providers: ProviderDescription parses llm.provider-description/1, an inference URL template filled only by a 1-48 byte [a-z0-9] instance, its wires and authentication, and a pinned control plane (OpenAPI URL and SHA-256, HTTPS server, four operation IDs), with no I/O. Runpod's ships as descriptions::runpod(). Fixture evidence only; no live Runpod pod or control-plane call qualifies it.",
       "label": "One provider description per provider",
-      "status": "planned"
+      "status": "shipped"
     },
     {
       "area": "Providers and routing",
@@ -172,9 +172,9 @@
     },
     {
       "area": "Providers and routing",
-      "detail": "b10x-llm-models: port builds the Chat Completions, Responses or Messages client a catalog binding's protocol names, with the caller's resolver for its account, and refuses a credentialed account without one as unauthorized before any I/O; CatalogModels builds every serving model's port and is the Models ordered fallback takes. In the tree; not in a release yet.",
+      "detail": "b10x-llm-models: port builds the Chat Completions, Responses or Messages client a catalog binding's protocol names, with the caller's resolver for its account, and refuses a credentialed account without one as unauthorized before any I/O; CatalogModels builds every serving model's port and is the Models ordered fallback takes.",
       "label": "One function builds the port a serving model declares",
-      "status": "planned"
+      "status": "shipped"
     },
     {
       "area": "Providers and routing",
@@ -202,7 +202,7 @@
     },
     {
       "area": "Helpers for agent loops",
-      "detail": "Harness replaces its own model wire crates with llm's; the parity matrix maps every capability they need.",
+      "detail": "A Harness branch replacing its own model wire crates with llm 0.1.7 builds and passes its tests, and the parity matrix maps every capability they need; Harness has not merged it.",
       "label": "Harness builds on llm",
       "status": "planned"
     },
@@ -220,25 +220,13 @@
     },
     {
       "area": "Serving",
-      "detail": "b10x-llm-gateway, b10x-llm-provision, b10x-llm-runpod and b10x-llm-modal moved with their tests and their ESS domains to their own repository; its status covers the gateway, the hosting contract, the Runpod adapter and their pending work, and llm keeps the client side.",
-      "label": "The gateway and hosting crates live in llm-gateway",
+      "detail": "The gateway, hosting and provisioning crates and their ESS domains moved to their own repository, llm-gateway, in 0.2.0; llm is the client side.",
+      "label": "Serving lives in llm-gateway",
       "status": "shipped"
     },
     {
-      "area": "Serving",
-      "detail": "A reversible cutover from the previous gateway to llm-gateway.",
-      "label": "Deployments move from llmgw",
-      "status": "planned"
-    },
-    {
-      "area": "Serving",
-      "detail": "Validate, inspect and run one configuration; b10x-llm-cli exports nothing yet.",
-      "label": "An operator command line",
-      "status": "planned"
-    },
-    {
       "area": "Release",
-      "detail": "One exact release tied to its required checks, artifacts and live provider and hosting qualification.",
+      "detail": "One exact release tied to its required checks, artifacts and live provider qualification.",
       "label": "A qualified release",
       "status": "planned"
     }
