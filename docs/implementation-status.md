@@ -41,7 +41,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 (`harness-builds-on-llm`). The previous gateway, llmgw, stays in service until its reversible
 cutover.
 
-## Status at 0.4.0 (2026-10-08)
+## Status at 0.5.0 (2026-10-08)
 
 ### Neutral turn
 
