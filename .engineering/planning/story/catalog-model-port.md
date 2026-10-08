@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:catalog-model-port
 kind: story
-status: active
+status: implemented
 title: One exported function builds the Model a catalog serving model declares
 summary: Protocol picks ChatClient, ResponsesClient or MessagesClient; the account picks the caller's credential resolver; callers stop writing that match
 relations:
@@ -33,10 +33,11 @@ scope:
   path: spec/domains/routing.yaml
 - confidence: inferred
   path: website/docs
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-08T07:35:39Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-08T07:35:39Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-08T08:14:55Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Context
 
