@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CatalogConstruction",
+  "x-ess-name": "llm.models.CatalogConstruction",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "construction_id": {
+      "type": "string"
+    },
+    "built": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "resolver_calls": {
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.models.CatalogConstruction.State"
+    }
+  },
+  "required": [
+    "construction_id",
+    "built",
+    "answers",
+    "resolver_calls",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "cf4a18118e40c0d20963b4691bfdfdf16e2d4ee2cbdff372e018969151dc6270",
+    "contract_digest": "slice-sha256/2:50c9e9f77b23b2d46a5576f0adcc994f40ead1abd8dca990bbd9b2dfa83e7ce9",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.models.CatalogConstruction.State": {
+      "title": "State",
+      "x-ess-name": "llm.models.CatalogConstruction.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

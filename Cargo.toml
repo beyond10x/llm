@@ -9,6 +9,7 @@ members = [
     "crates/llm-credentials",
     "crates/llm-providers",
     "crates/llm-routing",
+    "crates/llm-models",
     "crates/llm-cost",
     "crates/llm-cli",
     "crates/llm-tool-call",

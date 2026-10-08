@@ -275,4 +275,8 @@ impl Catalog {
     pub fn binding(&self, id: &Id) -> Option<&Binding> {
         self.bindings.get(id)
     }
+    /// Every serving model's validated binding, keyed by serving-model id, in id order.
+    pub fn bindings(&self) -> impl Iterator<Item = (&Id, &Binding)> {
+        self.bindings.iter()
+    }
 }

@@ -652,6 +652,14 @@ scenarios:
 - secrets/scenarios/codex-read-a-truncated-login-stays-unavailable.yaml
 - secrets/scenarios/codex-renewal-a-truncated-login-is-refused-as-unavailable-before-sending.yaml
 - messages/scenarios/thinking-opened-without-a-signature-field-is-signed-by-its-delta.yaml
+- models/scenarios/a-chat-completions-serving-model-builds-the-chat-port.yaml
+- models/scenarios/a-credentialed-account-without-a-resolver-is-refused-unauthorized.yaml
+- models/scenarios/a-messages-serving-model-builds-the-messages-port.yaml
+- models/scenarios/an-anonymous-account-builds-without-any-resolver.yaml
+- models/scenarios/an-unknown-serving-model-id-is-refused.yaml
+- models/scenarios/a-responses-serving-model-builds-the-responses-port.yaml
+- models/scenarios/the-catalog-builder-answers-every-declared-serving-model-and-no-other.yaml
+- models/scenarios/the-catalog-builder-refuses-a-credentialed-account-without-a-resolver.yaml
 - anthropic/scenarios/a-bearer-request-carries-neither-the-oauth-beta-nor-the-client-preamble.yaml
 - anthropic/scenarios/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble.yaml
 - anthropic/scenarios/a-rotated-subscription-token-is-presented-on-the-next-turn.yaml

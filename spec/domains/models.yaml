@@ -1,0 +1,91 @@
+domain: llm.models
+
+# Port construction (crates/llm-models). One validated catalog binding becomes one usable
+# single-attempt `Model`: the binding's protocol selects the Chat Completions, Responses or
+# Messages client, and the binding's account selects the credential resolver through a lookup
+# the caller supplies, keyed by account id. An anonymous account needs no resolver. A
+# credentialed account (bearer, api-key, subscription-oauth) without one is refused as
+# `unauthorized` ("no credential resolver is supplied for account `<id>`"), never given a
+# resolver that answers `missing`. A serving model id the catalog does not declare is refused as
+# `invalid-request` ("no such serving model in the catalog").
+#
+# Construction performs no network I/O and resolves no secret: resolution stays at turn time.
+# The catalog-wide builder applies the same rules to every declared serving model, refuses as a
+# whole on the first refusal, and answers `llm_routing::Models::model` with the built port for a
+# declared id and nothing for any other.
+#
+# The entities are verification-adapter observations of the real crate. Every resolver the
+# adapter supplies counts its calls; `resolver_calls` is the total across them.
+entities:
+  - name: llm.models.Construction
+    identity: {name: construction_id, type: String}
+    fields: &construction_facts
+      - {name: built, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # The port built: `chat-completions`, `responses` or `messages`.
+      - {name: port, type: Optional<String>}
+      # Whether a supplied resolver was handed to the port; false for an anonymous account.
+      - {name: resolver_attached, type: Optional<Boolean>}
+      - {name: resolver_calls, type: Integer}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+  - name: llm.models.CatalogConstruction
+    identity: {name: construction_id, type: String}
+    fields: &catalog_facts
+      - {name: built, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # Per probed id, in probe order: `<id>:<port>` for an answered port, `<id>:none` otherwise.
+      - {name: answers, type: List<String>}
+      - {name: resolver_calls, type: Integer}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+commands:
+  - name: llm.models.Build
+    # Build the port one serving model of the catalog declares, without I/O.
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: serving_model_id, type: String}
+      # Accounts the caller's lookup answers with a resolver; every other account has none.
+      - {name: resolver_accounts, type: List<String>}
+    outcomes:
+      - name: observed
+        emits: [llm.models.Built]
+        payload:
+          llm.models.Built:
+            built: {generated: true}
+        summary: Return the port built or the typed refusal; not inference success.
+
+  - name: llm.models.BuildCatalog
+    # Build a port for every serving model of the catalog, then ask it for each probed id.
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: resolver_accounts, type: List<String>}
+      - {name: probe_ids, type: List<String>}
+    outcomes:
+      - name: observed
+        emits: [llm.models.CatalogBuilt]
+        payload:
+          llm.models.CatalogBuilt:
+            built: {generated: true}
+        summary: Return what the catalog-wide builder answered for each probed id, or its refusal.
+
+events:
+  # Local notifications from the verification adapter only.
+  - name: llm.models.Built
+    fields:
+      - {name: built, type: Boolean}
+  - name: llm.models.CatalogBuilt
+    fields:
+      - {name: built, type: Boolean}
+
+views:
+  - name: llm.models.LastConstruction
+    source: llm.models.Construction
+    consistency: read_your_writes
+    fields: *construction_facts
+  - name: llm.models.LastCatalogConstruction
+    source: llm.models.CatalogConstruction
+    consistency: read_your_writes
+    fields: *catalog_facts

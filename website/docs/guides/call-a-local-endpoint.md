@@ -3,7 +3,7 @@ title: Call a local endpoint
 sidebar_position: 2
 description: Declare an anonymous vLLM-compatible server in TOML, build a Chat Completions client from the catalog, and run one turn through the neutral port.
 lede: One anonymous turn to a vLLM-compatible server, with the request llm sent and the answer it observed.
-source: crates/llm-docs/examples/local_endpoint.rs, crates/llm-chat (client, fixtures/vllm-text-no-usage.sse), examples/catalog.toml
+source: crates/llm-docs/examples/local_endpoint.rs, crates/llm-models, crates/llm-chat (client, fixtures/vllm-text-no-usage.sse), examples/catalog.toml
 ---
 
 # Call a local endpoint
@@ -42,7 +42,7 @@ from the repository root:
 cargo run --locked -p llm-docs --example local_endpoint
 ```
 
-In your own project it needs `b10x-llm-core`, `b10x-llm-chat`, `b10x-llm-http`,
+In your own project it needs `b10x-llm-core`, `b10x-llm-models`, `b10x-llm-http`,
 `b10x-llm-credentials`, `b10x-llm-routing`, and `tokio` with the `rt` and `macros` features; see
 [Getting started](../getting-started.md#depend-on-a-crate-from-your-own-project) for the Git
 dependency form.
@@ -52,36 +52,23 @@ dependency form.
 //!
 //! Start a vLLM-compatible server on `127.0.0.1:8000`, then run
 //! `cargo run --locked -p llm-docs --example local_endpoint` from the repository root.
-use llm_chat::ChatClient;
-use llm_core::{BoxFuture, Cancel, Id, Item, Model, TurnRequest, VecSink};
-use llm_credentials::{ResolvedSecret, SecretError, SecretRef, SecretResolver};
+use llm_core::{Cancel, Id, Item, Model, TurnRequest, VecSink};
+use llm_credentials::SecretResolver;
 use llm_http::{HttpClient, Limits};
 use llm_routing::Catalog;
-use std::sync::Arc;
-
-/// The local target is anonymous, so nothing is ever resolved.
-struct NoSecrets;
-impl SecretResolver for NoSecrets {
-    fn resolve<'a>(
-        &'a self,
-        _reference: &'a SecretRef,
-    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
-        Box::pin(async { Err(SecretError::Missing) })
-    }
-}
+use std::{collections::BTreeMap, sync::Arc};
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let catalog = Catalog::parse(&std::fs::read_to_string("examples/catalog.toml")?)?;
-    let binding = catalog
-        .binding(&Id::new("local-small")?)
-        .ok_or("no such serving model")?
-        .clone();
-    let client = ChatClient::new(
-        binding,
+    // The local account is anonymous, so the caller supplies no resolver for it.
+    let resolvers: BTreeMap<Id, Arc<dyn SecretResolver>> = BTreeMap::new();
+    let client = llm_models::port(
+        &catalog,
+        &Id::new("local-small")?,
         HttpClient::new(Limits::default())?,
-        Arc::new(NoSecrets),
-    );
+        &resolvers,
+    )?;
 
     let request = TurnRequest::new("small", vec![Item::user("Hallo")]);
     let mut sink = VecSink::new(64, 64 * 1024);
@@ -99,8 +86,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-`Catalog::binding` takes a **serving-model** id and returns the validated binding for it. The
-request names `small`, the catalog's own model id, which must match the binding's model.
+`llm_models::port` takes a **serving-model** id and builds the client its binding declares: the
+binding's `chat-completions` protocol selects the Chat Completions client. The resolver map is
+keyed by account id; the anonymous account needs none, and a `bearer` or `api-key` account with no
+entry is refused `unauthorized` before anything is sent. The request names `small`, the catalog's
+own model id, which must match the binding's model.
 
 ## What happens
 
@@ -139,5 +129,6 @@ Read the last three lines carefully:
   [Resolve a local secret](resolve-a-local-secret.md).
 - Put several targets behind one alias and fall back between them:
   [Routing](../concepts/routing.md#ordered-fallback).
-- `MessagesClient::new` and `ResponsesClient::new` take the same inputs but return a `Result`,
-  because each refuses a binding whose protocol is not its own.
+- The same call builds the Responses or Messages client for a serving model declared over that
+  protocol. `llm_models::CatalogModels` builds every serving model's port at once and serves them
+  to ordered fallback.

@@ -4,6 +4,7 @@ mod fallback;
 mod gate;
 mod inference;
 mod messages;
+mod models;
 mod pricing;
 mod providers;
 mod responses;
