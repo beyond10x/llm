@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-08T12:56:52Z",
+  "actor": "human:timo",
+  "artifact": "story:runpod-provider-description",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "Gate run 37779231255 on PR 28 head 2f970776: libraries-and-plan, native-adapter-builds macOS and Windows pass; Documentation validation 37779231303 and Shared source gates 37779233037 pass",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/37779231255"
+  }
+}

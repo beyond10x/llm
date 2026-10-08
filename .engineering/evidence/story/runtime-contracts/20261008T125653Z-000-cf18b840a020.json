@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-08T12:56:53Z",
+  "actor": "human:timo",
+  "artifact": "story:runtime-contracts",
+  "kind": "story",
+  "revision": 16,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "Gate run 37779231255 on PR 28 head 2f970776 runs the full task check: the contract tests in crates/llm-core/tests/embedding.rs, dependency_boundary.rs and crates/llm-providers/tests/bindings.rs pass; contract docs/contract-v1.md; source releases 0.1.0-0.4.0 tagged; common Gates run in shared-gates.yml",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/37779231255"
+  }
+}

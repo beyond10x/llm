@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:runpod-provider-description
 kind: story
-status: active
+status: implemented
 title: Runpod is one provider description in llm-providers, read by every consumer
 summary: A llm.provider-description/1 document names a provider's inference URL template, wires and authentication and its control plane's pinned OpenAPI operations; Runpod's ships in the crate
 relations:
@@ -41,10 +41,11 @@ scope:
   path: spec/domains/providers.yaml
 - confidence: inferred
   path: website/docs
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-08T10:37:51Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-08T10:37:51Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-08T12:56:53Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Context
 
