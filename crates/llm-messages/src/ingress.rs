@@ -5,6 +5,17 @@
 //! checked against the same reader `decode_message` and `StreamDecoder` use before it is sent,
 //! so an answer this encoder emits is one this crate reads back as the same outcome, and one it
 //! would read back as anything else is refused rather than approximated.
+//!
+//! Two limits of the streamed answer, each because `StreamEvent` carries less than this wire:
+//!
+//! - **The model travels only in `message_start`**, which precedes the outcome. A stream carries
+//!   the model passed to `IngressStream::new`; an outcome model the stream never announced is not
+//!   sent, and reads back unknown. `encode_ingress_message` carries the outcome's own model.
+//! - **Content with no neutral event cannot sit between streamed blocks.** A `redacted_thinking`
+//!   block emits no `StreamEvent`, so a relayed answer of thinking, redacted thinking and then
+//!   text has already shown the text at the index the redacted block holds in the outcome.
+//!   `close` refuses it as a contradiction and sends nothing; such content is carried only after
+//!   every streamed block. Relaying it in place needs block boundaries in `StreamEvent`.
 
 use crate::{codec::decode_block, decode::read_reason, usage::Snapshot};
 use llm_core::{
@@ -85,7 +96,8 @@ pub struct IngressStream {
     model: Option<Id>,
     blocks: Vec<Block>,
     /// Calls whose fragments arrived with no announcement, or whose name the decoder would
-    /// refuse when the block opens. Nothing of them was relayed; `close` sends them complete.
+    /// refuse when the block opens. Nothing of them was relayed; `close` sends them complete, and
+    /// refuses an outcome that omits one.
     held: Vec<CallId>,
     /// Content arrived past the bound the decoder holds a stream to; `close` refuses.
     overflowed: bool,
@@ -96,6 +108,11 @@ pub struct IngressStream {
 impl IngressStream {
     /// `model` is what `message_start` announces. That event precedes the outcome, so the
     /// upstream model is announced only when the caller already knows it; none is invented.
+    ///
+    /// The model travels only in `message_start`: a server passes here the model it will
+    /// announce, for example the binding's upstream model name. With `None`, an outcome that
+    /// does report a model still closes, and the caller reads the model back as unknown. A model
+    /// announced here and contradicted by the outcome is refused by `close`.
     ///
     /// # Errors
     /// Refuses an identifier or model name the decoder cannot read, before anything is sent.
@@ -145,12 +162,14 @@ impl IngressStream {
     ///
     /// The outcome's items must begin with exactly the blocks streamed, in order: the same text,
     /// the same reasoning, the same calls with the arguments relayed. Content the stream never
-    /// showed may only follow them, because the decoder reads content in block order. A refusal
-    /// sends nothing and leaves the stream open for `fail`.
+    /// showed may only follow them, because the decoder reads content in block order. Every call
+    /// the stream reported is in the outcome: an announced one at its block, a held one among
+    /// the content that follows. A refusal sends nothing and leaves the stream open for `fail`.
     ///
     /// # Errors
     /// Refuses everything `encode_ingress_message` refuses, an outcome that contradicts what was
-    /// streamed, a model other than the one announced, and a stream that already ended.
+    /// streamed or omits a call the stream reported, a model other than the one announced, and a
+    /// stream that already ended.
     pub fn close(&mut self, outcome: &TurnOutcome) -> Result<Vec<Value>, Error> {
         if self.ended {
             return Err(Error::protocol(ENDED));
@@ -161,6 +180,10 @@ impl IngressStream {
         if self.overflowed
             || outcome.items.len() < self.blocks.len()
             || (self.model.is_some() && self.model != outcome.observation.upstream_model)
+            || self
+                .held
+                .iter()
+                .any(|held| !outcome.tool_calls().any(|call| call.call_id == *held))
         {
             return Err(Error::protocol(CONTRADICTION));
         }
