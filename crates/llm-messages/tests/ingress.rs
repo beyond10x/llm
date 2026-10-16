@@ -501,6 +501,33 @@ fn reasoning_without_a_signature_is_refused() {
     }
 }
 
+/// A stream built `without_reasoning_relay` shows no reasoning delta. Signed thinking the outcome
+/// carries is still sent, whole at close, as content the stream never showed, and reads back.
+#[tokio::test]
+async fn reasoning_not_relayed_still_sends_signed_thinking_whole_at_close() {
+    let answer = outcome(StopReason::EndTurn, text_items());
+    let mut stream = IngressStream::new(ID, Some(MODEL))
+        .unwrap()
+        .without_reasoning_relay();
+    for event in [reasoning("Let me "), reasoning("look")] {
+        assert!(stream.chunk(&event).is_empty(), "{event:?}");
+    }
+    let payloads = stream.close(&answer).unwrap();
+    let (decoded, shown) = decode(&payloads).await;
+    assert_eq!(decoded.unwrap(), answer);
+    assert_eq!(shown, [reasoning("Let me look"), text("Checking.")]);
+
+    // Unshown content only follows what was streamed: text already relayed at index 0 cannot be
+    // preceded by the thinking block the outcome places first.
+    let mut stream = IngressStream::new(ID, Some(MODEL))
+        .unwrap()
+        .without_reasoning_relay();
+    for event in text_events() {
+        stream.chunk(&event);
+    }
+    assert!(stream.close(&answer).is_err());
+}
+
 #[test]
 fn opaque_state_this_wire_cannot_carry_is_refused() {
     let mut foreign = target();

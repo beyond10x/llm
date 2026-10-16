@@ -16,6 +16,19 @@
 //!   text has already shown the text at the index the redacted block holds in the outcome.
 //!   `close` refuses it as a contradiction and sends nothing; such content is carried only after
 //!   every streamed block. Relaying it in place needs block boundaries in `StreamEvent`.
+//!
+//! **Reasoning is relayed live only from an upstream that signs it.** A relayed `thinking` block
+//! is signed by `close` from the outcome's opaque state, and only a Messages upstream carries
+//! that signature. A server whose upstream cannot sign reasoning (Chat Completions, Responses)
+//! builds its stream with `IngressStream::without_reasoning_relay`: reasoning deltas are then not
+//! sent, and the answer reads back without them. A Messages upstream relays its reasoning live.
+//! A stream that relays reasoning the outcome then carries no signed block for is refused by
+//! `close`.
+//!
+//! **A known input total is left out when either cache count is unknown**, as the cache-creation
+//! count is on every Chat and Responses upstream: this wire reports fresh input apart from both
+//! cache counters, so the fresh count cannot be derived without a guess. This holds for the
+//! streamed answer and `encode_ingress_message` alike.
 
 use crate::{codec::decode_block, decode::read_reason, usage::Snapshot};
 use llm_core::{
@@ -79,6 +92,15 @@ struct Block {
     open: bool,
 }
 
+/// What a stream does with a reasoning delta.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Reasoning {
+    /// Opens or extends a `thinking` block, signed at close.
+    Relayed,
+    /// Sends nothing; set by `without_reasoning_relay`.
+    Withheld,
+}
+
 /// Encoder for one streamed answer.
 ///
 /// Each value it returns is one event payload carrying its `type`; the SSE event name equals it
@@ -101,6 +123,8 @@ pub struct IngressStream {
     held: Vec<CallId>,
     /// Content arrived past the bound the decoder holds a stream to; `close` refuses.
     overflowed: bool,
+    /// Whether reasoning deltas are relayed; withheld by `without_reasoning_relay`.
+    reasoning_relay: Reasoning,
     started: bool,
     ended: bool,
 }
@@ -123,9 +147,24 @@ impl IngressStream {
             blocks: Vec::new(),
             held: Vec::new(),
             overflowed: false,
+            reasoning_relay: Reasoning::Relayed,
             started: false,
             ended: false,
         })
+    }
+
+    /// A stream that does not relay reasoning deltas, for a server whose upstream cannot sign
+    /// reasoning (Chat Completions, Responses). A relayed `thinking` block needs the signature
+    /// only a Messages upstream's outcome carries, so without one `close` would refuse the turn
+    /// after its answer was shown.
+    ///
+    /// `ReasoningDelta` then sends nothing and opens no block. Signed thinking the outcome does
+    /// carry is sent whole by `close`, as content the stream never showed, after the blocks it
+    /// did show.
+    #[must_use]
+    pub fn without_reasoning_relay(mut self) -> Self {
+        self.reasoning_relay = Reasoning::Withheld;
+        self
     }
 
     /// The events for one neutral delta; empty when this wire carries nothing for it.
@@ -139,7 +178,9 @@ impl IngressStream {
         let mut out = Vec::new();
         match event {
             StreamEvent::TextDelta { text } if !text.is_empty() => self.text(text, &mut out),
-            StreamEvent::ReasoningDelta { text } if !text.is_empty() => {
+            StreamEvent::ReasoningDelta { text }
+                if self.reasoning_relay == Reasoning::Relayed && !text.is_empty() =>
+            {
                 self.reasoning(text, &mut out);
             }
             StreamEvent::ToolCallStarted { call_id, name } => {
