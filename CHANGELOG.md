@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-16
+
 ### Added
 
 - `b10x-llm-models`: model routes, format `llm.routes/1` (YAML, module `llm_models::routes`).
