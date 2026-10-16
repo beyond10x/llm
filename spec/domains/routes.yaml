@@ -1,12 +1,12 @@
 domain: llm.routes
 
 # Model routes (`llm.routes/1`, crates/llm-models `routes`). One short YAML document that a
-# gateway, an agent CLI and an SDK read the same way: a provider names its base URL, its wire
+# gateway, an agent CLI and an SDK read the same way: an endpoint names its base URL, its wire
 # protocol and how it authenticates, its secret only as a source reference (`env:<VARIABLE>`,
-# `file:<path>` or `keychain:<service>/<entry>`); a route names one `<provider>/<model-id>`.
+# `file:<path>` or `keychain:<service>/<entry>`); a route names one `<endpoint>/<model-id>`.
 #
 #   format: llm.routes/1
-#   providers:
+#   endpoints:
 #     anthropic:  {base_url: https://api.anthropic.com/v1, protocol: messages,
 #                  auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
 #     openrouter: {base_url: https://openrouter.ai/api/v1, protocol: chat-completions,
@@ -22,22 +22,24 @@ domain: llm.routes
 #                 temperature: true, top_p: true, reasoning_efforts: [], context_window: 32768,
 #                 max_output_tokens: 8192}}
 #
-# A route is a `<provider>/<model-id>` string, or a mapping naming that `model` and the route's
+# A route is an `<endpoint>/<model-id>` string, or a mapping naming that `model` and the route's
 # `capabilities` (the `llm.catalog` Capabilities); a string route takes the module's default
-# capabilities. A route value splits on its FIRST `/` only, so a model id may itself contain `/`. A name that
-# is not a route but reads `<declared provider>/<model-id>` resolves directly. The document
-# expands into an `llm.catalog/1` catalog (one provider, account and endpoint per provider; one
-# served model, serving model and single-target route per route), so port construction is the
-# `llm.models` domain's unchanged. Parsing is strict and performs no I/O: an unknown field, an
-# unknown format version, a route naming an undeclared provider, an unknown protocol or
+# capabilities. A route value splits on its FIRST `/` only, so a model id may itself contain `/`.
+# A name that is not a route but reads `<declared endpoint>/<model-id>` resolves directly; that
+# name is itself one identifier of at most 256 bytes. The document expands into an
+# `llm.catalog/1` catalog (one catalog provider, account and endpoint per endpoint, each with the
+# endpoint's name as id; one served model, serving model and single-target route per route), so
+# port construction is the `llm.models` domain's unchanged. Parsing is strict and performs no
+# I/O: an unknown field (the former `providers` included), an
+# unknown format version, a route naming an undeclared endpoint, an unknown protocol or
 # authentication kind, a literal secret value and a secret reference of an unknown source kind
-# are refused as `invalid-request` with a diagnostic that names the field or the provider and
+# are refused as `invalid-request` with a diagnostic that names the field or the endpoint and
 # never echoes a value.
 #
 # The document's secret references become the caller's resolvers, one per credentialed
-# provider, keyed by the provider's name (which is also its account id and its secret reference
+# endpoint, keyed by the endpoint's name (which is also its account id and its secret reference
 # id). Building them reads nothing. At turn time an unset variable or a missing file is refused
-# as `unauthorized`, naming the provider's reference (never the variable, the path or a value),
+# as `unauthorized`, naming the endpoint's reference (never the variable, the path or a value),
 # before any request is sent; no other source is tried.
 #
 # The entities are verification-adapter observations of the real crate.
@@ -48,12 +50,12 @@ entities:
       - {name: loaded, type: Boolean}
       - {name: error_code, type: Optional<String>}
       - {name: error_message, type: Optional<String>}
-      # Every declared route, in name order: `<route>=<provider>/<upstream model>`.
+      # Every declared route, in name order: `<route>=<endpoint>/<upstream model>`.
       - {name: routes, type: List<String>}
-      # Every declared provider, in name order:
-      # `<provider>:<protocol>:<auth kind>:<secret source kind or none>`.
-      - {name: providers, type: List<String>}
-      # Per probed name, in probe order: `<name>=<provider>:<protocol>:<upstream model>` for an
+      # Every declared endpoint, in name order:
+      # `<endpoint>:<protocol>:<auth kind>:<secret source kind or none>`.
+      - {name: endpoints, type: List<String>}
+      # Per probed name, in probe order: `<name>=<endpoint>:<protocol>:<upstream model>` for an
       # answered name, `<name>!<error code>` for a refused one.
       - {name: answers, type: List<String>}
       # The serving-model ids of the expanded `llm.catalog/1` catalog, in id order.
@@ -87,7 +89,7 @@ commands:
         payload:
           llm.routes.Loaded:
             loaded: {generated: true}
-        summary: Return the routes, providers and answers the document yields, or its refusal.
+        summary: Return the routes, endpoints and answers the document yields, or its refusal.
 
   - name: llm.routes.Authenticate
     # Build the document's resolvers and prepare one route's credential, as a turn would before

@@ -8,6 +8,7 @@ mod models;
 mod pricing;
 mod providers;
 mod responses;
+mod routes;
 mod secrets;
 mod target;
 mod transport;

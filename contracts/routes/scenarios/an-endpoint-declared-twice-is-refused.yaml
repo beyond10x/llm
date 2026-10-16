@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-endpoint-declared-twice-is-refused
+summary: an endpoint declared twice under the same YAML key is refused as invalid-request instead of the last declaration winning
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+        anthropic: {base_url: https://second.example.invalid/v1, protocol: messages,
+                    auth: {kind: anonymous}}
+      routes:
+        sonnet: anthropic/claude-sonnet-4-5
+    probe_names: [sonnet]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "endpoint `anthropic`: the document declares it more than once"
+    routes: []
+    endpoints: []
+    answers: []
+    catalog_serving_models: []
