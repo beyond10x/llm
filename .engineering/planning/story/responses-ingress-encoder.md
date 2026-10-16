@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:responses-ingress-encoder
 kind: story
-status: active
+status: implemented
 title: A server answers a Responses caller from a neutral turn
 summary: StreamEvents and TurnOutcome encode to the Responses SSE sequence and response object the repo's decoder accepts
 relations:
@@ -21,10 +21,11 @@ scope:
   path: crates/llm-responses/tests
 - confidence: cited
   path: spec/domains/responses.yaml
-revision: 11
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-16T02:36:56Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-10-16T02:36:56Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-10-16T14:32:15Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"test_result":1,"review_outcome":8,"verification":1}}}
 ---
 ## Context
 

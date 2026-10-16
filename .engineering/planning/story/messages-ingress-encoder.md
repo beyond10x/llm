@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:messages-ingress-encoder
 kind: story
-status: active
+status: implemented
 title: A server answers a Messages caller from a neutral turn
 summary: StreamEvents and TurnOutcome encode to the Messages event stream and message the repo's decoder accepts
 relations:
@@ -23,10 +23,11 @@ scope:
   path: docs/verification/messages-falsification.json
 - confidence: cited
   path: spec/domains/messages.yaml
-revision: 12
+revision: 13
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-16T02:36:56Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-10-16T02:36:56Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-10-16T14:32:17Z", actor: "human:timo", revision: 13, decided_on: {"recorded":{"test_result":1,"review_outcome":6,"verification":1}}}
 ---
 ## Context
 

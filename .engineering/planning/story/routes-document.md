@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:routes-document
 kind: story
-status: active
+status: implemented
 title: One llm.routes/1 document yields the catalog and the resolvers every consumer builds from
 summary: YAML routes expand into llm.catalog/1 and llm_models::Resolvers from env/file/keychain references, strictly
 relations:
@@ -33,10 +33,11 @@ scope:
   path: crates/llm-routing/src/catalog.rs
 - confidence: cited
   path: spec/domains/routes.yaml
-revision: 18
+revision: 19
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-16T02:36:55Z", actor: "human:timo", revision: 14, decided_on: {"recorded":{"review_outcome":5}}}
 - {from: "proposed", to: "active", at: "2026-10-16T02:36:56Z", actor: "human:timo", revision: 15, decided_on: {"recorded":{"review_outcome":5}}}
+- {from: "active", to: "implemented", at: "2026-10-16T14:32:14Z", actor: "human:timo", revision: 19, decided_on: {"recorded":{"test_result":1,"review_outcome":9,"verification":1}}}
 ---
 ## Context
 

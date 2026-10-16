@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-16T14:31:35Z",
+  "actor": "human:timo",
+  "artifact": "story:routes-document",
+  "kind": "story",
+  "revision": 18,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "Gate (task check on Rust 1.98.0) on PR 33, b1cfd9a4",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/38915138582"
+  }
+}
