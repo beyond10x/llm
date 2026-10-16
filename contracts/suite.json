@@ -406,6 +406,20 @@
       "llm.responses/authored/an-unreported-counter-stays-unknown",
       "llm.responses/authored/an-unreported-model-is-not-the-configured-one",
       "llm.responses/authored/contradictory-reported-counters-are-refused",
+      "llm.responses/authored/encoding-a-caller-owned-item-is-refused",
+      "llm.responses/authored/encoding-a-non-streamed-response-reads-back-unchanged",
+      "llm.responses/authored/encoding-a-stop-reason-the-wire-cannot-express-is-refused",
+      "llm.responses/authored/encoding-a-streamed-turn-with-reasoning-text-and-two-calls-reads-back-unchanged",
+      "llm.responses/authored/encoding-an-end-turn-reads-back-as-an-end-turn",
+      "llm.responses/authored/encoding-an-incomplete-reason-reads-back-as-that-reason",
+      "llm.responses/authored/encoding-an-outcome-renaming-an-announced-call-is-refused",
+      "llm.responses/authored/encoding-an-unknown-input-count-is-omitted-never-zero",
+      "llm.responses/authored/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers",
+      "llm.responses/authored/encoding-arguments-that-are-not-an-object-are-refused",
+      "llm.responses/authored/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class",
+      "llm.responses/authored/encoding-text-after-a-call-is-a-new-message",
+      "llm.responses/authored/encoding-the-output-cap-reads-back-as-max-output-tokens",
+      "llm.responses/authored/encoding-unattributed-state-is-refused-by-name",
       "llm.responses/authored/ingress-carries-an-unmodelled-entry-it-cannot-attribute",
       "llm.responses/authored/ingress-refusal-reads-no-model-or-instructions",
       "llm.responses/authored/ingress-refuses-a-body-for-another-model",
@@ -2749,6 +2763,76 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/contradictory-reported-counters-are-refused"
       },
+      "responses/scenarios/encoding-a-caller-owned-item-is-refused.yaml": {
+        "digest": "sha256:150574aebbe061723f579b64463deda4c5db31577ab23ec1601d3544cb9a80e8",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-a-caller-owned-item-is-refused"
+      },
+      "responses/scenarios/encoding-a-non-streamed-response-reads-back-unchanged.yaml": {
+        "digest": "sha256:b801d96b8ae8f425efff9635580be9ef9a1db7ebbfb992cfa7d520590c5ea94f",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-a-non-streamed-response-reads-back-unchanged"
+      },
+      "responses/scenarios/encoding-a-stop-reason-the-wire-cannot-express-is-refused.yaml": {
+        "digest": "sha256:0e1a0eb67b2ca5307e5b38023aa3d34c37562cf5657c6d74ccfc85d2247ead71",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-a-stop-reason-the-wire-cannot-express-is-refused"
+      },
+      "responses/scenarios/encoding-a-streamed-turn-with-reasoning-text-and-two-calls-reads-back-unchanged.yaml": {
+        "digest": "sha256:d619d8ad3758ea2298576434ba3fe93bd090039e714ddc52bb56afc1f3080be6",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-a-streamed-turn-with-reasoning-text-and-two-calls-reads-back-unchanged"
+      },
+      "responses/scenarios/encoding-an-end-turn-reads-back-as-an-end-turn.yaml": {
+        "digest": "sha256:692d4c1a5b31129b7ddfdf9d9d6062cf7d2cc66f2edefa3344eb183571d9af28",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-an-end-turn-reads-back-as-an-end-turn"
+      },
+      "responses/scenarios/encoding-an-incomplete-reason-reads-back-as-that-reason.yaml": {
+        "digest": "sha256:f03ef8d2869de6112c3dc598df46c28dbe472357d183a68794d4905134f4beee",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-an-incomplete-reason-reads-back-as-that-reason"
+      },
+      "responses/scenarios/encoding-an-outcome-renaming-an-announced-call-is-refused.yaml": {
+        "digest": "sha256:f535050b520c78eb8991b32a7d84ad19ee83baa912b80082b4e9eb556b55b678",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-an-outcome-renaming-an-announced-call-is-refused"
+      },
+      "responses/scenarios/encoding-an-unknown-input-count-is-omitted-never-zero.yaml": {
+        "digest": "sha256:e24925d3a323506458b08c208d29aca73bf2c5f858917154c5ac191bfb7b8839",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-an-unknown-input-count-is-omitted-never-zero"
+      },
+      "responses/scenarios/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers.yaml": {
+        "digest": "sha256:723f7b61b22d3cc6448cd98f5dbddd14a44d3acc2b6830d3094f02bd3e8816af",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers"
+      },
+      "responses/scenarios/encoding-arguments-that-are-not-an-object-are-refused.yaml": {
+        "digest": "sha256:0ba566ee9713f60253c7aebfb308bdd60548e23e38ceae36712e7be0d03dadd9",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-arguments-that-are-not-an-object-are-refused"
+      },
+      "responses/scenarios/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class.yaml": {
+        "digest": "sha256:e585c64e6d185cf17722cfd535b62ed2bb0e26bc8d4fcc7d53af2e3cde2cb473",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class"
+      },
+      "responses/scenarios/encoding-text-after-a-call-is-a-new-message.yaml": {
+        "digest": "sha256:e5f0abe3710782f3f2e2ed53476beb9e3f60446b1819a2e2d0e0df1aba71c0e1",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-text-after-a-call-is-a-new-message"
+      },
+      "responses/scenarios/encoding-the-output-cap-reads-back-as-max-output-tokens.yaml": {
+        "digest": "sha256:585d0def50e1d04cb279b23c7cb0bc2a331039306bc5c354834d05fe1e0cd185",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-the-output-cap-reads-back-as-max-output-tokens"
+      },
+      "responses/scenarios/encoding-unattributed-state-is-refused-by-name.yaml": {
+        "digest": "sha256:47a9166bb6022e7e7e5c65afae0c4b1d4f6d4e67d4558ec025cc5f39e2976321",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-unattributed-state-is-refused-by-name"
+      },
       "responses/scenarios/ingress-carries-an-unmodelled-entry-it-cannot-attribute.yaml": {
         "digest": "sha256:f36aba48b7d2384494d0021ebe950c3e80a793904075c50afdeeb6ac0dfb9bb5",
         "disposition": "accepted",
@@ -4181,8 +4265,8 @@
       }
     },
     "counts": {
-      "authored": 696,
-      "generated": 30,
+      "authored": 710,
+      "generated": 31,
       "outside": 0,
       "refused": 0
     },
@@ -4203,6 +4287,7 @@
       "llm.providers.Describe/outcome/observed",
       "llm.providers.Prepare/outcome/observed",
       "llm.responses.DecodeStream/outcome/observed",
+      "llm.responses.EncodeIngress/outcome/observed",
       "llm.responses.Ingest/outcome/observed",
       "llm.responses.Project/outcome/observed",
       "llm.routes.Authenticate/outcome/observed",
@@ -4232,9 +4317,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "044c9430e99be060f3459baf761c5ab1af300f92c9808c5bfc4f75c3f3b010b5",
+    "contract_digest": "2a8bd796ae4384ba761b2dee4bf13c753f9da871d3b04799b23da07bdaf100dc",
     "scenario_initial_state": "empty",
-    "spec_digest": "bda8981146eb10d44bc7ad1f4c64c9b581bd0fb1b1f73be48bdf203c6fb9165e",
+    "spec_digest": "4d76c6ed9e5668af7998d2e86c681a01cc20452f934ec6d8d16e19dc59fc09c2",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -4297,6 +4382,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -4409,6 +4498,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -11676,6 +11769,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -11781,6 +11878,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -18277,6 +18378,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -18385,6 +18490,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -18483,6 +18592,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -18606,6 +18719,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -18704,6 +18821,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -18831,6 +18952,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -18929,6 +19054,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -19045,6 +19174,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -26236,6 +26369,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -26345,6 +26482,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -31324,6 +31465,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -31436,6 +31581,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -31534,6 +31683,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -31649,6 +31802,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -31747,6 +31904,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -31870,6 +32031,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -31968,6 +32133,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -32080,6 +32249,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -40338,6 +40511,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -40454,6 +40631,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -40552,6 +40733,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -40668,6 +40853,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -41581,6 +41770,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -41697,6 +41890,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -41803,6 +42000,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -41927,6 +42128,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -50041,6 +50246,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -50161,7 +50370,248 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.responses.EncodeIngress/outcome/observed": {
+      "purpose": "`llm.responses.EncodeIngress` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "binding_json"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "events_json"
+            },
+            "failure_json": {
+              "kind": "literal",
+              "value": "failure_json"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "outcome_json"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "upstream_model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "shape": {
+            "accepted": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
           "step": "expect_no_event"
         },
         {
@@ -50255,6 +50705,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -50374,6 +50828,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -50472,6 +50930,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -50600,6 +51062,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -54393,6 +54859,1659 @@
           },
           "step": "expect_view",
           "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-a-caller-owned-item-is-refused": {
+      "purpose": "an outcome carrying a tool result, which the caller owns, is refused rather than answered",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hi\"},{\"kind\":\"tool-result\",\"call_id\":\"call-1\",\"output\":\"noon\",\"failed\":false}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": false
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "model outcome contains caller-owned content"
+              },
+              "output_json": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-a-non-streamed-response-reads-back-unchanged": {
+      "purpose": "a non-streamed response object carries the whole turn and reads back unchanged",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"payload\":{\"type\":\"reasoning\",\"id\":\"rs_upstream_1\",\"summary\":[],\"encrypted_content\":\"gAAAAABfixture\"}},{\"kind\":\"assistant-text\",\"text\":\"Let me check.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": false
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_stop_reason": {
+                "kind": "literal",
+                "value": "tool-calls"
+              },
+              "decoded_stream_events": {
+                "kind": "literal",
+                "value": []
+              },
+              "model_reported": {
+                "kind": "literal",
+                "value": "example/Small-Model"
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "output_json": {
+                "kind": "literal",
+                "value": "[{\"encrypted_content\":\"gAAAAABfixture\",\"id\":\"rs_upstream_1\",\"summary\":[],\"type\":\"reasoning\"},{\"content\":[{\"annotations\":[],\"text\":\"Let me check.\",\"type\":\"output_text\"}],\"id\":\"msg_resp_gateway_fixture_1\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"},{\"arguments\":\"{}\",\"call_id\":\"call-1\",\"id\":\"fc_resp_gateway_fixture_2\",\"name\":\"clock\",\"status\":\"completed\",\"type\":\"function_call\"}]"
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": []
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "resp_gateway_fixture"
+              },
+              "status": {
+                "kind": "literal",
+                "value": "completed"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-a-stop-reason-the-wire-cannot-express-is-refused": {
+      "purpose": "a reason that would read back as another one is refused rather than approximated",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"incomplete\",\"reason\":\"content-filter\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"I can\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": false
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the Responses wire cannot report this terminal reason"
+              },
+              "status": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-a-streamed-turn-with-reasoning-text-and-two-calls-reads-back-unchanged": {
+      "purpose": "a streamed turn with reasoning, text and two calls reads back unchanged",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"reasoning-delta\",\"text\":\"Need the time.\"},{\"kind\":\"text-delta\",\"text\":\"Let me \"},{\"kind\":\"text-delta\",\"text\":\"check.\"},{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"clock\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{}\"},{\"kind\":\"tool-call-started\",\"call_id\":\"call-2\",\"name\":\"file_read\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-2\",\"delta\":\"{\\\"path\\\":\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-2\",\"delta\":\"\\\"README.md\\\"}\"}]"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"payload\":{\"type\":\"reasoning\",\"id\":\"rs_upstream_1\",\"summary\":[{\"type\":\"summary_text\",\"text\":\"Need the time.\"}],\"encrypted_content\":\"gAAAAABfixture\"}},{\"kind\":\"assistant-text\",\"text\":\"Let me check.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}},{\"kind\":\"tool-call\",\"call_id\":\"call-2\",\"name\":\"file_read\",\"arguments\":{\"path\":\"README.md\"}}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"usage\":{\"input_tokens\":1788,\"output_tokens\":115,\"cached_input_tokens\":1680,\"reasoning_output_tokens\":42},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_stop_reason": {
+                "kind": "literal",
+                "value": "tool-calls"
+              },
+              "decoded_stream_events": {
+                "kind": "literal",
+                "value": [
+                  "reasoning-delta:Need the time.",
+                  "text-delta:Let me ",
+                  "text-delta:check.",
+                  "tool-call-started:call-1:clock",
+                  "tool-arguments-delta:call-1:{}",
+                  "tool-call-started:call-2:file_read",
+                  "tool-arguments-delta:call-2:{\"path\":",
+                  "tool-arguments-delta:call-2:\"README.md\"}"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "events_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "incomplete_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "model_reported": {
+                "kind": "literal",
+                "value": "example/Small-Model"
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": [
+                  "response.created",
+                  "response.in_progress",
+                  "response.output_item.added",
+                  "response.reasoning_summary_part.added",
+                  "response.reasoning_summary_text.delta",
+                  "response.output_item.added",
+                  "response.content_part.added",
+                  "response.output_text.delta",
+                  "response.output_text.delta",
+                  "response.output_item.added",
+                  "response.function_call_arguments.delta",
+                  "response.output_item.added",
+                  "response.function_call_arguments.delta",
+                  "response.function_call_arguments.delta",
+                  "response.reasoning_summary_text.done",
+                  "response.reasoning_summary_part.done",
+                  "response.output_item.done",
+                  "response.output_text.done",
+                  "response.content_part.done",
+                  "response.output_item.done",
+                  "response.function_call_arguments.done",
+                  "response.output_item.done",
+                  "response.function_call_arguments.done",
+                  "response.output_item.done",
+                  "response.completed"
+                ]
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "resp_gateway_fixture"
+              },
+              "status": {
+                "kind": "literal",
+                "value": "completed"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":1788,\"input_tokens_details\":{\"cached_tokens\":1680},\"output_tokens\":115,\"output_tokens_details\":{\"reasoning_tokens\":42},\"total_tokens\":1903}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-an-end-turn-reads-back-as-an-end-turn": {
+      "purpose": "an answer that ends its turn reads back as an end turn",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"Hel\"},{\"kind\":\"text-delta\",\"text\":\"lo\"}]"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hello\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"usage\":{\"input_tokens\":12,\"output_tokens\":3},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "decoded_stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:Hel",
+                  "text-delta:lo"
+                ]
+              },
+              "events_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "incomplete_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "output_json": {
+                "kind": "literal",
+                "value": "[{\"content\":[{\"annotations\":[],\"text\":\"Hello\",\"type\":\"output_text\"}],\"id\":\"msg_resp_gateway_fixture_0\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}]"
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": [
+                  "response.created",
+                  "response.in_progress",
+                  "response.output_item.added",
+                  "response.content_part.added",
+                  "response.output_text.delta",
+                  "response.output_text.delta",
+                  "response.output_text.done",
+                  "response.content_part.done",
+                  "response.output_item.done",
+                  "response.completed"
+                ]
+              },
+              "status": {
+                "kind": "literal",
+                "value": "completed"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-an-incomplete-reason-reads-back-as-that-reason": {
+      "purpose": "an incomplete turn names its reason and reads back with that reason",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"I can\"}]"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"incomplete\",\"reason\":\"content_filter\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"I can\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_stop_reason": {
+                "kind": "literal",
+                "value": "incomplete"
+              },
+              "decoded_usage_json": {
+                "kind": "literal",
+                "value": null
+              },
+              "events_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "incomplete_reason": {
+                "kind": "literal",
+                "value": "content_filter"
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "status": {
+                "kind": "literal",
+                "value": "incomplete"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-an-outcome-renaming-an-announced-call-is-refused": {
+      "purpose": "an outcome that renames a call already announced on the stream is refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"lookup\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{}\"}]"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "model outcome contradicts what was already streamed"
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": []
+              },
+              "status": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-an-unknown-input-count-is-omitted-never-zero": {
+      "purpose": "an input count the upstream never reported is left out and reads back unknown, never zero",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"Hi\"}]"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hi\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"usage\":{\"output_tokens\":5},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_usage_json": {
+                "kind": "literal",
+                "value": "{\"output_tokens\":5}"
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"output_tokens\":5}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers": {
+      "purpose": "an answer leaves out a model the upstream never reported and names the caller's response id, not the upstream's",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hi\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"response_id\":\"resp_upstream_1\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": false
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "decoded_usage_json": {
+                "kind": "literal",
+                "value": null
+              },
+              "model_reported": {
+                "kind": "literal",
+                "value": null
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": false
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "resp_gateway_fixture"
+              },
+              "status": {
+                "kind": "literal",
+                "value": "completed"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-arguments-that-are-not-an-object-are-refused": {
+      "purpose": "a call whose arguments are not a JSON object is refused, because the decoder would refuse to read it back",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":[1]}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the Responses wire carries only tool arguments that are a JSON object"
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class": {
+      "purpose": "a stream that fails after output ends with one failed response the decoder reads as the same class",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"Hel\"}]"
+            },
+            "failure_json": {
+              "kind": "literal",
+              "value": "{\"code\":\"rate-limited\",\"message\":\"upstream prose that must not be relayed\",\"dispatch\":\"accepted\"}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "decoded_error_code": {
+                "kind": "literal",
+                "value": "rate-limited"
+              },
+              "decoded_stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:Hel"
+                ]
+              },
+              "events_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "failure_code": {
+                "kind": "literal",
+                "value": "rate_limit_exceeded"
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": null
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": [
+                  "response.created",
+                  "response.in_progress",
+                  "response.output_item.added",
+                  "response.content_part.added",
+                  "response.output_text.delta",
+                  "response.failed"
+                ]
+              },
+              "status": {
+                "kind": "literal",
+                "value": "failed"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-text-after-a-call-is-a-new-message": {
+      "purpose": "text streamed after a call opens a new message item, so each message shows its own text once",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"First.\"},{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"clock\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{}\"},{\"kind\":\"text-delta\",\"text\":\"Second.\"}]"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"First.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}},{\"kind\":\"assistant-text\",\"text\":\"Second.\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"response_id\":\"resp_gateway_fixture\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:First.",
+                  "tool-call-started:call-1:clock",
+                  "tool-arguments-delta:call-1:{}",
+                  "text-delta:Second."
+                ]
+              },
+              "events_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": [
+                  "response.created",
+                  "response.in_progress",
+                  "response.output_item.added",
+                  "response.content_part.added",
+                  "response.output_text.delta",
+                  "response.output_item.added",
+                  "response.function_call_arguments.delta",
+                  "response.output_item.added",
+                  "response.content_part.added",
+                  "response.output_text.delta",
+                  "response.output_text.done",
+                  "response.content_part.done",
+                  "response.output_item.done",
+                  "response.function_call_arguments.done",
+                  "response.output_item.done",
+                  "response.output_text.done",
+                  "response.content_part.done",
+                  "response.output_item.done",
+                  "response.completed"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-the-output-cap-reads-back-as-max-output-tokens": {
+      "purpose": "a turn stopped by the output cap ends incomplete and reads back as max output tokens",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"The file says\"}]"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"max-output-tokens\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"The file says\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"usage\":{\"input_tokens\":12,\"output_tokens\":4},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_stop_reason": {
+                "kind": "literal",
+                "value": "max-output-tokens"
+              },
+              "events_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "incomplete_reason": {
+                "kind": "literal",
+                "value": "max_output_tokens"
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "status": {
+                "kind": "literal",
+                "value": "incomplete"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-unattributed-state-is-refused-by-name": {
+      "purpose": "opaque state no caller bound is refused by name rather than answered or dropped",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"unattributed-opaque\",\"protocol\":\"responses\",\"payload\":{\"type\":\"reasoning\",\"summary\":[]}},{\"kind\":\"assistant-text\",\"text\":\"Hi\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "unattributed opaque state is not sendable until a caller binds it to a target"
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
         }
       ]
     },
@@ -59615,6 +61734,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -59735,6 +61858,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -59829,6 +61956,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -59948,6 +62079,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -60042,6 +62177,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -60165,6 +62304,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -60259,6 +62402,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -60383,6 +62530,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -69202,6 +71353,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -69322,6 +71477,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -69424,6 +71583,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -69567,6 +71730,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -69661,6 +71828,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -69796,6 +71967,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -69894,6 +72069,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -70021,6 +72200,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -70119,6 +72302,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -70258,6 +72445,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -70368,6 +72559,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -70520,6 +72715,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {
@@ -81223,6 +83422,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
           "name": "llm.responses.Projected"
         },
         {
@@ -81335,6 +83538,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.responses.Projected",
           "step": "expect_no_event"
         },
@@ -81429,6 +83636,10 @@
         {
           "kind": "event",
           "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
         },
         {
           "kind": "event",
@@ -81541,6 +83752,10 @@
         },
         {
           "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
           "step": "expect_no_event"
         },
         {

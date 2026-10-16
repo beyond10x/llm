@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IngressEncoding",
+  "x-ess-name": "llm.responses.IngressEncoding",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "encoding_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "payload_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string"
+    },
+    "incomplete_reason": {
+      "type": "string"
+    },
+    "failure_code": {
+      "type": "string"
+    },
+    "model_reported": {
+      "type": "string"
+    },
+    "response_id": {
+      "type": "string"
+    },
+    "usage_json": {
+      "type": "string"
+    },
+    "output_json": {
+      "type": "string"
+    },
+    "decoded_accepted": {
+      "type": "boolean"
+    },
+    "decoded_error_code": {
+      "type": "string"
+    },
+    "decoded_stop_reason": {
+      "type": "string"
+    },
+    "decoded_stream_events": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "decoded_usage_json": {
+      "type": "string"
+    },
+    "outcome_preserved": {
+      "type": "boolean"
+    },
+    "events_preserved": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.responses.IngressEncoding.State"
+    }
+  },
+  "required": [
+    "encoding_id",
+    "accepted",
+    "payload_types",
+    "decoded_stream_events",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4d76c6ed9e5668af7998d2e86c681a01cc20452f934ec6d8d16e19dc59fc09c2",
+    "contract_digest": "slice-sha256/2:72afc733851be16dc4832a9c9f258bfc2b380344f8485d07156332d60e9c916a",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.responses.IngressEncoding.State": {
+      "title": "State",
+      "x-ess-name": "llm.responses.IngressEncoding.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}
