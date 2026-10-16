@@ -12,14 +12,18 @@ scope:
 - confidence: cited
   path: checks/conformance/src/messages.rs
 - confidence: cited
+  path: contracts/ess-inputs.yaml
+- confidence: cited
   path: contracts/messages/scenarios
 - confidence: cited
   path: crates/llm-messages/src
 - confidence: cited
   path: crates/llm-messages/tests
 - confidence: cited
+  path: docs/verification/messages-falsification.json
+- confidence: cited
   path: spec/domains/messages.yaml
-revision: 10
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-16T02:36:56Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-10-16T02:36:56Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"review_outcome":2}}}

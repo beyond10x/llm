@@ -10,6 +10,8 @@ relations:
 - serves: vision:portable-model-inference
 scope:
 - confidence: cited
+  path: Cargo.lock
+- confidence: cited
   path: checks/conformance/Cargo.toml
 - confidence: cited
   path: checks/conformance/src/main.rs
@@ -17,6 +19,8 @@ scope:
   path: checks/conformance/src/routes.rs
 - confidence: cited
   path: checks/conformance/src/target.rs
+- confidence: cited
+  path: contracts/ess-inputs.yaml
 - confidence: cited
   path: contracts/routes/scenarios
 - confidence: cited
@@ -29,7 +33,7 @@ scope:
   path: crates/llm-routing/src/catalog.rs
 - confidence: cited
   path: spec/domains/routes.yaml
-revision: 15
+revision: 18
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-16T02:36:55Z", actor: "human:timo", revision: 14, decided_on: {"recorded":{"review_outcome":5}}}
 - {from: "proposed", to: "active", at: "2026-10-16T02:36:56Z", actor: "human:timo", revision: 15, decided_on: {"recorded":{"review_outcome":5}}}
@@ -161,3 +165,16 @@ Unit tests in `crates/llm-models/tests/routes.rs`, each a named `#[test]`:
 `task conformance`; `cargo test -p b10x-llm-models --all-features`; `cargo test -p b10x-llm-models`;
 `cargo clippy -p b10x-llm-models --all-targets --all-features -- -D warnings`; `cargo test -p
 b10x-llm-core --test dependency_boundary`. No network I/O, no paid call.
+
+## Vocabulary change
+
+Decided by the plan's owner on 2026-10-16, during the wave and before 0.6.0 is tagged: the
+top-level `providers:` map of `llm.routes/1` is named **`endpoints:`**. A route value is
+`<endpoint>/<model-id>` and a direct name `<declared endpoint>/<model-id>`. Every mention above of a
+routes-document "provider" (the map, its entries, "undeclared provider", "the provider's reference")
+reads as "endpoint"; `providers:` is refused as an unknown field. Reason: in the connectors vocabulary
+"provider" means the company and one API is a "connector", so one word would mean two things across
+the command lines; llm's own declarations already call the `base_url` holder an endpoint. The
+expansion is unchanged: an endpoint's name becomes the catalog provider, account and endpoint id and
+the secret reference id. Applied in correction round 2 to the spec (`llm.routes.Loading.endpoints`),
+code, tests, scenarios, error texts and the routes guide.
