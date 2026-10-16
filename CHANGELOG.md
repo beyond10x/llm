@@ -6,6 +6,11 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Changed
+
+- The shared source gates workflow runs Gates 0.1.21 instead of 0.1.3: its scan limit is 512 MiB
+  instead of 256 MiB, and it reads the compressed policy secret `B10X_GATES_POLICY_GZ` first.
+
 ## [0.6.0] - 2026-10-16
 
 ### Added
