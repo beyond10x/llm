@@ -23,7 +23,7 @@ The workspace holds 15 packages at version `0.5.1`. None is published to a regis
 | `llm-docs` | binary `llm-docs` | `crates/llm-docs` | Generates and drift-checks the derived pages of the llm documentation site, and holds the programs its guides quote. |
 | `b10x-llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |
 | `b10x-llm-messages` | `llm_messages` | `crates/llm-messages` | Messages protocol projection and gateway ingress for the declared supported subset. |
-| `b10x-llm-models` | `llm_models` | `crates/llm-models` | Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account. |
+| `b10x-llm-models` | `llm_models` | `crates/llm-models` | Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account, and reads llm.routes/1 model routes into a catalog and resolvers. |
 | `b10x-llm-providers` | `llm_providers` | `crates/llm-providers` | Provider/account and authentication bindings independent of protocol selection. |
 | `b10x-llm-responses` | `llm_responses` | `crates/llm-responses` | Responses protocol projection, gateway ingress and a single-attempt client for the declared supported subset. |
 | `b10x-llm-routing` | `llm_routing` | `crates/llm-routing` | TOML catalogs, capability-aware resolution and explicit ordered fallback. |
@@ -44,5 +44,8 @@ Every feature is off by default unless the package lists it as a default. A feat
 | `b10x-llm-credentials` | `keychain` | — | `keyring-core`, `sha2` |
 | `b10x-llm-credentials` | `native-keychain` | `keychain` | `zbus-secret-service-keyring-store`, `apple-native-keyring-store`, `windows-native-keyring-store` |
 | `b10x-llm-credentials` | `secrets` | — | `secrets-core`, `secrets-keychain`, `keyring-core`, `sha2` |
+| `b10x-llm-models` | `environment` | `llm-credentials/environment` | — |
+| `b10x-llm-models` | `file` | `llm-credentials/file` | — |
+| `b10x-llm-models` | `keychain` | `llm-credentials/keychain` | `keyring-core` |
 
 No package turns on a feature by default.

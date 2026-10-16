@@ -6,7 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish.workspace = true
-description = "Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account."
+description = "Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account, and reads llm.routes/1 model routes into a catalog and resolvers."
 
 [lints]
 workspace = true

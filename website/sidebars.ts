@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'guides/call-a-local-endpoint',
         'guides/call-a-model-with-one-forced-tool',
         'guides/use-llm-from-a-synchronous-loop',
+        'guides/configure-model-routes',
         'guides/explain-a-route',
         'guides/price-recorded-usage',
         'guides/resolve-a-local-secret',
