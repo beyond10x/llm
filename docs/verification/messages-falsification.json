@@ -1761,9 +1761,14 @@
   "survivors": 0
  },
  "unaimed": [
+  "Messages answer carries caller-owned content",
+  "Messages answer content would not read back as itself",
+  "Messages answer contradicts what was already streamed",
+  "Messages answer has already ended",
   "Messages block start carries no block",
   "Messages block stop names a block that never started",
   "Messages cache breakdown contradicts its total",
+  "Messages cannot report this terminal reason",
   "Messages citations are outside the declared subset",
   "Messages content block index is missing or invalid",
   "Messages content block is out of order",
