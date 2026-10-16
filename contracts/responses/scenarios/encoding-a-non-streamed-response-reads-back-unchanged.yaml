@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: encoding-a-non-streamed-response-reads-back-unchanged
+summary: a non-streamed response object carries the whole turn and reads back unchanged
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.EncodeIngress
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"opaque","provenance":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"payload":{"type":"reasoning","id":"rs_upstream_1","summary":[],"encrypted_content":"gAAAAABfixture"}},{"kind":"assistant-text","text":"Let me check."},{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":{}}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_upstream_1","final_usage":true}}}'
+    streamed: false
+  outcome: observed
+assert:
+- view: llm.responses.LastIngressEncoding
+  counts: {at_least: 1, at_most: 1}
+- view: llm.responses.LastIngressEncoding
+  contains:
+    accepted: true
+    payload_types: []
+    status: completed
+    # The model and the response id the outcome reports.
+    model_reported: example/Small-Model
+    response_id: resp_upstream_1
+    usage_json: null
+    # The reasoning item verbatim, then each item under an identifier from its position.
+    output_json: '[{"encrypted_content":"gAAAAABfixture","id":"rs_upstream_1","summary":[],"type":"reasoning"},{"content":[{"annotations":[],"text":"Let me check.","type":"output_text"}],"id":"msg_resp_gateway_fixture_1","role":"assistant","status":"completed","type":"message"},{"arguments":"{}","call_id":"call-1","id":"fc_resp_gateway_fixture_2","name":"clock","status":"completed","type":"function_call"}]'
+    decoded_accepted: true
+    decoded_stop_reason: tool-calls
+    decoded_stream_events: []
+    outcome_preserved: true

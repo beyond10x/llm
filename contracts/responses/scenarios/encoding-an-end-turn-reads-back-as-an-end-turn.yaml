@@ -1,0 +1,42 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: encoding-an-end-turn-reads-back-as-an-end-turn
+summary: an answer that ends its turn reads back as an end turn
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.EncodeIngress
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hello"}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_upstream_1","usage":{"input_tokens":12,"output_tokens":3},"final_usage":true}}}'
+    events_json: '[{"kind":"text-delta","text":"Hel"},{"kind":"text-delta","text":"lo"}]'
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.responses.LastIngressEncoding
+  counts: {at_least: 1, at_most: 1}
+- view: llm.responses.LastIngressEncoding
+  contains:
+    accepted: true
+    payload_types:
+    - response.created
+    - response.in_progress
+    - response.output_item.added
+    - response.content_part.added
+    - response.output_text.delta
+    - response.output_text.delta
+    - response.output_text.done
+    - response.content_part.done
+    - response.output_item.done
+    - response.completed
+    status: completed
+    incomplete_reason: null
+    # The streamed message is finished under the identifier its deltas named.
+    output_json: '[{"content":[{"annotations":[],"text":"Hello","type":"output_text"}],"id":"msg_resp_gateway_fixture_0","role":"assistant","status":"completed","type":"message"}]'
+    decoded_accepted: true
+    decoded_stop_reason: end-turn
+    decoded_stream_events:
+    - text-delta:Hel
+    - text-delta:lo
+    events_preserved: true
+    outcome_preserved: true

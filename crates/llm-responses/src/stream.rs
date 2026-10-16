@@ -675,7 +675,7 @@ fn stop_reason(terminal: &Terminal, has_tool_calls: bool) -> StopReason {
     }
 }
 
-fn is_safe_reason(value: &str) -> bool {
+pub(crate) fn is_safe_reason(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 64
         && value

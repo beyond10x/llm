@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: encoding-an-outcome-renaming-an-announced-call-is-refused
+summary: an outcome that renames a call already announced on the stream is refused
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.EncodeIngress
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":{}}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"final_usage":true}}}'
+    events_json: '[{"kind":"tool-call-started","call_id":"call-1","name":"lookup"},{"kind":"tool-arguments-delta","call_id":"call-1","delta":"{}"}]'
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.responses.LastIngressEncoding
+  counts: {at_least: 1, at_most: 1}
+- view: llm.responses.LastIngressEncoding
+  contains:
+    # The caller already saw `lookup` announced; no closing payload can take it back.
+    accepted: false
+    error_code: protocol
+    error_message: model outcome contradicts what was already streamed
+    payload_types: []
+    status: null
+    decoded_accepted: null

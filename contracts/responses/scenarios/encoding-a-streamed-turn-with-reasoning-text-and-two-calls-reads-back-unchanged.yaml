@@ -1,0 +1,69 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: encoding-a-streamed-turn-with-reasoning-text-and-two-calls-reads-back-unchanged
+summary: a streamed turn with reasoning, text and two calls reads back unchanged
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.EncodeIngress
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"opaque","provenance":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"payload":{"type":"reasoning","id":"rs_upstream_1","summary":[{"type":"summary_text","text":"Need the time."}],"encrypted_content":"gAAAAABfixture"}},{"kind":"assistant-text","text":"Let me check."},{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":{}},{"kind":"tool-call","call_id":"call-2","name":"file_read","arguments":{"path":"README.md"}}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_upstream_1","usage":{"input_tokens":1788,"output_tokens":115,"cached_input_tokens":1680,"reasoning_output_tokens":42},"final_usage":true}}}'
+    events_json: '[{"kind":"reasoning-delta","text":"Need the time."},{"kind":"text-delta","text":"Let me "},{"kind":"text-delta","text":"check."},{"kind":"tool-call-started","call_id":"call-1","name":"clock"},{"kind":"tool-arguments-delta","call_id":"call-1","delta":"{}"},{"kind":"tool-call-started","call_id":"call-2","name":"file_read"},{"kind":"tool-arguments-delta","call_id":"call-2","delta":"{\"path\":"},{"kind":"tool-arguments-delta","call_id":"call-2","delta":"\"README.md\"}"}]'
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.responses.LastIngressEncoding
+  counts: {at_least: 1, at_most: 1}
+- view: llm.responses.LastIngressEncoding
+  contains:
+    # Every payload is one the decoder interprets: the response opens, each item opens before
+    # its deltas, every item closes at the end on the outcome's content, and one terminal
+    # payload ends it.
+    accepted: true
+    error_code: null
+    payload_types:
+    - response.created
+    - response.in_progress
+    - response.output_item.added
+    - response.reasoning_summary_part.added
+    - response.reasoning_summary_text.delta
+    - response.output_item.added
+    - response.content_part.added
+    - response.output_text.delta
+    - response.output_text.delta
+    - response.output_item.added
+    - response.function_call_arguments.delta
+    - response.output_item.added
+    - response.function_call_arguments.delta
+    - response.function_call_arguments.delta
+    - response.reasoning_summary_text.done
+    - response.reasoning_summary_part.done
+    - response.output_item.done
+    - response.output_text.done
+    - response.content_part.done
+    - response.output_item.done
+    - response.function_call_arguments.done
+    - response.output_item.done
+    - response.function_call_arguments.done
+    - response.output_item.done
+    - response.completed
+    status: completed
+    incomplete_reason: null
+    model_reported: example/Small-Model
+    response_id: resp_upstream_1
+    usage_json: '{"input_tokens":1788,"input_tokens_details":{"cached_tokens":1680},"output_tokens":115,"output_tokens_details":{"reasoning_tokens":42},"total_tokens":1903}'
+    # The decoder reads back the events that were encoded and the turn that was encoded.
+    decoded_accepted: true
+    decoded_stop_reason: tool-calls
+    decoded_stream_events:
+    - reasoning-delta:Need the time.
+    - 'text-delta:Let me '
+    - text-delta:check.
+    - tool-call-started:call-1:clock
+    - tool-arguments-delta:call-1:{}
+    - tool-call-started:call-2:file_read
+    - 'tool-arguments-delta:call-2:{"path":'
+    - 'tool-arguments-delta:call-2:"README.md"}'
+    events_preserved: true
+    outcome_preserved: true

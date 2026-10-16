@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IngressEncoded payload",
+  "x-ess-name": "llm.responses.IngressEncoded",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "accepted": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "accepted"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4d76c6ed9e5668af7998d2e86c681a01cc20452f934ec6d8d16e19dc59fc09c2",
+    "contract_digest": "slice-sha256/2:2b6c3d2ff6d1d298a4361b4a09d0282c184ff5a860d45862b087859677fb097d",
+    "regenerate": "ess generate"
+  }
+}

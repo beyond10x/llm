@@ -1,0 +1,723 @@
+//! The Responses ingress encoder, read back by this crate's own decoder.
+//!
+//! A server answering a Responses caller turns neutral `StreamEvent`s and a `TurnOutcome` into the
+//! event sequence and the response object this wire carries. Every case here decodes what the
+//! encoder produced with `decode_stream` on the binding the outcome names, so "the encoder emits
+//! what the decoder accepts" is checked by the decoder, not restated.
+
+use llm_core::{
+    CallId, Dispatch, Error, ErrorCode, Id, Item, Protocol, Provenance, StopReason, StreamEvent,
+    ToolCall, ToolName, TurnObservation, TurnOutcome, Usage,
+};
+use llm_responses::{
+    ACCEPTED_STREAM_EVENTS, Binding, IngressStream, decode_stream, encode_ingress_response,
+    ingest_request,
+};
+use serde_json::{Value, json};
+
+const CREATED_AT: u64 = 1_772_000_000;
+
+fn id(value: &str) -> Id {
+    Id::new(value).expect("fixture identifier")
+}
+
+fn provenance() -> Provenance {
+    Provenance {
+        protocol: Protocol::Responses,
+        provider: id("my-lab"),
+        account: id("local"),
+        endpoint: id("local-vllm"),
+        model: id("small"),
+        binding_revision: id("rev-1"),
+    }
+}
+
+fn binding() -> Binding {
+    Binding::new(provenance(), id("example/Small-Model"))
+}
+
+fn call_id(value: &str) -> CallId {
+    CallId::new(value).expect("fixture call id")
+}
+
+fn tool(value: &str) -> ToolName {
+    ToolName::new(value).expect("fixture tool name")
+}
+
+fn call(call: &str, name: &str, arguments: Value) -> Item {
+    Item::ToolCall(ToolCall {
+        call_id: call_id(call),
+        name: tool(name),
+        arguments,
+    })
+}
+
+/// Encrypted reasoning as the decoder binds it: the output item, verbatim, under the binding.
+fn reasoning() -> Item {
+    Item::Opaque {
+        provenance: provenance(),
+        payload: json!({
+            "type": "reasoning",
+            "id": "rs_upstream_1",
+            "summary": [{"type": "summary_text", "text": "Need the time and the file."}],
+            "encrypted_content": "gAAAAABfixture"
+        }),
+    }
+}
+
+fn full_usage() -> Usage {
+    Usage {
+        input_tokens: Some(1788),
+        output_tokens: Some(115),
+        cached_input_tokens: Some(1680),
+        cache_creation_input_tokens: None,
+        reasoning_output_tokens: Some(42),
+    }
+}
+
+fn observation() -> TurnObservation {
+    TurnObservation {
+        binding: provenance(),
+        upstream_model: Some(id("example/Small-Model")),
+        response_id: Some(id("resp_upstream_1")),
+        usage: Some(full_usage()),
+        final_usage: true,
+    }
+}
+
+fn outcome(stop_reason: StopReason, items: Vec<Item>) -> TurnOutcome {
+    TurnOutcome {
+        stop_reason,
+        items,
+        observation: observation(),
+    }
+}
+
+/// A client body a gateway receives, publishing the two tools the outcomes below call.
+fn client_body() -> Value {
+    json!({
+        "model": "example/Small-Model",
+        "input": [{"type": "message", "role": "user",
+                   "content": [{"type": "input_text", "text": "What time is it, and what is in README.md?"}]}],
+        "tools": [
+            {"type": "function", "name": "clock", "description": "Now.",
+             "parameters": {"type": "object"}, "strict": false},
+            {"type": "function", "name": "file_read", "description": "Read a file.",
+             "parameters": {"type": "object"}, "strict": false}
+        ],
+        "stream": true,
+        "store": false,
+        "include": ["reasoning.encrypted_content"]
+    })
+}
+
+fn text_and_reasoning_events() -> Vec<StreamEvent> {
+    vec![
+        StreamEvent::ReasoningDelta {
+            text: "Need the time".to_owned(),
+        },
+        StreamEvent::ReasoningDelta {
+            text: " and the file.".to_owned(),
+        },
+        StreamEvent::TextDelta {
+            text: "Let me ".to_owned(),
+        },
+        StreamEvent::TextDelta {
+            text: "check.".to_owned(),
+        },
+    ]
+}
+
+fn two_call_events() -> Vec<StreamEvent> {
+    vec![
+        StreamEvent::ToolCallStarted {
+            call_id: call_id("call-1"),
+            name: tool("clock"),
+        },
+        StreamEvent::ToolArgumentsDelta {
+            call_id: call_id("call-1"),
+            delta: "{}".to_owned(),
+        },
+        StreamEvent::ToolCallStarted {
+            call_id: call_id("call-2"),
+            name: tool("file_read"),
+        },
+        StreamEvent::ToolArgumentsDelta {
+            call_id: call_id("call-2"),
+            delta: "{\"path\":".to_owned(),
+        },
+        StreamEvent::ToolArgumentsDelta {
+            call_id: call_id("call-2"),
+            delta: "\"README.md\"}".to_owned(),
+        },
+    ]
+}
+
+fn two_call_items() -> Vec<Item> {
+    vec![
+        reasoning(),
+        Item::assistant("Let me check."),
+        call("call-1", "clock", json!({})),
+        call("call-2", "file_read", json!({"path": "README.md"})),
+    ]
+}
+
+/// Encodes `events` then closes on `outcome`, returning every payload in wire order.
+fn encode(events: &[StreamEvent], outcome: &TurnOutcome) -> Result<Vec<Value>, Error> {
+    let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
+    let mut payloads = Vec::new();
+    for event in events {
+        payloads.extend(stream.chunk(event));
+    }
+    payloads.extend(stream.close(outcome)?);
+    Ok(payloads)
+}
+
+fn kinds(payloads: &[Value]) -> Vec<&str> {
+    payloads
+        .iter()
+        .map(|payload| {
+            payload["type"]
+                .as_str()
+                .expect("every payload names its type")
+        })
+        .collect()
+}
+
+const TERMINAL: &[&str] = &[
+    "response.completed",
+    "response.incomplete",
+    "response.failed",
+];
+
+/// Every payload is one the decoder interprets, the response opens before anything else, and
+/// exactly one terminal payload ends it.
+fn assert_well_formed(payloads: &[Value]) {
+    let kinds = kinds(payloads);
+    for kind in &kinds {
+        assert!(
+            ACCEPTED_STREAM_EVENTS.contains(kind),
+            "`{kind}` is outside the decoder's pinned subset"
+        );
+    }
+    assert_eq!(
+        &kinds[..2],
+        ["response.created", "response.in_progress"],
+        "{kinds:?}"
+    );
+    let terminals = kinds.iter().filter(|kind| TERMINAL.contains(kind)).count();
+    assert_eq!(terminals, 1, "{kinds:?}");
+    assert!(
+        TERMINAL.contains(kinds.last().expect("not empty")),
+        "{kinds:?}"
+    );
+}
+
+#[test]
+fn a_streamed_turn_round_trips_through_the_decoder_for_every_stop_reason() {
+    let request = ingest_request(&binding(), &client_body()).expect("the client body ingests");
+    let mut with_calls = text_and_reasoning_events();
+    with_calls.extend(two_call_events());
+    // `EndTurn` beside a proposed call is a contradiction the neutral contract itself refuses
+    // (`TurnOutcome::validate_for`), so the end-turn case carries text and reasoning only.
+    let cases = [
+        (
+            StopReason::EndTurn,
+            text_and_reasoning_events(),
+            vec![reasoning(), Item::assistant("Let me check.")],
+        ),
+        (StopReason::ToolCalls, with_calls.clone(), two_call_items()),
+        (
+            StopReason::MaxOutputTokens,
+            with_calls.clone(),
+            two_call_items(),
+        ),
+        (
+            StopReason::Incomplete {
+                reason: "content_filter".to_owned(),
+            },
+            with_calls,
+            two_call_items(),
+        ),
+    ];
+    for (stop_reason, events, items) in cases {
+        let encoded = outcome(stop_reason.clone(), items);
+        encoded
+            .validate_for(&request, &provenance())
+            .expect("the fixture outcome is a valid answer to the ingested request");
+        let payloads = encode(&events, &encoded).expect("the outcome encodes");
+        assert_well_formed(&payloads);
+        let decoded = decode_stream(&binding(), &payloads);
+        assert_eq!(
+            decoded.events, events,
+            "{stop_reason:?}: the caller sees the same events"
+        );
+        assert_eq!(
+            decoded.result.expect("the decoder accepts the encoding"),
+            encoded,
+            "{stop_reason:?}: the decoded turn is the encoded one"
+        );
+    }
+}
+
+#[test]
+fn a_non_streamed_response_round_trips_when_wrapped_as_the_terminal_object() {
+    let cases = [
+        (
+            StopReason::EndTurn,
+            vec![reasoning(), Item::assistant("It is noon.")],
+        ),
+        (StopReason::ToolCalls, two_call_items()),
+        (StopReason::MaxOutputTokens, two_call_items()),
+        (
+            StopReason::Incomplete {
+                reason: "content_filter".to_owned(),
+            },
+            vec![Item::assistant("partial")],
+        ),
+    ];
+    for (stop_reason, items) in cases {
+        let encoded = outcome(stop_reason.clone(), items);
+        let body = encode_ingress_response(&encoded, "resp_gateway_1", CREATED_AT)
+            .expect("the outcome encodes");
+        assert_eq!(body["object"], "response");
+        assert_eq!(body["created_at"], CREATED_AT);
+        let decoded = decode_stream(
+            &binding(),
+            &[json!({"type": "response.completed", "response": body})],
+        );
+        assert_eq!(decoded.events, Vec::new(), "{stop_reason:?}");
+        assert_eq!(
+            decoded.result.expect("the decoder accepts the object"),
+            encoded,
+            "{stop_reason:?}"
+        );
+    }
+}
+
+#[test]
+fn an_unknown_input_count_is_omitted_and_decodes_back_unknown_never_zero() {
+    let mut encoded = outcome(StopReason::EndTurn, vec![Item::assistant("Hi")]);
+    encoded.observation.usage = Some(Usage {
+        input_tokens: None,
+        output_tokens: Some(5),
+        ..Usage::default()
+    });
+    let body = encode_ingress_response(&encoded, "resp_gateway_1", CREATED_AT).expect("encodes");
+    assert_eq!(body["usage"], json!({"output_tokens": 5}));
+    let payloads = encode(
+        &[StreamEvent::TextDelta {
+            text: "Hi".to_owned(),
+        }],
+        &encoded,
+    )
+    .expect("encodes");
+    let terminal = payloads.last().expect("a terminal payload");
+    assert_eq!(terminal["response"]["usage"], json!({"output_tokens": 5}));
+    let decoded = decode_stream(&binding(), &payloads)
+        .result
+        .expect("decodes");
+    let usage = decoded.observation.usage.clone().expect("a usage report");
+    assert_eq!(usage.input_tokens, None);
+    assert_eq!(usage.output_tokens, Some(5));
+    assert_eq!(decoded, encoded);
+}
+
+#[test]
+fn a_total_is_reported_only_from_two_known_parts() {
+    let body = encode_ingress_response(
+        &outcome(StopReason::EndTurn, vec![Item::assistant("Hi")]),
+        "resp_gateway_1",
+        CREATED_AT,
+    )
+    .expect("encodes");
+    assert_eq!(
+        body["usage"],
+        json!({
+            "input_tokens": 1788, "output_tokens": 115, "total_tokens": 1903,
+            "input_tokens_details": {"cached_tokens": 1680},
+            "output_tokens_details": {"reasoning_tokens": 42}
+        })
+    );
+}
+
+#[test]
+fn a_reported_cache_write_is_named_rather_than_dropped() {
+    let mut encoded = outcome(StopReason::EndTurn, vec![Item::assistant("Hi")]);
+    encoded.observation.usage = Some(Usage {
+        input_tokens: Some(100),
+        cache_creation_input_tokens: Some(64),
+        ..Usage::default()
+    });
+    let body = encode_ingress_response(&encoded, "resp_gateway_1", CREATED_AT).expect("encodes");
+    assert_eq!(
+        body["usage"],
+        json!({"input_tokens": 100, "input_tokens_details": {"cache_creation_input_tokens": 64}})
+    );
+}
+
+#[test]
+fn an_unreported_model_is_left_out_and_the_response_id_falls_back_to_the_callers() {
+    let mut encoded = outcome(StopReason::EndTurn, vec![Item::assistant("Hi")]);
+    encoded.observation.upstream_model = None;
+    encoded.observation.response_id = None;
+    encoded.observation.usage = None;
+    let body = encode_ingress_response(&encoded, "resp_gateway_1", CREATED_AT).expect("encodes");
+    assert!(body.get("model").is_none(), "{body}");
+    assert!(body.get("usage").is_none(), "{body}");
+    assert_eq!(body["id"], "resp_gateway_1");
+    let decoded = decode_stream(
+        &binding(),
+        &[json!({"type": "response.completed", "response": body})],
+    )
+    .result
+    .expect("decodes");
+    assert_eq!(decoded.observation.upstream_model, None);
+    assert_eq!(decoded.observation.usage, None);
+    assert_eq!(decoded.observation.response_id, Some(id("resp_gateway_1")));
+}
+
+#[test]
+fn fail_ends_the_stream_with_a_failure_the_decoder_reads_as_the_same_code() {
+    let cases = [
+        (
+            Error::new(ErrorCode::Unavailable, "upstream-prose-down").with_retriable(true),
+            ErrorCode::Unavailable,
+            "server_is_overloaded",
+        ),
+        (
+            Error::new(ErrorCode::Unavailable, "upstream-prose-down"),
+            ErrorCode::Unavailable,
+            "server_error",
+        ),
+        (
+            Error::new(ErrorCode::RateLimited, "upstream-prose-slow"),
+            ErrorCode::RateLimited,
+            "rate_limit_exceeded",
+        ),
+        (
+            Error::new(ErrorCode::Refused, "upstream-prose-no"),
+            ErrorCode::Refused,
+            "refused",
+        ),
+        // No wire code reads back as `transport`: the failure names its own code, and the
+        // decoder classifies every code it does not know as a refusal.
+        (
+            Error::new(ErrorCode::Transport, "upstream-prose-cut").with_retriable(true),
+            ErrorCode::Refused,
+            "transport",
+        ),
+    ];
+    for (error, decoded_code, wire_code) in cases {
+        // Nothing streamed: `fail` opens the response itself.
+        let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
+        let payloads = stream.fail(&error);
+        assert_well_formed(&payloads);
+        let failed = payloads.last().expect("a terminal payload");
+        assert_eq!(failed["type"], "response.failed");
+        assert_eq!(failed["response"]["error"]["code"], wire_code);
+        // The neutral diagnostic is never relayed onto the wire.
+        assert!(!failed.to_string().contains(&error.message), "{failed}");
+        let refusal = decode_stream(&binding(), &payloads)
+            .result
+            .expect_err("a failed response is a refusal");
+        assert_eq!(refusal.code, decoded_code, "{wire_code}");
+        assert_eq!(refusal.dispatch, Dispatch::Accepted);
+    }
+}
+
+#[test]
+fn fail_after_output_keeps_what_was_shown_and_ends_with_one_failure() {
+    let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
+    let shown = [StreamEvent::TextDelta {
+        text: "Hel".to_owned(),
+    }];
+    let mut payloads = Vec::new();
+    for event in &shown {
+        payloads.extend(stream.chunk(event));
+    }
+    payloads.extend(stream.fail(&Error::new(ErrorCode::RateLimited, "slow down")));
+    assert_well_formed(&payloads);
+    // The stream is over: nothing more is emitted, and it cannot be closed a second time.
+    assert!(
+        stream
+            .chunk(&StreamEvent::TextDelta {
+                text: "lo".to_owned()
+            })
+            .is_empty()
+    );
+    assert!(
+        stream
+            .close(&outcome(
+                StopReason::EndTurn,
+                vec![Item::assistant("Hello")]
+            ))
+            .is_err()
+    );
+    let decoded = decode_stream(&binding(), &payloads);
+    assert_eq!(decoded.events, shown);
+    assert_eq!(
+        decoded.result.expect_err("a refusal").code,
+        ErrorCode::RateLimited
+    );
+}
+
+#[test]
+fn an_outcome_contradicting_the_streamed_calls_is_refused() {
+    let events = two_call_events();
+    let missing = outcome(
+        StopReason::ToolCalls,
+        vec![call("call-1", "clock", json!({}))],
+    );
+    let renamed = outcome(
+        StopReason::ToolCalls,
+        vec![
+            call("call-1", "clock", json!({})),
+            call("call-2", "file_write", json!({"path": "README.md"})),
+        ],
+    );
+    let different_arguments = outcome(
+        StopReason::ToolCalls,
+        vec![
+            call("call-1", "clock", json!({})),
+            call("call-2", "file_read", json!({"path": "Cargo.toml"})),
+        ],
+    );
+    for (why, contradicting) in [
+        ("an announced call is missing", missing),
+        ("an announced call is renamed", renamed),
+        ("relayed arguments differ", different_arguments),
+    ] {
+        let refusal = encode(&events, &contradicting).expect_err(why);
+        assert_eq!(refusal.code, ErrorCode::Protocol, "{why}");
+    }
+}
+
+#[test]
+fn an_outcome_without_the_text_the_caller_was_shown_is_refused() {
+    let refusal = encode(
+        &[StreamEvent::TextDelta {
+            text: "Hel".to_owned(),
+        }],
+        &outcome(
+            StopReason::ToolCalls,
+            vec![call("call-1", "clock", json!({}))],
+        ),
+    )
+    .expect_err("shown text the outcome does not carry");
+    assert_eq!(refusal.code, ErrorCode::Protocol);
+}
+
+/// The decoder keeps only shown text that is not empty, so an empty delta obliges the outcome to
+/// carry no message.
+#[test]
+fn an_empty_text_delta_needs_no_message_in_the_outcome() {
+    let events = vec![
+        StreamEvent::TextDelta {
+            text: String::new(),
+        },
+        StreamEvent::ToolCallStarted {
+            call_id: call_id("call-1"),
+            name: tool("clock"),
+        },
+        StreamEvent::ToolArgumentsDelta {
+            call_id: call_id("call-1"),
+            delta: "{}".to_owned(),
+        },
+    ];
+    let encoded = outcome(
+        StopReason::ToolCalls,
+        vec![call("call-1", "clock", json!({}))],
+    );
+    let payloads = encode(&events, &encoded).expect("encodes");
+    assert_well_formed(&payloads);
+    let decoded = decode_stream(&binding(), &payloads);
+    assert_eq!(decoded.events, events);
+    assert_eq!(decoded.result.expect("decodes"), encoded);
+}
+
+#[test]
+fn a_refused_close_leaves_the_stream_open_for_fail() {
+    let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
+    let mut payloads = Vec::new();
+    for event in two_call_events() {
+        payloads.extend(stream.chunk(&event));
+    }
+    let refusal = stream
+        .close(&outcome(
+            StopReason::EndTurn,
+            vec![Item::assistant("no calls")],
+        ))
+        .expect_err("contradiction");
+    payloads.extend(stream.fail(&refusal));
+    assert_well_formed(&payloads);
+}
+
+#[test]
+fn caller_owned_items_and_unattributed_or_foreign_state_are_refused() {
+    let mut foreign = provenance();
+    foreign.binding_revision = id("rev-2");
+    let cases = [
+        (Item::user("Hi"), ErrorCode::Protocol),
+        (
+            Item::ToolResult {
+                call_id: call_id("call-1"),
+                output: json!("noon"),
+                failed: false,
+            },
+            ErrorCode::Protocol,
+        ),
+        (
+            Item::UnattributedOpaque {
+                protocol: Protocol::Responses,
+                payload: json!({"type": "reasoning", "summary": []}),
+            },
+            ErrorCode::Unsupported,
+        ),
+        (
+            Item::Opaque {
+                provenance: foreign,
+                payload: json!({"type": "reasoning", "summary": []}),
+            },
+            ErrorCode::Unsupported,
+        ),
+        // Opaque state this wire's output carries only as reasoning.
+        (
+            Item::Opaque {
+                provenance: provenance(),
+                payload: json!({"type": "response.web_search_call.searching"}),
+            },
+            ErrorCode::Unsupported,
+        ),
+    ];
+    for (item, code) in cases {
+        let refused = outcome(
+            StopReason::EndTurn,
+            vec![Item::assistant("Hi"), item.clone()],
+        );
+        let streamed = encode(&[], &refused).expect_err("refused streamed");
+        assert_eq!(streamed.code, code, "{item:?}");
+        let whole = encode_ingress_response(&refused, "resp_gateway_1", CREATED_AT)
+            .expect_err("refused non-streamed");
+        assert_eq!(whole.code, code, "{item:?}");
+        if matches!(item, Item::UnattributedOpaque { .. }) {
+            assert_eq!(whole.message, Item::UNATTRIBUTED_REFUSAL);
+        }
+    }
+}
+
+#[test]
+fn a_stop_reason_the_wire_cannot_express_is_refused_not_approximated() {
+    let cases = [
+        // The decoder derives `ToolCalls` from any call in the turn.
+        outcome(
+            StopReason::EndTurn,
+            vec![call("call-1", "clock", json!({}))],
+        ),
+        // And `EndTurn` from a turn without one.
+        outcome(StopReason::ToolCalls, vec![Item::assistant("Hi")]),
+        // Read back as `MaxOutputTokens`, not as this reason.
+        outcome(
+            StopReason::Incomplete {
+                reason: "max_output_tokens".to_owned(),
+            },
+            vec![Item::assistant("Hi")],
+        ),
+        // Read back as `unrecognized`: the decoder relays only code-shaped reasons.
+        outcome(
+            StopReason::Incomplete {
+                reason: "content-filter".to_owned(),
+            },
+            vec![Item::assistant("Hi")],
+        ),
+    ];
+    for refused in cases {
+        let error = encode_ingress_response(&refused, "resp_gateway_1", CREATED_AT)
+            .expect_err("inexpressible");
+        assert_eq!(
+            error.code,
+            ErrorCode::Unsupported,
+            "{:?}",
+            refused.stop_reason
+        );
+        assert_eq!(
+            encode(&[], &refused).expect_err("inexpressible").code,
+            ErrorCode::Unsupported
+        );
+    }
+}
+
+#[test]
+fn a_call_never_announced_is_emitted_whole_at_close() {
+    // Fragments for a call nobody announced are not relayed: there is no item to name.
+    let unannounced = StreamEvent::ToolArgumentsDelta {
+        call_id: call_id("call-1"),
+        delta: "{}".to_owned(),
+    };
+    let encoded = outcome(
+        StopReason::ToolCalls,
+        vec![call("call-1", "clock", json!({}))],
+    );
+    let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
+    assert!(stream.chunk(&unannounced).is_empty());
+    let payloads = stream.close(&encoded).expect("encodes");
+    assert_well_formed(&payloads);
+    let decoded = decode_stream(&binding(), &payloads);
+    assert_eq!(
+        decoded.events,
+        vec![
+            StreamEvent::ToolCallStarted {
+                call_id: call_id("call-1"),
+                name: tool("clock"),
+            },
+            StreamEvent::ToolArgumentsDelta {
+                call_id: call_id("call-1"),
+                delta: "{}".to_owned(),
+            },
+        ]
+    );
+    assert_eq!(decoded.result.expect("decodes"), encoded);
+}
+
+#[test]
+fn reasoning_shown_without_carried_state_adds_no_item() {
+    let events = vec![StreamEvent::ReasoningDelta {
+        text: "thinking".to_owned(),
+    }];
+    let encoded = outcome(StopReason::EndTurn, vec![Item::assistant("noon")]);
+    let payloads = encode(&events, &encoded).expect("encodes");
+    assert_well_formed(&payloads);
+    let decoded = decode_stream(&binding(), &payloads);
+    assert_eq!(
+        decoded.events,
+        vec![
+            StreamEvent::ReasoningDelta {
+                text: "thinking".to_owned()
+            },
+            StreamEvent::TextDelta {
+                text: "noon".to_owned()
+            },
+        ]
+    );
+    assert_eq!(decoded.result.expect("decodes"), encoded);
+}
+
+#[test]
+fn an_empty_stream_closes_on_the_opening_events_and_the_turn() {
+    let encoded = outcome(StopReason::EndTurn, Vec::new());
+    let payloads = encode(&[], &encoded).expect("encodes");
+    assert_eq!(
+        kinds(&payloads),
+        [
+            "response.created",
+            "response.in_progress",
+            "response.completed"
+        ]
+    );
+    assert_eq!(
+        decode_stream(&binding(), &payloads)
+            .result
+            .expect("decodes"),
+        encoded
+    );
+}

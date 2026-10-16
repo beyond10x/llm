@@ -6,11 +6,12 @@
 
 use ess_conformance::target::TargetError;
 use llm_core::{
-    Error, Id, Item, Provenance, StopReason, StreamEvent, TurnDocument, TurnObservation,
+    Error, Id, Item, OutcomeDocument, Provenance, StopReason, StreamEvent, TurnDocument,
+    TurnObservation,
 };
 use llm_responses::{
-    Binding, Conversation, PATH, decode_stream, encode_request, ingest_request, project_request,
-    request_headers,
+    Binding, Conversation, IngressStream, PATH, decode_stream, encode_ingress_response,
+    encode_request, ingest_request, project_request, request_headers,
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -22,6 +23,7 @@ pub const VIEWS: &[&str] = &[
     "llm.responses.LastProjection",
     "llm.responses.LastStream",
     "llm.responses.LastIngestion",
+    "llm.responses.LastIngressEncoding",
 ];
 
 /// Observe one command of this domain, or `None` when the command belongs to another.
@@ -30,6 +32,7 @@ pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetEr
         "llm.responses.Project" => Some(project(input)),
         "llm.responses.DecodeStream" => Some(stream(input)),
         "llm.responses.Ingest" => Some(ingest(input)),
+        "llm.responses.EncodeIngress" => Some(encode_ingress(input)),
         _ => None,
     }
 }
@@ -296,6 +299,131 @@ fn decoding(input: &StreamInput, facts: &mut Value) -> Result<(), Error> {
             Err(error)
         }
     }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EncodeInput {
+    binding_json: String,
+    upstream_model: String,
+    #[serde(default)]
+    outcome_json: Option<String>,
+    streamed: bool,
+    #[serde(default)]
+    events_json: Option<String>,
+    #[serde(default)]
+    failure_json: Option<String>,
+}
+
+fn encode_ingress(input: &Value) -> Result<Observed, TargetError> {
+    let input: EncodeInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
+    let mut facts = json!({
+        "accepted": false, "error_code": null, "error_message": null, "payload_types": [],
+        "status": null, "incomplete_reason": null, "failure_code": null,
+        "model_reported": null, "response_id": null, "usage_json": null, "output_json": null,
+        "decoded_accepted": null, "decoded_error_code": null, "decoded_stop_reason": null,
+        "decoded_stream_events": [], "decoded_usage_json": null,
+        "outcome_preserved": null, "events_preserved": null
+    });
+    if let Err(error) = encoding(&input, &mut facts) {
+        facts["error_code"] = json!(error.code);
+        facts["error_message"] = json!(error.message);
+    }
+    Ok(Observed {
+        facts,
+        view: "llm.responses.LastIngressEncoding",
+        event: "llm.responses.IngressEncoded",
+        field: "accepted",
+    })
+}
+
+fn encoding(input: &EncodeInput, facts: &mut Value) -> Result<(), Error> {
+    let binding = binding(&input.binding_json, &input.upstream_model)?;
+    // Raw, as the turn envelope is raw: a malformed outcome, event or error reaches the
+    // production decoders rather than a filter in this target.
+    let outcome = match &input.outcome_json {
+        Some(raw) => Some(
+            serde_json::from_str::<OutcomeDocument>(raw)
+                .map_err(|_| Error::invalid("invalid outcome envelope"))?
+                .outcome,
+        ),
+        None => None,
+    };
+    let failure: Option<Error> = match &input.failure_json {
+        Some(raw) => {
+            Some(serde_json::from_str(raw).map_err(|_| Error::invalid("invalid failure"))?)
+        }
+        None => None,
+    };
+    let events: Vec<StreamEvent> = match &input.events_json {
+        Some(raw) => {
+            serde_json::from_str(raw).map_err(|_| Error::invalid("invalid stream events"))?
+        }
+        None => Vec::new(),
+    };
+    let payloads = if input.streamed {
+        let mut stream = IngressStream::new("resp_gateway_fixture", 1_772_000_000);
+        let mut payloads = Vec::new();
+        for event in &events {
+            payloads.extend(stream.chunk(event));
+        }
+        match (&failure, &outcome) {
+            (Some(failure), _) => payloads.extend(stream.fail(failure)),
+            (None, Some(outcome)) => payloads.extend(stream.close(outcome)?),
+            (None, None) => return Err(Error::invalid("neither an outcome nor a failure")),
+        }
+        payloads
+    } else {
+        let outcome = outcome
+            .as_ref()
+            .ok_or_else(|| Error::invalid("a non-streamed answer needs an outcome"))?;
+        let body = encode_ingress_response(outcome, "resp_gateway_fixture", 1_772_000_000)?;
+        // The decoder's own terminal payload; the object's `status` says whether it completed.
+        vec![json!({"type": "response.completed", "response": body})]
+    };
+    facts["accepted"] = json!(true);
+    if input.streamed {
+        facts["payload_types"] = json!(
+            payloads
+                .iter()
+                .map(|payload| payload.get("type").cloned().unwrap_or(Value::Null))
+                .collect::<Vec<_>>()
+        );
+    }
+    if let Some(response) = payloads.last().and_then(|payload| payload.get("response")) {
+        let text = |value: Option<&Value>| value.cloned().unwrap_or(Value::Null);
+        facts["status"] = text(response.get("status"));
+        facts["incomplete_reason"] = text(response.pointer("/incomplete_details/reason"));
+        facts["failure_code"] = text(response.pointer("/error/code"));
+        facts["model_reported"] = text(response.get("model"));
+        facts["response_id"] = text(response.get("id"));
+        facts["usage_json"] = json!(response.get("usage").map(compact));
+        facts["output_json"] = json!(response.get("output").map(compact));
+    }
+    // The encoding read back by this crate's own decoder, on the binding the scenario names.
+    let decoded = decode_stream(&binding, &payloads);
+    facts["decoded_stream_events"] =
+        json!(decoded.events.iter().map(stream_event).collect::<Vec<_>>());
+    facts["events_preserved"] = json!(decoded.events == events);
+    match decoded.result {
+        Ok(turn) => {
+            facts["decoded_accepted"] = json!(true);
+            facts["decoded_stop_reason"] = json!(stop_reason(&turn.stop_reason));
+            facts["decoded_usage_json"] = json!(
+                turn.observation
+                    .usage
+                    .as_ref()
+                    .map(|usage| serialize(usage).map(|usage| compact(&usage)))
+                    .transpose()?
+            );
+            facts["outcome_preserved"] = json!(outcome.as_ref() == Some(&turn));
+        }
+        Err(error) => {
+            facts["decoded_accepted"] = json!(false);
+            facts["decoded_error_code"] = json!(error.code);
+        }
+    }
+    Ok(())
 }
 
 fn observation(observation: &TurnObservation, facts: &mut Value) {
