@@ -15,6 +15,7 @@ explicit envelope, and an old or unknown version refuses rather than being coerc
 | `llm.outcome/4` | Persisted neutral outputs |
 | `llm.binding/1` | Provider/account/endpoint/model declarations |
 | `llm.catalog/1` | TOML routing catalogs |
+| `llm.routes/1` | YAML model routes: endpoints by base URL, protocol and secret reference, routes as `<endpoint>/<model-id>`; expands into `llm.catalog/1` ([guide](../guides/configure-model-routes.md)) |
 | `llm.provider-description/1` | TOML provider descriptions: inference URL template, wires, authentication and pinned control-plane operations |
 | `llm.prices/1` | Price books, TOML or JSON |
 | `llm.usage/2` | Attributed usage observations; refuses v1 |
@@ -36,6 +37,7 @@ An unsupported addition needs a version change before it is accepted. Nothing is
 
 | Input | Bound |
 | --- | --- |
+| Routes document | 2 MiB, as a catalog |
 | Price book, observations | 1 MiB and 4096 entries each |
 | Provider description | 64 KiB |
 | Provider-description instance name | 1 through 48 bytes of `[a-z0-9]` |

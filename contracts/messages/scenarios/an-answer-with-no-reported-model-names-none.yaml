@@ -1,0 +1,34 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: an-answer-with-no-reported-model-names-none
+summary: a stream announcing no model, for an outcome that observed none, reads back with the model unknown
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.messages.EncodeIngress
+  input:
+    request_json: '{"model":"messages-route","max_tokens":512,"messages":[{"role":"user","content":"Summarise the log"}],"stream":true}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Looking"}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260"},"response_id":"msg_gateway_fixture","final_usage":true}}}'
+    events_json: '[{"kind":"text-delta","text":"Looking"}]'
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.messages.LastIngressEncoding
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastIngressEncoding
+  contains:
+    accepted: true
+    error_code: null
+    # No model field at all, and no usage: an unreported fact is left out, never filled in.
+    wire:
+    - '{"message":{"content":[],"id":"msg_gateway_fixture","role":"assistant","type":"message"},"type":"message_start"}'
+    - '{"content_block":{"text":"","type":"text"},"index":0,"type":"content_block_start"}'
+    - '{"delta":{"text":"Looking","type":"text_delta"},"index":0,"type":"content_block_delta"}'
+    - '{"index":0,"type":"content_block_stop"}'
+    - '{"delta":{"stop_reason":"end_turn"},"type":"message_delta"}'
+    - '{"type":"message_stop"}'
+    decoded_accepted: true
+    decoded_upstream_model: null
+    decoded_usage_json: null
+    round_trip: true

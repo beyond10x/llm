@@ -46,7 +46,7 @@
     },
     {
       "area": "Transport",
-      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 705 scenarios against the real crates three times and skips none.",
+      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 777 scenarios against the real crates three times and skips none.",
       "label": "Every library crate is specified in ESS",
       "status": "shipped"
     },
@@ -90,6 +90,18 @@
       "area": "Protocols",
       "detail": "encode_request gives the exact bytes the client sends; opt-in conversation identity sends prompt_cache_key, session-id and x-client-request-id.",
       "label": "Responses request encoding and conversation identity",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "encode_ingress_response and IngressStream encode neutral events and an outcome as the Responses event payloads and response object this crate's decoder reads back as the same turn; partial usage and the error's message are never relayed.",
+      "label": "A server answers a Responses caller",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "encode_ingress_message and IngressStream encode the Messages event stream and message, each block, reason and usage report checked against this crate's decoder; without_reasoning_relay for an upstream that cannot sign reasoning.",
+      "label": "A server answers a Messages caller",
       "status": "shipped"
     },
     {
@@ -168,6 +180,12 @@
       "area": "Providers and routing",
       "detail": "RetryPolicy, on by default: four attempts per target with 1, 2 and 4 second waits, server delays honoured up to 30 seconds, a turn-retried warning before each wait, then fallback.",
       "label": "Same-target retry before visible output",
+      "status": "shipped"
+    },
+    {
+      "area": "Providers and routing",
+      "detail": "b10x-llm-models: llm_models::routes::Routes reads llm.routes/1 (YAML endpoints with base URL, protocol and a secret reference; routes as <endpoint>/<model-id>, or direct names), expands it into an llm.catalog/1 catalog and builds RouteResolvers from env:, file: and keychain: references (features environment, file, keychain), refusing an unset variable or a missing file by the endpoint's reference before any request. Fixture evidence only.",
+      "label": "One routes document for every consumer",
       "status": "shipped"
     },
     {

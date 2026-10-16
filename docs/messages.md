@@ -11,6 +11,8 @@ Messages. Authentication presentation and billing come from the binding, never f
 | `decode_request` | Decodes an arriving Messages request into `IngressRequest` (neutral request plus the streaming choice) |
 | `decode_message` | Decodes one complete response into a bound `TurnOutcome` |
 | `StreamDecoder` / `decode_stream` | Decodes the event stream through the same response codec |
+| `encode_ingress_message` | Encodes a neutral outcome as the non-streamed message a caller reads |
+| `IngressStream` | Encodes neutral events and the outcome as the Messages event stream a caller reads |
 | `MessagesClient` | One bound endpoint, one attempt, credential resolved per request |
 
 ## What the declared subset carries
@@ -197,6 +199,46 @@ reading.
 
 Retries, alternate accounts and fallback belong to routing. Gateway server composition and live
 Anthropic API or subscription qualification are separate stories; nothing here establishes them.
+
+## Answering a Messages caller
+
+`encode_ingress_message(&TurnOutcome, id)` and `IngressStream` (`new`, `chunk`, `close`, `fail`)
+answer a caller on this wire. Each value is one event payload carrying its `type`, which is also
+the SSE `event:` name; framing is the server's. `IngressStream::new(id, model)` takes the response
+identifier and, optionally, the model to announce in `message_start`, the only event that can carry
+one; it refuses an identifier or model the decoder could not read before anything is sent. When a
+model was announced, `close` refuses an outcome naming another; when none was, the outcome's model
+stays off the wire and reads back as unknown.
+
+A thinking block relayed live is signed at `close` from the outcome's opaque state, which only a
+Messages upstream carries. A server whose upstream cannot sign reasoning (Chat Completions,
+Responses) builds its stream with `IngressStream::without_reasoning_relay`: reasoning deltas then
+send nothing, and signed thinking an outcome does carry is sent whole at `close`. A known input
+total is left out when either cache count is unknown, because this wire reports fresh input apart
+from both cache counters.
+
+This crate's decoder is the contract: every block, terminal reason and usage report is checked
+against the reader `decode_message` and `StreamDecoder` use before it is sent, and the tests decode
+every answer and compare it with the encoded `TurnOutcome` for every stop reason, streamed and not.
+
+- **Blocks.** Text becomes a `text` block with `text_delta`s, a call a `tool_use` block with
+  `input_json_delta`s, reasoning a `thinking` block with `thinking_delta`s. A thinking block stays
+  open until `close`, which sends the signature the outcome's opaque state holds and then stops it;
+  every other block stops when the next opens. Reasoning with no signature, or signed for another
+  binding, is refused. Content the stream never showed (redacted thinking, a call whose fragments
+  arrived before it was announced) is sent whole at `close`, after the streamed blocks.
+- **Reasons.** `end_turn`, `tool_use`, `max_tokens`, and an `Incomplete` reason under its own name;
+  a reason the decoder would read as another one is refused.
+- **Usage.** Only reported counters, in `message_delta`; an unknown counter is left out, never zero.
+  Fresh input is sent only when the total and both cache counters are known, never derived from a
+  part.
+- **Failure.** `fail` emits the `error` event; eight error codes map to an Anthropic error type the
+  decoder reads back as the same code, and `protocol`, `cancelled` and `unsupported` take the nearest
+  (`api_error`, `api_error`, `invalid_request_error`).
+- **Refusals.** `UserText`, `ToolResult` and `UnattributedOpaque` items, and an outcome that
+  contradicts the streamed calls. Argument fragments for a call whose block already stopped make
+  `close` refuse, and redacted thinking that would precede streamed text is refused because it
+  would read back in another order.
 
 ## Verification
 

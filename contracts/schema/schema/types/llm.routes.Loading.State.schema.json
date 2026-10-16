@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.routes.Loading.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "ae3b0bdbde784d678a05cfa1c3b8412e603d1eb69bb61f7f128323775ca513d2",
+    "contract_digest": "slice-sha256/2:bdf137c02d1859f87ea16d4b69c4517a1995231e6dd40b82b4e23bd709ad88ba",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.routes.Loading.State": {
+      "title": "State",
+      "x-ess-name": "llm.routes.Loading.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

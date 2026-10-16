@@ -1,0 +1,36 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: encoding-fail-ends-the-stream-with-a-failure-of-the-same-class
+summary: a stream that fails after output ends with one failed response the decoder reads as the same class
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.EncodeIngress
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    events_json: '[{"kind":"text-delta","text":"Hel"}]'
+    failure_json: '{"code":"rate-limited","message":"upstream prose that must not be relayed","dispatch":"accepted"}'
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.responses.LastIngressEncoding
+  counts: {at_least: 1, at_most: 1}
+- view: llm.responses.LastIngressEncoding
+  contains:
+    accepted: true
+    payload_types:
+    - response.created
+    - response.in_progress
+    - response.output_item.added
+    - response.content_part.added
+    - response.output_text.delta
+    - response.failed
+    status: failed
+    failure_code: rate_limit_exceeded
+    # The text the caller was shown stays shown; the turn is the failure.
+    decoded_accepted: false
+    decoded_error_code: rate-limited
+    decoded_stream_events:
+    - text-delta:Hel
+    events_preserved: true
+    outcome_preserved: null

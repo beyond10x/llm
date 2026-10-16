@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Authenticated payload",
+  "x-ess-name": "llm.routes.Authenticated",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "prepared": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "prepared"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "ae3b0bdbde784d678a05cfa1c3b8412e603d1eb69bb61f7f128323775ca513d2",
+    "contract_digest": "slice-sha256/2:7bb62831ba4f1b86b8c37c5c17bc9f6a692a0ca21f0d1e89e6eecb9b808c294a",
+    "regenerate": "ess generate"
+  }
+}

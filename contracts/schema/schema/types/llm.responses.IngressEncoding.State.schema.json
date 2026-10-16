@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.responses.IngressEncoding.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "ae3b0bdbde784d678a05cfa1c3b8412e603d1eb69bb61f7f128323775ca513d2",
+    "contract_digest": "slice-sha256/2:72a324a1fa8015b39991df76113e1cd40430e62851ae2d89cbcf06b2ba67f96e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.responses.IngressEncoding.State": {
+      "title": "State",
+      "x-ess-name": "llm.responses.IngressEncoding.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

@@ -5,10 +5,13 @@
 
 use ess_conformance::target::TargetError;
 use llm_core::{
-    Cancel, Error, ErrorCode, Id, Item, StopReason, StreamEvent, TurnDocument, TurnOutcome,
-    TurnRequest, VecSink,
+    Cancel, Error, ErrorCode, Id, Item, OutcomeDocument, StopReason, StreamEvent, TurnDocument,
+    TurnOutcome, TurnRequest, VecSink,
 };
-use llm_messages::{decode_message, decode_request, decode_stream, encode_request};
+use llm_messages::{
+    IngressStream, decode_message, decode_request, decode_stream, encode_ingress_message,
+    encode_request,
+};
 use llm_routing::Catalog;
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -19,6 +22,7 @@ use crate::target::Observed;
 pub const VIEWS: &[&str] = &[
     "llm.messages.LastInspection",
     "llm.messages.LastPresentation",
+    "llm.messages.LastIngressEncoding",
 ];
 
 const MAX_SINK_EVENTS: usize = 4096;
@@ -52,6 +56,14 @@ pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetEr
             facts,
             view: "llm.messages.LastPresentation",
             event: "llm.messages.Presented",
+            field: "accepted",
+        }));
+    }
+    if command == "llm.messages.EncodeIngress" {
+        return Some(ingress_encoding(input).map(|facts| Observed {
+            facts,
+            view: "llm.messages.LastIngressEncoding",
+            event: "llm.messages.Encoded",
             field: "accepted",
         }));
     }
@@ -331,6 +343,150 @@ fn stop_label(stop: &StopReason) -> String {
         StopReason::ToolCalls => "tool-calls".to_owned(),
         StopReason::MaxOutputTokens => "max-output-tokens".to_owned(),
         StopReason::Incomplete { reason } => format!("incomplete:{reason}"),
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// llm.messages.EncodeIngress: what a gateway answers a Messages caller from a neutral outcome,
+// then what this crate's own decoder reads back from that answer under the fixture binding.
+// ---------------------------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EncodeInput {
+    request_json: String,
+    outcome_json: String,
+    streamed: bool,
+    #[serde(default)]
+    events_json: Option<String>,
+    #[serde(default)]
+    model: Option<String>,
+    #[serde(default)]
+    fail_code: Option<String>,
+}
+
+/// The answer's identifier. The caller supplies it; the encoder mints none.
+const ANSWER_ID: &str = "msg_gateway_fixture";
+
+fn ingress_encoding(input: &Value) -> Result<Value, TargetError> {
+    let input: EncodeInput = serde_json::from_value(input.clone()).map_err(|error| {
+        TargetError::unavailable("messages ingress encoding", error.to_string())
+    })?;
+    let mut facts = json!({"accepted":false,"error_code":null,"error_message":null,
+        "dispatch":null,"wire":[],"decoded_accepted":null,"decoded_error_code":null,
+        "decoded_items":[],"decoded_stop_reason":null,"decoded_upstream_model":null,
+        "decoded_response_id":null,"decoded_usage_json":null,"shown":[],"round_trip":null});
+    if let Err(error) = encode_and_read_back(&input, &mut facts) {
+        facts["error_code"] = json!(error.code);
+        facts["error_message"] = json!(error.message);
+        facts["dispatch"] = json!(error.dispatch);
+    }
+    Ok(facts)
+}
+
+/// Runs the production encoder, then the production decoder over exactly what it produced. Only
+/// a refusal before the answer exists is returned; the decoder's verdict is a fact of its own.
+fn encode_and_read_back(input: &EncodeInput, facts: &mut Value) -> Result<(), Error> {
+    let catalog = fixture()?;
+    let binding = catalog
+        .binding(&serving()?)
+        .ok_or_else(|| Error::invalid("fixture binding is missing"))?;
+    let target = binding.provenance();
+    let request = decode_request(input.request_json.as_bytes(), target)?.request;
+    let outcome = serde_json::from_str::<OutcomeDocument>(&input.outcome_json)
+        .map_err(|_| Error::invalid("invalid outcome envelope"))?
+        .outcome;
+    if !input.streamed {
+        if input.fail_code.is_some() || input.events_json.is_some() {
+            return Err(Error::invalid("a complete answer has no stream"));
+        }
+        let message = encode_ingress_message(&outcome, ANSWER_ID)?;
+        facts["accepted"] = json!(true);
+        facts["wire"] = json!([message.to_string()]);
+        report_read_back(decode_message(&message, &request, target), &outcome, facts);
+        return Ok(());
+    }
+    // Raw for the same reason the outcome is: a malformed event must reach the encoder.
+    let events: Vec<StreamEvent> = match &input.events_json {
+        Some(events) => {
+            serde_json::from_str(events).map_err(|_| Error::invalid("invalid stream events"))?
+        }
+        None => Vec::new(),
+    };
+    let mut stream = IngressStream::new(ANSWER_ID, input.model.as_deref())?;
+    let mut wire = Vec::new();
+    for event in &events {
+        wire.extend(stream.chunk(event));
+    }
+    // What was already sent is reported whether or not the answer then closes.
+    facts["wire"] = json!(wire.iter().map(ToString::to_string).collect::<Vec<_>>());
+    match &input.fail_code {
+        Some(code) => {
+            let code: ErrorCode = serde_json::from_value(json!(code))
+                .map_err(|_| Error::invalid("invalid fixture error code"))?;
+            wire.extend(stream.fail(&Error::new(code, "the fixture upstream failed")));
+        }
+        None => wire.extend(stream.close(&outcome)?),
+    }
+    facts["accepted"] = json!(true);
+    facts["wire"] = json!(wire.iter().map(ToString::to_string).collect::<Vec<_>>());
+    let mut bytes = Vec::new();
+    for payload in &wire {
+        let name = payload
+            .get("type")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        bytes.extend_from_slice(format!("event: {name}\ndata: {payload}\n\n").as_bytes());
+    }
+    let mut sink = VecSink::new(MAX_SINK_EVENTS, MAX_SINK_BYTES);
+    let decoded = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .map_err(|_| Error::new(ErrorCode::Unavailable, "no local runtime"))?
+        .block_on(decode_stream(
+            &bytes,
+            &request,
+            target,
+            &mut sink,
+            &Cancel::new(),
+        ));
+    facts["shown"] = json!(sink.events().iter().map(shown).collect::<Vec<_>>());
+    report_read_back(decoded, &outcome, facts);
+    Ok(())
+}
+
+fn report_read_back(decoded: Result<TurnOutcome, Error>, encoded: &TurnOutcome, facts: &mut Value) {
+    match decoded {
+        Ok(decoded) => {
+            facts["decoded_accepted"] = json!(true);
+            facts["decoded_items"] = json!(labels(&decoded.items));
+            facts["decoded_stop_reason"] = json!(stop_label(&decoded.stop_reason));
+            facts["decoded_upstream_model"] = json!(decoded.observation.upstream_model);
+            facts["decoded_response_id"] = json!(decoded.observation.response_id);
+            facts["decoded_usage_json"] = json!(
+                decoded
+                    .observation
+                    .usage
+                    .as_ref()
+                    .and_then(|usage| serde_json::to_string(usage).ok())
+            );
+            facts["round_trip"] = json!(&decoded == encoded);
+        }
+        Err(error) => {
+            facts["decoded_accepted"] = json!(false);
+            facts["decoded_error_code"] = json!(error.code);
+        }
+    }
+}
+
+fn shown(event: &StreamEvent) -> String {
+    match event {
+        StreamEvent::TextDelta { text } => format!("text:{text}"),
+        StreamEvent::ReasoningDelta { text } => format!("reasoning:{text}"),
+        StreamEvent::ToolCallStarted { call_id, name } => format!("started:{call_id}:{name}"),
+        StreamEvent::ToolArgumentsDelta { call_id, delta } => {
+            format!("arguments:{call_id}:{delta}")
+        }
+        StreamEvent::Warning { code, message } => format!("warning:{code}:{message}"),
     }
 }
 

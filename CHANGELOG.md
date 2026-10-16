@@ -6,6 +6,50 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `b10x-llm-models`: model routes, format `llm.routes/1` (YAML, module `llm_models::routes`).
+  `Routes::parse` reads `endpoints` (base URL, protocol `messages`, `responses` or
+  `chat-completions`, and `auth` of kind `anonymous`, `bearer` or `api-key` whose secret is only a
+  reference: `env:<VARIABLE>`, `file:<path>` or `keychain:<service>/<entry>`) and `routes` (a name
+  for `<endpoint>/<model-id>`, split on the first `/`, or a mapping with its own `capabilities`).
+  A name that is not a route but reads `<declared endpoint>/<model-id>` resolves directly. The
+  document expands into an `llm.catalog/1` `Catalog`, so `port` and `CatalogModels::build` build
+  its ports unchanged; `Routes::port` builds one for any name. `Routes::resolvers(&SecretSources)`
+  builds `RouteResolvers` (an `llm_models::Resolvers`) from the references through the existing
+  resolvers, behind the new default-off features `environment`, `file` and `keychain`; nothing is
+  read when they are built, and an unset variable or a missing file is refused `unauthorized` by
+  the endpoint's reference before any request is sent, with no fallback. Parsing does no I/O and
+  refuses unknown fields, repeated keys, an unknown format, protocol, auth kind or secret source,
+  a literal secret and a route to an undeclared endpoint, naming the field and echoing no value;
+  YAML aliases are bounded so a small document cannot cost more than its length allows. Routes
+  without capabilities take a default (tools, tool choice, temperature and `top_p` allowed;
+  efforts `low`, `medium`, `high`; context 200000; output 16384). ESS domain `llm.routes` and 24
+  scenarios.
+- `b10x-llm-routing`: `CatalogDocument::new`, so a catalog can be built from declarations.
+- `b10x-llm-responses`: the answer half of gateway ingress. `encode_ingress_response` and
+  `IngressStream` (`new`, `chunk`, `close`, `fail`) turn neutral events and a `TurnOutcome` into the
+  Responses event payloads and response object this crate's `decode_stream` reads back as the same
+  turn: text, function calls, reasoning, every stop reason, only reported counters, one caller
+  identifier per answer, and `response.failed` without the error's message or a partial usage
+  snapshot. ESS command `llm.responses.EncodeIngress` and 14 scenarios.
+- `b10x-llm-messages`: the same for Messages. `encode_ingress_message` and `IngressStream`
+  (`new(id, model)`, `chunk`, `close`, `fail`, `without_reasoning_relay`) emit `message_start`,
+  `content_block_*`, `message_delta` with the stop reason and reported usage, `message_stop` and
+  `error`, each checked against this crate's decoder before it is sent. ESS command
+  `llm.messages.EncodeIngress` and 11 scenarios.
+
+### Known limits
+
+- `StreamEvent` carries no item boundary, so the Responses encoder refuses two consecutive messages,
+  or one message another item interrupts, and the Messages encoder refuses redacted thinking between
+  streamed blocks (story `ingress-block-boundaries`). A streamed Messages answer names a model only
+  when one is announced at `IngressStream::new`.
+
+### Conformance
+
+- The suite answers 777 scenarios and skips none (baseline floor 705 → 777).
+
 ## [0.5.1] - 2026-10-08
 
 ### Documentation

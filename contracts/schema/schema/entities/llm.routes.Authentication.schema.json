@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Authentication",
+  "x-ess-name": "llm.routes.Authentication",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "authentication_id": {
+      "type": "string"
+    },
+    "prepared": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "header": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.routes.Authentication.State"
+    }
+  },
+  "required": [
+    "authentication_id",
+    "prepared",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "ae3b0bdbde784d678a05cfa1c3b8412e603d1eb69bb61f7f128323775ca513d2",
+    "contract_digest": "slice-sha256/2:3eb70ab46c6d86910bc51541c4359a3fa797880c69b8f2b24d566d9bba73550b",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.routes.Authentication.State": {
+      "title": "State",
+      "x-ess-name": "llm.routes.Authentication.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

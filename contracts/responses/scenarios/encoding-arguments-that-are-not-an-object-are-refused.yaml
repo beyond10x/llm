@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: encoding-arguments-that-are-not-an-object-are-refused
+summary: a call whose arguments are not a JSON object is refused, because the decoder would refuse to read it back
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.EncodeIngress
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":[1]}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"final_usage":true}}}'
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.responses.LastIngressEncoding
+  counts: {at_least: 1, at_most: 1}
+- view: llm.responses.LastIngressEncoding
+  contains:
+    accepted: false
+    error_code: unsupported
+    error_message: the Responses wire carries only tool arguments that are a JSON object
+    payload_types: []
+    decoded_accepted: null

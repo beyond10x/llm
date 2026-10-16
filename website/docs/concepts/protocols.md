@@ -13,11 +13,11 @@ separate crate, and each serves both directions: an outgoing request to a model 
 incoming request from a client that speaks that wire. One codec for both directions means a client
 and a gateway cannot disagree about the subset.
 
-| Crate | Protocol | Request path | Client | Ingress decoder |
-| --- | --- | --- | --- | --- |
-| `b10x-llm-responses` | Responses | `{base}responses` | `ResponsesClient` | `ingest_request` |
-| `b10x-llm-messages` | Messages | `{base}messages` | `MessagesClient` | `decode_request` |
-| `b10x-llm-chat` | Chat Completions | `{base}chat/completions` | `ChatClient` | `decode_ingress_request` |
+| Crate | Protocol | Request path | Client | Ingress decoder | Ingress encoder |
+| --- | --- | --- | --- | --- | --- |
+| `b10x-llm-responses` | Responses | `{base}responses` | `ResponsesClient` | `ingest_request` | `IngressStream`, `encode_ingress_response` |
+| `b10x-llm-messages` | Messages | `{base}messages` | `MessagesClient` | `decode_request` | `IngressStream`, `encode_ingress_message` |
+| `b10x-llm-chat` | Chat Completions | `{base}chat/completions` | `ChatClient` | `decode_ingress_request` | `IngressStream`, `encode_ingress_completion` |
 
 Every client implements `Model`. It checks the request against its binding, resolves the credential
 for the attempt, sends one request through the bounded transport, and hands each decoded event to

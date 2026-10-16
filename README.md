@@ -57,11 +57,11 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 | --- | --- |
 | `b10x-llm-core` | The neutral turn: `Model`, requests, events, outcomes, typed failures; no I/O |
 | `b10x-llm-http` | Bounded single-attempt HTTP and SSE transport |
-| `b10x-llm-responses`, `b10x-llm-messages`, `b10x-llm-chat` | One protocol each: projection both ways and a client |
+| `b10x-llm-responses`, `b10x-llm-messages`, `b10x-llm-chat` | One protocol each: projection both ways, a gateway's ingress decoder and answer encoder, and a client |
 | `b10x-llm-credentials` | Injected secret resolution; opt-in file, keychain, environment, JSON pointer, Codex login and `secrets` adapters |
 | `b10x-llm-providers` | Provider, account and endpoint bindings, independent of protocol; provider descriptions (`llm.provider-description/1`), with Runpod's built in |
 | `b10x-llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
-| `b10x-llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account |
+| `b10x-llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account; reads `llm.routes/1` model routes ([guide](https://beyond10x.github.io/llm/docs/guides/configure-model-routes)) |
 | `b10x-llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |
 | `b10x-llm-tool-call` | `call_tool` (one forced tool, its JSON input back) and the Codex Responses preset |
 | `b10x-llm-blocking` | A blocking adapter over any `Model` for a synchronous loop |

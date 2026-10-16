@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: encoding-a-stop-reason-the-wire-cannot-express-is-refused
+summary: a reason that would read back as another one is refused rather than approximated
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.EncodeIngress
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    # `content-filter` is not shaped like a code on this wire; the decoder would read it back as
+    # `unrecognized`.
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"incomplete","reason":"content-filter"},"items":[{"kind":"assistant-text","text":"I can"}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"final_usage":true}}}'
+    streamed: false
+  outcome: observed
+assert:
+- view: llm.responses.LastIngressEncoding
+  counts: {at_least: 1, at_most: 1}
+- view: llm.responses.LastIngressEncoding
+  contains:
+    accepted: false
+    error_code: unsupported
+    error_message: the Responses wire cannot report this terminal reason
+    status: null

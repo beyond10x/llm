@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: an-answer-contradicting-the-streamed-calls-is-refused
+summary: an outcome that leaves out a call the caller was already streamed is refused, not closed
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.messages.EncodeIngress
+  input:
+    request_json: '{"model":"messages-route","max_tokens":512,"messages":[{"role":"user","content":"Summarise the log"}],"tools":[{"name":"lookup","description":"Look up a record","input_schema":{"type":"object"}},{"name":"search","description":"Search the log","input_schema":{"type":"object"}}],"stream":true}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"tool-call","call_id":"call-1","name":"lookup","arguments":{"query":"errors"}}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260"},"upstream_model":"example-model-20260201","final_usage":true}}}'
+    events_json: '[{"kind":"tool-call-started","call_id":"call-1","name":"lookup"},{"kind":"tool-arguments-delta","call_id":"call-1","delta":"{\"query\":\"errors\"}"},{"kind":"tool-call-started","call_id":"call-2","name":"search"},{"kind":"tool-arguments-delta","call_id":"call-2","delta":"{\"query\":\"warnings\"}"}]'
+    model: example-model-20260201
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.messages.LastIngressEncoding
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastIngressEncoding
+  contains:
+    accepted: false
+    error_code: protocol
+    error_message: Messages answer contradicts what was already streamed
+    dispatch: not-sent
+    decoded_accepted: null
+    decoded_items: []
+    round_trip: null

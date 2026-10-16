@@ -12,6 +12,8 @@ disagree about nothing.
 | `request_headers(Option<&Conversation>, u64) -> Vec<(&str, String)>` | every non-secret header the client sets |
 | `ingest_request(&Binding, &Value) -> Result<TurnRequest, Error>` | wire body to neutral turn |
 | `decode_stream(&Binding, &[Value]) -> StreamDecoding` | wire stream to neutral outcome |
+| `encode_ingress_response(&TurnOutcome, &str, u64) -> Result<Value, Error>` | neutral outcome to the non-streamed response object |
+| `IngressStream::{new, chunk, close, fail}` | neutral events and outcome to the Responses event payloads a caller reads |
 | `ResponsesClient::new(llm_providers::Binding, HttpClient, Arc<dyn SecretResolver>)` | one bound endpoint as an `llm_core::Model` |
 | `ResponsesClient::with_conversation(Conversation)` | opts that client into one conversation |
 
@@ -329,6 +331,49 @@ crate wrote; an upstream string relayed into a diagnostic is how a prompt or a c
 eventually reaches a log. `incomplete_details.reason` is treated the same way: it is kept when it
 is shaped like a code (lowercase, digits, underscore, at most 64 bytes) and named `unrecognized`
 otherwise.
+
+## Answering a Responses caller
+
+`encode_ingress_response(&TurnOutcome, id, created_at)` and `IngressStream` (`new`, `chunk`,
+`close`, `fail`) are the answer half of gateway ingress: they turn the neutral events and outcome
+that answer an ingested request back into the payloads a Responses caller reads. Each value is one
+server-sent-event payload carrying its `type`; the `event:`/`data:` framing, the response
+identifier and the clock are the server's.
+
+The encoder emits only what `decode_stream` interprets, in the order it requires, and the tests read
+every answer back through it: the decoded events and `TurnOutcome` equal the encoded ones for every
+stop reason, streamed and non-streamed (the non-streamed object wrapped as the terminal
+`response.completed`). The opening `response.created` precedes the first chunk's own payloads, or
+comes with `close` or `fail` when nothing was streamed. `close` ends with exactly one
+`response.completed` or `response.incomplete`; `fail` ends with `response.failed`, whose code the
+decoder reads back as the same class of failure, and never carries the error's own message. A
+refused `close` sends nothing and leaves the stream open for `fail`.
+
+What the encoder refuses rather than approximates or drops:
+
+| Refused | Why |
+| --- | --- |
+| a stop reason the decoder would read back as another, such as Chat's `content-filter` | the caller would see a different reason |
+| `UnattributedOpaque` state, opaque state of another binding, `UserText` and `ToolResult` items | the wire cannot carry them as the model's answer |
+| an outcome contradicting what was streamed: an announced call missing, renamed or with other arguments, or text the caller was shown missing | the caller already holds the streamed version |
+
+Usage carries only reported counters: an unknown counter is left out, never written as zero, and a
+total comes only from two known parts. A reported cache-write count goes out as
+`input_tokens_details.cache_creation_input_tokens`, as the Chat encoder does; this crate's decoder
+does not read that field back, so such an outcome does not round-trip exactly. Reasoning streamed
+without opaque state in the outcome adds no output item. `ingest_request` still refuses
+`stream: false`, so the non-streamed encoder serves callers that accept a request by other means.
+
+One identifier per answer: every payload, the terminal one included, carries the caller-supplied
+`id`; the upstream's response id belongs to the upstream exchange and is not relayed, so the decoded
+`response_id` is the caller's. `fail` carries counters only when the error's observation reports
+them as final; a partial snapshot is left out rather than read back as a final cost. A text delta
+after any other item opens a new message item, and each message ends with exactly the text its
+deltas showed. Because `StreamEvent` carries no item boundary, two consecutive messages with
+nothing streamed between them, and one message whose text a reasoning delta or a call interrupts,
+are refused at `close` (story `ingress-block-boundaries`). The `fail` code mapping (which error codes
+read back as themselves and which as `refused`) is a table in the module documentation of
+`crates/llm-responses/src/ingress.rs`.
 
 ## Four behaviours of the Harness adapter this crate does not reproduce
 
