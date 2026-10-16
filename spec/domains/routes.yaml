@@ -1,0 +1,126 @@
+domain: llm.routes
+
+# Model routes (`llm.routes/1`, crates/llm-models `routes`). One short YAML document that a
+# gateway, an agent CLI and an SDK read the same way: a provider names its base URL, its wire
+# protocol and how it authenticates, its secret only as a source reference (`env:<VARIABLE>`,
+# `file:<path>` or `keychain:<service>/<entry>`); a route names one `<provider>/<model-id>`.
+#
+#   format: llm.routes/1
+#   providers:
+#     anthropic:  {base_url: https://api.anthropic.com/v1, protocol: messages,
+#                  auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+#     openrouter: {base_url: https://openrouter.ai/api/v1, protocol: chat-completions,
+#                  auth: {kind: bearer, secret: env:OPENROUTER_API_KEY}}
+#     gateway:    {base_url: https://gateway.internal/v1, protocol: responses,
+#                  auth: {kind: bearer, secret: file:~/.config/b10x/gateway-token}}
+#     lab:        {base_url: http://127.0.0.1:8000/v1, protocol: chat-completions,
+#                  auth: {kind: anonymous}}
+#   routes:
+#     sonnet:    anthropic/claude-sonnet-4-5
+#     or-sonnet: openrouter/anthropic/claude-sonnet-4.5
+#     qwen:      {model: gateway/qwen, capabilities: {tools: true, tool_choice: true,
+#                 temperature: true, top_p: true, reasoning_efforts: [], context_window: 32768,
+#                 max_output_tokens: 8192}}
+#
+# A route is a `<provider>/<model-id>` string, or a mapping naming that `model` and the route's
+# `capabilities` (the `llm.catalog` Capabilities); a string route takes the module's default
+# capabilities. A route value splits on its FIRST `/` only, so a model id may itself contain `/`. A name that
+# is not a route but reads `<declared provider>/<model-id>` resolves directly. The document
+# expands into an `llm.catalog/1` catalog (one provider, account and endpoint per provider; one
+# served model, serving model and single-target route per route), so port construction is the
+# `llm.models` domain's unchanged. Parsing is strict and performs no I/O: an unknown field, an
+# unknown format version, a route naming an undeclared provider, an unknown protocol or
+# authentication kind, a literal secret value and a secret reference of an unknown source kind
+# are refused as `invalid-request` with a diagnostic that names the field or the provider and
+# never echoes a value.
+#
+# The document's secret references become the caller's resolvers, one per credentialed
+# provider, keyed by the provider's name (which is also its account id and its secret reference
+# id). Building them reads nothing. At turn time an unset variable or a missing file is refused
+# as `unauthorized`, naming the provider's reference (never the variable, the path or a value),
+# before any request is sent; no other source is tried.
+#
+# The entities are verification-adapter observations of the real crate.
+entities:
+  - name: llm.routes.Loading
+    identity: {name: load_id, type: String}
+    fields: &load_facts
+      - {name: loaded, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # Every declared route, in name order: `<route>=<provider>/<upstream model>`.
+      - {name: routes, type: List<String>}
+      # Every declared provider, in name order:
+      # `<provider>:<protocol>:<auth kind>:<secret source kind or none>`.
+      - {name: providers, type: List<String>}
+      # Per probed name, in probe order: `<name>=<provider>:<protocol>:<upstream model>` for an
+      # answered name, `<name>!<error code>` for a refused one.
+      - {name: answers, type: List<String>}
+      # The serving-model ids of the expanded `llm.catalog/1` catalog, in id order.
+      - {name: catalog_serving_models, type: List<String>}
+      # Per route, in name order, the capabilities its expanded serving model declares:
+      # `<route>=tools:<bool>,tool_choice:<bool>,temperature:<bool>,top_p:<bool>,efforts:<a|b|…>,context:<n>,output:<n>`
+      # (`efforts:` is empty when none). A string route declares the default: every boolean true,
+      # efforts `low|medium|high`, context 200000, output 16384.
+      - {name: capabilities, type: List<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+  - name: llm.routes.Authentication
+    identity: {name: authentication_id, type: String}
+    fields: &authentication_facts
+      - {name: prepared, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # The header the prepared credential travels in, when one was prepared.
+      - {name: header, type: Optional<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
+commands:
+  - name: llm.routes.Load
+    # Parse a routes document and resolve each probed name against it, without I/O.
+    input:
+      - {name: routes_yaml, type: String}
+      - {name: probe_names, type: List<String>}
+    outcomes:
+      - name: observed
+        emits: [llm.routes.Loaded]
+        payload:
+          llm.routes.Loaded:
+            loaded: {generated: true}
+        summary: Return the routes, providers and answers the document yields, or its refusal.
+
+  - name: llm.routes.Authenticate
+    # Build the document's resolvers and prepare one route's credential, as a turn would before
+    # it sends anything. `home` is the directory a `file:~/` reference expands against; the
+    # adapter roots it in a private fixture directory, and `file_secrets` are written there
+    # (`<relative path>=<content>`) before the attempt.
+    input:
+      - {name: routes_yaml, type: String}
+      - {name: name, type: String}
+      - {name: file_secrets, type: List<String>}
+    outcomes:
+      - name: observed
+        emits: [llm.routes.Authenticated]
+        payload:
+          llm.routes.Authenticated:
+            prepared: {generated: true}
+        summary: Return whether a credential was prepared, or the named refusal.
+
+events:
+  # Local notifications from the verification adapter only.
+  - name: llm.routes.Loaded
+    fields:
+      - {name: loaded, type: Boolean}
+  - name: llm.routes.Authenticated
+    fields:
+      - {name: prepared, type: Boolean}
+
+views:
+  - name: llm.routes.LastLoad
+    source: llm.routes.Loading
+    consistency: read_your_writes
+    fields: *load_facts
+  - name: llm.routes.LastAuthentication
+    source: llm.routes.Authentication
+    consistency: read_your_writes
+    fields: *authentication_facts

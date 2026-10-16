@@ -5,6 +5,7 @@ domains:
   - llm.catalog
   - llm.routing
   - llm.models
+  - llm.routes
   - llm.secrets
   - llm.accounting
   - llm.budget

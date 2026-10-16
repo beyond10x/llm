@@ -4182,7 +4182,7 @@
     },
     "counts": {
       "authored": 696,
-      "generated": 28,
+      "generated": 30,
       "outside": 0,
       "refused": 0
     },
@@ -4205,6 +4205,8 @@
       "llm.responses.DecodeStream/outcome/observed",
       "llm.responses.Ingest/outcome/observed",
       "llm.responses.Project/outcome/observed",
+      "llm.routes.Authenticate/outcome/observed",
+      "llm.routes.Load/outcome/observed",
       "llm.routing.Evaluate/outcome/observed",
       "llm.routing.Fallback/outcome/observed",
       "llm.secrets.ProbeEnvironment/outcome/observed",
@@ -4230,9 +4232,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "904d6e4793ba0d9a04772ccd94ff63d09f1c55d1fc1bbf8549a0053047960448",
+    "contract_digest": "044c9430e99be060f3459baf761c5ab1af300f92c9808c5bfc4f75c3f3b010b5",
     "scenario_initial_state": "empty",
-    "spec_digest": "56979a5df4140ee65f43b8382a9e3c8c0804e613f36463e8c4f915a5ad47b0b6",
+    "spec_digest": "bda8981146eb10d44bc7ad1f4c64c9b581bd0fb1b1f73be48bdf203c6fb9165e",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -4303,6 +4305,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -4407,6 +4417,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -11666,6 +11684,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -11763,6 +11789,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -18251,6 +18285,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -18351,6 +18393,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -18441,6 +18491,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -18556,6 +18614,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -18646,6 +18712,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -18765,6 +18839,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -18855,6 +18937,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -18963,6 +19053,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -26146,6 +26244,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -26247,6 +26353,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -31218,6 +31332,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -31322,6 +31444,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -31412,6 +31542,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -31519,6 +31657,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -31609,6 +31755,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -31724,6 +31878,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -31814,6 +31976,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -31918,6 +32088,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -40168,6 +40346,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -40276,6 +40462,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -40366,6 +40560,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -40474,6 +40676,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -41379,6 +41589,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -41487,6 +41705,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -41585,6 +41811,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -41701,6 +41935,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -49807,6 +50049,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -49915,6 +50165,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -50005,6 +50263,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -50116,6 +50382,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -50206,6 +50480,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -50322,6 +50604,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -59265,6 +59555,436 @@
         }
       ]
     },
+    "llm.routes.Authenticate/outcome/observed": {
+      "purpose": "`llm.routes.Authenticate` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.routes.Authenticate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Authenticate",
+          "input": {
+            "file_secrets": {
+              "kind": "literal",
+              "value": []
+            },
+            "name": {
+              "kind": "literal",
+              "value": "name"
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "routes_yaml"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "shape": {
+            "prepared": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.routes.Load/outcome/observed": {
+      "purpose": "`llm.routes.Load` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": []
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "routes_yaml"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "shape": {
+            "loaded": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
     "llm.routing.Evaluate/outcome/observed": {
       "purpose": "`llm.routing.Evaluate` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -59330,6 +60050,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -59445,6 +60173,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.FallbackObserved",
           "step": "expect_no_event"
         },
@@ -59531,6 +60267,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -59647,6 +60391,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -68458,6 +69210,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -68570,6 +69330,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -68664,6 +69432,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -68799,6 +69575,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -68885,6 +69669,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -69012,6 +69804,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -69102,6 +69902,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -69221,6 +70029,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -69311,6 +70127,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -69442,6 +70266,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -69544,6 +70376,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -69688,6 +70528,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {
@@ -80383,6 +81231,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
           "name": "llm.routing.Evaluated"
         },
         {
@@ -80487,6 +81343,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.routing.Evaluated",
           "step": "expect_no_event"
         },
@@ -80573,6 +81437,14 @@
         {
           "kind": "event",
           "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
         },
         {
           "kind": "event",
@@ -80677,6 +81549,14 @@
         },
         {
           "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
           "step": "expect_no_event"
         },
         {

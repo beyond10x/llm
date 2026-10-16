@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.routes.Authentication.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "bda8981146eb10d44bc7ad1f4c64c9b581bd0fb1b1f73be48bdf203c6fb9165e",
+    "contract_digest": "slice-sha256/2:140a71bcaf43057716a603e4b209852d99f12c5a7f2d58f09620aa3db1d89998",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.routes.Authentication.State": {
+      "title": "State",
+      "x-ess-name": "llm.routes.Authentication.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

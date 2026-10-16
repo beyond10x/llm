@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Load input",
+  "x-ess-name": "llm.routes.Load",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "routes_yaml": {
+      "type": "string"
+    },
+    "probe_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "routes_yaml",
+    "probe_names"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "bda8981146eb10d44bc7ad1f4c64c9b581bd0fb1b1f73be48bdf203c6fb9165e",
+    "contract_digest": "slice-sha256/2:01d9ddafd2ad7fb60cc790f15710a13f456aa88679cf5a796d77550cf4905bc3",
+    "regenerate": "ess generate"
+  }
+}
