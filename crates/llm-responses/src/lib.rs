@@ -7,7 +7,9 @@
 //! the body this wire accepts; [`ingest_request`] reads that same body back into a neutral request,
 //! which is what a gateway ingress surface needs. [`decode_stream`] turns the wire's decoded
 //! server-sent-event payloads into a neutral [`llm_core::TurnOutcome`]. [`ResponsesClient`] puts
-//! the three on one bound endpoint as an [`llm_core::Model`].
+//! the three on one bound endpoint as an [`llm_core::Model`]. [`IngressStream`] and
+//! [`encode_ingress_response`] answer a caller the other way: neutral stream events and a neutral
+//! outcome, encoded as the payloads and the response object [`decode_stream`] reads back.
 //!
 //! # What is here and what is not
 //!
@@ -30,12 +32,14 @@
 mod binding;
 mod client;
 mod conversation;
+mod ingress;
 mod request;
 mod stream;
 
 pub use binding::{Binding, PATH, PROTOCOL};
 pub use client::ResponsesClient;
 pub use conversation::{Conversation, request_headers};
+pub use ingress::{IngressStream, encode_ingress_response};
 pub use request::{
     ACCEPTED_BODY_FIELDS, CARRIED_ENTRY_TYPES, INCLUDE, TOOL_NAME_PATTERN, encode_request,
     ingest_request, project_request,

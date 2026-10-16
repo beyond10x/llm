@@ -187,6 +187,40 @@ entities:
       - {name: bound_body_preserved, type: Boolean}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 
+  - name: llm.responses.IngressEncoding
+    identity: {name: encoding_id, type: String}
+    fields: &encoding_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # The diagnostic this crate wrote for a refused encoding.
+      - {name: error_message, type: Optional<String>}
+      # The `type` of every streamed payload, in wire order. Empty for a non-streamed answer.
+      - {name: payload_types, type: List<String>}
+      # The terminal response object's own facts.
+      - {name: status, type: Optional<String>}
+      - {name: incomplete_reason, type: Optional<String>}
+      # The `error.code` a `response.failed` carries. The neutral diagnostic is never relayed.
+      - {name: failure_code, type: Optional<String>}
+      # The upstream model the answer reports, absent when the outcome reports none.
+      - {name: model_reported, type: Optional<String>}
+      - {name: response_id, type: Optional<String>}
+      # The wire `usage` object, compactly encoded. An unknown counter is absent, never zero.
+      - {name: usage_json, type: Optional<String>}
+      # The terminal object's `output`, compactly encoded.
+      - {name: output_json, type: Optional<String>}
+      # What this crate's own decoder reads back from the encoding, on the same binding.
+      - {name: decoded_accepted, type: Optional<Boolean>}
+      - {name: decoded_error_code, type: Optional<String>}
+      - {name: decoded_stop_reason, type: Optional<String>}
+      - {name: decoded_stream_events, type: List<String>}
+      # The decoded neutral counters, compactly encoded; an unknown one is absent from it.
+      - {name: decoded_usage_json, type: Optional<String>}
+      # Whether the decoded turn equals the encoded outcome, field for field.
+      - {name: outcome_preserved, type: Optional<Boolean>}
+      # Whether the decoded stream events equal the neutral events that were encoded.
+      - {name: events_preserved, type: Optional<Boolean>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+
 commands:
   - name: llm.responses.Project
     # Project a versioned neutral turn onto the wire body, then read that body back through the
@@ -240,6 +274,30 @@ commands:
             accepted: {generated: true}
         summary: Return facts from reading a wire body, including typed refusals.
 
+  - name: llm.responses.EncodeIngress
+    # Encode one neutral answer onto this wire, streamed or not, then read the encoding back with
+    # this crate's own decoder on the given binding. Streamed, each neutral event is re-emitted
+    # through one IngressStream, which then closes on the outcome or, when a failure is given,
+    # fails with it. Not streamed, the response object is read back as a terminal object.
+    input:
+      - {name: binding_json, type: String}
+      - {name: upstream_model, type: String}
+      # Serialized llm.outcome/4, raw so a malformed envelope reaches the production decoder.
+      # Absent only when the stream fails instead of closing.
+      - {name: outcome_json, type: Optional<String>}
+      - {name: streamed, type: Boolean}
+      # A JSON array of neutral stream events. Absent means the stream carried no events.
+      - {name: events_json, type: Optional<String>}
+      # A serialized neutral error the stream fails with instead of closing.
+      - {name: failure_json, type: Optional<String>}
+    outcomes:
+      - name: observed
+        emits: [llm.responses.IngressEncoded]
+        payload:
+          llm.responses.IngressEncoded:
+            accepted: {generated: true}
+        summary: Return what a gateway would answer a Responses caller, and what the decoder reads back.
+
 events:
   # Local notification that the adapter finished observing a library return.
   # No message bus, production event publication or delivery guarantee is implied.
@@ -250,6 +308,9 @@ events:
     fields:
       - {name: accepted, type: Boolean}
   - name: llm.responses.Ingested
+    fields:
+      - {name: accepted, type: Boolean}
+  - name: llm.responses.IngressEncoded
     fields:
       - {name: accepted, type: Boolean}
 
@@ -266,3 +327,7 @@ views:
     source: llm.responses.RequestIngestion
     consistency: read_your_writes
     fields: *ingestion_facts
+  - name: llm.responses.LastIngressEncoding
+    source: llm.responses.IngressEncoding
+    consistency: read_your_writes
+    fields: *encoding_facts

@@ -59,7 +59,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | --- | --- |
 | `http-streaming` | **Bounded HTTP and server-sent events.** One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails. |
 | `parity-http-timeouts-cancel` | **Connect and idle bounds, and cancellation.** A 15-second connect timeout (`HttpClient::with_connect_timeout`), a 180-second idle bound by default, and cancellation that wins over a pending read. |
-| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 705 scenarios against the real crates three times and skips none. |
+| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 777 scenarios against the real crates three times and skips none. |
 
 ### Protocols
 
@@ -72,6 +72,8 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | `responses-client` | **Responses client.** `ResponsesClient` implements `Model` over one Responses endpoint: the request is checked against its binding and bounded before the credential is resolved. |
 | `parity-responses-live-stream` | **Live Responses streaming.** Each event reaches the caller as it arrives, and text the caller was shown stays in the turn when the terminal output omits it. |
 | `parity-responses-wire` | **Responses request encoding and conversation identity.** `encode_request` gives the exact bytes the client sends; opt-in conversation identity sends `prompt_cache_key`, `session-id` and `x-client-request-id`. |
+| `responses-ingress-encoder` | **A server answers a Responses caller.** `encode_ingress_response` and `IngressStream` encode neutral events and an outcome as the Responses event payloads and response object this crate's decoder reads back as the same turn; partial usage and the error's message are never relayed. |
+| `messages-ingress-encoder` | **A server answers a Messages caller.** `encode_ingress_message` and `IngressStream` encode the Messages event stream and message, each block, reason and usage report checked against this crate's decoder; `without_reasoning_relay` for an upstream that cannot sign reasoning. |
 | `codex-stream` | **Responses turns against the Codex backend.** A success without a content type is read as an event stream when one was asked for, and an empty terminal output after streamed items keeps the streamed items. |
 
 ### Credentials
@@ -95,6 +97,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | `catalog-routing` | **TOML catalogs, selection and explanation.** Strict `llm.catalog/1`, a deterministic configuration digest, ordered opt-in selection, capability and input-token admission, and an explanation that resolves no secret. |
 | `ordered-fallback` | **Ordered fallback.** `Catalog::run_turn` tries a route's declared targets in order and stops on visible output, an ineligible failure, an ambiguous dispatch, the attempt bound, the deadline, cancellation or the caller's limit. |
 | `same-target-retry` | **Same-target retry before visible output.** `RetryPolicy`, on by default: four attempts per target with 1, 2 and 4 second waits, server delays honoured up to 30 seconds, a `turn-retried` warning before each wait, then fallback. |
+| `routes-document` | **One routes document for every consumer.** `b10x-llm-models`: `llm_models::routes::Routes` reads `llm.routes/1` (YAML endpoints with base URL, protocol and a secret reference; routes as `<endpoint>/<model-id>`, or direct names), expands it into an `llm.catalog/1` catalog and builds `RouteResolvers` from `env:`, `file:` and `keychain:` references (features `environment`, `file`, `keychain`), refusing an unset variable or a missing file by the endpoint's reference before any request. Fixture evidence only. |
 | `catalog-model-port` | **One function builds the port a serving model declares.** `b10x-llm-models`: `port` builds the Chat Completions, Responses or Messages client a catalog binding's protocol names, with the caller's resolver for its account, and refuses a credentialed account without one as `unauthorized` before any I/O; `CatalogModels` builds every serving model's port and is the `Models` ordered fallback takes. |
 | `openai-access` | Pending: **OpenAI access qualified.** API and caller-managed subscription routes with recorded live evidence. A live probe of the Codex backend found the two incompatibilities 0.1.6 fixed; no route is qualified. |
 | `anthropic-access` | Pending: **Anthropic access qualified.** API and caller-managed subscription routes with recorded live evidence. The subscription presentation is built and fixture-checked: a `subscription-oauth` account resolves its token through its secret reference and Messages sends it as a bearer with the OAuth beta header and the client preamble; no live turn is recorded. |

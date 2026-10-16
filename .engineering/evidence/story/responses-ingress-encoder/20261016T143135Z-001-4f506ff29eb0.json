@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-16T14:31:35Z",
+  "actor": "human:timo",
+  "artifact": "story:responses-ingress-encoder",
+  "kind": "story",
+  "revision": 11,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "conformance check on the merged wave: 777 of 777 scenarios, none skipped; the story's scenarios are new behaviour the base cannot show",
+    "reference": "https://github.com/beyond10x/llm/actions/runs/38915138582"
+  }
+}

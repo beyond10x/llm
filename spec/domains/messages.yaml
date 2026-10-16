@@ -74,6 +74,37 @@ entities:
       # For each request, the 1-based ordinal of the resolver answer it carried; 0 for none.
       - {name: presented_credentials, type: List<Integer>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # What a gateway answers a Messages caller from a neutral outcome, and what this crate's own
+  # decoder reads back from that answer under the same fixture binding. The encoder sends only
+  # what the decoder reads back as the same outcome: a block, terminal reason or usage report it
+  # would read as anything else is refused, never approximated.
+  - name: llm.messages.IngressEncoding
+    identity: {name: observation_id, type: String}
+    fields: &ingress_encoding_facts
+      # Whether the encoder answered. A refusal reached before anything was sent is not-sent.
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      - {name: dispatch, type: Optional<String>}
+      # Each encoded payload in order, re-encoded with sorted keys: every event of a stream,
+      # each carrying the `type` its SSE event is named by, or the one complete message.
+      - {name: wire, type: List<String>}
+      # Whether this crate's decoder accepted the answer, and its refusal or failure code.
+      - {name: decoded_accepted, type: Optional<Boolean>}
+      - {name: decoded_error_code, type: Optional<String>}
+      # The decoded outcome, labelled as llm.messages.CodecInspection labels one.
+      - {name: decoded_items, type: List<String>}
+      - {name: decoded_stop_reason, type: Optional<String>}
+      - {name: decoded_upstream_model, type: Optional<String>}
+      - {name: decoded_response_id, type: Optional<String>}
+      # Absent counters are absent from this encoding; unknown is never reported as zero.
+      - {name: decoded_usage_json, type: Optional<String>}
+      # The deltas the decoder showed its caller, in order: `text:<delta>`, `reasoning:<delta>`,
+      # `started:<call>:<name>`, `arguments:<call>:<fragment>`.
+      - {name: shown, type: List<String>}
+      # Whether the decoded outcome equals the encoded one, field for field.
+      - {name: round_trip, type: Optional<Boolean>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
   - name: llm.messages.Present
     input:
@@ -124,11 +155,37 @@ commands:
           llm.messages.Inspected:
             accepted: {generated: true}
         summary: Observe the shared complete-response decoder that the stream decoder also finishes through.
+  - name: llm.messages.EncodeIngress
+    # Encode one neutral outcome back onto this wire, streamed or not, then read the answer back
+    # through this crate's decoder against the request the caller sent.
+    input:
+      # The caller's Messages request body, read with the production ingress decoder.
+      - {name: request_json, type: String}
+      # Serialized llm.outcome/4, raw so that a malformed envelope reaches the encoder.
+      - {name: outcome_json, type: String}
+      - {name: streamed, type: Boolean}
+      # A JSON array of neutral stream events, each passed to one IngressStream before it closes
+      # on the outcome. Absent means the stream carried no events.
+      - {name: events_json, type: Optional<String>}
+      # The model the stream announces in message_start, which precedes the outcome.
+      - {name: model, type: Optional<String>}
+      # When present, the stream ends with this error code instead of closing on the outcome.
+      - {name: fail_code, type: Optional<String>}
+    outcomes:
+      - name: observed
+        emits: [llm.messages.Encoded]
+        payload:
+          llm.messages.Encoded:
+            accepted: {generated: true}
+        summary: Observe what a gateway answers a Messages caller and what the decoder reads back.
 events:
   - name: llm.messages.Inspected
     fields:
       - {name: accepted, type: Boolean}
   - name: llm.messages.Presented
+    fields:
+      - {name: accepted, type: Boolean}
+  - name: llm.messages.Encoded
     fields:
       - {name: accepted, type: Boolean}
 views:
@@ -140,3 +197,7 @@ views:
     source: llm.messages.PresentationObservation
     consistency: read_your_writes
     fields: *presentation_facts
+  - name: llm.messages.LastIngressEncoding
+    source: llm.messages.IngressEncoding
+    consistency: read_your_writes
+    fields: *ingress_encoding_facts

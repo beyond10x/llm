@@ -153,6 +153,14 @@ fn stop_reason(reported: Option<&str>) -> Result<StopReason, Error> {
     }
 }
 
+/// The terminal reason one reported name decodes to, by the same checks a message is read by.
+/// The ingress encoder sends a name only when this reads it back as the reason it encodes.
+pub(crate) fn read_reason(reported: &str) -> Result<StopReason, Error> {
+    let mut header = Header::default();
+    header.reason(Some(reported))?;
+    stop_reason(header.stop_reason.as_deref())
+}
+
 /// Decode one complete Messages response into a bound neutral outcome.
 ///
 /// # Errors

@@ -379,6 +379,12 @@ dependencies = [
  "b10x-llm-providers",
  "b10x-llm-responses",
  "b10x-llm-routing",
+ "keyring-core",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]

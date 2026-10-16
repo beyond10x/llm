@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Authenticate input",
+  "x-ess-name": "llm.routes.Authenticate",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "routes_yaml": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "file_secrets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "routes_yaml",
+    "name",
+    "file_secrets"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "ae3b0bdbde784d678a05cfa1c3b8412e603d1eb69bb61f7f128323775ca513d2",
+    "contract_digest": "slice-sha256/2:b0b02c9241d74fb7b9ef7c8d79b165d2a2bbe65912f6ae87b1f3a7637d85c272",
+    "regenerate": "ess generate"
+  }
+}

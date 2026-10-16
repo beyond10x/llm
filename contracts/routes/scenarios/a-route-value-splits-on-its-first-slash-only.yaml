@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: a-route-value-splits-on-its-first-slash-only
+summary: or-sonnet answers endpoint openrouter and upstream model anthropic/claude-sonnet-4.5, splitting its value on the first slash only
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        openrouter: {base_url: https://openrouter.ai/api/v1, protocol: chat-completions,
+                     auth: {kind: bearer, secret: env:OPENROUTER_API_KEY}}
+      routes:
+        or-sonnet: openrouter/anthropic/claude-sonnet-4.5
+    probe_names: [or-sonnet]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: true
+    error_code: null
+    routes: ["or-sonnet=openrouter/anthropic/claude-sonnet-4.5"]
+    answers: ["or-sonnet=openrouter:chat-completions:anthropic/claude-sonnet-4.5"]
+    catalog_serving_models: [or-sonnet]

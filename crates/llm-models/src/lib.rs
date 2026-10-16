@@ -8,6 +8,8 @@
 //! `unauthorized` before any I/O. Construction sends nothing and resolves no secret: resolution
 //! stays at turn time, inside the client.
 
+pub mod routes;
+
 use llm_chat::ChatClient;
 use llm_core::{
     AuthKind, BoxFuture, Cancel, Capabilities, Error, ErrorCode, Id, Model, Protocol, Provenance,

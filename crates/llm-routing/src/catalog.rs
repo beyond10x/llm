@@ -48,6 +48,29 @@ pub struct CatalogDocument {
 }
 
 impl CatalogDocument {
+    /// An `llm.catalog/1` document from declarations built in code rather than parsed, so another
+    /// document format can expand into one and be validated by [`CatalogDocument::validate`].
+    pub const fn new(
+        providers: Vec<Provider>,
+        accounts: Vec<Account>,
+        endpoints: Vec<Endpoint>,
+        models: Vec<ServedModel>,
+        serving_models: Vec<ServingModel>,
+        routes: Vec<Route>,
+        targets: Vec<RouteTarget>,
+    ) -> Self {
+        Self {
+            format: Format::V1,
+            providers,
+            accounts,
+            endpoints,
+            models,
+            serving_models,
+            routes,
+            targets,
+        }
+    }
+
     /// # Errors
     /// Refuses invalid versions/fields, size bounds and malformed TOML without echoing its values.
     pub fn parse(source: &str) -> Result<Self, Error> {
