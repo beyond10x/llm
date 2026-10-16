@@ -35,7 +35,7 @@
 //! `unauthorized`, by the provider's reference, before any request is sent.
 
 use crate::{Port, Resolvers, port};
-use llm_core::{AuthKind, BillingKind, Capabilities, Error, Id, Protocol};
+use llm_core::{AuthKind, BillingKind, Capabilities, Error, ErrorCode, Id, Protocol};
 use llm_credentials::{SecretRef, SecretResolver};
 use llm_http::HttpClient;
 use llm_providers::{
@@ -44,9 +44,10 @@ use llm_providers::{
 use llm_routing::{Catalog, CatalogDocument, MAX_CONFIG_BYTES, Route, RouteTarget};
 use serde::{
     Deserialize, Deserializer,
-    de::{self, MapAccess, Visitor},
+    de::{self, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess, Visitor},
 };
 use std::{
+    cell::Cell,
     collections::{BTreeMap, BTreeSet},
     fmt,
     marker::PhantomData,
@@ -61,6 +62,10 @@ const DEFAULT_CONTEXT_WINDOW: u64 = 200_000;
 const DEFAULT_MAX_OUTPUT_TOKENS: u64 = 16_384;
 const MAX_PATH_BYTES: usize = 4096;
 const DUPLICATE_KEY: &str = "llm.routes duplicate mapping key";
+const EXPANSION: &str = "llm.routes expansion bound";
+const EXPANDED: &str =
+    "llm.routes/1 document expands beyond its byte bound when its YAML aliases are resolved";
+const CATALOG_BOUND: &str = "llm.routes/1 document expands beyond the catalog's bound";
 const SECRET_FORMS: &str = "`auth.secret` must be a reference: env:<VARIABLE>, \
 file:<absolute or ~/ path> or keychain:<service>/<entry>";
 
@@ -156,6 +161,9 @@ impl<'de, V: Deserialize<'de>> Deserialize<'de> for Unique<V> {
 
 /// The YAML parser's own diagnostic can quote the document, so only its location is kept.
 fn malformed(error: &serde_yaml::Error) -> Error {
+    if error.to_string().contains(EXPANSION) {
+        return Error::too_large(EXPANDED);
+    }
     let repeated = if error.to_string().contains(DUPLICATE_KEY) {
         ": a mapping key is repeated"
     } else {
@@ -167,6 +175,102 @@ fn malformed(error: &serde_yaml::Error) -> Error {
     Error::invalid(format!(
         "invalid {FORMAT} YAML document{repeated}{location}"
     ))
+}
+
+/// How many bytes the document may present once every YAML alias is replayed: twice its own
+/// bound, which a document without aliases stays within (its decoded text is never longer than
+/// its source, and every node it holds costs one byte below).
+const MAX_EXPANDED_BYTES: usize = 2 * MAX_CONFIG_BYTES;
+
+/// Walks the document as the YAML parser presents it, every alias replayed, and keeps nothing.
+///
+/// The parser replays an alias from the events it already holds, without copying them, so this
+/// walk holds no more than the parser does. Deserializing into owned values would instead copy
+/// the anchored text once per alias: a short document could cost far more than its byte bound
+/// before any of it was refused. Each node costs its text plus one byte, so many small repeated
+/// nodes are bounded too, and the walk stops at [`MAX_EXPANDED_BYTES`].
+#[derive(Clone, Copy)]
+struct Measure<'a>(&'a Cell<usize>);
+
+impl Measure<'_> {
+    fn charge<E: de::Error>(self, text: usize) -> Result<(), E> {
+        let left = self
+            .0
+            .get()
+            .checked_sub(text.saturating_add(1))
+            .ok_or_else(|| E::custom(EXPANSION))?;
+        self.0.set(left);
+        Ok(())
+    }
+}
+
+impl<'de> DeserializeSeed<'de> for Measure<'_> {
+    type Value = ();
+    fn deserialize<D: Deserializer<'de>>(self, deserializer: D) -> Result<(), D::Error> {
+        deserializer.deserialize_any(self)
+    }
+}
+
+impl<'de> Visitor<'de> for Measure<'_> {
+    type Value = ();
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a YAML node")
+    }
+    fn visit_bool<E: de::Error>(self, _: bool) -> Result<(), E> {
+        self.charge(0)
+    }
+    fn visit_i64<E: de::Error>(self, _: i64) -> Result<(), E> {
+        self.charge(0)
+    }
+    fn visit_i128<E: de::Error>(self, _: i128) -> Result<(), E> {
+        self.charge(0)
+    }
+    fn visit_u64<E: de::Error>(self, _: u64) -> Result<(), E> {
+        self.charge(0)
+    }
+    fn visit_u128<E: de::Error>(self, _: u128) -> Result<(), E> {
+        self.charge(0)
+    }
+    fn visit_f64<E: de::Error>(self, _: f64) -> Result<(), E> {
+        self.charge(0)
+    }
+    fn visit_str<E: de::Error>(self, value: &str) -> Result<(), E> {
+        self.charge(value.len())
+    }
+    fn visit_bytes<E: de::Error>(self, value: &[u8]) -> Result<(), E> {
+        self.charge(value.len())
+    }
+    fn visit_none<E: de::Error>(self) -> Result<(), E> {
+        self.charge(0)
+    }
+    fn visit_unit<E: de::Error>(self) -> Result<(), E> {
+        self.charge(0)
+    }
+    fn visit_some<D: Deserializer<'de>>(self, deserializer: D) -> Result<(), D::Error> {
+        self.charge(0)?;
+        deserializer.deserialize_any(self)
+    }
+    fn visit_newtype_struct<D: Deserializer<'de>>(self, deserializer: D) -> Result<(), D::Error> {
+        self.charge(0)?;
+        deserializer.deserialize_any(self)
+    }
+    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<(), A::Error> {
+        self.charge(0)?;
+        while seq.next_element_seed(self)?.is_some() {}
+        Ok(())
+    }
+    fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<(), A::Error> {
+        self.charge(0)?;
+        while map.next_key_seed(self)?.is_some() {
+            map.next_value_seed(self)?;
+        }
+        Ok(())
+    }
+    /// A tagged node (`!tag value`): the tag and its value both count.
+    fn visit_enum<A: EnumAccess<'de>>(self, data: A) -> Result<(), A::Error> {
+        let ((), value) = data.variant_seed(self)?;
+        value.newtype_variant_seed(self)
+    }
 }
 
 /// A provider or route name: a valid identifier holding no `/`.
@@ -528,13 +632,25 @@ fn expand<'a>(
         targets,
     )
     .validate()
+    .map_err(|error| {
+        // The catalog bounds its declarations; the caller wrote a routes document, so the
+        // refusal names that document rather than the catalog it was never shown.
+        if error.code == ErrorCode::TooLarge {
+            Error::too_large(CATALOG_BOUND)
+        } else {
+            error
+        }
+    })
 }
 
 impl Routes {
     /// Reads and validates a routes document and expands it into its catalog. Performs no I/O.
     ///
     /// # Errors
-    /// `too-large` above [`MAX_CONFIG_BYTES`]; otherwise `invalid-request` for malformed YAML,
+    /// `too-large` for a document above [`MAX_CONFIG_BYTES`], for one whose YAML aliases repeat
+    /// it past twice that bound while it is read, and for one whose expansion exceeds the
+    /// catalog's own bounds (`MAX_CONFIG_BYTES` of declarations, 4096 of each kind: a few
+    /// thousand routes); otherwise `invalid-request` for malformed YAML,
     /// an unknown field, a repeated key, an unknown format, protocol, authentication kind or
     /// secret source, a literal secret, contradictory authentication fields, an invalid name,
     /// base URL, header or capability declaration, and a route to an undeclared provider. The
@@ -543,6 +659,10 @@ impl Routes {
         if source.len() > MAX_CONFIG_BYTES {
             return Err(Error::too_large("routes document exceeds its byte bound"));
         }
+        let budget = Cell::new(MAX_EXPANDED_BYTES);
+        Measure(&budget)
+            .deserialize(serde_yaml::Deserializer::from_str(source))
+            .map_err(|error| malformed(&error))?;
         let raw: RawDocument = serde_yaml::from_str(source).map_err(|error| malformed(&error))?;
         if raw.format != FORMAT {
             return Err(Error::invalid(format!(

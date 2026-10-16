@@ -1,7 +1,7 @@
 //! The `llm.routes/1` document: strict parsing, its expansion into an `llm.catalog/1` catalog,
 //! and the resolvers its secret references build. No test here sends a request.
 
-use llm_core::{Error, ErrorCode, Id, Model, Protocol};
+use llm_core::{BillingKind, Error, ErrorCode, Id, Model, Protocol};
 use llm_credentials::SecretResolver;
 use llm_http::{HttpClient, Limits};
 use llm_models::{
@@ -340,6 +340,97 @@ fn refusals_name_the_provider_or_route_they_concern() {
 fn an_oversized_document_is_refused_before_parsing() {
     let document = format!("{DOCUMENT}#{}\n", "x".repeat(llm_routing::MAX_CONFIG_BYTES));
     assert_eq!(refused(&document).code, ErrorCode::TooLarge);
+}
+
+/// YAML aliases repeat what they anchor while the document is read. The repetition is held to
+/// the same byte bound as the document itself, so a short document cannot expand past it; an
+/// alias that stays within the bound is ordinary YAML and is read as written.
+#[test]
+fn a_document_whose_yaml_aliases_expand_past_the_byte_bound_is_refused() {
+    let document = |copies: usize| {
+        format!(
+            "format: llm.routes/1
+providers:
+  p: {{base_url: https://p.example.invalid/v1, protocol: messages, auth: {{kind: anonymous}}}}
+routes:
+  r:
+    model: p/m
+    capabilities: {{tools: true, tool_choice: true, temperature: true, top_p: true,
+                   context_window: 8192, max_output_tokens: 1024,
+                   reasoning_efforts: [&e {}, {}]}}
+",
+            "a".repeat(64 * 1024),
+            vec!["*e"; copies].join(", ")
+        )
+    };
+    let expanding = document(64);
+    assert!(expanding.len() < llm_routing::MAX_CONFIG_BYTES / 16);
+    let error = refused(&expanding);
+    assert_eq!(error.code, ErrorCode::TooLarge);
+    assert_eq!(
+        error.message,
+        "llm.routes/1 document expands beyond its byte bound when its YAML aliases are resolved"
+    );
+    let routes = Routes::parse(&document(2)).unwrap();
+    let route = routes.routes().next().unwrap();
+    assert_eq!(route.capabilities().reasoning_efforts.len(), 3);
+
+    // Without aliases the bound never fires, even for the densest nodes a document within its
+    // byte bound can hold: one-byte scalars, two source bytes each.
+    let head = "format: llm.routes/1
+providers:
+  p: {base_url: https://p.example.invalid/v1, protocol: messages, auth: {kind: anonymous}}
+routes:
+  r:
+    model: p/m
+    capabilities: {tools: true, tool_choice: true, temperature: true, top_p: true,
+                   context_window: 8192, max_output_tokens: 1024, reasoning_efforts: [";
+    let room = (llm_routing::MAX_CONFIG_BYTES - head.len() - 8) / 2;
+    let dense = format!("{head}{}a]}}\n", "a,".repeat(room));
+    assert!(
+        dense.len() <= llm_routing::MAX_CONFIG_BYTES,
+        "{}",
+        dense.len()
+    );
+    if let Err(error) = Routes::parse(&dense) {
+        assert_ne!(
+            error.message,
+            "llm.routes/1 document expands beyond its byte bound when its YAML aliases are resolved"
+        );
+    }
+}
+
+/// A credentialed provider bills as metered API use; an anonymous one as self-hosted.
+#[test]
+fn each_expanded_account_bills_by_how_its_provider_authenticates() {
+    let routes = Routes::parse(DOCUMENT).unwrap();
+    let billing: Vec<(&str, &str, BillingKind)> = routes
+        .catalog()
+        .bindings()
+        .map(|(serving, binding)| {
+            let account = &binding.declaration().account;
+            (serving.as_str(), account.id.as_str(), account.billing_kind)
+        })
+        .collect();
+    assert_eq!(
+        billing,
+        [
+            ("or-sonnet", "openrouter", BillingKind::Metered),
+            ("qwen", "gateway", BillingKind::Metered),
+            ("small", "lab", BillingKind::SelfHosted),
+            ("sonnet", "anthropic", BillingKind::Metered),
+        ]
+    );
+    let direct = routes.binding("lab/other-model").unwrap();
+    assert_eq!(
+        direct.declaration().account.billing_kind,
+        BillingKind::SelfHosted
+    );
+    let direct = routes.binding("anthropic/claude-opus-4-1").unwrap();
+    assert_eq!(
+        direct.declaration().account.billing_kind,
+        BillingKind::Metered
+    );
 }
 
 #[test]
