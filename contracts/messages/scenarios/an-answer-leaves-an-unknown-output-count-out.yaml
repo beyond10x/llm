@@ -1,0 +1,35 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: an-answer-leaves-an-unknown-output-count-out
+summary: an output count the upstream never reported is left out of the answer and reads back unknown, never zero
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.messages.EncodeIngress
+  input:
+    request_json: '{"model":"messages-route","max_tokens":512,"messages":[{"role":"user","content":"Summarise the log"}],"stream":true}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Looking"}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260"},"upstream_model":"example-model-20260201","response_id":"msg_gateway_fixture","usage":{"input_tokens":21,"cached_input_tokens":4,"cache_creation_input_tokens":6},"final_usage":true}}}'
+    events_json: '[{"kind":"text-delta","text":"Looking"}]'
+    model: example-model-20260201
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.messages.LastIngressEncoding
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastIngressEncoding
+  contains:
+    accepted: true
+    error_code: null
+    # The route reports fresh input apart from both cache counters: 21 inclusive is 11 fresh.
+    # No output_tokens is sent, and none is sent as zero.
+    wire:
+    - '{"message":{"content":[],"id":"msg_gateway_fixture","model":"example-model-20260201","role":"assistant","type":"message"},"type":"message_start"}'
+    - '{"content_block":{"text":"","type":"text"},"index":0,"type":"content_block_start"}'
+    - '{"delta":{"text":"Looking","type":"text_delta"},"index":0,"type":"content_block_delta"}'
+    - '{"index":0,"type":"content_block_stop"}'
+    - '{"delta":{"stop_reason":"end_turn"},"type":"message_delta","usage":{"cache_creation_input_tokens":6,"cache_read_input_tokens":4,"input_tokens":11}}'
+    - '{"type":"message_stop"}'
+    decoded_accepted: true
+    decoded_usage_json: '{"input_tokens":21,"cached_input_tokens":4,"cache_creation_input_tokens":6}'
+    round_trip: true

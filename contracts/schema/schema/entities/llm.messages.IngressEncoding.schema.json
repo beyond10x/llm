@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IngressEncoding",
+  "x-ess-name": "llm.messages.IngressEncoding",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "wire": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "decoded_accepted": {
+      "type": "boolean"
+    },
+    "decoded_error_code": {
+      "type": "string"
+    },
+    "decoded_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "decoded_stop_reason": {
+      "type": "string"
+    },
+    "decoded_upstream_model": {
+      "type": "string"
+    },
+    "decoded_response_id": {
+      "type": "string"
+    },
+    "decoded_usage_json": {
+      "type": "string"
+    },
+    "shown": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "round_trip": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.messages.IngressEncoding.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "wire",
+    "decoded_items",
+    "shown",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1d09b2d9edf4744d7a99676e5bbc2d39379e04090f86117528370775b39371ec",
+    "contract_digest": "slice-sha256/2:e462d450d4b189a9c5f5f54214e93ebb82e23a0c848a065968c07a60532a9d4b",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.messages.IngressEncoding.State": {
+      "title": "State",
+      "x-ess-name": "llm.messages.IngressEncoding.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

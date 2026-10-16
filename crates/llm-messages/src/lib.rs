@@ -5,11 +5,13 @@
 mod client;
 mod codec;
 mod decode;
+mod ingress;
 mod usage;
 
 pub use client::{ANTHROPIC_VERSION, BETA_HEADER, MessagesClient, OAUTH_BETA, VERSION_HEADER};
 pub use codec::{IngressRequest, SUBSCRIPTION_CLIENT_PREAMBLE, decode_request, encode_request};
 pub use decode::{StreamDecoder, decode_message, decode_stream};
+pub use ingress::{IngressStream, encode_ingress_message};
 
 use llm_core::Error;
 use serde_json::{Map, Value};

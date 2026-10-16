@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: a-streamed-end-turn-answer-reads-back-whole
+summary: a streamed completed answer is sent as end_turn and reads back as the same outcome
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.messages.EncodeIngress
+  input:
+    request_json: '{"model":"messages-route","max_tokens":512,"messages":[{"role":"user","content":"Summarise the log"}],"tools":[{"name":"lookup","description":"Look up a record","input_schema":{"type":"object"}},{"name":"search","description":"Search the log","input_schema":{"type":"object"}}],"stream":true}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"opaque","provenance":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260"},"payload":{"type":"thinking","thinking":"weighing","signature":"sig-1"}},{"kind":"assistant-text","text":"Nothing failed."}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260"},"upstream_model":"example-model-20260201","response_id":"msg_gateway_fixture","usage":{"input_tokens":21,"output_tokens":9,"cached_input_tokens":4,"cache_creation_input_tokens":6,"reasoning_output_tokens":3},"final_usage":true}}}'
+    events_json: '[{"kind":"reasoning-delta","text":"weighing"},{"kind":"text-delta","text":"Nothing "},{"kind":"text-delta","text":"failed."}]'
+    model: example-model-20260201
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.messages.LastIngressEncoding
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastIngressEncoding
+  contains:
+    accepted: true
+    error_code: null
+    decoded_accepted: true
+    decoded_items:
+    - 'opaque:{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260"}:{"signature":"sig-1","thinking":"weighing","type":"thinking"}'
+    - 'assistant-text:Nothing failed.'
+    decoded_stop_reason: end-turn
+    shown:
+    - 'reasoning:weighing'
+    - 'text:Nothing '
+    - 'text:failed.'
+    round_trip: true
