@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-unknown-auth-kind-is-refused
+summary: a provider declaring auth kind password is refused as invalid-request, naming the provider and not the value
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      providers:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: password, secret: env:ANTHROPIC_API_KEY}}
+      routes:
+        sonnet: anthropic/claude-sonnet-4-5
+    probe_names: [sonnet]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "provider `anthropic`: unknown `auth.kind`; expected anonymous, bearer or api-key"
+    routes: []
+    providers: []
+    answers: []
+    catalog_serving_models: []

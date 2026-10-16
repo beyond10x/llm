@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: a-string-route-declares-the-default-capabilities
+summary: a route written as a plain string declares the default capabilities in the expanded catalog
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      providers:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+      routes:
+        sonnet: anthropic/claude-sonnet-4-5
+    probe_names: [sonnet]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: true
+    error_code: null
+    capabilities: ["sonnet=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:low|medium|high,context:200000,output:16384"]

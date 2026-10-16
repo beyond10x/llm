@@ -458,6 +458,30 @@
       "llm.responses/authored/wire-an-unknown-output-item-is-preserved-with-a-warning",
       "llm.responses/authored/wire-an-unset-output-bound-is-absent-from-the-body",
       "llm.responses/authored/wire-the-encoded-body-is-the-bytes-the-client-sends",
+      "llm.routes/authored/a-bare-unknown-name-is-refused",
+      "llm.routes/authored/a-literal-secret-without-a-source-prefix-is-refused",
+      "llm.routes/authored/a-missing-file-secret-is-refused-unauthorized",
+      "llm.routes/authored/a-name-naming-an-undeclared-provider-is-refused",
+      "llm.routes/authored/a-present-file-secret-prepares-the-providers-api-key-header",
+      "llm.routes/authored/a-provider-declared-twice-is-refused",
+      "llm.routes/authored/a-route-mapping-declares-its-own-capabilities",
+      "llm.routes/authored/a-route-to-an-undeclared-provider-is-refused",
+      "llm.routes/authored/a-route-value-splits-on-its-first-slash-only",
+      "llm.routes/authored/a-string-route-declares-the-default-capabilities",
+      "llm.routes/authored/a-subscription-oauth-provider-is-refused",
+      "llm.routes/authored/an-anonymous-provider-prepares-nothing-and-succeeds",
+      "llm.routes/authored/an-anonymous-provider-with-a-secret-is-refused",
+      "llm.routes/authored/an-api-key-provider-without-a-header-is-refused",
+      "llm.routes/authored/an-undeclared-name-reading-a-declared-provider-and-model-resolves-directly",
+      "llm.routes/authored/an-unknown-auth-field-is-refused",
+      "llm.routes/authored/an-unknown-auth-kind-is-refused",
+      "llm.routes/authored/an-unknown-format-version-is-refused",
+      "llm.routes/authored/an-unknown-protocol-is-refused",
+      "llm.routes/authored/an-unknown-provider-field-is-refused",
+      "llm.routes/authored/an-unknown-secret-source-is-refused",
+      "llm.routes/authored/an-unknown-top-level-field-is-refused",
+      "llm.routes/authored/an-unset-environment-variable-is-refused-unauthorized",
+      "llm.routes/authored/the-three-provider-example-loads-and-each-route-answers-its-provider-protocol-and-model",
       "llm.routing/authored/a-caller-attempt-bound-above-sixty-four-is-refused",
       "llm.routing/authored/a-caller-attempt-bound-of-zero-is-refused",
       "llm.routing/authored/a-falling-back-route-between-subscription-billed-targets-is-accepted",
@@ -3009,6 +3033,126 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/wire-the-encoded-body-is-the-bytes-the-client-sends"
       },
+      "routes/scenarios/a-bare-unknown-name-is-refused.yaml": {
+        "digest": "sha256:c6801074420200c795a1454df3a9c62d86575d2e718b1402ba443adbbe0b8461",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-bare-unknown-name-is-refused"
+      },
+      "routes/scenarios/a-literal-secret-without-a-source-prefix-is-refused.yaml": {
+        "digest": "sha256:ecf5f09c36a2a30e909b864d2b4cdf1065822bf6d5acad8baa9094481af769b6",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-literal-secret-without-a-source-prefix-is-refused"
+      },
+      "routes/scenarios/a-missing-file-secret-is-refused-unauthorized.yaml": {
+        "digest": "sha256:7ad8b71e2d0f7b9a191e4378282d24b0074564718918d8ecfaec94acb155e9a1",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-missing-file-secret-is-refused-unauthorized"
+      },
+      "routes/scenarios/a-name-naming-an-undeclared-provider-is-refused.yaml": {
+        "digest": "sha256:f653deeb99377fd460990bf8f54972690c0a8bbc2711fbffb5dbb5c9cc2a6b71",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-name-naming-an-undeclared-provider-is-refused"
+      },
+      "routes/scenarios/a-present-file-secret-prepares-the-providers-api-key-header.yaml": {
+        "digest": "sha256:331425b8f45d6d08ce5afef817dcb8c2312fd10090f38e32e626b7f57f62c473",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-present-file-secret-prepares-the-providers-api-key-header"
+      },
+      "routes/scenarios/a-provider-declared-twice-is-refused.yaml": {
+        "digest": "sha256:545cfe5113ebad8ca4e9d65e30b1d5eb431e6012841f03552ef67ae9a1e01bb8",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-provider-declared-twice-is-refused"
+      },
+      "routes/scenarios/a-route-mapping-declares-its-own-capabilities.yaml": {
+        "digest": "sha256:173f076b72f7709cb5323d7f84a9bd8566514ae9825dd30ddd8584b3f1485ee7",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-route-mapping-declares-its-own-capabilities"
+      },
+      "routes/scenarios/a-route-to-an-undeclared-provider-is-refused.yaml": {
+        "digest": "sha256:bccc9636a065d1e31d2143d559f678cbffb67707ff5648c0dcef448f41676043",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-route-to-an-undeclared-provider-is-refused"
+      },
+      "routes/scenarios/a-route-value-splits-on-its-first-slash-only.yaml": {
+        "digest": "sha256:2f95dc9a76f29fefe8699b4887d71b92745e86a5018bf41d261d2cebeb50d786",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-route-value-splits-on-its-first-slash-only"
+      },
+      "routes/scenarios/a-string-route-declares-the-default-capabilities.yaml": {
+        "digest": "sha256:e8a4c19a911b91401bf4e702c6a8580caed2c21f41a23888e75f49f5443b9531",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-string-route-declares-the-default-capabilities"
+      },
+      "routes/scenarios/a-subscription-oauth-provider-is-refused.yaml": {
+        "digest": "sha256:389ed223882175cf8611f297b50f21bae1015c3ccec8d9d093fda62b0a922582",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-subscription-oauth-provider-is-refused"
+      },
+      "routes/scenarios/an-anonymous-provider-prepares-nothing-and-succeeds.yaml": {
+        "digest": "sha256:50ed19130ad9e2a8b47727f73717eb4ddfc24868c4c200fabea3b7a30415687a",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-anonymous-provider-prepares-nothing-and-succeeds"
+      },
+      "routes/scenarios/an-anonymous-provider-with-a-secret-is-refused.yaml": {
+        "digest": "sha256:72d8d12026a7e9f7ea98e6b824e9ed995adb7d446c228d44e10542c67e5bc02c",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-anonymous-provider-with-a-secret-is-refused"
+      },
+      "routes/scenarios/an-api-key-provider-without-a-header-is-refused.yaml": {
+        "digest": "sha256:c25aa9c47c5ebd6862f916643778d940129995228bbb60e7aff846c3fcdeb351",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-api-key-provider-without-a-header-is-refused"
+      },
+      "routes/scenarios/an-undeclared-name-reading-a-declared-provider-and-model-resolves-directly.yaml": {
+        "digest": "sha256:e5410713b35215590975803611616da7a52b2efa1fd3a884f0abdbfd0a8acc5a",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-undeclared-name-reading-a-declared-provider-and-model-resolves-directly"
+      },
+      "routes/scenarios/an-unknown-auth-field-is-refused.yaml": {
+        "digest": "sha256:24d54824d7788037d0f73a10e2592821d1c98ae39ac491ddd4d4b0c09afbf759",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-unknown-auth-field-is-refused"
+      },
+      "routes/scenarios/an-unknown-auth-kind-is-refused.yaml": {
+        "digest": "sha256:987590fb4cd551834a32506da3e421e6916d95b66787f0f8b26b3155fb9eb152",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-unknown-auth-kind-is-refused"
+      },
+      "routes/scenarios/an-unknown-format-version-is-refused.yaml": {
+        "digest": "sha256:f0de9c489d0240f350612e03b9ab0e10df639a98b78cb4e5fb70b89647530bf0",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-unknown-format-version-is-refused"
+      },
+      "routes/scenarios/an-unknown-protocol-is-refused.yaml": {
+        "digest": "sha256:73a878777aa639a103e6729087c59ab3ec1d24b5178f5ff013d3cb070af45872",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-unknown-protocol-is-refused"
+      },
+      "routes/scenarios/an-unknown-provider-field-is-refused.yaml": {
+        "digest": "sha256:d5dee69b8115a987dcc1987a5ba3d1c10b13f10cc4bc6c657539e1dd43664fce",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-unknown-provider-field-is-refused"
+      },
+      "routes/scenarios/an-unknown-secret-source-is-refused.yaml": {
+        "digest": "sha256:cad0bf87267163e3293f6b7904195138091dd3146d0928d0b3b32f50a412660d",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-unknown-secret-source-is-refused"
+      },
+      "routes/scenarios/an-unknown-top-level-field-is-refused.yaml": {
+        "digest": "sha256:1c035b7ca4bac7db69965b4d5af99221a972f25813630bd9cd4d581ebf3a1b84",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-unknown-top-level-field-is-refused"
+      },
+      "routes/scenarios/an-unset-environment-variable-is-refused-unauthorized.yaml": {
+        "digest": "sha256:8c74bb165873bd4357adb968d95d979d40030edcf34f469ab7c0b8bbd2ee1a86",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-unset-environment-variable-is-refused-unauthorized"
+      },
+      "routes/scenarios/the-three-provider-example-loads-and-each-route-answers-its-provider-protocol-and-model.yaml": {
+        "digest": "sha256:844838f47d7c78ffa1e12167325caa09ae29c58cebda893e93a1ed6c998f994e",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/the-three-provider-example-loads-and-each-route-answers-its-provider-protocol-and-model"
+      },
       "routing/scenarios/a-caller-attempt-bound-above-sixty-four-is-refused.yaml": {
         "digest": "sha256:3f85f2ef7d4b446c5e1d1379061797659395bc42cb8f4a51e8fb3d1b62153bb5",
         "disposition": "accepted",
@@ -4181,7 +4325,7 @@
       }
     },
     "counts": {
-      "authored": 696,
+      "authored": 720,
       "generated": 30,
       "outside": 0,
       "refused": 0
@@ -59982,6 +60126,2398 @@
         {
           "event": "llm.transport.JsonPosted",
           "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.routes/authored/a-bare-unknown-name-is-refused": {
+      "purpose": "a bare name that is neither a route nor <provider>/<model-id> answers invalid-request",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "opus"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "opus!invalid-request"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-literal-secret-without-a-source-prefix-is-refused": {
+      "purpose": "a secret written as a literal value with no source prefix is refused as invalid-request without echoing it",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: sk-literal}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider `anthropic`: `auth.secret` must be a reference: env:<VARIABLE>, file:<absolute or ~/ path> or keychain:<service>/<entry>"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-missing-file-secret-is-refused-unauthorized": {
+      "purpose": "a route whose file reference names a file the home does not hold is refused unauthorized by the provider's reference, naming neither the path nor a value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Authenticate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastAuthentication"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Authenticate",
+          "input": {
+            "file_secrets": {
+              "kind": "literal",
+              "value": []
+            },
+            "name": {
+              "kind": "literal",
+              "value": "qwen"
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  gateway: {base_url: https://gateway.internal/v1, protocol: responses,\n            auth: {kind: bearer, secret: file:~/.config/b10x/gateway-token}}\nroutes:\n  qwen: gateway/qwen\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "secret reference `gateway` refused: secret reference was not found"
+              },
+              "header": {
+                "kind": "literal",
+                "value": null
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastAuthentication"
+        }
+      ]
+    },
+    "llm.routes/authored/a-name-naming-an-undeclared-provider-is-refused": {
+      "purpose": "a name nobody/model whose provider the document does not declare answers invalid-request",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "nobody/model"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "nobody/model!invalid-request"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-present-file-secret-prepares-the-providers-api-key-header": {
+      "purpose": "a route whose file reference names a protected file below the caller's home prepares its credential in the api-key header the provider names",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Authenticate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastAuthentication"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Authenticate",
+          "input": {
+            "file_secrets": {
+              "kind": "literal",
+              "value": [
+                ".config/b10x/gateway-token=fixture-gateway-key"
+              ]
+            },
+            "name": {
+              "kind": "literal",
+              "value": "qwen"
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  gateway: {base_url: https://gateway.internal/v1, protocol: responses,\n            auth: {kind: api-key, header: x-gateway-key, secret: file:~/.config/b10x/gateway-token}}\nroutes:\n  qwen: gateway/qwen\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": null
+              },
+              "header": {
+                "kind": "literal",
+                "value": "x-gateway-key"
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastAuthentication"
+        }
+      ]
+    },
+    "llm.routes/authored/a-provider-declared-twice-is-refused": {
+      "purpose": "a provider declared twice under the same YAML key is refused as invalid-request instead of the last declaration winning",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\n  anthropic: {base_url: https://second.example.invalid/v1, protocol: messages,\n              auth: {kind: anonymous}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "invalid llm.routes/1 YAML document: a mapping key is repeated at line 3 column 3"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-route-mapping-declares-its-own-capabilities": {
+      "purpose": "a route written as a mapping with capabilities declares exactly those capabilities in the expanded catalog",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "qwen"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  gateway: {base_url: https://gateway.internal/v1, protocol: responses,\n            auth: {kind: bearer, secret: file:~/.config/b10x/gateway-token}}\nroutes:\n  qwen:\n    model: gateway/qwen\n    capabilities: {tools: true, tool_choice: true, temperature: true, top_p: true,\n                   reasoning_efforts: [], context_window: 32768, max_output_tokens: 8192}\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "qwen=gateway:responses:qwen"
+                ]
+              },
+              "capabilities": {
+                "kind": "literal",
+                "value": [
+                  "qwen=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:,context:32768,output:8192"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-route-to-an-undeclared-provider-is-refused": {
+      "purpose": "a route naming a provider the document does not declare is refused as invalid-request, naming the route and not its value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: nobody/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "route `sonnet`: its model names an undeclared provider"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-route-value-splits-on-its-first-slash-only": {
+      "purpose": "or-sonnet answers provider openrouter and upstream model anthropic/claude-sonnet-4.5, splitting its value on the first slash only",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "or-sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  openrouter: {base_url: https://openrouter.ai/api/v1, protocol: chat-completions,\n               auth: {kind: bearer, secret: env:OPENROUTER_API_KEY}}\nroutes:\n  or-sonnet: openrouter/anthropic/claude-sonnet-4.5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "or-sonnet=openrouter:chat-completions:anthropic/claude-sonnet-4.5"
+                ]
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": [
+                  "or-sonnet"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              },
+              "routes": {
+                "kind": "literal",
+                "value": [
+                  "or-sonnet=openrouter/anthropic/claude-sonnet-4.5"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-string-route-declares-the-default-capabilities": {
+      "purpose": "a route written as a plain string declares the default capabilities in the expanded catalog",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "capabilities": {
+                "kind": "literal",
+                "value": [
+                  "sonnet=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:low|medium|high,context:200000,output:16384"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-subscription-oauth-provider-is-refused": {
+      "purpose": "a provider declaring auth kind subscription-oauth is refused by name as invalid-request without echoing the value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: subscription-oauth, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider `anthropic`: `auth.kind` names a subscription OAuth login, which a routes document cannot declare"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-anonymous-provider-prepares-nothing-and-succeeds": {
+      "purpose": "a route to an anonymous provider prepares no credential header and succeeds",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Authenticate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastAuthentication"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Authenticate",
+          "input": {
+            "file_secrets": {
+              "kind": "literal",
+              "value": []
+            },
+            "name": {
+              "kind": "literal",
+              "value": "small"
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  lab: {base_url: http://127.0.0.1:8000/v1, protocol: chat-completions, auth: {kind: anonymous}}\nroutes:\n  small: lab/small\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": null
+              },
+              "header": {
+                "kind": "literal",
+                "value": null
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastAuthentication"
+        }
+      ]
+    },
+    "llm.routes/authored/an-anonymous-provider-with-a-secret-is-refused": {
+      "purpose": "an anonymous provider that names a secret is refused as invalid-request without echoing the reference",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "small"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  lab: {base_url: http://127.0.0.1:8000/v1, protocol: chat-completions,\n        auth: {kind: anonymous, secret: env:LAB_PRIVATE_TOKEN}}\nroutes:\n  small: lab/small\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider `lab`: an anonymous provider cannot name `auth.secret`"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-api-key-provider-without-a-header-is-refused": {
+      "purpose": "an api-key provider that names no header is refused as invalid-request, naming the provider",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider `anthropic`: an api-key provider requires `auth.header`"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-undeclared-name-reading-a-declared-provider-and-model-resolves-directly": {
+      "purpose": "a name that is no route but reads <declared provider>/<model-id> answers that provider directly",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "anthropic/claude-opus-4-1"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "anthropic/claude-opus-4-1=anthropic:messages:claude-opus-4-1"
+                ]
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": [
+                  "sonnet"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-unknown-auth-field-is-refused": {
+      "purpose": "an unknown field in a provider's auth refuses the whole document as invalid-request without echoing its value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic:\n    base_url: https://api.anthropic.com/v1\n    protocol: messages\n    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY, token: sk-private-marker}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "invalid llm.routes/1 YAML document at line 6 column 77"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-unknown-auth-kind-is-refused": {
+      "purpose": "a provider declaring auth kind password is refused as invalid-request, naming the provider and not the value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: password, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider `anthropic`: unknown `auth.kind`; expected anonymous, bearer or api-key"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-unknown-format-version-is-refused": {
+      "purpose": "a document declaring format llm.routes/2 is refused as invalid-request without echoing the version",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/2\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the document's `format` is not llm.routes/1"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-unknown-protocol-is-refused": {
+      "purpose": "a provider declaring protocol grpc is refused as invalid-request, naming the provider and not the value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: grpc,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider `anthropic`: unknown `protocol`; expected messages, responses or chat-completions"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-unknown-provider-field-is-refused": {
+      "purpose": "an unknown field in a provider refuses the whole document as invalid-request without echoing its value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic:\n    base_url: https://api.anthropic.com/v1\n    protocol: messages\n    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}\n    region: eu-private-marker\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "invalid llm.routes/1 YAML document at line 7 column 5"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-unknown-secret-source-is-refused": {
+      "purpose": "a secret reference of an unknown source kind, vault:x, is refused as invalid-request without echoing it",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: \"vault:x\"}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "provider `anthropic`: `auth.secret` must be a reference: env:<VARIABLE>, file:<absolute or ~/ path> or keychain:<service>/<entry>"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-unknown-top-level-field-is-refused": {
+      "purpose": "an unknown top-level field refuses the whole document as invalid-request without echoing its value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nregion: eu-private-marker\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "invalid llm.routes/1 YAML document at line 2 column 1"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "providers": {
+                "kind": "literal",
+                "value": []
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-unset-environment-variable-is-refused-unauthorized": {
+      "purpose": "a route whose env reference names an unset variable is refused unauthorized by the provider's reference, before any request, naming neither the variable nor a value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Authenticate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastAuthentication"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Authenticate",
+          "input": {
+            "file_secrets": {
+              "kind": "literal",
+              "value": []
+            },
+            "name": {
+              "kind": "literal",
+              "value": "sonnet"
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:LLM_ROUTES_CONFORMANCE_NEVER_SET}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Authenticate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastAuthentication"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "secret reference `anthropic` refused: secret reference was not found"
+              },
+              "header": {
+                "kind": "literal",
+                "value": null
+              },
+              "prepared": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastAuthentication"
+        }
+      ]
+    },
+    "llm.routes/authored/the-three-provider-example-loads-and-each-route-answers-its-provider-protocol-and-model": {
+      "purpose": "the three-provider example loads, each route answers its provider, protocol and upstream model, and the expanded catalog's serving models are the routes",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet",
+                "or-sonnet",
+                "qwen"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nproviders:\n  anthropic:  {base_url: https://api.anthropic.com/v1, protocol: messages,\n               auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\n  openrouter: {base_url: https://openrouter.ai/api/v1, protocol: chat-completions,\n               auth: {kind: bearer, secret: env:OPENROUTER_API_KEY}}\n  gateway:    {base_url: https://gateway.internal/v1, protocol: responses,\n               auth: {kind: bearer, secret: file:~/.config/b10x/gateway-token}}\nroutes:\n  sonnet:    anthropic/claude-sonnet-4-5\n  or-sonnet: openrouter/anthropic/claude-sonnet-4.5\n  qwen:      gateway/qwen\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "sonnet=anthropic:messages:claude-sonnet-4-5",
+                  "or-sonnet=openrouter:chat-completions:anthropic/claude-sonnet-4.5",
+                  "qwen=gateway:responses:qwen"
+                ]
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": [
+                  "or-sonnet",
+                  "qwen",
+                  "sonnet"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              },
+              "providers": {
+                "kind": "literal",
+                "value": [
+                  "anthropic:messages:api-key:env",
+                  "gateway:responses:bearer:file",
+                  "openrouter:chat-completions:bearer:env"
+                ]
+              },
+              "routes": {
+                "kind": "literal",
+                "value": [
+                  "or-sonnet=openrouter/anthropic/claude-sonnet-4.5",
+                  "qwen=gateway/qwen",
+                  "sonnet=anthropic/claude-sonnet-4-5"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
         }
       ]
     },

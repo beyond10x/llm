@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: a-name-naming-an-undeclared-provider-is-refused
+summary: a name nobody/model whose provider the document does not declare answers invalid-request
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      providers:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+      routes:
+        sonnet: anthropic/claude-sonnet-4-5
+    probe_names: [nobody/model]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: true
+    error_code: null
+    answers: ["nobody/model!invalid-request"]

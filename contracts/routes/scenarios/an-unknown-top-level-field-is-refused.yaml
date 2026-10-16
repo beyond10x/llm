@@ -1,0 +1,32 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-unknown-top-level-field-is-refused
+summary: an unknown top-level field refuses the whole document as invalid-request without echoing its value
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      region: eu-private-marker
+      providers:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+      routes:
+        sonnet: anthropic/claude-sonnet-4-5
+    probe_names: [sonnet]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "invalid llm.routes/1 YAML document at line 2 column 1"
+    routes: []
+    providers: []
+    answers: []
+    catalog_serving_models: []

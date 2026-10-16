@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-undeclared-name-reading-a-declared-provider-and-model-resolves-directly
+summary: a name that is no route but reads <declared provider>/<model-id> answers that provider directly
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      providers:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+      routes:
+        sonnet: anthropic/claude-sonnet-4-5
+    probe_names: [anthropic/claude-opus-4-1]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: true
+    error_code: null
+    answers: ["anthropic/claude-opus-4-1=anthropic:messages:claude-opus-4-1"]
+    catalog_serving_models: [sonnet]
