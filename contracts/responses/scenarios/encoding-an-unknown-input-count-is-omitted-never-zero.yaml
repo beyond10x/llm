@@ -8,7 +8,7 @@ timeline:
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hi"}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_upstream_1","usage":{"output_tokens":5},"final_usage":true}}}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hi"}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_gateway_fixture","usage":{"output_tokens":5},"final_usage":true}}}'
     events_json: '[{"kind":"text-delta","text":"Hi"}]'
     streamed: true
   outcome: observed

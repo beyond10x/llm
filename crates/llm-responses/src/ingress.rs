@@ -10,12 +10,49 @@
 //!
 //! Each returned value is one server-sent-event payload carrying its `type`. Framing (`event:`
 //! and `data:` lines) is the server's. The caller supplies the response identifier and the clock.
+//!
+//! # One identifier per answer
+//!
+//! Every payload of one answer, and the non-streamed object, carries the caller's `id`: the
+//! opening `response.created`, the terminal object and a `response.failed` alike. The outcome's
+//! `response_id` is the identifier the **upstream** gave its own response; it names the upstream
+//! conversation, not the gateway's answer, and is not relayed to the gateway's caller. A caller
+//! decoding the answer therefore reads the gateway's `id` as the response id, and an outcome
+//! round-trips unchanged only when its `response_id` is that `id`.
+//!
+//! # Failures
+//!
+//! [`IngressStream::fail`] writes the error's code as the wire code below. This crate's decoder
+//! classifies a failure by that code alone, so only three neutral codes read back as themselves;
+//! every other one reads back as `refused`, because the wire has no code that would read back
+//! as it.
+//!
+//! | neutral code | wire `error.code` | read back as |
+//! | --- | --- | --- |
+//! | `unavailable`, retriable | `server_is_overloaded` | `unavailable` |
+//! | `unavailable`, not retriable | `server_error` | `unavailable` |
+//! | `rate-limited` | `rate_limit_exceeded` | `rate-limited` |
+//! | `refused` | `refused` | `refused` |
+//! | `invalid-request` | `invalid_request` | `refused` |
+//! | `transport` | `transport` | `refused` |
+//! | `protocol` | `protocol` | `refused` |
+//! | `unauthorized` | `unauthorized` | `refused` |
+//! | `too-large` | `too_large` | `refused` |
+//! | `unsupported` | `unsupported` | `refused` |
+//! | `cancelled` | `cancelled` | `refused` |
+//! | `deadline` | `deadline` | `refused` |
+//!
+//! # Limits
+//!
+//! - Two consecutive assistant messages streamed with nothing between them are refused at close: [`StreamEvent`] carries no message boundary, so their deltas share one item (story:ingress-block-boundaries).
 
 use llm_core::{
-    CallId, Error, ErrorCode, Item, Protocol, StopReason, StreamEvent, ToolCall, ToolName,
-    TurnObservation, TurnOutcome, Usage,
+    CallId, Error, ErrorCode, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Protocol, StopReason,
+    StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome, Usage, exceeds,
 };
 use serde_json::{Map, Value, json};
+use std::iter::Filter;
+use std::slice;
 
 use crate::stream::is_safe_reason;
 
@@ -25,13 +62,15 @@ use crate::stream::is_safe_reason;
 /// `response`; `status` alone already says which, so a reader needs no event name.
 ///
 /// `id` and `created_at` come from the caller: this library owns no clock and mints no identity.
-/// The object's `id` is the response identifier the outcome reports, or `id` when it reports none.
+/// The object's `id` is always `id`; see the module documentation for why.
 ///
 /// # Errors
 /// Refuses what this wire cannot express rather than approximating it: caller-owned items,
 /// unattributed opaque state ([`Item::UNATTRIBUTED_REFUSAL`]), opaque state of another binding or
 /// other than reasoning, a stop reason the decoder would read back as another one, contradictory
-/// counters, and a successful outcome without terminal evidence.
+/// counters, a successful outcome without terminal evidence, and what the decoder would refuse to
+/// read back: tool arguments that are not a JSON object or exceed their bound, and more items than
+/// a turn holds.
 pub fn encode_ingress_response(
     outcome: &TurnOutcome,
     id: &str,
@@ -65,8 +104,12 @@ pub struct IngressStream {
     finished: bool,
     /// The `output_index` the next opened item takes.
     next_index: u64,
-    /// The one assistant message every text delta continues.
-    message: Option<OpenText>,
+    /// The assistant message items text deltas opened, in order. A text delta continues the last
+    /// one only while nothing else was relayed since; after a reasoning delta or a call it opens a
+    /// new one, so each item's deltas are exactly one message's text.
+    messages: Vec<OpenText>,
+    /// Whether the last relayed delta was text, so the next text delta continues its message.
+    in_message: bool,
     /// The one reasoning item every reasoning delta continues.
     reasoning: Option<OpenText>,
     /// Announced calls, in announcement order, with the argument text relayed for each.
@@ -101,7 +144,8 @@ impl IngressStream {
             opened: false,
             finished: false,
             next_index: 0,
-            message: None,
+            messages: Vec::new(),
+            in_message: false,
             reasoning: None,
             calls: Vec::new(),
             unannounced: Vec::new(),
@@ -121,24 +165,25 @@ impl IngressStream {
         let mut payloads = Vec::new();
         match event {
             StreamEvent::TextDelta { text } => {
-                let open = match &mut self.message {
-                    Some(open) => open,
-                    slot => {
-                        let output_index = self.next_index;
-                        self.next_index += 1;
-                        let item_id = format!("msg_{}_{output_index}", self.id);
-                        payloads.extend(open_message(output_index, &item_id));
-                        slot.insert(OpenText {
-                            output_index,
-                            item_id,
-                            text: String::new(),
-                        })
-                    }
-                };
-                open.text.push_str(text);
-                payloads.push(text_delta(open.output_index, &open.item_id, text));
+                if !self.in_message {
+                    let output_index = self.next_index;
+                    self.next_index += 1;
+                    let item_id = format!("msg_{}_{output_index}", self.id);
+                    payloads.extend(open_message(output_index, &item_id));
+                    self.messages.push(OpenText {
+                        output_index,
+                        item_id,
+                        text: String::new(),
+                    });
+                    self.in_message = true;
+                }
+                if let Some(open) = self.messages.last_mut() {
+                    open.text.push_str(text);
+                    payloads.push(text_delta(open.output_index, &open.item_id, text));
+                }
             }
             StreamEvent::ReasoningDelta { text } => {
+                self.in_message = false;
                 let open = match &mut self.reasoning {
                     Some(open) => open,
                     slot => {
@@ -166,6 +211,7 @@ impl IngressStream {
                 if self.position(call_id).is_some() || self.unannounced.contains(call_id) {
                     return Vec::new();
                 }
+                self.in_message = false;
                 let output_index = self.next_index;
                 self.next_index += 1;
                 let item_id = format!("fc_{}_{output_index}", self.id);
@@ -189,6 +235,7 @@ impl IngressStream {
                     }
                     return Vec::new();
                 };
+                self.in_message = false;
                 let open = &mut self.calls[index];
                 open.arguments.push_str(delta);
                 payloads.push(arguments_delta(open.output_index, &open.item_id, delta));
@@ -202,10 +249,11 @@ impl IngressStream {
     /// outcome's order, then exactly one `response.completed` or `response.incomplete` carrying
     /// the whole response object. When nothing was streamed, the opening payloads come first.
     ///
-    /// The streamed message is finished as the outcome's first assistant message, the streamed
-    /// reasoning as its first reasoning item, and each announced call as the outcome's call under
-    /// the same identifier. What the outcome carries beyond that is emitted whole here: an item
-    /// opened, filled and finished, so a reader sees it as it would any other.
+    /// Each streamed message item that showed text is finished as the outcome's assistant message
+    /// in the same position, which must be exactly that text; the streamed reasoning as the first
+    /// reasoning item; and each announced call as the outcome's call under the same identifier.
+    /// What the outcome carries beyond that is emitted whole here: an item opened, filled and
+    /// finished, so a reader sees it as it would any other.
     ///
     /// A refusal emits nothing and leaves the stream open, so the server can still end it with
     /// [`IngressStream::fail`].
@@ -213,8 +261,8 @@ impl IngressStream {
     /// # Errors
     /// Refuses everything [`encode_ingress_response`] refuses; an outcome that contradicts what
     /// was already streamed (an announced call it does not carry, carries under another name, or
-    /// with arguments other than the relayed ones; shown text it carries no message for); and a
-    /// stream that has already ended.
+    /// with arguments other than the relayed ones; a shown message it does not carry, or carries
+    /// with other text); and a stream that has already ended.
     pub fn close(&mut self, outcome: &TurnOutcome) -> Result<Vec<Value>, Error> {
         if self.finished {
             return Err(Error::protocol("the streamed response has already ended"));
@@ -230,13 +278,14 @@ impl IngressStream {
             next_index += 1;
             (output_index, format!("{kind}_{}_{output_index}", self.id))
         };
-        let mut message = self.message.as_ref();
+        // `check_streamed` matched these, in order, to the outcome's first assistant messages.
+        let mut messages = shown_messages(&self.messages);
         let mut reasoning = self.reasoning.as_ref();
         let mut finished_calls = vec![false; self.calls.len()];
         for item in &outcome.items {
             match item {
                 Item::AssistantText { text } => {
-                    let (output_index, item_id) = if let Some(open) = message.take() {
+                    let (output_index, item_id) = if let Some(open) = messages.next() {
                         (open.output_index, open.item_id.clone())
                     } else {
                         let (output_index, item_id) = fresh("msg");
@@ -320,12 +369,11 @@ impl IngressStream {
     /// The payloads that end the answer as failed: one `response.failed`, preceded by the opening
     /// payloads when nothing was streamed. Nothing after it, and nothing after the stream ended.
     ///
-    /// The failure's code is the one this crate's decoder classifies back into the error's own
-    /// code where the wire has one: `server_is_overloaded` for a retriable `unavailable`,
-    /// `server_error` for any other, `rate_limit_exceeded` for `rate-limited`. Every other code is
-    /// written as its own name, which the decoder reads as `refused`. The diagnostic is a fixed
-    /// string: the error's message is never relayed. The counters, model and response identifier
-    /// the error's observation reports are carried, an invalid usage report excepted.
+    /// The failure's wire code follows the table in the module documentation; only `unavailable`,
+    /// `rate-limited` and `refused` read back as themselves. The diagnostic is a fixed string: the
+    /// error's message is never relayed. The counters and model the error's observation reports
+    /// are carried, an invalid usage report excepted; the `id` is the stream's, as on every other
+    /// payload.
     pub fn fail(&mut self, error: &Error) -> Vec<Value> {
         if self.finished {
             return Vec::new();
@@ -333,14 +381,7 @@ impl IngressStream {
         let (code, message) = failure(error);
         let mut body = Map::new();
         let observation = error.observation.as_deref();
-        body.insert(
-            "id".to_owned(),
-            json!(
-                observation
-                    .and_then(|observation| observation.response_id.as_ref())
-                    .map_or(self.id.as_str(), |id| id.as_str())
-            ),
-        );
+        body.insert("id".to_owned(), json!(self.id));
         body.insert("object".to_owned(), json!("response"));
         body.insert("created_at".to_owned(), json!(self.created_at));
         body.insert("status".to_owned(), json!("failed"));
@@ -417,23 +458,31 @@ impl IngressStream {
                 return Err(streamed_contradiction());
             }
         }
-        // The decoder keeps text a caller was shown when the turn carries no message for it, so
-        // an outcome without one would be read back as a different turn. Shown text that is
-        // empty is not kept, and its message is left unfinished rather than finished empty.
-        if self
-            .message
-            .as_ref()
-            .is_some_and(|open| !open.text.is_empty())
-            && !outcome
-                .items
-                .iter()
-                .any(|item| matches!(item, Item::AssistantText { .. }))
-        {
-            return Err(streamed_contradiction());
+        // Each message item the caller was shown finishes with exactly the text its deltas
+        // showed, as the outcome's assistant message in the same position. The decoder keeps
+        // shown text the turn carries no message for, so a missing message is a different turn,
+        // and a different text is a message the caller was not shown.
+        let mut carried = outcome.items.iter().filter_map(|item| match item {
+            Item::AssistantText { text } => Some(text),
+            _ => None,
+        });
+        for open in shown_messages(&self.messages) {
+            if carried.next() != Some(&open.text) {
+                return Err(streamed_contradiction());
+            }
         }
         Ok(())
     }
 }
+
+/// The message items whose deltas showed any text. One that showed none is left unfinished: the
+/// decoder keeps no empty shown text, so it obliges the outcome to carry nothing.
+fn shown_messages(messages: &[OpenText]) -> Filter<slice::Iter<'_, OpenText>, ShownFilter> {
+    messages.iter().filter(|open| !open.text.is_empty())
+}
+
+/// A concrete filter, so the borrow ends with its last use rather than with the scope.
+type ShownFilter = fn(&&OpenText) -> bool;
 
 /// How the turn ends on this wire.
 struct Terminal {
@@ -445,9 +494,24 @@ struct Terminal {
 /// Refuses an outcome this wire cannot carry, and says how it ends.
 fn check_outcome(outcome: &TurnOutcome) -> Result<Terminal, Error> {
     let observation = &outcome.observation;
+    // What the decoder refuses on reading the answer back is refused here instead of emitted:
+    // more items than it reads, and call arguments that are not an object or exceed their bound.
+    if outcome.items.len() > MAX_ITEMS {
+        return Err(Error::too_large("model output exceeds its bound"));
+    }
     for item in &outcome.items {
         match item {
-            Item::AssistantText { .. } | Item::ToolCall(_) => {}
+            Item::AssistantText { .. } => {}
+            Item::ToolCall(call) => {
+                if !call.arguments.is_object() {
+                    return Err(Error::unsupported(
+                        "the Responses wire carries only tool arguments that are a JSON object",
+                    ));
+                }
+                if exceeds(&call.arguments, MAX_TOOL_ARGUMENT_BYTES) {
+                    return Err(Error::too_large("model tool arguments exceed their bound"));
+                }
+            }
             Item::Opaque {
                 provenance,
                 payload,
@@ -527,15 +591,8 @@ fn response_object(
 ) -> Value {
     let observation: &TurnObservation = &outcome.observation;
     let mut body = Map::new();
-    body.insert(
-        "id".to_owned(),
-        json!(
-            observation
-                .response_id
-                .as_ref()
-                .map_or(id, |reported| reported.as_str())
-        ),
-    );
+    // The caller's id, never the upstream's `response_id` (see the module documentation).
+    body.insert("id".to_owned(), json!(id));
     body.insert("object".to_owned(), json!("response"));
     body.insert("created_at".to_owned(), json!(created_at));
     body.insert("status".to_owned(), json!(terminal.status));

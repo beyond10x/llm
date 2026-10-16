@@ -1,14 +1,14 @@
 type: ess-scenario/1
 domain: llm.responses
 scenario: encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers
-summary: an answer whose upstream reported no model leaves the model out and names the caller's response id
+summary: an answer leaves out a model the upstream never reported and names the caller's response id, not the upstream's
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.responses.EncodeIngress
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hi"}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"final_usage":true}}}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"Hi"}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"response_id":"resp_upstream_1","final_usage":true}}}'
     streamed: false
   outcome: observed
 assert:
@@ -20,10 +20,11 @@ assert:
     status: completed
     # Not the binding's upstream model: an absent observation is not filled in.
     model_reported: null
+    # The upstream's own id names the upstream conversation and is not relayed.
     response_id: resp_gateway_fixture
     usage_json: null
     decoded_accepted: true
     decoded_stop_reason: end-turn
     decoded_usage_json: null
-    # The decoder now knows a response id, the caller's, where the outcome knew none.
+    # The decoder reads the caller's id back where the outcome held the upstream's.
     outcome_preserved: false

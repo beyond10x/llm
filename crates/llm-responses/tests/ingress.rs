@@ -6,8 +6,8 @@
 //! what the decoder accepts" is checked by the decoder, not restated.
 
 use llm_core::{
-    CallId, Dispatch, Error, ErrorCode, Id, Item, Protocol, Provenance, StopReason, StreamEvent,
-    ToolCall, ToolName, TurnObservation, TurnOutcome, Usage,
+    CallId, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, Protocol, Provenance, StopReason,
+    StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome, Usage,
 };
 use llm_responses::{
     ACCEPTED_STREAM_EVENTS, Binding, IngressStream, decode_stream, encode_ingress_response,
@@ -79,7 +79,10 @@ fn observation() -> TurnObservation {
     TurnObservation {
         binding: provenance(),
         upstream_model: Some(id("example/Small-Model")),
-        response_id: Some(id("resp_upstream_1")),
+        // The caller's id, which every payload of an answer carries in place of the upstream's
+        // own `response_id`; the decoder reads it back as the response id, so a round trip
+        // compares equal only when the encoded outcome carries it too.
+        response_id: Some(id("resp_gateway_1")),
         usage: Some(full_usage()),
         final_usage: true,
     }
@@ -357,10 +360,11 @@ fn a_reported_cache_write_is_named_rather_than_dropped() {
 }
 
 #[test]
-fn an_unreported_model_is_left_out_and_the_response_id_falls_back_to_the_callers() {
+fn an_unreported_model_is_left_out_and_the_response_id_is_always_the_callers() {
     let mut encoded = outcome(StopReason::EndTurn, vec![Item::assistant("Hi")]);
     encoded.observation.upstream_model = None;
-    encoded.observation.response_id = None;
+    // The upstream's own id names the upstream conversation and is not relayed.
+    encoded.observation.response_id = Some(id("resp_upstream_1"));
     encoded.observation.usage = None;
     let body = encode_ingress_response(&encoded, "resp_gateway_1", CREATED_AT).expect("encodes");
     assert!(body.get("model").is_none(), "{body}");
@@ -377,52 +381,68 @@ fn an_unreported_model_is_left_out_and_the_response_id_falls_back_to_the_callers
     assert_eq!(decoded.observation.response_id, Some(id("resp_gateway_1")));
 }
 
+const EVERY_ERROR_CODE: [ErrorCode; 11] = [
+    ErrorCode::InvalidRequest,
+    ErrorCode::Transport,
+    ErrorCode::Protocol,
+    ErrorCode::Unauthorized,
+    ErrorCode::RateLimited,
+    ErrorCode::Refused,
+    ErrorCode::TooLarge,
+    ErrorCode::Unsupported,
+    ErrorCode::Cancelled,
+    ErrorCode::Deadline,
+    ErrorCode::Unavailable,
+];
+
+/// The table in the module documentation ("Failures"): the wire code a neutral code is written
+/// as, and the code this crate's decoder reads it back as. Exhaustive, so a new `ErrorCode` does
+/// not compile until it has a row.
+fn documented_failure(code: ErrorCode, retriable: bool) -> (&'static str, ErrorCode) {
+    match code {
+        ErrorCode::Unavailable if retriable => ("server_is_overloaded", ErrorCode::Unavailable),
+        ErrorCode::Unavailable => ("server_error", ErrorCode::Unavailable),
+        ErrorCode::RateLimited => ("rate_limit_exceeded", ErrorCode::RateLimited),
+        ErrorCode::Refused => ("refused", ErrorCode::Refused),
+        ErrorCode::InvalidRequest => ("invalid_request", ErrorCode::Refused),
+        ErrorCode::Transport => ("transport", ErrorCode::Refused),
+        ErrorCode::Protocol => ("protocol", ErrorCode::Refused),
+        ErrorCode::Unauthorized => ("unauthorized", ErrorCode::Refused),
+        ErrorCode::TooLarge => ("too_large", ErrorCode::Refused),
+        ErrorCode::Unsupported => ("unsupported", ErrorCode::Refused),
+        ErrorCode::Cancelled => ("cancelled", ErrorCode::Refused),
+        ErrorCode::Deadline => ("deadline", ErrorCode::Refused),
+    }
+}
+
 #[test]
-fn fail_ends_the_stream_with_a_failure_the_decoder_reads_as_the_same_code() {
-    let cases = [
-        (
-            Error::new(ErrorCode::Unavailable, "upstream-prose-down").with_retriable(true),
-            ErrorCode::Unavailable,
-            "server_is_overloaded",
-        ),
-        (
-            Error::new(ErrorCode::Unavailable, "upstream-prose-down"),
-            ErrorCode::Unavailable,
-            "server_error",
-        ),
-        (
-            Error::new(ErrorCode::RateLimited, "upstream-prose-slow"),
-            ErrorCode::RateLimited,
-            "rate_limit_exceeded",
-        ),
-        (
-            Error::new(ErrorCode::Refused, "upstream-prose-no"),
-            ErrorCode::Refused,
-            "refused",
-        ),
-        // No wire code reads back as `transport`: the failure names its own code, and the
-        // decoder classifies every code it does not know as a refusal.
-        (
-            Error::new(ErrorCode::Transport, "upstream-prose-cut").with_retriable(true),
-            ErrorCode::Refused,
-            "transport",
-        ),
-    ];
-    for (error, decoded_code, wire_code) in cases {
-        // Nothing streamed: `fail` opens the response itself.
-        let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
-        let payloads = stream.fail(&error);
-        assert_well_formed(&payloads);
-        let failed = payloads.last().expect("a terminal payload");
-        assert_eq!(failed["type"], "response.failed");
-        assert_eq!(failed["response"]["error"]["code"], wire_code);
-        // The neutral diagnostic is never relayed onto the wire.
-        assert!(!failed.to_string().contains(&error.message), "{failed}");
-        let refusal = decode_stream(&binding(), &payloads)
-            .result
-            .expect_err("a failed response is a refusal");
-        assert_eq!(refusal.code, decoded_code, "{wire_code}");
-        assert_eq!(refusal.dispatch, Dispatch::Accepted);
+fn fail_ends_the_stream_with_a_failure_the_decoder_reads_back_by_the_documented_mapping() {
+    for code in EVERY_ERROR_CODE {
+        for retriable in [false, true] {
+            let error = Error::new(code, "upstream-prose-never-relayed").with_retriable(retriable);
+            let (wire_code, decoded_code) = documented_failure(code, retriable);
+            // Nothing streamed: `fail` opens the response itself.
+            let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
+            let payloads = stream.fail(&error);
+            assert_well_formed(&payloads);
+            let failed = payloads.last().expect("a terminal payload");
+            assert_eq!(failed["type"], "response.failed");
+            assert_eq!(failed["response"]["id"], "resp_gateway_1");
+            assert_eq!(
+                failed["response"]["error"]["code"], wire_code,
+                "{code:?}, retriable {retriable}"
+            );
+            // The neutral diagnostic is never relayed onto the wire.
+            assert!(!failed.to_string().contains(&error.message), "{failed}");
+            let refusal = decode_stream(&binding(), &payloads)
+                .result
+                .expect_err("a failed response is a refusal");
+            assert_eq!(
+                refusal.code, decoded_code,
+                "{code:?}, retriable {retriable}: written as {wire_code}"
+            );
+            assert_eq!(refusal.dispatch, Dispatch::Accepted);
+        }
     }
 }
 
@@ -720,4 +740,114 @@ fn an_empty_stream_closes_on_the_opening_events_and_the_turn() {
             .expect("decodes"),
         encoded
     );
+}
+
+/// Everything the decoder refuses when reading a turn's items back, the encoder refuses before
+/// emitting it: arguments that are not an object, arguments over their bound, and more items than
+/// a turn holds. Each is checked on both paths.
+#[test]
+fn what_the_decoder_would_refuse_to_read_back_is_refused_not_emitted() {
+    let oversize = json!({"path": "x".repeat(70_000)});
+    let mut cases: Vec<(String, TurnOutcome, ErrorCode)> = [json!([1]), json!("noon"), json!(null)]
+        .into_iter()
+        .map(|arguments| {
+            (
+                format!("arguments {arguments}"),
+                outcome(
+                    StopReason::ToolCalls,
+                    vec![call("call-1", "clock", arguments)],
+                ),
+                ErrorCode::Unsupported,
+            )
+        })
+        .collect();
+    cases.push((
+        "arguments over their bound".to_owned(),
+        outcome(
+            StopReason::ToolCalls,
+            vec![call("call-1", "file_read", oversize)],
+        ),
+        ErrorCode::TooLarge,
+    ));
+    cases.push((
+        "more items than a turn holds".to_owned(),
+        outcome(
+            StopReason::EndTurn,
+            vec![Item::assistant("x"); MAX_ITEMS + 1],
+        ),
+        ErrorCode::TooLarge,
+    ));
+    for (why, refused, code) in cases {
+        let whole =
+            encode_ingress_response(&refused, "resp_gateway_1", CREATED_AT).expect_err(&why);
+        assert_eq!(whole.code, code, "{why}");
+        let streamed = encode(&[], &refused).expect_err(&why);
+        assert_eq!(streamed.code, code, "{why}");
+    }
+}
+
+/// Text after a call is a new message item: each item's deltas are one message's text, and the
+/// close finishes each with that text, as the outcome's message in the same position.
+#[test]
+fn text_after_a_call_opens_a_new_message() {
+    let events = vec![
+        StreamEvent::TextDelta {
+            text: "First.".to_owned(),
+        },
+        StreamEvent::ToolCallStarted {
+            call_id: call_id("call-1"),
+            name: tool("clock"),
+        },
+        StreamEvent::ToolArgumentsDelta {
+            call_id: call_id("call-1"),
+            delta: "{}".to_owned(),
+        },
+        StreamEvent::TextDelta {
+            text: "Second.".to_owned(),
+        },
+    ];
+    let encoded = outcome(
+        StopReason::ToolCalls,
+        vec![
+            Item::assistant("First."),
+            call("call-1", "clock", json!({})),
+            Item::assistant("Second."),
+        ],
+    );
+    let payloads = encode(&events, &encoded).expect("encodes");
+    assert_well_formed(&payloads);
+    let finished: Vec<(&str, &str)> = payloads
+        .iter()
+        .filter(|payload| payload["type"] == "response.output_text.done")
+        .map(|payload| {
+            (
+                payload["item_id"].as_str().expect("item id"),
+                payload["text"].as_str().expect("text"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        finished,
+        [
+            ("msg_resp_gateway_1_0", "First."),
+            ("msg_resp_gateway_1_2", "Second.")
+        ]
+    );
+    let decoded = decode_stream(&binding(), &payloads);
+    assert_eq!(decoded.events, events);
+    assert_eq!(decoded.result.expect("decodes"), encoded);
+}
+
+/// A streamed message finishes with exactly the text its deltas showed; an outcome carrying other
+/// text in that message is refused rather than shown twice or rewritten.
+#[test]
+fn an_outcome_rewriting_a_shown_message_is_refused() {
+    let refusal = encode(
+        &[StreamEvent::TextDelta {
+            text: "Hel".to_owned(),
+        }],
+        &outcome(StopReason::EndTurn, vec![Item::assistant("Hello")]),
+    )
+    .expect_err("the caller was shown other text");
+    assert_eq!(refusal.code, ErrorCode::Protocol);
 }

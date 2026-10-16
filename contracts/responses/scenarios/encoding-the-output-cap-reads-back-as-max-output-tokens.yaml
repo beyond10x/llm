@@ -8,7 +8,7 @@ timeline:
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"max-output-tokens"},"items":[{"kind":"assistant-text","text":"The file says"}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_upstream_1","usage":{"input_tokens":12,"output_tokens":4},"final_usage":true}}}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"max-output-tokens"},"items":[{"kind":"assistant-text","text":"The file says"}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_gateway_fixture","usage":{"input_tokens":12,"output_tokens":4},"final_usage":true}}}'
     events_json: '[{"kind":"text-delta","text":"The file says"}]'
     streamed: true
   outcome: observed

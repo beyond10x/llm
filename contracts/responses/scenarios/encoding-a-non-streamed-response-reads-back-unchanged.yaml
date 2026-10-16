@@ -8,7 +8,7 @@ timeline:
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"opaque","provenance":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"payload":{"type":"reasoning","id":"rs_upstream_1","summary":[],"encrypted_content":"gAAAAABfixture"}},{"kind":"assistant-text","text":"Let me check."},{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":{}}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_upstream_1","final_usage":true}}}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"opaque","provenance":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"payload":{"type":"reasoning","id":"rs_upstream_1","summary":[],"encrypted_content":"gAAAAABfixture"}},{"kind":"assistant-text","text":"Let me check."},{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":{}}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_gateway_fixture","final_usage":true}}}'
     streamed: false
   outcome: observed
 assert:
@@ -19,9 +19,10 @@ assert:
     accepted: true
     payload_types: []
     status: completed
-    # The model and the response id the outcome reports.
+    # The model the outcome reports, and the caller's id, which the outcome carries so that it
+    # reads back unchanged.
     model_reported: example/Small-Model
-    response_id: resp_upstream_1
+    response_id: resp_gateway_fixture
     usage_json: null
     # The reasoning item verbatim, then each item under an identifier from its position.
     output_json: '[{"encrypted_content":"gAAAAABfixture","id":"rs_upstream_1","summary":[],"type":"reasoning"},{"content":[{"annotations":[],"text":"Let me check.","type":"output_text"}],"id":"msg_resp_gateway_fixture_1","role":"assistant","status":"completed","type":"message"},{"arguments":"{}","call_id":"call-1","id":"fc_resp_gateway_fixture_2","name":"clock","status":"completed","type":"function_call"}]'

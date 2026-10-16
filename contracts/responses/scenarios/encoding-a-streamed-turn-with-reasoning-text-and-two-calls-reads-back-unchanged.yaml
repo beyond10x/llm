@@ -8,7 +8,7 @@ timeline:
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"opaque","provenance":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"payload":{"type":"reasoning","id":"rs_upstream_1","summary":[{"type":"summary_text","text":"Need the time."}],"encrypted_content":"gAAAAABfixture"}},{"kind":"assistant-text","text":"Let me check."},{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":{}},{"kind":"tool-call","call_id":"call-2","name":"file_read","arguments":{"path":"README.md"}}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_upstream_1","usage":{"input_tokens":1788,"output_tokens":115,"cached_input_tokens":1680,"reasoning_output_tokens":42},"final_usage":true}}}'
+    outcome_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"opaque","provenance":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"payload":{"type":"reasoning","id":"rs_upstream_1","summary":[{"type":"summary_text","text":"Need the time."}],"encrypted_content":"gAAAAABfixture"}},{"kind":"assistant-text","text":"Let me check."},{"kind":"tool-call","call_id":"call-1","name":"clock","arguments":{}},{"kind":"tool-call","call_id":"call-2","name":"file_read","arguments":{"path":"README.md"}}],"observation":{"binding":{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"},"upstream_model":"example/Small-Model","response_id":"resp_gateway_fixture","usage":{"input_tokens":1788,"output_tokens":115,"cached_input_tokens":1680,"reasoning_output_tokens":42},"final_usage":true}}}'
     events_json: '[{"kind":"reasoning-delta","text":"Need the time."},{"kind":"text-delta","text":"Let me "},{"kind":"text-delta","text":"check."},{"kind":"tool-call-started","call_id":"call-1","name":"clock"},{"kind":"tool-arguments-delta","call_id":"call-1","delta":"{}"},{"kind":"tool-call-started","call_id":"call-2","name":"file_read"},{"kind":"tool-arguments-delta","call_id":"call-2","delta":"{\"path\":"},{"kind":"tool-arguments-delta","call_id":"call-2","delta":"\"README.md\"}"}]'
     streamed: true
   outcome: observed
@@ -51,7 +51,7 @@ assert:
     status: completed
     incomplete_reason: null
     model_reported: example/Small-Model
-    response_id: resp_upstream_1
+    response_id: resp_gateway_fixture
     usage_json: '{"input_tokens":1788,"input_tokens_details":{"cached_tokens":1680},"output_tokens":115,"output_tokens_details":{"reasoning_tokens":42},"total_tokens":1903}'
     # The decoder reads back the events that were encoded and the turn that was encoded.
     decoded_accepted: true

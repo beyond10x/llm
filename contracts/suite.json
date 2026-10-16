@@ -415,7 +415,9 @@
       "llm.responses/authored/encoding-an-outcome-renaming-an-announced-call-is-refused",
       "llm.responses/authored/encoding-an-unknown-input-count-is-omitted-never-zero",
       "llm.responses/authored/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers",
+      "llm.responses/authored/encoding-arguments-that-are-not-an-object-are-refused",
       "llm.responses/authored/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class",
+      "llm.responses/authored/encoding-text-after-a-call-is-a-new-message",
       "llm.responses/authored/encoding-the-output-cap-reads-back-as-max-output-tokens",
       "llm.responses/authored/encoding-unattributed-state-is-refused-by-name",
       "llm.responses/authored/ingress-carries-an-unmodelled-entry-it-cannot-attribute",
@@ -2767,7 +2769,7 @@
         "scenario": "llm.responses/authored/encoding-a-caller-owned-item-is-refused"
       },
       "responses/scenarios/encoding-a-non-streamed-response-reads-back-unchanged.yaml": {
-        "digest": "sha256:06f5491f734bde9dc682da4afb3b0417bd4789e358a00145a92ce3434c2a1ee5",
+        "digest": "sha256:b801d96b8ae8f425efff9635580be9ef9a1db7ebbfb992cfa7d520590c5ea94f",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-a-non-streamed-response-reads-back-unchanged"
       },
@@ -2777,17 +2779,17 @@
         "scenario": "llm.responses/authored/encoding-a-stop-reason-the-wire-cannot-express-is-refused"
       },
       "responses/scenarios/encoding-a-streamed-turn-with-reasoning-text-and-two-calls-reads-back-unchanged.yaml": {
-        "digest": "sha256:1e6206f281e244f069a8560f5060486e6d9ae18df158f3b11afd7055f54da881",
+        "digest": "sha256:d619d8ad3758ea2298576434ba3fe93bd090039e714ddc52bb56afc1f3080be6",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-a-streamed-turn-with-reasoning-text-and-two-calls-reads-back-unchanged"
       },
       "responses/scenarios/encoding-an-end-turn-reads-back-as-an-end-turn.yaml": {
-        "digest": "sha256:42b163781de7f6b57039e175eee6de4b6000b7506db0e96f063429a941295530",
+        "digest": "sha256:692d4c1a5b31129b7ddfdf9d9d6062cf7d2cc66f2edefa3344eb183571d9af28",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-an-end-turn-reads-back-as-an-end-turn"
       },
       "responses/scenarios/encoding-an-incomplete-reason-reads-back-as-that-reason.yaml": {
-        "digest": "sha256:2f5299e2da04e57e02ad46a693b396afa7f568714e69c4c8f3d43d4ce8339f17",
+        "digest": "sha256:f03ef8d2869de6112c3dc598df46c28dbe472357d183a68794d4905134f4beee",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-an-incomplete-reason-reads-back-as-that-reason"
       },
@@ -2797,22 +2799,32 @@
         "scenario": "llm.responses/authored/encoding-an-outcome-renaming-an-announced-call-is-refused"
       },
       "responses/scenarios/encoding-an-unknown-input-count-is-omitted-never-zero.yaml": {
-        "digest": "sha256:272c907bcddf627f32a00a3cf090286f007d32f7d6ef1e3adbe2c503e9ef63bc",
+        "digest": "sha256:e24925d3a323506458b08c208d29aca73bf2c5f858917154c5ac191bfb7b8839",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-an-unknown-input-count-is-omitted-never-zero"
       },
       "responses/scenarios/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers.yaml": {
-        "digest": "sha256:af6b5ab406db8a859ec0f39bb0a6623189655d3c7c7881e205c2052fd377a7a1",
+        "digest": "sha256:723f7b61b22d3cc6448cd98f5dbddd14a44d3acc2b6830d3094f02bd3e8816af",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers"
+      },
+      "responses/scenarios/encoding-arguments-that-are-not-an-object-are-refused.yaml": {
+        "digest": "sha256:0ba566ee9713f60253c7aebfb308bdd60548e23e38ceae36712e7be0d03dadd9",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-arguments-that-are-not-an-object-are-refused"
       },
       "responses/scenarios/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class.yaml": {
         "digest": "sha256:e585c64e6d185cf17722cfd535b62ed2bb0e26bc8d4fcc7d53af2e3cde2cb473",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class"
       },
+      "responses/scenarios/encoding-text-after-a-call-is-a-new-message.yaml": {
+        "digest": "sha256:e5f0abe3710782f3f2e2ed53476beb9e3f60446b1819a2e2d0e0df1aba71c0e1",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-text-after-a-call-is-a-new-message"
+      },
       "responses/scenarios/encoding-the-output-cap-reads-back-as-max-output-tokens.yaml": {
-        "digest": "sha256:a102f84aaaadc8e90faae0129f04a8c030bb209447da91acd8bdba0c3e1b2d4c",
+        "digest": "sha256:585d0def50e1d04cb279b23c7cb0bc2a331039306bc5c354834d05fe1e0cd185",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-the-output-cap-reads-back-as-max-output-tokens"
       },
@@ -4253,7 +4265,7 @@
       }
     },
     "counts": {
-      "authored": 708,
+      "authored": 710,
       "generated": 31,
       "outside": 0,
       "refused": 0
@@ -54980,7 +54992,7 @@
             },
             "outcome_json": {
               "kind": "literal",
-              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"payload\":{\"type\":\"reasoning\",\"id\":\"rs_upstream_1\",\"summary\":[],\"encrypted_content\":\"gAAAAABfixture\"}},{\"kind\":\"assistant-text\",\"text\":\"Let me check.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_upstream_1\",\"final_usage\":true}}}"
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"payload\":{\"type\":\"reasoning\",\"id\":\"rs_upstream_1\",\"summary\":[],\"encrypted_content\":\"gAAAAABfixture\"}},{\"kind\":\"assistant-text\",\"text\":\"Let me check.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"final_usage\":true}}}"
             },
             "streamed": {
               "kind": "literal",
@@ -55055,7 +55067,7 @@
               },
               "response_id": {
                 "kind": "literal",
-                "value": "resp_upstream_1"
+                "value": "resp_gateway_fixture"
               },
               "status": {
                 "kind": "literal",
@@ -55206,7 +55218,7 @@
             },
             "outcome_json": {
               "kind": "literal",
-              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"payload\":{\"type\":\"reasoning\",\"id\":\"rs_upstream_1\",\"summary\":[{\"type\":\"summary_text\",\"text\":\"Need the time.\"}],\"encrypted_content\":\"gAAAAABfixture\"}},{\"kind\":\"assistant-text\",\"text\":\"Let me check.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}},{\"kind\":\"tool-call\",\"call_id\":\"call-2\",\"name\":\"file_read\",\"arguments\":{\"path\":\"README.md\"}}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_upstream_1\",\"usage\":{\"input_tokens\":1788,\"output_tokens\":115,\"cached_input_tokens\":1680,\"reasoning_output_tokens\":42},\"final_usage\":true}}}"
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"payload\":{\"type\":\"reasoning\",\"id\":\"rs_upstream_1\",\"summary\":[{\"type\":\"summary_text\",\"text\":\"Need the time.\"}],\"encrypted_content\":\"gAAAAABfixture\"}},{\"kind\":\"assistant-text\",\"text\":\"Let me check.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}},{\"kind\":\"tool-call\",\"call_id\":\"call-2\",\"name\":\"file_read\",\"arguments\":{\"path\":\"README.md\"}}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"usage\":{\"input_tokens\":1788,\"output_tokens\":115,\"cached_input_tokens\":1680,\"reasoning_output_tokens\":42},\"final_usage\":true}}}"
             },
             "streamed": {
               "kind": "literal",
@@ -55324,7 +55336,7 @@
               },
               "response_id": {
                 "kind": "literal",
-                "value": "resp_upstream_1"
+                "value": "resp_gateway_fixture"
               },
               "status": {
                 "kind": "literal",
@@ -55378,7 +55390,7 @@
             },
             "outcome_json": {
               "kind": "literal",
-              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hello\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_upstream_1\",\"usage\":{\"input_tokens\":12,\"output_tokens\":3},\"final_usage\":true}}}"
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hello\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"usage\":{\"input_tokens\":12,\"output_tokens\":3},\"final_usage\":true}}}"
             },
             "streamed": {
               "kind": "literal",
@@ -55517,7 +55529,7 @@
             },
             "outcome_json": {
               "kind": "literal",
-              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"incomplete\",\"reason\":\"content_filter\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"I can\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_upstream_1\",\"final_usage\":true}}}"
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"incomplete\",\"reason\":\"content_filter\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"I can\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"final_usage\":true}}}"
             },
             "streamed": {
               "kind": "literal",
@@ -55747,7 +55759,7 @@
             },
             "outcome_json": {
               "kind": "literal",
-              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hi\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_upstream_1\",\"usage\":{\"output_tokens\":5},\"final_usage\":true}}}"
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hi\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"usage\":{\"output_tokens\":5},\"final_usage\":true}}}"
             },
             "streamed": {
               "kind": "literal",
@@ -55816,7 +55828,7 @@
       ]
     },
     "llm.responses/authored/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers": {
-      "purpose": "an answer whose upstream reported no model leaves the model out and names the caller's response id",
+      "purpose": "an answer leaves out a model the upstream never reported and names the caller's response id, not the upstream's",
       "source": [
         {
           "kind": "domain",
@@ -55848,7 +55860,7 @@
             },
             "outcome_json": {
               "kind": "literal",
-              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hi\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"final_usage\":true}}}"
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"Hi\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"response_id\":\"resp_upstream_1\",\"final_usage\":true}}}"
             },
             "streamed": {
               "kind": "literal",
@@ -55924,6 +55936,107 @@
               "usage_json": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-arguments-that-are-not-an-object-are-refused": {
+      "purpose": "a call whose arguments are not a JSON object is refused, because the decoder would refuse to read it back",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":[1]}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the Responses wire carries only tool arguments that are a JSON object"
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": []
               }
             }
           },
@@ -56062,6 +56175,136 @@
         }
       ]
     },
+    "llm.responses/authored/encoding-text-after-a-call-is-a-new-message": {
+      "purpose": "text streamed after a call opens a new message item, so each message shows its own text once",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"First.\"},{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"clock\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{}\"},{\"kind\":\"text-delta\",\"text\":\"Second.\"}]"
+            },
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"First.\"},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"clock\",\"arguments\":{}},{\"kind\":\"assistant-text\",\"text\":\"Second.\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"response_id\":\"resp_gateway_fixture\",\"final_usage\":true}}}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:First.",
+                  "tool-call-started:call-1:clock",
+                  "tool-arguments-delta:call-1:{}",
+                  "text-delta:Second."
+                ]
+              },
+              "events_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "outcome_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "payload_types": {
+                "kind": "literal",
+                "value": [
+                  "response.created",
+                  "response.in_progress",
+                  "response.output_item.added",
+                  "response.content_part.added",
+                  "response.output_text.delta",
+                  "response.output_item.added",
+                  "response.function_call_arguments.delta",
+                  "response.output_item.added",
+                  "response.content_part.added",
+                  "response.output_text.delta",
+                  "response.output_text.done",
+                  "response.content_part.done",
+                  "response.output_item.done",
+                  "response.function_call_arguments.done",
+                  "response.output_item.done",
+                  "response.output_text.done",
+                  "response.content_part.done",
+                  "response.output_item.done",
+                  "response.completed"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
     "llm.responses/authored/encoding-the-output-cap-reads-back-as-max-output-tokens": {
       "purpose": "a turn stopped by the output cap ends incomplete and reads back as max output tokens",
       "source": [
@@ -56099,7 +56342,7 @@
             },
             "outcome_json": {
               "kind": "literal",
-              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"max-output-tokens\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"The file says\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_upstream_1\",\"usage\":{\"input_tokens\":12,\"output_tokens\":4},\"final_usage\":true}}}"
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"max-output-tokens\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"The file says\"}],\"observation\":{\"binding\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"upstream_model\":\"example/Small-Model\",\"response_id\":\"resp_gateway_fixture\",\"usage\":{\"input_tokens\":12,\"output_tokens\":4},\"final_usage\":true}}}"
             },
             "streamed": {
               "kind": "literal",
