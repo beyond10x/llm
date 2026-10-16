@@ -1,18 +1,20 @@
 type: ess-scenario/1
 domain: llm.routes
-scenario: a-route-to-an-undeclared-provider-is-refused
-summary: a route naming a provider the document does not declare is refused as invalid-request, naming the route and not its value
+scenario: an-endpoint-declared-twice-is-refused
+summary: an endpoint declared twice under the same YAML key is refused as invalid-request instead of the last declaration winning
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.routes.Load
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
                     auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+        anthropic: {base_url: https://second.example.invalid/v1, protocol: messages,
+                    auth: {kind: anonymous}}
       routes:
-        sonnet: nobody/claude-sonnet-4-5
+        sonnet: anthropic/claude-sonnet-4-5
     probe_names: [sonnet]
   outcome: observed
 assert:
@@ -24,8 +26,8 @@ assert:
   contains:
     loaded: false
     error_code: invalid-request
-    error_message: "route `sonnet`: its model names an undeclared provider"
+    error_message: "endpoint `anthropic`: the document declares it more than once"
     routes: []
-    providers: []
+    endpoints: []
     answers: []
     catalog_serving_models: []

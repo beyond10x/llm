@@ -1,14 +1,14 @@
 type: ess-scenario/1
 domain: llm.routes
-scenario: an-api-key-provider-without-a-header-is-refused
-summary: an api-key provider that names no header is refused as invalid-request, naming the provider
+scenario: an-api-key-endpoint-without-a-header-is-refused
+summary: an api-key endpoint that names no header is refused as invalid-request, naming the endpoint
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.routes.Load
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
                     auth: {kind: api-key, secret: env:ANTHROPIC_API_KEY}}
       routes:
@@ -24,8 +24,8 @@ assert:
   contains:
     loaded: false
     error_code: invalid-request
-    error_message: "provider `anthropic`: an api-key provider requires `auth.header`"
+    error_message: "endpoint `anthropic`: an api-key endpoint requires `auth.header`"
     routes: []
-    providers: []
+    endpoints: []
     answers: []
     catalog_serving_models: []

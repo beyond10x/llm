@@ -1,14 +1,14 @@
 type: ess-scenario/1
 domain: llm.routes
 scenario: a-bare-unknown-name-is-refused
-summary: a bare name that is neither a route nor <provider>/<model-id> answers invalid-request
+summary: a bare name that is neither a route nor <endpoint>/<model-id> answers invalid-request
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.routes.Load
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
                     auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
       routes:

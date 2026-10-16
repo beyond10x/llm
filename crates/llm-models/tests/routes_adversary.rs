@@ -57,7 +57,7 @@ fn yaml_aliases_cannot_expand_a_document_past_its_byte_bound_while_it_is_parsed(
     let aliases = vec!["*e"; 2048].join(", ");
     let document = format!(
         "format: llm.routes/1
-providers:
+endpoints:
   p: {{base_url: https://p.example.invalid/v1, protocol: messages, auth: {{kind: anonymous}}}}
 routes:
   r:
@@ -90,7 +90,7 @@ routes:
 fn a_document_whose_expansion_exceeds_the_catalog_bound_is_refused_as_too_large_by_name() {
     let mut document = String::from(
         "format: llm.routes/1
-providers:
+endpoints:
   p: {base_url: https://p.example.invalid/v1, protocol: messages, auth: {kind: anonymous}}
 routes:
 ",

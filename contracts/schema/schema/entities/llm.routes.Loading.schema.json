@@ -23,7 +23,7 @@
         "type": "string"
       }
     },
-    "providers": {
+    "endpoints": {
       "type": "array",
       "items": {
         "type": "string"
@@ -55,7 +55,7 @@
     "load_id",
     "loaded",
     "routes",
-    "providers",
+    "endpoints",
     "answers",
     "catalog_serving_models",
     "capabilities",
@@ -65,8 +65,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "bda8981146eb10d44bc7ad1f4c64c9b581bd0fb1b1f73be48bdf203c6fb9165e",
-    "contract_digest": "slice-sha256/2:056a48621c49aa010193f4c02c9feb8f13f3210373d2ddcb8c2cb18e1096afe1",
+    "source_digest": "55721cd538efbe89dd17f35330020571a64a8c5ca6bbf93c3fb94de55167bfdf",
+    "contract_digest": "slice-sha256/2:4d69ef697be3416010ee509c19691c1d64cfc69bb053b65f7c68195e594e4be4",
     "regenerate": "ess generate"
   },
   "$defs": {

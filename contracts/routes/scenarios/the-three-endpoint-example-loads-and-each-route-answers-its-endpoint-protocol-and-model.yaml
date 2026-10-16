@@ -1,14 +1,14 @@
 type: ess-scenario/1
 domain: llm.routes
-scenario: the-three-provider-example-loads-and-each-route-answers-its-provider-protocol-and-model
-summary: the three-provider example loads, each route answers its provider, protocol and upstream model, and the expanded catalog's serving models are the routes
+scenario: the-three-endpoint-example-loads-and-each-route-answers-its-endpoint-protocol-and-model
+summary: the three-endpoint example loads, each route answers its endpoint, protocol and upstream model, and the expanded catalog's serving models are the routes
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.routes.Load
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         anthropic:  {base_url: https://api.anthropic.com/v1, protocol: messages,
                      auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
         openrouter: {base_url: https://openrouter.ai/api/v1, protocol: chat-completions,
@@ -32,6 +32,6 @@ assert:
     error_code: null
     error_message: null
     routes: ["or-sonnet=openrouter/anthropic/claude-sonnet-4.5", "qwen=gateway/qwen", "sonnet=anthropic/claude-sonnet-4-5"]
-    providers: ["anthropic:messages:api-key:env", "gateway:responses:bearer:file", "openrouter:chat-completions:bearer:env"]
+    endpoints: ["anthropic:messages:api-key:env", "gateway:responses:bearer:file", "openrouter:chat-completions:bearer:env"]
     answers: ["sonnet=anthropic:messages:claude-sonnet-4-5", "or-sonnet=openrouter:chat-completions:anthropic/claude-sonnet-4.5", "qwen=gateway:responses:qwen"]
     catalog_serving_models: [or-sonnet, qwen, sonnet]

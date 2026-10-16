@@ -87,7 +87,7 @@ fn load(input: &Value) -> Result<Observed, TargetError> {
     let input: LoadInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
     let mut facts = json!({
         "loaded": false, "error_code": null, "error_message": null, "routes": [],
-        "providers": [], "answers": [], "catalog_serving_models": [], "capabilities": []
+        "endpoints": [], "answers": [], "catalog_serving_models": [], "capabilities": []
     });
     match Routes::parse(&input.routes_yaml) {
         Ok(routes) => {
@@ -98,20 +98,20 @@ fn load(input: &Value) -> Result<Observed, TargetError> {
                     .map(|route| format!(
                         "{}={}/{}",
                         route.name(),
-                        route.provider(),
+                        route.endpoint(),
                         route.upstream_model()
                     ))
                     .collect::<Vec<_>>()
             );
-            facts["providers"] = json!(
+            facts["endpoints"] = json!(
                 routes
-                    .providers()
-                    .map(|provider| format!(
+                    .endpoints()
+                    .map(|endpoint| format!(
                         "{}:{}:{}:{}",
-                        provider.name(),
-                        label(provider.protocol()),
-                        label(provider.auth_kind()),
-                        provider.secret_kind().map_or("none", SecretKind::as_str)
+                        endpoint.name(),
+                        label(endpoint.protocol()),
+                        label(endpoint.auth_kind()),
+                        endpoint.secret_kind().map_or("none", SecretKind::as_str)
                     ))
                     .collect::<Vec<_>>()
             );
@@ -122,7 +122,7 @@ fn load(input: &Value) -> Result<Observed, TargetError> {
                     .map(|name| match routes.target(name) {
                         Ok(target) => format!(
                             "{name}={}:{}:{}",
-                            target.provider,
+                            target.endpoint,
                             label(target.protocol),
                             target.upstream_model
                         ),

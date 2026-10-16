@@ -23,8 +23,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "bda8981146eb10d44bc7ad1f4c64c9b581bd0fb1b1f73be48bdf203c6fb9165e",
-    "contract_digest": "slice-sha256/2:01d9ddafd2ad7fb60cc790f15710a13f456aa88679cf5a796d77550cf4905bc3",
+    "source_digest": "55721cd538efbe89dd17f35330020571a64a8c5ca6bbf93c3fb94de55167bfdf",
+    "contract_digest": "slice-sha256/2:42a40cf3757d5cbcf488aa3f88e6e5f4f8c6046cdb45b1bd7c8948e8095a0977",
     "regenerate": "ess generate"
   }
 }

@@ -1,18 +1,18 @@
 type: ess-scenario/1
 domain: llm.routes
-scenario: a-subscription-oauth-provider-is-refused
-summary: a provider declaring auth kind subscription-oauth is refused by name as invalid-request without echoing the value
+scenario: a-route-to-an-undeclared-endpoint-is-refused
+summary: a route naming an endpoint the document does not declare is refused as invalid-request, naming the route and not its value
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.routes.Load
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
-                    auth: {kind: subscription-oauth, secret: env:ANTHROPIC_API_KEY}}
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
       routes:
-        sonnet: anthropic/claude-sonnet-4-5
+        sonnet: nobody/claude-sonnet-4-5
     probe_names: [sonnet]
   outcome: observed
 assert:
@@ -24,8 +24,8 @@ assert:
   contains:
     loaded: false
     error_code: invalid-request
-    error_message: "provider `anthropic`: `auth.kind` names a subscription OAuth login, which a routes document cannot declare"
+    error_message: "route `sonnet`: its model names an undeclared endpoint"
     routes: []
-    providers: []
+    endpoints: []
     answers: []
     catalog_serving_models: []

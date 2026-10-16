@@ -8,13 +8,13 @@ use llm_models::{
     CatalogModels, Resolvers,
     routes::{FORMAT, Routes, SecretKind, SecretSources, default_capabilities},
 };
-use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
+use std::{collections::BTreeMap, fmt::Write as _, path::PathBuf, sync::Arc};
 
 /// No test environment sets this; every `env:` reference in the shared document names it.
 const NEVER_SET: &str = "LLM_ROUTES_TEST_NEVER_SET";
 
 const DOCUMENT: &str = "format: llm.routes/1
-providers:
+endpoints:
   anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
               auth: {kind: api-key, header: x-api-key, secret: env:LLM_ROUTES_TEST_NEVER_SET}}
   openrouter: {base_url: https://openrouter.ai/api/v1, protocol: chat-completions,
@@ -37,15 +37,15 @@ routes:
   small: lab/small
 ";
 
-/// One provider `p` and one route `r`; each refusal case replaces one placeholder.
+/// One endpoint `p` and one route `r`; each refusal case replaces one placeholder.
 const SINGLE: &str = "format: FORMAT
 TOP
-providers:
+endpoints:
   p:
     base_url: https://p.example.invalid/v1
     protocol: PROTOCOL
     auth: AUTH
-    PROVIDER_EXTRA
+    ENDPOINT_EXTRA
 routes:
   r: ROUTE
 ";
@@ -59,7 +59,7 @@ fn single(replacements: &[(&str, &str)]) -> String {
             "AUTH",
             "{kind: bearer, secret: env:LLM_ROUTES_TEST_NEVER_SET}",
         ),
-        ("PROVIDER_EXTRA", ""),
+        ("ENDPOINT_EXTRA", ""),
         ("TOP", ""),
         ("ROUTE", "p/m"),
     ] {
@@ -118,11 +118,11 @@ fn resolvers_for(routes: &Routes) -> Box<dyn Resolvers> {
             }
         }
         let map: BTreeMap<Id, Arc<dyn SecretResolver>> = routes
-            .providers()
-            .filter(|provider| provider.secret_kind().is_some())
-            .map(|provider| {
+            .endpoints()
+            .filter(|endpoint| endpoint.secret_kind().is_some())
+            .map(|endpoint| {
                 (
-                    provider.name().clone(),
+                    endpoint.name().clone(),
                     Arc::new(Refusing) as Arc<dyn SecretResolver>,
                 )
             })
@@ -135,7 +135,7 @@ fn resolvers_for(routes: &Routes) -> Box<dyn Resolvers> {
 fn the_example_document_answers_each_route_and_direct_name() {
     assert_eq!(FORMAT, "llm.routes/1");
     let routes = Routes::parse(DOCUMENT).unwrap();
-    for (name, provider, protocol, upstream) in [
+    for (name, endpoint, protocol, upstream) in [
         (
             "sonnet",
             "anthropic",
@@ -158,7 +158,7 @@ fn the_example_document_answers_each_route_and_direct_name() {
         ),
     ] {
         let target = routes.target(name).unwrap();
-        assert_eq!(target.provider.as_str(), provider, "{name}");
+        assert_eq!(target.endpoint.as_str(), endpoint, "{name}");
         assert_eq!(target.protocol, protocol, "{name}");
         assert_eq!(target.upstream_model.as_str(), upstream, "{name}");
     }
@@ -189,17 +189,17 @@ fn the_example_document_answers_each_route_and_direct_name() {
     );
     assert_eq!(default_capabilities().context_window, 200_000);
     assert_eq!(default_capabilities().max_output_tokens, 16384);
-    let providers: Vec<(&str, Option<&str>)> = routes
-        .providers()
-        .map(|provider| {
+    let endpoints: Vec<(&str, Option<&str>)> = routes
+        .endpoints()
+        .map(|endpoint| {
             (
-                provider.name().as_str(),
-                provider.secret_kind().map(SecretKind::as_str),
+                endpoint.name().as_str(),
+                endpoint.secret_kind().map(SecretKind::as_str),
             )
         })
         .collect();
     assert_eq!(
-        providers,
+        endpoints,
         [
             ("anthropic", Some("env")),
             ("gateway", Some("file")),
@@ -210,17 +210,88 @@ fn the_example_document_answers_each_route_and_direct_name() {
 }
 
 #[test]
-fn a_provider_declared_twice_is_refused() {
+fn an_endpoint_declared_twice_is_refused() {
     let document = DOCUMENT.replace(
         "  lab:\n",
         "  anthropic: {base_url: https://second.example.invalid/v1, protocol: messages, auth: {kind: anonymous}}\n  lab:\n",
     );
     let error = refused(&document);
     assert_eq!(error.code, ErrorCode::InvalidRequest);
-    assert!(!error.message.contains("second.example.invalid"));
+    assert_eq!(
+        error.message,
+        "endpoint `anthropic`: the document declares it more than once"
+    );
     let routes = "routes:\n  r: p/m\n  r: p/other\n";
     let error = refused(&single(&[]).replace("routes:\n  r: p/m\n", routes));
     assert_eq!(error.code, ErrorCode::InvalidRequest);
+    assert_eq!(
+        error.message,
+        "route `r`: the document declares it more than once"
+    );
+    // A repeated field of a declaration is refused by the parser, at its location.
+    let error = refused(&single(&[("ENDPOINT_EXTRA", "protocol: responses")]));
+    assert_eq!(error.code, ErrorCode::InvalidRequest);
+    assert!(
+        error
+            .message
+            .starts_with("invalid llm.routes/1 YAML document at line "),
+        "{}",
+        error.message
+    );
+}
+
+/// `providers:` was this document's name for its endpoints before the vocabulary settled on
+/// `endpoints:`; it is now an unknown field like any other.
+#[test]
+fn the_retired_providers_field_is_refused_as_an_unknown_field() {
+    let document = single(&[]).replace("\nendpoints:\n", "\nproviders:\n");
+    assert!(document.contains("\nproviders:\n  p:\n"), "{document}");
+    let error = refused(&document);
+    assert_eq!(error.code, ErrorCode::InvalidRequest);
+    assert_eq!(
+        error.message,
+        "invalid llm.routes/1 YAML document at line 3 column 1"
+    );
+}
+
+/// A refusal's kind comes from where it arose, never from searching the parser's message, which
+/// quotes an unknown field's name: a field named after any refusal this module raises is an
+/// unknown field, at every level, and nothing else.
+#[test]
+fn no_refusal_is_classified_by_the_text_of_the_field_it_names() {
+    for marker in [
+        "llm.routes expansion bound",
+        "llm.routes duplicate mapping key",
+        "llm.routes/1 document expands beyond its byte bound when its YAML aliases are resolved",
+        "llm.routes/1 document expands beyond the catalog's bound",
+        "routes document exceeds its byte bound",
+        "the document declares it more than once",
+        "a mapping key is repeated",
+    ] {
+        for document in [
+            single(&[("TOP", &format!("\"{marker}\": 1"))]),
+            single(&[("ENDPOINT_EXTRA", &format!("\"{marker}\": 1"))]),
+            single(&[("AUTH", &format!("{{kind: anonymous, \"{marker}\": 1}}"))]),
+            single(&[(
+                "ROUTE",
+                &format!("{{model: p/m, \"{marker}\": 1, capabilities: {{}}}}"),
+            )]),
+        ] {
+            let error = refused(&document);
+            assert_eq!(
+                error.code,
+                ErrorCode::InvalidRequest,
+                "{marker}: {document}"
+            );
+            assert!(
+                error
+                    .message
+                    .starts_with("invalid llm.routes/1 YAML document at line "),
+                "{marker}: {}",
+                error.message
+            );
+        }
+    }
 }
 
 #[test]
@@ -232,9 +303,9 @@ fn strict_parsing_refuses_each_malformed_document_without_echoing_its_value() {
             "sk-unknown-top",
         ),
         (
-            "unknown provider field",
-            single(&[("PROVIDER_EXTRA", "region: sk-unknown-provider")]),
-            "sk-unknown-provider",
+            "unknown endpoint field",
+            single(&[("ENDPOINT_EXTRA", "region: sk-unknown-endpoint")]),
+            "sk-unknown-endpoint",
         ),
         (
             "unknown auth field",
@@ -250,12 +321,12 @@ fn strict_parsing_refuses_each_malformed_document_without_echoing_its_value() {
             "llm.routes/2",
         ),
         (
-            "undeclared provider",
+            "undeclared endpoint",
             single(&[("ROUTE", "nobody/sk-model")]),
             "nobody/sk-model",
         ),
         (
-            "route without a provider",
+            "route without an endpoint",
             single(&[("ROUTE", "sk-bare-model")]),
             "sk-bare-model",
         ),
@@ -327,7 +398,7 @@ fn strict_parsing_refuses_each_malformed_document_without_echoing_its_value() {
 }
 
 #[test]
-fn refusals_name_the_provider_or_route_they_concern() {
+fn refusals_name_the_endpoint_or_route_they_concern() {
     let error = refused(&single(&[("PROTOCOL", "grpc")]));
     assert!(error.message.contains("`p`"), "{}", error.message);
     let error = refused(&single(&[("ROUTE", "nobody/model")]));
@@ -342,15 +413,19 @@ fn an_oversized_document_is_refused_before_parsing() {
     assert_eq!(refused(&document).code, ErrorCode::TooLarge);
 }
 
-/// YAML aliases repeat what they anchor while the document is read. The repetition is held to
-/// the same byte bound as the document itself, so a short document cannot expand past it; an
-/// alias that stays within the bound is ordinary YAML and is read as written.
+const EXPANDED: &str =
+    "llm.routes/1 document expands beyond its byte bound when its YAML aliases are resolved";
+
+/// YAML aliases repeat what they anchor while the document is read. What the repetition may
+/// cost is held to what the densest alias-free document of the same length costs, so a short
+/// document cannot expand past it, whether it repeats long text or many small nodes; an alias
+/// that stays within the bound is ordinary YAML and is read as written.
 #[test]
 fn a_document_whose_yaml_aliases_expand_past_the_byte_bound_is_refused() {
     let document = |copies: usize| {
         format!(
             "format: llm.routes/1
-providers:
+endpoints:
   p: {{base_url: https://p.example.invalid/v1, protocol: messages, auth: {{kind: anonymous}}}}
 routes:
   r:
@@ -363,46 +438,106 @@ routes:
             vec!["*e"; copies].join(", ")
         )
     };
-    let expanding = document(64);
+    // 128 copies of 64 KiB is 8 MiB of text from a document of about 66 KB.
+    let expanding = document(128);
     assert!(expanding.len() < llm_routing::MAX_CONFIG_BYTES / 16);
     let error = refused(&expanding);
-    assert_eq!(error.code, ErrorCode::TooLarge);
     assert_eq!(
-        error.message,
-        "llm.routes/1 document expands beyond its byte bound when its YAML aliases are resolved"
+        (error.code, error.message.as_str()),
+        (ErrorCode::TooLarge, EXPANDED)
     );
     let routes = Routes::parse(&document(2)).unwrap();
     let route = routes.routes().next().unwrap();
     assert_eq!(route.capabilities().reasoning_efforts.len(), 3);
 
-    // Without aliases the bound never fires, even for the densest nodes a document within its
-    // byte bound can hold: one-byte scalars, two source bytes each.
+    // Many small nodes cost memory too, each charged as a node: 100 aliases of a 200-node
+    // sequence are 20000 nodes from a document of about 1 KB, within its budget at one byte a
+    // node and far past it at the cost of a buffered node.
+    let small = vec!["e"; 200].join(",");
+    let aliases = vec!["*s"; 100].join(",");
+    let nodes = format!(
+        "format: llm.routes/1
+endpoints:
+  p: {{base_url: https://p.example.invalid/v1, protocol: messages, auth: {{kind: anonymous}}}}
+routes:
+  r:
+    model: p/m
+    capabilities: {{tools: true, tool_choice: true, temperature: true, top_p: true,
+                   context_window: 8192, max_output_tokens: 1024,
+                   reasoning_efforts: [&s [{small}], {aliases}]}}
+"
+    );
+    assert!(nodes.len() < 2 * 1024, "{}", nodes.len());
+    let error = refused(&nodes);
+    assert_eq!(
+        (error.code, error.message.as_str()),
+        (ErrorCode::TooLarge, EXPANDED)
+    );
+}
+
+/// The alias bound is relative to the document's length and never refuses a document without
+/// aliases that is within its byte bound, however densely it packs its nodes: each shape below
+/// is the densest found for its kind (two nodes per two bytes, one per byte, one and a half
+/// bytes of text per byte), at the full byte bound. An ordinary document of 2000 routes loads.
+#[test]
+fn no_alias_free_document_within_the_byte_bound_is_refused_by_the_alias_bound() {
     let head = "format: llm.routes/1
-providers:
+endpoints:
   p: {base_url: https://p.example.invalid/v1, protocol: messages, auth: {kind: anonymous}}
 routes:
   r:
     model: p/m
     capabilities: {tools: true, tool_choice: true, temperature: true, top_p: true,
-                   context_window: 8192, max_output_tokens: 1024, reasoning_efforts: [";
-    let room = (llm_routing::MAX_CONFIG_BYTES - head.len() - 8) / 2;
-    let dense = format!("{head}{}a]}}\n", "a,".repeat(room));
-    assert!(
-        dense.len() <= llm_routing::MAX_CONFIG_BYTES,
-        "{}",
-        dense.len()
-    );
-    if let Err(error) = Routes::parse(&dense) {
-        assert_ne!(
-            error.message,
-            "llm.routes/1 document expands beyond its byte bound when its YAML aliases are resolved"
+                   context_window: 8192, max_output_tokens: 1024, reasoning_efforts: [a]}
+";
+    let fill = |open: &str, unit: &str, close: &str| {
+        let room =
+            (llm_routing::MAX_CONFIG_BYTES - head.len() - open.len() - close.len()) / unit.len();
+        format!("{head}{open}{}{close}", unit.repeat(room))
+    };
+    for (shape, document) in [
+        (
+            "one-byte scalars in a flow sequence",
+            fill("x: [", "a,", "a]\n"),
+        ),
+        (
+            "keys with implicit null values in a flow mapping",
+            fill("x: {", "a,", "a}\n"),
+        ),
+        (
+            "explicit empty keys in a block mapping",
+            fill("", "?\n", ""),
+        ),
+        ("escaped line separators", fill("x: \"", "\\L", "\"\n")),
+    ] {
+        assert!(
+            document.len() <= llm_routing::MAX_CONFIG_BYTES
+                && document.len() > llm_routing::MAX_CONFIG_BYTES - 8,
+            "{shape}: {}",
+            document.len()
         );
+        if let Err(error) = Routes::parse(&document) {
+            assert_ne!(error.message, EXPANDED, "{shape}");
+        }
     }
+
+    let mut ordinary = String::from(
+        "format: llm.routes/1
+endpoints:
+  p: {base_url: https://p.example.invalid/v1, protocol: messages, auth: {kind: anonymous}}
+routes:
+",
+    );
+    for index in 0..2000 {
+        writeln!(ordinary, "  route-{index:0>8}: p/model-{index:0>8}").unwrap();
+    }
+    let routes = Routes::parse(&ordinary).unwrap();
+    assert_eq!(routes.routes().count(), 2000);
 }
 
-/// A credentialed provider bills as metered API use; an anonymous one as self-hosted.
+/// A credentialed endpoint bills as metered API use; an anonymous one as self-hosted.
 #[test]
-fn each_expanded_account_bills_by_how_its_provider_authenticates() {
+fn each_expanded_account_bills_by_how_its_endpoint_authenticates() {
     let routes = Routes::parse(DOCUMENT).unwrap();
     let billing: Vec<(&str, &str, BillingKind)> = routes
         .catalog()
@@ -449,7 +584,7 @@ fn a_relative_file_reference_is_refused() {
 }
 
 #[test]
-fn building_resolvers_for_a_keychain_reference_without_an_injected_store_is_refused_naming_the_provider()
+fn building_resolvers_for_a_keychain_reference_without_an_injected_store_is_refused_naming_the_endpoint()
  {
     let document = single(&[(
         "AUTH",
@@ -591,9 +726,9 @@ fn the_catalog_builder_answers_one_port_per_route_with_the_routes_protocol() {
         let port = models.get(route.name()).unwrap();
         let target = routes.target(route.name().as_str()).unwrap();
         assert_eq!(port.protocol(), target.protocol, "{}", route.name());
-        assert_eq!(port.provenance().provider, target.provider);
-        assert_eq!(port.provenance().account, target.provider);
-        assert_eq!(port.provenance().endpoint, target.provider);
+        assert_eq!(port.provenance().provider, target.endpoint);
+        assert_eq!(port.provenance().account, target.endpoint);
+        assert_eq!(port.provenance().endpoint, target.endpoint);
         assert_eq!(
             port.resolver().is_some(),
             route.name().as_str() != "small",
@@ -603,11 +738,11 @@ fn the_catalog_builder_answers_one_port_per_route_with_the_routes_protocol() {
     }
 }
 
-/// No ambient fallback: the unset variable is refused by the provider's reference, before any
+/// No ambient fallback: the unset variable is refused by the endpoint's reference, before any
 /// request, and the refusal names neither the variable nor a value.
 #[cfg(feature = "environment")]
 #[test]
-fn an_unset_variable_is_refused_at_turn_time_by_the_providers_reference() {
+fn an_unset_variable_is_refused_at_turn_time_by_the_endpoints_reference() {
     let routes = Routes::parse(&single(&[])).unwrap();
     let resolvers = routes.resolvers(&SecretSources::new()).unwrap();
     let runtime = tokio::runtime::Builder::new_current_thread()
@@ -630,7 +765,7 @@ fn an_unset_variable_is_refused_at_turn_time_by_the_providers_reference() {
 }
 
 #[test]
-fn llm_models_port_for_a_direct_provider_model_name_builds_through_the_same_rules() {
+fn llm_models_port_for_a_direct_endpoint_model_name_builds_through_the_same_rules() {
     let routes = Routes::parse(DOCUMENT).unwrap();
     let resolvers = resolvers_for(&routes);
     let port = routes
@@ -713,7 +848,7 @@ fn no_secret_material_leaves_the_document() {
     }
     let document = format!(
         "format: llm.routes/1
-providers:
+endpoints:
   marked: {{base_url: https://marked.example.invalid/v1, protocol: responses,
            auth: {{kind: bearer, secret: \"env:{MARKER_VARIABLE}\"}}}}
   filed: {{base_url: https://filed.example.invalid/v1, protocol: messages,

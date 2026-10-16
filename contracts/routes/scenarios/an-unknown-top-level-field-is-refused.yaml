@@ -9,7 +9,7 @@ timeline:
     routes_yaml: |
       format: llm.routes/1
       region: eu-private-marker
-      providers:
+      endpoints:
         anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
                     auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
       routes:
@@ -27,6 +27,6 @@ assert:
     error_code: invalid-request
     error_message: "invalid llm.routes/1 YAML document at line 2 column 1"
     routes: []
-    providers: []
+    endpoints: []
     answers: []
     catalog_serving_models: []

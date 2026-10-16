@@ -1,15 +1,16 @@
 //! `llm.routes/1`: the short YAML document every consumer reads to learn which model a name
 //! reaches, and how.
 //!
-//! A provider names its base URL, its wire protocol and how it authenticates; its secret is only
+//! An endpoint names its base URL, its wire protocol and how it authenticates; its secret is only
 //! a source reference (`env:<VARIABLE>`, `file:<path>` or `keychain:<service>/<entry>`). A route
-//! names one `<provider>/<model-id>`, split on the first `/` only, or a mapping with that `model`
-//! and its `capabilities`. A name that is not a route but reads `<declared provider>/<model-id>`
-//! resolves directly.
+//! names one `<endpoint>/<model-id>`, split on the first `/` only, or a mapping with that `model`
+//! and its `capabilities`. A name that is not a route but reads `<declared endpoint>/<model-id>`
+//! resolves directly; such a direct name is itself one identifier of at most 256 bytes, so a
+//! model id longer than the room it leaves is reached through a route.
 //!
 //! ```yaml
 //! format: llm.routes/1
-//! providers:
+//! endpoints:
 //!   anthropic:  {base_url: https://api.anthropic.com/v1, protocol: messages,
 //!                auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
 //!   lab:        {base_url: http://127.0.0.1:8000/v1, protocol: chat-completions,
@@ -21,18 +22,18 @@
 //!            max_output_tokens: 2048}}
 //! ```
 //!
-//! The document expands into an `llm.catalog/1` catalog: per provider one provider, account and
-//! endpoint, each with the provider's name as id, and the account's secret reference id is the
-//! provider's name too; per route one served model, one serving model and one single-target
+//! The document expands into an `llm.catalog/1` catalog: per endpoint one catalog provider, account
+//! and endpoint, each with the endpoint's name as id, and the account's secret reference id is the
+//! endpoint's name too; per route one served model, one serving model and one single-target
 //! route without fallback, each with the route's name as id. Ports are then built by
 //! [`crate::port`] and [`crate::CatalogModels::build`] on their unchanged rules.
 //!
 //! Parsing is strict and performs no I/O: an unknown field, a repeated key, an unknown format,
 //! protocol, authentication kind or secret source, a literal secret and a route to an undeclared
-//! provider are refused as `invalid-request`, naming the field, provider or route and never
+//! endpoint are refused as `invalid-request`, naming the field, endpoint or route and never
 //! echoing a value. [`Routes::resolvers`] turns the references into the caller's resolvers
 //! without reading anything; an unset variable or a missing file is refused at turn time, as
-//! `unauthorized`, by the provider's reference, before any request is sent.
+//! `unauthorized`, by the endpoint's reference, before any request is sent.
 
 use crate::{Port, Resolvers, port};
 use llm_core::{AuthKind, BillingKind, Capabilities, Error, ErrorCode, Id, Protocol};
@@ -48,7 +49,7 @@ use serde::{
 };
 use std::{
     cell::Cell,
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeMap,
     fmt,
     marker::PhantomData,
     path::{Component, Path, PathBuf},
@@ -61,15 +62,14 @@ pub const FORMAT: &str = "llm.routes/1";
 const DEFAULT_CONTEXT_WINDOW: u64 = 200_000;
 const DEFAULT_MAX_OUTPUT_TOKENS: u64 = 16_384;
 const MAX_PATH_BYTES: usize = 4096;
-const DUPLICATE_KEY: &str = "llm.routes duplicate mapping key";
-const EXPANSION: &str = "llm.routes expansion bound";
 const EXPANDED: &str =
     "llm.routes/1 document expands beyond its byte bound when its YAML aliases are resolved";
 const CATALOG_BOUND: &str = "llm.routes/1 document expands beyond the catalog's bound";
+const REPEATED: &str = "the document declares it more than once";
 const SECRET_FORMS: &str = "`auth.secret` must be a reference: env:<VARIABLE>, \
 file:<absolute or ~/ path> or keychain:<service>/<entry>";
 
-/// The capabilities a route written as a plain `<provider>/<model-id>` string declares: every
+/// The capabilities a route written as a plain `<endpoint>/<model-id>` string declares: every
 /// boolean true, reasoning efforts `low`, `medium` and `high`, a context window of 200000 tokens
 /// and at most 16384 output tokens. A route whose model differs writes its own `capabilities`.
 pub fn default_capabilities() -> Capabilities {
@@ -88,14 +88,14 @@ pub fn default_capabilities() -> Capabilities {
 #[serde(deny_unknown_fields)]
 struct RawDocument {
     format: String,
-    providers: Unique<RawProvider>,
+    endpoints: Ordered<RawEndpoint>,
     #[serde(default)]
-    routes: Unique<RawRoute>,
+    routes: Ordered<RawRoute>,
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct RawProvider {
+struct RawEndpoint {
     base_url: String,
     protocol: String,
     auth: RawAuth,
@@ -125,81 +125,99 @@ struct RawDeclaredRoute {
     capabilities: Capabilities,
 }
 
-/// A mapping in document order that refuses a repeated key, which a plain map would let the
-/// last occurrence silently win.
-struct Unique<V>(Vec<(String, V)>);
+/// A mapping in document order. A repeated key is kept rather than merged, so [`Routes::parse`]
+/// refuses it by name where a plain map would let the last occurrence silently win.
+struct Ordered<V>(Vec<(String, V)>);
 
-impl<V> Default for Unique<V> {
+impl<V> Default for Ordered<V> {
     fn default() -> Self {
         Self(Vec::new())
     }
 }
 
-impl<'de, V: Deserialize<'de>> Deserialize<'de> for Unique<V> {
+impl<'de, V: Deserialize<'de>> Deserialize<'de> for Ordered<V> {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         struct Entries<V>(PhantomData<V>);
         impl<'de, V: Deserialize<'de>> Visitor<'de> for Entries<V> {
-            type Value = Unique<V>;
+            type Value = Ordered<V>;
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                formatter.write_str("a mapping with unique keys")
+                formatter.write_str("a mapping")
             }
             fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
-                let mut seen = BTreeSet::new();
                 let mut entries = Vec::new();
                 while let Some(key) = map.next_key::<String>()? {
-                    if !seen.insert(key.clone()) {
-                        return Err(de::Error::custom(DUPLICATE_KEY));
-                    }
                     entries.push((key, map.next_value()?));
                 }
-                Ok(Unique(entries))
+                Ok(Ordered(entries))
             }
         }
         deserializer.deserialize_map(Entries(PhantomData))
     }
 }
 
-/// The YAML parser's own diagnostic can quote the document, so only its location is kept.
+/// The YAML parser's own diagnostic can quote the document, so only its location is kept. The
+/// diagnostic is never searched: a refusal's kind is decided where it arose.
 fn malformed(error: &serde_yaml::Error) -> Error {
-    if error.to_string().contains(EXPANSION) {
-        return Error::too_large(EXPANDED);
-    }
-    let repeated = if error.to_string().contains(DUPLICATE_KEY) {
-        ": a mapping key is repeated"
-    } else {
-        ""
-    };
     let location = error.location().map_or(String::new(), |location| {
         format!(" at line {} column {}", location.line(), location.column())
     });
-    Error::invalid(format!(
-        "invalid {FORMAT} YAML document{repeated}{location}"
-    ))
+    Error::invalid(format!("invalid {FORMAT} YAML document{location}"))
 }
 
-/// How many bytes the document may present once every YAML alias is replayed: twice its own
-/// bound, which a document without aliases stays within (its decoded text is never longer than
-/// its source, and every node it holds costs one byte below).
-const MAX_EXPANDED_BYTES: usize = 2 * MAX_CONFIG_BYTES;
+/// What one node is charged beyond its text. Before a value's type is known it is buffered as
+/// serde's `Content` (32 bytes, in a vector that may hold twice its length), so 64 bytes is at
+/// least what a node costs once deserialized.
+const NODE_BYTES: usize = 64;
+
+/// What a document may cost per byte of its source once every YAML alias is replayed: the most
+/// an alias-free document can cost under [`NODE_BYTES`]. Measured, the densest alias-free YAML
+/// holds one node per source byte (keys with implicit null values, `{a,a}`; explicit empty keys,
+/// `?` lines) and decodes into at most one and a half bytes of text per source byte (`\L`
+/// escapes), so 64 + 2 bytes per source byte bounds every document without aliases. A smaller
+/// multiple would refuse ordinary documents: a plain route line costs about 4.5 times its length.
+const EXPANDED_PER_SOURCE_BYTE: usize = NODE_BYTES + 2;
+
+/// The budget of the shortest documents, so a few aliases in a small document stay ordinary.
+const MIN_EXPANDED_BYTES: usize = 64 * 1024;
+
+/// How much a document may cost while it is read, every alias replayed: what the densest
+/// alias-free document of its length costs, and at least [`MIN_EXPANDED_BYTES`].
+fn expansion_budget(source: &str) -> usize {
+    source
+        .len()
+        .saturating_mul(EXPANDED_PER_SOURCE_BYTE)
+        .max(MIN_EXPANDED_BYTES)
+}
+
+/// What a [`Measure`] walk may still spend, and whether it ran out.
+struct Budget {
+    left: Cell<usize>,
+    exhausted: Cell<bool>,
+}
 
 /// Walks the document as the YAML parser presents it, every alias replayed, and keeps nothing.
 ///
 /// The parser replays an alias from the events it already holds, without copying them, so this
 /// walk holds no more than the parser does. Deserializing into owned values would instead copy
-/// the anchored text once per alias: a short document could cost far more than its byte bound
-/// before any of it was refused. Each node costs its text plus one byte, so many small repeated
-/// nodes are bounded too, and the walk stops at [`MAX_EXPANDED_BYTES`].
+/// the anchored nodes once per alias: a short document could cost far more than its byte bound
+/// before any of it was refused. Each node costs its text plus [`NODE_BYTES`], and the walk stops
+/// when the [`expansion_budget`] is spent, marking the budget exhausted so the refusal is
+/// classified by where it arose rather than by the parser's message.
 #[derive(Clone, Copy)]
-struct Measure<'a>(&'a Cell<usize>);
+struct Measure<'a>(&'a Budget);
 
 impl Measure<'_> {
     fn charge<E: de::Error>(self, text: usize) -> Result<(), E> {
-        let left = self
+        let Some(left) = self
             .0
+            .left
             .get()
-            .checked_sub(text.saturating_add(1))
-            .ok_or_else(|| E::custom(EXPANSION))?;
-        self.0.set(left);
+            .checked_sub(text.saturating_add(NODE_BYTES))
+        else {
+            self.0.exhausted.set(true);
+            return Err(E::custom("expansion budget spent"));
+        };
+        self.0.left.set(left);
         Ok(())
     }
 }
@@ -273,7 +291,7 @@ impl<'de> Visitor<'de> for Measure<'_> {
     }
 }
 
-/// A provider or route name: a valid identifier holding no `/`.
+/// An endpoint or route name: a valid identifier holding no `/`.
 fn name(value: &str, kind: &str) -> Result<Id, Error> {
     Id::new(value)
         .ok()
@@ -325,7 +343,7 @@ impl FilePath {
     }
 }
 
-/// A provider's secret reference. Its `Debug` names only the source kind: the variable name,
+/// An endpoint's secret reference. Its `Debug` names only the source kind: the variable name,
 /// path and keychain entry stay out of every diagnostic.
 #[derive(Clone)]
 enum SecretSource {
@@ -369,7 +387,7 @@ impl fmt::Debug for SecretSource {
     }
 }
 
-/// The source kind of a provider's secret reference.
+/// The source kind of an endpoint's secret reference.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SecretKind {
     /// `env:<VARIABLE>`
@@ -391,9 +409,9 @@ impl SecretKind {
     }
 }
 
-/// One declared provider, as the document states it.
+/// One declared endpoint, as the document states it.
 #[derive(Debug, Clone)]
-pub struct ProviderDeclaration {
+pub struct EndpointDeclaration {
     name: Id,
     base_url: BaseUrl,
     protocol: Protocol,
@@ -402,9 +420,9 @@ pub struct ProviderDeclaration {
     secret: Option<SecretSource>,
 }
 
-impl ProviderDeclaration {
-    fn read(name: Id, raw: RawProvider) -> Result<Self, Error> {
-        let refuse = |message: &str| about("provider", &name, message);
+impl EndpointDeclaration {
+    fn read(name: Id, raw: RawEndpoint) -> Result<Self, Error> {
+        let refuse = |message: &str| about("endpoint", &name, message);
         let base_url = BaseUrl::new(&raw.base_url).map_err(|error| refuse(&error.message))?;
         let protocol = match raw.protocol.as_str() {
             "messages" => Protocol::Messages,
@@ -436,20 +454,20 @@ impl ProviderDeclaration {
                 Some(ApiKeyHeader::new(&header).map_err(|error| refuse(&error.message))?)
             }
             (AuthKind::ApiKey, None) => {
-                return Err(refuse("an api-key provider requires `auth.header`"));
+                return Err(refuse("an api-key endpoint requires `auth.header`"));
             }
             (_, Some(_)) => {
-                return Err(refuse("only an api-key provider takes `auth.header`"));
+                return Err(refuse("only an api-key endpoint takes `auth.header`"));
             }
             (_, None) => None,
         };
         let secret = match (auth_kind, raw.auth.secret) {
             (AuthKind::Anonymous, Some(_)) => {
-                return Err(refuse("an anonymous provider cannot name `auth.secret`"));
+                return Err(refuse("an anonymous endpoint cannot name `auth.secret`"));
             }
             (AuthKind::Anonymous, None) => None,
             (_, None) => {
-                return Err(refuse("a credentialed provider requires `auth.secret`"));
+                return Err(refuse("a credentialed endpoint requires `auth.secret`"));
             }
             (_, Some(secret)) => {
                 Some(SecretSource::read(&secret).ok_or_else(|| refuse(SECRET_FORMS))?)
@@ -465,7 +483,7 @@ impl ProviderDeclaration {
         })
     }
 
-    /// The provider's name; also its account, endpoint and secret reference id.
+    /// The endpoint's name; also its catalog provider, account, endpoint and secret reference id.
     pub fn name(&self) -> &Id {
         &self.name
     }
@@ -482,21 +500,22 @@ impl ProviderDeclaration {
         self.auth_kind
     }
 
-    /// The header an api-key provider's credential travels in.
+    /// The header an api-key endpoint's credential travels in.
     pub fn api_key_header(&self) -> Option<&ApiKeyHeader> {
         self.api_key_header.as_ref()
     }
 
-    /// The source kind of the secret reference; `None` for an anonymous provider.
+    /// The source kind of the secret reference; `None` for an anonymous endpoint.
     pub fn secret_kind(&self) -> Option<SecretKind> {
         self.secret.as_ref().map(SecretSource::kind)
     }
 
     fn reference(&self) -> Result<SecretRef, Error> {
         SecretRef::new(self.name.as_str())
-            .map_err(|_| about("provider", &self.name, "its name is not a secret reference"))
+            .map_err(|_| about("endpoint", &self.name, "its name is not a secret reference"))
     }
 
+    /// The catalog provider, account and endpoint this endpoint expands into.
     fn declarations(&self) -> Result<(Provider, Account, Endpoint), Error> {
         let anonymous = self.auth_kind == AuthKind::Anonymous;
         let category = Id::new(if anonymous { "self-hosted" } else { "hosted" })
@@ -530,7 +549,7 @@ impl ProviderDeclaration {
 #[derive(Debug, Clone)]
 pub struct RouteDeclaration {
     name: Id,
-    provider: Id,
+    endpoint: Id,
     upstream_model: Id,
     capabilities: Capabilities,
 }
@@ -541,8 +560,9 @@ impl RouteDeclaration {
         &self.name
     }
 
-    pub fn provider(&self) -> &Id {
-        &self.provider
+    /// The declared endpoint the route's model names: everything before its first `/`.
+    pub fn endpoint(&self) -> &Id {
+        &self.endpoint
     }
 
     /// The model id sent upstream: everything after the first `/` of the route's model.
@@ -558,10 +578,10 @@ impl RouteDeclaration {
 /// What a name reaches.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Target {
-    /// The serving model id that answers the name: the route's name, or `<provider>/<model-id>`
+    /// The serving model id that answers the name: the route's name, or `<endpoint>/<model-id>`
     /// for a direct name.
     pub serving_model: Id,
-    pub provider: Id,
+    pub endpoint: Id,
     pub upstream_model: Id,
     pub protocol: Protocol,
 }
@@ -569,7 +589,7 @@ pub struct Target {
 /// A validated `llm.routes/1` document and the catalog it expands into.
 #[derive(Debug)]
 pub struct Routes {
-    providers: BTreeMap<Id, ProviderDeclaration>,
+    endpoints: BTreeMap<Id, EndpointDeclaration>,
     declared: BTreeMap<Id, RouteDeclaration>,
     catalog: Catalog,
 }
@@ -577,18 +597,18 @@ pub struct Routes {
 /// One serving model the expansion declares.
 struct Served<'a> {
     id: &'a Id,
-    provider: &'a ProviderDeclaration,
+    endpoint: &'a EndpointDeclaration,
     upstream_model: &'a Id,
     capabilities: &'a Capabilities,
 }
 
 fn expand<'a>(
-    providers: impl IntoIterator<Item = &'a ProviderDeclaration>,
+    endpoints: impl IntoIterator<Item = &'a EndpointDeclaration>,
     served: &[Served<'_>],
 ) -> Result<Catalog, Error> {
     let mut declared = (Vec::new(), Vec::new(), Vec::new());
-    for provider in providers {
-        let (provider, account, endpoint) = provider.declarations()?;
+    for endpoint in endpoints {
+        let (provider, account, endpoint) = endpoint.declarations()?;
         declared.0.push(provider);
         declared.1.push(account);
         declared.2.push(endpoint);
@@ -605,9 +625,9 @@ fn expand<'a>(
         });
         serving_models.push(ServingModel {
             id: entry.id.clone(),
-            endpoint_id: entry.provider.name.clone(),
+            endpoint_id: entry.endpoint.name.clone(),
             model_id: entry.id.clone(),
-            protocol: entry.provider.protocol,
+            protocol: entry.endpoint.protocol,
             capabilities: entry.capabilities.clone(),
         });
         routes.push(Route {
@@ -647,49 +667,64 @@ impl Routes {
     /// Reads and validates a routes document and expands it into its catalog. Performs no I/O.
     ///
     /// # Errors
-    /// `too-large` for a document above [`MAX_CONFIG_BYTES`], for one whose YAML aliases repeat
-    /// it past twice that bound while it is read, and for one whose expansion exceeds the
-    /// catalog's own bounds (`MAX_CONFIG_BYTES` of declarations, 4096 of each kind: a few
-    /// thousand routes); otherwise `invalid-request` for malformed YAML,
-    /// an unknown field, a repeated key, an unknown format, protocol, authentication kind or
-    /// secret source, a literal secret, contradictory authentication fields, an invalid name,
-    /// base URL, header or capability declaration, and a route to an undeclared provider. The
-    /// message names the field, provider or route and never a value.
+    /// `too-large` for a document above [`MAX_CONFIG_BYTES`], for one whose YAML aliases make
+    /// it cost more while it is read than the densest document of its length without aliases
+    /// (each node at 64 bytes plus its text, 66 bytes per source byte), and for one whose
+    /// expansion exceeds the catalog's own bounds (`MAX_CONFIG_BYTES` of declarations, 4096 of
+    /// each kind: a few thousand routes); otherwise `invalid-request` for malformed YAML, an
+    /// unknown field (`providers` included), a repeated key, an unknown format, protocol,
+    /// authentication kind or secret source, a literal secret, contradictory authentication
+    /// fields, an invalid name, base URL, header or capability declaration, and a route to an
+    /// undeclared endpoint. The message names the field, endpoint or route and never a value.
     pub fn parse(source: &str) -> Result<Self, Error> {
         if source.len() > MAX_CONFIG_BYTES {
             return Err(Error::too_large("routes document exceeds its byte bound"));
         }
-        let budget = Cell::new(MAX_EXPANDED_BYTES);
-        Measure(&budget)
-            .deserialize(serde_yaml::Deserializer::from_str(source))
-            .map_err(|error| malformed(&error))?;
+        let budget = Budget {
+            left: Cell::new(expansion_budget(source)),
+            exhausted: Cell::new(false),
+        };
+        if let Err(error) = Measure(&budget).deserialize(serde_yaml::Deserializer::from_str(source))
+        {
+            return Err(if budget.exhausted.get() {
+                Error::too_large(EXPANDED)
+            } else {
+                malformed(&error)
+            });
+        }
         let raw: RawDocument = serde_yaml::from_str(source).map_err(|error| malformed(&error))?;
         if raw.format != FORMAT {
             return Err(Error::invalid(format!(
                 "the document's `format` is not {FORMAT}"
             )));
         }
-        let mut providers = BTreeMap::new();
-        for (provider, declaration) in raw.providers.0 {
-            let provider = name(&provider, "provider")?;
-            let declaration = ProviderDeclaration::read(provider.clone(), declaration)?;
-            providers.insert(provider, declaration);
+        let mut endpoints = BTreeMap::new();
+        for (endpoint, declaration) in raw.endpoints.0 {
+            let endpoint = name(&endpoint, "endpoint")?;
+            if endpoints.contains_key(&endpoint) {
+                return Err(about("endpoint", &endpoint, REPEATED));
+            }
+            let declaration = EndpointDeclaration::read(endpoint.clone(), declaration)?;
+            endpoints.insert(endpoint, declaration);
         }
         let mut routes = BTreeMap::new();
         for (route, declaration) in raw.routes.0 {
             let route = name(&route, "route")?;
             let refuse = |message: &str| about("route", &route, message);
+            if routes.contains_key(&route) {
+                return Err(refuse(REPEATED));
+            }
             let (model, capabilities) = match declaration {
                 RawRoute::Model(model) => (model, default_capabilities()),
                 RawRoute::Declared(declared) => (declared.model, declared.capabilities),
             };
-            let (provider, upstream_model) = model
+            let (endpoint, upstream_model) = model
                 .split_once('/')
-                .ok_or_else(|| refuse("its model must read <provider>/<model-id>"))?;
-            let provider = Id::new(provider)
+                .ok_or_else(|| refuse("its model must read <endpoint>/<model-id>"))?;
+            let endpoint = Id::new(endpoint)
                 .ok()
-                .filter(|provider| providers.contains_key(provider))
-                .ok_or_else(|| refuse("its model names an undeclared provider"))?;
+                .filter(|endpoint| endpoints.contains_key(endpoint))
+                .ok_or_else(|| refuse("its model names an undeclared endpoint"))?;
             let upstream_model = Id::new(upstream_model)
                 .map_err(|_| refuse("its model id must be 1..=256 printable ASCII bytes"))?;
             capabilities
@@ -699,7 +734,7 @@ impl Routes {
                 route.clone(),
                 RouteDeclaration {
                     name: route,
-                    provider,
+                    endpoint,
                     upstream_model,
                     capabilities,
                 },
@@ -709,14 +744,14 @@ impl Routes {
             .values()
             .map(|route| Served {
                 id: &route.name,
-                provider: &providers[&route.provider],
+                endpoint: &endpoints[&route.endpoint],
                 upstream_model: &route.upstream_model,
                 capabilities: &route.capabilities,
             })
             .collect();
-        let catalog = expand(providers.values(), &served)?;
+        let catalog = expand(endpoints.values(), &served)?;
         Ok(Self {
-            providers,
+            endpoints,
             declared: routes,
             catalog,
         })
@@ -727,9 +762,9 @@ impl Routes {
         &self.catalog
     }
 
-    /// Every declared provider, in name order.
-    pub fn providers(&self) -> impl Iterator<Item = &ProviderDeclaration> {
-        self.providers.values()
+    /// Every declared endpoint, in name order.
+    pub fn endpoints(&self) -> impl Iterator<Item = &EndpointDeclaration> {
+        self.endpoints.values()
     }
 
     /// Every declared route, in name order.
@@ -741,29 +776,30 @@ impl Routes {
         Id::new(name).ok().and_then(|id| self.declared.get(&id))
     }
 
-    /// A `<declared provider>/<model-id>` name: its serving model id, provider and model id.
-    fn direct(&self, name: &str) -> Result<(Id, &ProviderDeclaration, Id), Error> {
+    /// A `<declared endpoint>/<model-id>` name of at most 256 bytes: its serving model id,
+    /// endpoint and model id.
+    fn direct(&self, name: &str) -> Result<(Id, &EndpointDeclaration, Id), Error> {
         let unknown =
-            || Error::invalid("the name is neither a route nor <declared provider>/<model-id>");
-        let (provider, model) = name.split_once('/').ok_or_else(unknown)?;
-        let provider = Id::new(provider)
+            || Error::invalid("the name is neither a route nor <declared endpoint>/<model-id>");
+        let (endpoint, model) = name.split_once('/').ok_or_else(unknown)?;
+        let endpoint = Id::new(endpoint)
             .ok()
-            .and_then(|provider| self.providers.get(&provider))
+            .and_then(|endpoint| self.endpoints.get(&endpoint))
             .ok_or_else(unknown)?;
         let model = Id::new(model).map_err(|_| unknown())?;
         let serving = Id::new(name).map_err(|_| unknown())?;
-        Ok((serving, provider, model))
+        Ok((serving, endpoint, model))
     }
 
     /// The one-entry catalog a direct name expands into, by the same rules as a route.
     fn direct_catalog(&self, name: &str) -> Result<(Catalog, Id), Error> {
-        let (serving, provider, model) = self.direct(name)?;
+        let (serving, endpoint, model) = self.direct(name)?;
         let capabilities = default_capabilities();
         let catalog = expand(
-            [provider],
+            [endpoint],
             &[Served {
                 id: &serving,
-                provider,
+                endpoint,
                 upstream_model: &model,
                 capabilities: &capabilities,
             }],
@@ -771,27 +807,29 @@ impl Routes {
         Ok((catalog, serving))
     }
 
-    /// What a name reaches: a route first; else `<declared provider>/<model-id>`, split on the
-    /// first `/`.
+    /// What a name reaches: a route first; else `<declared endpoint>/<model-id>`, split on the
+    /// first `/`. A direct name is itself one identifier of at most 256 bytes, its serving model
+    /// id; a longer model id is reached through a route.
     ///
     /// # Errors
-    /// `invalid-request` for any other name, without echoing it.
+    /// `invalid-request` for any other name, a direct name above 256 bytes included, without
+    /// echoing it.
     pub fn target(&self, name: &str) -> Result<Target, Error> {
         if let Some(route) = self.route(name) {
-            let provider = &self.providers[&route.provider];
+            let endpoint = &self.endpoints[&route.endpoint];
             return Ok(Target {
                 serving_model: route.name.clone(),
-                provider: provider.name.clone(),
+                endpoint: endpoint.name.clone(),
                 upstream_model: route.upstream_model.clone(),
-                protocol: provider.protocol,
+                protocol: endpoint.protocol,
             });
         }
-        let (serving_model, provider, upstream_model) = self.direct(name)?;
+        let (serving_model, endpoint, upstream_model) = self.direct(name)?;
         Ok(Target {
             serving_model,
-            provider: provider.name.clone(),
+            endpoint: endpoint.name.clone(),
             upstream_model,
-            protocol: provider.protocol,
+            protocol: endpoint.protocol,
         })
     }
 
@@ -817,7 +855,7 @@ impl Routes {
     /// direct name over the one-entry catalog it expands into, so the rules are identical.
     ///
     /// # Errors
-    /// As [`Routes::target`], and as [`crate::port`] refuses a credentialed provider the caller
+    /// As [`Routes::target`], and as [`crate::port`] refuses a credentialed endpoint the caller
     /// has no resolver for (`unauthorized`).
     pub fn port(
         &self,
@@ -832,32 +870,32 @@ impl Routes {
         port(&catalog, &serving, http, resolvers)
     }
 
-    /// The caller's resolvers for every credentialed provider, keyed by the provider's name.
+    /// The caller's resolvers for every credentialed endpoint, keyed by the endpoint's name.
     /// Building them reads no variable, file or keychain entry.
     ///
     /// # Errors
-    /// `invalid-request` naming the provider for a source kind whose feature (`environment`,
+    /// `invalid-request` naming the endpoint for a source kind whose feature (`environment`,
     /// `file`, `keychain`) this build does not enable, a `file:~/` reference without a home, a
     /// `keychain:` reference without an injected store, and a path the file source refuses.
     pub fn resolvers(&self, sources: &SecretSources) -> Result<RouteResolvers, Error> {
         let mut resolvers = BTreeMap::new();
-        for provider in self.providers.values() {
-            let Some(secret) = &provider.secret else {
+        for endpoint in self.endpoints.values() {
+            let Some(secret) = &endpoint.secret else {
                 continue;
             };
-            let reference = provider.reference()?;
+            let reference = endpoint.reference()?;
             let resolver = match secret {
                 SecretSource::Environment(variable) => {
-                    environment(&provider.name, &reference, variable)?
+                    environment(&endpoint.name, &reference, variable)?
                 }
                 SecretSource::File(path) => {
-                    file(&provider.name, &reference, path, sources.home.as_deref())?
+                    file(&endpoint.name, &reference, path, sources.home.as_deref())?
                 }
                 SecretSource::Keychain { service, entry } => {
-                    keychain(&provider.name, &reference, service, entry, sources)?
+                    keychain(&endpoint.name, &reference, service, entry, sources)?
                 }
             };
-            resolvers.insert(provider.name.clone(), resolver);
+            resolvers.insert(endpoint.name.clone(), resolver);
         }
         Ok(RouteResolvers { resolvers })
     }
@@ -868,10 +906,10 @@ impl Routes {
     not(feature = "file"),
     not(feature = "keychain")
 ))]
-fn compiled_out(provider: &Id, source: &str, feature: &str) -> Error {
+fn compiled_out(endpoint: &Id, source: &str, feature: &str) -> Error {
     about(
-        "provider",
-        provider,
+        "endpoint",
+        endpoint,
         &format!(
             "`{source}` secrets need feature `{feature}` of b10x-llm-models, which this build does not enable"
         ),
@@ -880,7 +918,7 @@ fn compiled_out(provider: &Id, source: &str, feature: &str) -> Error {
 
 #[cfg(feature = "environment")]
 fn environment(
-    provider: &Id,
+    endpoint: &Id,
     reference: &SecretRef,
     variable: &str,
 ) -> Result<Arc<dyn SecretResolver>, Error> {
@@ -891,8 +929,8 @@ fn environment(
     .map(|resolver| Arc::new(resolver) as Arc<dyn SecretResolver>)
     .map_err(|_| {
         about(
-            "provider",
-            provider,
+            "endpoint",
+            endpoint,
             "its `env:` variable name is not usable",
         )
     })
@@ -900,16 +938,16 @@ fn environment(
 
 #[cfg(not(feature = "environment"))]
 fn environment(
-    provider: &Id,
+    endpoint: &Id,
     _reference: &SecretRef,
     _variable: &str,
 ) -> Result<Arc<dyn SecretResolver>, Error> {
-    Err(compiled_out(provider, "env:", "environment"))
+    Err(compiled_out(endpoint, "env:", "environment"))
 }
 
 #[cfg(feature = "file")]
 fn file(
-    provider: &Id,
+    endpoint: &Id,
     reference: &SecretRef,
     path: &FilePath,
     home: Option<&Path>,
@@ -919,8 +957,8 @@ fn file(
         FilePath::Home(relative) => home
             .ok_or_else(|| {
                 about(
-                    "provider",
-                    provider,
+                    "endpoint",
+                    endpoint,
                     "a `file:~/` secret needs a home directory, and none was supplied",
                 )
             })?
@@ -930,8 +968,8 @@ fn file(
         .map(|resolver| Arc::new(resolver) as Arc<dyn SecretResolver>)
         .map_err(|_| {
             about(
-                "provider",
-                provider,
+                "endpoint",
+                endpoint,
                 "its `file:` secret does not expand to an absolute path without `.` or `..`",
             )
         })
@@ -939,17 +977,17 @@ fn file(
 
 #[cfg(not(feature = "file"))]
 fn file(
-    provider: &Id,
+    endpoint: &Id,
     _reference: &SecretRef,
     _path: &FilePath,
     _home: Option<&Path>,
 ) -> Result<Arc<dyn SecretResolver>, Error> {
-    Err(compiled_out(provider, "file:", "file"))
+    Err(compiled_out(endpoint, "file:", "file"))
 }
 
 #[cfg(feature = "keychain")]
 fn keychain(
-    provider: &Id,
+    endpoint: &Id,
     reference: &SecretRef,
     service: &Id,
     entry: &Id,
@@ -958,8 +996,8 @@ fn keychain(
     use llm_credentials::keychain::{KeychainEntry, KeychainResolver};
     let store = sources.keychain.clone().ok_or_else(|| {
         about(
-            "provider",
-            provider,
+            "endpoint",
+            endpoint,
             "a `keychain:` secret needs an injected credential store, and none was supplied",
         )
     })?;
@@ -974,18 +1012,18 @@ fn keychain(
         )]),
     )
     .map(|resolver| Arc::new(resolver) as Arc<dyn SecretResolver>)
-    .map_err(|_| about("provider", provider, "its `keychain:` entry is not usable"))
+    .map_err(|_| about("endpoint", endpoint, "its `keychain:` entry is not usable"))
 }
 
 #[cfg(not(feature = "keychain"))]
 fn keychain(
-    provider: &Id,
+    endpoint: &Id,
     _reference: &SecretRef,
     _service: &Id,
     _entry: &Id,
     _sources: &SecretSources,
 ) -> Result<Arc<dyn SecretResolver>, Error> {
-    Err(compiled_out(provider, "keychain:", "keychain"))
+    Err(compiled_out(endpoint, "keychain:", "keychain"))
 }
 
 /// Where the caller's secret sources live. Nothing is read implicitly: a `file:~/` reference
@@ -1030,14 +1068,14 @@ impl fmt::Debug for SecretSources {
     }
 }
 
-/// The resolvers a routes document's references build, one per credentialed provider, keyed by
-/// the provider's name (its account id).
+/// The resolvers a routes document's references build, one per credentialed endpoint, keyed by
+/// the endpoint's name (its account id).
 pub struct RouteResolvers {
     resolvers: BTreeMap<Id, Arc<dyn SecretResolver>>,
 }
 
 impl RouteResolvers {
-    /// The providers a resolver was built for, in name order.
+    /// The accounts, one per credentialed endpoint, a resolver was built for, in name order.
     pub fn accounts(&self) -> impl Iterator<Item = &Id> {
         self.resolvers.keys()
     }

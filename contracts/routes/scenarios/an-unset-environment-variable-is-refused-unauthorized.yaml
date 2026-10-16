@@ -1,14 +1,14 @@
 type: ess-scenario/1
 domain: llm.routes
 scenario: an-unset-environment-variable-is-refused-unauthorized
-summary: a route whose env reference names an unset variable is refused unauthorized by the provider's reference, before any request, naming neither the variable nor a value
+summary: a route whose env reference names an unset variable is refused unauthorized by the endpoint's reference, before any request, naming neither the variable nor a value
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.routes.Authenticate
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
                     auth: {kind: api-key, header: x-api-key, secret: env:LLM_ROUTES_CONFORMANCE_NEVER_SET}}
       routes:

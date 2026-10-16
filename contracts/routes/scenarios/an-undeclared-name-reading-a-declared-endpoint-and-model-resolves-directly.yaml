@@ -1,14 +1,14 @@
 type: ess-scenario/1
 domain: llm.routes
-scenario: an-undeclared-name-reading-a-declared-provider-and-model-resolves-directly
-summary: a name that is no route but reads <declared provider>/<model-id> answers that provider directly
+scenario: an-undeclared-name-reading-a-declared-endpoint-and-model-resolves-directly
+summary: a name that is no route but reads <declared endpoint>/<model-id> answers that endpoint directly
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.routes.Load
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
                     auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
       routes:

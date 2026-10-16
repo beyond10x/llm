@@ -1,18 +1,16 @@
 type: ess-scenario/1
 domain: llm.routes
-scenario: a-provider-declared-twice-is-refused
-summary: a provider declared twice under the same YAML key is refused as invalid-request instead of the last declaration winning
+scenario: a-subscription-oauth-endpoint-is-refused
+summary: an endpoint declaring auth kind subscription-oauth is refused by name as invalid-request without echoing the value
 timeline:
 - at: '2026-10-16T12:00:00Z'
   command: llm.routes.Load
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
-                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
-        anthropic: {base_url: https://second.example.invalid/v1, protocol: messages,
-                    auth: {kind: anonymous}}
+                    auth: {kind: subscription-oauth, secret: env:ANTHROPIC_API_KEY}}
       routes:
         sonnet: anthropic/claude-sonnet-4-5
     probe_names: [sonnet]
@@ -26,8 +24,8 @@ assert:
   contains:
     loaded: false
     error_code: invalid-request
-    error_message: "invalid llm.routes/1 YAML document: a mapping key is repeated at line 3 column 3"
+    error_message: "endpoint `anthropic`: `auth.kind` names a subscription OAuth login, which a routes document cannot declare"
     routes: []
-    providers: []
+    endpoints: []
     answers: []
     catalog_serving_models: []

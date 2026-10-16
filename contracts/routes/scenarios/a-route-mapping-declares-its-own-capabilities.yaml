@@ -8,7 +8,7 @@ timeline:
   input:
     routes_yaml: |
       format: llm.routes/1
-      providers:
+      endpoints:
         gateway: {base_url: https://gateway.internal/v1, protocol: responses,
                   auth: {kind: bearer, secret: file:~/.config/b10x/gateway-token}}
       routes:
