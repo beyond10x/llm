@@ -851,3 +851,145 @@ fn an_outcome_rewriting_a_shown_message_is_refused() {
     .expect_err("the caller was shown other text");
     assert_eq!(refusal.code, ErrorCode::Protocol);
 }
+
+/// A `response.failed` object's counters read back as final. `fail` relays the error's counters
+/// only when its observation says they are final; a partial snapshot is left out, never promoted.
+/// The upstream model is an observation either way and is relayed in both.
+#[test]
+fn fail_relays_counters_only_when_the_observation_reports_them_as_final() {
+    for final_usage in [true, false] {
+        let mut observed = TurnObservation::new(provenance());
+        observed.upstream_model = Some(id("example/Small-Model"));
+        observed.usage = Some(full_usage());
+        observed.final_usage = final_usage;
+        let error = Error::new(ErrorCode::Unavailable, "overloaded").with_observation(observed);
+        let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
+        let mut payloads = stream.chunk(&StreamEvent::TextDelta {
+            text: "Hel".to_owned(),
+        });
+        payloads.extend(stream.fail(&error));
+        assert_well_formed(&payloads);
+        let failed = &payloads.last().expect("a terminal payload")["response"];
+        assert_eq!(
+            failed.get("usage").is_some(),
+            final_usage,
+            "final_usage {final_usage}: {failed}"
+        );
+        let refusal = decode_stream(&binding(), &payloads)
+            .result
+            .expect_err("a failed response is a refusal");
+        let read_back = refusal.observation.as_deref().expect("evidence");
+        assert_eq!(
+            read_back.upstream_model,
+            Some(id("example/Small-Model")),
+            "final_usage {final_usage}"
+        );
+        let expected = final_usage.then(full_usage);
+        assert_eq!(read_back.usage, expected, "final_usage {final_usage}");
+    }
+}
+
+/// A call announced with argument fragments that are blank reads back as exactly those events:
+/// the close finishes the call with its arguments and relays no fragment of its own, because the
+/// decoder reads a call's arguments from the finished item, not from the fragments.
+#[test]
+fn an_announced_call_with_blank_fragments_reads_back_as_the_events_encoded() {
+    for fragments in [&[][..], &[""][..], &[" ", "\n"][..]] {
+        let mut events = vec![StreamEvent::ToolCallStarted {
+            call_id: call_id("call-1"),
+            name: tool("file_read"),
+        }];
+        events.extend(
+            fragments
+                .iter()
+                .map(|delta| StreamEvent::ToolArgumentsDelta {
+                    call_id: call_id("call-1"),
+                    delta: (*delta).to_owned(),
+                }),
+        );
+        let encoded = outcome(
+            StopReason::ToolCalls,
+            vec![call("call-1", "file_read", json!({"path": "README.md"}))],
+        );
+        let payloads = encode(&events, &encoded).expect("encodes");
+        assert_well_formed(&payloads);
+        let decoded = decode_stream(&binding(), &payloads);
+        assert_eq!(decoded.events, events, "fragments {fragments:?}");
+        assert_eq!(
+            decoded.result.expect("decodes"),
+            encoded,
+            "fragments {fragments:?}"
+        );
+    }
+}
+
+/// An empty assistant message is never shown, so it matches no streamed message: wherever the
+/// outcome carries one, it is emitted whole at close and the shown messages keep their order.
+#[test]
+fn an_empty_message_anywhere_in_the_outcome_reads_back_unchanged() {
+    let shown = |value: &str| StreamEvent::TextDelta {
+        text: value.to_owned(),
+    };
+    let started = StreamEvent::ToolCallStarted {
+        call_id: call_id("call-1"),
+        name: tool("clock"),
+    };
+    let arguments = StreamEvent::ToolArgumentsDelta {
+        call_id: call_id("call-1"),
+        delta: "{}".to_owned(),
+    };
+    let clock = || call("call-1", "clock", json!({}));
+    let cases = [
+        (
+            "empty ahead of a shown message",
+            vec![shown("Done.")],
+            StopReason::EndTurn,
+            vec![Item::assistant(""), Item::assistant("Done.")],
+        ),
+        (
+            "empty after a shown message",
+            vec![shown("Done.")],
+            StopReason::EndTurn,
+            vec![Item::assistant("Done."), Item::assistant("")],
+        ),
+        (
+            "an empty delta, a call, then a shown message",
+            vec![shown(""), started.clone(), arguments.clone(), shown("B.")],
+            StopReason::ToolCalls,
+            vec![Item::assistant(""), clock(), Item::assistant("B.")],
+        ),
+        (
+            "two shown messages around a call, empty between",
+            vec![shown("A."), started, arguments, shown("B.")],
+            StopReason::ToolCalls,
+            vec![
+                Item::assistant("A."),
+                Item::assistant(""),
+                clock(),
+                Item::assistant("B."),
+            ],
+        ),
+    ];
+    for (why, events, stop_reason, items) in cases {
+        let encoded = outcome(stop_reason, items);
+        let payloads = encode(&events, &encoded).unwrap_or_else(|error| panic!("{why}: {error:?}"));
+        assert_well_formed(&payloads);
+        let decoded = decode_stream(&binding(), &payloads);
+        assert_eq!(decoded.events, events, "{why}");
+        assert_eq!(decoded.result.expect("decodes"), encoded, "{why}");
+    }
+}
+
+/// An empty carried message does not stand in for a shown one: the shown text must still be
+/// carried, or the outcome is a different turn from the one the caller watched.
+#[test]
+fn an_empty_message_does_not_carry_shown_text() {
+    let refusal = encode(
+        &[StreamEvent::TextDelta {
+            text: "Hel".to_owned(),
+        }],
+        &outcome(StopReason::EndTurn, vec![Item::assistant("")]),
+    )
+    .expect_err("the shown text is not carried");
+    assert_eq!(refusal.code, ErrorCode::Protocol);
+}

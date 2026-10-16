@@ -45,6 +45,11 @@
 //! # Limits
 //!
 //! - Two consecutive assistant messages streamed with nothing between them are refused at close: [`StreamEvent`] carries no message boundary, so their deltas share one item (story:ingress-block-boundaries).
+//! - One assistant message whose deltas another item interrupts (text, reasoning, text, or text, a
+//!   call, text) is refused at close when the outcome carries it as one message. Text after
+//!   another item opens a new message item, so that a Responses upstream's message, reasoning,
+//!   message reads back as the two messages it was; [`StreamEvent`] carries no item boundary that
+//!   would tell the two shapes apart (story:ingress-block-boundaries).
 
 use llm_core::{
     CallId, Error, ErrorCode, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Protocol, StopReason,
@@ -278,19 +283,25 @@ impl IngressStream {
             next_index += 1;
             (output_index, format!("{kind}_{}_{output_index}", self.id))
         };
-        // `check_streamed` matched these, in order, to the outcome's first assistant messages.
+        // `check_streamed` matched these, in order, to the outcome's first shown assistant
+        // messages. An empty one was never shown and is emitted whole.
         let mut messages = shown_messages(&self.messages);
         let mut reasoning = self.reasoning.as_ref();
         let mut finished_calls = vec![false; self.calls.len()];
         for item in &outcome.items {
             match item {
                 Item::AssistantText { text } => {
-                    let (output_index, item_id) = if let Some(open) = messages.next() {
+                    let shown = if is_shown(text) {
+                        messages.next()
+                    } else {
+                        None
+                    };
+                    let (output_index, item_id) = if let Some(open) = shown {
                         (open.output_index, open.item_id.clone())
                     } else {
                         let (output_index, item_id) = fresh("msg");
                         payloads.extend(open_message(output_index, &item_id));
-                        if !text.is_empty() {
+                        if is_shown(text) {
                             payloads.push(text_delta(output_index, &item_id, text));
                         }
                         (output_index, item_id)
@@ -329,13 +340,17 @@ impl IngressStream {
                             open.arguments.clone(),
                         )
                     } else {
+                        // A call the stream never opened is emitted whole: opened, filled with
+                        // its arguments and finished, as a reader sees any other call.
                         let (output_index, item_id) = fresh("fc");
                         payloads.push(json!({
                             "type": "response.output_item.added",
                             "output_index": output_index,
                             "item": call_item(&item_id, &call.call_id, &call.name, "", "in_progress"),
                         }));
-                        (output_index, item_id, String::new())
+                        let whole = call.arguments.to_string();
+                        payloads.push(arguments_delta(output_index, &item_id, &whole));
+                        (output_index, item_id, whole)
                     };
                     output.push(finish_call(
                         &mut payloads,
@@ -371,9 +386,10 @@ impl IngressStream {
     ///
     /// The failure's wire code follows the table in the module documentation; only `unavailable`,
     /// `rate-limited` and `refused` read back as themselves. The diagnostic is a fixed string: the
-    /// error's message is never relayed. The counters and model the error's observation reports
-    /// are carried, an invalid usage report excepted; the `id` is the stream's, as on every other
-    /// payload.
+    /// error's message is never relayed. The model the error's observation reports is carried.
+    /// Its counters are carried only when the observation says they are final and they are valid:
+    /// this wire reads a failed response's counters back as final, so a partial snapshot is left
+    /// out rather than promoted. The `id` is the stream's, as on every other payload.
     pub fn fail(&mut self, error: &Error) -> Vec<Value> {
         if self.finished {
             return Vec::new();
@@ -395,6 +411,7 @@ impl IngressStream {
             json!({"code": code, "message": message}),
         );
         if let Some(usage) = observation
+            .filter(|observation| observation.final_usage)
             .and_then(|observation| observation.usage.as_ref())
             .filter(|usage| usage.validate().is_ok())
         {
@@ -461,9 +478,10 @@ impl IngressStream {
         // Each message item the caller was shown finishes with exactly the text its deltas
         // showed, as the outcome's assistant message in the same position. The decoder keeps
         // shown text the turn carries no message for, so a missing message is a different turn,
-        // and a different text is a message the caller was not shown.
+        // and a different text is a message the caller was not shown. An empty message can
+        // never have been shown, so it matches no streamed one, by the same rule on both sides.
         let mut carried = outcome.items.iter().filter_map(|item| match item {
-            Item::AssistantText { text } => Some(text),
+            Item::AssistantText { text } if is_shown(text) => Some(text),
             _ => None,
         });
         for open in shown_messages(&self.messages) {
@@ -478,7 +496,13 @@ impl IngressStream {
 /// The message items whose deltas showed any text. One that showed none is left unfinished: the
 /// decoder keeps no empty shown text, so it obliges the outcome to carry nothing.
 fn shown_messages(messages: &[OpenText]) -> Filter<slice::Iter<'_, OpenText>, ShownFilter> {
-    messages.iter().filter(|open| !open.text.is_empty())
+    messages.iter().filter(|open| is_shown(&open.text))
+}
+
+/// Whether message text is something a reader was shown. The one rule for both sides of the match
+/// between streamed and carried messages: the decoder keeps no empty shown text.
+fn is_shown(text: &str) -> bool {
+    !text.is_empty()
 }
 
 /// A concrete filter, so the borrow ends with its last use rather than with the scope.
@@ -817,8 +841,9 @@ fn finish_reasoning_text(open: &OpenText) -> [Value; 2] {
 
 /// The closing payloads of one call, and its finished item.
 ///
-/// When nothing a reader could assemble was relayed, the arguments are sent here, and the text the
-/// reader then holds, which the finished item repeats, is what was relayed followed by them.
+/// No argument fragment is sent here: the decoder reads a call's arguments from its finished item,
+/// and a fragment the stream never carried would read back as an event that was not encoded. When
+/// what was relayed is blank, the finished item carries the call's whole arguments instead.
 fn finish_call(
     payloads: &mut Vec<Value>,
     output_index: u64,
@@ -827,9 +852,7 @@ fn finish_call(
     call: &ToolCall,
 ) -> Value {
     let arguments = if relayed.trim().is_empty() {
-        let whole = call.arguments.to_string();
-        payloads.push(arguments_delta(output_index, item_id, &whole));
-        relayed + &whole
+        call.arguments.to_string()
     } else {
         relayed
     };
