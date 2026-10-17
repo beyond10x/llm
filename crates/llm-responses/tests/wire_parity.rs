@@ -271,17 +271,21 @@ async fn a_client_without_a_conversation_sends_no_identity() {
     );
 }
 
-/// Ingress does not read a conversation key: the neutral turn has nowhere to carry it, so a body
-/// with one is refused rather than read without it. Mutation: add `prompt_cache_key` to
-/// `ACCEPTED_BODY_FIELDS`.
+/// Ingress reads a conversation key into the turn's `prompt_cache_key` hint, and egress writes
+/// it back (wave 2026-10-16-w08; until then it was refused). Mutation: drop the hint on either
+/// side, and the key is lost or the body comes back without it.
 #[test]
-fn ingress_refuses_a_body_carrying_a_conversation_key() {
+fn ingress_reads_a_conversation_key_and_egress_writes_it_back() {
     let binding = projection("http://127.0.0.1:9/v1");
     let mut body = project_request(&binding, &TurnRequest::new("small", vec![Item::user("Hi")]))
         .expect("projects");
     body["prompt_cache_key"] = json!("conv-1");
-    let error = ingest_request(&binding, &body).expect_err("a conversation key is not read");
-    assert_eq!(error.code, ErrorCode::Unsupported, "{error}");
+    let request = ingest_request(&binding, &body).expect("a conversation key is read");
+    assert_eq!(
+        request.controls.hints.prompt_cache_key.as_deref(),
+        Some("conv-1")
+    );
+    assert_eq!(project_request(&binding, &request).expect("projects"), body);
 }
 
 /// R44, default route: the request a client without a conversation sends for the canonical turn,

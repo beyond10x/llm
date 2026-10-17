@@ -459,12 +459,11 @@ fn fail_after_output_keeps_what_was_shown_and_ends_with_one_failure() {
     payloads.extend(stream.fail(&Error::new(ErrorCode::RateLimited, "slow down")));
     assert_well_formed(&payloads);
     // The stream is over: nothing more is emitted, and it cannot be closed a second time.
-    assert!(
-        stream
-            .chunk(&StreamEvent::TextDelta {
-                text: "lo".to_owned()
-            })
-            .is_empty()
+    assert_eq!(
+        stream.chunk(&StreamEvent::TextDelta {
+            text: "lo".to_owned()
+        }),
+        Vec::<Value>::new()
     );
     assert!(
         stream
@@ -679,7 +678,7 @@ fn a_call_never_announced_is_emitted_whole_at_close() {
         vec![call("call-1", "clock", json!({}))],
     );
     let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
-    assert!(stream.chunk(&unannounced).is_empty());
+    assert_eq!(stream.chunk(&unannounced), Vec::<Value>::new());
     let payloads = stream.close(&encoded).expect("encodes");
     assert_well_formed(&payloads);
     let decoded = decode_stream(&binding(), &payloads);

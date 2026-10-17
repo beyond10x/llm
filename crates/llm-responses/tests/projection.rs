@@ -841,11 +841,18 @@ fn every_body_field_the_pin_declares_accepted_survives_ingress() {
         reasoning_effort: Some("medium".to_owned()),
     };
     request.tool_choice = ToolChoice::Named(ToolName::new("file_read").expect("name"));
+    request.controls.parallel_tool_calls = Some(true);
+    request.controls.hints.prompt_cache_key = Some("conv-1".to_owned());
+    request.controls.hints.verbosity = Some(llm_core::Verbosity::Low);
+    request.controls.hints.reasoning_summary = Some(llm_core::ReasoningSummary::Auto);
     let body = project_request(&binding(), &request).expect("projects");
     let object = body.as_object().expect("an object");
+    // Read on ingress and never written: `instructions` goes back out as the developer message
+    // at the head of `input`, and `client_metadata` is an unforwarded hint.
+    let read_only = ["client_metadata", "instructions"];
     for field in llm_responses::ACCEPTED_BODY_FIELDS {
         assert!(
-            object.contains_key(*field),
+            object.contains_key(*field) || read_only.contains(field),
             "`{field}` is declared accepted but this fixture never exercises it"
         );
     }
@@ -853,6 +860,18 @@ fn every_body_field_the_pin_declares_accepted_survives_ingress() {
         ingest_request(&binding(), &body).expect("reads back"),
         request
     );
+    for (field, value) in [
+        ("client_metadata", json!({"turn_id": "t-1"})),
+        ("instructions", json!("Read first")),
+    ] {
+        let mut body = body.clone();
+        body[field] = value;
+        assert_ne!(
+            ingest_request(&binding(), &body).expect("reads back"),
+            request,
+            "`{field}` is accepted and must be read, not dropped"
+        );
+    }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -985,8 +1004,12 @@ fn every_ingress_body_refusal_the_contract_promises_is_reachable() {
             ErrorCode::Unsupported,
         ),
         (
+            // `summary` is inside the subset since wave 2026-10-16-w08; `generate_summary` is not.
             "a reasoning field outside the subset",
-            wire_body(&[("reasoning", json!({"effort": "medium", "summary": "auto"}))]),
+            wire_body(&[(
+                "reasoning",
+                json!({"effort": "medium", "generate_summary": "auto"}),
+            )]),
             ErrorCode::Unsupported,
         ),
         (
@@ -1048,15 +1071,18 @@ fn every_ingress_content_refusal_the_contract_promises_is_reachable() {
             ErrorCode::Unsupported,
         ),
         (
-            "a tool result outside the pinned envelope",
+            // A plain string is a successful result since wave 2026-10-16-w08; an output that is
+            // not a string at all is still refused.
+            "a tool result whose output is not a string",
             wire_body(&[(
                 "input",
                 json!([
             {"type": "function_call", "call_id": "call-1", "name": "file_read",
              "arguments": "{\"path\":\"README.md\"}"},
-            {"type": "function_call_output", "call_id": "call-1", "output": "# Title"}]),
+            {"type": "function_call_output", "call_id": "call-1",
+             "output": [{"type": "input_text", "text": "# Title"}]}]),
             )]),
-            ErrorCode::Unsupported,
+            ErrorCode::InvalidRequest,
         ),
         (
             "function call arguments that are not a JSON object",

@@ -1,0 +1,25 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: ingress-refuses-an-unknown-tool-type-without-naming-it
+summary: a tool of a type outside the fixed list is refused without naming the type
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.Ingest
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Hi"}]}],"tools":[{"type":"made_up_tool"}],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
+  outcome: observed
+assert:
+- view: llm.responses.LastIngestion
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastIngestion
+  contains:
+    accepted: false
+    error_code: unsupported
+    error_message: 'only function tools are inside the pinned subset'
+    turn_json: null
+    reprojected: false
+    body_preserved: false

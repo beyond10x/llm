@@ -1,0 +1,37 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: egress-the-first-codex-turn-with-verbosity-drops-only-its-unforwarded-hints
+summary: the ingested Codex turn projects its verbosity, controls and hints, and only the unforwarded hints do not come back
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: code
+    turn_json: '{"format":"llm.turn/4","request":{"controls":{"hints":{"prompt_cache_key":"00000000-0000-7000-8000-000000000004","reasoning_summary":"auto","unforwarded":["input-item-ids","client-metadata"],"verbosity":"low"},"parallel_tool_calls":true},"instructions":"You are a coding agent running in the Codex CLI, a terminal-based coding assistant. Codex CLI is an open source project  [shortened]\n<skills_instructions>\n[shortened]\n</skills_instructions>\n<permissions instructions>\n[shortened]\n</permissions>","items":[{"kind":"user-text","text":"<environment_context>\n  <cwd>/workspace</cwd>\n  <shell>bash</shell>\n</environment_context>"},{"kind":"user-text","text":"What does a.txt say?"}],"model":"small","sampling":{"reasoning_effort":"high"},"tools":[{"description":"Runs a command in a PTY, returning output or a session ID for ongoing interaction.","input_schema":{"additionalProperties":false,"properties":{"cmd":{"description":"Shell command to execute.","type":"string"},"justification":{"description":"User-facing approval question for `require_escalated`; omit otherwise.","type":"string"},"login":{"description":"True runs the shell with -l/-i semantics; false disables them. Defaults to true.","type":"boolean"},"max_output_tokens":{"description":"Output token budget. Defaults to 10000 tokens; larger requests may be capped by policy.","type":"number"},"prefix_rule":{"description":"Reusable approval prefix for `cmd`, only with `sandbox_permissions: \"require_escalated\"`; for example [\"git\", \"pull\"].","items":{"type":"string"},"type":"array"},"sandbox_permissions":{"description":"Per-command sandbox override. Defaults to `use_default`; use `require_escalated` for unsandboxed execution.","enum":["use_default","require_escalated"],"type":"string"},"shell":{"description":"Shell binary to launch. Defaults to the user''s default shell.","type":"string"},"tty":{"description":"True allocates a PTY for the command; false or omitted uses plain pipes.","type":"boolean"},"workdir":{"description":"Working directory for the command. Defaults to the turn cwd.","type":"string"},"yield_time_ms":{"description":"Wait before yielding output. Defaults to 10000 ms; effective range is 250-30000 ms.","type":"number"}},"required":["cmd"],"type":"object"},"name":"exec_command"},{"description":"Writes characters to an existing unified exec session and returns recent output.","input_schema":{"additionalProperties":false,"properties":{"chars":{"description":"Bytes to write to stdin. Defaults to empty, which polls without writing.","type":"string"},"max_output_tokens":{"description":"Output token budget. Defaults to 10000 tokens; larger requests may be capped by policy.","type":"number"},"session_id":{"description":"Identifier of the running unified exec session.","type":"number"},"yield_time_ms":{"description":"Wait before yielding output. Non-empty writes default to 250 ms and cap at 30000 ms; empty polls wait 5000-300000 ms by default.","type":"number"}},"required":["session_id"],"type":"object"},"name":"write_stdin"},{"description":"Request user input for one to three short questions and wait for the response. This tool is only available in Plan mode.","input_schema":{"additionalProperties":false,"properties":{"questions":{"description":"Questions to show the user. Prefer 1 and do not exceed 3","items":{"additionalProperties":false,"properties":{"header":{"description":"Short header label shown in the UI (12 or fewer chars).","type":"string"},"id":{"description":"Stable identifier for mapping answers (snake_case).","type":"string"},"options":{"description":"Provide 2-3 mutually exclusive choices. Put the recommended option first and suffix its label with \"(Recommended)\". Do not include an \"Other\" option in this list; the client will add a free-form \"Other\" option automatically.","items":{"additionalProperties":false,"properties":{"description":{"description":"One short sentence explaining impact/tradeoff if selected.","type":"string"},"label":{"description":"User-facing label (1-5 words).","type":"string"}},"required":["label","description"],"type":"object"},"type":"array"},"question":{"description":"Single-sentence prompt shown to the user.","type":"string"}},"required":["id","header","question","options"],"type":"object"},"type":"array"}},"required":["questions"],"type":"object"},"name":"request_user_input"},{"description":"View a local image file from the filesystem when visual inspection is needed. Use this for images already available on disk.","input_schema":{"additionalProperties":false,"properties":{"path":{"description":"Local filesystem path to an image file.","type":"string"}},"required":["path"],"type":"object"},"name":"view_image"}]}}'
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: true
+    error_code: null
+    body_fields:
+    - include
+    - input
+    - model
+    - parallel_tool_calls
+    - prompt_cache_key
+    - reasoning
+    - store
+    - stream
+    - text
+    - tools
+    prompt_cache_key: 00000000-0000-7000-8000-000000000004
+    omitted_advisories:
+    - input-item-ids
+    - client-metadata
+    request_preserved: false

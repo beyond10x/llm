@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: egress-refuses-a-cache-key-other-than-the-conversation
+summary: a turn whose prompt_cache_key differs from the conversation of the client is refused
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/4","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"}],"tools":[],"controls":{"hints":{"prompt_cache_key":"conv-2"}}}}'
+    conversation_id: conv-1
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: false
+    error_code: unsupported
+    error_message: 'the turn''s prompt_cache_key differs from the client''s conversation'
+    encoded_body: null
