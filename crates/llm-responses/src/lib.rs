@@ -41,7 +41,7 @@ pub use client::ResponsesClient;
 pub use conversation::{Conversation, request_headers};
 pub use ingress::{IngressStream, encode_ingress_response};
 pub use request::{
-    ACCEPTED_BODY_FIELDS, CARRIED_ENTRY_TYPES, INCLUDE, TOOL_NAME_PATTERN, encode_request,
-    ingest_request, project_request,
+    ACCEPTED_BODY_FIELDS, CARRIED_ENTRY_TYPES, INCLUDE, REFUSED_TOOL_TYPES, TOOL_NAME_PATTERN,
+    encode_request, ingest_request, omitted_advisories, project_request,
 };
 pub use stream::{ACCEPTED_STREAM_EVENTS, REASONING_DELTA_EVENTS, StreamDecoding, decode_stream};

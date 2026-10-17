@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: ingress-reads-a-plain-string-tool-result
+summary: a function_call_output string outside the envelope is a successful result carrying that string
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.Ingest
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    body_json: '{"include":["reasoning.encrypted_content"],"input":[{"content":[{"text":"Read it","type":"input_text"}],"role":"user","type":"message"},{"arguments":"{\"path\":\"README.md\"}","call_id":"call-1","name":"file_read","type":"function_call"},{"call_id":"call-1","output":"# Title","type":"function_call_output"}],"model":"example/Small-Model","store":false,"stream":true,"tools":[{"description":"d","name":"file_read","parameters":{"type":"object"},"strict":false,"type":"function"}]}'
+  outcome: observed
+assert:
+- view: llm.responses.LastIngestion
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastIngestion
+  contains:
+    accepted: true
+    error_code: null
+    item_kinds:
+    - user-text
+    - tool-call
+    - tool-result
+    reprojected: true
+    body_preserved: false
+    turn_json: '{"format":"llm.turn/3","request":{"instructions":"","items":[{"kind":"user-text","text":"Read it"},{"arguments":{"path":"README.md"},"call_id":"call-1","kind":"tool-call","name":"file_read"},{"call_id":"call-1","failed":false,"kind":"tool-result","output":"# Title"}],"model":"small","tools":[{"description":"d","input_schema":{"type":"object"},"name":"file_read"}]}}'

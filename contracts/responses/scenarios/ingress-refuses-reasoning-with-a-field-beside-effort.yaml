@@ -1,14 +1,14 @@
 type: ess-scenario/1
 domain: llm.responses
 scenario: ingress-refuses-reasoning-with-a-field-beside-effort
-summary: ingress refuses reasoning carrying a field outside the pinned subset (request.rs sampling)
+summary: ingress refuses reasoning carrying a field outside the pinned subset, named by its path (request.rs reasoning)
 timeline:
 - at: '2026-09-27T12:00:00Z'
   command: llm.responses.Ingest
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Hello"}]}],"reasoning":{"effort":"low","summary":"auto"},"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
+    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Hello"}]}],"reasoning":{"effort":"low","generate_summary":"auto"},"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
   outcome: observed
 assert:
 - view: llm.responses.LastIngestion
@@ -19,6 +19,7 @@ assert:
   contains:
     accepted: false
     error_code: unsupported
+    error_message: 'request body carries a field outside the pinned subset: reasoning.generate_summary'
     turn_json: null
     reprojected: false
     body_preserved: false
