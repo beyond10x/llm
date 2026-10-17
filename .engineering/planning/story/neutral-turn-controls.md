@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:neutral-turn-controls
 kind: story
-status: active
+status: implemented
 title: The neutral turn carries thinking, parallel tool calls and advisory hints
 summary: llm-core Controls, the one effort table, llm.turn/4
 relations:
@@ -31,10 +31,11 @@ scope:
   path: docs/contract-v1.md
 - confidence: cited
   path: spec/domains/inference.yaml
-revision: 16
+revision: 17
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-17T04:25:32Z", actor: "human:timo", revision: 15, decided_on: {"recorded":{"review_outcome":3}}}
 - {from: "proposed", to: "active", at: "2026-10-17T04:25:33Z", actor: "human:timo", revision: 16, decided_on: {"recorded":{"review_outcome":3}}}
+- {from: "active", to: "implemented", at: "2026-10-17T07:23:40Z", actor: "human:timo", revision: 17, decided_on: {"recorded":{"test_result":1,"review_outcome":5,"verification":1}}}
 ---
 ## Context
 

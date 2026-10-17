@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:client-turns-cross-wire
 kind: story
-status: active
+status: implemented
 title: A Claude Code and a Codex first turn cross to the other two wires
 summary: Cross-wire acceptance over the three protocol crates
 relations:
@@ -16,10 +16,11 @@ scope:
   path: checks/conformance/Cargo.toml
 - confidence: cited
   path: checks/conformance/tests/client_turns.rs
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-17T04:25:36Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-10-17T04:25:37Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-10-17T07:23:41Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 ## Context
 

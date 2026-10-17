@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-17T07:23:50Z",
+  "actor": "human:timo",
+  "artifact": "story:client-turns-cross-wire",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo test -p b10x-llm-conformance --test client_turns",
+    "reference": "base: no cross-wire path decodes either client's turn; treatment 298d9262: four cases pass"
+  }
+}

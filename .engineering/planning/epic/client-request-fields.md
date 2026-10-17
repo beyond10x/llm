@@ -2,15 +2,16 @@
 format: aep.planning-md/3
 id: epic:client-request-fields
 kind: epic
-status: active
+status: implemented
 title: Every field a coding-agent client sends has one written rule
 summary: Ingress carries, translates, reports or refuses each client field by name; nothing is dropped
 relations:
 - serves: vision:portable-model-inference
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-17T04:25:38Z", actor: "human:timo", revision: 3, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-10-17T04:25:38Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"review_outcome":1}}}
+- {from: "active", to: "implemented", at: "2026-10-17T07:23:42Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":1}}}
 ---
 ## Outcome
 

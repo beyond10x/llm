@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:messages-ingress-client-fields
 kind: story
-status: active
+status: implemented
 title: Messages ingress and egress hold Claude Code's first turn under written rules
 summary: thinking, system blocks, cache_control, effort max, disable_parallel_tool_use, metadata
 relations:
@@ -22,10 +22,11 @@ scope:
   path: docs/messages.md
 - confidence: cited
   path: spec/domains/messages.yaml
-revision: 12
+revision: 13
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-17T04:25:33Z", actor: "human:timo", revision: 11, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-10-17T04:25:34Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-10-17T07:23:40Z", actor: "human:timo", revision: 13, decided_on: {"recorded":{"test_result":1,"review_outcome":4}}}
 ---
 ## Context
 

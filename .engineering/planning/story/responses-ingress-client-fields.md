@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:responses-ingress-client-fields
 kind: story
-status: active
+status: implemented
 title: Responses ingress and egress hold Codex's requests under written rules, closed at every level
 summary: instructions, parallel_tool_calls, prompt_cache_key, text.verbosity, reasoning.summary, item ids, client_metadata, plain-string results
 relations:
@@ -22,10 +22,11 @@ scope:
   path: docs/responses.md
 - confidence: cited
   path: spec/domains/responses.yaml
-revision: 13
+revision: 14
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-17T04:25:34Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"review_outcome":4}}}
 - {from: "proposed", to: "active", at: "2026-10-17T04:25:35Z", actor: "human:timo", revision: 13, decided_on: {"recorded":{"review_outcome":4}}}
+- {from: "active", to: "implemented", at: "2026-10-17T07:23:40Z", actor: "human:timo", revision: 14, decided_on: {"recorded":{"test_result":1,"review_outcome":7}}}
 ---
 ## Context
 

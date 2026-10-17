@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-17T05:18:07Z",
+  "actor": "human:timo",
+  "artifact": "story:neutral-turn-controls",
+  "kind": "story",
+  "revision": 16,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo test -p b10x-llm-core --test controls --test adversary_w08_controls",
+    "reference": "base 8c0aab4e: the tests do not compile (no Controls, wire_effort, llm.turn/4); treatment 13127751: 17 passed"
+  }
+}

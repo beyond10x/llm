@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-17T07:22:00Z",
+  "actor": "human:timo",
+  "artifact": "story:messages-ingress-client-fields",
+  "kind": "story",
+  "revision": 12,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 task check steps on wave/2026-10-16-w08 at 298d9262 (workspace tests, clippy, fmt, docs, ess, conformance 868/868 none skipped, aep validate): every step exit 0",
+    "reference": "wave/2026-10-16-w08@298d9262"
+  }
+}
