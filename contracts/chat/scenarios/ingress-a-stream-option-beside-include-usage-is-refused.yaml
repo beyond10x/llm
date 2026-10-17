@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.chat
 scenario: ingress-a-stream-option-beside-include-usage-is-refused
-summary: ingress refuses stream_options carrying an option outside the published subset (ingress.rs)
+summary: ingress refuses stream_options carrying an option outside the published subset, naming its path (ingress.rs)
 timeline:
 - at: '2026-09-27T12:00:00Z'
   command: llm.chat.DecodeIngress
@@ -16,5 +16,5 @@ assert:
     accepted: false
     dispatch: not-sent
     error_code: unsupported
-    error_message: chat request stream_options carries an option outside the published subset
+    error_message: 'chat request field is outside the published subset: stream_options.include_obfuscation'
     turn_valid: null

@@ -7,8 +7,8 @@ mod common;
 use common::binding_at;
 use llm_chat::ChatClient;
 use llm_core::{
-    Cancel, Capabilities, Dispatch, Item, Model, Protocol, StopReason, StreamEvent, TurnRequest,
-    VecSink,
+    ADVISORY_OMITTED, Cancel, Capabilities, Dispatch, ErrorCode, Item, Model, PromptCache,
+    Protocol, ReasoningSummary, StopReason, StreamEvent, TurnRequest, VecSink, Verbosity,
 };
 use llm_credentials::{ResolvedSecret, SecretError, SecretRef, SecretResolver};
 use llm_http::{HttpClient, Limits};
@@ -168,4 +168,138 @@ async fn a_snapshot_that_cannot_validate_does_not_travel_with_its_failure() {
     error
         .validate_for(&target)
         .expect("the failure is itself reportable");
+}
+
+// ---------------------------------------------------------------- advisory warnings
+
+fn client_at(base_url: &str) -> ChatClient {
+    ChatClient::new(
+        binding_at(
+            Protocol::ChatCompletions,
+            Capabilities::text(32_768, 4_096),
+            base_url,
+        ),
+        HttpClient::new(Limits::default()).expect("client"),
+        Arc::new(NoResolver),
+    )
+}
+
+fn advisory_warnings(events: &[StreamEvent]) -> Vec<&StreamEvent> {
+    events
+        .iter()
+        .filter(
+            |event| matches!(event, StreamEvent::Warning { code, .. } if code == ADVISORY_OMITTED),
+        )
+        .collect()
+}
+
+/// A request carrying a hint this wire has no field for, and one it sends.
+fn hinted_request() -> TurnRequest {
+    let mut request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+    request.controls.hints.prompt_cache = Some(PromptCache { ttl: None });
+    request.controls.hints.reasoning_summary = Some(ReasoningSummary::Auto);
+    request.controls.hints.prompt_cache_key = Some("session-7".to_owned());
+    request
+}
+
+#[tokio::test]
+async fn a_successful_turn_ends_with_one_warning_naming_the_omitted_hints() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let client = client_at(&base_url);
+    let request = hinted_request();
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect("the local endpoint answered");
+
+    let events = sink.events();
+    assert_eq!(advisory_warnings(events).len(), 1, "{events:?}");
+    // After the turn's own output, never before it.
+    let Some(StreamEvent::Warning { code, message }) = events.last() else {
+        panic!("the warning is not the last event: {events:?}");
+    };
+    assert_eq!(code, ADVISORY_OMITTED);
+    assert_eq!(
+        message,
+        "Chat Completions carries no prompt-cache, reasoning-summary; the advisory hint was not sent"
+    );
+
+    let sent = server.await.expect("server finished");
+    let (_, body) = sent.split_once("\r\n\r\n").expect("a complete request");
+    let body: serde_json::Value = serde_json::from_str(body).expect("a JSON body");
+    assert_eq!(body["prompt_cache_key"], serde_json::json!("session-7"));
+}
+
+#[tokio::test]
+async fn a_turn_that_omits_nothing_emits_no_warning() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let client = client_at(&base_url);
+    let mut request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+    request.controls.hints.prompt_cache_key = Some("session-7".to_owned());
+    request.controls.hints.verbosity = Some(Verbosity::Low);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect("the local endpoint answered");
+    let _ = server.await;
+    assert!(
+        advisory_warnings(sink.events()).is_empty(),
+        "{:?}",
+        sink.events()
+    );
+}
+
+#[tokio::test]
+async fn a_failed_turn_emits_no_advisory_warning() {
+    let (base_url, server) = serve_once(CONTRADICTORY_COUNTERS).await;
+    let client = client_at(&base_url);
+    let request = hinted_request();
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect_err("the endpoint reported counters that contradict each other");
+    let _ = server.await;
+    assert!(
+        advisory_warnings(sink.events()).is_empty(),
+        "{:?}",
+        sink.events()
+    );
+}
+
+/// A sink with room for the turn's own output and nothing more refuses the warning, and the
+/// caller receives that refusal. The turn was served, so it carries dispatch evidence.
+#[tokio::test]
+async fn a_sink_refusing_the_warning_fails_the_turn_with_its_own_error() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client_at(&base_url);
+    model
+        .turn(
+            &TurnRequest::new("small", vec![Item::user("Hallo")]),
+            &mut sink,
+            &Cancel::new(),
+        )
+        .await
+        .expect("the local endpoint answered");
+    let _ = server.await;
+    let output_events = sink.events().len();
+
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let mut sink = VecSink::new(output_events, 64 * 1024);
+    let model: &dyn Model = &client_at(&base_url);
+    let error = model
+        .turn(&hinted_request(), &mut sink, &Cancel::new())
+        .await
+        .expect_err("the sink refused the warning");
+    let _ = server.await;
+    assert_eq!(error.code, ErrorCode::TooLarge);
+    assert_eq!(error.message, "stream sink event bound reached");
+    assert_eq!(error.dispatch, Dispatch::Accepted);
+    assert_eq!(sink.events().len(), output_events);
 }

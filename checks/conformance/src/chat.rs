@@ -7,11 +7,11 @@ use ess_conformance::target::TargetError;
 use llm_chat::{
     Account, BaseUrl, Binding, BindingDocument, Endpoint, IngressStream, Provider, ServedModel,
     ServingModel, SseEvent, StreamProjection, decode_completion, decode_ingress_request,
-    encode_ingress_completion, project_request, project_response_bytes,
+    encode_ingress_completion, omitted_advisories, project_request, project_response_bytes,
 };
 use llm_core::{
-    AuthKind, BillingKind, Capabilities, Error, Id, Item, OutcomeDocument, Protocol, Provenance,
-    StreamEvent, TurnDocument, TurnOutcome,
+    Advisory, AuthKind, BillingKind, Capabilities, Error, Id, Item, OutcomeDocument, Protocol,
+    Provenance, StreamEvent, TurnDocument, TurnOutcome, TurnRequest,
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -129,7 +129,7 @@ fn request_projection(input: &Value) -> Result<Observed, TargetError> {
         "wire_model": null,
         "body_fields": [], "message_roles": [], "message_contents": [], "tool_arguments": [],
         "tool_choice": null, "output_limit_field": null, "output_limit": null,
-        "stream": null, "include_usage": null
+        "stream": null, "include_usage": null, "wire_request": null, "omitted_advisories": []
     });
     if let Err(error) = project(&input, &mut facts) {
         fault(&mut facts, &error);
@@ -149,6 +149,8 @@ fn project(input: &RequestInput, facts: &mut Value) -> Result<(), Error> {
     let body = project_request(&document.request, &binding, input.streaming)?;
 
     facts["accepted"] = json!(true);
+    facts["wire_request"] = json!(body.to_string());
+    facts["omitted_advisories"] = advisory_names(&document.request);
     facts["wire_model"] = text_of(body.get("model"));
     facts["tool_choice"] = compact(body.get("tool_choice"));
     facts["stream"] = json!(body.get("stream").and_then(Value::as_bool));
@@ -369,7 +371,8 @@ fn ingress_decoding(input: &Value) -> Result<Observed, TargetError> {
         "accepted": false, "error_code": null, "error_message": null, "dispatch": null,
         "model": null,
         "instructions": null, "items": [], "tools": [], "tool_choice": null,
-        "output_limit": null, "stream": null, "include_usage": null, "turn_valid": null
+        "output_limit": null, "stream": null, "include_usage": null, "turn_valid": null,
+        "turn_json": null, "omitted_advisories": []
     });
     if let Err(error) = decode_ingress(&input, &mut facts) {
         fault(&mut facts, &error);
@@ -420,7 +423,22 @@ fn decode_ingress(input: &IngressInput, facts: &mut Value) -> Result<(), Error> 
             .collect::<Vec<_>>()
     );
     facts["turn_valid"] = json!(request.validate().is_ok());
+    facts["omitted_advisories"] = advisory_names(&request);
+    facts["turn_json"] = json!(
+        serde_json::to_string(&TurnDocument::new(request))
+            .map_err(|_| Error::invalid("the decoded turn could not be encoded"))?
+    );
     Ok(())
+}
+
+/// What `omitted_advisories` returned, by the names a warning reports them under.
+fn advisory_names(request: &TurnRequest) -> Value {
+    json!(
+        omitted_advisories(request)
+            .into_iter()
+            .map(Advisory::name)
+            .collect::<Vec<_>>()
+    )
 }
 
 #[derive(Deserialize)]

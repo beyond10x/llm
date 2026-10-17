@@ -16,6 +16,7 @@ assert:
     accepted: false
     dispatch: not-sent
     error_code: unsupported
-    # A field this subset has never heard of is refused too, and the diagnostic quotes
-    # nothing the client sent.
-    error_message: chat request carries a field outside the published subset
+    # A field this subset has never heard of is refused too. The diagnostic names the field
+    # through `llm_core::field_path`, which copies only a bounded name of the wire's own
+    # shape, and quotes no value the client sent.
+    error_message: 'chat request field is outside the published subset: surprise_setting'

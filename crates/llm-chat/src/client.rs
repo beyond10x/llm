@@ -1,17 +1,23 @@
 //! A single-attempt Chat Completions client over the shared bounded HTTP/SSE transport.
-use crate::{incoming::StreamProjection, outgoing::project_request};
+use crate::{
+    incoming::StreamProjection,
+    outgoing::{omitted_advisories, project_request},
+};
 use http::{
     HeaderValue,
     header::{ACCEPT, CONTENT_TYPE},
 };
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, Model, Provenance, StreamSink, TurnOutcome,
-    TurnRequest,
+    TurnRequest, advisory_warning,
 };
 use llm_credentials::SecretResolver;
 use llm_http::{Framing, HttpClient};
 use llm_providers::Binding;
 use std::sync::Arc;
+
+/// The name the advisory warning gives this wire.
+const WIRE: &str = "Chat Completions";
 
 /// One immutable binding served over Chat Completions. Retries, alternates and fallback
 /// belong to routing; this client sends exactly once.
@@ -98,6 +104,13 @@ impl Model for ChatClient {
             outcome
                 .validate_for(request, target)
                 .map_err(|error| retain(error, &projection, target))?;
+            // Only now: a warning on the sink is visible output, and an attempt that showed
+            // output before it failed would no longer be eligible for fallback.
+            if let Some(warning) = advisory_warning(WIRE, &omitted_advisories(request)) {
+                sink.emit(warning)
+                    .await
+                    .map_err(|error| retain(error, &projection, target))?;
+            }
             Ok(outcome)
         })
     }

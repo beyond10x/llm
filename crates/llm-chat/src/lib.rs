@@ -5,7 +5,8 @@
 //! Three surfaces over one documented subset of the `OpenAI` Chat Completions wire, which
 //! `vLLM`'s server and other compatible endpoints also serve:
 //!
-//! - [`project_request`] builds an outgoing request from a validated neutral turn;
+//! - [`project_request`] builds an outgoing request from a validated neutral turn, and
+//!   [`omitted_advisories`] names the advisory hints it does not send;
 //! - [`project_response_bytes`], [`StreamProjection`] and [`decode_completion`] read a
 //!   response back onto the neutral outcome and stream vocabulary;
 //! - [`decode_ingress_request`], [`encode_ingress_completion`] and [`IngressStream`] serve
@@ -37,4 +38,4 @@ pub use llm_http::SseEvent;
 pub use llm_providers::{
     Account, BaseUrl, Binding, BindingDocument, Endpoint, Provider, ServedModel, ServingModel,
 };
-pub use outgoing::project_request;
+pub use outgoing::{omitted_advisories, project_request};

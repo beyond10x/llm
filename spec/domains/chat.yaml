@@ -28,6 +28,16 @@ entities:
       - {name: output_limit, type: Optional<String>}
       - {name: stream, type: Optional<Boolean>}
       - {name: include_usage, type: Optional<Boolean>}
+      # The projected body as compact JSON. `reasoning_effort` is what `llm_core::wire_effort`
+      # gives for Chat Completions: effort `max` is sent as `xhigh`, disabled thinking as
+      # `none`, adaptive thinking sends nothing more, and a thinking budget or disabled
+      # thinking beside an effort is refused. `parallel_tool_calls`, `prompt_cache_key` and
+      # `verbosity` are sent under those names when the turn sets them, and only then.
+      - {name: wire_request, type: Optional<String>}
+      # The advisory hints the turn carries that this wire does not send (`prompt-cache`,
+      # `reasoning-summary` and the unforwarded names), in the order of the design's advisory
+      # table: what `omitted_advisories` returns for the turn.
+      - {name: omitted_advisories, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 
   - name: llm.chat.ResponseProjection
@@ -82,6 +92,15 @@ entities:
       - {name: stream, type: Optional<Boolean>}
       - {name: include_usage, type: Optional<Boolean>}
       - {name: turn_valid, type: Optional<Boolean>}
+      # The whole neutral `llm.turn/3` or `llm.turn/4` document the request decoded to.
+      # `parallel_tool_calls` is carried in its controls, `prompt_cache_key` and `verbosity` in
+      # its hints. Every object of the request is closed: a key outside a level's published
+      # keys is refused naming its path (`messages[].name`, `tools[].function.foo`), a tool
+      # call or object tool choice whose `type` is not `function` is refused, and so is a
+      # `strict` function schema.
+      - {name: turn_json, type: Optional<String>}
+      # What `omitted_advisories` returns for the decoded turn.
+      - {name: omitted_advisories, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 
   - name: llm.chat.IngressEncoding
@@ -109,8 +128,8 @@ commands:
     # Build one outgoing Chat Completions body from a serialized neutral turn and a binding
     # declared by these inputs. No I/O, no credential resolution and no endpoint contact.
     input:
-      # Serialized llm.turn/3 is intentionally raw: a malformed envelope must reach the
-      # production decoder rather than being filtered out by the test target.
+      # Serialized llm.turn/3 or llm.turn/4 is intentionally raw: a malformed envelope must
+      # reach the production decoder rather than being filtered out by the test target.
       - {name: turn_json, type: String}
       - {name: protocol, type: String}
       - {name: upstream_model, type: String}

@@ -1,0 +1,21 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: round-trip-verbosity-decodes-back-to-the-same-turn
+summary: the body round-trip-verbosity-is-projected-under-its-own-name pins decodes back to the turn it was projected from (ingress.rs)
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.chat.DecodeIngress
+  input:
+    request_json: '{"messages":[{"content":"hi","role":"user"}],"model":"small","stream":false,"verbosity":"low"}'
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressRequest
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressRequest
+  contains:
+    accepted: true
+    error_code: null
+    # Byte for byte the turn_json the projection half was given.
+    turn_json: '{"format":"llm.turn/4","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"hi"}],"tools":[],"controls":{"hints":{"verbosity":"low"}}}}'
+    omitted_advisories: []
+    turn_valid: true
