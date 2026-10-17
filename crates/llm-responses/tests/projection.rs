@@ -82,6 +82,7 @@ fn text_request() -> TurnRequest {
         max_output_tokens: Some(128),
         sampling: Sampling::default(),
         tool_choice: ToolChoice::Auto,
+        controls: llm_core::Controls::default(),
     }
 }
 
@@ -195,6 +196,7 @@ fn tool_round_trip_request() -> TurnRequest {
         max_output_tokens: None,
         sampling: Sampling::default(),
         tool_choice: ToolChoice::Auto,
+        controls: llm_core::Controls::default(),
     }
 }
 

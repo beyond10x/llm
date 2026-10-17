@@ -5,6 +5,7 @@
 //! The contract and extraction provenance are documented in `docs/contract-v1.md`.
 
 mod bound;
+mod controls;
 mod error;
 mod id;
 mod item;
@@ -13,6 +14,10 @@ mod turn;
 mod vocabulary;
 
 pub use bound::*;
+pub use controls::{
+    ADVISORY_OMITTED, Advisory, CacheTtl, Controls, Hints, MAX_PROMPT_CACHE_KEY_BYTES, PromptCache,
+    ReasoningSummary, Thinking, Unforwarded, Verbosity, advisory_warning, field_path, wire_effort,
+};
 pub use error::{Dispatch, Error, ErrorCode};
 pub use id::{CallId, Id, InvalidId, ToolName};
 pub use item::{Item, ToolCall};
