@@ -753,7 +753,7 @@ fn stream_error(error: Option<&Value>) -> Error {
 /// Awaits the caller, bounded by both of the things that end a turn from outside it.
 ///
 /// Backpressure is still awaited: this is a bound on the wait, not a reason to drop an event.
-async fn emit(
+pub(crate) async fn emit(
     sink: &mut dyn StreamSink,
     event: StreamEvent,
     cancel: &Cancel,

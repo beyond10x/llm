@@ -103,6 +103,20 @@ const CONFIRMED: &[&str] = &[
 /// network access this gate does not have. The behaviour around each is tested; the spelling is
 /// an open question for `story:anthropic-access`, which reads the producer for its own reasons.
 const CARRIED: &[&str] = &[
+    // Named by the section Client request fields of `docs/design.md` (wave 2026-10-16-w08) and, for
+    // `adaptive`, by the authored fixture `tests/fixtures/claude-code-first-turn.json`, whose
+    // provenance is published client documentation, not the producer's types. Unread against the
+    // producer like the rest of this list.
+    "1h",
+    "5m",
+    "adaptive",
+    "budget_tokens",
+    "disable_parallel_tool_use",
+    "disabled",
+    "enabled",
+    "metadata",
+    "ttl",
+    "user_id",
     "auto",
     "cache_creation",
     "caller",

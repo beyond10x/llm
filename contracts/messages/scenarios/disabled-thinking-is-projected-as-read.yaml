@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: disabled-thinking-is-projected-as-read
+summary: a turn asking for no thinking projects to the body ingress read it from
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"format":"llm.turn/4","request":{"model":"internal-model","instructions":"Stay terse","items":[{"kind":"user-text","text":"Summarise the log"}],"tools":[],"max_output_tokens":512,"controls":{"thinking":{"mode":"disabled"},"hints":{"prompt_cache":{}}}}}'
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: '{"max_tokens":512,"messages":[{"content":[{"cache_control":{"type":"ephemeral"},"text":"Summarise the log","type":"text"}],"role":"user"}],"model":"example/Model-Revision","stream":true,"system":[{"cache_control":{"type":"ephemeral"},"text":"Stay terse","type":"text"}],"thinking":{"type":"disabled"}}'
+    neutral_request: null
+    items:
+      - "user-text:Summarise the log"
+    omitted_advisories: []

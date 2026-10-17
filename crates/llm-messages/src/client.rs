@@ -1,11 +1,11 @@
-use crate::{StreamDecoder, encode_request};
+use crate::{StreamDecoder, decode::emit, encode_request, omitted_advisories};
 use http::{
     HeaderMap, HeaderName, HeaderValue,
     header::{ACCEPT, CONTENT_TYPE},
 };
 use llm_core::{
     AuthKind, BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Model, Protocol,
-    Provenance, StreamSink, TurnOutcome, TurnRequest,
+    Provenance, StreamSink, TurnOutcome, TurnRequest, advisory_warning,
 };
 use llm_credentials::SecretResolver;
 use llm_http::{Framing, HttpClient};
@@ -15,6 +15,9 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
+
+/// The wire name an `advisory-omitted` warning carries.
+const WIRE: &str = "Messages";
 
 /// The API version this projection is pinned to. Sent on every request.
 ///
@@ -158,7 +161,13 @@ impl MessagesClient {
                 break;
             }
         }
-        decoder.finish(request)
+        let outcome = decoder.finish(request)?;
+        // Only now: a warning on the sink is visible output, and an attempt that showed output
+        // before it failed would no longer be eligible for fallback.
+        if let Some(warning) = advisory_warning(WIRE, &omitted_advisories(request)) {
+            emit(sink, warning, cancel, deadline).await?;
+        }
+        Ok(outcome)
     }
 }
 
