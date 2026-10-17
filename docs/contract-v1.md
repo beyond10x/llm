@@ -51,6 +51,17 @@ structure and declared capabilities, not a tokenizer or the truth of an operator
 declaration. Context-window admission needs the routing/token-accounting implementation and is
 not proved by request byte limits.
 
+A turn's `controls` hold what is not sampling: a thinking mode (`adaptive`, `enabled` with a
+positive budget, `disabled`), whether parallel tool calls are allowed (only beside published
+tools), and advisory hints (a prompt-cache request, a cache key of at most 512 bytes, verbosity, a
+reasoning-summary request, and the names of fields ingress read and no wire sends). The reasoning
+effort a wire receives is `llm_core::wire_effort`'s, and capabilities are checked against it:
+`max` reaches Chat Completions and Responses as `xhigh`, disabled thinking as `none`, and a
+thinking budget is refused there. A hint a wire cannot carry is omitted and reported: by the
+wire crate's `omitted_advisories` before sending, and by one `advisory-omitted` warning after a
+successful turn. Empty controls are written as `llm.turn/3`, unchanged; others as `llm.turn/4`.
+The tables are in [design.md](design.md#client-request-fields).
+
 All usage fields are optional independently. Input tokens include the disjoint cache-read and
 cache-write subsets, and output tokens include the reasoning subset. Unknown is not zero.
 Contradictory known totals refuse rather than saturating a negative remainder. Adapters normalize

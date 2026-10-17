@@ -1,6 +1,6 @@
 //! Turn and tool projection values adapted from Harness, without execution authority.
 use crate::{
-    Capabilities, Error, Id, Item, MAX_INSTRUCTION_BYTES, MAX_ITEMS, MAX_REQUEST_BYTES,
+    Capabilities, Controls, Error, Id, Item, MAX_INSTRUCTION_BYTES, MAX_ITEMS, MAX_REQUEST_BYTES,
     MAX_TOOL_ARGUMENT_BYTES, MAX_TOOL_DESCRIPTION_BYTES, MAX_TOOL_RESULT_BYTES, MAX_TOOLS,
     Provenance, ToolCall, ToolName, exceeds,
 };
@@ -85,6 +85,9 @@ pub struct TurnRequest {
     pub sampling: Sampling,
     #[serde(default, skip_serializing_if = "ToolChoice::is_auto")]
     pub tool_choice: ToolChoice,
+    /// Thinking, parallel tool calls and advisory hints; empty is the 0.6.0 turn exactly.
+    #[serde(default, skip_serializing_if = "Controls::is_empty")]
+    pub controls: Controls,
 }
 
 impl TurnRequest {
@@ -97,6 +100,7 @@ impl TurnRequest {
             max_output_tokens: None,
             sampling: Sampling::default(),
             tool_choice: ToolChoice::Auto,
+            controls: Controls::default(),
         }
     }
 
@@ -117,6 +121,7 @@ impl TurnRequest {
             ));
         }
         self.validate_tools()?;
+        self.controls.validate(&self.tools)?;
         let mut calls = BTreeSet::new();
         let mut results = BTreeSet::new();
         for item in &self.items {
@@ -234,11 +239,8 @@ impl TurnRequest {
             || (!self.tool_choice.is_auto() && !capabilities.tool_choice)
             || (self.sampling.temperature.is_some() && !capabilities.temperature)
             || (self.sampling.top_p.is_some() && !capabilities.top_p)
-            || self
-                .sampling
-                .reasoning_effort
-                .as_ref()
-                .is_some_and(|v| !capabilities.reasoning_efforts.contains(v))
+            || crate::wire_effort(target.protocol, self)?
+                .is_some_and(|v| !capabilities.reasoning_efforts.contains(&v))
         {
             return Err(Error::unsupported(
                 "binding does not support a requested tool or sampling setting",
@@ -419,25 +421,77 @@ impl TurnOutcome {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 enum TurnFormat {
+    /// A turn without controls, byte for byte as llm 0.6.0 wrote it.
     #[serde(rename = "llm.turn/3")]
     V3,
+    /// A turn carrying [`Controls`].
+    #[serde(rename = "llm.turn/4")]
+    V4,
+}
+
+impl TurnFormat {
+    fn of(request: &TurnRequest) -> Self {
+        if request.controls.is_empty() {
+            Self::V3
+        } else {
+            Self::V4
+        }
+    }
 }
 
 /// A versioned persisted request. Unknown envelope versions and fields refuse deserialization.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+///
+/// The version follows the request: `llm.turn/3` when its controls are empty, `llm.turn/4`
+/// otherwise. Both are read, and a document whose version disagrees with its request is refused,
+/// so a reader of `/3` never meets a field it does not know.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(try_from = "RawTurnDocument")]
 pub struct TurnDocument {
-    format: TurnFormat,
     pub request: TurnRequest,
 }
 impl TurnDocument {
     pub const fn new(request: TurnRequest) -> Self {
-        Self {
-            format: TurnFormat::V3,
-            request,
+        Self { request }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(deny_unknown_fields)]
+struct TurnDocumentRef<'a> {
+    format: TurnFormat,
+    request: &'a TurnRequest,
+}
+
+impl Serialize for TurnDocument {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        TurnDocumentRef {
+            format: TurnFormat::of(&self.request),
+            request: &self.request,
         }
+        .serialize(serializer)
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawTurnDocument {
+    format: TurnFormat,
+    request: TurnRequest,
+}
+
+impl TryFrom<RawTurnDocument> for TurnDocument {
+    type Error = &'static str;
+    fn try_from(raw: RawTurnDocument) -> Result<Self, Self::Error> {
+        if raw.format != TurnFormat::of(&raw.request) {
+            return Err(
+                "llm.turn/3 carries no controls and llm.turn/4 carries controls; this document's version disagrees with its request",
+            );
+        }
+        Ok(Self {
+            request: raw.request,
+        })
     }
 }
 

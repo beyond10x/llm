@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.Hints",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "7a288c605e6f03c44c6684571e635bdeca66a2c91c41a094cca17ea75f050865",
+    "contract_digest": "slice-sha256/2:be5fc1695363eb7d88d114e32f35f0b5ee6d786810174e5506af076b1987ae4a",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.CacheTtl": {
+      "title": "CacheTtl",
+      "x-ess-name": "llm.inference.CacheTtl",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "FiveMinutes",
+        "OneHour"
+      ]
+    },
+    "llm.inference.Hints": {
+      "title": "Hints",
+      "x-ess-name": "llm.inference.Hints",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "prompt_cache": {
+          "$ref": "#/$defs/llm.inference.PromptCache"
+        },
+        "prompt_cache_key": {
+          "type": "string"
+        },
+        "verbosity": {
+          "$ref": "#/$defs/llm.inference.Verbosity"
+        },
+        "reasoning_summary": {
+          "$ref": "#/$defs/llm.inference.ReasoningSummary"
+        },
+        "unforwarded": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/llm.inference.Unforwarded"
+          }
+        }
+      },
+      "required": [
+        "unforwarded"
+      ],
+      "additionalProperties": false
+    },
+    "llm.inference.PromptCache": {
+      "title": "PromptCache",
+      "x-ess-name": "llm.inference.PromptCache",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "ttl": {
+          "$ref": "#/$defs/llm.inference.CacheTtl"
+        }
+      },
+      "additionalProperties": false
+    },
+    "llm.inference.ReasoningSummary": {
+      "title": "ReasoningSummary",
+      "x-ess-name": "llm.inference.ReasoningSummary",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Auto",
+        "Concise",
+        "Detailed"
+      ]
+    },
+    "llm.inference.Unforwarded": {
+      "title": "Unforwarded",
+      "x-ess-name": "llm.inference.Unforwarded",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "InputItemIds",
+        "ClientMetadata"
+      ]
+    },
+    "llm.inference.Verbosity": {
+      "title": "Verbosity",
+      "x-ess-name": "llm.inference.Verbosity",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ]
+    }
+  }
+}

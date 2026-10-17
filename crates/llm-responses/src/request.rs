@@ -214,6 +214,7 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
         },
         sampling: sampling(object)?,
         tool_choice: wire_to_tool_choice(object.get("tool_choice"))?,
+        controls: llm_core::Controls::default(),
     };
     // A named choice that is not published, a tool result answering no call and every other
     // structural rule are `TurnRequest::validate`'s, not this crate's to restate.

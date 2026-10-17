@@ -46,6 +46,7 @@ fn text_request() -> TurnRequest {
         max_output_tokens: None,
         sampling: Sampling::default(),
         tool_choice: ToolChoice::Auto,
+        controls: llm_core::Controls::default(),
     }
 }
 

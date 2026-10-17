@@ -12,6 +12,55 @@ types:
       # True means these are terminal reported counters, not that all are known
       # or that the provider's eventual invoice is final.
       - {name: final_usage, type: Boolean}
+  # What a turn asks beyond its sampling (docs/design.md "Client request fields"). Empty controls
+  # are written as llm.turn/3, any other as llm.turn/4.
+  - name: llm.inference.ThinkingMode
+    kind: enum
+    variants: [Adaptive, Enabled, Disabled]
+  - name: llm.inference.Thinking
+    kind: struct
+    fields:
+      - {name: mode, type: llm.inference.ThinkingMode}
+      # Positive, and present exactly when the mode is Enabled.
+      - {name: budget_tokens, type: Optional<Integer>}
+  - name: llm.inference.CacheTtl
+    kind: enum
+    variants: [FiveMinutes, OneHour]
+  - name: llm.inference.PromptCache
+    kind: struct
+    fields:
+      - {name: ttl, type: Optional<llm.inference.CacheTtl>}
+  - name: llm.inference.Verbosity
+    kind: enum
+    variants: [Low, Medium, High]
+  - name: llm.inference.ReasoningSummary
+    kind: enum
+    variants: [Auto, Concise, Detailed]
+  # Read by an ingress decoder and sent by no egress wire; its omission is always reported.
+  - name: llm.inference.Unforwarded
+    kind: enum
+    variants: [InputItemIds, ClientMetadata]
+  # Advisory: a wire without the concept omits the hint, and the omission is reported.
+  - name: llm.inference.Hints
+    kind: struct
+    fields:
+      - {name: prompt_cache, type: Optional<llm.inference.PromptCache>}
+      # Non-empty, at most 512 bytes.
+      - {name: prompt_cache_key, type: Optional<String>}
+      - {name: verbosity, type: Optional<llm.inference.Verbosity>}
+      - {name: reasoning_summary, type: Optional<llm.inference.ReasoningSummary>}
+      - {name: unforwarded, type: List<llm.inference.Unforwarded>}
+  # The name an omitted hint is reported under, in this order.
+  - name: llm.inference.Advisory
+    kind: enum
+    variants: [PromptCache, PromptCacheKey, Verbosity, ReasoningSummary, InputItemIds, ClientMetadata]
+  - name: llm.inference.Controls
+    kind: struct
+    fields:
+      - {name: thinking, type: Optional<llm.inference.Thinking>}
+      # Needs published tools.
+      - {name: parallel_tool_calls, type: Optional<Boolean>}
+      - {name: hints, type: llm.inference.Hints}
 entities:
   - name: llm.inference.ResultInspection
     identity: {name: observation_id, type: String}
