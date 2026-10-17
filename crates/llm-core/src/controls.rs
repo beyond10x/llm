@@ -15,8 +15,11 @@ pub const MAX_PROMPT_CACHE_KEY_BYTES: usize = 512;
 pub const ADVISORY_OMITTED: &str = "advisory-omitted";
 
 /// How the model is asked to think, beyond the effort name in [`crate::Sampling`].
+///
+/// Read strictly: `budget_tokens` is present exactly when the mode is `enabled`, and no other
+/// key is accepted beside `mode`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "mode", rename_all = "kebab-case", deny_unknown_fields)]
+#[serde(tag = "mode", rename_all = "kebab-case", try_from = "RawThinking")]
 pub enum Thinking {
     /// The model decides whether and how long to think: the behaviour of Chat Completions and
     /// Responses when no thinking control is sent.
@@ -25,6 +28,37 @@ pub enum Thinking {
     Enabled { budget_tokens: u64 },
     /// Do not think.
     Disabled,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum ThinkingMode {
+    Adaptive,
+    Enabled,
+    Disabled,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawThinking {
+    mode: ThinkingMode,
+    #[serde(default)]
+    budget_tokens: Option<u64>,
+}
+
+impl TryFrom<RawThinking> for Thinking {
+    type Error = &'static str;
+    fn try_from(raw: RawThinking) -> Result<Self, Self::Error> {
+        match (raw.mode, raw.budget_tokens) {
+            (ThinkingMode::Adaptive, None) => Ok(Self::Adaptive),
+            (ThinkingMode::Disabled, None) => Ok(Self::Disabled),
+            (ThinkingMode::Enabled, Some(budget_tokens)) => Ok(Self::Enabled { budget_tokens }),
+            (ThinkingMode::Enabled, None) => Err("enabled thinking needs budget_tokens"),
+            (ThinkingMode::Adaptive | ThinkingMode::Disabled, Some(_)) => {
+                Err("only enabled thinking carries budget_tokens")
+            }
+        }
+    }
 }
 
 /// How long a prompt-cache entry should live.

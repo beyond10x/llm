@@ -478,20 +478,25 @@ impl Serialize for TurnDocument {
 #[serde(deny_unknown_fields)]
 struct RawTurnDocument {
     format: TurnFormat,
-    request: TurnRequest,
+    request: Value,
 }
 
+const VERSION_DISAGREES: &str = "llm.turn/3 carries no controls and llm.turn/4 carries controls; this document's version disagrees with its request";
+
 impl TryFrom<RawTurnDocument> for TurnDocument {
-    type Error = &'static str;
+    type Error = String;
     fn try_from(raw: RawTurnDocument) -> Result<Self, Self::Error> {
-        if raw.format != TurnFormat::of(&raw.request) {
-            return Err(
-                "llm.turn/3 carries no controls and llm.turn/4 carries controls; this document's version disagrees with its request",
-            );
+        // A /3 reader never met a `controls` key, empty or not: llm 0.6.0 refuses one as an
+        // unknown field, so this version does too.
+        if raw.format == TurnFormat::V3 && raw.request.get("controls").is_some() {
+            return Err(VERSION_DISAGREES.to_owned());
         }
-        Ok(Self {
-            request: raw.request,
-        })
+        let request: TurnRequest =
+            serde_json::from_value(raw.request).map_err(|error| error.to_string())?;
+        if raw.format != TurnFormat::of(&request) {
+            return Err(VERSION_DISAGREES.to_owned());
+        }
+        Ok(Self { request })
     }
 }
 
