@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: outgoing-omitted-advisories-are-named-in-table-order
+summary: the hints this wire has no field for are reported, in the design's order, while the two it has are sent (outgoing.rs)
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.chat.ProjectRequest
+  input:
+    turn_json: '{"format":"llm.turn/4","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"hi"}],"tools":[],"controls":{"hints":{"prompt_cache":{},"prompt_cache_key":"session-7","verbosity":"high","reasoning_summary":"auto","unforwarded":["client-metadata","input-item-ids"]}}}}'
+    protocol: chat-completions
+    upstream_model: Qwen/Qwen3-8B
+    capabilities_json: '{"tools":true,"tool_choice":true,"temperature":true,"top_p":true,"reasoning_efforts":["low","high"],"context_window":32768,"max_output_tokens":4096}'
+    streaming: false
+  outcome: observed
+assert:
+- view: llm.chat.LastRequestProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastRequestProjection
+  contains:
+    accepted: true
+    error_code: null
+    body_fields: [messages, model, prompt_cache_key, stream, verbosity]
+    omitted_advisories: [prompt-cache, reasoning-summary, input-item-ids, client-metadata]

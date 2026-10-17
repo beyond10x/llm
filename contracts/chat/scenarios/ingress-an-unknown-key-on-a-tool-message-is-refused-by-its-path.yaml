@@ -1,0 +1,20 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: ingress-an-unknown-key-on-a-tool-message-is-refused-by-its-path
+summary: ingress refuses a tool message key outside role, content and tool_call_id, naming its path (ingress.rs)
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.chat.DecodeIngress
+  input:
+    request_json: '{"model":"code","messages":[{"role":"assistant","tool_calls":[{"id":"call-1","type":"function","function":{"name":"lookup","arguments":"{}"}}]},{"role":"tool","tool_call_id":"call-1","content":"sunny","name":"lookup"}]}'
+  outcome: observed
+assert:
+- view: llm.chat.LastIngressRequest
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastIngressRequest
+  contains:
+    accepted: false
+    dispatch: not-sent
+    error_code: unsupported
+    error_message: 'chat request field is outside the published subset: messages[].name'
+    turn_json: null

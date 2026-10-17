@@ -29,7 +29,13 @@ any network I/O.
 | `tools` | `tools[].function` with `name`, `description` and `parameters` |
 | `ToolChoice::Required` / `Named` | `"required"` / `{"type":"function",...}`; `Auto` is omitted |
 | `max_output_tokens` | `max_completion_tokens`, never the deprecated `max_tokens` |
-| `temperature`, `top_p`, `reasoning_effort` | the same names, and absent when the caller did not ask |
+| `temperature`, `top_p` | the same names, and absent when the caller did not ask |
+| `reasoning_effort` and `controls.thinking` | `reasoning_effort`, as `llm_core::wire_effort` gives it: `max` is sent as `xhigh`, disabled thinking as `none`, adaptive thinking sends nothing more; a thinking budget, and disabled thinking beside an effort, are refused |
+| `controls.parallel_tool_calls` | `parallel_tool_calls` |
+| `hints.prompt_cache_key`, `hints.verbosity` | `prompt_cache_key`, `verbosity` (`low`, `medium`, `high`) |
+| `hints.prompt_cache`, `hints.reasoning_summary`, `hints.unforwarded` | not sent: this wire has no field for them. `omitted_advisories(&request)` names them, and `ChatClient` reports them in one warning after a successful turn |
+
+Each control and hint is sent only when the turn sets it.
 
 A streamed request always sends `stream_options: {"include_usage": true}`. Without it this wire
 reports no usage at all, and an absent report would be indistinguishable from a model that
@@ -125,8 +131,38 @@ partial snapshot, which is what a failure after dispatch retains.
 `decode_ingress_request` reads a client request strictly. The implemented fields are
 `SUPPORTED_REQUEST_FIELDS`; the fields this subset knows about and deliberately does not
 implement are `NAMED_UNSUPPORTED_REQUEST_FIELDS`, and a request carrying one is refused with
-that field's own name. A field in neither list is refused too, with a diagnostic that quotes
-nothing the client sent — so a new vendor field is never silently ignored.
+that field's own name (``chat request field `n` is outside the published subset``).
+
+Every object of the request is closed, not only the top level. A key a level does not publish
+is refused as `chat request field is outside the published subset: <path>`, the path written by
+`llm_core::field_path`, which copies only a bounded name of the wire's own shape and writes any
+other as `?`; no value the client sent is quoted. So a new vendor field is never silently
+ignored, at any depth:
+
+| Level | Published keys |
+| --- | --- |
+| the request | `SUPPORTED_REQUEST_FIELDS` |
+| `messages[]`, role `system`, `developer` or `user` | `role`, `content` |
+| `messages[]`, role `assistant` | `role`, `content`, `tool_calls` |
+| `messages[]`, role `tool` | `role`, `content`, `tool_call_id` |
+| `messages[].content[]` | `type` (`text`), `text` |
+| `messages[].tool_calls[]` | `id`, `type` (`function`), `function` |
+| `messages[].tool_calls[].function` | `name`, `arguments` |
+| `tools[]` | `type` (`function`), `function` |
+| `tools[].function` | `name`, `description`, `parameters`, `strict` (absent or `false`) |
+| `tool_choice`, as an object | `type` (`function`), `function` |
+| `tool_choice.function` | `name` |
+| `stream_options` | `include_usage` |
+
+A key the subset reads with a value of the wrong type is refused as invalid rather than read
+as absent; an explicit `null` for an optional key is absent. `strict: true` is refused
+(`chat strict function schemas are outside the published subset`): the neutral tool has no
+strict mode. A tool call or object tool choice whose `type` is not `function` is refused by its
+type.
+
+`parallel_tool_calls` (a boolean) is carried in the turn's controls, `prompt_cache_key` (a
+string) and `verbosity` (`low`, `medium` or `high`) in its hints; `project_request` sends each
+back under the same name, so the body it builds decodes to the same turn.
 
 Also refused: a role outside `system`/`developer`/`user`/`assistant`/`tool`, a content part
 that is not text, `tool_choice: "none"` (the neutral subset cannot express it and must not
@@ -169,6 +205,12 @@ an invented name.
 `ChatClient` joins the outgoing projection and the response projection over the shared bounded
 HTTP/SSE transport: one attempt, no redirects, no automatic retry, explicit deadlines, and
 cancellation. Retries, alternates and fallback belong to routing.
+
+A turn carrying hints this wire does not send ends, once it has succeeded, with one `Warning`
+event of code `advisory-omitted` naming them (`Chat Completions carries no prompt-cache; the
+advisory hint was not sent`). Never before or during the turn: a warning counts as visible
+output and would end fallback eligibility. A failed turn, or one that omitted nothing, emits
+none. A sink that refuses the warning fails the turn with its own error, stamped as served.
 
 Any endpoint serving this wire works, including an explicitly anonymous, self-hosted one — the
 shape a local `vLLM` deployment declares. `crates/llm-chat/fixtures/` holds pinned response
