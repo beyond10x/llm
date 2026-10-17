@@ -1,7 +1,10 @@
 //! The request body, in both directions, from one pinned description of the subset.
 
+use std::collections::BTreeSet;
+
 use llm_core::{
-    CallId, Error, Item, Protocol, Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest,
+    Advisory, CallId, Controls, Error, Hints, Item, Protocol, ReasoningSummary, Sampling, ToolCall,
+    ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded, Verbosity, field_path, wire_effort,
 };
 use serde_json::{Map, Value, json};
 
@@ -33,31 +36,94 @@ pub const CARRIED_ENTRY_TYPES: &[&str] = &["reasoning"];
 /// reasoning arrives as a plain output item instead; both are handled, neither is required.
 pub const INCLUDE: &[&str] = &["reasoning.encrypted_content"];
 
-/// Every top-level body field inside the pinned subset. Ingress refuses anything else.
+/// Every top-level body field inside the pinned subset. Ingress refuses anything else by name.
+///
+/// `client_metadata` and `instructions` are read and never written: the first is client telemetry
+/// whose value is not kept, the second is written back as the developer message at the head of
+/// `input`.
 pub const ACCEPTED_BODY_FIELDS: &[&str] = &[
+    "client_metadata",
     "include",
     "input",
+    "instructions",
     "max_output_tokens",
     "model",
+    "parallel_tool_calls",
+    "prompt_cache_key",
     "reasoning",
     "store",
     "stream",
     "temperature",
+    "text",
     "tool_choice",
     "tools",
     "top_p",
 ];
+
+/// The tool types other than `function` that ingress refuses by name.
+///
+/// Hosted and custom tools a Responses client publishes. The name in the diagnostic is copied from
+/// this list, never from the request.
+pub const REFUSED_TOOL_TYPES: &[&str] = &[
+    "web_search",
+    "custom",
+    "namespace",
+    "tool_search",
+    "local_shell",
+    "file_search",
+    "computer_use_preview",
+    "mcp",
+    "image_generation",
+    "code_interpreter",
+];
+
+/// The advisory hints this projection sends: `docs/design.md`, "Advisory hints".
+const CARRIED: &[Advisory] = &[
+    Advisory::PromptCacheKey,
+    Advisory::Verbosity,
+    Advisory::ReasoningSummary,
+];
+
+/// The hints `request` carries that this wire does not send, in the design's order.
+///
+/// A gateway can report them before it forwards anything; [`crate::ResponsesClient`] warns
+/// `advisory-omitted` naming them once a turn has succeeded.
+pub fn omitted_advisories(request: &TurnRequest) -> Vec<Advisory> {
+    request.controls.hints.omitted_by(CARRIED)
+}
+
+/// The refusal for a key no rule names, at `at`.
+fn outside(at: &str, key: &str) -> Error {
+    Error::unsupported(format!(
+        "request body carries a field outside the pinned subset: {}",
+        field_path(at, key)
+    ))
+}
+
+/// Refuses the first key of `object` that `keys` does not name.
+fn closed(object: &Map<String, Value>, at: &str, keys: &[&str]) -> Result<(), Error> {
+    match object.keys().find(|key| !keys.contains(&key.as_str())) {
+        Some(key) => Err(outside(at, key)),
+        None => Ok(()),
+    }
+}
 
 /// Projects one neutral turn into the request body this wire accepts.
 ///
 /// Absent stays absent: a sampling field nobody set is one the provider decides, and writing its
 /// default here would turn that decision into this crate's without anyone making it.
 ///
+/// The effort goes through [`llm_core::wire_effort`]: `max` is sent as `xhigh` and disabled
+/// thinking as `none`. `parallel_tool_calls`, `prompt_cache_key`, `text.verbosity` and
+/// `reasoning.summary` are written when the turn sets them; the other hints are omitted and
+/// listed by [`omitted_advisories`].
+///
 /// # Errors
 /// Refuses a binding of another protocol, a request the neutral contract already refuses, a
-/// request addressed to a different model, a tool name this wire cannot publish, opaque
-/// continuation state belonging to any other binding, and unattributed opaque state no caller
-/// has bound, with [`Item::UNATTRIBUTED_REFUSAL`].
+/// request addressed to a different model, a tool name this wire cannot publish, a thinking
+/// budget and disabled thinking beside an effort, opaque continuation state belonging to any
+/// other binding, and unattributed opaque state no caller has bound, with
+/// [`Item::UNATTRIBUTED_REFUSAL`].
 pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value, Error> {
     binding.validate()?;
     request.validate()?;
@@ -67,6 +133,7 @@ pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value
         ));
     }
     check_tool_names(&request.tools)?;
+    let effort = wire_effort(Protocol::Responses, request)?;
 
     let mut input = Vec::with_capacity(request.items.len() + 1);
     if !request.instructions.is_empty() {
@@ -96,13 +163,49 @@ pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value
     if let Some(top_p) = request.sampling.top_p {
         body.insert("top_p".to_owned(), json!(top_p));
     }
-    if let Some(effort) = &request.sampling.reasoning_effort {
-        body.insert("reasoning".to_owned(), json!({"effort": effort}));
+    let hints = &request.controls.hints;
+    let mut reasoning = Map::new();
+    if let Some(effort) = effort {
+        reasoning.insert("effort".to_owned(), json!(effort));
+    }
+    if let Some(summary) = hints.reasoning_summary {
+        reasoning.insert("summary".to_owned(), json!(summary_name(summary)));
+    }
+    if !reasoning.is_empty() {
+        body.insert("reasoning".to_owned(), Value::Object(reasoning));
     }
     if let Some(choice) = tool_choice_to_wire(&request.tool_choice) {
         body.insert("tool_choice".to_owned(), choice);
     }
+    if let Some(parallel) = request.controls.parallel_tool_calls {
+        body.insert("parallel_tool_calls".to_owned(), json!(parallel));
+    }
+    if let Some(key) = &hints.prompt_cache_key {
+        body.insert("prompt_cache_key".to_owned(), json!(key));
+    }
+    if let Some(verbosity) = hints.verbosity {
+        body.insert(
+            "text".to_owned(),
+            json!({"verbosity": verbosity_name(verbosity)}),
+        );
+    }
     Ok(Value::Object(body))
+}
+
+const fn summary_name(summary: ReasoningSummary) -> &'static str {
+    match summary {
+        ReasoningSummary::Auto => "auto",
+        ReasoningSummary::Concise => "concise",
+        ReasoningSummary::Detailed => "detailed",
+    }
+}
+
+const fn verbosity_name(verbosity: Verbosity) -> &'static str {
+    match verbosity {
+        Verbosity::Low => "low",
+        Verbosity::Medium => "medium",
+        Verbosity::High => "high",
+    }
 }
 
 /// The exact bytes of the request body the client sends for one turn.
@@ -113,7 +216,8 @@ pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value
 /// conversation's identifier.
 ///
 /// # Errors
-/// Refuses exactly what [`project_request`] refuses, and a body that cannot be encoded.
+/// Refuses exactly what [`project_request`] refuses, a turn whose own `prompt_cache_key` differs
+/// from the conversation's identifier, and a body that cannot be encoded.
 pub fn encode_request(
     binding: &Binding,
     request: &TurnRequest,
@@ -121,6 +225,18 @@ pub fn encode_request(
 ) -> Result<Vec<u8>, Error> {
     let mut body = project_request(binding, request)?;
     if let (Some(conversation), Value::Object(fields)) = (conversation, &mut body) {
+        // Two keys for one request: neither may silently win.
+        if request
+            .controls
+            .hints
+            .prompt_cache_key
+            .as_deref()
+            .is_some_and(|key| key != conversation.id().as_str())
+        {
+            return Err(Error::unsupported(
+                "the turn's prompt_cache_key differs from the client's conversation",
+            ));
+        }
         fields.insert(
             "prompt_cache_key".to_owned(),
             json!(conversation.id().as_str()),
@@ -135,13 +251,25 @@ pub fn encode_request(
 /// [`project_request`] writes is read here, and a body carrying anything outside the subset is
 /// refused rather than translated with the excess silently dropped.
 ///
+/// Every object this reads is closed: the top level, each modelled `input` item, each content
+/// part, an object `tool_choice`, each published tool, `reasoning` and `text` name their keys, and
+/// any other key is refused `unsupported` naming its path (`llm_core::field_path`).
+///
+/// A few fields are read one way, by `docs/design.md` "Client request fields": the top-level
+/// `instructions` and the `input_text` parts of the developer messages that open `input`,
+/// joined by a line feed, are the instructions, written back as one developer message; an item
+/// `id` and `client_metadata` are unforwarded hints whose values are not kept; a
+/// `function_call_output` string that is not the pinned envelope is a successful result carrying
+/// that string, written back inside the envelope.
+///
 /// # Errors
-/// Refuses a binding of another protocol, a body that is not an object, a top-level field outside
-/// [`ACCEPTED_BODY_FIELDS`], a body addressed to another upstream model, non-streaming or
-/// provider-stored conversations and `item_reference` entries pointing into them, content this
-/// version does not carry, an `input` entry that names no type, a client-authored entry this
-/// version does not model (a hosted-tool output, for example), a tool result outside the pinned
-/// envelope, and any request the neutral contract itself refuses.
+/// Refuses a binding of another protocol, a body that is not an object, a key outside the subset
+/// at any level, a body addressed to another upstream model, non-streaming or provider-stored
+/// conversations and `item_reference` entries pointing into them, content this version does not
+/// carry, a developer message after the conversation began, an `input` entry that names no type,
+/// a client-authored entry this version does not model (a hosted-tool output, for example), a
+/// tool of another type than `function`, a field of the wrong type, and any request the neutral
+/// contract itself refuses.
 ///
 /// An entry of a type in [`CARRIED_ENTRY_TYPES`] — continuation state the model mints — is not
 /// refused: it is carried as [`Item::UnattributedOpaque`], JSON-equal to what arrived, and
@@ -151,13 +279,7 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
     let object = body
         .as_object()
         .ok_or_else(|| Error::invalid("request body is not an object"))?;
-    for field in object.keys() {
-        if !ACCEPTED_BODY_FIELDS.contains(&field.as_str()) {
-            return Err(Error::unsupported(
-                "request body carries a field outside the pinned subset",
-            ));
-        }
-    }
+    closed(object, "", ACCEPTED_BODY_FIELDS)?;
     let model =
         string(object.get("model")).ok_or_else(|| Error::invalid("request body names no model"))?;
     if model != binding.upstream_model().as_str() {
@@ -169,23 +291,29 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
     check_fixed(object, "store", &json!(false))?;
     check_fixed(object, "include", &json!(INCLUDE))?;
 
-    let mut instructions = String::new();
+    let mut unforwarded = BTreeSet::new();
+    let mut instructions = match object.get("instructions") {
+        None => Vec::new(),
+        Some(Value::String(text)) => vec![text.clone()],
+        Some(_) => return Err(Error::invalid("`instructions` is not a string")),
+    };
     let mut items = Vec::new();
     if let Some(input) = object.get("input") {
         let entries = input
             .as_array()
             .ok_or_else(|| Error::invalid("`input` is not an array"))?;
-        for (index, entry) in entries.iter().enumerate() {
+        for entry in entries {
             if is_developer_message(entry) {
-                if index != 0 {
+                // The neutral turn has no item that places an instruction between two turns.
+                if !items.is_empty() {
                     return Err(Error::unsupported(
                         "a standing instruction is carried once, at the head of `input`",
                     ));
                 }
-                instructions = content_text(entry, "input_text")?;
+                instructions.extend(developer_parts(entry, &mut unforwarded)?);
                 continue;
             }
-            items.push(input_to_item(entry)?);
+            items.push(input_to_item(entry, &mut unforwarded)?);
         }
     }
 
@@ -199,9 +327,38 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
         }
     }
 
+    let (reasoning_effort, reasoning_summary) = reasoning(object.get("reasoning"))?;
+    match object.get("client_metadata") {
+        None => {}
+        // Client telemetry with no model semantics: its presence is reported, its value dropped.
+        Some(Value::Object(_)) => {
+            unforwarded.insert(Unforwarded::ClientMetadata);
+        }
+        Some(_) => return Err(Error::invalid("`client_metadata` is not an object")),
+    }
+    let controls = Controls {
+        thinking: None,
+        parallel_tool_calls: match object.get("parallel_tool_calls") {
+            None => None,
+            Some(Value::Bool(parallel)) => Some(*parallel),
+            Some(_) => return Err(Error::invalid("`parallel_tool_calls` is not a boolean")),
+        },
+        hints: Hints {
+            prompt_cache: None,
+            prompt_cache_key: match object.get("prompt_cache_key") {
+                None => None,
+                Some(Value::String(key)) => Some(key.clone()),
+                Some(_) => return Err(Error::invalid("`prompt_cache_key` is not a string")),
+            },
+            verbosity: verbosity(object.get("text"))?,
+            reasoning_summary,
+            unforwarded,
+        },
+    };
+
     let request = TurnRequest {
         model: binding.provenance().model.as_str().to_owned(),
-        instructions,
+        instructions: instructions.join("\n"),
         items,
         tools,
         max_output_tokens: match object.get("max_output_tokens") {
@@ -212,8 +369,9 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
                     .ok_or_else(|| Error::invalid("`max_output_tokens` is not a count"))?,
             ),
         },
-        sampling: sampling(object)?,
+        sampling: sampling(object, reasoning_effort)?,
         tool_choice: wire_to_tool_choice(object.get("tool_choice"))?,
+        controls,
     };
     // A named choice that is not published, a tool result answering no call and every other
     // structural rule are `TurnRequest::validate`'s, not this crate's to restate.
@@ -222,7 +380,8 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
     // request its own outgoing side then refuses to forward has agreed to something it cannot
     // do, and the caller finds out one hop later. `project_request` applies exactly five checks
     // — the binding's protocol, `TurnRequest::validate`, the model, this one, and the opaque
-    // coordinates — and each has its counterpart above. The one deliberate exception is state
+    // coordinates — and each has its counterpart above. The sixth, `wire_effort`, refuses only a
+    // thinking control, which this ingress never reads. The one deliberate exception is state
     // ingress carries unattributed: egress refuses it by name until the caller binds it, because
     // that binding is a decision only the caller can make.
     check_tool_names(&request.tools)?;
@@ -252,7 +411,10 @@ fn check_fixed(object: &Map<String, Value>, field: &str, pinned: &Value) -> Resu
     ))
 }
 
-fn sampling(object: &Map<String, Value>) -> Result<Sampling, Error> {
+fn sampling(
+    object: &Map<String, Value>,
+    reasoning_effort: Option<String>,
+) -> Result<Sampling, Error> {
     let number = |value: Option<&Value>, field: &str| -> Result<Option<f64>, Error> {
         match value {
             None | Some(Value::Null) => Ok(None),
@@ -262,23 +424,63 @@ fn sampling(object: &Map<String, Value>) -> Result<Sampling, Error> {
                 .ok_or_else(|| Error::invalid(format!("`{field}` is not a number"))),
         }
     };
-    let reasoning_effort = match object.get("reasoning") {
-        None | Some(Value::Null) => None,
-        Some(Value::Object(reasoning)) => {
-            if reasoning.keys().any(|key| key != "effort") {
-                return Err(Error::unsupported(
-                    "`reasoning` carries a field outside the pinned subset",
-                ));
-            }
-            string(reasoning.get("effort")).map(ToOwned::to_owned)
-        }
-        Some(_) => return Err(Error::invalid("`reasoning` is not an object")),
-    };
     Ok(Sampling {
         temperature: number(object.get("temperature"), "temperature")?,
         top_p: number(object.get("top_p"), "top_p")?,
         reasoning_effort,
     })
+}
+
+/// `reasoning`: the effort, any name, and the summary hint. A `null` member is absent.
+fn reasoning(value: Option<&Value>) -> Result<(Option<String>, Option<ReasoningSummary>), Error> {
+    let reasoning = match value {
+        None | Some(Value::Null) => return Ok((None, None)),
+        Some(Value::Object(reasoning)) => reasoning,
+        Some(_) => return Err(Error::invalid("`reasoning` is not an object")),
+    };
+    closed(reasoning, "reasoning", &["effort", "summary"])?;
+    let effort = match reasoning.get("effort") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(effort)) => Some(effort.clone()),
+        Some(_) => return Err(Error::invalid("`reasoning.effort` is not a string")),
+    };
+    let summary = match reasoning.get("summary") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(summary)) => Some(match summary.as_str() {
+            "auto" => ReasoningSummary::Auto,
+            "concise" => ReasoningSummary::Concise,
+            "detailed" => ReasoningSummary::Detailed,
+            _ => {
+                return Err(Error::unsupported(
+                    "`reasoning.summary` is outside the pinned subset",
+                ));
+            }
+        }),
+        Some(_) => return Err(Error::invalid("`reasoning.summary` is not a string")),
+    };
+    Ok((effort, summary))
+}
+
+/// `text`: only `verbosity`. Structured output (`text.format`) is outside this design.
+fn verbosity(value: Option<&Value>) -> Result<Option<Verbosity>, Error> {
+    let text = match value {
+        None | Some(Value::Null) => return Ok(None),
+        Some(Value::Object(text)) => text,
+        Some(_) => return Err(Error::invalid("`text` is not an object")),
+    };
+    closed(text, "text", &["verbosity"])?;
+    match text.get("verbosity") {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(verbosity)) => match verbosity.as_str() {
+            "low" => Ok(Some(Verbosity::Low)),
+            "medium" => Ok(Some(Verbosity::Medium)),
+            "high" => Ok(Some(Verbosity::High)),
+            _ => Err(Error::unsupported(
+                "`text.verbosity` is outside the pinned subset",
+            )),
+        },
+        Some(_) => Err(Error::invalid("`text.verbosity` is not a string")),
+    }
 }
 
 fn check_tool_names(tools: &[ToolSpec]) -> Result<(), Error> {
@@ -321,21 +523,28 @@ fn wire_to_tool(value: &Value) -> Result<ToolSpec, Error> {
     let object = value
         .as_object()
         .ok_or_else(|| Error::invalid("a published tool is not an object"))?;
-    if string(object.get("type")) != Some("function") {
-        return Err(Error::unsupported(
-            "only function tools are inside the pinned subset",
-        ));
+    match string(object.get("type")) {
+        Some("function") => {}
+        kind => {
+            // The name is copied from the fixed list, never from the request.
+            return Err(Error::unsupported(
+                match REFUSED_TOOL_TYPES
+                    .iter()
+                    .find(|known| Some(**known) == kind)
+                {
+                    Some(known) => {
+                        format!("a published tool of type `{known}` is outside the pinned subset")
+                    }
+                    None => "only function tools are inside the pinned subset".to_owned(),
+                },
+            ));
+        }
     }
-    if object.keys().any(|key| {
-        !matches!(
-            key.as_str(),
-            "type" | "name" | "description" | "parameters" | "strict"
-        )
-    }) {
-        return Err(Error::unsupported(
-            "a published tool carries a field outside the pinned subset",
-        ));
-    }
+    closed(
+        object,
+        "tools[]",
+        &["type", "name", "description", "parameters", "strict"],
+    )?;
     // `strict` is the fourth fixed field, beside `stream`, `store` and `include`, and obeys the
     // same rule: present and exactly `false`. Absent is refused too, because the reprojection
     // writes the key, and a body that comes back carrying a field it did not send is a body the
@@ -368,6 +577,7 @@ fn wire_to_tool_choice(value: Option<&Value>) -> Result<ToolChoice, Error> {
         Some(Value::String(word)) if word == "auto" => Ok(ToolChoice::Auto),
         Some(Value::String(word)) if word == "required" => Ok(ToolChoice::Required),
         Some(Value::Object(named)) if string(named.get("type")) == Some("function") => {
+            closed(named, "tool_choice", &["type", "name"])?;
             let name = string(named.get("name"))
                 .ok_or_else(|| Error::invalid("a named tool choice has no name"))?;
             Ok(ToolChoice::Named(
@@ -434,16 +644,81 @@ fn tool_result_envelope(output: &Value, failed: bool) -> Result<Value, Error> {
         .map_err(|_| Error::invalid("tool result is not encodable"))
 }
 
-fn input_to_item(entry: &Value) -> Result<Item, Error> {
+/// The keys a `message` item carries.
+const MESSAGE_KEYS: &[&str] = &["type", "id", "role", "content"];
+
+/// An item's own `id`: a client-assigned identifier no provider that stores nothing can use.
+/// Its presence is the `input-item-ids` hint; its value is not kept.
+fn item_id(
+    entry: &Map<String, Value>,
+    unforwarded: &mut BTreeSet<Unforwarded>,
+) -> Result<(), Error> {
+    match entry.get("id") {
+        None => Ok(()),
+        Some(Value::String(_)) => {
+            unforwarded.insert(Unforwarded::InputItemIds);
+            Ok(())
+        }
+        Some(_) => Err(Error::invalid("an input item's `id` is not a string")),
+    }
+}
+
+/// The text of every part of one developer message, in order. An empty text is still a part.
+fn developer_parts(
+    entry: &Value,
+    unforwarded: &mut BTreeSet<Unforwarded>,
+) -> Result<Vec<String>, Error> {
+    let fields = entry
+        .as_object()
+        .ok_or_else(|| Error::invalid("a message is not an object"))?;
+    closed(fields, "input[]", MESSAGE_KEYS)?;
+    item_id(fields, unforwarded)?;
+    let parts = content_parts(fields)?;
+    // A message with no parts would vanish from the body without a trace in the turn.
+    if parts.is_empty() {
+        return Err(Error::unsupported(
+            "a message carries content this version cannot represent part for part",
+        ));
+    }
+    parts
+        .iter()
+        .map(|part| part_text(part, "input_text"))
+        .collect()
+}
+
+fn input_to_item(entry: &Value, unforwarded: &mut BTreeSet<Unforwarded>) -> Result<Item, Error> {
+    let Some(fields) = entry.as_object() else {
+        return Err(Error::unsupported(
+            "an input entry names no type this version can carry",
+        ));
+    };
     match string(entry.get("type")) {
-        Some("message") => match string(entry.get("role")) {
-            Some("user") => Ok(Item::user(content_text(entry, "input_text")?)),
-            Some("assistant") => Ok(Item::assistant(content_text(entry, "output_text")?)),
-            _ => Err(Error::unsupported(
-                "a message role outside the pinned subset",
-            )),
-        },
+        Some("message") => {
+            let part = match string(entry.get("role")) {
+                Some("user") => "input_text",
+                Some("assistant") => "output_text",
+                _ => {
+                    return Err(Error::unsupported(
+                        "a message role outside the pinned subset",
+                    ));
+                }
+            };
+            closed(fields, "input[]", MESSAGE_KEYS)?;
+            item_id(fields, unforwarded)?;
+            let text = content_text(fields, part)?;
+            Ok(if part == "input_text" {
+                Item::user(text)
+            } else {
+                Item::assistant(text)
+            })
+        }
         Some("function_call") => {
+            closed(
+                fields,
+                "input[]",
+                &["type", "id", "call_id", "name", "arguments"],
+            )?;
+            item_id(fields, unforwarded)?;
             let raw = string(entry.get("arguments"))
                 .ok_or_else(|| Error::invalid("a function call has no `arguments`"))?;
             let arguments: Value = serde_json::from_str(raw)
@@ -464,26 +739,15 @@ fn input_to_item(entry: &Value) -> Result<Item, Error> {
             }))
         }
         Some("function_call_output") => {
+            closed(fields, "input[]", &["type", "id", "call_id", "output"])?;
+            item_id(fields, unforwarded)?;
+            // An array of content items is a shape this version does not carry.
             let raw = string(entry.get("output"))
-                .ok_or_else(|| Error::invalid("a tool result has no `output`"))?;
-            let envelope: Value = serde_json::from_str(raw)
-                .map_err(|_| Error::unsupported("tool result is outside the pinned envelope"))?;
-            let envelope = envelope
-                .as_object()
-                .ok_or_else(|| Error::unsupported("tool result is outside the pinned envelope"))?;
-            let failed = match envelope.get("ok") {
-                Some(Value::Bool(ok)) if envelope.len() == 2 && envelope.contains_key("output") => {
-                    !ok
-                }
-                _ => {
-                    return Err(Error::unsupported(
-                        "tool result is outside the pinned envelope",
-                    ));
-                }
-            };
+                .ok_or_else(|| Error::invalid("a tool result's `output` is not a string"))?;
+            let (output, failed) = read_tool_result(raw);
             Ok(Item::ToolResult {
                 call_id: call_id(entry)?,
-                output: envelope.get("output").cloned().unwrap_or(Value::Null),
+                output,
                 failed,
             })
         }
@@ -521,6 +785,21 @@ fn input_to_item(entry: &Value) -> Result<Item, Error> {
     }
 }
 
+/// A result string read as the pinned envelope when it is exactly one — an object of exactly a
+/// boolean `ok` and an `output` — and otherwise as a successful result carrying that string.
+///
+/// Codex sends a command's output as a plain string. Egress writes it back inside the envelope,
+/// so the body changes and the turn does not.
+fn read_tool_result(raw: &str) -> (Value, bool) {
+    if let Ok(Value::Object(envelope)) = serde_json::from_str::<Value>(raw)
+        && envelope.len() == 2
+        && let (Some(Value::Bool(ok)), Some(output)) = (envelope.get("ok"), envelope.get("output"))
+    {
+        return (output.clone(), !ok);
+    }
+    (Value::String(raw.to_owned()), false)
+}
+
 fn is_developer_message(entry: &Value) -> bool {
     string(entry.get("type")) == Some("message") && string(entry.get("role")) == Some("developer")
 }
@@ -539,22 +818,39 @@ fn call_id(entry: &Value) -> Result<CallId, Error> {
 /// not send; zero parts come back out as one empty part. Egress writes exactly one part, so
 /// requiring exactly one here is the symmetric rule rather than a new restriction. Image and
 /// audio parts are outside this contract version and refused with the same code.
-fn content_text(entry: &Value, part: &str) -> Result<String, Error> {
-    let parts = entry
-        .get("content")
-        .and_then(Value::as_array)
-        .ok_or_else(|| Error::invalid("a message has no `content` array"))?;
-    let [only] = parts.as_slice() else {
+fn content_text(entry: &Map<String, Value>, part: &str) -> Result<String, Error> {
+    let [only] = content_parts(entry)? else {
         return Err(Error::unsupported(
             "a message carries content this version cannot represent part for part",
         ));
     };
-    if string(only.get("type")) != Some(part) {
-        return Err(Error::unsupported(
-            "message content is outside the pinned subset",
-        ));
+    part_text(only, part)
+}
+
+fn content_parts(entry: &Map<String, Value>) -> Result<&[Value], Error> {
+    entry
+        .get("content")
+        .and_then(Value::as_array)
+        .map(Vec::as_slice)
+        .ok_or_else(|| Error::invalid("a message has no `content` array"))
+}
+
+/// One content part of type `kind`: `type` and `text`, and on an `output_text` part an empty
+/// `annotations` array, which is what a replayed answer carries and loses nothing.
+fn part_text(part: &Value, kind: &str) -> Result<String, Error> {
+    let fields = part
+        .as_object()
+        .filter(|fields| string(fields.get("type")) == Some(kind))
+        .ok_or_else(|| Error::unsupported("message content is outside the pinned subset"))?;
+    for (key, value) in fields {
+        match key.as_str() {
+            "type" | "text" => {}
+            "annotations"
+                if kind == "output_text" && value.as_array().is_some_and(Vec::is_empty) => {}
+            _ => return Err(outside("input[].content[]", key)),
+        }
     }
-    Ok(string(only.get("text"))
+    Ok(string(fields.get("text"))
         .ok_or_else(|| Error::invalid("a content part has no text"))?
         .to_owned())
 }

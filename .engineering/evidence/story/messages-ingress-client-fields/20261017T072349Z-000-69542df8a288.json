@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-17T07:23:49Z",
+  "actor": "human:timo",
+  "artifact": "story:messages-ingress-client-fields",
+  "kind": "story",
+  "revision": 13,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo test -p b10x-llm-messages --test client_request_fields",
+    "reference": "base: llm 0.6.0 refuses the fixture at thinking (llm-gateway translation.rs known-limit test pins it); treatment 298d9262: the fixture decodes, test passes"
+  }
+}

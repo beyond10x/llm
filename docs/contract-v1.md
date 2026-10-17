@@ -51,6 +51,17 @@ structure and declared capabilities, not a tokenizer or the truth of an operator
 declaration. Context-window admission needs the routing/token-accounting implementation and is
 not proved by request byte limits.
 
+A turn's `controls` hold what is not sampling: a thinking mode (`adaptive`, `enabled` with a
+positive budget, `disabled`), whether parallel tool calls are allowed (only beside published
+tools), and advisory hints (a prompt-cache request, a cache key of at most 512 bytes, verbosity, a
+reasoning-summary request, and the names of fields ingress read and no wire sends). The reasoning
+effort a wire receives is `llm_core::wire_effort`'s, and capabilities are checked against it:
+`max` reaches Chat Completions and Responses as `xhigh`, disabled thinking as `none`, and a
+thinking budget is refused there. A hint a wire cannot carry is omitted and reported: by the
+wire crate's `omitted_advisories` before sending, and by one `advisory-omitted` warning after a
+successful turn. Empty controls are written as `llm.turn/3`, unchanged; others as `llm.turn/4`.
+The tables are in [design.md](design.md#client-request-fields).
+
 All usage fields are optional independently. Input tokens include the disjoint cache-read and
 cache-write subsets, and output tokens include the reasoning subset. Unknown is not zero.
 Contradictory known totals refuse rather than saturating a negative remainder. Adapters normalize
@@ -142,7 +153,7 @@ presentation. A rejected subscription credential never changes billing kind or a
 ## Compatibility and source provenance
 
 Published Rust APIs follow the crate release's semantic version. Persisted neutral requests carry
-an explicit `llm.turn/3` envelope and outputs carry `llm.outcome/4`; old/unknown versions and fields refuse. Both moved when `Item` gained the
+an explicit `llm.turn/3` envelope (`llm.turn/4` when they carry controls) and outputs carry `llm.outcome/4`; old/unknown versions and fields refuse. Both moved when `Item` gained the
 unattributed opaque variant, so a `llm.turn/2` or `llm.outcome/3` reader is never handed one. Unversioned Rust
 values are in-process values, not a claim of a stable vendor wire format. Unsupported additions
 need a version change before they are accepted. This contract does not establish any live provider

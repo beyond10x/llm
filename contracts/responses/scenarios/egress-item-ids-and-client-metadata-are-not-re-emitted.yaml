@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: egress-item-ids-and-client-metadata-are-not-re-emitted
+summary: a turn carrying the unforwarded hints projects no id and no client_metadata and reports both
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/4","request":{"controls":{"hints":{"unforwarded":["input-item-ids","client-metadata"]}},"instructions":"","items":[{"kind":"user-text","text":"Hi"}],"model":"small","tools":[{"description":"d","input_schema":{"type":"object"},"name":"file_read"}]}}'
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: true
+    error_code: null
+    body_fields:
+    - include
+    - input
+    - model
+    - store
+    - stream
+    - tools
+    input_json: '[{"content":[{"text":"Hi","type":"input_text"}],"role":"user","type":"message"}]'
+    omitted_advisories:
+    - input-item-ids
+    - client-metadata
+    request_preserved: false

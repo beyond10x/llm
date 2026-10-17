@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: egress-sends-disabled-thinking-as-effort-none
+summary: disabled thinking with no effort is sent as the effort none
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/4","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"}],"tools":[],"controls":{"thinking":{"mode":"disabled"}}}}'
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: true
+    error_code: null
+    encoded_body: '{"include":["reasoning.encrypted_content"],"input":[{"content":[{"text":"Hi","type":"input_text"}],"role":"user","type":"message"}],"model":"example/Small-Model","reasoning":{"effort":"none"},"store":false,"stream":true,"tools":[]}'
+    request_preserved: false

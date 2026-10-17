@@ -3,9 +3,11 @@
 //!
 //! A request is read strictly. Every field outside the published subset is refused, because a
 //! gateway that quietly ignores `response_format` or `n` answers a question it was not asked.
+//! That holds at every level: each object of the request is closed, and a key it does not
+//! publish is refused naming its path (`messages[].content[].cache_control`).
 use llm_core::{
     CallId, Error, Item, Sampling, StopReason, StreamEvent, ToolChoice, ToolName, ToolSpec,
-    TurnOutcome, TurnRequest, Usage,
+    TurnOutcome, TurnRequest, Usage, Verbosity, field_path,
 };
 use serde_json::{Map, Value, json};
 
@@ -22,11 +24,30 @@ pub const SUPPORTED_REQUEST_FIELDS: &[&str] = &[
     "reasoning_effort",
     "stream",
     "stream_options",
+    "parallel_tool_calls",
+    "prompt_cache_key",
+    "verbosity",
 ];
 
+// The keys each closed level below the top publishes (`docs/design.md` "Client request
+// fields"). Anything else is refused by its path.
+
+/// A `system`, `developer` or `user` message.
+const TEXT_MESSAGE_KEYS: &[&str] = &["role", "content"];
+const ASSISTANT_MESSAGE_KEYS: &[&str] = &["role", "content", "tool_calls"];
+const TOOL_MESSAGE_KEYS: &[&str] = &["role", "content", "tool_call_id"];
+const CONTENT_PART_KEYS: &[&str] = &["type", "text"];
+const TOOL_CALL_KEYS: &[&str] = &["id", "type", "function"];
+const TOOL_CALL_FUNCTION_KEYS: &[&str] = &["name", "arguments"];
+const TOOL_KEYS: &[&str] = &["type", "function"];
+const TOOL_FUNCTION_KEYS: &[&str] = &["name", "description", "parameters", "strict"];
+const TOOL_CHOICE_KEYS: &[&str] = &["type", "function"];
+const TOOL_CHOICE_FUNCTION_KEYS: &[&str] = &["name"];
+const STREAM_OPTION_KEYS: &[&str] = &["include_usage"];
+
 /// Request fields this subset deliberately does not implement, named so a client learns which
-/// one was refused. A field in neither list is refused too, with a diagnostic that quotes
-/// nothing the client sent.
+/// one was refused. A field in neither list is refused too, by the path `llm_core::field_path`
+/// writes for it, which quotes no value the client sent.
 pub const NAMED_UNSUPPORTED_REQUEST_FIELDS: &[&str] = &[
     "n",
     "logprobs",
@@ -39,7 +60,6 @@ pub const NAMED_UNSUPPORTED_REQUEST_FIELDS: &[&str] = &[
     "logit_bias",
     "functions",
     "function_call",
-    "parallel_tool_calls",
     "modalities",
     "audio",
     "prediction",
@@ -61,9 +81,9 @@ pub struct IngressRequest {
 /// Decode one Chat Completions request body onto the neutral subset.
 ///
 /// # Errors
-/// Refuses any field, role, content part or tool choice outside the published subset,
-/// contradictory output limits, instructions that do not precede the conversation, and every
-/// malformed value the neutral vocabulary cannot hold.
+/// Refuses any field at any level, role, content part, tool call type, tool choice or strict
+/// schema outside the published subset, contradictory output limits, instructions that do not
+/// precede the conversation, and every malformed value the neutral vocabulary cannot hold.
 pub fn decode_ingress_request(body: &Value) -> Result<IngressRequest, Error> {
     let object = body
         .as_object()
@@ -89,21 +109,19 @@ pub fn decode_ingress_request(body: &Value) -> Result<IngressRequest, Error> {
     request.sampling = Sampling {
         temperature: number(object.get("temperature"), "temperature")?,
         top_p: number(object.get("top_p"), "top_p")?,
-        reasoning_effort: object
-            .get("reasoning_effort")
-            .and_then(Value::as_str)
-            .map(ToOwned::to_owned),
+        reasoning_effort: text(object.get("reasoning_effort"), "reasoning_effort")?,
     };
+    request.controls.parallel_tool_calls =
+        optional_flag(object.get("parallel_tool_calls"), "parallel_tool_calls")?;
+    request.controls.hints.prompt_cache_key =
+        text(object.get("prompt_cache_key"), "prompt_cache_key")?;
+    request.controls.hints.verbosity = decode_verbosity(object.get("verbosity"))?;
 
     let stream = flag(object.get("stream"), "stream")?;
     let include_usage = match object.get("stream_options") {
         None | Some(Value::Null) => false,
-        Some(Value::Object(options)) => {
-            if options.keys().any(|key| key != "include_usage") {
-                return Err(Error::unsupported(
-                    "chat request stream_options carries an option outside the published subset",
-                ));
-            }
+        Some(options @ Value::Object(_)) => {
+            closed(options, "stream_options", STREAM_OPTION_KEYS)?;
             flag(options.get("include_usage"), "include_usage")?
         }
         Some(_) => {
@@ -135,15 +153,28 @@ fn refuse_unsupported_fields(object: &Map<String, Value>) -> Result<(), Error> {
             )));
         }
     }
-    if object
-        .keys()
-        .any(|key| !SUPPORTED_REQUEST_FIELDS.contains(&key.as_str()))
-    {
-        return Err(Error::unsupported(
-            "chat request carries a field outside the published subset",
-        ));
+    closed_object(object, "", SUPPORTED_REQUEST_FIELDS)
+}
+
+/// Refuse the first key of `value` outside `published`, naming its path under `at`. A value
+/// that is not an object has no keys; the reader of that level refuses its shape.
+fn closed(value: &Value, at: &str, published: &[&str]) -> Result<(), Error> {
+    match value.as_object() {
+        Some(object) => closed_object(object, at, published),
+        None => Ok(()),
     }
-    Ok(())
+}
+
+fn closed_object(object: &Map<String, Value>, at: &str, published: &[&str]) -> Result<(), Error> {
+    match object.keys().find(|key| !published.contains(&key.as_str())) {
+        // `field_path` copies only a bounded name of the wire's own shape, so no client byte
+        // beyond such a name reaches the diagnostic.
+        Some(key) => Err(Error::unsupported(format!(
+            "chat request field is outside the published subset: {}",
+            field_path(at, key)
+        ))),
+        None => Ok(()),
+    }
 }
 
 fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), Error> {
@@ -152,6 +183,17 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
             .get("role")
             .and_then(Value::as_str)
             .ok_or_else(|| Error::invalid("chat message carries no role"))?;
+        let published = match role {
+            "system" | "developer" | "user" => TEXT_MESSAGE_KEYS,
+            "assistant" => ASSISTANT_MESSAGE_KEYS,
+            "tool" => TOOL_MESSAGE_KEYS,
+            _ => {
+                return Err(Error::unsupported(
+                    "chat message role is outside the published subset",
+                ));
+            }
+        };
+        closed(message, "messages[]", published)?;
         match role {
             "system" | "developer" => {
                 if !request.items.is_empty() {
@@ -174,9 +216,15 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
                 if !text.is_empty() {
                     request.items.push(Item::assistant(text));
                 }
-                if let Some(calls) = message.get("tool_calls").and_then(Value::as_array) {
-                    for call in calls {
-                        request.items.push(decode_tool_call(call)?);
+                match message.get("tool_calls") {
+                    None | Some(Value::Null) => {}
+                    Some(Value::Array(calls)) => {
+                        for call in calls {
+                            request.items.push(decode_tool_call(call)?);
+                        }
+                    }
+                    Some(_) => {
+                        return Err(Error::invalid("chat message tool_calls is not an array"));
                     }
                 }
             }
@@ -194,17 +242,28 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
                     failed: false,
                 });
             }
-            _ => {
-                return Err(Error::unsupported(
-                    "chat message role is outside the published subset",
-                ));
-            }
+            // Every other role was refused above, before its keys were read.
+            _ => {}
         }
     }
     Ok(())
 }
 
+/// Whether a `type` key leaves its object in the subset: absent, `null` or `function`.
+fn is_function_type(value: &Value) -> bool {
+    match value.get("type") {
+        None | Some(Value::Null) => true,
+        Some(kind) => kind.as_str() == Some("function"),
+    }
+}
+
 fn decode_tool_call(call: &Value) -> Result<Item, Error> {
+    if !is_function_type(call) {
+        return Err(Error::unsupported(
+            "chat tool call type is outside the published subset",
+        ));
+    }
+    closed(call, "messages[].tool_calls[]", TOOL_CALL_KEYS)?;
     let call_id = call
         .get("id")
         .and_then(Value::as_str)
@@ -212,14 +271,20 @@ fn decode_tool_call(call: &Value) -> Result<Item, Error> {
     let function = call
         .get("function")
         .ok_or_else(|| Error::invalid("chat tool call carries no function"))?;
+    closed(
+        function,
+        "messages[].tool_calls[].function",
+        TOOL_CALL_FUNCTION_KEYS,
+    )?;
     let name = function
         .get("name")
         .and_then(Value::as_str)
         .ok_or_else(|| Error::invalid("chat tool call carries no name"))?;
-    let raw = function
-        .get("arguments")
-        .and_then(Value::as_str)
-        .unwrap_or_default();
+    let raw = match function.get("arguments") {
+        None | Some(Value::Null) => "",
+        Some(Value::String(raw)) => raw,
+        Some(_) => return Err(Error::invalid("chat tool call arguments are not text")),
+    };
     let arguments = if raw.trim().is_empty() {
         json!({})
     } else {
@@ -244,9 +309,26 @@ fn decode_tools(tools: &Value) -> Result<Vec<ToolSpec>, Error> {
                 "chat tool type is outside the published subset",
             ));
         }
+        closed(tool, "tools[]", TOOL_KEYS)?;
         let function = tool
             .get("function")
             .ok_or_else(|| Error::invalid("chat tool declaration carries no function"))?;
+        closed(function, "tools[].function", TOOL_FUNCTION_KEYS)?;
+        match function.get("strict") {
+            None | Some(Value::Null | Value::Bool(false)) => {}
+            // The neutral tool has no strict mode. Accepting `true` would promise the client a
+            // schema-conformant call that nothing downstream enforces.
+            Some(Value::Bool(true)) => {
+                return Err(Error::unsupported(
+                    "chat strict function schemas are outside the published subset",
+                ));
+            }
+            Some(_) => {
+                return Err(Error::invalid(
+                    "chat tool declaration strict is not a boolean",
+                ));
+            }
+        }
         let name = function
             .get("name")
             .and_then(Value::as_str)
@@ -257,13 +339,18 @@ fn decode_tools(tools: &Value) -> Result<Vec<ToolSpec>, Error> {
             .get("parameters")
             .cloned()
             .ok_or_else(|| Error::invalid("chat tool declaration omits its parameters schema"))?;
+        let description = match function.get("description") {
+            None | Some(Value::Null) => String::new(),
+            Some(Value::String(description)) => description.clone(),
+            Some(_) => {
+                return Err(Error::invalid(
+                    "chat tool declaration description is not text",
+                ));
+            }
+        };
         out.push(ToolSpec {
             name: tool_name_of(name)?,
-            description: function
-                .get("description")
-                .and_then(Value::as_str)
-                .unwrap_or_default()
-                .to_owned(),
+            description,
             input_schema,
         });
     }
@@ -275,10 +362,19 @@ fn decode_tool_choice(value: Option<&Value>) -> Result<ToolChoice, Error> {
         None | Some(Value::Null) => Ok(ToolChoice::Auto),
         Some(Value::String(choice)) if choice == "auto" => Ok(ToolChoice::Auto),
         Some(Value::String(choice)) if choice == "required" => Ok(ToolChoice::Required),
-        Some(Value::Object(choice)) => {
-            let name = choice
+        Some(choice @ Value::Object(_)) => {
+            if !is_function_type(choice) {
+                return Err(Error::unsupported(
+                    "chat tool choice type is outside the published subset",
+                ));
+            }
+            closed(choice, "tool_choice", TOOL_CHOICE_KEYS)?;
+            let function = choice
                 .get("function")
-                .and_then(|function| function.get("name"))
+                .ok_or_else(|| Error::invalid("chat tool choice names no function"))?;
+            closed(function, "tool_choice.function", TOOL_CHOICE_FUNCTION_KEYS)?;
+            let name = function
+                .get("name")
                 .and_then(Value::as_str)
                 .ok_or_else(|| Error::invalid("chat tool choice names no function"))?;
             Ok(ToolChoice::Named(tool_name_of(name)?))
@@ -315,7 +411,12 @@ fn content_text(content: Option<&Value>) -> Result<String, Error> {
                         "chat content part type is outside the published subset",
                     ));
                 }
-                text.push_str(part.get("text").and_then(Value::as_str).unwrap_or_default());
+                closed(part, "messages[].content[]", CONTENT_PART_KEYS)?;
+                match part.get("text") {
+                    None | Some(Value::Null) => {}
+                    Some(Value::String(part)) => text.push_str(part),
+                    Some(_) => return Err(Error::invalid("chat content part text is not text")),
+                }
             }
             Ok(text)
         }
@@ -331,6 +432,41 @@ fn flag(value: Option<&Value>, field: &'static str) -> Result<bool, Error> {
             "chat request field `{field}` is not a boolean"
         ))),
     }
+}
+
+fn optional_flag(value: Option<&Value>, field: &'static str) -> Result<Option<bool>, Error> {
+    match value {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::Bool(flag)) => Ok(Some(*flag)),
+        Some(_) => Err(Error::invalid(format!(
+            "chat request field `{field}` is not a boolean"
+        ))),
+    }
+}
+
+fn text(value: Option<&Value>, field: &'static str) -> Result<Option<String>, Error> {
+    match value {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(text)) => Ok(Some(text.clone())),
+        Some(_) => Err(Error::invalid(format!(
+            "chat request field `{field}` is not a string"
+        ))),
+    }
+}
+
+fn decode_verbosity(value: Option<&Value>) -> Result<Option<Verbosity>, Error> {
+    Ok(match text(value, "verbosity")?.as_deref() {
+        None => None,
+        Some("low") => Some(Verbosity::Low),
+        Some("medium") => Some(Verbosity::Medium),
+        Some("high") => Some(Verbosity::High),
+        // The value is the client's, so the diagnostic names the field and not the value.
+        Some(_) => {
+            return Err(Error::unsupported(
+                "chat request verbosity is outside the published subset",
+            ));
+        }
+    })
 }
 
 fn number(value: Option<&Value>, field: &'static str) -> Result<Option<f64>, Error> {

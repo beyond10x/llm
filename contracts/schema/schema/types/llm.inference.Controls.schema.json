@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.Controls",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:916d2f19d3932248ab06cc423ce0f4a4a02553b9408e9a845a2790a244ec39d8",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.CacheTtl": {
+      "title": "CacheTtl",
+      "x-ess-name": "llm.inference.CacheTtl",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "FiveMinutes",
+        "OneHour"
+      ]
+    },
+    "llm.inference.Controls": {
+      "title": "Controls",
+      "x-ess-name": "llm.inference.Controls",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "thinking": {
+          "$ref": "#/$defs/llm.inference.Thinking"
+        },
+        "parallel_tool_calls": {
+          "type": "boolean"
+        },
+        "hints": {
+          "$ref": "#/$defs/llm.inference.Hints"
+        }
+      },
+      "required": [
+        "hints"
+      ],
+      "additionalProperties": false
+    },
+    "llm.inference.Hints": {
+      "title": "Hints",
+      "x-ess-name": "llm.inference.Hints",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "prompt_cache": {
+          "$ref": "#/$defs/llm.inference.PromptCache"
+        },
+        "prompt_cache_key": {
+          "type": "string"
+        },
+        "verbosity": {
+          "$ref": "#/$defs/llm.inference.Verbosity"
+        },
+        "reasoning_summary": {
+          "$ref": "#/$defs/llm.inference.ReasoningSummary"
+        },
+        "unforwarded": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/llm.inference.Unforwarded"
+          }
+        }
+      },
+      "required": [
+        "unforwarded"
+      ],
+      "additionalProperties": false
+    },
+    "llm.inference.PromptCache": {
+      "title": "PromptCache",
+      "x-ess-name": "llm.inference.PromptCache",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "ttl": {
+          "$ref": "#/$defs/llm.inference.CacheTtl"
+        }
+      },
+      "additionalProperties": false
+    },
+    "llm.inference.ReasoningSummary": {
+      "title": "ReasoningSummary",
+      "x-ess-name": "llm.inference.ReasoningSummary",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Auto",
+        "Concise",
+        "Detailed"
+      ]
+    },
+    "llm.inference.Thinking": {
+      "title": "Thinking",
+      "x-ess-name": "llm.inference.Thinking",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/llm.inference.ThinkingMode"
+        },
+        "budget_tokens": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false
+    },
+    "llm.inference.ThinkingMode": {
+      "title": "ThinkingMode",
+      "x-ess-name": "llm.inference.ThinkingMode",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Adaptive",
+        "Enabled",
+        "Disabled"
+      ]
+    },
+    "llm.inference.Unforwarded": {
+      "title": "Unforwarded",
+      "x-ess-name": "llm.inference.Unforwarded",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "InputItemIds",
+        "ClientMetadata"
+      ]
+    },
+    "llm.inference.Verbosity": {
+      "title": "Verbosity",
+      "x-ess-name": "llm.inference.Verbosity",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ]
+    }
+  }
+}

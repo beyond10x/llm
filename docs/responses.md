@@ -82,9 +82,13 @@ boundary and are absent.
 
 ## The pinned request subset
 
-`project_request` writes exactly these fields, and `ingest_request` reads exactly these fields.
-`ACCEPTED_BODY_FIELDS` is the list, and a body carrying anything else is refused with
-`ErrorCode::Unsupported` rather than translated with the excess dropped.
+`project_request` writes these fields, and `ingest_request` reads them and two more it never
+writes, `instructions` and `client_metadata`. `ACCEPTED_BODY_FIELDS` is the list. Every object
+ingress reads is closed: a key no rule names, at any level, is refused with
+`ErrorCode::Unsupported` and `request body carries a field outside the pinned subset: <path>`,
+the path written by `llm_core::field_path` (`input[].content[].foo`, `tools[].container`,
+`tool_choice.foo`, `reasoning.generate_summary`, `text.format`), rather than translated with the
+excess dropped.
 
 | field | value |
 | --- | --- |
@@ -94,22 +98,48 @@ boundary and are absent.
 | `stream` | always `true`; this projection serves streaming responses only |
 | `store` | always `false`; the conversation is the caller's, replayed whole every turn |
 | `include` | `["reasoning.encrypted_content"]` |
-| `max_output_tokens`, `temperature`, `top_p`, `reasoning.effort`, `tool_choice` | present only when the caller set them |
+| `max_output_tokens`, `temperature`, `top_p`, `tool_choice` | present only when the caller set them |
+| `reasoning` | `effort` (from `llm_core::wire_effort`: `max` is sent as `xhigh`, disabled thinking as `none`) and `summary` (`auto`, `concise`, `detailed`), each only when set |
+| `parallel_tool_calls` | the turn's control, only when set |
+| `prompt_cache_key` | the turn's hint, or the conversation's identifier ([Conversation identity](#conversation-identity)) |
+| `text` | `{"verbosity": "low" \| "medium" \| "high"}`, only when the hint is set |
+| `instructions` | ingress only: the head of the instructions, below |
+| `client_metadata` | ingress only: any object, the unforwarded hint `client-metadata`; its value is not kept |
 
 **Absent stays absent.** A sampling field nobody set is one the provider decides; writing its
 default here would turn that decision into this crate's without anyone making it. `tool_choice` is
 likewise omitted for `Auto`, because the model choosing is the route's own default.
 
-The standing instruction goes at the **head of `input`** as a `developer` message, not in a
-top-level `instructions` field. An empty instruction produces no entry at all, and a body carrying
-a top-level `instructions` is outside the subset and refused.
+The standing instruction goes out at the **head of `input`** as one `developer` message, not in a
+top-level `instructions` field. An empty instruction produces no entry at all. On ingress the
+instructions are the top-level `instructions` (a string) followed by the `input_text` parts of
+every developer message that opens `input`, in order, joined by a line feed; an empty string is
+still a part. That is what Codex sends: an `instructions` string and a developer message of two
+parts. The join is one way: the turn round-trips, the body comes back as one developer message. A
+developer part of another type, a developer message with no parts, and a developer message after
+the first item of another kind are refused: the neutral turn has no item that places an
+instruction between two turns.
+
+A tool of another type than `function` is refused. When its type is one of `web_search`,
+`custom`, `namespace`, `tool_search`, `local_shell`, `file_search`, `computer_use_preview`, `mcp`,
+`image_generation` or `code_interpreter` (`REFUSED_TOOL_TYPES`) the diagnostic names it, copied
+from that list; any other type is refused without being named.
+
+### Advisory hints
+
+`prompt_cache_key`, `text.verbosity` and `reasoning.summary` are hints this wire sends.
+`omitted_advisories(&TurnRequest)` lists, in the design's order, the hints a turn carries that it
+does not send: `prompt-cache`, `input-item-ids` and `client-metadata`. `ResponsesClient` emits one
+`advisory-omitted` warning naming them after a successful turn, never before or during it (a
+sink event is visible output and ends fallback eligibility), and none when the turn failed or
+nothing was omitted. A sink that refuses that warning fails the turn with its own error.
 
 ### Items
 
 | neutral item | wire entry |
 | --- | --- |
 | `UserText` | `message` / `user` / `input_text`, exactly one part |
-| `AssistantText` | `message` / `assistant` / `output_text`, exactly one part |
+| `AssistantText` | `message` / `assistant` / `output_text`, exactly one part; an empty `annotations` array is accepted on ingress |
 | `ToolCall` | `function_call` with `arguments` as a JSON **string** |
 | `ToolResult` | `function_call_output` with the envelope below |
 | `Opaque` | outgoing: the payload, verbatim, after all six coordinates match |
@@ -120,7 +150,16 @@ single string this wire's `function_call_output` carries. The wire has no failur
 neutral `failed` flag has to travel inside the text. It is applied to successful results too: an
 envelope used only for failures cannot be told apart from a successful result that happens to be
 shaped like one, and a round trip that can flip `failed` corrupts the conversation rather than
-translating it. A body whose `function_call_output` is not in this envelope is refused on ingress.
+translating it. On ingress a `function_call_output` string that parses to exactly this envelope
+(an object of exactly a boolean `ok` and an `output`) is read as one; any other string is a
+successful result whose output is that string, which is how Codex sends a command's output. It
+goes back out inside the envelope. An `output` that is not a string is refused.
+
+Each modelled item names its keys: a message `type`, `id`, `role` and `content`; a content part
+`type` and `text`; a `function_call` `type`, `id`, `call_id`, `name` and `arguments`; a
+`function_call_output` `type`, `id`, `call_id` and `output`. An `id` (a string) is the unforwarded
+hint `input-item-ids`: its value is not kept and egress writes no id. A `reasoning` item is carried
+whole, its `id` inside the payload.
 
 ### Opaque state goes out bound and comes back in unattributed
 
@@ -171,6 +210,12 @@ is read back as that shape rather than as opaque.
 | an `input` entry of a type neither modelled nor in `CARRIED_ENTRY_TYPES`, on ingress | `Unsupported` |
 | a binding not declaring the Responses protocol | `Unsupported` |
 | image or audio content, on either side | `Unsupported` |
+| a key outside the subset at any level, on ingress, named by its path | `Unsupported` |
+| a tool of another type than `function`, on ingress | `Unsupported` |
+| a developer message after the first item of another kind, on ingress | `Unsupported` |
+| a thinking budget, or disabled thinking beside an effort, outgoing (`llm_core::wire_effort`) | `Unsupported` |
+| a turn's `prompt_cache_key` that differs from the client's conversation, outgoing | `Unsupported` |
+| a field of the wrong type (`instructions`, `parallel_tool_calls`, `prompt_cache_key`, `client_metadata`, `text`, an item `id`, a non-string tool result), on ingress | `InvalidRequest` |
 | a request model that is not the binding's | `InvalidRequest` |
 | everything `TurnRequest::validate` already refuses | its own |
 
@@ -183,7 +228,8 @@ vacuously.
 
 **Every pre-flight check egress applies, ingress applies too.** `project_request` applies exactly
 five — the binding's protocol, `TurnRequest::validate`, the request model, the tool-name class and
-the opaque coordinates — and each has its counterpart in `ingest_request`. A gateway that accepted
+the opaque coordinates — and each has its counterpart in `ingest_request`. The sixth,
+`llm_core::wire_effort`, refuses only a thinking control, which this wire's ingress never reads. A gateway that accepted
 a request its own outgoing side then refused to forward would have agreed to something it cannot
 do, and the caller would find out one hop later.
 
@@ -414,12 +460,12 @@ These are Harness's (`harness-responses/src/project.rs:360`, `lib.rs:289`-`297`)
 cache on the conversation because a prefix digest measured `cached_tokens: 0` where the
 conversation's id measured 85% cached.
 
-**Ingress does not read `prompt_cache_key`.** The neutral turn has no conversation to carry it,
-and reading a body without it would re-project a different body. So `ingest_request` refuses a
-body carrying one as a field outside the subset, and a projection with a conversation reports
-`request_preserved: false`. The consequence: a client opted into a conversation cannot send through
-this crate's own Responses gateway ingress. Leave the conversation unset on a route that ends at
-an llm gateway.
+**Ingress reads `prompt_cache_key` into the turn's hint**, and `project_request` writes the hint
+back. A turn carrying its own key, sent with a conversation, must carry that conversation's
+identifier: `encode_request` refuses a different one with `Unsupported` (`the turn's
+prompt_cache_key differs from the client's conversation`) rather than letting one of the two
+silently win. A turn without a key, sent with a conversation, gains the conversation's, so its
+projection reports `request_preserved: false`.
 
 ## What this does not establish
 

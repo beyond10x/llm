@@ -10,7 +10,7 @@ use llm_core::{
 };
 use llm_messages::{
     IngressStream, decode_message, decode_request, decode_stream, encode_ingress_message,
-    encode_request,
+    encode_request, omitted_advisories,
 };
 use llm_routing::Catalog;
 use serde::Deserialize;
@@ -93,7 +93,7 @@ fn blank() -> Value {
         "dispatch":null,"wire_request":null,
         "neutral_request":null,"stream":null,"items":[],"text":"","reasoning":"",
         "tool_arguments":[],"tool_stream":[],"upstream_model":null,"response_id":null,"final_usage":null,
-        "usage_json":null,"stop_reason":null})
+        "usage_json":null,"stop_reason":null,"omitted_advisories":[]})
 }
 
 fn inspect<T: for<'de> Deserialize<'de>>(
@@ -152,6 +152,24 @@ reasoning_efforts = ["medium", "high"]
 context_window = 32768
 max_output_tokens = 2048
 
+[[models]]
+id = "internal-model-max"
+upstream_name = "example/Model-Max"
+
+[[serving_models]]
+id = "serving-max"
+endpoint_id = "endpoint"
+model_id = "internal-model-max"
+protocol = "messages"
+[serving_models.capabilities]
+tools = true
+tool_choice = true
+temperature = true
+top_p = true
+reasoning_efforts = ["medium", "high", "max"]
+context_window = 32768
+max_output_tokens = 2048
+
 [[routes]]
 id = "messages"
 alias = "messages-route"
@@ -192,8 +210,16 @@ fn project(input: &ProjectInput, facts: &mut Value) -> Result<(), Error> {
         facts["stream"] = json!(ingress.stream);
         facts["neutral_request"] = json!(document(&ingress.request)?);
         facts["items"] = json!(labels(&ingress.request.items));
+        facts["omitted_advisories"] = json!(omitted(&ingress.request));
     } else {
         let request = turn(&input.request_json)?;
+        // The binding that serves the turn's model, as routing would select it; the fixture
+        // binding otherwise, so a turn naming another model meets the projection's own refusal.
+        let binding = catalog
+            .bindings()
+            .map(|(_, binding)| binding)
+            .find(|binding| binding.provenance().model.as_str() == request.model)
+            .unwrap_or(binding);
         let wire: Value = serde_json::from_slice(&encode_request(&request, binding)?)
             .map_err(|_| Error::protocol("the projection is not JSON"))?;
         facts["wire_request"] = json!(
@@ -201,8 +227,17 @@ fn project(input: &ProjectInput, facts: &mut Value) -> Result<(), Error> {
                 .map_err(|_| Error::protocol("the projection cannot be encoded"))?
         );
         facts["items"] = json!(labels(&request.items));
+        facts["omitted_advisories"] = json!(omitted(&request));
     }
     Ok(())
+}
+
+/// The advisory hints the Messages projection reports omitted for `request`, by name.
+fn omitted(request: &TurnRequest) -> Vec<&'static str> {
+    omitted_advisories(request)
+        .into_iter()
+        .map(llm_core::Advisory::name)
+        .collect()
 }
 
 fn stream(input: &StreamInput, facts: &mut Value) -> Result<(), Error> {

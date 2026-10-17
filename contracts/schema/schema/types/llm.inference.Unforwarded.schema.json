@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.Unforwarded",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:d785cc185f36042ae343d33216d6ce510261508bfbb4902ce1e6091de13f073d",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.Unforwarded": {
+      "title": "Unforwarded",
+      "x-ess-name": "llm.inference.Unforwarded",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "InputItemIds",
+        "ClientMetadata"
+      ]
+    }
+  }
+}

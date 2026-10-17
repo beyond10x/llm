@@ -51,7 +51,8 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | `streamed-tool-call-name` | **Streamed tool calls carry their announced name.** The start of a streamed tool call names the tool before any argument fragment, in all three protocol projections. |
 | `unattributed-opaque-state` | **Opaque state from ingress cannot be sent until bound.** Reasoning state that arrives in a client request is held unattributed, and every egress path refuses it until the caller binds it to a target of the same protocol. |
 | `parity-retry-classes` | **Every failure says whether it may be retried.** `Error::retriable` and `Error::may_retry`: the transport marks 408, 429, 5xx, no response, a body failing mid-stream and a stream ending inside an event; unauthorized, refused, invalid and cancelled failures never are. |
-| `runtime-contracts` | **A written contract and compatibility policy.** `docs/contract-v1.md` states turn ownership, validation, accounting, pricing, credentials and compatibility; the versioned envelopes (`llm.turn/3`, `llm.outcome/4`, `llm.usage/2`, `llm.cost/2`, `llm.binding/1`, `llm.catalog/1`) refuse unknown versions and fields. |
+| `neutral-turn-controls` | **Thinking, parallel tool calls and advisory hints in the neutral turn.** `TurnRequest.controls` carries a thinking mode, the parallel-tool-call choice and advisory hints (prompt cache, cache key, verbosity, reasoning summary, unforwarded field names); `wire_effort` is the one reasoning table (`max` reaches Chat Completions and Responses as `xhigh`), and a turn with controls is `llm.turn/4`. |
+| `runtime-contracts` | **A written contract and compatibility policy.** `docs/contract-v1.md` states turn ownership, validation, accounting, pricing, credentials and compatibility; the versioned envelopes (`llm.turn/3` and `/4`, `llm.outcome/4`, `llm.usage/2`, `llm.cost/2`, `llm.binding/1`, `llm.catalog/1`) refuse unknown versions and fields. |
 
 ### Transport
 
@@ -59,7 +60,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | --- | --- |
 | `http-streaming` | **Bounded HTTP and server-sent events.** One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails. |
 | `parity-http-timeouts-cancel` | **Connect and idle bounds, and cancellation.** A 15-second connect timeout (`HttpClient::with_connect_timeout`), a 180-second idle bound by default, and cancellation that wins over a pending read. |
-| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 777 scenarios against the real crates three times and skips none. |
+| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 868 scenarios against the real crates three times and skips none. |
 
 ### Protocols
 
@@ -74,6 +75,10 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | `parity-responses-wire` | **Responses request encoding and conversation identity.** `encode_request` gives the exact bytes the client sends; opt-in conversation identity sends `prompt_cache_key`, `session-id` and `x-client-request-id`. |
 | `responses-ingress-encoder` | **A server answers a Responses caller.** `encode_ingress_response` and `IngressStream` encode neutral events and an outcome as the Responses event payloads and response object this crate's decoder reads back as the same turn; partial usage and the error's message are never relayed. |
 | `messages-ingress-encoder` | **A server answers a Messages caller.** `encode_ingress_message` and `IngressStream` encode the Messages event stream and message, each block, reason and usage report checked against this crate's decoder; `without_reasoning_relay` for an upstream that cannot sign reasoning. |
+| `messages-ingress-client-fields` | **Claude Code's first turn under written Messages rules.** Ingress carries `thinking`, a `system` of text blocks, `cache_control` as the prompt-cache hint, effort `max` and `disable_parallel_tool_use`; `metadata` is reported, never sent; everything else is refused by its path. Checked against llm-gateway's authored fixture, not a captured session. |
+| `responses-ingress-client-fields` | **Codex's requests under written Responses rules.** Ingress carries `instructions`, `parallel_tool_calls`, `prompt_cache_key`, `text.verbosity` and `reasoning.summary`, reads a plain-string tool result, reports item ids and `client_metadata` as unsent, and refuses every unknown key at every level by its path and hosted tools by type. Checked against requests captured from Codex 0.160.0 at a loopback recorder; no provider was called. |
+| `chat-ingress-closed-levels` | **Chat ingress closed at every level.** Every unknown key below the top is refused by its path, `strict` schemas are refused, and `parallel_tool_calls`, `prompt_cache_key` and `verbosity` are carried both ways. |
+| `client-turns-cross-wire` | **A Claude Code and a Codex first turn cross wires.** Each decodes on its own wire and projects onto the other two with every field under a written rule; each projection lists the advisory hints it omits, and each client warns `advisory-omitted` after a successful turn. |
 | `codex-stream` | **Responses turns against the Codex backend.** A success without a content type is read as an event stream when one was asked for, and an empty terminal output after streamed items keeps the streamed items. |
 
 ### Credentials

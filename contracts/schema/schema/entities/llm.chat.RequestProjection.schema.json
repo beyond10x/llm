@@ -62,6 +62,15 @@
     "include_usage": {
       "type": "boolean"
     },
+    "wire_request": {
+      "type": "string"
+    },
+    "omitted_advisories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "state": {
       "$ref": "#/$defs/llm.chat.RequestProjection.State"
     }
@@ -73,14 +82,15 @@
     "message_roles",
     "message_contents",
     "tool_arguments",
+    "omitted_advisories",
     "state"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "ae3b0bdbde784d678a05cfa1c3b8412e603d1eb69bb61f7f128323775ca513d2",
-    "contract_digest": "slice-sha256/2:9da45472e007efff9cfafca64acb2f84d24afe9ede92de288eb962ce1ffa9c19",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:5107de5b8b734781ea37f8f5de2cb7d806a16aa7c9bde4362a6135a41dee8c68",
     "regenerate": "ess generate"
   },
   "$defs": {

@@ -1,7 +1,8 @@
 use crate::{absent, fields, optional, string};
 use llm_core::{
-    AuthKind, CallId, Error, Item, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, Protocol,
-    Provenance, Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, exceeds,
+    Advisory, AuthKind, CacheTtl, CallId, Error, Item, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES,
+    PromptCache, Protocol, Provenance, Sampling, Thinking, ToolCall, ToolChoice, ToolName,
+    ToolSpec, TurnRequest, Unforwarded, exceeds, wire_effort,
 };
 use llm_providers::Binding;
 use serde_json::{Value, json};
@@ -67,8 +68,15 @@ pub(crate) fn block(item: &Item) -> Result<Value, Error> {
 /// route rejects. An allowlist, so that a new opaque shape never becomes markable unnoticed.
 const MARKABLE: [&str; 2] = ["text", "tool_result"];
 
-fn ephemeral() -> Value {
-    json!({"type":"ephemeral"})
+/// The breakpoint this projection places: `ephemeral`, with the lifetime `1h` when the turn's
+/// prompt-cache hint asks for it. The default lifetime is written by leaving `ttl` out.
+fn ephemeral(request: &TurnRequest) -> Value {
+    match request.controls.hints.prompt_cache {
+        Some(PromptCache {
+            ttl: Some(CacheTtl::OneHour),
+        }) => json!({"type":"ephemeral","ttl":"1h"}),
+        _ => json!({"type":"ephemeral"}),
+    }
 }
 
 /// Places the rolling prompt-cache breakpoint on the last markable block of the last message.
@@ -77,7 +85,7 @@ fn ephemeral() -> Value {
 /// write the prefix the next one reads back, so the conversation's growth is paid for once rather
 /// than on every remaining turn. A tail with nothing markable carries no marker: a missing
 /// breakpoint costs money, a modified opaque block costs the turn.
-fn mark_rolling_breakpoint(messages: &mut [Value]) {
+fn mark_rolling_breakpoint(messages: &mut [Value], mark: Value) {
     let tail = messages
         .last_mut()
         .and_then(|message| message.get_mut("content"))
@@ -92,7 +100,7 @@ fn mark_rolling_breakpoint(messages: &mut [Value]) {
         })
         .and_then(Value::as_object_mut);
     if let Some(block) = tail {
-        block.insert("cache_control".to_owned(), ephemeral());
+        block.insert("cache_control".to_owned(), mark);
     }
 }
 
@@ -136,7 +144,7 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
         }
         tools.push(json!({"name":tool.name,"description":tool.description,"input_schema":tool.input_schema}));
     }
-    mark_rolling_breakpoint(&mut messages);
+    mark_rolling_breakpoint(&mut messages, ephemeral(request));
     let mut body = json!({"model":binding.upstream_model(),"max_tokens":request.max_output_tokens.unwrap_or(binding.capabilities().max_output_tokens),"messages":messages,"stream":true});
     // A block list rather than a string, so it can carry the breakpoint that caches the constant
     // head (tools, then system) of every turn. An empty instruction sends nothing to mark; the
@@ -151,7 +159,9 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
         system.push(json!({"type":"text","text":SUBSCRIPTION_CLIENT_PREAMBLE}));
     }
     if !request.instructions.is_empty() {
-        system.push(json!({"type":"text","text":request.instructions,"cache_control":ephemeral()}));
+        system.push(
+            json!({"type":"text","text":request.instructions,"cache_control":ephemeral(request)}),
+        );
     }
     if !system.is_empty() {
         body["system"] = Value::Array(system);
@@ -165,13 +175,30 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
     if let Some(n) = request.sampling.top_p {
         body["top_p"] = json!(n);
     }
-    if let Some(effort) = &request.sampling.reasoning_effort {
+    if let Some(effort) = wire_effort(Protocol::Messages, request)? {
         body["output_config"] = json!({"effort":effort});
     }
-    match &request.tool_choice {
-        ToolChoice::Auto => {}
-        ToolChoice::Required => body["tool_choice"] = json!({"type":"any"}),
-        ToolChoice::Named(n) => body["tool_choice"] = json!({"type":"tool","name":n}),
+    match request.controls.thinking {
+        None => {}
+        Some(Thinking::Adaptive) => body["thinking"] = json!({"type":"adaptive"}),
+        Some(Thinking::Enabled { budget_tokens }) => {
+            body["thinking"] = json!({"type":"enabled","budget_tokens":budget_tokens});
+        }
+        Some(Thinking::Disabled) => body["thinking"] = json!({"type":"disabled"}),
+    }
+    let mut choice = match &request.tool_choice {
+        ToolChoice::Auto => None,
+        ToolChoice::Required => Some(json!({"type":"any"})),
+        ToolChoice::Named(n) => Some(json!({"type":"tool","name":n})),
+    };
+    // This wire carries the parallel control inside the choice, so an automatic choice that
+    // needs to carry it is written out.
+    if let Some(parallel) = request.controls.parallel_tool_calls {
+        choice.get_or_insert_with(|| json!({"type":"auto"}))["disable_parallel_tool_use"] =
+            json!(!parallel);
+    }
+    if let Some(choice) = choice {
+        body["tool_choice"] = choice;
     }
     if exceeds(&body, MAX_REQUEST_BYTES) {
         return Err(Error::too_large("Messages encoded request exceeds bound"));
@@ -198,7 +225,7 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
             "Messages ingress requires Messages origin",
         ));
     }
-    let value: Value = serde_json::from_slice(bytes)
+    let mut value: Value = serde_json::from_slice(bytes)
         .map_err(|_| Error::invalid("Messages ingress is not JSON"))?;
     fields(
         &value,
@@ -214,6 +241,8 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
             "top_p",
             "output_config",
             "tool_choice",
+            "thinking",
+            "metadata",
         ],
     )?;
     let mut request = TurnRequest::new(string(&value, "model")?, Vec::new());
@@ -224,11 +253,22 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
             .filter(|n| *n != 0)
             .ok_or_else(|| Error::invalid("Messages max_tokens must be positive"))?,
     );
-    request.instructions = instructions(&value)?;
+    let mut marks = Marks::default();
+    request.instructions = instructions(&value, &mut marks)?;
+    marks.strip_content(&mut value)?;
     decode_messages(&value, &mut request)?;
-    decode_tools(&value, &mut request)?;
+    decode_tools(&value, &mut request, &mut marks)?;
     decode_sampling(&value, &mut request)?;
     decode_tool_choice(&value, &mut request)?;
+    request.controls.thinking = thinking(&value)?;
+    if client_metadata(&value)? {
+        request
+            .controls
+            .hints
+            .unforwarded
+            .insert(Unforwarded::ClientMetadata);
+    }
+    request.controls.hints.prompt_cache = marks.prompt_cache();
     let stream = match optional(&value, "stream") {
         None => false,
         Some(Value::Bool(b)) => *b,
@@ -237,21 +277,162 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
     request.validate()?;
     Ok(IngressRequest { request, stream })
 }
-/// The system prompt, which this route carries either as text or as one text block.
-fn instructions(value: &Value) -> Result<String, Error> {
+/// The prompt-cache marks one arriving request carries, read into one hint.
+///
+/// A mark is `{"type":"ephemeral"}` with an optional `ttl` of `5m` or `1h`. `5m` is the route's
+/// default, so a mark without a `ttl` and a `5m` mark have the same lifetime; only `1h` differs.
+/// The neutral hint holds one lifetime, so marks of two lifetimes in one request are refused
+/// rather than one of them silently winning.
+#[derive(Default)]
+struct Marks {
+    /// `None` until a mark is read; then whether its lifetime is one hour.
+    one_hour: Option<bool>,
+}
+
+impl Marks {
+    /// Reads the `cache_control` of the object at `at`, when it has one.
+    fn read(&mut self, object: &Value, at: &str) -> Result<(), Error> {
+        let Some(mark) = optional(object, "cache_control") else {
+            return Ok(());
+        };
+        if !mark.is_object() {
+            return Err(Error::unsupported(
+                "Messages cache mark is outside the declared subset",
+            ));
+        }
+        fields(mark, &format!("{at}.cache_control"), &["type", "ttl"])?;
+        if mark.get("type").and_then(Value::as_str) != Some("ephemeral") {
+            return Err(Error::unsupported(
+                "Messages cache mark type is outside the declared subset",
+            ));
+        }
+        let one_hour = match optional(mark, "ttl").map(Value::as_str) {
+            None | Some(Some("5m")) => false,
+            Some(Some("1h")) => true,
+            Some(_) => {
+                return Err(Error::unsupported(
+                    "Messages cache mark lifetime is outside the declared subset",
+                ));
+            }
+        };
+        if self.one_hour.is_some_and(|seen| seen != one_hour) {
+            return Err(Error::unsupported(
+                "Messages cache marks carry more than one lifetime",
+            ));
+        }
+        self.one_hour = Some(one_hour);
+        Ok(())
+    }
+
+    /// Reads and removes the mark of every content block that may carry one, so each block then
+    /// decodes through the same reader a response block does. A block of any other type keeps
+    /// its mark, and the block reader refuses it by its path; a shape that is not a list of
+    /// messages holding blocks is left for the message reader to refuse.
+    fn strip_content(&mut self, body: &mut Value) -> Result<(), Error> {
+        let Some(messages) = body.get_mut("messages").and_then(Value::as_array_mut) else {
+            return Ok(());
+        };
+        for message in messages {
+            let Some(blocks) = message.get_mut("content").and_then(Value::as_array_mut) else {
+                continue;
+            };
+            for block in blocks {
+                let markable = block
+                    .get("type")
+                    .and_then(Value::as_str)
+                    .is_some_and(|kind| matches!(kind, "text" | "tool_use" | "tool_result"));
+                if !markable || block.get("cache_control").is_none() {
+                    continue;
+                }
+                self.read(block, "messages[].content[]")?;
+                if let Some(object) = block.as_object_mut() {
+                    object.remove("cache_control");
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn prompt_cache(&self) -> Option<PromptCache> {
+        self.one_hour.map(|one_hour| PromptCache {
+            ttl: one_hour.then_some(CacheTtl::OneHour),
+        })
+    }
+}
+
+/// The system prompt: text, or text blocks joined by a line feed as Chat joins system messages.
+fn instructions(value: &Value, marks: &mut Marks) -> Result<String, Error> {
     match optional(value, "system") {
         None => Ok(String::new()),
         Some(Value::String(text)) => Ok(text.clone()),
-        Some(Value::Array(blocks)) if blocks.len() == 1 => {
-            fields(&blocks[0], "system[]", &["type", "text"])?;
-            if string(&blocks[0], "type")? != "text" {
-                return Err(Error::unsupported("Messages system block is not text"));
+        Some(Value::Array(blocks)) => {
+            let mut texts = Vec::with_capacity(blocks.len());
+            for block in blocks {
+                if block.get("type").and_then(Value::as_str) != Some("text") {
+                    return Err(Error::unsupported("Messages system block is not text"));
+                }
+                fields(block, "system[]", &["type", "text", "cache_control"])?;
+                marks.read(block, "system[]")?;
+                texts.push(string(block, "text")?);
             }
-            Ok(string(&blocks[0], "text")?.to_owned())
+            Ok(texts.join("\n"))
         }
         _ => Err(Error::unsupported(
             "Messages system shape is outside the declared subset",
         )),
+    }
+}
+
+/// The thinking control: `adaptive`, `enabled` with a positive `budget_tokens`, or `disabled`.
+fn thinking(value: &Value) -> Result<Option<Thinking>, Error> {
+    let Some(thinking) = optional(value, "thinking") else {
+        return Ok(None);
+    };
+    let kind = thinking
+        .as_object()
+        .and_then(|object| object.get("type"))
+        .and_then(Value::as_str)
+        .ok_or_else(|| Error::invalid("Messages thinking must name its type"))?;
+    Ok(Some(match kind {
+        "adaptive" => {
+            fields(thinking, "thinking", &["type"])?;
+            Thinking::Adaptive
+        }
+        "disabled" => {
+            fields(thinking, "thinking", &["type"])?;
+            Thinking::Disabled
+        }
+        "enabled" => {
+            fields(thinking, "thinking", &["type", "budget_tokens"])?;
+            Thinking::Enabled {
+                budget_tokens: thinking
+                    .get("budget_tokens")
+                    .and_then(Value::as_u64)
+                    .filter(|n| *n != 0)
+                    .ok_or_else(|| {
+                        Error::invalid("Messages thinking budget must be a positive integer")
+                    })?,
+            }
+        }
+        _ => {
+            return Err(Error::unsupported(
+                "Messages thinking type is outside the declared subset",
+            ));
+        }
+    }))
+}
+
+/// Whether the request carries client telemetry: `metadata` holding only `user_id`, a string.
+/// Its value has no model semantics, is never kept and is never re-emitted.
+fn client_metadata(value: &Value) -> Result<bool, Error> {
+    let Some(metadata) = optional(value, "metadata") else {
+        return Ok(false);
+    };
+    fields(metadata, "metadata", &["user_id"])?;
+    match optional(metadata, "user_id") {
+        None => Ok(false),
+        Some(Value::String(_)) => Ok(true),
+        Some(_) => Err(Error::invalid("Messages metadata user_id must be text")),
     }
 }
 
@@ -297,7 +478,7 @@ fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error
     Ok(())
 }
 
-fn decode_tools(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
+fn decode_tools(value: &Value, request: &mut TurnRequest, marks: &mut Marks) -> Result<(), Error> {
     let Some(tools) = optional(value, "tools") else {
         return Ok(());
     };
@@ -305,7 +486,12 @@ fn decode_tools(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
         .as_array()
         .ok_or_else(|| Error::invalid("Messages tools must be an array"))?
     {
-        fields(tool, "tools[]", &["name", "description", "input_schema"])?;
+        fields(
+            tool,
+            "tools[]",
+            &["name", "description", "input_schema", "cache_control"],
+        )?;
+        marks.read(tool, "tools[]")?;
         let schema = tool
             .get("input_schema")
             .filter(|schema| schema.is_object())
@@ -344,7 +530,20 @@ fn decode_tool_choice(value: &Value, request: &mut TurnRequest) -> Result<(), Er
     let Some(choice) = optional(value, "tool_choice") else {
         return Ok(());
     };
-    fields(choice, "tool_choice", &["type", "name"])?;
+    fields(
+        choice,
+        "tool_choice",
+        &["type", "name", "disable_parallel_tool_use"],
+    )?;
+    request.controls.parallel_tool_calls = match optional(choice, "disable_parallel_tool_use") {
+        None => None,
+        Some(Value::Bool(disable)) => Some(!disable),
+        Some(_) => {
+            return Err(Error::invalid(
+                "Messages disable_parallel_tool_use must be boolean",
+            ));
+        }
+    };
     request.tool_choice = match string(choice, "type")? {
         "auto" => {
             absent(choice, "name")?;
@@ -482,4 +681,16 @@ pub(crate) fn decode_block(
             "Messages content is outside the declared subset",
         )),
     }
+}
+
+/// The advisory hints this projection sends: only the prompt cache, as the lifetime of the
+/// breakpoints it places (the advisory table of `docs/design.md`).
+const CARRIED: [Advisory; 1] = [Advisory::PromptCache];
+
+/// The advisory hints `request` carries that this wire does not send, in the design's order.
+///
+/// A gateway can report them before it forwards anything; [`crate::MessagesClient`] emits them
+/// as one `advisory-omitted` warning after a turn has succeeded.
+pub fn omitted_advisories(request: &TurnRequest) -> Vec<Advisory> {
+    request.controls.hints.omitted_by(&CARRIED)
 }

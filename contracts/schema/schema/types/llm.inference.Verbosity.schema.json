@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.Verbosity",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:c3d97e2d363a56125be5cf36e495f02e477e0b50d6b03e2df67fc882e28aeb77",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.Verbosity": {
+      "title": "Verbosity",
+      "x-ess-name": "llm.inference.Verbosity",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ]
+    }
+  }
+}

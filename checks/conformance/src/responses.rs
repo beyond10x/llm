@@ -11,7 +11,7 @@ use llm_core::{
 };
 use llm_responses::{
     Binding, Conversation, IngressStream, PATH, decode_stream, encode_ingress_response,
-    encode_request, ingest_request, project_request, request_headers,
+    encode_request, ingest_request, omitted_advisories, project_request, request_headers,
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -83,10 +83,12 @@ fn project(input: &Value) -> Result<Observed, TargetError> {
         "stream": null, "store": null, "include": [], "input_json": null,
         "tool_names": [], "tool_choice": null, "max_output_tokens": null,
         "sampling": [], "request_preserved": false, "encoded_body": null, "body_fields": [],
-        "prompt_cache_key": null, "request_headers": []
+        "prompt_cache_key": null, "request_headers": [], "error_message": null,
+        "omitted_advisories": []
     });
     if let Err(error) = projection(&input, &mut facts) {
         facts["error_code"] = json!(error.code);
+        facts["error_message"] = json!(error.message);
     }
     Ok(Observed {
         facts,
@@ -100,6 +102,7 @@ fn projection(input: &ProjectInput, facts: &mut Value) -> Result<(), Error> {
     let binding = binding(&input.binding_json, &input.upstream_model)?;
     let document: TurnDocument = serde_json::from_str(&input.turn_json)
         .map_err(|_| Error::invalid("invalid turn envelope"))?;
+    facts["omitted_advisories"] = advisories(&document.request);
     let conversation = conversation(input)?;
     // The bytes the client would send, read back for every fact below: the projection's own
     // value is never consulted beside them, so no fact can describe a body that was not encoded.
@@ -187,10 +190,12 @@ fn ingest(input: &Value) -> Result<Observed, TargetError> {
         "accepted": false, "error_code": null, "turn_json": null, "model": null,
         "instructions": null, "item_kinds": [], "tool_names": [],
         "reprojected": false, "body_preserved": false, "forward_refusal": null,
-        "bound_input_json": null, "bound_body_preserved": false
+        "bound_input_json": null, "bound_body_preserved": false, "error_message": null,
+        "omitted_advisories": []
     });
     if let Err(error) = ingestion(&input, &mut facts) {
         facts["error_code"] = json!(error.code);
+        facts["error_message"] = json!(error.message);
     }
     Ok(Observed {
         facts,
@@ -206,6 +211,7 @@ fn ingestion(input: &IngestInput, facts: &mut Value) -> Result<(), Error> {
         serde_json::from_str(&input.body_json).map_err(|_| Error::invalid("invalid wire body"))?;
     let request = ingest_request(&binding, &body)?;
     facts["accepted"] = json!(true);
+    facts["omitted_advisories"] = advisories(&request);
     facts["model"] = json!(request.model);
     facts["instructions"] = json!(request.instructions);
     facts["item_kinds"] = json!(request.items.iter().map(item_kind).collect::<Vec<_>>());
@@ -239,6 +245,16 @@ fn ingestion(input: &IngestInput, facts: &mut Value) -> Result<(), Error> {
     }
     facts["turn_json"] = json!(compact(&serialize(&TurnDocument::new(request))?));
     Ok(())
+}
+
+/// The hints the turn carries that this wire does not send, by their reported names.
+fn advisories(request: &llm_core::TurnRequest) -> Value {
+    json!(
+        omitted_advisories(request)
+            .into_iter()
+            .map(llm_core::Advisory::name)
+            .collect::<Vec<_>>()
+    )
 }
 
 /// Every field the body carried comes back identically. A body may legitimately omit a field the

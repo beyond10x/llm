@@ -26,6 +26,12 @@
     "neutral_request": {
       "type": "string"
     },
+    "omitted_advisories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "stream": {
       "type": "boolean"
     },
@@ -75,6 +81,7 @@
   "required": [
     "observation_id",
     "accepted",
+    "omitted_advisories",
     "items",
     "text",
     "reasoning",
@@ -86,8 +93,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "ae3b0bdbde784d678a05cfa1c3b8412e603d1eb69bb61f7f128323775ca513d2",
-    "contract_digest": "slice-sha256/2:a6d8a32c72fff73954715030101c9b53049a538e8d0cda39c7bce7a82879f737",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:1bf60d03ec986ad60d88469918ec8c6d336f873a7908e636f207f3e088ae0602",
     "regenerate": "ess generate"
   },
   "$defs": {

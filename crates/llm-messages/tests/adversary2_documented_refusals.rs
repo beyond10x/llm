@@ -52,16 +52,19 @@ fn ingress_refuses_a_role_outside_user_and_assistant() {
     assert_eq!(error.code, ErrorCode::Unsupported);
 }
 
-/// `docs/messages.md:40`: "a system prompt that is not one text block" is refused. Two blocks are
-/// not one, and keeping the first of them is the silent loss the document names.
+/// A system prompt of several text blocks is read whole since wave 2026-10-16-w08 (`docs/design.md`
+/// "Client request fields": the blocks joined by a line feed). Keeping the first of them would be
+/// the silent loss the document names, so the case now pins that every block arrives.
 #[test]
-fn ingress_refuses_a_system_prompt_of_more_than_one_block() {
+fn ingress_keeps_every_block_of_a_system_prompt_of_more_than_one_block() {
     let body = minimal(&[(
         "system",
         json!([{"type":"text","text":"Stay terse"}, {"type":"text","text":"Cite nothing"}]),
     )]);
-    let error = ingress(&body).expect_err("a system prompt that is not one text block");
-    assert_eq!(error.code, ErrorCode::Unsupported);
+    let request = ingress(&body)
+        .expect("a system prompt of text blocks")
+        .request;
+    assert_eq!(request.instructions, "Stay terse\nCite nothing");
 }
 
 /// `docs/messages.md:40`: "a `none` tool choice" is refused. Reading it as `auto` would let a

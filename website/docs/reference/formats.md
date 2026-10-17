@@ -11,7 +11,8 @@ explicit envelope, and an old or unknown version refuses rather than being coerc
 
 | Format | Carried by |
 | --- | --- |
-| `llm.turn/3` | Persisted neutral requests |
+| `llm.turn/3` | Persisted neutral requests without controls |
+| `llm.turn/4` | Persisted neutral requests carrying controls (thinking, parallel tool calls, advisory hints) |
 | `llm.outcome/4` | Persisted neutral outputs |
 | `llm.binding/1` | Provider/account/endpoint/model declarations |
 | `llm.catalog/1` | TOML routing catalogs |

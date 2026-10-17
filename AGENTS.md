@@ -15,7 +15,8 @@ llm owns the client side of model inference: the neutral turn (`llm-core`), the 
 three protocol crates (each with its ingress decoder and encoder), credentials, provider bindings,
 routing, port construction from a catalog or an `llm.routes/1` routes document
 (`llm-models`), pricing, `call_tool` and the blocking adapter. The accepted design is
-`docs/design.md`; per-protocol detail is in `docs/responses.md`, `docs/messages.md` and
+`docs/design.md` (its "Client request fields" section is the rule for every field an ingress
+decoder reads); per-protocol detail is in `docs/responses.md`, `docs/messages.md` and
 `docs/chat.md`.
 
 It does not own:
@@ -50,7 +51,8 @@ story that says so.
 | Fallback tries only the declared compatible order | `crates/llm-routing/tests/fallback.rs::eligible_failure_before_output_attempts_only_the_declared_compatible_order` |
 | Credentials never reach a redirect target or an ambient proxy | `crates/llm-http/tests/transport.rs::redirect_never_sends_credentials_to_a_second_endpoint`, `crates/llm-http/tests/ambient_proxy.rs::ambient_proxy_environment_does_not_receive_caller_credentials` |
 | No `unsafe` code | `unsafe_code = "forbid"` in the root `Cargo.toml`; Clippy `all` and `pedantic` deny |
-| The conformance suite answers at least 777 scenarios and skips none | `contracts/baseline.json`, enforced by `b10x-llm-conformance check` |
+| No field a client sends is dropped: each ingress decoder carries, translates, reports or refuses it, and refuses an unknown key at every level by its path | `crates/llm-messages/tests/client_request_fields.rs::every_refusal_names_its_field_by_path`, `crates/llm-responses/tests/client_fields.rs::a_key_outside_the_subset_is_refused_by_its_path_at_every_level`, `crates/llm-chat/tests/ingress.rs::an_unknown_key_on_a_content_part_is_refused_by_its_path` and the other `an_unknown_key_on_*` cases there; advisory omissions `checks/conformance/tests/client_turns.rs` |
+| The conformance suite answers at least 868 scenarios and skips none | `contracts/baseline.json`, enforced by `b10x-llm-conformance check` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.

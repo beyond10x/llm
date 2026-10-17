@@ -1,7 +1,16 @@
 //! The outgoing Chat Completions request built from a validated neutral turn.
-use llm_core::{Error, Item, Protocol, ToolChoice, ToolSpec, TurnRequest};
+use llm_core::{Advisory, Error, Item, Protocol, ToolChoice, ToolSpec, TurnRequest, wire_effort};
 use llm_providers::Binding;
 use serde_json::{Map, Value, json};
+
+/// The advisory hints this wire sends: the Chat Completions column of the design's table.
+const CARRIED: &[Advisory] = &[Advisory::PromptCacheKey, Advisory::Verbosity];
+
+/// The advisory hints `request` carries that [`project_request`] does not send, in
+/// [`Advisory`] order, so a gateway can report them before it forwards anything.
+pub fn omitted_advisories(request: &TurnRequest) -> Vec<Advisory> {
+    request.controls.hints.omitted_by(CARRIED)
+}
 
 /// Project a neutral turn onto one Chat Completions request body.
 ///
@@ -10,8 +19,9 @@ use serde_json::{Map, Value, json};
 ///
 /// # Errors
 /// Refuses a binding that serves another protocol, a request the binding's declared
-/// capabilities do not support, opaque continuation state this wire cannot carry, and every
-/// failure [`TurnRequest::validate_for`] reports.
+/// capabilities do not support, opaque continuation state this wire cannot carry, a thinking
+/// budget and disabled thinking beside an effort ([`wire_effort`]), and every failure
+/// [`TurnRequest::validate_for`] reports.
 pub fn project_request(
     request: &TurnRequest,
     binding: &Binding,
@@ -56,8 +66,20 @@ pub fn project_request(
     if let Some(value) = request.sampling.top_p {
         body.insert("top_p".to_owned(), json!(value));
     }
-    if let Some(value) = &request.sampling.reasoning_effort {
-        body.insert("reasoning_effort".to_owned(), json!(value));
+    // Not the neutral effort as it is: `max` and disabled thinking have their own names here,
+    // and a thinking budget has none.
+    if let Some(effort) = wire_effort(Protocol::ChatCompletions, request)? {
+        body.insert("reasoning_effort".to_owned(), json!(effort));
+    }
+    if let Some(parallel) = request.controls.parallel_tool_calls {
+        body.insert("parallel_tool_calls".to_owned(), json!(parallel));
+    }
+    let hints = &request.controls.hints;
+    if let Some(key) = &hints.prompt_cache_key {
+        body.insert("prompt_cache_key".to_owned(), json!(key));
+    }
+    if let Some(verbosity) = hints.verbosity {
+        body.insert("verbosity".to_owned(), json!(verbosity));
     }
     body.insert("stream".to_owned(), json!(streaming));
     if streaming {

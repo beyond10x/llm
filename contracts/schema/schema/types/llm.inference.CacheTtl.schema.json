@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.CacheTtl",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:357de9b93bcd6fc495775c6fb74e8a57ac0fb74a7bdd9511c4452fc03c0b3bbe",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.CacheTtl": {
+      "title": "CacheTtl",
+      "x-ess-name": "llm.inference.CacheTtl",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "FiveMinutes",
+        "OneHour"
+      ]
+    }
+  }
+}

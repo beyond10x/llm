@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.responses
-scenario: ingress-refuses-a-tool-result-envelope-with-an-extra-field
-summary: a tool result envelope carrying a field beside ok and output is refused rather than read
+scenario: ingress-reads-an-envelope-with-an-extra-field-as-a-plain-string
+summary: a result string shaped like the envelope with a field beside ok and output is not the envelope, so it is a successful result carrying that string
 timeline:
 - at: '2026-09-20T12:00:00Z'
   command: llm.responses.Ingest
@@ -19,6 +19,8 @@ assert:
     at_most: 1
 - view: llm.responses.LastIngestion
   contains:
-    accepted: false
-    error_code: unsupported
-    turn_json: null
+    accepted: true
+    error_code: null
+    turn_json: '{"format":"llm.turn/3","request":{"instructions":"","items":[{"arguments":{"path":"README.md"},"call_id":"call-1","kind":"tool-call","name":"file_read"},{"call_id":"call-1","failed":false,"kind":"tool-result","output":"{\"ok\":true,\"output\":\"# Title\",\"note\":\"x\"}"}],"model":"small","tools":[{"description":"Read one file","input_schema":{"type":"object"},"name":"file_read"}]}}'
+    reprojected: true
+    body_preserved: false

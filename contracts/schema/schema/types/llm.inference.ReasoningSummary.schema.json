@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.ReasoningSummary",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:fec4570108d9fb7b3d7e5a32c4bf7b1b03a78c31449b87f749bf7c5f7001458a",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.ReasoningSummary": {
+      "title": "ReasoningSummary",
+      "x-ess-name": "llm.inference.ReasoningSummary",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Auto",
+        "Concise",
+        "Detailed"
+      ]
+    }
+  }
+}

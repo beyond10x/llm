@@ -1,0 +1,30 @@
+{
+  "model": "code",
+  "max_tokens": 32000,
+  "stream": true,
+  "thinking": {"type": "adaptive"},
+  "output_config": {"effort": "max"},
+  "system": [
+    {"type": "text", "text": "[attribution block: client version and conversation fingerprint]"},
+    {"type": "text", "text": "You are Claude Code, an interactive command line tool.", "cache_control": {"type": "ephemeral"}}
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {"type": "text", "text": "What does /tmp/a.txt say?", "cache_control": {"type": "ephemeral"}}
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "Read",
+      "description": "Reads a file from the local filesystem.",
+      "input_schema": {
+        "type": "object",
+        "properties": {"file_path": {"type": "string", "description": "The absolute path to the file to read"}},
+        "required": ["file_path"]
+      }
+    }
+  ]
+}

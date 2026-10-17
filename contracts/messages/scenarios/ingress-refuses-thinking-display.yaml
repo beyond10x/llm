@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-refuses-thinking-display
+summary: thinking.display has no neutral field and is refused by its path, never dropped
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"messages":[{"content":"hi","role":"user"}],"model":"caller-alias","thinking":{"display":"summarized","type":"adaptive"}}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "unsupported"
+    error_message: "Messages field is outside the declared subset: thinking.display"
+    dispatch: "not-sent"
+    wire_request: null
+    neutral_request: null
+    stream: null
+    items: []
+    omitted_advisories: []

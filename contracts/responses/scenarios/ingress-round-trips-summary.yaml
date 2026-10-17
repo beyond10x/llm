@@ -1,0 +1,25 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: ingress-round-trips-summary
+summary: reasoning.summary beside an effort round-trips through ingress and egress unchanged
+timeline:
+- at: '2026-10-16T12:00:00Z'
+  command: llm.responses.Ingest
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    body_json: '{"include":["reasoning.encrypted_content"],"input":[{"content":[{"text":"Hi","type":"input_text"}],"role":"user","type":"message"}],"model":"example/Small-Model","reasoning":{"effort":"low","summary":"auto"},"store":false,"stream":true,"tools":[{"description":"d","name":"file_read","parameters":{"type":"object"},"strict":false,"type":"function"}]}'
+  outcome: observed
+assert:
+- view: llm.responses.LastIngestion
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastIngestion
+  contains:
+    accepted: true
+    error_code: null
+    omitted_advisories: []
+    reprojected: true
+    body_preserved: true
+    turn_json: '{"format":"llm.turn/4","request":{"controls":{"hints":{"reasoning_summary":"auto"}},"instructions":"","items":[{"kind":"user-text","text":"Hi"}],"model":"small","sampling":{"reasoning_effort":"low"},"tools":[{"description":"d","input_schema":{"type":"object"},"name":"file_read"}]}}'

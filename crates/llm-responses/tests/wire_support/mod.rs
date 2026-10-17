@@ -173,6 +173,7 @@ pub fn canonical_request(provenance: &Provenance) -> TurnRequest {
             reasoning_effort: Some("medium".to_owned()),
         },
         tool_choice: ToolChoice::Named(file_read),
+        controls: llm_core::Controls::default(),
     }
 }
 

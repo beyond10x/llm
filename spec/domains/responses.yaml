@@ -85,9 +85,12 @@ domain: llm.responses
 # `originator` only when the caller named one, and never invents one. The non-secret headers are,
 # in order: `accept: text/event-stream`, `content-type: application/json`, then `originator`,
 # `session-id` and `x-client-request-id` where they apply; `Project` observes them, for the
-# client's first request, as `request_headers`. Ingress does not read `prompt_cache_key`: the
-# neutral turn has no conversation to carry it in, so a body carrying one is refused as a field
-# outside the subset, and `request_preserved` is false for a projection that sent one.
+# client's first request, as `request_headers`. Ingress reads `prompt_cache_key` (a string) into
+# the turn's `prompt_cache_key` hint, and egress writes the hint back. A turn carrying a key sent
+# through a client given a conversation must carry that conversation's identifier: a different
+# key is refused `unsupported` (`the turn's prompt_cache_key differs from the client's
+# conversation`) rather than one of the two silently winning. A turn with no key, sent with a
+# conversation, gains the conversation's, so `request_preserved` is false for it.
 #
 # Tool results (row R18). Every tool result travels as the string `{"ok":<bool>,"output":<value>}`,
 # a successful string result included, where Harness sends a successful string unenveloped and a
@@ -95,7 +98,42 @@ domain: llm.responses
 # for some results makes a successful result shaped like one indistinguishable from a failure,
 # and a successful string from a successful number or object, so reading a body back could flip
 # `failed` or change the value. One envelope for every result is what lets ingress return the turn
-# that was projected, field for field.
+# that was projected, field for field. On ingress a `function_call_output` string that parses to
+# exactly that envelope (an object of exactly a boolean `ok` and an `output`) is read as one; any
+# other string is a successful result whose output is that string, as Codex sends a command's
+# output. It goes back out in the envelope, so `body_preserved` is false for it. An `output` that
+# is not a string is refused.
+#
+# Client request fields (wave 2026-10-16-w08, `docs/design.md` "Client request fields"). Ingress
+# reads what Codex 0.160.0 sends beside the subset, each under one rule:
+# - Instructions. A top-level `instructions` (a string; another type is `invalid`) and then the
+#   `input_text` parts of every developer message that opens `input`, in order, joined by a line
+#   feed, are the turn's instructions; an empty string is still a part. A developer part of
+#   another type, a developer message with no parts, and a developer message after the first item
+#   of another kind are refused. Egress writes the instructions as one developer message, so a
+#   body that used `instructions` or several parts is not preserved; the turn is.
+# - Item ids. An `id` (a string; another type is `invalid`) on a `message`, `function_call` or
+#   `function_call_output` item is the unforwarded hint `input-item-ids`; its value is not kept and
+#   egress writes no id. A `reasoning` item keeps its `id` inside the carried payload.
+# - `parallel_tool_calls` (a boolean, else `invalid`) is carried; `prompt_cache_key` (a string),
+#   `text.verbosity` (`low`, `medium`, `high`) and `reasoning.summary` (`auto`, `concise`,
+#   `detailed`; `null` is absent) are hints egress writes back; `client_metadata` (an object) is
+#   the unforwarded hint `client-metadata`, its value never kept.
+# - Closed at every level. The top level, each `input[]` item of a modelled type, each content
+#   part, an object `tool_choice`, each `tools[]` entry, `reasoning` and `text` name their keys,
+#   and any other key is refused `unsupported` with `request body carries a field outside the
+#   pinned subset: <path>`, the path from `llm_core::field_path` (`input[].content[].foo`,
+#   `text.format`, `reasoning.generate_summary`). A content part carries `type` and `text`, and an
+#   `output_text` part may carry `annotations` only as an empty array. A tool whose type is
+#   `web_search`, `custom`, `namespace`, `tool_search`, `local_shell`, `file_search`,
+#   `computer_use_preview`, `mcp`, `image_generation` or `code_interpreter` is refused naming that
+#   type; a tool of any other type than `function` is refused without naming it.
+# - Egress writes `parallel_tool_calls`, `prompt_cache_key`, `text.verbosity`, and `reasoning`
+#   with the effort `llm_core::wire_effort` gives (`max` is sent as `xhigh`; disabled thinking is
+#   `none`) and the summary; a thinking budget, and disabled thinking beside an effort, are
+#   refused `unsupported`. The hints this wire does not send (`prompt-cache`, `input-item-ids`,
+#   `client-metadata`) are `omitted_advisories`, in the design's order, and the client warns
+#   `advisory-omitted` naming them once, after a successful turn.
 entities:
   - name: llm.responses.RequestProjection
     identity: {name: projection_id, type: String}
@@ -128,6 +166,11 @@ entities:
       # Every header the client sets other than authentication, as `name: value`, for the
       # client's first request (R8).
       - {name: request_headers, type: List<String>}
+      # The diagnostic this crate wrote for a refused projection.
+      - {name: error_message, type: Optional<String>}
+      # The hints the projected turn carries that this wire does not send, in the design's order
+      # (`omitted_advisories`).
+      - {name: omitted_advisories, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 
   - name: llm.responses.StreamDecoding
@@ -163,8 +206,15 @@ entities:
     fields: &ingestion_facts
       - {name: accepted, type: Boolean}
       - {name: error_code, type: Optional<String>}
-      # The whole neutral llm.turn/3 document the wire body was read into.
+      # The diagnostic this crate wrote for a refused body. A key outside the subset is named by
+      # its path.
+      - {name: error_message, type: Optional<String>}
+      # The whole neutral turn document (llm.turn/3, or llm.turn/4 when it carries controls) the
+      # wire body was read into.
       - {name: turn_json, type: Optional<String>}
+      # The hints the ingested turn carries that this wire does not send, in the design's order
+      # (`omitted_advisories`).
+      - {name: omitted_advisories, type: List<String>}
       # The operator's own model identifier, never the upstream name the body addressed.
       - {name: model, type: Optional<String>}
       - {name: instructions, type: Optional<String>}

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-17T07:23:49Z",
+  "actor": "human:timo",
+  "artifact": "story:chat-ingress-closed-levels",
+  "kind": "story",
+  "revision": 14,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo test -p b10x-llm-chat --test ingress",
+    "reference": "base 8c0aab4e: unknown nested keys pass (llm-gateway chat_closed exists for that); treatment 298d9262: each is refused by its path"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.ThinkingMode",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:881a8c4775d9cd764db20655c6d1377c0644adc9a14a33a480c561f2a5d485c6",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.ThinkingMode": {
+      "title": "ThinkingMode",
+      "x-ess-name": "llm.inference.ThinkingMode",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Adaptive",
+        "Enabled",
+        "Disabled"
+      ]
+    }
+  }
+}

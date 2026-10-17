@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: claude-codes-first-turn-decodes-under-the-written-rules
+summary: the first turn a coding-agent client sends decodes with its two system texts joined, adaptive thinking, effort max and a prompt-cache hint
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"model":"code","max_tokens":32000,"stream":true,"thinking":{"type":"adaptive"},"output_config":{"effort":"max"},"system":[{"type":"text","text":"[attribution block: client version and conversation fingerprint]"},{"type":"text","text":"You are Claude Code, an interactive command line tool.","cache_control":{"type":"ephemeral"}}],"messages":[{"role":"user","content":[{"type":"text","text":"What does /tmp/a.txt say?","cache_control":{"type":"ephemeral"}}]}],"tools":[{"name":"Read","description":"Reads a file from the local filesystem.","input_schema":{"type":"object","properties":{"file_path":{"type":"string","description":"The absolute path to the file to read"}},"required":["file_path"]}}]}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    error_message: null
+    dispatch: null
+    wire_request: null
+    neutral_request: '{"format":"llm.turn/4","request":{"model":"code","instructions":"[attribution block: client version and conversation fingerprint]\nYou are Claude Code, an interactive command line tool.","items":[{"kind":"user-text","text":"What does /tmp/a.txt say?"}],"tools":[{"name":"Read","description":"Reads a file from the local filesystem.","input_schema":{"properties":{"file_path":{"description":"The absolute path to the file to read","type":"string"}},"required":["file_path"],"type":"object"}}],"max_output_tokens":32000,"sampling":{"reasoning_effort":"max"},"controls":{"thinking":{"mode":"adaptive"},"hints":{"prompt_cache":{}}}}}'
+    stream: true
+    items:
+      - "user-text:What does /tmp/a.txt say?"
+    omitted_advisories: []

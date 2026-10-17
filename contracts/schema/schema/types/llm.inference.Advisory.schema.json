@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.Advisory",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:fcae1edadc683bd7db7910efb41243519276569c4b2266e017ce3a0c6158f24c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.Advisory": {
+      "title": "Advisory",
+      "x-ess-name": "llm.inference.Advisory",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "PromptCache",
+        "PromptCacheKey",
+        "Verbosity",
+        "ReasoningSummary",
+        "InputItemIds",
+        "ClientMetadata"
+      ]
+    }
+  }
+}

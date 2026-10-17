@@ -74,6 +74,15 @@
         "type": "string"
       }
     },
+    "error_message": {
+      "type": "string"
+    },
+    "omitted_advisories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "state": {
       "$ref": "#/$defs/llm.responses.RequestProjection.State"
     }
@@ -87,14 +96,15 @@
     "request_preserved",
     "body_fields",
     "request_headers",
+    "omitted_advisories",
     "state"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "ae3b0bdbde784d678a05cfa1c3b8412e603d1eb69bb61f7f128323775ca513d2",
-    "contract_digest": "slice-sha256/2:423d6fa2f942f9045ac1a838431701f432732265f31db3f2d092ff0c136b6283",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:90b99654e0e69cbf0bb1a0cc021b4c68ddd29438a5da64dd2c2b4db8bd77eb38",
     "regenerate": "ess generate"
   },
   "$defs": {

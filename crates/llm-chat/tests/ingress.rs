@@ -5,11 +5,11 @@ mod common;
 use common::binding;
 use llm_chat::{
     IngressStream, NAMED_UNSUPPORTED_REQUEST_FIELDS, SUPPORTED_REQUEST_FIELDS,
-    decode_ingress_request, encode_ingress_completion,
+    decode_ingress_request, encode_ingress_completion, omitted_advisories, project_request,
 };
 use llm_core::{
-    CallId, Dispatch, ErrorCode, Id, Item, Protocol, StopReason, StreamEvent, ToolCall, ToolChoice,
-    ToolName, TurnObservation, TurnOutcome, Usage,
+    Advisory, CallId, Controls, Dispatch, ErrorCode, Hints, Id, Item, Protocol, StopReason,
+    StreamEvent, ToolCall, ToolChoice, ToolName, TurnObservation, TurnOutcome, Usage, Verbosity,
 };
 use serde_json::{Value, json};
 
@@ -639,4 +639,423 @@ fn an_outcome_carrying_unattributed_state_cannot_be_encoded_onto_this_wire() {
         encode_ingress_completion(&outcome, "chatcmpl-gw-6", 1_772_001_000).expect_err("refused");
     assert_eq!(error.code, ErrorCode::Unsupported);
     assert_eq!(error.message, Item::UNATTRIBUTED_REFUSAL);
+}
+
+// ---------------------------------------------------------------- closed levels
+
+/// The refusal a key outside a level's published keys gets: its path, from `llm_core::field_path`.
+fn assert_refused_at(body: &Value, path: &str) {
+    let error = decode_ingress_request(body).expect_err(path);
+    assert_eq!(
+        error.code,
+        ErrorCode::Unsupported,
+        "{path}: {}",
+        error.message
+    );
+    assert_eq!(
+        error.message,
+        format!("chat request field is outside the published subset: {path}")
+    );
+    assert_eq!(error.dispatch, Dispatch::NotSent, "{path}");
+}
+
+// `json!` borrows its values; taking them by value keeps every call site short.
+#[allow(clippy::needless_pass_by_value)]
+fn with_messages(messages: Value) -> Value {
+    json!({"model": "code", "messages": messages})
+}
+
+fn lookup_tool() -> Value {
+    json!({"type": "function", "function": {
+        "name": "lookup", "description": "Look up", "parameters": {"type": "object"}
+    }})
+}
+
+fn lookup_call() -> Value {
+    json!({"id": "call-1", "type": "function",
+           "function": {"name": "lookup", "arguments": "{}"}})
+}
+
+#[test]
+fn an_unknown_top_level_field_is_refused_naming_it() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    body["surprise_setting"] = json!("a-client-supplied-value");
+    assert_refused_at(&body, "surprise_setting");
+}
+
+#[test]
+fn an_unknown_key_on_a_system_message_is_refused_by_its_path() {
+    assert_refused_at(
+        &with_messages(json!([{"role": "system", "content": "Be brief", "name": "ops"}])),
+        "messages[].name",
+    );
+}
+
+#[test]
+fn an_unknown_key_on_a_developer_message_is_refused_by_its_path() {
+    assert_refused_at(
+        &with_messages(json!([{"role": "developer", "content": "Be brief", "name": "ops"}])),
+        "messages[].name",
+    );
+}
+
+#[test]
+fn an_unknown_key_on_a_user_message_is_refused_by_its_path() {
+    assert_refused_at(
+        &with_messages(json!([{"role": "user", "content": "hi", "name": "ada"}])),
+        "messages[].name",
+    );
+}
+
+#[test]
+fn an_unknown_key_on_an_assistant_message_is_refused_by_its_path() {
+    assert_refused_at(
+        &with_messages(json!([
+            {"role": "user", "content": "hi"},
+            {"role": "assistant", "content": "Hello", "audio": {"id": "a-1"}}
+        ])),
+        "messages[].audio",
+    );
+}
+
+#[test]
+fn an_unknown_key_on_a_tool_message_is_refused_by_its_path() {
+    assert_refused_at(
+        &with_messages(json!([
+            {"role": "assistant", "tool_calls": [lookup_call()]},
+            {"role": "tool", "tool_call_id": "call-1", "content": "sunny", "name": "lookup"}
+        ])),
+        "messages[].name",
+    );
+}
+
+/// A key the role does not read is outside the subset even when another role reads it.
+#[test]
+fn a_key_another_role_reads_is_refused_on_a_role_that_does_not() {
+    assert_refused_at(
+        &with_messages(json!([{"role": "user", "content": "hi", "tool_call_id": "call-1"}])),
+        "messages[].tool_call_id",
+    );
+    assert_refused_at(
+        &with_messages(json!([{"role": "user", "content": "hi", "tool_calls": []}])),
+        "messages[].tool_calls",
+    );
+}
+
+#[test]
+fn an_unknown_key_on_a_content_part_is_refused_by_its_path() {
+    assert_refused_at(
+        &with_messages(json!([{"role": "user", "content": [
+            {"type": "text", "text": "hi", "cache_control": {"type": "ephemeral"}}
+        ]}])),
+        "messages[].content[].cache_control",
+    );
+}
+
+#[test]
+fn an_unknown_key_on_a_tool_call_is_refused_by_its_path() {
+    let mut call = lookup_call();
+    call["index"] = json!(0);
+    assert_refused_at(
+        &with_messages(json!([{"role": "assistant", "tool_calls": [call]}])),
+        "messages[].tool_calls[].index",
+    );
+}
+
+#[test]
+fn an_unknown_key_on_a_tool_call_function_is_refused_by_its_path() {
+    let mut call = lookup_call();
+    call["function"]["strict"] = json!(true);
+    assert_refused_at(
+        &with_messages(json!([{"role": "assistant", "tool_calls": [call]}])),
+        "messages[].tool_calls[].function.strict",
+    );
+}
+
+#[test]
+fn an_unknown_key_on_a_tool_is_refused_by_its_path() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    let mut tool = lookup_tool();
+    tool["cache_control"] = json!({"type": "ephemeral"});
+    body["tools"] = json!([tool]);
+    assert_refused_at(&body, "tools[].cache_control");
+}
+
+#[test]
+fn an_unknown_key_on_a_tool_function_is_refused_by_its_path() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    let mut tool = lookup_tool();
+    tool["function"]["foo"] = json!(1);
+    body["tools"] = json!([tool]);
+    assert_refused_at(&body, "tools[].function.foo");
+}
+
+#[test]
+fn an_unknown_key_on_a_tool_choice_is_refused_by_its_path() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    body["tools"] = json!([lookup_tool()]);
+    body["tool_choice"] = json!({"type": "function", "function": {"name": "lookup"}, "foo": 1});
+    assert_refused_at(&body, "tool_choice.foo");
+}
+
+#[test]
+fn an_unknown_key_on_a_tool_choice_function_is_refused_by_its_path() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    body["tools"] = json!([lookup_tool()]);
+    body["tool_choice"] = json!({"type": "function", "function": {"name": "lookup", "foo": 1}});
+    assert_refused_at(&body, "tool_choice.function.foo");
+}
+
+#[test]
+fn an_unknown_stream_option_is_refused_by_its_path() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    body["stream"] = json!(true);
+    body["stream_options"] = json!({"include_usage": true, "foo": true});
+    assert_refused_at(&body, "stream_options.foo");
+}
+
+/// A key name is caller text: only a bounded name of the wire's own shape is copied.
+#[test]
+fn a_key_that_is_not_a_field_name_is_refused_without_copying_it() {
+    assert_refused_at(
+        &with_messages(json!([{"role": "user", "content": "hi", "a secret value": 1}])),
+        "messages[].?",
+    );
+}
+
+/// Every key the design publishes, at every level, decodes; closing a level refuses only what
+/// lies outside it.
+#[test]
+fn every_published_key_at_every_level_is_accepted() {
+    let mut tool = lookup_tool();
+    tool["function"]["strict"] = json!(false);
+    let body = json!({
+        "model": "code",
+        "messages": [
+            {"role": "system", "content": "Be brief"},
+            {"role": "developer", "content": [{"type": "text", "text": "Use tools"}]},
+            {"role": "user", "content": [{"type": "text", "text": "Weather?"}]},
+            {"role": "assistant", "content": null, "tool_calls": [lookup_call()]},
+            {"role": "tool", "tool_call_id": "call-1", "content": "sunny"},
+            {"role": "assistant", "content": "Sunny.", "tool_calls": null}
+        ],
+        "tools": [tool],
+        "tool_choice": {"type": "function", "function": {"name": "lookup"}},
+        "stream": true,
+        "stream_options": {"include_usage": true}
+    });
+    let ingress = decode_ingress_request(&body).expect("decoded");
+    assert_eq!(ingress.request.instructions, "Be brief\nUse tools");
+    assert_eq!(
+        ingress.request.items,
+        vec![
+            Item::user("Weather?"),
+            Item::ToolCall(ToolCall {
+                call_id: call_id("call-1"),
+                name: ToolName::new("lookup").expect("fixture tool"),
+                arguments: json!({}),
+            }),
+            Item::ToolResult {
+                call_id: call_id("call-1"),
+                output: json!("sunny"),
+                failed: false,
+            },
+            Item::assistant("Sunny."),
+        ]
+    );
+}
+
+#[test]
+fn a_strict_function_schema_is_refused_and_a_non_boolean_strict_is_invalid() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    let mut tool = lookup_tool();
+    tool["function"]["strict"] = json!(true);
+    body["tools"] = json!([tool.clone()]);
+    let error = decode_ingress_request(&body).expect_err("strict refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(
+        error.message,
+        "chat strict function schemas are outside the published subset"
+    );
+
+    tool["function"]["strict"] = json!("yes");
+    body["tools"] = json!([tool]);
+    assert_eq!(
+        decode_ingress_request(&body)
+            .expect_err("not a boolean")
+            .code,
+        ErrorCode::InvalidRequest
+    );
+}
+
+#[test]
+fn a_tool_call_whose_type_is_not_function_is_refused() {
+    let mut call = lookup_call();
+    call["type"] = json!("custom");
+    let error = decode_ingress_request(&with_messages(json!([
+        {"role": "assistant", "tool_calls": [call]}
+    ])))
+    .expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(
+        error.message,
+        "chat tool call type is outside the published subset"
+    );
+}
+
+#[test]
+fn a_tool_choice_whose_type_is_not_function_is_refused() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    body["tools"] = json!([lookup_tool()]);
+    body["tool_choice"] = json!({"type": "custom", "function": {"name": "lookup"}});
+    let error = decode_ingress_request(&body).expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(
+        error.message,
+        "chat tool choice type is outside the published subset"
+    );
+}
+
+/// A value of the wrong type at a key the subset reads is refused, never read as absent.
+#[test]
+fn a_published_key_of_the_wrong_type_is_refused_rather_than_dropped() {
+    let mut call = lookup_call();
+    call["function"]["arguments"] = json!({"city": "Oslo"});
+    let mut tool = lookup_tool();
+    tool["function"]["description"] = json!(7);
+    let cases: &[(&str, Value)] = &[
+        (
+            "reasoning_effort",
+            json!({"model": "code", "messages": [{"role": "user", "content": "hi"}],
+                   "reasoning_effort": 3}),
+        ),
+        (
+            "tool_calls",
+            with_messages(json!([{"role": "assistant", "content": "x", "tool_calls": 5}])),
+        ),
+        (
+            "content part text",
+            with_messages(json!([{"role": "user", "content": [{"type": "text", "text": 5}]}])),
+        ),
+        (
+            "arguments",
+            with_messages(json!([{"role": "assistant", "tool_calls": [call]}])),
+        ),
+        (
+            "description",
+            json!({"model": "code", "messages": [{"role": "user", "content": "hi"}],
+                   "tools": [tool]}),
+        ),
+        (
+            "parallel_tool_calls",
+            json!({"model": "code", "messages": [{"role": "user", "content": "hi"}],
+                   "tools": [lookup_tool()], "parallel_tool_calls": "yes"}),
+        ),
+        (
+            "prompt_cache_key",
+            json!({"model": "code", "messages": [{"role": "user", "content": "hi"}],
+                   "prompt_cache_key": 42}),
+        ),
+        (
+            "verbosity",
+            json!({"model": "code", "messages": [{"role": "user", "content": "hi"}],
+                   "verbosity": 1}),
+        ),
+    ];
+    for (case, body) in cases {
+        let Err(error) = decode_ingress_request(body) else {
+            panic!("{case} of the wrong type was accepted")
+        };
+        assert_eq!(
+            error.code,
+            ErrorCode::InvalidRequest,
+            "{case}: {}",
+            error.message
+        );
+    }
+}
+
+#[test]
+fn a_verbosity_outside_low_medium_and_high_is_refused() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    body["verbosity"] = json!("loud");
+    let error = decode_ingress_request(&body).expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert!(!error.message.contains("loud"), "{}", error.message);
+}
+
+// ---------------------------------------------------------------- carried options
+
+#[test]
+fn parallel_tool_calls_prompt_cache_key_and_verbosity_are_carried() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    body["tools"] = json!([lookup_tool()]);
+    body["parallel_tool_calls"] = json!(false);
+    body["prompt_cache_key"] = json!("session-7");
+    body["verbosity"] = json!("low");
+    let request = decode_ingress_request(&body).expect("decoded").request;
+    assert_eq!(
+        request.controls,
+        Controls {
+            thinking: None,
+            parallel_tool_calls: Some(false),
+            hints: Hints {
+                prompt_cache_key: Some("session-7".to_owned()),
+                verbosity: Some(Verbosity::Low),
+                ..Hints::default()
+            },
+        }
+    );
+    // Both carried hints are sent by this wire, so nothing is omitted.
+    assert_eq!(omitted_advisories(&request), Vec::<Advisory>::new());
+}
+
+#[test]
+fn parallel_tool_calls_left_the_named_unsupported_list() {
+    assert!(!NAMED_UNSUPPORTED_REQUEST_FIELDS.contains(&"parallel_tool_calls"));
+    for field in ["parallel_tool_calls", "prompt_cache_key", "verbosity"] {
+        assert!(SUPPORTED_REQUEST_FIELDS.contains(&field), "{field}");
+    }
+}
+
+#[test]
+fn explicit_null_options_are_absent() {
+    let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+    body["parallel_tool_calls"] = Value::Null;
+    body["prompt_cache_key"] = Value::Null;
+    body["verbosity"] = Value::Null;
+    let request = decode_ingress_request(&body).expect("decoded").request;
+    assert!(request.controls.is_empty(), "{:?}", request.controls);
+}
+
+/// The turn the gateway decodes projects onto this wire again, and the projected body decodes
+/// back to the same turn. The wire names the binding's upstream model, so only `model` differs.
+#[test]
+fn each_carried_option_survives_a_round_trip_through_the_projection() {
+    let options: &[(&str, Value)] = &[
+        ("parallel_tool_calls", json!(true)),
+        ("parallel_tool_calls", json!(false)),
+        ("prompt_cache_key", json!("session-7")),
+        ("verbosity", json!("low")),
+        ("verbosity", json!("medium")),
+        ("verbosity", json!("high")),
+    ];
+    for (field, value) in options {
+        let mut body = with_messages(json!([{"role": "user", "content": "hi"}]));
+        body["model"] = json!("small");
+        body["tools"] = json!([lookup_tool()]);
+        body[*field] = value.clone();
+        let request = decode_ingress_request(&body).expect("decoded").request;
+        assert!(!request.controls.is_empty(), "{field} was not carried");
+
+        let projected = project_request(&request, &binding(), false).expect("projected");
+        assert_eq!(projected[*field], *value, "{field} was not re-emitted");
+
+        let mut back = decode_ingress_request(&projected)
+            .expect("the projected body decodes")
+            .request;
+        assert_eq!(back.model, "Qwen/Qwen3-8B");
+        back.model = request.model.clone();
+        assert_eq!(back, request, "{field}");
+    }
 }

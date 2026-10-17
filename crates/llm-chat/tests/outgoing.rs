@@ -2,10 +2,11 @@
 mod common;
 
 use common::{binding, binding_at, capable};
-use llm_chat::project_request;
+use llm_chat::{omitted_advisories, project_request};
 use llm_core::{
-    CallId, Capabilities, ErrorCode, Item, Protocol, Sampling, ToolCall, ToolChoice, ToolName,
-    ToolSpec, TurnRequest,
+    Advisory, CallId, Capabilities, ErrorCode, Hints, Item, PromptCache, Protocol,
+    ReasoningSummary, Sampling, Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest,
+    Unforwarded, Verbosity,
 };
 use serde_json::json;
 
@@ -244,4 +245,117 @@ fn unattributed_opaque_state_is_refused_by_name_rather_than_dropped() {
     let error = project_request(&request, &binding(), true).expect_err("refused");
     assert_eq!(error.code, ErrorCode::Unsupported);
     assert_eq!(error.message, Item::UNATTRIBUTED_REFUSAL);
+}
+
+// ---------------------------------------------------------------- controls and hints
+
+fn reasoning_binding(efforts: &[&str]) -> llm_chat::Binding {
+    let mut capabilities = capable();
+    capabilities.reasoning_efforts = efforts.iter().map(|&effort| effort.to_owned()).collect();
+    binding_at(
+        Protocol::ChatCompletions,
+        capabilities,
+        "http://127.0.0.1:8000/v1",
+    )
+}
+
+#[test]
+fn effort_max_is_sent_as_xhigh() {
+    let mut request = TurnRequest::new("small", vec![Item::user("Hello")]);
+    request.sampling.reasoning_effort = Some("max".to_owned());
+    let body = project_request(&request, &reasoning_binding(&["high", "xhigh"]), false)
+        .expect("projected");
+    assert_eq!(body["reasoning_effort"], json!("xhigh"));
+}
+
+#[test]
+fn disabled_thinking_is_sent_as_effort_none() {
+    let mut request = TurnRequest::new("small", vec![Item::user("Hello")]);
+    request.controls.thinking = Some(Thinking::Disabled);
+    let body =
+        project_request(&request, &reasoning_binding(&["none", "high"]), false).expect("projected");
+    assert_eq!(body["reasoning_effort"], json!("none"));
+}
+
+#[test]
+fn adaptive_thinking_sends_nothing_beyond_the_effort() {
+    let mut request = TurnRequest::new("small", vec![Item::user("Hello")]);
+    request.controls.thinking = Some(Thinking::Adaptive);
+    let body =
+        project_request(&request, &reasoning_binding(&["none", "high"]), false).expect("projected");
+    assert_eq!(body.get("reasoning_effort"), None);
+    assert!(
+        body.as_object()
+            .expect("a body object")
+            .keys()
+            .all(|key| !key.contains("thinking")),
+        "{body}"
+    );
+}
+
+#[test]
+fn a_thinking_budget_is_refused() {
+    let mut request = TurnRequest::new("small", vec![Item::user("Hello")]);
+    request.controls.thinking = Some(Thinking::Enabled {
+        budget_tokens: 2_048,
+    });
+    let error = project_request(&request, &reasoning_binding(&["none", "high"]), false)
+        .expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.message, "Chat Completions has no thinking budget");
+}
+
+#[test]
+fn disabled_thinking_beside_an_effort_is_refused() {
+    let mut request = TurnRequest::new("small", vec![Item::user("Hello")]);
+    request.sampling.reasoning_effort = Some("high".to_owned());
+    request.controls.thinking = Some(Thinking::Disabled);
+    let error = project_request(&request, &reasoning_binding(&["none", "high"]), false)
+        .expect_err("refused");
+    assert_eq!(error.code, ErrorCode::Unsupported);
+}
+
+#[test]
+fn parallel_tool_calls_prompt_cache_key_and_verbosity_are_sent_under_their_names() {
+    let mut request = TurnRequest::new("small", vec![Item::user("Weather?")]);
+    request.tools = vec![tool("lookup")];
+    request.controls.parallel_tool_calls = Some(false);
+    request.controls.hints.prompt_cache_key = Some("session-7".to_owned());
+    request.controls.hints.verbosity = Some(Verbosity::High);
+    let body = project_request(&request, &binding(), false).expect("projected");
+    assert_eq!(body["parallel_tool_calls"], json!(false));
+    assert_eq!(body["prompt_cache_key"], json!("session-7"));
+    assert_eq!(body["verbosity"], json!("high"));
+}
+
+#[test]
+fn omitted_advisories_names_exactly_the_hints_this_wire_does_not_send_in_table_order() {
+    let mut request = TurnRequest::new("small", vec![Item::user("Hello")]);
+    assert_eq!(omitted_advisories(&request), Vec::<Advisory>::new());
+
+    request.controls.hints = Hints {
+        prompt_cache: Some(PromptCache { ttl: None }),
+        prompt_cache_key: Some("session-7".to_owned()),
+        verbosity: Some(Verbosity::Low),
+        reasoning_summary: Some(ReasoningSummary::Auto),
+        unforwarded: [Unforwarded::ClientMetadata, Unforwarded::InputItemIds]
+            .into_iter()
+            .collect(),
+    };
+    assert_eq!(
+        omitted_advisories(&request),
+        vec![
+            Advisory::PromptCache,
+            Advisory::ReasoningSummary,
+            Advisory::InputItemIds,
+            Advisory::ClientMetadata,
+        ]
+    );
+
+    request.controls.hints = Hints {
+        prompt_cache_key: Some("session-7".to_owned()),
+        verbosity: Some(Verbosity::Low),
+        ..Hints::default()
+    };
+    assert_eq!(omitted_advisories(&request), Vec::<Advisory>::new());
 }

@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-21T12:00:00Z'
   command: llm.messages.Project
   input:
-    request_json: "{\"max_tokens\":512,\"messages\":[{\"content\":\"hi\",\"role\":\"user\"}],\"metadata\":{\"user_id\":\"u\"},\"model\":\"caller-alias\"}"
+    request_json: "{\"max_tokens\":512,\"messages\":[{\"content\":\"hi\",\"role\":\"user\"}],\"model\":\"caller-alias\",\"top_k\":5}"
     ingress: true
   outcome: observed
 assert:
@@ -18,7 +18,7 @@ assert:
   contains:
     accepted: false
     error_code: "unsupported"
-    error_message: "Messages field is outside the declared subset: metadata"
+    error_message: "Messages field is outside the declared subset: top_k"
     dispatch: "not-sent"
     wire_request: null
     neutral_request: null

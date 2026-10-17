@@ -11,14 +11,19 @@ use std::{
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, MAX_REQUEST_BYTES, Model,
     Provenance, StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
+    advisory_warning,
 };
 use llm_credentials::SecretResolver;
 use llm_http::{Framing, HeaderMap, HeaderName, HeaderValue, HttpClient, SseEvent};
 use serde_json::Value;
 
 use crate::{
-    Conversation, PROTOCOL, StreamDecoding, encode_request, request_headers, stream::Decoder,
+    Conversation, PROTOCOL, StreamDecoding, encode_request, omitted_advisories, request_headers,
+    stream::Decoder,
 };
+
+/// The wire's name in an `advisory-omitted` warning.
+const PROTOCOL_NAME: &str = "Responses";
 
 /// The stream events after which this wire sends nothing the decoder reads.
 ///
@@ -49,6 +54,10 @@ const FINAL_EVENTS: &[&str] = &[
 ///
 /// Each payload is decoded as it arrives and the [`StreamEvent`]s it produced reach the sink
 /// before the next payload is read, in wire order, as the Messages client does.
+///
+/// When the turn carries hints this wire does not send ([`crate::omitted_advisories`]), the
+/// client emits one `advisory-omitted` warning naming them after the turn has succeeded, and none
+/// when the turn failed. A sink that refuses the warning fails the turn with its own error.
 pub struct ResponsesClient {
     binding: llm_providers::Binding,
     projection: crate::Binding,
@@ -145,6 +154,11 @@ impl ResponsesClient {
         outcome
             .validate_for(request, self.binding.provenance())
             .map_err(|error| keep(error.with_dispatch(Dispatch::Accepted), &evidence))?;
+        // Once, after the turn succeeded and never before: a warning on the sink is visible
+        // output, and an attempt that showed output is no longer eligible for fallback.
+        if let Some(warning) = advisory_warning(PROTOCOL_NAME, &omitted_advisories(request)) {
+            hand_over(sink, vec![warning], cancel, deadline, &evidence).await?;
+        }
         Ok(outcome)
     }
 

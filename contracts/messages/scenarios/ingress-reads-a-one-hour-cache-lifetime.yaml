@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-reads-a-one-hour-cache-lifetime
+summary: cache marks that all say ttl 1h are the prompt-cache hint with the lifetime 1h
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"messages":[{"content":[{"cache_control":{"ttl":"1h","type":"ephemeral"},"text":"Summarise the log","type":"text"}],"role":"user"}],"model":"example/Model-Revision","stream":true,"system":[{"cache_control":{"ttl":"1h","type":"ephemeral"},"text":"Stay terse","type":"text"}]}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: null
+    neutral_request: '{"format":"llm.turn/4","request":{"model":"example/Model-Revision","instructions":"Stay terse","items":[{"kind":"user-text","text":"Summarise the log"}],"tools":[],"max_output_tokens":512,"controls":{"hints":{"prompt_cache":{"ttl":"1h"}}}}}'
+    stream: true
+    items:
+      - "user-text:Summarise the log"
+    omitted_advisories: []
