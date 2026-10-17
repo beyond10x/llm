@@ -11,10 +11,12 @@ source: crates/llm-core (turn.rs, error.rs, item.rs), docs/contract-v1.md
 `llm-core` defines what every caller and every adapter agrees on: a request, a stream of events, an
 outcome, a failure. It performs no I/O and depends on no consumer.
 
-The persisted envelopes are `llm.turn/3` and `llm.outcome/4`; publishing them as a released contract
+The persisted envelopes are `llm.turn/3` (`llm.turn/4` for a turn carrying thinking, parallel-tool-call or advisory controls) and `llm.outcome/4`; publishing them as a released contract
 with a compatibility policy is planned. The contract supports stateless text and tool turns.
 Image and audio input, vendor-side tools, provider thread management and unrecognized request
-settings are outside this version and adapters must refuse them.
+settings are outside this version and adapters must refuse them. Every field a client request
+carries is carried, translated by a written table, reported as an omitted advisory hint, or refused
+by its path; the rules are the design's "Client request fields".
 
 ## Streamed events
 

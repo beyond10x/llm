@@ -6,8 +6,52 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+Every field a coding-agent client sends now has one written rule: carried, translated, advisory
+with a reported omission, or refused by name; no key at any level is passed over
+(`docs/design.md` "Client request fields"). Evidence: llm-gateway's authored Claude Code first
+turn, and Codex 0.160.0 requests captured against a loopback recorder (no paid call).
+
+### Added
+
+- `b10x-llm-core`: `TurnRequest.controls` (`Controls`): `thinking` (`Thinking::Adaptive`,
+  `Enabled { budget_tokens }`, `Disabled`), `parallel_tool_calls`, and advisory `hints` (`Hints`:
+  `prompt_cache` with an optional `5m` or `1h` lifetime, `prompt_cache_key` of at most 512 bytes,
+  `verbosity`, `reasoning_summary`, and `unforwarded` names of fields no wire sends). `wire_effort`
+  is the one reasoning table; `Advisory`, `Hints::omitted_by`, `advisory_warning` and
+  `field_path`. A turn with controls is the envelope `llm.turn/4`; one without is `llm.turn/3`,
+  byte for byte as before.
+- Each protocol crate: `omitted_advisories(&TurnRequest)`, the hints its projection does not
+  send, and its client emits one `advisory-omitted` warning naming them after a successful turn.
+- `b10x-llm-messages`: ingress carries `thinking`, a `system` of text blocks (joined by a line
+  feed), `cache_control` on system blocks, text, `tool_use` and `tool_result` blocks and tools (the
+  prompt-cache hint; two lifetimes refused), effort `max` and
+  `tool_choice.disable_parallel_tool_use`; `metadata.user_id` is an unforwarded name. Egress
+  re-emits thinking and the parallel choice and gives its breakpoints a `1h` lifetime when asked.
+  `thinking.display`, `context_management`, `safeguards`, `output_config.format` and a `system`
+  message inside `messages` stay refused by name.
+- `b10x-llm-responses`: ingress carries `instructions` (followed by the leading developer
+  messages' parts), `parallel_tool_calls`, `prompt_cache_key`, `text.verbosity` and
+  `reasoning.summary`; item `id`s and `client_metadata` are unforwarded names; a
+  `function_call_output` string that is not the pinned envelope is a successful result carrying
+  that string. Egress re-emits them and refuses a conversation whose identifier differs from the
+  turn's `prompt_cache_key`. Fixtures: Codex 0.160.0's first and second turns, captured against a
+  loopback recorder and sanitized.
+- `b10x-llm-chat`: `parallel_tool_calls`, `prompt_cache_key` and `verbosity` are carried both
+  ways.
+- 91 conformance scenarios (868 in all; baseline floors 868), and a cross-wire test
+  (`checks/conformance/tests/client_turns.rs`) that projects each client's first turn onto the
+  other two wires.
+
 ### Changed
 
+- `TurnRequest::validate_for` checks `reasoning_efforts` against the effort the wire receives:
+  effort `max` reaches Chat Completions and Responses as `xhigh`, disabled thinking as `none`, and
+  a thinking budget is refused there.
+- Every unknown key in a Chat Completions or Responses request is refused naming its path, at
+  every level; 0.6.0 passed over keys below the top level. The top-level refusals now name the
+  field too: `chat request field is outside the published subset: <path>` and `request body
+  carries a field outside the pinned subset: <path>`. A Chat `strict` function schema is refused
+  instead of dropped, and a hosted or custom Responses tool is refused naming its type.
 - The shared source gates workflow runs Gates 0.1.21 instead of 0.1.3: its scan limit is 512 MiB
   instead of 256 MiB, and it reads the compressed policy secret `B10X_GATES_POLICY_GZ` first.
 

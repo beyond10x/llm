@@ -14,8 +14,17 @@
     "error_code": {
       "type": "string"
     },
+    "error_message": {
+      "type": "string"
+    },
     "turn_json": {
       "type": "string"
+    },
+    "omitted_advisories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "model": {
       "type": "string"
@@ -57,6 +66,7 @@
   "required": [
     "ingestion_id",
     "accepted",
+    "omitted_advisories",
     "item_kinds",
     "tool_names",
     "reprojected",
@@ -68,8 +78,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "7a288c605e6f03c44c6684571e635bdeca66a2c91c41a094cca17ea75f050865",
-    "contract_digest": "slice-sha256/2:4aa743f030825b2775ca77f324db6193c4ec6ddad92768edf4ae4d84c88d9e60",
+    "source_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "contract_digest": "slice-sha256/2:fdf0d292317922257d3739d62188a61f590da7c38350260190f0edf1bd7d1420",
     "regenerate": "ess generate"
   },
   "$defs": {
