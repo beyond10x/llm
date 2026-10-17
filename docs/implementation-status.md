@@ -41,7 +41,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 (`harness-builds-on-llm`). Serving, hosting and their qualification are llm-gateway's
 ([GitHub](https://github.com/beyond10x/llm-gateway)).
 
-## Status at 0.6.0 (2026-10-16)
+## Status at 0.7.0 (2026-10-17)
 
 ### Neutral turn
 

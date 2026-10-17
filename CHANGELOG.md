@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-17
+
 Every field a coding-agent client sends now has one written rule: carried, translated, advisory
 with a reported omission, or refused by name; no key at any level is passed over
 (`docs/design.md` "Client request fields"). Evidence: llm-gateway's authored Claude Code first
