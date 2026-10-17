@@ -659,6 +659,8 @@ fn assert_refused_at(body: &Value, path: &str) {
     assert_eq!(error.dispatch, Dispatch::NotSent, "{path}");
 }
 
+// `json!` borrows its values; taking them by value keeps every call site short.
+#[allow(clippy::needless_pass_by_value)]
 fn with_messages(messages: Value) -> Value {
     json!({"model": "code", "messages": messages})
 }

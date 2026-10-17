@@ -129,7 +129,9 @@ An omission is never silent. `omitted_advisories` lists hints in the order of th
 hints its projection does not send, so a gateway can report them before it forwards anything; and
 each client emits one `Warning` stream event with code `advisory-omitted` naming them once the turn
 has succeeded. Not before: a warning on the sink counts as visible output, and an attempt that
-showed output is no longer eligible for fallback.
+showed output is no longer eligible for fallback. A sink that refuses that warning fails the turn with its own error and
+`accepted` dispatch, as any sink refusal after dispatch does: the turn was served and is not
+resent.
 
 ### Ingress rules
 

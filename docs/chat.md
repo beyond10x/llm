@@ -154,8 +154,10 @@ ignored, at any depth:
 | `tool_choice.function` | `name` |
 | `stream_options` | `include_usage` |
 
-A key the subset reads with a value of the wrong type is refused as invalid rather than read
-as absent; an explicit `null` for an optional key is absent. `strict: true` is refused
+A key the subset reads with a value of the wrong type is refused rather than read as absent
+(`invalid-request`, or `unsupported` for a `tool_choice` or a `type` outside the subset); an
+explicit `null` is absent for every optional key except `tools`, which must be an array when
+present. `strict: true` is refused
 (`chat strict function schemas are outside the published subset`): the neutral tool has no
 strict mode. A tool call or object tool choice whose `type` is not `function` is refused by its
 type.
