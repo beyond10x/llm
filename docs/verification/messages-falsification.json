@@ -974,37 +974,6 @@
   {
    "edits": [
     {
-     "after": "        Some(Value::Array(blocks)) if !blocks.is_empty() => {",
-     "before": "        Some(Value::Array(blocks)) if blocks.len() == 1 => {"
-    }
-   ],
-   "failed_cases": [
-    "ingress_refuses_a_system_prompt_of_more_than_one_block"
-   ],
-   "failed_scenarios": [],
-   "guards": [
-    "Messages system shape is outside the declared subset"
-   ],
-   "killed_by": [
-    "case"
-   ],
-   "mutation": "system-prompt-of-one-block-relaxed",
-   "restored": true,
-   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
-   "scenario_counts": {
-    "error": 0,
-    "failed": 0,
-    "passed": 41,
-    "skipped": 0,
-    "total": 41,
-    "unsupported": 0
-   },
-   "source": "crates/llm-messages/src/codec.rs",
-   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
-  },
-  {
-   "edits": [
-    {
      "after": "        _ => ToolChoice::Auto,",
      "before": "        _ => {\n            return Err(Error::unsupported(\n                \"Messages tool choice is outside the declared subset\",\n            ));\n        }"
     }
@@ -1741,7 +1710,7 @@
    "source_before_sha256": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a"
   }
  ],
- "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not. Wave 2026-10-05-w27 (Harness parity M23, M36, M39): unknown stream events, deltas and blocks are now preserved with a warning, so unknown-stream-event-ignored was retired with the refusal it claimed; in-flight-content-block-bound-deleted was re-measured where the bound moved; and six mutations were run in a second pass against the tree named under `sources`, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- run <suite> <baseline> <out> <identity>`. Three of the claimed literals are fixed warnings rather than refusals: each mutation claiming one deletes the preservation that warning reports. Wave 2026-10-05-w48 (story:anthropic-access, Harness parity M5, M6): five mutations of the subscription presentation were run in a third pass with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- check`; the subscription client preamble is a fixed literal the route requires rather than a refusal, and the mutation claiming it changes its text. Wave 2026-10-05-w53 (story:anthropic-access): the field refusal now names the refused field by its path, so the four mutations whose recorded text that change touched were re-measured: unknown-request-field-accepted (lib.rs), ingress-stamps-the-reading-binding-onto-thinking (codec.rs), stream-start-not-checked-as-an-assistant-message and content-assembled-in-block-stop-order (decode.rs), whose calls now pass that path; each was run alone against the sha256 it records, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- check` under ess 0.52.0; their failed cases omit tests/falsification.rs, whose checks fail under any mutation that removes recorded text.",
+ "note": "Every mutation below was applied to the source named, run against both lanes and restored, in one pass, by one harness. A record of kills says nothing about the guards nothing was ever aimed at, so the refusals no mutation claims are enumerated under `unaimed` rather than left to be discovered: tests/falsification.rs recomputes the projection's fixed diagnostics from its own source and fails when one is in neither half. What remains hand-written is the `guards` attribution - which refusal a mutation deletes. The check bounds it to the mutated file and no further, so a mutation could still claim another refusal of that same file and shrink `unaimed` by one without covering anything. Measured: a cross-file claim fails a_mutation_only_claims_a_refusal_its_own_source_makes; a same-file one does not. Wave 2026-10-05-w27 (Harness parity M23, M36, M39): unknown stream events, deltas and blocks are now preserved with a warning, so unknown-stream-event-ignored was retired with the refusal it claimed; in-flight-content-block-bound-deleted was re-measured where the bound moved; and six mutations were run in a second pass against the tree named under `sources`, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- run <suite> <baseline> <out> <identity>`. Three of the claimed literals are fixed warnings rather than refusals: each mutation claiming one deletes the preservation that warning reports. Wave 2026-10-05-w48 (story:anthropic-access, Harness parity M5, M6): five mutations of the subscription presentation were run in a third pass with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- check`; the subscription client preamble is a fixed literal the route requires rather than a refusal, and the mutation claiming it changes its text. Wave 2026-10-05-w53 (story:anthropic-access): the field refusal now names the refused field by its path, so the four mutations whose recorded text that change touched were re-measured: unknown-request-field-accepted (lib.rs), ingress-stamps-the-reading-binding-onto-thinking (codec.rs), stream-start-not-checked-as-an-assistant-message and content-assembled-in-block-stop-order (decode.rs), whose calls now pass that path; each was run alone against the sha256 it records, with the scenario lane invoked as `cargo run --locked -p b10x-llm-conformance -- check` under ess 0.52.0; their failed cases omit tests/falsification.rs, whose checks fail under any mutation that removes recorded text. Wave 2026-10-16-w08 (story:messages-ingress-client-fields): a system of several text blocks is now read, its blocks joined by a line feed, so system-prompt-of-one-block-relaxed was retired with the one-block rule it relaxed; the refusal it claimed still guards a system that is neither text nor a list and is listed under unaimed, beside the nine refusals the client request fields added, at which no mutation was aimed.",
  "sources": {
   "crates/llm-http/src/transport.rs": "2d488d03ef7c914c2c75dc41e32fc217701dbf73f07623013ca87e67408d48be",
   "crates/llm-messages/src/client.rs": "ac41afe611f176c765e796cb4c670c8e8c9458626d5117b7137b400d36e4d81a",
@@ -1751,13 +1720,13 @@
   "crates/llm-messages/src/usage.rs": "2355a24a01de52b8af9464298178b31d55f7fc6c0ef1af4875800b7cbc6d55a6"
  },
  "summary": {
-  "diagnostics_claimed_by_a_mutation": 27,
-  "diagnostics_in_source": 92,
-  "diagnostics_nothing_is_aimed_at": 65,
-  "killed_by_a_case_only": 13,
+  "diagnostics_claimed_by_a_mutation": 26,
+  "diagnostics_in_source": 101,
+  "diagnostics_nothing_is_aimed_at": 75,
+  "killed_by_a_case_only": 12,
   "killed_by_a_scenario_only": 4,
   "killed_by_both_lanes": 34,
-  "mutations": 51,
+  "mutations": 50,
   "survivors": 0
  },
  "unaimed": [
@@ -1768,6 +1737,10 @@
   "Messages block start carries no block",
   "Messages block stop names a block that never started",
   "Messages cache breakdown contradicts its total",
+  "Messages cache mark is outside the declared subset",
+  "Messages cache mark lifetime is outside the declared subset",
+  "Messages cache mark type is outside the declared subset",
+  "Messages cache marks carry more than one lifetime",
   "Messages cannot report this terminal reason",
   "Messages citations are outside the declared subset",
   "Messages content block index is missing or invalid",
@@ -1776,6 +1749,7 @@
   "Messages content must be an array",
   "Messages content must be text or blocks",
   "Messages delta carries no delta",
+  "Messages disable_parallel_tool_use must be boolean",
   "Messages encoded request exceeds bound",
   "Messages event precedes its message start",
   "Messages field is not a string",
@@ -1788,6 +1762,7 @@
   "Messages max_tokens must be positive",
   "Messages message delta carries no delta",
   "Messages messages must be an array",
+  "Messages metadata user_id must be text",
   "Messages opaque block is outside the declared subset",
   "Messages optional feature is outside the declared subset",
   "Messages payload follows the terminal event",
@@ -1803,7 +1778,11 @@
   "Messages streamed tool arguments exceed their bound",
   "Messages string field is missing or invalid",
   "Messages system block is not text",
+  "Messages system shape is outside the declared subset",
   "Messages terminal event leaves a content block open",
+  "Messages thinking budget must be a positive integer",
+  "Messages thinking must name its type",
+  "Messages thinking type is outside the declared subset",
   "Messages tool arguments exceed bound",
   "Messages tool description must be text",
   "Messages tool input must be an object",

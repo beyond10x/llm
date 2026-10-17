@@ -9,7 +9,10 @@ mod ingress;
 mod usage;
 
 pub use client::{ANTHROPIC_VERSION, BETA_HEADER, MessagesClient, OAUTH_BETA, VERSION_HEADER};
-pub use codec::{IngressRequest, SUBSCRIPTION_CLIENT_PREAMBLE, decode_request, encode_request};
+pub use codec::{
+    IngressRequest, SUBSCRIPTION_CLIENT_PREAMBLE, decode_request, encode_request,
+    omitted_advisories,
+};
 pub use decode::{StreamDecoder, decode_message, decode_stream};
 pub use ingress::{IngressStream, encode_ingress_message};
 

@@ -18,6 +18,7 @@ assert:
   contains:
     accepted: false
     error_code: "unsupported"
+    error_message: "Messages role is outside the declared subset"
     dispatch: "not-sent"
     wire_request: null
     neutral_request: null

@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-reads-parallel-tool-use-left-enabled
+summary: disable_parallel_tool_use false on a required choice is parallel_tool_calls true
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"messages":[{"content":[{"cache_control":{"type":"ephemeral"},"text":"Summarise the log","type":"text"}],"role":"user"}],"model":"example/Model-Revision","stream":true,"system":[{"cache_control":{"type":"ephemeral"},"text":"Stay terse","type":"text"}],"tool_choice":{"disable_parallel_tool_use":false,"type":"any"},"tools":[{"description":"Look up a record","input_schema":{"type":"object"},"name":"lookup"}]}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: null
+    neutral_request: '{"format":"llm.turn/4","request":{"model":"example/Model-Revision","instructions":"Stay terse","items":[{"kind":"user-text","text":"Summarise the log"}],"tools":[{"name":"lookup","description":"Look up a record","input_schema":{"type":"object"}}],"max_output_tokens":512,"tool_choice":"required","controls":{"parallel_tool_calls":true,"hints":{"prompt_cache":{}}}}}'
+    stream: true
+    items:
+      - "user-text:Summarise the log"
+    omitted_advisories: []

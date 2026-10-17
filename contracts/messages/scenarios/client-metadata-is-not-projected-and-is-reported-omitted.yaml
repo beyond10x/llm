@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: client-metadata-is-not-projected-and-is-reported-omitted
+summary: a turn carrying the client-metadata hint projects no metadata, and the projection reports the hint omitted
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"format":"llm.turn/4","request":{"model":"internal-model","instructions":"","items":[{"kind":"user-text","text":"hi"}],"tools":[],"max_output_tokens":512,"controls":{"hints":{"unforwarded":["client-metadata"]}}}}'
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: '{"max_tokens":512,"messages":[{"content":[{"cache_control":{"type":"ephemeral"},"text":"hi","type":"text"}],"role":"user"}],"model":"example/Model-Revision","stream":true}'
+    neutral_request: null
+    items:
+      - "user-text:hi"
+    omitted_advisories:
+      - "client-metadata"

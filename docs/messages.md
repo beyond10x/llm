@@ -37,7 +37,28 @@ endpoint is attributable, and is attributed.
 The route requires `max_tokens`. The neutral `max_output_tokens` stays optional, and an absent one
 resolves to the binding's declared maximum — the only value in the system that is an operator's
 statement rather than a guess. Temperature above `1.0` is refused: this route's range is not the
-neutral one. A reasoning effort travels in `output_config.effort`.
+neutral one. A reasoning effort travels in `output_config.effort`, through `llm_core::wire_effort`,
+which leaves every name unchanged on this wire, `max` included.
+
+**What a coding-agent client sends is read under written rules** (`docs/design.md` "Client request
+fields"). The first turn Claude Code sends, `tests/fixtures/claude-code-first-turn.json`, decodes
+whole:
+
+| Field | Ingress | Egress |
+| --- | --- | --- |
+| `thinking` | `{"type":"adaptive"}`, `{"type":"enabled","budget_tokens":n}` (n positive) or `{"type":"disabled"}` is `controls.thinking`; `budget_tokens` beside `adaptive` or `disabled`, and any other key (`display` included), refused by its path | re-emitted as read |
+| `system` | a string, or text blocks joined by a line feed; an empty array is no instructions; a block of another type is refused (`Messages system block is not text`) | one block (one-way: the joined text comes back as one block) |
+| `cache_control` | `{"type":"ephemeral"}` with an optional `ttl` of `5m` or `1h`, on a `system` block, a `text`, `tool_use` or `tool_result` block, or a tool, is the `prompt-cache` hint; `5m` is the default and reads as no lifetime; another key refused by its path, another type or lifetime refused; marks of two lifetimes in one request refused (`Messages cache marks carry more than one lifetime`); on a `thinking` or `redacted_thinking` block refused by its path | the breakpoints below, each with `ttl: 1h` when the hint says `1h`; the caller's mark positions are not reproduced |
+| `output_config.effort` | any non-empty name, `max` included; `format` and any other key refused by its path | the same name |
+| `tool_choice.disable_parallel_tool_use` | a boolean `v` on `auto`, `any` or `tool` is `controls.parallel_tool_calls = !v` | `disable_parallel_tool_use: !b`, writing `{"type":"auto"}` when the choice is automatic |
+| `metadata` | an object holding only `user_id` (a string) is the `client-metadata` hint; another key refused by its path; the value is never kept | not sent (one-way), and reported omitted |
+
+`omitted_advisories(&TurnRequest)` names the hints this projection does not send, in the design's
+order: it carries only `prompt-cache`, so `prompt-cache-key`, `verbosity`, `reasoning-summary`,
+`input-item-ids` and `client-metadata` are reported whenever present. `context_management`,
+`safeguards`, `thinking.display`, `output_config.format` and every other key stay refused by their
+path, and a `system` message inside `messages` stays a role outside the subset: the neutral turn
+has no item that places an instruction between two turns.
 
 **The projection places two prompt-cache breakpoints.** The caller replays the whole transcript on
 every turn, so without them each turn pays the full input rate for everything it resends. A
@@ -47,7 +68,8 @@ which caches the constant head (tools, then system). A second, rolling marker go
 reads back. Nothing else is marked: a replayed `thinking` or `redacted_thinking` block is sent byte
 for byte, because its signature covers it as produced, and a tail with nothing markable carries no
 rolling marker. An empty instruction sends no `system` at all; the rolling marker already covers
-the tools.
+the tools. A turn whose `prompt-cache` hint has the lifetime `1h` marks both breakpoints
+`{type: ephemeral, ttl: 1h}`; any other turn marks them as above.
 
 **A subscription token changes `system`.** Under a `subscription-oauth` account, `system` opens
 with the subscription client preamble ("You are Claude Code, Anthropic's official CLI for
@@ -55,14 +77,14 @@ Claude.") as its own block carrying only `type` and `text`, and the caller's ins
 the marked block, so the breakpoint still covers the whole constant head. An empty instruction sends
 the preamble alone, unmarked. The same account adds `anthropic-beta: oauth-2025-04-20` to the
 headers and sends the token as `authorization: Bearer`. API-key and plain bearer accounts send
-neither. Such a body has two `system` blocks, so it is not valid ingress input either.
+neither. Read back as ingress, such a body's two `system` blocks join into one instruction that
+begins with the preamble.
 
 Everything else is refused, not dropped: unknown request fields, image, document, search-result and
-server-tool content, citations, cache-control on a block, a `none` tool choice, a system prompt that
-is not one text block, and a role outside user/assistant. A translation that silently loses a field
-is a translation that appeared to succeed. Ingress still refuses `cache_control` even though the
-projection now sends it: a caller's own breakpoint has no neutral field to travel in, and dropping it
-would hide a billing decision. So a body this projection sends is not itself valid ingress input.
+server-tool content, citations, a cache mark outside the shape above, a `none` tool choice, a
+`system` block that is not text, and a role outside user/assistant. A translation that silently
+loses a field is a translation that appeared to succeed. A body this projection sends is valid
+ingress input: its breakpoints read back as the `prompt-cache` hint they were placed for.
 
 A field outside the declared subset is refused by its path, in a request, a complete response or
 a stream alike: `Messages field is outside the declared subset: <path>`, where the path starts at
@@ -142,7 +164,7 @@ the check travels with the accept list itself rather than sitting beside one use
 accepted names, `citations` on a text block and `caller` on a tool call, are held to something
 stricter still: any value at all is outside the declared subset and is refused outright.
 
-**Fourteen of the eighty-five producer names this projection speaks are carried, not read.**
+**Twenty-four of the ninety-seven producer names this projection speaks are carried, not read.**
 A name is not a behaviour — the behaviour around each is tested — but a wrong name is a field
 silently never seen, or an accepted field refused, and no fixture written from the same wrong name
 can notice. Sixty-seven were read from the extraction provenance the implementation
@@ -154,8 +176,11 @@ warning codes `unknown-stream-event` and `unknown-output-item` — were read fro
 draft and nothing read in this session supports them: `auto`, `cache_creation`,
 `ephemeral_1h_input_tokens`, `ephemeral_5m_input_tokens`, `caller`, `citations`, `inference_geo`,
 `output_tokens_details`, `thinking_tokens`, `rate_limit_error`, `service_tier`, `timeout_error`,
-`web_fetch_requests` and `web_search_requests`. They need one read of the producer's own types,
-which belongs with the access story.
+`web_fetch_requests` and `web_search_requests`. Ten more arrived with the client request fields
+and are named by `docs/design.md` and the authored fixture rather than by the producer's types:
+`1h`, `5m`, `adaptive`, `budget_tokens`, `disable_parallel_tool_use`, `disabled`, `enabled`,
+`metadata`, `ttl` and `user_id`. They need one read of the producer's own types, which belongs
+with the access story.
 
 The split is not a paragraph to keep in step by hand: `tests/wire_names.rs` scans this crate's
 source for every wire-shaped literal and fails on any name that is in neither list, and on any
@@ -175,6 +200,12 @@ request through the injected resolver, so rotation needs no restart; the present
 binding's (`x-api-key` or `Authorization`), never inferred from the protocol. Every request carries
 `anthropic-version: 2023-06-01`, a constant rather than a setting. Diagnostics are fixed: a status
 or a reported upstream failure contributes its category, never its response text.
+
+A turn carrying hints this wire omits ends, once it has succeeded, with one `StreamEvent::Warning`
+of code `advisory-omitted` naming them (`llm_core::advisory_warning`, wire name `Messages`). Never
+before or during the turn, because a warning on the sink is visible output and ends fallback
+eligibility; not at all after a failed turn or when nothing was omitted. A sink that refuses the
+warning fails the turn with its own error.
 
 **What bounds a turn, exactly.** A turn has three waits — credential resolution, the HTTP exchange
 and a sink that is not accepting — and both things that end a turn from outside it reach all three.

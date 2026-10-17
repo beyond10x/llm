@@ -522,3 +522,122 @@ async fn the_turn_deadline_bounds_a_sink_that_never_accepts() {
         "the last snapshot is retained across a deadline"
     );
 }
+
+/// A request carrying hints this wire omits (a cache key and client metadata) and the one it
+/// carries (the prompt cache).
+fn hinted_request() -> TurnRequest {
+    let mut request = request();
+    let hints = &mut request.controls.hints;
+    hints.prompt_cache = Some(llm_core::PromptCache { ttl: None });
+    hints.prompt_cache_key = Some("conversation-1".to_owned());
+    hints
+        .unforwarded
+        .insert(llm_core::Unforwarded::ClientMetadata);
+    request
+}
+
+/// Serves `STREAM`, or the first `cut` bytes of it, to one connection.
+async fn serve_once(listener: TcpListener, cut: Option<usize>) {
+    let (mut socket, _) = accept(&listener).await;
+    read_request(&mut socket).await;
+    socket
+        .write_all(
+            b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n",
+        )
+        .await
+        .unwrap();
+    socket
+        .write_all(&STREAM[..cut.unwrap_or(STREAM.len())])
+        .await
+        .unwrap();
+    socket.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn a_succeeded_turn_ends_with_one_warning_naming_the_hints_this_wire_omitted() {
+    let (listener, url) = listener().await;
+    let server = tokio::spawn(serve_once(listener, None));
+    let client = client(&url, StaticResolver::new("fixture-key"));
+    let mut sink = VecSink::new(16, 4096);
+    client
+        .turn(&hinted_request(), &mut sink, &Cancel::new())
+        .await
+        .expect("a decoded turn");
+    server.await.unwrap();
+    assert_eq!(
+        sink.events(),
+        [
+            StreamEvent::TextDelta {
+                text: "Hello".to_owned()
+            },
+            StreamEvent::Warning {
+                code: llm_core::ADVISORY_OMITTED.to_owned(),
+                message: "Messages carries no prompt-cache-key, client-metadata; the advisory \
+                          hint was not sent"
+                    .to_owned(),
+            },
+        ]
+    );
+}
+
+#[tokio::test]
+async fn a_turn_whose_hints_this_wire_all_carries_emits_no_warning() {
+    let (listener, url) = listener().await;
+    let server = tokio::spawn(serve_once(listener, None));
+    let client = client(&url, StaticResolver::new("fixture-key"));
+    let mut sink = VecSink::new(16, 4096);
+    let mut request = request();
+    request.controls.hints.prompt_cache = Some(llm_core::PromptCache {
+        ttl: Some(llm_core::CacheTtl::OneHour),
+    });
+    client
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect("a decoded turn");
+    server.await.unwrap();
+    assert_eq!(
+        sink.events(),
+        [StreamEvent::TextDelta {
+            text: "Hello".to_owned()
+        }]
+    );
+}
+
+#[tokio::test]
+async fn a_failed_turn_emits_no_advisory_warning() {
+    let (listener, url) = listener().await;
+    let end = STREAM
+        .windows(13)
+        .position(|w| w == b"message_delta")
+        .expect("a terminal half to cut off");
+    let server = tokio::spawn(serve_once(listener, Some(end - 7)));
+    let client = client(&url, StaticResolver::new("fixture-key"));
+    let mut sink = VecSink::new(16, 4096);
+    client
+        .turn(&hinted_request(), &mut sink, &Cancel::new())
+        .await
+        .expect_err("a truncated stream");
+    server.await.unwrap();
+    assert_eq!(
+        sink.events(),
+        [StreamEvent::TextDelta {
+            text: "Hello".to_owned()
+        }]
+    );
+}
+
+#[tokio::test]
+async fn a_sink_that_refuses_the_warning_fails_the_turn_with_its_own_error() {
+    let (listener, url) = listener().await;
+    let server = tokio::spawn(serve_once(listener, None));
+    let client = client(&url, StaticResolver::new("fixture-key"));
+    // Room for the one text delta and nothing more.
+    let mut sink = VecSink::new(1, 4096);
+    let error = client
+        .turn(&hinted_request(), &mut sink, &Cancel::new())
+        .await
+        .expect_err("the sink refused the warning");
+    server.await.unwrap();
+    assert_eq!(error.code, ErrorCode::TooLarge);
+    assert_eq!(error.message, "stream sink event bound reached");
+}

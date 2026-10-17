@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-refuses-a-cache-mark-on-thinking
+summary: a cache mark on a thinking block would modify signed state and is refused by its path
+timeline:
+- at: '2026-10-17T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"messages":[{"content":"hi","role":"user"},{"content":[{"cache_control":{"type":"ephemeral"},"signature":"sig-1","thinking":"weighing","type":"thinking"}],"role":"assistant"},{"content":"go on","role":"user"}],"model":"caller-alias"}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "unsupported"
+    error_message: "Messages field is outside the declared subset: messages[].content[].cache_control"
+    dispatch: "not-sent"
+    wire_request: null
+    neutral_request: null
+    stream: null
+    items: []
+    omitted_advisories: []

@@ -185,18 +185,23 @@ fn a_tail_with_nothing_markable_carries_no_rolling_breakpoint() {
     assert_eq!(body.to_string().matches(MARKER).count(), 0, "{body}");
 }
 
-/// The projection marks what it sends, and ingress still refuses `cache_control` on an arriving
-/// block (`docs/messages.md`): a caller's own breakpoint has no neutral field to travel in, and
-/// dropping it would hide a billing decision. So the projected body is not itself ingress input.
+/// The projection marks what it sends, and since wave 2026-10-16-w08 a caller's breakpoint has a
+/// neutral field to travel in: the `prompt-cache` hint (`docs/design.md` "Client request
+/// fields"). So the projected body is ingress input, and its marks are read, never dropped.
 #[test]
-fn ingress_refuses_the_breakpoints_egress_places() {
+fn ingress_reads_the_breakpoints_egress_places_as_the_prompt_cache_hint() {
     let projected = encode_request(&full_request(), &binding()).expect("projected");
     assert!(
         String::from_utf8_lossy(&projected).contains(MARKER),
         "the projection placed no breakpoint"
     );
-    let error = decode_request(&projected, binding().provenance()).expect_err("refused");
-    assert_eq!(error.code, ErrorCode::Unsupported);
+    let request = decode_request(&projected, binding().provenance())
+        .expect("the projected body is ingress input")
+        .request;
+    assert_eq!(
+        request.controls.hints.prompt_cache,
+        Some(llm_core::PromptCache { ttl: None })
+    );
 }
 
 /// The projected body with every breakpoint removed: what the round trips below read back.
@@ -384,9 +389,11 @@ fn thinking_survives_a_gateway_round_trip_only_through_the_callers_binding() {
 #[test]
 fn ingress_refuses_a_request_field_outside_the_declared_subset() {
     for body in [
-        json!({"model":"m","max_tokens":8,"messages":[{"role":"user","content":"hi"}],"metadata":{"user_id":"u"}}),
+        // `metadata` of `user_id` alone and `thinking` are read since wave 2026-10-16-w08; any
+        // other key beside them is still refused.
+        json!({"model":"m","max_tokens":8,"messages":[{"role":"user","content":"hi"}],"metadata":{"user_id":"u","tags":["a"]}}),
         json!({"model":"m","max_tokens":8,"messages":[{"role":"user","content":"hi"}],"service_tier":"auto"}),
-        json!({"model":"m","max_tokens":8,"messages":[{"role":"user","content":"hi"}],"thinking":{"type":"enabled","budget_tokens":1024}}),
+        json!({"model":"m","max_tokens":8,"messages":[{"role":"user","content":"hi"}],"thinking":{"type":"enabled","budget_tokens":1024,"display":"omitted"}}),
     ] {
         assert_eq!(
             ingress(&body).expect_err("refused").code,
@@ -401,7 +408,9 @@ fn ingress_refuses_content_outside_the_declared_subset() {
     for content in [
         json!({"type":"image","source":{"type":"base64","media_type":"image/png","data":"AA=="}}),
         json!({"type":"server_tool_use","id":"srvtoolu_1","name":"web_search","input":{}}),
-        json!({"type":"text","text":"cached","cache_control":{"type":"ephemeral"}}),
+        // An `ephemeral` mark is the prompt-cache hint since wave 2026-10-16-w08; a mark of
+        // another shape is still refused.
+        json!({"type":"text","text":"cached","cache_control":{"type":"ephemeral","scope":"global"}}),
         json!({"type":"text","text":"cited","citations":[{"type":"char_location"}]}),
     ] {
         let body = json!({"model":"m","max_tokens":8,
