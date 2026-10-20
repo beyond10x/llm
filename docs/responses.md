@@ -414,8 +414,10 @@ caller may retry the identical request only before output. Every other code is
 final, an exhausted quota (`insufficient_quota`) or spend limit included. That holds inside a
 stream and before it: a 429 whose error body names one of the five billing, spend or quota codes
 (`insufficient_quota`, `credit_balance_exhausted`, `organization_spend_limit_exceeded`,
-`project_spend_limit_exceeded`, `organization_usage_limit_exceeded`) as its `error.code` is a
-final `Refused` with dispatch `rejected`. The client hands the transport that rule, and the
+`project_spend_limit_exceeded`, `organization_usage_limit_exceeded`) as its `error.code`, or
+`insufficient_quota`, `usage_limit_reached` or `usage_not_included` (the Codex backend's
+subscription limits) as its `error.type`, is a final `Refused` with dispatch `rejected`, as the
+official Codex CLI treats it. The client hands the transport that rule, and the
 transport reads the 429's body for it only, bounded in bytes and time; every other 429, and one
 whose body cannot be read in that bound, stays a retriable `RateLimited`
 (`story:quota-429-is-final`). The provider lines this rests on are in

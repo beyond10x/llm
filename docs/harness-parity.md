@@ -320,12 +320,16 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `an_exhausted_quota_or_spend_limit_stays_final_before_output` `:320`. Inside a stream, an
   exhausted quota (`insufficient_quota`) stays a final `Refused`. As an HTTP 429 before the
   stream it is a final `Refused` too (`story:quota-429-is-final`): the client's rule
-  `exhausted_quota` `llm-responses/src/client.rs:43` reads `error.code` from the 429's body,
-  which the transport reads for it only, bounded (`llm-http/src/transport.rs:260`). Tests:
+  `exhausted_quota` `llm-responses/src/client.rs:55` reads `error.code` and `error.type` from the
+  429's body (the five codes; the types `insufficient_quota`, `usage_limit_reached` and
+  `usage_not_included`, as the Codex CLI does), which the transport reads for it only, bounded
+  (`llm-http/src/transport.rs:260`). Tests:
   `an_exhausted_quota_answered_as_a_429_before_the_stream_is_final`
   `llm-responses/tests/retry_class.rs:411` and
-  `llm-responses/tests/adversary_w09_retry_http_quota.rs:156`, and
-  `any_other_429_stays_a_retriable_rate_limit` `llm-responses/tests/retry_class.rs:437`.
+  `llm-responses/tests/adversary_w09_retry_http_quota.rs:156`,
+  `a_quota_or_usage_limit_named_by_its_error_type_is_final_as_a_429`
+  `llm-responses/tests/retry_class.rs:440` and `llm-responses/tests/adversary_w10_quota_type.rs`,
+  and `any_other_429_stays_a_retriable_rate_limit` `llm-responses/tests/retry_class.rs:469`.
   The bridge keeps `may_retry` (`llm_port.rs:622`-`627`), so Harness's loop retries both classes
   before output again, as its wire did. The bridge's code mapping does not change.
 - **M27.** A Messages `overloaded_error` (`Unavailable`) or `api_error` (`Transport`) stream error

@@ -405,13 +405,13 @@ async fn answered_429(body: &serde_json::Value) -> (Error, VecSink) {
 
 /// story:quota-429-is-final. The same quota answered as an HTTP 429 before any stream is final
 /// too, a refusal with dispatch `rejected`, so routing ends the run as it does for the quota
-/// inside a stream. Only the machine-readable `error.code` decides; the prose never reaches a
-/// diagnostic.
+/// inside a stream. The machine-readable `error.code` decides here, with no `error.type` beside
+/// it; the prose never reaches a diagnostic.
 #[tokio::test]
 async fn an_exhausted_quota_answered_as_a_429_before_the_stream_is_final() {
     for code in QUOTA {
         let (error, sink) = answered_429(&serde_json::json!({"error": {
-            "message": "SECRET-UPSTREAM-TEXT", "type": "insufficient_quota", "param": null, "code": code
+            "message": "SECRET-UPSTREAM-TEXT", "param": null, "code": code
         }}))
         .await;
         assert_eq!(
@@ -431,15 +431,50 @@ async fn an_exhausted_quota_answered_as_a_429_before_the_stream_is_final() {
     }
 }
 
-/// Only those codes, exactly spelt, as `error.code`: every other 429 stays a retriable rate
-/// limit, a quota named only by `error.type` or outside `error` included.
+/// The quota and subscription usage limits named by `error.type`, which the official Codex CLI
+/// reads as terminal (`openai/codex` 8196bcdc `codex-rs/codex-api/src/api_bridge.rs:185`-`238`,
+/// `codex-rs/protocol/src/error.rs:410`-`437`): `insufficient_quota` with no code or beside a
+/// rate-limit code, `usage_limit_reached` and `usage_not_included`. Each is a final refusal as a
+/// 429, as the same document is inside a stream.
+#[tokio::test]
+async fn a_quota_or_usage_limit_named_by_its_error_type_is_final_as_a_429() {
+    for body in [
+        serde_json::json!({"error": {"code": null, "type": "insufficient_quota", "message": "SECRET-UPSTREAM-TEXT"}}),
+        serde_json::json!({"error": {"code": "rate_limit_exceeded", "type": "insufficient_quota", "message": "SECRET-UPSTREAM-TEXT"}}),
+        serde_json::json!({"error": {"type": "usage_limit_reached", "message": "SECRET-UPSTREAM-TEXT", "plan_type": "pro", "resets_at": 1_900_000_000}}),
+        serde_json::json!({"error": {"type": "usage_not_included", "message": "SECRET-UPSTREAM-TEXT"}}),
+    ] {
+        let (error, sink) = answered_429(&body).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Refused, Dispatch::Rejected),
+            "{body}"
+        );
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "{body} is final: {error:?}"
+        );
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "{body}: {error:?}"
+        );
+    }
+}
+
+/// Every other 429 stays a retriable rate limit: a genuine rate limit (`OpenAI`'s shape, and the
+/// two the Codex CLI's own test keeps apart from a quota, `api_bridge_tests.rs:503`), a quota
+/// code or type in another spelling, either one outside `error`, and no error at all.
 #[tokio::test]
 async fn any_other_429_stays_a_retriable_rate_limit() {
     for body in [
-        serde_json::json!({"error": {"code": "rate_limit_exceeded", "type": "insufficient_quota", "message": "SECRET-UPSTREAM-TEXT"}}),
-        serde_json::json!({"error": {"code": null, "type": "insufficient_quota"}}),
+        serde_json::json!({"error": {"code": "rate_limit_exceeded", "type": "requests", "param": null, "message": "SECRET-UPSTREAM-TEXT"}}),
+        serde_json::json!({"error": {"code": "rate_limit_exceeded", "type": "rate_limit_error"}}),
+        serde_json::json!({"error": {"code": "slow_down", "type": "rate_limit_error"}}),
         serde_json::json!({"error": {"code": "INSUFFICIENT_QUOTA"}}),
+        serde_json::json!({"error": {"type": "USAGE_LIMIT_REACHED"}}),
         serde_json::json!({"code": "insufficient_quota"}),
+        serde_json::json!({"type": "usage_limit_reached"}),
         serde_json::json!({}),
     ] {
         let (error, sink) = answered_429(&body).await;

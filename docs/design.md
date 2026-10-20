@@ -224,7 +224,7 @@ or no; nothing it reads reaches a diagnostic, and a response tap is still shown 
 
 | Protocol | A 429 is final when | Provider documentation, read 2026-10-20 |
 | --- | --- | --- |
-| Responses | its body's `error.code` is one of the five billing, spend and quota codes above, exactly spelt | [OpenAI error codes][openai-errors]: "Retrying billing, spend, or quota errors won’t restore API access." |
+| Responses | its body's `error.code` is one of the five billing, spend and quota codes above, or its `error.type` is `insufficient_quota`, `usage_limit_reached` or `usage_not_included`, each exactly spelt | [OpenAI error codes][openai-errors]: "Retrying billing, spend, or quota errors won’t restore API access." The official Codex CLI at the commit cited below maps a 429 with either kind of name to a quota or usage-limit error ([`codex-api/src/api_bridge.rs:185`-`238`][codex-quota-429]) and gives each no retry delay ([`protocol/src/error.rs:410`-`437`][codex-terminal]); its test `map_api_error_distinguishes_http_quota_errors_from_rate_limits` keeps `{"type": "insufficient_quota"}` without a code apart from a rate limit ([`api_bridge_tests.rs:503`][codex-quota-test]) |
 | Messages | its body's `error.type` is `rate_limit_error` and its `error.details.error_code` is `enforced_spend_limit_reached`, whatever its headers | [Anthropic rate limits][anthropic-spend-cap], "Reaching your spend cap": "On the Messages API, `error.details.error_code` is `enforced_spend_limit_reached`. Use it to tell this response apart from a rate limit." The same section: "Retrying, including the SDK's automatic retries, fails until access resumes." |
 | Chat Completions | never: no rule is stated, and every 429 stays retriable | — |
 
@@ -292,6 +292,9 @@ back by the receiving decoder's rules, as above.
 [anthropic-errors]: https://platform.claude.com/docs/en/api/errors
 [anthropic-spend-cap]: https://platform.claude.com/docs/en/api/rate-limits#reaching-your-spend-cap
 [codex-errors]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/sse/responses_error.rs#L87-L101
+[codex-quota-429]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/api_bridge.rs#L185-L238
+[codex-terminal]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/protocol/src/error.rs#L410-L437
+[codex-quota-test]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/api_bridge_tests.rs#L503
 [openai-python-retry]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_base_client.py#L899-L941
 [openai-python-stream]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_streaming.py#L78-L90
 [anthropic-python-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L929-L962
