@@ -271,6 +271,11 @@ impl StreamDecoder {
         self.complete
     }
 
+    /// Whether any payload outside [`LIFECYCLE_EVENTS`] was read, shown to the caller or not.
+    pub(crate) const fn has_answered(&self) -> bool {
+        self.answered
+    }
+
     /// Retains dispatch evidence and the last valid usage snapshot on a failure.
     pub fn attach(&self, error: Error) -> Error {
         self.header.attach(error, &self.target)

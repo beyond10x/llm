@@ -222,7 +222,10 @@ or a reported upstream failure contributes its category, never its response text
 A stream `error` of type `overloaded_error` (`unavailable`) or `api_error` (`transport`) is
 retriable when no payload but `message_start` and `ping` came before it. After any other payload
 it is final, a block that opened without showing anything included. Every other type is final,
-`rate_limit_error` included, because on this route it may be a spend cap. Before the stream, a
+`rate_limit_error` included, because on this route it may be a spend cap. A connection cut inside
+the stream, inside an event or inside a chunk, counts output the same way: before any payload but
+`message_start` and `ping` it keeps the transport's retry class, and after one it is final, as on
+Responses (`story:messages-cut-after-silent-output-is-final`). Before the stream, a
 429 whose error body says `rate_limit_error` with `error.details.error_code`
 `enforced_spend_limit_reached` is that spend cap: a final `Refused` with dispatch `rejected`,
 with or without a `retry-after` (`story:quota-429-is-final`). Every other 429 stays a retriable
