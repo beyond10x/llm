@@ -27,20 +27,26 @@
 //! every other one reads back as `refused`, because the wire has no code that would read back
 //! as it.
 //!
-//! | neutral code | wire `error.code` | read back as |
-//! | --- | --- | --- |
-//! | `unavailable`, retriable | `server_is_overloaded` | `unavailable` |
-//! | `unavailable`, not retriable | `server_error` | `unavailable` |
-//! | `rate-limited` | `rate_limit_exceeded` | `rate-limited` |
-//! | `refused` | `refused` | `refused` |
-//! | `invalid-request` | `invalid_request` | `refused` |
-//! | `transport` | `transport` | `refused` |
-//! | `protocol` | `protocol` | `refused` |
-//! | `unauthorized` | `unauthorized` | `refused` |
-//! | `too-large` | `too_large` | `refused` |
-//! | `unsupported` | `unsupported` | `refused` |
-//! | `cancelled` | `cancelled` | `refused` |
-//! | `deadline` | `deadline` | `refused` |
+//! A relayed failure also reads back retriable or final by the receiving decoder's rules, not by
+//! the error's own retry mark: no wire field carries this side's retry decision. The three codes
+//! that read back as themselves are retriable when nothing was streamed before them, whatever
+//! this side decided, a failure it marked final or whose retries it had spent included. Carrying
+//! the decision across the hop is story:relayed-failures-keep-their-retry-decision.
+//!
+//! | neutral code | wire `error.code` | read back as | retriable when nothing was streamed first |
+//! | --- | --- | --- | --- |
+//! | `unavailable`, retriable | `server_is_overloaded` | `unavailable` | yes |
+//! | `unavailable`, not retriable | `server_error` | `unavailable` | yes |
+//! | `rate-limited` | `rate_limit_exceeded` | `rate-limited` | yes |
+//! | `refused` | `refused` | `refused` | no |
+//! | `invalid-request` | `invalid_request` | `refused` | no |
+//! | `transport` | `transport` | `refused` | no |
+//! | `protocol` | `protocol` | `refused` | no |
+//! | `unauthorized` | `unauthorized` | `refused` | no |
+//! | `too-large` | `too_large` | `refused` | no |
+//! | `unsupported` | `unsupported` | `refused` | no |
+//! | `cancelled` | `cancelled` | `refused` | no |
+//! | `deadline` | `deadline` | `refused` | no |
 //!
 //! # Limits
 //!

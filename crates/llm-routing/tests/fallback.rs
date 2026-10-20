@@ -62,6 +62,10 @@ enum Script {
     Fail(ErrorCode, Dispatch),
     /// Fails and attaches its bound observation whatever the dispatch claim says.
     FailWithEvidence(ErrorCode, Dispatch),
+    /// A provider failure read from an open stream: dispatch `accepted`, with the retry mark the
+    /// protocol decoder set (marked before any output, unmarked after output the caller was not
+    /// shown).
+    FailAccepted(ErrorCode, bool),
 }
 
 struct Scripted {
@@ -128,6 +132,10 @@ impl Model for Scripted {
                         .with_dispatch(*dispatch)
                         .with_observation(observation))
                 }
+                Script::FailAccepted(code, retriable) => Err(Error::new(*code, "scripted failure")
+                    .with_dispatch(Dispatch::Accepted)
+                    .with_retriable(*retriable)
+                    .with_observation(observation)),
             }
         })
     }
@@ -476,6 +484,70 @@ fn every_eligible_class_falls_back() {
         assert_eq!(run.halt, Halt::Succeeded, "{code:?} {dispatch:?}");
         assert_eq!(attempted(&run), ["coding-primary", "coding-secondary"]);
     }
+}
+
+/// story:retry-classes-harness-retried. A provider failure read from an open stream has dispatch
+/// `accepted`, which alone never falls back. Marked retriable, as the protocol decoders mark
+/// Responses `server_error` (`unavailable`) and `rate_limit_exceeded` (`rate-limited`) and
+/// Messages `overloaded_error` (`unavailable`) and `api_error` (`transport`) before any output,
+/// it is retried on its target and then falls back in the declared compatible order only.
+/// Unmarked, as after output the caller was not shown, it halts with no other attempt. An
+/// `unauthorized` failure halts whatever its mark says.
+#[test]
+fn a_provider_failure_marked_before_output_falls_back_in_the_declared_order_and_unmarked_halts() {
+    // The run, then how often the incompatible middle and the compatible last target were called.
+    let failing_primary = |script: Script| {
+        let catalog = catalog(true);
+        let models = fleet(&catalog, script, 0);
+        let mut sink = VecSink::new(16, 4096);
+        let outcome = run(
+            &catalog,
+            &request(),
+            FallbackPolicy::default(),
+            &models,
+            &mut admit_all(),
+            &mut sink,
+        );
+        (
+            outcome,
+            models.calls("local-tiny"),
+            models.calls("remote-large"),
+        )
+    };
+    let attempts = usize::try_from(FallbackPolicy::default().retry.max_attempts).unwrap();
+    for code in [
+        ErrorCode::Unavailable,
+        ErrorCode::RateLimited,
+        ErrorCode::Transport,
+    ] {
+        let (marked, middle, last) = failing_primary(Script::FailAccepted(code, true));
+        assert_eq!(marked.halt, Halt::Succeeded, "{code:?}");
+        let mut expected = vec!["coding-primary"; attempts];
+        expected.push("coding-secondary");
+        assert_eq!(attempted(&marked), expected, "{code:?}");
+        assert_eq!((middle, last), (0, 1), "{code:?}");
+        for attempt in &marked.attempts[..attempts] {
+            assert!(
+                matches!(
+                    attempt.result,
+                    AttemptResult::Failed { code: failed, dispatch: Dispatch::Accepted, .. }
+                        if failed == code
+                ),
+                "{code:?}: {:?}",
+                attempt.result
+            );
+        }
+
+        let (unmarked, middle, last) = failing_primary(Script::FailAccepted(code, false));
+        assert_eq!(unmarked.halt, Halt::IneligibleFailure, "{code:?}");
+        assert_eq!(attempted(&unmarked), ["coding-primary"], "{code:?}");
+        assert_eq!((middle, last), (0, 0), "{code:?}");
+    }
+    let (unauthorized, middle, last) =
+        failing_primary(Script::FailAccepted(ErrorCode::Unauthorized, true));
+    assert_eq!(unauthorized.halt, Halt::IneligibleFailure);
+    assert_eq!(attempted(&unauthorized), ["coding-primary"]);
+    assert_eq!((middle, last), (0, 0));
 }
 
 #[test]

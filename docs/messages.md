@@ -211,6 +211,12 @@ binding's (`x-api-key` or `Authorization`), never inferred from the protocol. Ev
 `anthropic-version: 2023-06-01`, a constant rather than a setting. Diagnostics are fixed: a status
 or a reported upstream failure contributes its category, never its response text.
 
+A stream `error` of type `overloaded_error` (`unavailable`) or `api_error` (`transport`) is
+retriable when no payload but `message_start` and `ping` came before it. After any other payload
+it is final, a block that opened without showing anything included. Every other type is final,
+`rate_limit_error` included, because on this route it may be a spend cap. The provider lines this
+rests on are in [design.md](design.md#provider-failures-retried-before-output).
+
 A turn carrying hints this wire omits ends, once it has succeeded, with one `StreamEvent::Warning`
 of code `advisory-omitted` naming them (`llm_core::advisory_warning`, wire name `Messages`). Never
 before or during the turn, because a warning on the sink is visible output and ends fallback
@@ -275,7 +281,11 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
   part.
 - **Failure.** `fail` emits the `error` event; eight error codes map to an Anthropic error type the
   decoder reads back as the same code, and `protocol`, `cancelled` and `unsupported` take the nearest
-  (`api_error`, `api_error`, `invalid_request_error`).
+  (`api_error`, `api_error`, `invalid_request_error`). No wire field carries the gateway's retry
+  decision, so a relayed failure reads back by the receiving decoder's rules. With nothing streamed
+  first, `overloaded_error` and `api_error` read back retriable, whatever the gateway decided
+  ([design.md](design.md#provider-failures-retried-before-output);
+  `story:relayed-failures-keep-their-retry-decision`).
 - **Refusals.** `UserText`, `ToolResult` and `UnattributedOpaque` items, and an outcome that
   contradicts the streamed calls. Argument fragments for a call whose block already stopped make
   `close` refuse, and redacted thinking that would precede streamed text is refused because it

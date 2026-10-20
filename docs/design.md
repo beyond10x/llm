@@ -122,6 +122,90 @@ Unknown is never zero. Define budget scope, reservations/concurrency, restart po
 charges before claiming enforcement. An admission bound is not a promise about a provider's final
 invoice. Product-level cheapest-model optimization is outside the first milestone.
 
+### Provider failures retried before output
+
+Decided 2026-10-20 (`story:retry-classes-harness-retried`). A provider can fail a turn inside a
+stream it already opened with status 200, so the HTTP status table above never sees it. Each class
+below is the far side reporting its own temporary state. Each is retriable while the attempt has
+produced no output and final once it has, whether or not the caller was shown that output. Responses
+`server_is_overloaded` has followed this rule since 0.3.1. The other four are the classes
+Harness's wire crates retried, and they now follow it too:
+
+| Protocol | Stream error | Reads as | Provider documentation, read 2026-10-20 |
+| --- | --- | --- | --- |
+| Responses | `server_is_overloaded` | `unavailable` | [OpenAI error codes][openai-errors], "503 - Model temporarily overloaded": "Follow the Retry-After header when it’s present, then retry your request." |
+| Responses | `server_error` | `unavailable` | [OpenAI error codes][openai-errors], "500 - The server had an error while processing your request": "Retry your request after a brief wait and contact us if the issue persists." |
+| Responses | `rate_limit_exceeded` | `rate-limited` | [OpenAI error codes][openai-errors], "429 - Rate limit reached for requests": "If a Retry-After header is present, wait at least as long as it specifies before trying again. If it’s missing, use exponential backoff with jitter and limit the number of retries." |
+| Messages | `overloaded_error` | `unavailable` | [Anthropic errors][anthropic-errors]: "529 - overloaded_error: The API is temporarily overloaded.", and "The official SDK automatically retries transient failures (such as connection errors, rate limits, and 5xx server errors) with exponential backoff" |
+| Messages | `api_error` | `transport` | [Anthropic errors][anthropic-errors]: "500 - api_error: An unexpected error has occurred internal to Anthropic's systems. Retry the request with exponential backoff; if the error persists, contact support with the request ID." |
+
+OpenAI's guide names HTTP statuses, not stream codes. The [Responses reference][openai-responses]
+lists `server_error` and `rate_limit_exceeded` among a failed response's `error.code` values;
+pairing them with the 500 and 429 entries above is a reading.
+
+Output is counted as the overload rule counts it. On Responses it is any payload but
+`response.created`, `response.in_progress`, `response.queued` and `keepalive`. On Messages it is
+any payload but `message_start` and `ping`. A block that opens empty shows nothing, but the
+attempt has started answering, and a second attempt would bill again. The decoders set the mark:
+`provider_failure` in `crates/llm-responses/src/stream.rs` and `stream_error` in
+`crates/llm-messages/src/decode.rs`. The client still makes one attempt; routing retries on the
+same target and falls back in the declared compatible order, as above.
+
+These stay final:
+
+- **An exhausted quota or spend limit** reported on Responses (`insufficient_quota`,
+  `credit_balance_exhausted`, `organization_spend_limit_exceeded`, `project_spend_limit_exceeded`,
+  `organization_usage_limit_exceeded`) reads as `refused`. It is a 429, but not a rate limit.
+  [OpenAI][openai-errors]: "Retrying billing, spend, or quota errors won’t restore API access."
+- **A Messages `rate_limit_error`.** [Anthropic][anthropic-errors]: "A tier spend-cap 429 has no
+  retry-after header and keeps failing until access resumes". A stream error carries no header
+  that tells the two apart, and Harness's wire did not retry it either.
+- **Every other code or type**, `billing_error` and `timeout_error` included, and a known code in
+  another spelling.
+
+**Before the stream opens** these classes arrive as an HTTP status, and the transport's status
+table already marks it retriable: 429, and 500-599 with 529. That is `status_error` in
+`crates/llm-http/src/transport.rs`, held by
+`every_status_harness_maps_has_its_code_dispatch_and_retry_class` in
+`crates/llm-http/tests/retry_classes.rs`. The transport never reads an error body. So a 429 whose
+body says the quota is exhausted is retried up to the retry policy's bound and then falls back,
+while the same quota reported inside a stream is final. Classifying a 429 by its body needs a
+transport change that this decision does not make (`story:quota-429-is-final`).
+
+**A relayed failure reads back by the receiving decoder's rules.** The ingress encoders write a
+failure under the wire code that reads back as its class. No wire field carries the relaying
+side's retry decision, so a downstream llm client applies its own rules. A Responses `fail` writes
+`unavailable` as `server_is_overloaded` or `server_error`, and `rate-limited` as
+`rate_limit_exceeded`. A Messages `fail` writes `unavailable` as `overloaded_error`, and
+`transport`, `protocol` and `cancelled` as `api_error`. When the gateway streamed nothing before
+the failure, a downstream llm client reads each of these back as retriable, whatever the gateway
+decided.
+
+Other clients decide for themselves, and they differ:
+
+- Codex CLI classes a failed response's `server_error`, and every code it does not name, as
+  `ApiError::Retryable` ([`codex-api/src/sse/responses_error.rs:98`-`101`][codex-errors]).
+  `rate_limit_exceeded` and `server_is_overloaded` get variants of their own (`:87`-`97`).
+- The official Python SDKs do not retry an error inside a 200 stream. Each decides a retry from the
+  HTTP status and headers alone (`_should_retry` in [openai-python][openai-python-retry] and
+  [anthropic-sdk-python][anthropic-python-retry]). Each raises an `error` event read from a
+  200 stream to the caller ([openai-python][openai-python-stream],
+  [anthropic-sdk-python][anthropic-python-stream]). Anthropic's errors page says such an error
+  "doesn't follow these standard mechanisms" ([Anthropic errors][anthropic-errors]).
+
+The accepted risk is that llm's own routing may call a gateway again after the gateway has already
+spent its retries on the same failure, and each such call can spend them again. Keeping the
+relaying side's decision across the hop is `story:relayed-failures-keep-their-retry-decision`.
+
+[openai-errors]: https://developers.openai.com/api/docs/guides/error-codes
+[openai-responses]: https://developers.openai.com/api/reference/resources/responses/methods/create
+[anthropic-errors]: https://platform.claude.com/docs/en/api/errors
+[codex-errors]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/sse/responses_error.rs#L87-L101
+[openai-python-retry]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_base_client.py#L899-L941
+[openai-python-stream]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_streaming.py#L78-L90
+[anthropic-python-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L929-L962
+[anthropic-python-stream]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_streaming.py#L160-L173
+
 ## Client request fields
 
 Accepted for wave 2026-10-16-w08 (llm 0.7.0). Coding-agent clients send fields the 0.6.0 ingress

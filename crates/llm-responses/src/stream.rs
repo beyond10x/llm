@@ -48,6 +48,7 @@ pub const ACCEPTED_STREAM_EVENTS: &[&str] = &[
     "response.output_item.done",
     "response.output_text.delta",
     "response.output_text.done",
+    "response.queued",
     "response.reasoning_part.added",
     "response.reasoning_part.done",
     "response.reasoning_summary_part.added",
@@ -736,30 +737,42 @@ impl<'a> Decoder<'a> {
     /// Only the machine-readable code is read, and only to choose between three classes. The
     /// message is this crate's own: an upstream string relayed into a diagnostic is how a prompt
     /// or a credential eventually reaches a log.
+    ///
+    /// The three codes the far side reports as its own temporary state are retriable before
+    /// any output and final after it (`docs/design.md`, provider failures retried before
+    /// output). Every other code is final, an exhausted quota (`insufficient_quota`) included:
+    /// another identical attempt meets it again.
     fn provider_failure(&self, response: Option<&Value>, event: &Value) -> Error {
         let source = response.unwrap_or(event);
         let code = source
             .get("error")
             .and_then(|error| string(error.get("code")))
             .or_else(|| string(source.get("code")));
-        let (class, message) = match code {
+        let (class, message, transient) = match code {
             Some("server_is_overloaded") => (
                 ErrorCode::Unavailable,
                 "the provider is temporarily overloaded",
+                true,
             ),
             Some("server_error") => (
                 ErrorCode::Unavailable,
                 "the provider failed this response on its own account",
+                true,
             ),
             Some("rate_limit_exceeded") => (
                 ErrorCode::RateLimited,
                 "the provider asked for less traffic",
+                true,
             ),
-            _ => (ErrorCode::Refused, "the provider refused this request"),
+            _ => (
+                ErrorCode::Refused,
+                "the provider refused this request",
+                false,
+            ),
         };
         let error = Error::new(class, message)
             .with_dispatch(Dispatch::Accepted)
-            .with_retriable(code == Some("server_is_overloaded") && !self.answered);
+            .with_retriable(transient && !self.answered);
         // **Classified first, evidence attached second.** The provider said what kind of failure
         // this was, and that answer is kept; counters that disagree with themselves narrow what
         // the refusal can carry rather than overwriting it. Reporting a rate limit as a
