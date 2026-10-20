@@ -305,6 +305,7 @@ retriable, so through the bridge each gets one attempt.
 | --- | --- | --- | --- |
 | `llm_core::Capabilities` | gains `output_streaming` and `input_during_output` (`story:capabilities-declare-streaming`); a document without them reads as `true` and `false` | the full struct literal `llm_port.rs:286`-`297` | add `output_streaming: true, input_during_output: false`, or end the literal with `..Capabilities::text(…)`. A binding that declares `output_streaming: false` or `input_during_output: true` is refused |
 | `llm_core::Item::ToolResult` | no change (`story:tool-result-rejected-or-failed` documents a rejected call as `failed: true` without changing `Item`) | `llm_port.rs:479`-`487`, `:568`-`577` | nothing |
+| `llm_messages` response decoding (0.8.1) | `container` and `stop_details` on a message and on `message_delta.delta`, `diagnostics`, `usage.speed`, and a `tool_use` block's `toolset_name` and `caller: {"type":"direct"}` are accepted in their documented empty shapes and not consumed; a refusal's `stop_details` is refused (`docs/messages.md` "Usage") | none | nothing: a Messages turn 0.8.0 refused with `Unsupported` at `message_start.message.container` decodes, with no signature change |
 
 Rows R28 and M27 (`story:retry-classes-harness-retried`; llm lines at this branch, not at 0.7.0,
 and the provider documentation in `docs/design.md` "Provider failures retried before output"):
@@ -335,8 +336,8 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
 - **M27.** A Messages `overloaded_error` (`Unavailable`) or `api_error` (`Transport`) stream error
   is retriable when no payload but `message_start` and `ping` came before it. After any other
   payload, a block that opened empty included, it is final. The code is `stream_error`
-  `llm-messages/src/decode.rs:738`, the mark is set at `:782`, and the payloads that do not count
-  are at `:217`. Tests:
+  `llm-messages/src/decode.rs:743`, the mark is set at `:787`, and the payloads that do not count
+  are at `:222`. Tests:
   `overloaded_and_api_errors_before_output_are_retriable_without_provider_prose`
   `llm-messages/tests/retry_class.rs:121`,
   `overloaded_and_api_errors_after_visible_or_silent_output_are_final` `:140`, and

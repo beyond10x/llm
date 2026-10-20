@@ -2115,7 +2115,7 @@
         "scenario": "llm.messages/authored/complete-response-decodes-through-the-shared-codec"
       },
       "messages/scenarios/complete-response-metadata-outside-the-subset-refused.yaml": {
-        "digest": "sha256:4fadade90c2573803f833bbfd46d64cde4fa3084dbb961228bda2e517c71feb8",
+        "digest": "sha256:103a6d4f2bd3cbd0929bedc59e8dfb5fd364b6aabd9a3ecd666b2f227cc74c5e",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/complete-response-metadata-outside-the-subset-refused"
       },
@@ -40975,7 +40975,7 @@
           "input": {
             "message_json": {
               "kind": "literal",
-              "value": "{\"container\":{\"expires_at\":\"2026-01-01T00:00:00Z\",\"id\":\"container_1\"},\"content\":[{\"text\":\"Hello\",\"type\":\"text\"}],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"type\":\"message\",\"usage\":{\"input_tokens\":11,\"output_tokens\":8}}"
+              "value": "{\"content\":[{\"text\":\"Hello\",\"type\":\"text\"}],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"type\":\"message\",\"unlisted_metadata\":{\"expires_at\":\"2026-01-01T00:00:00Z\",\"id\":\"container_1\"},\"usage\":{\"input_tokens\":11,\"output_tokens\":8}}"
             },
             "request_json": {
               "kind": "literal",
