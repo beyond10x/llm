@@ -210,10 +210,10 @@ pub trait SecretResolver: Send + Sync {
 /// anonymous binding never asks it for a secret. `llm_models::port` hands the same resolver to
 /// the client it builds for an anonymous account.
 ///
-/// It refuses every resolve with [`SecretError::InvalidReference`] rather than reporting
-/// [`SecretError::Missing`]: an anonymous binding has no reference to look up, so a resolve that
-/// reaches it names a wrong reference, not a credential that is merely absent. Refresh is
-/// unsupported.
+/// It holds no secret, so it refuses every resolve with [`SecretError::Missing`]. A client
+/// reports that refusal as `unauthorized`, which neither a retry nor a fallback takes: a
+/// credentialed binding handed this resolver by mistake stops on that configuration error before
+/// sending anything, instead of moving to the next target. Refresh is unsupported.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct AnonymousResolver;
 
@@ -222,7 +222,7 @@ impl SecretResolver for AnonymousResolver {
         &'a self,
         _reference: &'a SecretRef,
     ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
-        Box::pin(async { Err(SecretError::InvalidReference) })
+        Box::pin(async { Err(SecretError::Missing) })
     }
 }
 

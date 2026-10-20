@@ -133,8 +133,9 @@ or `MessagesClient::new`, still passes a resolver. For an anonymous binding, pas
 let client = ChatClient::new(binding, http, Arc::new(AnonymousResolver));
 ```
 
-The client of an anonymous binding never asks it for a secret. If something did, it would refuse
-with `SecretError::InvalidReference` rather than report a credential as missing. It is the
+The client of an anonymous binding never asks it for a secret. It holds none, so every resolve is
+refused with `SecretError::Missing`: a credentialed binding handed it by mistake fails
+`unauthorized` before sending anything, and routing does not fall back from that. It is the
 resolver `llm_models::port` attaches to an anonymous account's client, and it needs no
 `b10x-llm-credentials` feature.
 

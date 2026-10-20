@@ -161,16 +161,17 @@ async fn missing_credentials_never_fall_back_and_reference_memory_is_bounded() {
     );
 }
 
-/// An anonymous binding has no reference to look up, so a resolve reaching its resolver is a
-/// wrong reference, never a credential that is merely missing; and there is nothing to renew.
+/// The anonymous resolver holds no secret, so every resolve is refused as `Missing`: the kind a
+/// client reports as `unauthorized`, which no retry or fallback takes. A credentialed binding
+/// handed it by mistake therefore stops on that configuration error. There is nothing to renew.
 #[tokio::test]
-async fn the_anonymous_resolver_refuses_every_resolve_as_an_invalid_reference() {
+async fn the_anonymous_resolver_refuses_every_resolve_as_missing() {
     let resolver: Arc<dyn SecretResolver> = Arc::new(AnonymousResolver);
     for name in ["runtime/model-access", "local", "a"] {
         let reference = SecretRef::new(name).unwrap();
         assert_eq!(
             resolver.resolve(&reference).await.unwrap_err(),
-            SecretError::InvalidReference,
+            SecretError::Missing,
             "{name}"
         );
         assert_eq!(
@@ -188,7 +189,7 @@ async fn the_anonymous_resolver_refuses_every_resolve_as_an_invalid_reference() 
             .resolve(&SecretRef::new("local").unwrap())
             .await
             .unwrap_err(),
-        SecretError::InvalidReference
+        SecretError::Missing
     );
 }
 
