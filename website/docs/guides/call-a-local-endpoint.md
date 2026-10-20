@@ -3,7 +3,7 @@ title: Call a local endpoint
 sidebar_position: 2
 description: Declare an anonymous vLLM-compatible server in TOML, build a Chat Completions client from the catalog, and run one turn through the neutral port.
 lede: One anonymous turn to a vLLM-compatible server, with the request llm sent and the answer it observed.
-source: crates/llm-docs/examples/local_endpoint.rs, crates/llm-models, crates/llm-chat (client, fixtures/vllm-text-no-usage.sse), examples/catalog.toml
+source: crates/llm-docs/examples/local_endpoint.rs, crates/llm-models, crates/llm-chat (client, fixtures/vllm-text-no-usage.sse), crates/llm-credentials (AnonymousResolver), examples/catalog.toml
 ---
 
 # Call a local endpoint
@@ -122,6 +122,21 @@ Read the last three lines carefully:
   `example/Small-Model`, and LLM reports the difference instead of hiding it.
 - **`usage: None`**: this fixture's server sent no counters. They are unknown, not zero.
 - **`final usage: true`**: the stream terminated, so what was reported is all there will be.
+
+## Without the catalog
+
+A caller that builds the protocol client itself, with `ChatClient::new`, `ResponsesClient::new`
+or `MessagesClient::new`, still passes a resolver. For an anonymous binding, pass
+`llm_credentials::AnonymousResolver`:
+
+```rust
+let client = ChatClient::new(binding, http, Arc::new(AnonymousResolver));
+```
+
+The client of an anonymous binding never asks it for a secret. If something did, it would refuse
+with `SecretError::InvalidReference` rather than report a credential as missing. It is the
+resolver `llm_models::port` attaches to an anonymous account's client, and it needs no
+`b10x-llm-credentials` feature.
 
 ## Next
 

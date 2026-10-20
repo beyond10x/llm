@@ -1,7 +1,7 @@
 use llm_core::BoxFuture;
 use llm_credentials::{
-    CoordinatedResolver, ResolvedSecret, Secret, SecretError, SecretRef, SecretResolver,
-    SecretVersion,
+    AnonymousResolver, CoordinatedResolver, ResolvedSecret, Secret, SecretError, SecretRef,
+    SecretResolver, SecretVersion,
 };
 use std::sync::{
     Arc,
@@ -158,6 +158,37 @@ async fn missing_credentials_never_fall_back_and_reference_memory_is_bounded() {
             .await
             .unwrap_err(),
         SecretError::TooManyReferences
+    );
+}
+
+/// An anonymous binding has no reference to look up, so a resolve reaching its resolver is a
+/// wrong reference, never a credential that is merely missing; and there is nothing to renew.
+#[tokio::test]
+async fn the_anonymous_resolver_refuses_every_resolve_as_an_invalid_reference() {
+    let resolver: Arc<dyn SecretResolver> = Arc::new(AnonymousResolver);
+    for name in ["runtime/model-access", "local", "a"] {
+        let reference = SecretRef::new(name).unwrap();
+        assert_eq!(
+            resolver.resolve(&reference).await.unwrap_err(),
+            SecretError::InvalidReference,
+            "{name}"
+        );
+        assert_eq!(
+            resolver
+                .refresh(&reference, &SecretVersion::new("1".to_owned()).unwrap())
+                .await,
+            Err(SecretError::RefreshUnsupported),
+            "{name}"
+        );
+    }
+    // Behind the coordinator it stays the same typed refusal.
+    let coordinated = CoordinatedResolver::new(resolver, 1);
+    assert_eq!(
+        coordinated
+            .resolve(&SecretRef::new("local").unwrap())
+            .await
+            .unwrap_err(),
+        SecretError::InvalidReference
     );
 }
 
