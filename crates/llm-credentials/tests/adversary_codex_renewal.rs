@@ -21,6 +21,7 @@ use std::{
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
+    sync::Notify,
 };
 
 const NOW: u64 = 1_790_985_600;
@@ -110,6 +111,8 @@ struct Endpoint {
     url: String,
     requests: Arc<AtomicUsize>,
     bodies: Arc<Mutex<Vec<Vec<u8>>>>,
+    /// Raised each time a request has been read whole, counted and logged.
+    read: Arc<Notify>,
 }
 
 impl Endpoint {
@@ -119,7 +122,8 @@ impl Endpoint {
         let url = format!("http://{}/oauth/token", listener.local_addr().unwrap());
         let requests = Arc::new(AtomicUsize::new(0));
         let bodies = Arc::new(Mutex::new(Vec::new()));
-        let (count, log) = (requests.clone(), bodies.clone());
+        let read = Arc::new(Notify::new());
+        let (count, log, seen) = (requests.clone(), bodies.clone(), read.clone());
         tokio::spawn(async move {
             let mut index = 0usize;
             loop {
@@ -133,6 +137,7 @@ impl Endpoint {
                 };
                 count.fetch_add(1, Ordering::SeqCst);
                 log.lock().unwrap().push(body);
+                seen.notify_one();
                 match act {
                     Act::Answer(status, answer) => {
                         let head = format!(
@@ -155,6 +160,7 @@ impl Endpoint {
             url,
             requests,
             bodies,
+            read,
         }
     }
 
@@ -168,6 +174,15 @@ impl Endpoint {
 
     fn requests(&self) -> usize {
         self.requests.load(Ordering::SeqCst)
+    }
+
+    /// Returns once the endpoint has read `count` requests, however long that takes. A raise
+    /// with no waiter keeps its permit, so one that lands between the check and the wait is not
+    /// lost.
+    async fn reached(&self, count: usize) {
+        while self.requests() < count {
+            self.read.notified().await;
+        }
     }
 
     fn body(&self, index: usize) -> Value {
@@ -260,17 +275,26 @@ async fn a_dropped_resolve_does_not_let_the_next_resolve_resend_the_grant() {
     ])
     .await;
     let renewing = resolver(&path).renewing(renewal(&endpoint.url));
+    let secret = reference();
 
-    let dropped =
-        tokio::time::timeout(Duration::from_millis(500), renewing.resolve(&reference())).await;
-    assert!(dropped.is_err(), "the first resolve was expected to hang");
+    // The first resolve is dropped once the endpoint has read its grant, not after a fixed time:
+    // a loaded machine may take any time to get the request there. A resolve that never reaches
+    // the endpoint ends on the exchange's own 30 s bound and fails the assertion below.
+    let first = tokio::select! {
+        () = endpoint.reached(1) => None,
+        outcome = renewing.resolve(&secret) => Some(outcome),
+    };
+    assert!(
+        first.is_none(),
+        "the first resolve was expected to hang: {first:?}"
+    );
     assert_eq!(
         endpoint.requests(),
         1,
         "the first grant reached the endpoint"
     );
 
-    let second = renewing.resolve(&reference()).await;
+    let second = renewing.resolve(&secret).await;
     assert_eq!(
         endpoint.requests(),
         1,
