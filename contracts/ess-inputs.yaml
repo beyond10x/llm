@@ -75,6 +75,11 @@ scenarios:
 - chat/scenarios/incoming-an-unreported-model-is-not-replaced-by-the-binding.yaml
 - chat/scenarios/incoming-contradictory-counters-are-refused.yaml
 - chat/scenarios/incoming-framed-payloads-project-the-same-text-as-bytes-do.yaml
+- chat/scenarios/incoming-llama-server-a-timings-duration-that-is-not-a-number-is-refused-by-name.yaml
+- chat/scenarios/incoming-llama-server-stream-carries-text-reasoning-and-counters.yaml
+- chat/scenarios/incoming-llama-server-timings-report-the-counters-of-a-stream-without-usage.yaml
+- chat/scenarios/incoming-llama-server-timings-that-contradict-usage-are-refused.yaml
+- chat/scenarios/incoming-llama-server-tool-stream-preserves-its-call-and-counters.yaml
 - chat/scenarios/incoming-openai-stream-preserves-text-usage-and-finish-reason.yaml
 - chat/scenarios/incoming-the-cache-write-extension-survives-being-read-back.yaml
 - chat/scenarios/incoming-tool-arguments-survive-the-split-that-delivered-them.yaml

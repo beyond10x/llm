@@ -1,0 +1,18 @@
+:
+
+data: {"choices":[{"finish_reason":null,"index":0,"delta":{"role":"assistant","content":null}}],"created":1792500232,"id":"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5","model":"qwen2.5-1.5b-instruct","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":"In"}}],"created":1792500232,"id":"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5","model":"qwen2.5-1.5b-instruct","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":" short"}}],"created":1792500232,"id":"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5","model":"qwen2.5-1.5b-instruct","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":":"}}],"created":1792500232,"id":"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5","model":"qwen2.5-1.5b-instruct","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":" yes"}}],"created":1792500232,"id":"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5","model":"qwen2.5-1.5b-instruct","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":","}}],"created":1792500232,"id":"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5","model":"qwen2.5-1.5b-instruct","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+data: {"choices":[{"finish_reason":"length","index":0,"delta":{}}],"created":1792500232,"id":"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5","model":"qwen2.5-1.5b-instruct","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk","timings":{"cache_n":0,"prompt_n":2048,"prompt_ms":31927.645,"prompt_per_token_ms":15.58967041015625,"prompt_per_second":64.14503794438957,"predicted_n":5,"predicted_ms":380.902,"predicted_per_token_ms":95.2255,"predicted_per_second":10.501388808669947}}
+
+data: [DONE]
+

@@ -7,8 +7,9 @@ mod common;
 use common::binding_at;
 use llm_chat::ChatClient;
 use llm_core::{
-    ADVISORY_OMITTED, Cancel, Capabilities, Dispatch, ErrorCode, Item, Model, PromptCache,
-    Protocol, ReasoningSummary, StopReason, StreamEvent, TurnRequest, VecSink, Verbosity,
+    ADVISORY_OMITTED, CallId, Cancel, Capabilities, Dispatch, ErrorCode, Item, Model, PromptCache,
+    Protocol, ReasoningSummary, StopReason, StreamEvent, ToolCall, ToolName, ToolSpec, TurnRequest,
+    Usage, VecSink, Verbosity,
 };
 use llm_credentials::{AnonymousResolver, ResolvedSecret, SecretError, SecretRef, SecretResolver};
 use llm_http::{HttpClient, Limits};
@@ -338,4 +339,180 @@ async fn a_sink_refusing_the_warning_fails_the_turn_with_its_own_error() {
     assert_eq!(error.message, "stream sink event bound reached");
     assert_eq!(error.dispatch, Dispatch::Accepted);
     assert_eq!(sink.events().len(), output_events);
+}
+
+// ---------------------------------------------------------------- llama-server
+
+const LLAMA_TEXT: &[u8] = include_bytes!("../fixtures/llama-server-text-and-usage.sse");
+const LLAMA_TOOLS: &[u8] = include_bytes!("../fixtures/llama-server-tool-call-and-usage.sse");
+const LLAMA_TIMINGS: &[u8] = include_bytes!("../fixtures/llama-server-text-timings-only.sse");
+
+/// One llama-server stream and the turn it carries.
+struct LlamaServerStream {
+    fixture: &'static str,
+    bytes: &'static [u8],
+    events: Vec<StreamEvent>,
+    items: Vec<Item>,
+    stop_reason: StopReason,
+    usage: Usage,
+    upstream_model: &'static str,
+}
+
+fn llama_server_streams() -> Vec<LlamaServerStream> {
+    let text = |text: &str| StreamEvent::TextDelta {
+        text: text.to_owned(),
+    };
+    let call_id = CallId::new("ZbA6PzBpu91nN5WsfyZVwNFv4YLVVc51").expect("fixture call");
+    let arguments = |delta: &str| StreamEvent::ToolArgumentsDelta {
+        call_id: call_id.clone(),
+        delta: delta.to_owned(),
+    };
+    vec![
+        LlamaServerStream {
+            fixture: "llama-server-text-and-usage.sse",
+            bytes: LLAMA_TEXT,
+            events: vec![
+                StreamEvent::ReasoningDelta {
+                    text: "The user".to_owned(),
+                },
+                StreamEvent::ReasoningDelta {
+                    text: " wants a greeting.".to_owned(),
+                },
+                text("Hello"),
+                text(" there"),
+                text("."),
+            ],
+            items: vec![Item::assistant("Hello there.")],
+            stop_reason: StopReason::EndTurn,
+            // llama-server counts reasoning inside `completion_tokens` and names no part of it.
+            usage: Usage {
+                input_tokens: Some(23),
+                output_tokens: Some(14),
+                cached_input_tokens: Some(8),
+                cache_creation_input_tokens: None,
+                reasoning_output_tokens: None,
+            },
+            upstream_model: "qwen3-1.7b",
+        },
+        LlamaServerStream {
+            fixture: "llama-server-tool-call-and-usage.sse",
+            bytes: LLAMA_TOOLS,
+            events: vec![
+                text("Checking"),
+                text(" now"),
+                text(".\n"),
+                StreamEvent::ToolCallStarted {
+                    call_id: call_id.clone(),
+                    name: ToolName::new("lookup").expect("fixture tool"),
+                },
+                arguments("{"),
+                arguments("\""),
+                arguments("city"),
+                arguments("\":"),
+                arguments(" \""),
+                arguments("Lisbon"),
+                arguments("\"}"),
+            ],
+            items: vec![
+                Item::assistant("Checking now.\n"),
+                Item::ToolCall(ToolCall {
+                    call_id: call_id.clone(),
+                    name: ToolName::new("lookup").expect("fixture tool"),
+                    arguments: serde_json::json!({"city": "Lisbon"}),
+                }),
+            ],
+            stop_reason: StopReason::ToolCalls,
+            usage: Usage {
+                input_tokens: Some(212),
+                output_tokens: Some(24),
+                cached_input_tokens: Some(180),
+                cache_creation_input_tokens: None,
+                reasoning_output_tokens: None,
+            },
+            upstream_model: "qwen2.5-1.5b-instruct",
+        },
+        // The answer to a request without `stream_options.include_usage`, which this client
+        // never sends; served to it, it stands for a server that ignored the option. The
+        // counters come from `timings` alone.
+        LlamaServerStream {
+            fixture: "llama-server-text-timings-only.sse",
+            bytes: LLAMA_TIMINGS,
+            events: vec![
+                text("In"),
+                text(" short"),
+                text(":"),
+                text(" yes"),
+                text(","),
+            ],
+            items: vec![Item::assistant("In short: yes,")],
+            stop_reason: StopReason::MaxOutputTokens,
+            usage: Usage {
+                input_tokens: Some(2048),
+                output_tokens: Some(5),
+                cached_input_tokens: Some(0),
+                cache_creation_input_tokens: None,
+                reasoning_output_tokens: None,
+            },
+            upstream_model: "qwen2.5-1.5b-instruct",
+        },
+    ]
+}
+
+/// llama.cpp's `llama-server`, in the shape its source writes at release b11752: authored from
+/// that source, not captured (`docs/verification/chat.md`). Each stream is decoded by the client
+/// a caller holds. The events, the turn and its counters are the ones the bytes carry, and what
+/// the server adds — `reasoning_content`, `timings`, `system_fingerprint`, an SSE keep-alive —
+/// adds no event beyond them and takes nothing away.
+#[tokio::test]
+async fn each_llama_server_stream_decodes_through_the_chat_client() {
+    for stream in llama_server_streams() {
+        let fixture = stream.fixture;
+        let (base_url, server) = serve_once(stream.bytes).await;
+        let client = ChatClient::new(
+            binding_at(Protocol::ChatCompletions, common::capable(), &base_url),
+            HttpClient::new(Limits::default()).expect("client"),
+            Arc::new(NoResolver),
+        );
+        let mut request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+        request.tools = vec![ToolSpec {
+            name: ToolName::new("lookup").expect("fixture tool"),
+            description: "Look a city up".to_owned(),
+            input_schema: serde_json::json!({"type": "object", "properties": {"city": {"type": "string"}}}),
+        }];
+        let mut sink = VecSink::new(64, 64 * 1024);
+        let model: &dyn Model = &client;
+        let outcome = model
+            .turn(&request, &mut sink, &Cancel::new())
+            .await
+            .unwrap_or_else(|error| panic!("{fixture}: {error:?}"));
+
+        assert_eq!(sink.events(), stream.events.as_slice(), "{fixture}");
+        assert_eq!(outcome.items, stream.items, "{fixture}");
+        assert_eq!(outcome.stop_reason, stream.stop_reason, "{fixture}");
+        assert_eq!(outcome.observation.usage, Some(stream.usage), "{fixture}");
+        assert!(outcome.observation.final_usage, "{fixture}");
+        assert_eq!(
+            outcome
+                .observation
+                .upstream_model
+                .as_ref()
+                .map(ToString::to_string)
+                .as_deref(),
+            Some(stream.upstream_model),
+            "{fixture}"
+        );
+        outcome
+            .validate_for(&request, client.provenance())
+            .unwrap_or_else(|error| panic!("{fixture}: {error:?}"));
+
+        // What makes llama-server send its usage chunk, `server-task.cpp:494-506`.
+        let sent = server.await.expect("server finished");
+        let (_, body) = sent.split_once("\r\n\r\n").expect("a complete request");
+        let body: serde_json::Value = serde_json::from_str(body).expect("a JSON body");
+        assert_eq!(
+            body["stream_options"],
+            serde_json::json!({"include_usage": true}),
+            "{fixture}"
+        );
+    }
 }

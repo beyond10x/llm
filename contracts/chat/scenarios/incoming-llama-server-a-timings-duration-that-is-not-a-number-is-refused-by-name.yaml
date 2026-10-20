@@ -1,0 +1,30 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: incoming-llama-server-a-timings-duration-that-is-not-a-number-is-refused-by-name
+summary: incoming llama-server a timings duration that is not a number is refused by name
+timeline:
+- at: '2026-10-20T12:00:00Z'
+  command: llm.chat.ProjectResponse
+  input:
+    response: |+
+      data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":"hi"}}],"id":"chatcmpl-misshapen","model":"qwen3-1.7b","object":"chat.completion.chunk"}
+
+      data: {"choices":[{"finish_reason":"stop","index":0,"delta":{}}],"id":"chatcmpl-misshapen","model":"qwen3-1.7b","object":"chat.completion.chunk"}
+
+      data: {"choices":[],"id":"chatcmpl-misshapen","model":"qwen3-1.7b","object":"chat.completion.chunk","usage":{"completion_tokens":1,"prompt_tokens":23,"total_tokens":24,"prompt_tokens_details":{"cached_tokens":8}},"timings":{"cache_n":8,"prompt_n":15,"prompt_ms":"slow","predicted_n":1}}
+
+      data: [DONE]
+
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.chat.LastResponseProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastResponseProjection
+  contains:
+    accepted: false
+    dispatch: accepted
+    error_code: protocol
+    # Accepted and never read, but only in the shape llama-server writes: a number. The field is named; its value is not quoted.
+    error_message: 'chat completion timings field has a shape llama-server does not write: timings.prompt_ms'
+    stream_text: hi
