@@ -10,7 +10,7 @@ use llm_core::{
     ADVISORY_OMITTED, Cancel, Capabilities, Dispatch, ErrorCode, Item, Model, PromptCache,
     Protocol, ReasoningSummary, StopReason, StreamEvent, TurnRequest, VecSink, Verbosity,
 };
-use llm_credentials::{ResolvedSecret, SecretError, SecretRef, SecretResolver};
+use llm_credentials::{AnonymousResolver, ResolvedSecret, SecretError, SecretRef, SecretResolver};
 use llm_http::{HttpClient, Limits};
 use std::sync::Arc;
 use tokio::{
@@ -132,6 +132,42 @@ async fn a_local_vllm_compatible_endpoint_streams_through_the_neutral_port() {
     assert_eq!(
         body["stream_options"],
         serde_json::json!({"include_usage": true})
+    );
+}
+
+/// A caller that builds the client itself, without the catalog, hands an anonymous binding the
+/// resolver llm exports for it. The turn is served, which a resolve reaching that resolver would
+/// have refused, and no credential header is sent.
+#[tokio::test]
+async fn a_client_built_with_the_exported_anonymous_resolver_runs_a_turn_and_sends_no_credential() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let client = ChatClient::new(
+        binding_at(
+            Protocol::ChatCompletions,
+            Capabilities::text(32_768, 4_096),
+            &base_url,
+        ),
+        HttpClient::new(Limits::default()).expect("client"),
+        Arc::new(AnonymousResolver),
+    );
+
+    let request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    let outcome = model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect("the local endpoint answered");
+    assert_eq!(sink.text(), "Guten Tag");
+    assert_eq!(outcome.items, vec![Item::assistant("Guten Tag")]);
+    assert_eq!(outcome.stop_reason, StopReason::EndTurn);
+
+    let sent = server.await.expect("server finished");
+    let (head, _) = sent.split_once("\r\n\r\n").expect("a complete request");
+    assert!(head.starts_with("POST /v1/chat/completions "), "{head}");
+    assert!(
+        !head.to_ascii_lowercase().contains("authorization"),
+        "{head}"
     );
 }
 

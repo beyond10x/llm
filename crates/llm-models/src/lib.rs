@@ -15,7 +15,7 @@ use llm_core::{
     AuthKind, BoxFuture, Cancel, Capabilities, Error, ErrorCode, Id, Model, Protocol, Provenance,
     StreamSink, TurnOutcome, TurnRequest,
 };
-use llm_credentials::{ResolvedSecret, SecretError, SecretRef, SecretResolver};
+use llm_credentials::{AnonymousResolver, SecretResolver};
 use llm_http::HttpClient;
 use llm_messages::MessagesClient;
 use llm_providers::Binding;
@@ -43,19 +43,6 @@ where
 {
     fn resolver(&self, account_id: &Id) -> Option<Arc<dyn SecretResolver>> {
         self(account_id)
-    }
-}
-
-/// Handed to the client of an anonymous account, whose binding never asks for a secret. It
-/// refuses every call instead of pretending a credential is merely missing.
-struct Anonymous;
-
-impl SecretResolver for Anonymous {
-    fn resolve<'a>(
-        &'a self,
-        _reference: &'a SecretRef,
-    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
-        Box::pin(async { Err(SecretError::InvalidReference) })
     }
 }
 
@@ -117,7 +104,7 @@ impl Port {
         };
         let attached = resolver
             .clone()
-            .unwrap_or_else(|| Arc::new(Anonymous) as Arc<dyn SecretResolver>);
+            .unwrap_or_else(|| Arc::new(AnonymousResolver) as Arc<dyn SecretResolver>);
         let client = match binding.provenance().protocol {
             Protocol::ChatCompletions => Client::Chat(ChatClient::new(binding, http, attached)),
             Protocol::Responses => {

@@ -204,6 +204,28 @@ pub trait SecretResolver: Send + Sync {
     }
 }
 
+/// The resolver for an anonymous binding: an account that declares no credential, such as a
+/// keyless local server. Hand it to a protocol client built without the catalog
+/// (`ChatClient::new`, `ResponsesClient::new` or `MessagesClient::new`); the client of an
+/// anonymous binding never asks it for a secret. `llm_models::port` hands the same resolver to
+/// the client it builds for an anonymous account.
+///
+/// It holds no secret, so it refuses every resolve with [`SecretError::Missing`]. A client
+/// reports that refusal as `unauthorized`, which neither a retry nor a fallback takes: a
+/// credentialed binding handed this resolver by mistake stops on that configuration error before
+/// sending anything, instead of moving to the next target. Refresh is unsupported.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct AnonymousResolver;
+
+impl SecretResolver for AnonymousResolver {
+    fn resolve<'a>(
+        &'a self,
+        _reference: &'a SecretRef,
+    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
+        Box::pin(async { Err(SecretError::Missing) })
+    }
+}
+
 #[derive(Default)]
 struct RefreshState {
     attempted: Option<(SecretVersion, Result<(), SecretError>)>,
