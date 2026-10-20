@@ -91,7 +91,7 @@ scope:
   path: website/docs/reference/formats.md
 - confidence: inferred
   path: website/docs/status.mdx
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 6}
@@ -168,3 +168,27 @@ Derived 2026-10-20 by `story-scoper`. Every line is **cited** (read from the sto
 - Unrelated, found while scoping: `website/docs/concepts/routing.md:31-39` shows a catalog example
   without four capability fields, and `Capabilities` has no serde defaults at 0.7.0, so the example
   appears not to parse (not run).
+
+## Design decisions
+
+Taken 2026-10-20 from `docs/plan/wave-2026-10-20-w09-design-review.md` § Layer 1 (1.1 to 1.6).
+
+- **Shape:** two public bools, `output_streaming` and `input_during_output`, the two claims the
+  inference node reads (`Capability::OutputStreaming`, `Capability::ConcurrentInputOutput`).
+- **Serialization:** serde default (`output_streaming` true, `input_during_output` false) and
+  `skip_serializing_if` when equal to the default, so a document written before the change
+  serializes to the same bytes and `binding_revision` and `config_digest` do not move. Precedents:
+  `crates/llm-core/src/error.rs:47`, `crates/llm-core/src/turn.rs:89`.
+- **Refusal:** one llm-core function taking the `Protocol`, called from `BindingDocument::bind` and
+  from `Routes::parse` (`crates/llm-models/src/routes.rs:730-732`), so a routes refusal names the
+  route. It refuses `input_during_output: true` ("no protocol in this workspace carries input during
+  output") and `output_streaming: false` ("every protocol in this workspace streams its output").
+  `Capabilities::validate` does not check either; a Model built in code keeps its own claim.
+- **Consumer break:** plain public fields, plus additive `with_output_streaming` and
+  `with_input_during_output` setters; `#[non_exhaustive]` is not added. The CHANGELOG names the 6
+  full struct literals in consumers and points them to `..Capabilities::text(…)`.
+- **Corrections:** the string-route default (`routes.rs:72-73`, `spec/domains/routes.yaml:65`,
+  "every boolean true") is stated per field; `Capabilities::text`'s doc (`vocabulary.rs:61`) says it
+  sets `output_streaming` true; `website/docs/guides/configure-model-routes.md:61` ("all seven
+  fields") is updated; the field docs say `input_during_output` is false for every protocol here
+  until story:input-into-a-running-turn decides otherwise.

@@ -24,7 +24,7 @@ scope:
   path: website/docs/index.md
 - confidence: inferred
   path: website/docs/status.mdx
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 6}
@@ -96,3 +96,17 @@ bridge was not compiled against 0.7.0:
 One behaviour change with no signature change: the bridge's `REASONING_EFFORTS` (`llm_port.rs:44`)
 has no `max`; 0.7.0 maps `max` to `xhigh` on Responses (`crates/llm-core/src/controls.rs:252`) where
 0.1.7 refused it.
+
+## Design decisions
+
+Taken 2026-10-20 from `docs/plan/wave-2026-10-20-w09-design-review.md` § Layer 1 (1.7, 1.8).
+
+- **Cite against tag 0.7.0**, the tag Harness rebases onto (Atlas ADR 0097), and list what the next
+  release changes for the bridge: the full `Capabilities` literal at `llm_port.rs:286-296` gains two
+  fields (story:capabilities-declare-streaming). `Item::ToolResult` does not change
+  (story:tool-result-rejected-or-failed was decided without an `Item` change).
+- **Method:** pin 0.7.0 in the header; re-anchor each cell by its test or symbol name with a command
+  recorded in the header; check by hand only the cells whose text changed or that do not resolve
+  (about 43 of 321 unique anchors, measured), plus a status check per row. Row IDs stay as they are.
+- `docs/implementation-status.md`, `CHANGELOG.md` and the generated status pages are the
+  coordinator's; the unit hands back the text for `docs/implementation-status.md`.

@@ -39,7 +39,7 @@ scope:
   path: spec/domains/responses.yaml
 - confidence: inferred
   path: website/docs/concepts/neutral-boundary.md
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 6}
@@ -109,3 +109,26 @@ Derived 2026-10-20 by `story-scoper`. Every line is **cited** (read from the sto
 - **Confidence:** medium — the Messages fix site depends on an unmade choice (emit, refuse or warn on start text), and the "field on the outcome" option would widen scope to every `TurnOutcome {` constructor (30 files, 8 crates plus `checks/` and `crates/llm-docs/examples/`) and make `TurnOutcome` (`deny_unknown_fields`, `crates/llm-core/src/turn.rs:348-354`) a serialized format change
 - **Would collide with:** any unit touching `crates/llm-responses/src/stream.rs`, `crates/llm-messages/src/decode.rs`, `crates/llm-core/src/port.rs`, `docs/{responses,messages,chat}.md`, `docs/design.md`, or `contracts/suite.json` — inferred
 - **Safety fact:** a `StreamEvent::Warning` raised while deciding the turn reaches the caller with no client change, and no ingress encoder relays it: the Responses client hands `finish()`'s events to the sink before returning the outcome (`crates/llm-responses/src/client.rs:150`), and the ingress encoders drop `Warning` (`crates/llm-responses/src/ingress.rs:248`, `crates/llm-chat/src/ingress.rs:612`, `crates/llm-messages/src/ingress.rs:192`) — cited, unproven
+
+## Design decisions
+
+Taken 2026-10-20 from `docs/plan/wave-2026-10-20-w09-design-review.md` § Layer 2 (2.1 to 2.4).
+
+- **The shown deltas are the outcome's text.** Each assistant item's text in a successful outcome is
+  the concatenation of the `TextDelta`s shown for it. Where a server's own final text differed and
+  was replaced, the decoder emits `StreamEvent::Warning` with the fixed code `shown-text-kept` before
+  returning the outcome. No `TurnOutcome` field and no new `StreamEvent` variant.
+- **Responses:** one post-pass in the decoder's `terminate` covering both routes
+  (`keep_shown_text`, `crates/llm-responses/src/stream.rs:312-318`, and an empty terminal `output`
+  taking the `output_item.done` message, `:201-217`, `:366-387`), pairing by item id where both
+  sides have one and by order otherwise. Harness's R36 kept text is unchanged.
+- **Messages:** text in `content_block_start` is emitted as a `TextDelta` at block start and folded
+  into the block as today (`crates/llm-messages/src/decode.rs:407-461`), as `thinking_delta` is.
+- **Chat:** cannot differ (`crates/llm-chat/src/incoming.rs:126-129`, `:244-245`); a test pins it.
+- **Guarantee and tests:** the `StreamEvent` and `Model::turn` docs state that every event is final
+  and the rule above. Per protocol: deltas equal outcome text; `shown-text-kept` appears exactly
+  when text was replaced; the same events fed to that protocol's ingress encoder close on the
+  outcome without error. The scenario
+  `contracts/responses/scenarios/kept-text-a-terminal-message-outranks-the-shown-deltas.yaml` flips
+  to the shown text and gains the warning; `spec/domains/responses.yaml:45-55`,
+  `docs/responses.md:318-327` and `docs/harness-parity.md` row R36's note change with it.
