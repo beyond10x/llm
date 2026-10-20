@@ -14,9 +14,13 @@ missing.
 
 ## What it is not
 
-- **Not an agent loop.** llm never runs a tool. A caller such as
-  [Loom](https://beyond10x.github.io/loom/) ([GitHub](https://github.com/beyond10x/loom)) runs the
-  loop and executes the tools the model asks for.
+- **Not an agent loop.** llm never runs a tool. Its consumers run the loop and execute the tools
+  the model asks for:
+  [Harness](https://beyond10x.github.io/ecosystem/harness/) ([GitHub](https://github.com/beyond10x/harness)),
+  [Loom](https://beyond10x.github.io/loom/) ([GitHub](https://github.com/beyond10x/loom)) and
+  inference ([GitHub](https://github.com/beyond10x/inference)). Loom and inference pin an llm
+  release tag. Harness pins 0.7.0 when it drops its own model wire and credential crates, in its
+  own work, as Atlas ADR 0097 decides; [Harness parity](docs/harness-parity.md) maps what it needs.
 - **Not a credential store.** Credentials come from a resolver the caller injects; llm never runs
   a login flow. One adapter reads through the
   [Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets))
