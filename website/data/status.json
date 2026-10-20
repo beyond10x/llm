@@ -22,7 +22,7 @@
     },
     {
       "area": "Neutral turn",
-      "detail": "Error::retriable and Error::may_retry: the transport marks 408, 429, 5xx, no response, a body failing mid-stream and a stream ending inside an event; unauthorized, refused, invalid and cancelled failures never are.",
+      "detail": "Error::retriable and Error::may_retry: the transport marks 408, 429 (a 429 a client's quota rule reads as an exhausted quota excepted), 5xx, no response, a body failing mid-stream and a stream ending inside an event; unauthorized, refused, invalid and cancelled failures never are. An error status carrying x-should-retry: false is final whatever its status.",
       "label": "Every failure says whether it may be retried",
       "status": "shipped"
     },
@@ -160,7 +160,7 @@
     },
     {
       "area": "Protocols",
-      "detail": "A Responses server_error or rate_limit_exceeded and a Messages overloaded_error or api_error stream error may be retried before any output and are final after it, the rule Responses server_is_overloaded already followed; an exhausted quota inside a stream stays final. No wire field carries a gateway's retry decision, so a failure an llm gateway relays with nothing streamed first reads back retriable whatever the gateway decided.",
+      "detail": "A Responses server_error or rate_limit_exceeded and a Messages overloaded_error or api_error stream error may be retried before any output and are final after it, the rule Responses server_is_overloaded already followed; an exhausted quota stays final inside a stream and, since story:quota-429-is-final, as an HTTP 429 before it (Responses by error.code, or by error.type for insufficient_quota and the Codex backend's usage_limit_reached and usage_not_included; Messages a rate_limit_error whose error.details.error_code is enforced_spend_limit_reached). A failure an llm gateway relays inside a stream with nothing streamed first still reads back retriable; a failure before output, the gateway's HTTP 502, reads final when it carries x-should-retry: false, which llm-gateway has to send.",
       "label": "The provider failures Harness retried are retriable before output",
       "status": "shipped"
     },
@@ -274,9 +274,9 @@
     },
     {
       "area": "Helpers for agent loops",
-      "detail": "Atlas ADR 0097 decides the cutover: Harness drops its own model wire and credential crates and rebases the bridge of its spike, which built and passed its tests on llm 0.1.7, onto 0.7.0, in Harness's own work. docs/harness-parity.md cites every llm cell against 0.7.0 and lists the llm API changes the bridge meets; one needs an edit (TurnRequest.controls). Rows R28 and M27 are partial at 0.7.0, which marks fewer provider failures retriable than Harness's wires did; the next release retries those classes before any output. Harness has not merged it.",
-      "label": "Harness builds on llm 0.7.0",
-      "status": "planned"
+      "detail": "Atlas ADR 0097 decided the cutover: Harness dropped its own model wire and credential crates and builds on llm 0.8.0 since Harness commit 97ff3d7f on its main (2026-10-20); its spike had built and passed its tests on llm 0.1.7. docs/harness-parity.md cites every llm cell against 0.7.0 and lists the llm API changes the bridge meets; one needs an edit (TurnRequest.controls). Rows R28 and M27 are partial at 0.7.0, which marks fewer provider failures retriable than Harness's wires did; 0.8.0 retries those classes before any output.",
+      "label": "Harness builds on llm",
+      "status": "shipped"
     },
     {
       "area": "Accounting",
