@@ -432,10 +432,11 @@ not at 0.7.0):
 - **M25.** With `cache_creation_input_tokens` absent, llm takes the cache-write count from the
   `cache_creation` breakdown when it reports both `ephemeral_1h_input_tokens` and
   `ephemeral_5m_input_tokens`, and the inclusive total follows: `Snapshot::update`
-  `llm-messages/src/usage.rs:64`-`77`, `Snapshot::normalized` `:109`-`128`. The contract is
+  `llm-messages/src/usage.rs:68`-`81`, `Snapshot::normalized` `:113`-`132`. The contract is
   Anthropic's API reference, quoted with its lines in `docs/messages.md` "Usage". An absent or
-  partial breakdown leaves both unknown, and a reported count outranks the breakdown. **This does
-  not reach the Harness emulator.** `fake_messages.py` sends no `cache_creation` object in any
+  partial breakdown leaves both unknown, and a later reported count may raise the derived one but
+  never lower it (`:40`-`44`). **This does not reach the Harness emulator.**
+  `fake_messages.py` sends no `cache_creation` object in any
   scenario, at the spike (`spike/builds-on-llm-0.1.7` `8989d138`,
   `crates/harness-cli/tests/fixtures/fake_messages.py:69`-`78`, where `usage_object` leaves
   `cache_creation_input_tokens` out unless a caller passes it, and none does) or on Harness `main`
@@ -447,7 +448,11 @@ not at 0.7.0):
   `llm-messages/tests/streaming.rs:470`,
   `a_write_count_reported_after_a_breakdown_replaces_the_derived_one` `:523`,
   `an_absent_or_partial_cache_breakdown_leaves_the_write_count_and_the_total_unknown` `:541` and
-  `a_derived_write_count_that_goes_backwards_or_contradicts_a_reported_one_is_refused` `:580`.
+  `a_derived_write_count_that_goes_backwards_or_contradicts_a_reported_one_is_refused` `:580`;
+  `a_reported_write_count_below_the_derived_one_does_not_lower_the_known_total`
+  `llm-messages/tests/adversary_w11_u3_input_total.rs:74`,
+  `a_breakdown_that_is_the_only_counter_is_a_known_write_count` `:123` and
+  `a_total_with_a_derived_write_count_reaches_u64_max_and_one_more_is_refused` `:140`.
   `each_component_of_the_inclusive_input_absent_in_turn_leaves_it_unknown`
   `llm-messages/tests/adversary_streaming.rs:137` is unchanged: its usage carries no breakdown.
   The row stays covered.

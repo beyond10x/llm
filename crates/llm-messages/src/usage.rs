@@ -38,6 +38,10 @@ impl Snapshot {
         update(&mut next.output, value, "output_tokens")?;
         update(&mut next.read, value, "cache_read_input_tokens")?;
         update(&mut next.created, value, "cache_creation_input_tokens")?;
+        // A reported write count continues the one an earlier breakdown gave: cumulative, it may
+        // raise that count and never lower it.
+        let mut derived = next.breakdown;
+        advance(&mut derived, next.created)?;
         if let Some(details) = value.get("output_tokens_details").filter(|v| !v.is_null()) {
             fields(
                 details,
@@ -107,7 +111,7 @@ impl Snapshot {
     }
 
     pub fn normalized(&self) -> Result<Usage, Error> {
-        // A reported write count outranks the one its breakdown gives; with neither, it is unknown.
+        // A reported write count, never below a derived one, is the count; with neither, unknown.
         let created = self.created.or(self.breakdown);
         let total = match (self.input, self.read, created) {
             (Some(input), Some(read), Some(created)) => Some(

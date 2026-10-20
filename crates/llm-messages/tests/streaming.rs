@@ -516,9 +516,9 @@ async fn a_complete_cache_breakdown_gives_an_absent_write_count_and_the_inclusiv
     );
 }
 
-/// Usage is cumulative and a reported write count outranks a derived one: a later event that
-/// reports `cache_creation_input_tokens` replaces the count the breakdown gave, as any later report
-/// replaces an earlier one.
+/// Usage is cumulative: a later event that reports a higher `cache_creation_input_tokens` replaces
+/// the count the breakdown gave, as any later report replaces an earlier one. A lower one is refused
+/// (`adversary_w11_u3_input_total.rs`).
 #[tokio::test]
 async fn a_write_count_reported_after_a_breakdown_replaces_the_derived_one() {
     let (outcome, _) = decode(&text_turn(
