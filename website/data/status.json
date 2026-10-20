@@ -64,7 +64,7 @@
     },
     {
       "area": "Protocols",
-      "detail": "ChatClient and an ingress codec for any compatible endpoint, including an anonymous local vLLM server; usage is always requested on a stream.",
+      "detail": "ChatClient and an ingress codec for any compatible endpoint, including an anonymous local vLLM server or llama.cpp llama-server; usage is always requested on a stream, and llama-server's timings counters are read beside it.",
       "label": "Chat Completions projection and client",
       "status": "shipped"
     },
