@@ -174,18 +174,37 @@ transport change that this decision does not make (`story:quota-429-is-final`).
 
 **A relayed failure reads back by the receiving decoder's rules.** The ingress encoders write a
 failure under the wire code that reads back as its class. No wire field carries the relaying
-side's retry decision. A Responses `fail` writes `unavailable` as `server_is_overloaded` or
-`server_error`, and `rate-limited` as `rate_limit_exceeded`. A Messages `fail` writes `unavailable`
-as `overloaded_error`, and `transport`, `protocol` and `cancelled` as `api_error`. When the gateway
-streamed nothing before the failure, a caller reads each of these back as retriable, whatever the
-gateway decided, including a failure it had marked final or one whose retries it had already spent.
-The caller's own routing may then attempt the gateway again. This is accepted: vendor clients
-already retry these provider codes. Keeping the relaying side's decision across the hop is
-`story:relayed-failures-keep-their-retry-decision`.
+side's retry decision, so a downstream llm client applies its own rules. A Responses `fail` writes
+`unavailable` as `server_is_overloaded` or `server_error`, and `rate-limited` as
+`rate_limit_exceeded`. A Messages `fail` writes `unavailable` as `overloaded_error`, and
+`transport`, `protocol` and `cancelled` as `api_error`. When the gateway streamed nothing before
+the failure, a downstream llm client reads each of these back as retriable, whatever the gateway
+decided.
+
+Other clients decide for themselves, and they differ:
+
+- Codex CLI classes a failed response's `server_error`, and every code it does not name, as
+  `ApiError::Retryable` ([`codex-api/src/sse/responses_error.rs:98`-`101`][codex-errors]).
+  `rate_limit_exceeded` and `server_is_overloaded` get variants of their own (`:87`-`97`).
+- The official Python SDKs do not retry an error inside a 200 stream. Each decides a retry from the
+  HTTP status and headers alone (`_should_retry` in [openai-python][openai-python-retry] and
+  [anthropic-sdk-python][anthropic-python-retry]). Each raises an `error` event read from a
+  200 stream to the caller ([openai-python][openai-python-stream],
+  [anthropic-sdk-python][anthropic-python-stream]). Anthropic's errors page says such an error
+  "doesn't follow these standard mechanisms" ([Anthropic errors][anthropic-errors]).
+
+The accepted risk is that llm's own routing may call a gateway again after the gateway has already
+spent its retries on the same failure, and each such call can spend them again. Keeping the
+relaying side's decision across the hop is `story:relayed-failures-keep-their-retry-decision`.
 
 [openai-errors]: https://developers.openai.com/api/docs/guides/error-codes
 [openai-responses]: https://developers.openai.com/api/reference/resources/responses/methods/create
 [anthropic-errors]: https://platform.claude.com/docs/en/api/errors
+[codex-errors]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/sse/responses_error.rs#L87-L101
+[openai-python-retry]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_base_client.py#L899-L941
+[openai-python-stream]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_streaming.py#L78-L90
+[anthropic-python-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L929-L962
+[anthropic-python-stream]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_streaming.py#L160-L173
 
 ## Client request fields
 
