@@ -3,6 +3,7 @@
 //! Response fields this subset does not read are ignored, because a server may add fields to a
 //! response at any time. Every field it does read is refused when it contradicts the wire.
 //! Nothing here fills an absent counter, identifier or model name with a configured value.
+//! llama-server's `timings` is read for the counters it reports, and only those.
 use llm_core::{
     CallId, Dispatch, Error, Id, Item, Provenance, StopReason, StreamEvent, ToolCall, ToolName,
     TurnObservation, TurnOutcome, Usage,
@@ -40,6 +41,32 @@ struct Reported {
     response_id: Option<Id>,
     upstream_model: Option<Id>,
     usage: Option<Usage>,
+    /// The counters llama-server's `timings` reports: beside `usage` on a stream's last chunk,
+    /// or alone on the chunk carrying the finish reason when the request did not ask for usage.
+    timings: Option<Usage>,
+}
+
+impl Reported {
+    /// The usage report, each counter it leaves unknown taken from `timings` where that names
+    /// it. The two never differ on a counter both name: `read_reported` refuses that.
+    fn counters(&self) -> Option<Usage> {
+        if self.usage.is_none() && self.timings.is_none() {
+            return None;
+        }
+        let usage = self.usage.clone().unwrap_or_default();
+        let timings = self.timings.clone().unwrap_or_default();
+        Some(Usage {
+            input_tokens: usage.input_tokens.or(timings.input_tokens),
+            output_tokens: usage.output_tokens.or(timings.output_tokens),
+            cached_input_tokens: usage.cached_input_tokens.or(timings.cached_input_tokens),
+            cache_creation_input_tokens: usage
+                .cache_creation_input_tokens
+                .or(timings.cache_creation_input_tokens),
+            reasoning_output_tokens: usage
+                .reasoning_output_tokens
+                .or(timings.reasoning_output_tokens),
+        })
+    }
 }
 
 /// Incremental projection of one Chat Completions stream.
@@ -228,7 +255,7 @@ impl StreamProjection {
         observation
             .response_id
             .clone_from(&self.reported.response_id);
-        observation.usage.clone_from(&self.reported.usage);
+        observation.usage = self.reported.counters();
         observation.final_usage = self.terminated;
         observation
     }
@@ -365,9 +392,9 @@ fn completion(body: &Value, target: &Provenance) -> Result<TurnOutcome, Error> {
         }
     }
     let mut observation = TurnObservation::new(target.clone());
+    observation.usage = reported.counters();
     observation.upstream_model = reported.upstream_model;
     observation.response_id = reported.response_id;
-    observation.usage = reported.usage;
     // A complete non-streamed body is the whole report this attempt will ever make.
     observation.final_usage = true;
     observation.validate_for(target)?;
@@ -402,18 +429,137 @@ fn nonempty(value: Option<&Value>) -> Option<&str> {
         .filter(|text| !text.is_empty())
 }
 
+/// Reads the whole report a response or chunk makes about itself before keeping any of it. A
+/// report refused anywhere — an unusable identifier or model, a counter, `timings` in the wrong
+/// shape, or `timings` contradicting `usage` — leaves `into` as it was: a failure carries what
+/// `into` holds as its evidence, and a part kept from a refused report would be a figure the
+/// refusal said not to believe.
 fn read_reported(value: &Value, into: &mut Reported) -> Result<(), Error> {
-    if let Some(text) = nonempty(value.get("id")) {
-        into.response_id = Some(identifier(text)?);
-    }
+    let response_id = nonempty(value.get("id")).map(identifier).transpose()?;
     // An unreported model stays unreported. The configured alias never fills this in.
-    if let Some(text) = nonempty(value.get("model")) {
-        into.upstream_model = Some(identifier(text)?);
+    let upstream_model = nonempty(value.get("model")).map(identifier).transpose()?;
+    let usage = present(value.get("usage")).map(usage_of).transpose()?;
+    let timings = present(value.get("timings")).map(timings_of).transpose()?;
+    if let (Some(usage), Some(timings)) = (
+        usage.as_ref().or(into.usage.as_ref()),
+        timings.as_ref().or(into.timings.as_ref()),
+    ) {
+        agree(usage, timings)?;
     }
-    if let Some(usage) = value.get("usage")
-        && !usage.is_null()
+    if response_id.is_some() {
+        into.response_id = response_id;
+    }
+    if upstream_model.is_some() {
+        into.upstream_model = upstream_model;
+    }
+    if usage.is_some() {
+        into.usage = usage;
+    }
+    if timings.is_some() {
+        into.timings = timings;
+    }
+    Ok(())
+}
+
+/// A field that is there and not `null`.
+fn present(value: Option<&Value>) -> Option<&Value> {
+    value.filter(|value| !value.is_null())
+}
+
+/// How llama-server writes a `timings` field this subset accepts and never reads.
+#[derive(Clone, Copy)]
+enum Written {
+    /// A duration in milliseconds or a rate: any JSON number.
+    Number,
+    /// A count of tokens: a whole, non-negative number.
+    Count,
+}
+
+/// Every `timings` field llama.cpp `7879491cf` documents that this subset accepts and never
+/// reads (`tools/server/server-common.cpp:139-157`): the durations and rates, and the counts of
+/// speculative decoding. The neutral `Usage` has no place for any of them.
+///
+/// Accepting a name is not ignoring its value, as for `llm-messages`' `UNCONSUMED`: a field in
+/// another shape says the endpoint is not the server this subset was written against, and is
+/// refused by its name. `null` is such a shape: every division behind a rate is guarded
+/// (`server-common.h:461-475`), so the server never writes the `null` its JSON library makes of a
+/// number that is not finite. A key the server did not document passes, as every unread key on
+/// this wire does.
+const TIMINGS_UNREAD: [(&str, Written); 8] = [
+    ("prompt_ms", Written::Number),
+    ("prompt_per_token_ms", Written::Number),
+    ("prompt_per_second", Written::Number),
+    ("predicted_ms", Written::Number),
+    ("predicted_per_token_ms", Written::Number),
+    ("predicted_per_second", Written::Number),
+    ("draft_n", Written::Count),
+    ("draft_n_accepted", Written::Count),
+];
+
+/// A refusal naming the `timings` field, a name of this subset's own, and never its value.
+fn timings_shape(field: &str) -> Error {
+    Error::protocol(format!(
+        "chat completion timings field has a shape llama-server does not write: {field}"
+    ))
+}
+
+/// The counters in llama-server's `timings`: `prompt_n` prompt tokens it processed and `cache_n`
+/// it reused, which together are the input, and `predicted_n` it generated. Every other field
+/// it documents is held to its shape and not read ([`TIMINGS_UNREAD`]).
+fn timings_of(value: &Value) -> Result<Usage, Error> {
+    let fields = value.as_object().ok_or_else(|| timings_shape("timings"))?;
+    for (name, written) in TIMINGS_UNREAD {
+        if let Some(found) = fields.get(name) {
+            let shaped = match written {
+                Written::Number => found.is_number(),
+                Written::Count => found.is_u64(),
+            };
+            if !shaped {
+                return Err(timings_shape(&format!("timings.{name}")));
+            }
+        }
+    }
+    let cached = count(value, "cache_n")?;
+    let input_tokens = count(value, "prompt_n")?
+        .zip(cached)
+        .map(|(processed, cached)| {
+            processed.checked_add(cached).ok_or_else(|| {
+                Error::protocol("chat completion reported timings whose prompt counters overflow")
+            })
+        })
+        .transpose()?;
+    Ok(Usage {
+        input_tokens,
+        output_tokens: count(value, "predicted_n")?,
+        cached_input_tokens: cached,
+        cache_creation_input_tokens: None,
+        reasoning_output_tokens: None,
+    })
+}
+
+/// llama-server writes `timings` and `usage` from the same counters, so a counter both name and
+/// they disagree on has no truthful reading, and neither is believed over the other.
+fn agree(usage: &Usage, timings: &Usage) -> Result<(), Error> {
+    let named = [
+        (usage.input_tokens, timings.input_tokens),
+        (usage.output_tokens, timings.output_tokens),
+        (usage.cached_input_tokens, timings.cached_input_tokens),
+        (
+            usage.cache_creation_input_tokens,
+            timings.cache_creation_input_tokens,
+        ),
+        (
+            usage.reasoning_output_tokens,
+            timings.reasoning_output_tokens,
+        ),
+    ];
+    if named
+        .into_iter()
+        .any(|(reported, timed)| reported.zip(timed).is_some_and(|(a, b)| a != b))
     {
-        into.usage = Some(usage_of(usage)?);
+        return Err(Error::protocol(
+            "chat completion timings contradict its usage report",
+        ));
     }
     Ok(())
 }

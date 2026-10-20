@@ -38,10 +38,11 @@ provider call.
 ## Fixtures
 
 `crates/llm-chat/fixtures/*.sse` are pinned response bytes in the shapes this wire is served
-in: two `OpenAI`-shaped streams, two `vLLM`-shaped ones, and one whose usage report names a
-single counter. They are **authored to the documented shape, not captured from a live
-server** — including the `vLLM` ones, which carry that server's `reasoning_content`,
-`usage: null` and `stop_reason` fields. The ESS scenarios under `contracts/chat/scenarios/`
+in: two `OpenAI`-shaped streams, two `vLLM`-shaped ones, one whose usage report names a
+single counter, and three in `llama-server`'s shape ([below](#llama-server)). They are
+**authored, not captured from a live server**: the `OpenAI` and `vLLM` ones to the documented
+shape, including the `vLLM` server's `reasoning_content`, `usage: null` and `stop_reason`
+fields, and the `llama-server` ones from that server's source. The ESS scenarios under `contracts/chat/scenarios/`
 were generated from those same files and carry the same bytes inline, because a scenario
 input is literal.
 
@@ -50,6 +51,95 @@ bytes over a loopback socket and drive `ChatClient` through `llm_core::Model`, s
 outgoing request, the HTTP transport, the SSE framing, the projection, a bounded sink
 refusing an event and the evidence a failure retains are all exercised end to end. They are
 local fixtures. They establish no live `vLLM` qualification.
+
+## llama-server
+
+Added 2026-10-20 (`story:a-llama-server-response-fixture`). Three fixtures are in the shape
+llama.cpp's `llama-server` streams a Chat Completions answer in:
+
+| Fixture | What it carries |
+| --- | --- |
+| `llama-server-text-and-usage.sse` | a reasoning model's turn: `reasoning_content` deltas, then `content`, `finish_reason` `stop`, then the usage chunk with `usage` and `timings` |
+| `llama-server-tool-call-and-usage.sse` | prose, then one call whose opening fragment carries its `id`, `type`, `name` and the first byte of its arguments and whose six later fragments carry the rest, `finish_reason` `tool_calls`, then the usage chunk with `usage` and `timings` |
+| `llama-server-text-timings-only.sse` | the answer to a request without `stream_options.include_usage`: a keep-alive comment, text, `finish_reason` `length` on a chunk that also carries `timings`, and no usage chunk |
+
+They are **authored from llama.cpp's server source, not captured**. No `llama-server` runs on
+the machine they were written on, and no call of any kind produced them. The source is
+`ggml-org/llama.cpp` at `7879491cf4c1cfb25acbd78fae34a9e7a8e3a062`, the commit of release
+`b11752`; every path below is under `tools/server/` there unless it names another directory.
+Each duration and rate in `timings` was computed with the formulae of `server-common.h:437-475`
+from an authored count and duration; the same computation, applied to the counts and durations
+of the recorded streams named below, reproduces their rates to the last digit.
+
+| Field, as the fixtures carry it | Source | Sent |
+| --- | --- | --- |
+| `delta` `{"role":"assistant","content":null}` | `server-task.cpp:1126-1131` | with the first generated token |
+| `delta.reasoning_content`, `delta.content` | `server-chat.cpp:621-628` | one chunk per change the template's parser reports; reasoning is split out by default (`--reasoning-format deepseek`, `common/common.h:664`) |
+| `delta.tool_calls[]`: `index`; `id` and `type` only in the fragment that opens the call; `function.name`, `function.arguments` when not empty | `server-chat.cpp:629-647` | as above |
+| chunk keys `choices`, `created`, `id`, `model`, `system_fingerprint`, `object`, in that order | `server-task.cpp:1109-1124`, `479-492` | every chunk |
+| `system_fingerprint` `b11752-7879491cf`, the server's build | `server-task.cpp:1121` (`llama_build_info()`) | every chunk |
+| `id` `chatcmpl-` and 32 letters and digits; a call's `id`, 32 letters and digits | `server-common.cpp:166-187` | every chunk; the opening fragment of a call |
+| `model`, the server's first `--alias` | `server-context.cpp:1521-1530` | every chunk |
+| `finish_reason` `stop`, `tool_calls` or `length`, on a chunk whose `delta` is `{}` | `server-task.cpp:456-459`, `479-492` | after the last token |
+| a last chunk with `choices: []` and `usage` (`completion_tokens`, `prompt_tokens`, `total_tokens`, `prompt_tokens_details.cached_tokens`) | `server-task.cpp:494-506`, `357-364` | only for a request setting `stream_options.include_usage`, false by default (`server-task.h:53`) |
+| `timings`: `cache_n`, `prompt_n`, `prompt_ms`, `prompt_per_token_ms`, `prompt_per_second`, `predicted_n`, `predicted_ms`, `predicted_per_token_ms`, `predicted_per_second` | `server-common.cpp:139-152` | on the stream's last chunk, the usage chunk or else the finish chunk (`server-task.cpp:508-510`); on every chunk as well only with `timings_per_token` (`server-context.cpp:2222-2225`) |
+| a line `:` and a blank line | `server-context.cpp:5093-5104` | after `sse_ping_interval` seconds without a chunk, 30 by default (`common/common.h:634`) |
+| `data: [DONE]` | `server-context.cpp:5080` | after the last chunk |
+
+Sent only on request or by server configuration, and in none of the fixtures:
+
+- `__verbose`, a copy of the server's own result object, on the first chunk of the final
+  result, from a server run at verbosity above 9 (`server-schema.cpp:485`,
+  `server-task.cpp:512-515`).
+- `prompt_progress`, with the role-only chunk repeated beside it, for a request setting
+  `return_progress` (`server-schema.cpp:37-38`, `server-task.cpp:1126`, `1150-1152`).
+- `choices[].logprobs`, for a request asking for probabilities (`server-task.cpp:1141-1146`).
+- `draft_n` and `draft_n_accepted` in `timings`, with speculative decoding
+  (`server-common.cpp:154-157`).
+- A slot id. `id_slot` belongs to the server's own result object (`server-task.cpp:337`,
+  `1048`) and reaches this wire only inside `__verbose`.
+- A failure after the stream has begun: `data: {"error": …}`, and the stream closes without
+  `[DONE]` (`server-context.cpp:5047`, `5114-5118`). The projection refuses such a stream as
+  truncated; the error object is not read.
+
+**Against recorded streams.** The `inference` repository recorded streams from a running
+`llama-server` b11752 (`adapters/inference-llama-server/tests/fixtures/llama-server-b11752-text.sse`
+and `llama-server-b11752-tool-call.sse`, at its commit `3f887a0`). At every level of every
+chunk, the authored text and tool fixtures carry the keys those recordings carry, in the same
+order; the one difference is the `reasoning_content` delta, which the recorded checkpoint, not a
+reasoning model, does not produce. In each of the three streams recorded there that carries
+`timings` (those two and `llama-server-b11752-tool-result.sse`), `prompt_n` plus `cache_n` is
+`prompt_tokens`, `cache_n` is `cached_tokens` and `predicted_n` is `completion_tokens`.
+
+**What the decoder did with each field, measured.** With the fixtures and cases in place and
+`src/incoming.rs` unchanged, the two streams carrying `usage` decoded through `ChatClient` to
+exactly the asserted events, turn and counters; the stream without `usage` decoded with every
+counter unknown although its `timings` reported three; and `timings` contradicting `usage` were
+accepted. Six cases failed. A second round held the unread `timings` fields to their shape: with
+its cases in place and no shape check, a string duration was accepted and two cases failed,
+while the case accepting every documented field in its documented shape passed before the check
+and after it. The decision:
+
+| Field | Before | Now |
+| --- | --- | --- |
+| `delta.reasoning_content` | carried as `ReasoningDelta`, never in the text | unchanged |
+| `usage` | carried | unchanged |
+| `timings` `prompt_n`, `cache_n`, `predicted_n` | ignored | carried: a counter `usage` does not name is taken from them; one both name must agree, or the turn is refused |
+| `timings` durations and rates, `draft_n`, `draft_n_accepted` | ignored, in any shape | accepted and not read, because `Usage` has no place for them; held to the shape the server writes (numbers, the two draft counts whole counts), any other shape, `null` included, refused by the field's name without its value |
+| a `timings` key llama.cpp does not document at `7879491cf` | ignored | unchanged: it passes, as every unread key on this wire does |
+| `system_fingerprint`, `created`, `object` | ignored | unchanged, as for every server on this wire |
+| the keep-alive comment | skipped by the SSE framing | unchanged |
+
+| Lane | Cases |
+| --- | --- |
+| Rust, `tests/local_endpoint.rs` | `each_llama_server_stream_decodes_through_the_chat_client`: the three fixtures through `ChatClient` over a loopback socket |
+| Rust, `tests/incoming.rs` | the three fixtures in `the_turn_carries_exactly_the_text_its_deltas_showed`, the tool fixture in `a_pinned_tool_stream_preserves_identifiers_names_and_split_arguments`; `a_llama_server_stream_without_a_usage_report_carries_the_counters_its_timings_report`, `timings_that_contradict_the_usage_report_are_refused`, `removing_any_one_timings_counter_leaves_unknown_exactly_what_it_counted`, `per_token_timings_are_a_snapshot_until_the_stream_ends`, `the_documented_timings_fields_without_a_neutral_place_are_accepted_and_not_read`, `a_timings_field_in_a_shape_the_server_does_not_write_is_refused_by_name`, `a_chunk_refused_while_its_report_is_read_leaves_the_evidence_as_it_was`; four new rows in `no_refusal_in_the_decode_direction_reports_that_nothing_was_sent` |
+| Rust, `tests/adversary_w11_llama_timings.rs` | the adversary's two cases: a refused contradiction reports neither side's count in the failure's evidence (red until a refused chunk's report was kept only after it was accepted), and a cached count alone contradicting `usage` is refused |
+| ESS | the five `incoming-llama-server-*` scenarios, three of them carrying a fixture's bytes unchanged. Against the unchanged decoder three fail: the stream without `usage`, the contradicting `timings` and the string duration |
+
+The suite was synthesized with `ess` 0.60.0 and again with 0.56.0, the version CI installs; the
+two `contracts/suite.json` files are byte-identical. This is fixture evidence for the
+projection; it qualifies no live `llama-server`.
 
 ## Two claims this record got wrong
 

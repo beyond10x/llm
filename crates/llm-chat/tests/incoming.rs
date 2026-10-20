@@ -3,7 +3,7 @@ mod common;
 
 use common::binding;
 use llm_chat::{IngressStream, decode_completion, project_response_bytes};
-use llm_core::{Dispatch, ErrorCode, Item, StopReason, StreamEvent, Usage};
+use llm_core::{Dispatch, ErrorCode, Item, StopReason, StreamEvent, TurnOutcome, Usage};
 use serde_json::json;
 
 const OPENAI_TEXT: &[u8] = include_bytes!("../fixtures/openai-text-and-usage.sse");
@@ -11,6 +11,9 @@ const OPENAI_TOOLS: &[u8] = include_bytes!("../fixtures/openai-tool-calls.sse");
 const VLLM_TEXT: &[u8] = include_bytes!("../fixtures/vllm-text-no-usage.sse");
 const VLLM_TOOLS: &[u8] = include_bytes!("../fixtures/vllm-tool-call-and-usage.sse");
 const PARTIAL_USAGE: &[u8] = include_bytes!("../fixtures/openai-partial-usage.sse");
+const LLAMA_TEXT: &[u8] = include_bytes!("../fixtures/llama-server-text-and-usage.sse");
+const LLAMA_TOOLS: &[u8] = include_bytes!("../fixtures/llama-server-tool-call-and-usage.sse");
+const LLAMA_TIMINGS: &[u8] = include_bytes!("../fixtures/llama-server-text-timings-only.sse");
 
 fn text(value: &str) -> StreamEvent {
     StreamEvent::TextDelta {
@@ -91,6 +94,9 @@ fn the_turn_carries_exactly_the_text_its_deltas_showed() {
         ("openai tools", OPENAI_TOOLS),
         ("vllm text", VLLM_TEXT),
         ("vllm tools", VLLM_TOOLS),
+        ("llama-server text", LLAMA_TEXT),
+        ("llama-server tools", LLAMA_TOOLS),
+        ("llama-server timings", LLAMA_TIMINGS),
     ] {
         let binding = binding();
         let (events, outcome) = project_response_bytes(bytes, binding.provenance());
@@ -134,7 +140,7 @@ fn the_turn_carries_exactly_the_text_its_deltas_showed() {
 
 #[test]
 fn a_pinned_tool_stream_preserves_identifiers_names_and_split_arguments() {
-    for fixture in [OPENAI_TOOLS, VLLM_TOOLS] {
+    for fixture in [OPENAI_TOOLS, VLLM_TOOLS, LLAMA_TOOLS] {
         let binding = binding();
         let (events, outcome) = project_response_bytes(fixture, binding.provenance());
         let outcome = outcome.expect("projected");
@@ -589,6 +595,10 @@ fn no_refusal_in_the_decode_direction_reports_that_nothing_was_sent() {
         ("arguments that are not JSON", "data: {\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"c1\",\"type\":\"function\",\"function\":{\"name\":\"f\",\"arguments\":\"nonsense\"}}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n".to_owned()),
         ("counters that contradict", format!("{STOP}data: {{\"choices\":[],\"usage\":{{\"prompt_tokens\":2,\"prompt_tokens_details\":{{\"cached_tokens\":9}}}}}}\n\ndata: [DONE]\n\n")),
         ("cache counters that overflow", format!("{STOP}data: {{\"choices\":[],\"usage\":{{\"prompt_tokens_details\":{{\"cached_tokens\":18446744073709551615,\"cache_creation_input_tokens\":1}}}}}}\n\ndata: [DONE]\n\n")),
+        ("timings that contradict the usage report", format!("{STOP}data: {{\"choices\":[],\"usage\":{{\"completion_tokens\":2}},\"timings\":{{\"predicted_n\":3}}}}\n\ndata: [DONE]\n\n")),
+        ("a timings counter that is not a count", format!("{STOP}data: {{\"choices\":[],\"timings\":{{\"predicted_n\":\"many\"}}}}\n\ndata: [DONE]\n\n")),
+        ("timings prompt counters that overflow", format!("{STOP}data: {{\"choices\":[],\"timings\":{{\"prompt_n\":18446744073709551615,\"cache_n\":1}}}}\n\ndata: [DONE]\n\n")),
+        ("a timings duration that is not a number", format!("{STOP}data: {{\"choices\":[],\"timings\":{{\"prompt_ms\":\"slow\"}}}}\n\ndata: [DONE]\n\n")),
     ];
     let binding = binding();
     let mut seen = std::collections::BTreeSet::new();
@@ -627,6 +637,11 @@ fn no_refusal_in_the_decode_direction_reports_that_nothing_was_sent() {
             json!({"choices": [{"index": 0, "finish_reason": "tool_calls",
             "message": {"tool_calls": [{"id": "c1", "function": {"arguments": "{}"}}]}}]}),
         ),
+        (
+            "timings that contradict the usage report",
+            json!({"choices": [{"index": 0, "message": {}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 4}, "timings": {"prompt_n": 4, "cache_n": 1}}),
+        ),
     ];
     for (case, body) in bodies {
         let error = decode_completion(body, binding.provenance()).unwrap_err();
@@ -640,34 +655,38 @@ fn no_refusal_in_the_decode_direction_reports_that_nothing_was_sent() {
     }
     // Named, not counted: a refusal whose wording changes, or a new one any case above can
     // reach, fails here and has to be accounted for rather than quietly joining the set.
-    assert_eq!(
-        seen.into_iter().collect::<Vec<_>>(),
-        [
-            "SSE data is not valid JSON",
-            "chat completion carries no choices",
-            "chat completion carries no finish reason",
-            "chat completion carries other than one choice",
-            "chat completion choice carries no message",
-            "chat completion choice index is not a whole count",
-            "chat completion reported a counter that is not a whole count",
-            "chat completion reported a finish reason outside the supported subset",
-            "chat completion reported an unusable identifier",
-            "chat completion reported an unusable tool call identifier",
-            "chat completion reported an unusable tool name",
-            "chat completion returned more than one choice",
-            "chat completion stream carried no finish reason",
-            "chat completion stream ended before its terminal sentinel",
-            "chat tool call arguments are not valid JSON",
-            "chat tool call arguments arrived before their identifier",
-            "chat tool call carries no identifier",
-            "chat tool call carries no name",
-            "chat tool call delta carries no index",
-            "chat tool call fragment renames a call already announced",
-            "reported cache tokens overflow",
-            "reported usage subsets exceed totals",
-        ]
-    );
+    assert_eq!(seen.into_iter().collect::<Vec<_>>(), DECODE_REFUSALS);
 }
+
+/// Every refusal the decode direction can reach, in order, as
+/// `no_refusal_in_the_decode_direction_reports_that_nothing_was_sent` drives them.
+const DECODE_REFUSALS: [&str; 25] = [
+    "SSE data is not valid JSON",
+    "chat completion carries no choices",
+    "chat completion carries no finish reason",
+    "chat completion carries other than one choice",
+    "chat completion choice carries no message",
+    "chat completion choice index is not a whole count",
+    "chat completion reported a counter that is not a whole count",
+    "chat completion reported a finish reason outside the supported subset",
+    "chat completion reported an unusable identifier",
+    "chat completion reported an unusable tool call identifier",
+    "chat completion reported an unusable tool name",
+    "chat completion reported timings whose prompt counters overflow",
+    "chat completion returned more than one choice",
+    "chat completion stream carried no finish reason",
+    "chat completion stream ended before its terminal sentinel",
+    "chat completion timings contradict its usage report",
+    "chat completion timings field has a shape llama-server does not write: timings.prompt_ms",
+    "chat tool call arguments are not valid JSON",
+    "chat tool call arguments arrived before their identifier",
+    "chat tool call carries no identifier",
+    "chat tool call carries no name",
+    "chat tool call delta carries no index",
+    "chat tool call fragment renames a call already announced",
+    "reported cache tokens overflow",
+    "reported usage subsets exceed totals",
+];
 
 /// The rule for unknown counters, stated as a rule: take a report that names every counter
 /// this wire carries, remove exactly one, and only that one becomes unknown. An earlier
@@ -821,5 +840,400 @@ fn every_exported_decode_entry_point_applies_the_dispatch_correction() {
             "{name}: {}",
             error.message
         );
+    }
+}
+
+// ---------------------------------------------------------------- llama-server `timings`
+
+/// llama-server answers a request without `stream_options.include_usage` with no `usage`
+/// object, and puts its `timings` on the chunk that carries the finish reason (llama.cpp
+/// `7879491cf`, `tools/server/server-task.cpp:494-510`). Those timings count the turn: `prompt_n`
+/// prompt tokens processed and `cache_n` reused are its input, `cache_n` the cached part of it,
+/// `predicted_n` its output. A counter the server reported is not left unknown.
+#[test]
+fn a_llama_server_stream_without_a_usage_report_carries_the_counters_its_timings_report() {
+    let binding = binding();
+    let (events, outcome) = project_response_bytes(LLAMA_TIMINGS, binding.provenance());
+    let outcome = outcome.expect("projected");
+
+    assert_eq!(
+        events,
+        vec![
+            text("In"),
+            text(" short"),
+            text(":"),
+            text(" yes"),
+            text(",")
+        ]
+    );
+    assert_eq!(outcome.stop_reason, StopReason::MaxOutputTokens);
+    assert!(outcome.observation.final_usage);
+    assert_eq!(
+        outcome.observation.usage,
+        Some(Usage {
+            input_tokens: Some(2048),
+            output_tokens: Some(5),
+            cached_input_tokens: Some(0),
+            // Neither report names these; absent stays absent.
+            cache_creation_input_tokens: None,
+            reasoning_output_tokens: None,
+        })
+    );
+}
+
+/// Where llama-server sends both reports — on the last chunk of a stream, or in one
+/// non-streamed body — it writes them from the same counters (`server-context.cpp:2251-2258`,
+/// `server-common.cpp:139-152`, `server-task.cpp:357-364`). A pair that disagrees has no
+/// truthful reading, so it is refused as any contradictory report is, rather than one of the two
+/// being believed. A pair that agrees is the one report.
+#[test]
+fn timings_that_contradict_the_usage_report_are_refused() {
+    type Decode<'a> = &'a dyn Fn(&serde_json::Value) -> Result<TurnOutcome, llm_core::Error>;
+    let usage = json!({"completion_tokens": 14, "prompt_tokens": 23,
+        "prompt_tokens_details": {"cached_tokens": 8}});
+    let agreeing = json!({"cache_n": 8, "prompt_n": 15, "predicted_n": 14, "prompt_ms": 143.862});
+    let binding = binding();
+    let streamed = |timings: &serde_json::Value| {
+        let bytes = format!(
+            "data: {}\n\ndata: {}\n\ndata: [DONE]\n\n",
+            json!({"choices": [{"index": 0, "delta": {"content": "hi"}, "finish_reason": "stop"}]}),
+            json!({"choices": [], "usage": usage, "timings": timings})
+        );
+        project_response_bytes(bytes.as_bytes(), binding.provenance()).1
+    };
+    let whole = |timings: &serde_json::Value| {
+        let body = json!({
+            "choices": [{"index": 0, "message": {"content": "hi"}, "finish_reason": "stop"}],
+            "usage": usage,
+            "timings": timings
+        });
+        decode_completion(&body, binding.provenance())
+    };
+    let reported = Some(Usage {
+        input_tokens: Some(23),
+        output_tokens: Some(14),
+        cached_input_tokens: Some(8),
+        cache_creation_input_tokens: None,
+        reasoning_output_tokens: None,
+    });
+    let decoders: [(&str, Decode); 2] = [("streamed", &streamed), ("non-streamed", &whole)];
+    for (wire, decode) in decoders {
+        assert_eq!(
+            decode(&agreeing)
+                .unwrap_or_else(|error| panic!("{wire}: {error:?}"))
+                .observation
+                .usage,
+            reported,
+            "{wire}"
+        );
+        // Each counter moved by one, alone; the cached count also moves the input it is part of.
+        for (field, value) in [("cache_n", 9), ("prompt_n", 16), ("predicted_n", 13)] {
+            let mut timings = agreeing.clone();
+            timings[field] = json!(value);
+            let error = decode(&timings).expect_err(field);
+            assert_eq!(error.code, ErrorCode::Protocol, "{wire} {field}");
+            assert_eq!(error.dispatch, Dispatch::Accepted, "{wire} {field}");
+            assert_eq!(
+                error.message, "chat completion timings contradict its usage report",
+                "{wire} {field}"
+            );
+        }
+    }
+}
+
+/// The unknown-counter rule for `timings`, stated as a rule. With no `usage` object, removing
+/// one counter from `timings` leaves unknown exactly the neutral counters it is part of — the
+/// input needs both of its parts — and never turns one into a zero.
+#[test]
+fn removing_any_one_timings_counter_leaves_unknown_exactly_what_it_counted() {
+    // (the timings counter, the neutral counters that need it)
+    const COUNTERS: &[(&str, &[&str])] = &[
+        ("prompt_n", &["input_tokens"]),
+        ("cache_n", &["input_tokens", "cached_input_tokens"]),
+        ("predicted_n", &["output_tokens"]),
+    ];
+    let complete = json!({
+        "cache_n": 3, "prompt_n": 8, "prompt_ms": 80.5, "prompt_per_token_ms": 10.0625,
+        "prompt_per_second": 99.378_881_987_577_64, "predicted_n": 5, "predicted_ms": 200.0,
+        "predicted_per_token_ms": 50.0, "predicted_per_second": 20.0
+    });
+    let binding = binding();
+    let decode = |timings: &serde_json::Value| {
+        let body = json!({
+            "choices": [{"index": 0, "message": {"content": "x"}, "finish_reason": "stop"}],
+            "timings": timings
+        });
+        serde_json::to_value(
+            decode_completion(&body, binding.provenance())
+                .expect("decoded")
+                .observation
+                .usage
+                .expect("a report was made"),
+        )
+        .expect("encodable")
+    };
+
+    assert_eq!(
+        decode(&complete),
+        json!({"input_tokens": 11, "output_tokens": 5, "cached_input_tokens": 3})
+    );
+    let named: std::collections::BTreeSet<&str> = COUNTERS
+        .iter()
+        .flat_map(|(_, neutral)| neutral.iter().copied())
+        .collect();
+    for (field, needing) in COUNTERS {
+        let mut timings = complete.clone();
+        timings.as_object_mut().expect("an object").remove(*field);
+        let observed = decode(&timings);
+        for neutral in &named {
+            assert_eq!(
+                observed.get(neutral).is_none(),
+                needing.contains(neutral),
+                "{neutral} after removing {field}: {observed}"
+            );
+        }
+    }
+}
+
+/// With `timings_per_token` llama-server sends `timings` on every chunk, its counters growing
+/// (`server-context.cpp:2222-2225`). Before the stream ends they are a snapshot, never a final
+/// report; the last one, on the usage chunk, is checked against `usage` and agrees with it.
+#[test]
+fn per_token_timings_are_a_snapshot_until_the_stream_ends() {
+    let binding = binding();
+    let mut projection = llm_chat::StreamProjection::new(binding.provenance().clone());
+    let payload = |data: serde_json::Value| llm_http::SseEvent::Payload { event: None, data };
+    projection
+        .accept(&payload(json!({
+            "choices": [{"index": 0, "delta": {"content": "a"}, "finish_reason": null}],
+            "timings": {"cache_n": 0, "prompt_n": 4, "predicted_n": 1}
+        })))
+        .expect("a chunk");
+    let snapshot = projection.observation();
+    assert!(!snapshot.final_usage);
+    assert_eq!(
+        snapshot.usage.and_then(|usage| usage.output_tokens),
+        Some(1)
+    );
+    for data in [
+        json!({"choices": [{"index": 0, "delta": {"content": "b"}, "finish_reason": null}],
+            "timings": {"cache_n": 0, "prompt_n": 4, "predicted_n": 2}}),
+        json!({"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}),
+        json!({"choices": [], "usage": {"completion_tokens": 2, "prompt_tokens": 4,
+            "prompt_tokens_details": {"cached_tokens": 0}},
+            "timings": {"cache_n": 0, "prompt_n": 4, "predicted_n": 2}}),
+    ] {
+        projection.accept(&payload(data)).expect("a chunk");
+    }
+    projection
+        .accept(&llm_http::SseEvent::Done)
+        .expect("the sentinel");
+    let outcome = projection.finish().expect("finished");
+    assert!(outcome.observation.final_usage);
+    assert_eq!(
+        outcome.observation.usage,
+        Some(Usage {
+            input_tokens: Some(4),
+            output_tokens: Some(2),
+            cached_input_tokens: Some(0),
+            cache_creation_input_tokens: None,
+            reasoning_output_tokens: None,
+        })
+    );
+}
+
+/// The `timings` fields llama.cpp `7879491cf` documents and the neutral `Usage` has no place for
+/// (`tools/server/server-common.cpp:139-157`): six durations and rates, which it writes as
+/// numbers, and two speculative-decoding counts, which it writes as whole counts.
+const TIMINGS_UNREAD: [&str; 8] = [
+    "prompt_ms",
+    "prompt_per_token_ms",
+    "prompt_per_second",
+    "predicted_ms",
+    "predicted_per_token_ms",
+    "predicted_per_second",
+    "draft_n",
+    "draft_n_accepted",
+];
+
+/// A non-streamed body carrying `timings` and no `usage`.
+fn decode_timings(timings: &serde_json::Value) -> Result<TurnOutcome, llm_core::Error> {
+    let body = json!({
+        "choices": [{"index": 0, "message": {"content": "x"}, "finish_reason": "stop"}],
+        "timings": timings
+    });
+    decode_completion(&body, binding().provenance())
+}
+
+/// Accepted and never read, as `llm-messages` accepts `UNCONSUMED`: every documented field in
+/// the shape the server writes changes nothing but what the three counters report. A key the
+/// server does not document at that commit passes too, as every unread key on this wire does
+/// (`usage.total_tokens`, `prompt_tokens_details.audio_tokens`): a newer server adding one must
+/// not make every turn fail.
+#[test]
+fn the_documented_timings_fields_without_a_neutral_place_are_accepted_and_not_read() {
+    let counters = json!({"cache_n": 3, "prompt_n": 8, "predicted_n": 5});
+    let expected = Some(Usage {
+        input_tokens: Some(11),
+        output_tokens: Some(5),
+        cached_input_tokens: Some(3),
+        cache_creation_input_tokens: None,
+        reasoning_output_tokens: None,
+    });
+    // One value per name, in `TIMINGS_UNREAD`'s order; the array length ties the two together.
+    let values: [serde_json::Value; TIMINGS_UNREAD.len()] = [
+        json!(80.5),
+        json!(10.0625),
+        json!(99.378_881_987_577_64),
+        // An integral duration is still a number.
+        json!(200),
+        json!(50.0),
+        json!(0.0),
+        json!(12),
+        json!(9),
+    ];
+    let mut documented = counters;
+    for (field, value) in std::iter::zip(TIMINGS_UNREAD, values) {
+        documented[field] = value;
+    }
+    assert_eq!(
+        decode_timings(&documented)
+            .expect("the documented shape")
+            .observation
+            .usage,
+        expected
+    );
+
+    let mut undocumented = documented;
+    undocumented["a_field_a_later_server_adds"] = json!("any value");
+    assert_eq!(
+        decode_timings(&undocumented)
+            .expect("an undocumented key passes, as on the rest of this wire")
+            .observation
+            .usage,
+        expected
+    );
+}
+
+/// Accepting a name is not ignoring its value. A documented `timings` field in a shape the
+/// server never writes says the endpoint is not the one this projection was written against, so
+/// it is refused, by the field's name and without its value. `null` is such a shape: every
+/// division behind a rate is guarded (`server-common.h:461-475`), so the server never writes
+/// the `null` its JSON library makes of a non-finite number. A `timings` that is not an object
+/// is refused the same way.
+#[test]
+fn a_timings_field_in_a_shape_the_server_does_not_write_is_refused_by_name() {
+    const VALUE: &str = "slow-and-unquoted";
+    let counters = json!({"cache_n": 3, "prompt_n": 8, "predicted_n": 5});
+    let mut cases: Vec<(String, serde_json::Value)> = Vec::new();
+    for field in TIMINGS_UNREAD {
+        // The two speculative-decoding counts are written as whole counts, the rest as numbers.
+        let wrong = if field.starts_with("draft_") {
+            [json!(VALUE), serde_json::Value::Null, json!(1.5), json!(-1)]
+        } else {
+            [
+                json!(VALUE),
+                serde_json::Value::Null,
+                json!([1]),
+                json!({"ms": 1}),
+            ]
+        };
+        for value in wrong {
+            let mut timings = counters.clone();
+            timings[field] = value;
+            cases.push((format!("timings.{field}"), timings));
+        }
+    }
+    cases.push(("timings".to_owned(), json!(VALUE)));
+    cases.push(("timings".to_owned(), json!([3, 8, 5])));
+
+    for (named, timings) in cases {
+        let error = decode_timings(&timings).expect_err(&named);
+        assert_eq!(error.code, ErrorCode::Protocol, "{named}");
+        assert_eq!(error.dispatch, Dispatch::Accepted, "{named}");
+        assert_eq!(
+            error.message,
+            format!(
+                "chat completion timings field has a shape llama-server does not write: {named}"
+            ),
+            "{timings}"
+        );
+        assert!(!error.message.contains(VALUE), "{}", error.message);
+    }
+}
+
+/// The class of `adversary_w11_a_contradiction_refusal_does_not_report_the_contradicted_count`,
+/// stated as a rule. A chunk refused while its own report is read — its identifier, its model,
+/// its `usage`, its `timings`, or the two reports against each other — leaves the evidence
+/// exactly as it was before that chunk. A failure carries that evidence (`client.rs` `retain`),
+/// so a part kept from a refused report would be a figure the refusal said not to believe.
+#[test]
+fn a_chunk_refused_while_its_report_is_read_leaves_the_evidence_as_it_was() {
+    let report = json!({
+        "choices": [],
+        "id": "chatcmpl-report",
+        "model": "qwen3-1.7b",
+        "usage": {"completion_tokens": 14, "prompt_tokens": 23,
+            "prompt_tokens_details": {"cached_tokens": 8}},
+        "timings": {"cache_n": 8, "prompt_n": 15, "prompt_ms": 143.862, "predicted_n": 14}
+    });
+    // The report with one part replaced, each refused when the chunk is read; every other part
+    // of the chunk is one the report above shows is accepted on its own.
+    let refused = [
+        ("an unusable identifier", "id", json!("has space")),
+        ("an unusable model", "model", json!("has space")),
+        (
+            "a usage counter that is not a count",
+            "usage",
+            json!({"prompt_tokens": "many"}),
+        ),
+        (
+            "a timings counter that is not a count",
+            "timings",
+            json!({"predicted_n": "many"}),
+        ),
+        (
+            "a timings duration that is not a number",
+            "timings",
+            json!({"cache_n": 8, "prompt_n": 15, "prompt_ms": "slow", "predicted_n": 14}),
+        ),
+        (
+            "timings prompt counters that overflow",
+            "timings",
+            json!({"prompt_n": u64::MAX, "cache_n": 1}),
+        ),
+        (
+            "timings that contradict usage",
+            "timings",
+            json!({"cache_n": 8, "prompt_n": 15, "predicted_n": 13}),
+        ),
+    ];
+    let binding = binding();
+    let payload = |data: serde_json::Value| llm_http::SseEvent::Payload { event: None, data };
+    let opened = || {
+        let mut projection = llm_chat::StreamProjection::new(binding.provenance().clone());
+        projection
+            .accept(&payload(
+                json!({"choices": [{"index": 0, "delta": {"content": "hi"}}]}),
+            ))
+            .expect("a text chunk");
+        projection
+    };
+
+    // Not vacuous: the report itself is accepted and changes the evidence.
+    let mut accepted = opened();
+    let before = accepted.observation();
+    accepted
+        .accept(&payload(report.clone()))
+        .expect("the report");
+    assert_ne!(accepted.observation(), before);
+
+    for (case, part, value) in refused {
+        let mut projection = opened();
+        let before = projection.observation();
+        let mut chunk = report.clone();
+        chunk[part] = value;
+        projection.accept(&payload(chunk)).expect_err(case);
+        assert_eq!(projection.observation(), before, "{case}");
     }
 }

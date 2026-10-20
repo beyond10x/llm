@@ -73,11 +73,23 @@ time. Every field it does read is refused when it contradicts the wire:
 | `finish_reason` `stop` / `length` / `tool_calls` / `content_filter` | `EndTurn` / `MaxOutputTokens` / `ToolCalls` / `Incomplete{content-filter}` |
 | `id`, `model` | `response_id`, `upstream_model` — absent stays absent |
 | `usage` | `Usage`, counter by counter |
+| `timings` (llama-server) | the counters `usage` does not name ([below](#counters)) |
 
 Refused, each with a fixed diagnostic that carries no byte of the upstream response: a second
 choice, any other finish reason, a stream that ends before its `[DONE]` sentinel, a stream that
 carries no finish reason, a tool call whose identifier or name never arrived, arguments that
-are not valid JSON, a fragment renaming a call already announced, and counters that contradict each other.
+are not valid JSON, a fragment renaming a call already announced, counters that contradict each
+other, `timings` that contradict the `usage` report, and a `timings` field in a shape the
+server does not write ([below](#counters)).
+
+llama.cpp's `llama-server` adds more to a chunk than the fields above. Its `reasoning_content`
+is read as `vLLM`'s is, and its `timings` for the counters in it; the other `timings` fields
+are accepted only in the shape the server writes them in, and not read. The rest is not read:
+the build it writes into `system_fingerprint`, a `__verbose` debug copy of the result (only from
+a server run at verbosity above 9), and `prompt_progress` (only for a request setting
+`return_progress`, which nothing here sends). Its keep-alive, an SSE comment sent by default
+after 30 seconds without a chunk, is skipped by the framing. The source of each is in
+[the verification record](verification/chat.md#llama-server).
 
 A chunk carrying more than one choice is refused however it numbers them. An index that is
 not a whole count numbers nothing, and joining two completions would hand the caller one
@@ -127,6 +139,36 @@ cache-write counter, so against one `cache_creation_input_tokens` stays unknown;
 from `prompt_tokens_details.cache_creation_input_tokens` because the gateway below writes it
 there, and a counter deleted on read-back is a counter this wire lost.
 
+`llama-server` reports its counters twice. Beside `usage` it writes a `timings` object, on the
+last chunk of a stream: the usage chunk when the request set `stream_options.include_usage`, as
+every streamed request here does, and the chunk carrying the finish reason when it did not.
+`prompt_n` (prompt tokens processed) and `cache_n` (prompt tokens reused) are the input
+together, `cache_n` the cached part of it, and `predicted_n` the output. A counter `usage` does
+not name is taken from `timings`, the input only when both its parts are there. A counter both
+name has to agree, because the server writes both from the same count, so a pair that differs is
+refused (`chat completion timings contradict its usage report`) rather than one of the two
+believed.
+
+The other `timings` fields llama.cpp documents at `7879491cf` are accepted and not read, because
+`Usage` has no place for a duration, a rate or a count of speculative decoding:
+
+| `timings` field | What it is | Accepted as |
+| --- | --- | --- |
+| `prompt_ms`, `predicted_ms` | milliseconds spent on the prompt and on generation | a number |
+| `prompt_per_token_ms`, `predicted_per_token_ms` | milliseconds per token | a number |
+| `prompt_per_second`, `predicted_per_second` | tokens per second | a number |
+| `draft_n`, `draft_n_accepted` | tokens drafted and accepted by speculative decoding | a whole count |
+
+Accepting a field is not ignoring its value, the rule `llm-messages` applies to its accepted,
+unread fields. One in any other shape, `null` included (the server guards every division behind
+a rate, so it never writes the `null` its JSON library makes of a number that is not finite), says
+the endpoint is not the server this subset was written against. It is refused by name, without
+its value, or `timings` itself is when it is not an object:
+`chat completion timings field has a shape llama-server does not write: timings.prompt_ms`.
+A `timings` key llama.cpp does not document at that commit passes, as every unread key on this
+wire does (`usage.total_tokens`, `prompt_tokens_details.audio_tokens`): refusing one would fail
+every turn against a newer server that adds a field.
+
 **An absent counter is unknown, and unknown is never zero.** A `usage` object that names one
 counter leaves the others unknown; `usage: null` on every chunk leaves all of them unknown. A
 zero the upstream actually reported is a report and stays one. The same rule governs the model
@@ -134,7 +176,10 @@ name: a response that names no model leaves `upstream_model` absent, and the con
 is never substituted for it.
 
 `final_usage` becomes true when the stream terminates. Before that, `observation()` exposes a
-partial snapshot, which is what a failure after dispatch retains.
+partial snapshot, which is what a failure after dispatch retains. A chunk whose own report is
+refused — an unusable identifier or model, a counter or `timings` field in the wrong shape, or
+`timings` contradicting `usage` — adds nothing to it: the failure carries the snapshot as it
+stood before that chunk, so a figure the refusal declined to believe is never reported as known.
 
 ## Gateway ingress
 
@@ -256,7 +301,7 @@ output and would end fallback eligibility. A failed turn, or one that omitted no
 none. A sink that refuses the warning fails the turn with its own error, stamped as served.
 
 Any endpoint serving this wire works, including an explicitly anonymous, self-hosted one — the
-shape a local `vLLM` deployment declares. `crates/llm-chat/fixtures/` holds pinned response
-bytes in the shapes this wire is served in, and the integration test drives a real socket
-against them. That is fixture evidence for the projection, not qualification of a live `vLLM`,
-provider or hosting deployment.
+shape a local `vLLM` or `llama-server` deployment declares. `crates/llm-chat/fixtures/` holds
+pinned response bytes in the shapes this wire is served in, and the integration test drives a
+real socket against them. That is fixture evidence for the projection, not qualification of a
+live `vLLM`, `llama-server`, provider or hosting deployment.

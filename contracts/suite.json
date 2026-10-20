@@ -136,6 +136,11 @@
       "llm.chat/authored/incoming-an-unreported-model-is-not-replaced-by-the-binding",
       "llm.chat/authored/incoming-contradictory-counters-are-refused",
       "llm.chat/authored/incoming-framed-payloads-project-the-same-text-as-bytes-do",
+      "llm.chat/authored/incoming-llama-server-a-timings-duration-that-is-not-a-number-is-refused-by-name",
+      "llm.chat/authored/incoming-llama-server-stream-carries-text-reasoning-and-counters",
+      "llm.chat/authored/incoming-llama-server-timings-report-the-counters-of-a-stream-without-usage",
+      "llm.chat/authored/incoming-llama-server-timings-that-contradict-usage-are-refused",
+      "llm.chat/authored/incoming-llama-server-tool-stream-preserves-its-call-and-counters",
       "llm.chat/authored/incoming-openai-stream-preserves-text-usage-and-finish-reason",
       "llm.chat/authored/incoming-the-cache-write-extension-survives-being-read-back",
       "llm.chat/authored/incoming-tool-arguments-survive-the-split-that-delivered-them",
@@ -1348,6 +1353,31 @@
         "digest": "sha256:bef9c0e19c46aee5b51a8124eeeaf6951c2f3e544aa4223f65ea191241611867",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/incoming-framed-payloads-project-the-same-text-as-bytes-do"
+      },
+      "chat/scenarios/incoming-llama-server-a-timings-duration-that-is-not-a-number-is-refused-by-name.yaml": {
+        "digest": "sha256:3040d1a8ca001c1f5240d0cf14a41d79defe93a08138bd9e3193c69821a621b5",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/incoming-llama-server-a-timings-duration-that-is-not-a-number-is-refused-by-name"
+      },
+      "chat/scenarios/incoming-llama-server-stream-carries-text-reasoning-and-counters.yaml": {
+        "digest": "sha256:143afc1636290b64b0c4832e6ed38878f72dd388531d3f071cdc91ec16cba3d0",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/incoming-llama-server-stream-carries-text-reasoning-and-counters"
+      },
+      "chat/scenarios/incoming-llama-server-timings-report-the-counters-of-a-stream-without-usage.yaml": {
+        "digest": "sha256:b86b4ddd89865beef30f0f76fa31d0a6043aebddb3c01a58a0e15cc289666737",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/incoming-llama-server-timings-report-the-counters-of-a-stream-without-usage"
+      },
+      "chat/scenarios/incoming-llama-server-timings-that-contradict-usage-are-refused.yaml": {
+        "digest": "sha256:61035d63fda9ca8029a107ac23eaabccf3ca167744882469717cc6f4f1d69cf5",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/incoming-llama-server-timings-that-contradict-usage-are-refused"
+      },
+      "chat/scenarios/incoming-llama-server-tool-stream-preserves-its-call-and-counters.yaml": {
+        "digest": "sha256:290ed3e466526d0d467a3ce021f4c835f237ef5126eccdd727dc210a5e33daad",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/incoming-llama-server-tool-stream-preserves-its-call-and-counters"
       },
       "chat/scenarios/incoming-openai-stream-preserves-text-usage-and-finish-reason.yaml": {
         "digest": "sha256:028d5e577bcccffaeea163483c75ad3754d90c44eb2c1a50a17f2ab4a2b9fed9",
@@ -5111,7 +5141,7 @@
       }
     },
     "counts": {
-      "authored": 851,
+      "authored": 856,
       "generated": 32,
       "outside": 0,
       "refused": 0
@@ -22228,6 +22258,557 @@
               "stream_text": {
                 "kind": "literal",
                 "value": "Guten Tag"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        }
+      ]
+    },
+    "llm.chat/authored/incoming-llama-server-a-timings-duration-that-is-not-a-number-is-refused-by-name": {
+      "purpose": "incoming llama-server a timings duration that is not a number is refused by name",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectResponse"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastResponseProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectResponse",
+          "input": {
+            "response": {
+              "kind": "literal",
+              "value": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"hi\"}}],\"id\":\"chatcmpl-misshapen\",\"model\":\"qwen3-1.7b\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{}}],\"id\":\"chatcmpl-misshapen\",\"model\":\"qwen3-1.7b\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[],\"id\":\"chatcmpl-misshapen\",\"model\":\"qwen3-1.7b\",\"object\":\"chat.completion.chunk\",\"usage\":{\"completion_tokens\":1,\"prompt_tokens\":23,\"total_tokens\":24,\"prompt_tokens_details\":{\"cached_tokens\":8}},\"timings\":{\"cache_n\":8,\"prompt_n\":15,\"prompt_ms\":\"slow\",\"predicted_n\":1}}\n\ndata: [DONE]\n\n"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "chat completion timings field has a shape llama-server does not write: timings.prompt_ms"
+              },
+              "stream_text": {
+                "kind": "literal",
+                "value": "hi"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        }
+      ]
+    },
+    "llm.chat/authored/incoming-llama-server-stream-carries-text-reasoning-and-counters": {
+      "purpose": "incoming llama-server stream carries text reasoning and counters",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectResponse"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastResponseProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectResponse",
+          "input": {
+            "response": {
+              "kind": "literal",
+              "value": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null}}],\"created\":1792500000,\"id\":\"chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"reasoning_content\":\"The user\"}}],\"created\":1792500000,\"id\":\"chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"reasoning_content\":\" wants a greeting.\"}}],\"created\":1792500000,\"id\":\"chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"Hello\"}}],\"created\":1792500001,\"id\":\"chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" there\"}}],\"created\":1792500001,\"id\":\"chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\".\"}}],\"created\":1792500001,\"id\":\"chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{}}],\"created\":1792500001,\"id\":\"chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[],\"created\":1792500001,\"id\":\"chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\",\"usage\":{\"completion_tokens\":14,\"prompt_tokens\":23,\"total_tokens\":37,\"prompt_tokens_details\":{\"cached_tokens\":8}},\"timings\":{\"cache_n\":8,\"prompt_n\":15,\"prompt_ms\":143.862,\"prompt_per_token_ms\":9.5908,\"prompt_per_second\":104.26658881428037,\"predicted_n\":14,\"predicted_ms\":912.417,\"predicted_per_token_ms\":70.18592307692307,\"predicted_per_second\":14.247871313226298}}\n\ndata: [DONE]\n\n"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "assistant_text": {
+                "kind": "literal",
+                "value": "Hello there."
+              },
+              "cache_creation_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": "8"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": "23"
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": "14"
+              },
+              "reasoning_output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning_text": {
+                "kind": "literal",
+                "value": "The user wants a greeting."
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "chatcmpl-UF4lmh3ldAfTR8GVnGRDufurgCmrw6dO"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "{\"kind\":\"end-turn\"}"
+              },
+              "stream_text": {
+                "kind": "literal",
+                "value": "Hello there."
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "qwen3-1.7b"
+              },
+              "usage_reported": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        }
+      ]
+    },
+    "llm.chat/authored/incoming-llama-server-timings-report-the-counters-of-a-stream-without-usage": {
+      "purpose": "incoming llama-server timings report the counters of a stream without usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectResponse"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastResponseProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectResponse",
+          "input": {
+            "response": {
+              "kind": "literal",
+              "value": ":\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null}}],\"created\":1792500232,\"id\":\"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"In\"}}],\"created\":1792500232,\"id\":\"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" short\"}}],\"created\":1792500232,\"id\":\"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\":\"}}],\"created\":1792500232,\"id\":\"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" yes\"}}],\"created\":1792500232,\"id\":\"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\",\"}}],\"created\":1792500232,\"id\":\"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"length\",\"index\":0,\"delta\":{}}],\"created\":1792500232,\"id\":\"chatcmpl-jYXGjKjnAoA7x6olOpRf2PM9Mcv4POI5\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\",\"timings\":{\"cache_n\":0,\"prompt_n\":2048,\"prompt_ms\":31927.645,\"prompt_per_token_ms\":15.58967041015625,\"prompt_per_second\":64.14503794438957,\"predicted_n\":5,\"predicted_ms\":380.902,\"predicted_per_token_ms\":95.2255,\"predicted_per_second\":10.501388808669947}}\n\ndata: [DONE]\n\n"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "cache_creation_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": "0"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": "2048"
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": "5"
+              },
+              "reasoning_output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "{\"kind\":\"max-output-tokens\"}"
+              },
+              "stream_text": {
+                "kind": "literal",
+                "value": "In short: yes,"
+              },
+              "usage_reported": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        }
+      ]
+    },
+    "llm.chat/authored/incoming-llama-server-timings-that-contradict-usage-are-refused": {
+      "purpose": "incoming llama-server timings that contradict usage are refused",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectResponse"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastResponseProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectResponse",
+          "input": {
+            "response": {
+              "kind": "literal",
+              "value": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"hi\"}}],\"id\":\"chatcmpl-contradicted\",\"model\":\"qwen3-1.7b\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{}}],\"id\":\"chatcmpl-contradicted\",\"model\":\"qwen3-1.7b\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[],\"id\":\"chatcmpl-contradicted\",\"model\":\"qwen3-1.7b\",\"object\":\"chat.completion.chunk\",\"usage\":{\"completion_tokens\":1,\"prompt_tokens\":23,\"total_tokens\":24,\"prompt_tokens_details\":{\"cached_tokens\":8}},\"timings\":{\"cache_n\":8,\"prompt_n\":15,\"predicted_n\":2}}\n\ndata: [DONE]\n\n"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "chat completion timings contradict its usage report"
+              },
+              "stream_text": {
+                "kind": "literal",
+                "value": "hi"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        }
+      ]
+    },
+    "llm.chat/authored/incoming-llama-server-tool-stream-preserves-its-call-and-counters": {
+      "purpose": "incoming llama-server tool stream preserves its call and counters",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectResponse"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastResponseProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectResponse",
+          "input": {
+            "response": {
+              "kind": "literal",
+              "value": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null}}],\"created\":1792500100,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"Checking\"}}],\"created\":1792500100,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" now\"}}],\"created\":1792500100,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\".\\n\"}}],\"created\":1792500100,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"ZbA6PzBpu91nN5WsfyZVwNFv4YLVVc51\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{\"}}]}}],\"created\":1792500101,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"\"}}]}}],\"created\":1792500101,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"city\"}}]}}],\"created\":1792500101,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\"}}]}}],\"created\":1792500101,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\" \\\"\"}}]}}],\"created\":1792500101,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"Lisbon\"}}]}}],\"created\":1792500101,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]}}],\"created\":1792500102,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"delta\":{}}],\"created\":1792500102,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[],\"created\":1792500102,\"id\":\"chatcmpl-amckBYR4LCNUtE7Jn2dXBmJ90wVgUhSv\",\"model\":\"qwen2.5-1.5b-instruct\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\",\"usage\":{\"completion_tokens\":24,\"prompt_tokens\":212,\"total_tokens\":236,\"prompt_tokens_details\":{\"cached_tokens\":180}},\"timings\":{\"cache_n\":180,\"prompt_n\":32,\"prompt_ms\":301.774,\"prompt_per_token_ms\":9.4304375,\"prompt_per_second\":106.03961905266856,\"predicted_n\":24,\"predicted_ms\":1693.208,\"predicted_per_token_ms\":73.61773913043479,\"predicted_per_second\":13.583682571780901}}\n\ndata: [DONE]\n\n"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": "180"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": "212"
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": "24"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "{\"kind\":\"tool-calls\"}"
+              },
+              "tool_calls": {
+                "kind": "literal",
+                "value": [
+                  "ZbA6PzBpu91nN5WsfyZVwNFv4YLVVc51:lookup:{\"city\":\"Lisbon\"}"
+                ]
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "qwen2.5-1.5b-instruct"
+              },
+              "usage_reported": {
+                "kind": "literal",
+                "value": true
               }
             }
           },
