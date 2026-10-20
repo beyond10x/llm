@@ -105,9 +105,11 @@ an output that is not a string as its JSON text, which reads back as that string
 exceptions:
 
 - Ingress parses the Responses envelope and the Chat Completions failure object at most 127 levels
-  deep (`serde_json`'s recursion limit of 128), so on both wires a failed output nested more than
-  126 levels deep reads back as a successful string carrying the envelope's or the object's text.
-  Messages carries `is_error` beside the text, so the flag survives any depth.
+  deep (`serde_json`'s recursion limit of 128). On Responses, which envelopes every result, an
+  output nested more than 126 levels deep, failed or not, reads back as a successful string
+  carrying the envelope's text; on Chat Completions a failed output nested that deep reads back as
+  a successful string carrying the failure object's text. Messages carries `is_error` beside the
+  text, so the flag survives any depth.
 - Chat Completions parses a tool message only up to the tool-result bound (256 KiB). The failure
   object adds 21 bytes around the output's JSON, so a failed output whose JSON is within 21 bytes
   of the bound is sent and then refused by ingress as too large.

@@ -118,12 +118,11 @@ fn adv_a_failed_output_nested_to_the_parse_limit_still_decodes_back_failed() {
     );
 }
 
-/// Nothing outside the tool-result rule changed in Chat ingress. At the base the `tool` arm
-/// read the call identifier before the content (`call_id: call_id_of(..)?` ahead of
-/// `output: .. content_text(..)?` in one struct literal), so a tool message carrying both an
-/// unusable identifier and an unsupported content part was refused `InvalidRequest`. The
-/// change hoists `content_text` above `call_id_of`, and the same request is now refused
-/// `Unsupported`.
+/// Guard: nothing outside the tool-result rule changes in Chat ingress. The `tool` arm reads the
+/// call identifier before the content, as the base did, so a tool message carrying both an
+/// unusable identifier and an unsupported content part is refused `InvalidRequest` for its
+/// call. Reading the content first (an earlier revision of this change did) refuses it
+/// `Unsupported` instead.
 #[test]
 fn adv_an_unusable_call_id_is_still_refused_before_the_content_is_read() {
     let body = body_answering_with(&json!({
@@ -135,10 +134,10 @@ fn adv_an_unusable_call_id_is_still_refused_before_the_content_is_read() {
     assert_eq!(error.code, ErrorCode::InvalidRequest, "{error}");
 }
 
-/// `docs/chat.md`: "Any other content, JSON or not ... is a successful result whose output is
-/// that content as a string: keeping it is lossless". Content with a repeated key is not the
-/// two-member object the Chat encoder sends; `serde_json` keeps the last value of a repeated
-/// key, so the text collapses to a failure and its bytes are lost.
+/// Guard for `docs/chat.md`: content with a repeated `error` or `ok` key is not the two-member
+/// object the Chat encoder sends, so it stays a successful result carrying its text byte for
+/// byte. Reading it as a JSON value (an earlier revision of this change did) keeps the last
+/// value of the repeated key, so the text collapses to a failure and its bytes are lost.
 #[test]
 fn adv_content_with_a_repeated_key_stays_a_successful_string() {
     for content in [

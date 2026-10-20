@@ -92,9 +92,10 @@ entities:
       # `ProjectRequest` sends for a failed result; the output is then the `error` value.
       # Content is parsed only when it opens with `{` and is at most 256 KiB, the tool-result
       # bound that refuses longer content, and at most 127 levels deep. Any other content, JSON
-      # or not, a repeated key included, is a successful result whose output is that content as
-      # a string. A call rejected before it ran travels as a failed result too: this wire has no
-      # separate rejected state.
+      # or not, a repeated `error` or `ok` key included, is a successful result whose output is
+      # that content as a string; a key repeated inside the `error` value keeps its last value.
+      # A call rejected before it ran travels as a failed result too: this wire has no separate
+      # rejected state.
       - {name: items, type: List<String>}
       - {name: tools, type: List<String>}
       - {name: tool_choice, type: Optional<String>}

@@ -265,7 +265,8 @@ struct FailureObject {
 /// A tool message's text read back as a result: failed with the `error` value as its output
 /// when the text is a `FailureObject` whose `ok` is `false`, and otherwise successful with the
 /// text as a string, byte for byte. Keeping other text a string is lossless; guessing that it
-/// was meant to be JSON would not be. A repeated or extra key is not the failure object.
+/// was meant to be JSON would not be. A repeated `error` or `ok`, or an extra key, is not the
+/// failure object; a key repeated inside the `error` value keeps its last value.
 ///
 /// Only text that opens with `{` and fits the tool-result bound is parsed: longer text is left to
 /// that bound, which refuses it, and `serde_json` parses at most 127 levels deep, so a failed

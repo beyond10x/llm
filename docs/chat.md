@@ -206,11 +206,12 @@ keeps on client input:
   string carrying the object's text. The limit is kept: lifting it would let a client's nesting
   reach the stack.
 
-Any other content, JSON or not (`{"ok": false}` alone, an object with a third or a repeated key,
-`ok` true, an array), is a successful result whose output is that content as a string, byte for
-byte: keeping it is lossless, and guessing that it was meant to be JSON would not be. A successful
-result whose text is exactly the failure object therefore reads back as failed; the wire cannot
-tell the two apart.
+Any other content, JSON or not (`{"ok": false}` alone, an object with a third key or a repeated
+`error` or `ok` key, `ok` true, an array), is a successful result whose output is that content as
+a string, byte for byte: keeping it is lossless, and guessing that it was meant to be JSON would
+not be. The `error` value itself is read as any JSON value is, so a key repeated inside it keeps
+its last value. A successful result whose text is exactly the failure object therefore reads back
+as failed; the wire cannot tell the two apart.
 
 `encode_ingress_completion` and `IngressStream` answer on the same wire. The caller supplies
 the response identity and creation time; this library owns no clock and mints no identity.
