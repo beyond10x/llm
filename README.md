@@ -14,13 +14,14 @@ missing.
 
 ## What it is not
 
-- **Not an agent loop.** llm never runs a tool. The agent loops among its consumers run the loop
-  and execute the tools the model asks for:
-  [Harness](https://beyond10x.github.io/ecosystem/harness/) ([GitHub](https://github.com/beyond10x/harness)),
-  [Loom](https://beyond10x.github.io/loom/) ([GitHub](https://github.com/beyond10x/loom)) and
-  inference ([GitHub](https://github.com/beyond10x/inference)). Loom and inference pin an llm
-  release tag. Harness pins 0.7.0 when it drops its own model wire and credential crates, in its
-  own work, as Atlas ADR 0097 decides; [Harness parity](docs/harness-parity.md) maps what it needs.
+- **Not an agent loop.** llm never runs a tool.
+  [Harness](https://beyond10x.github.io/ecosystem/harness/) ([GitHub](https://github.com/beyond10x/harness))
+  runs the agent loop and executes the tools the model asks for;
+  [Loom](https://beyond10x.github.io/loom/) ([GitHub](https://github.com/beyond10x/loom)) calls llm
+  for decisions; inference ([GitHub](https://github.com/beyond10x/inference)) builds on the same
+  port. Each pins an llm release tag. Harness builds on 0.8.0 since it dropped its own model wire
+  and credential crates, as Atlas ADR 0097 decided; [Harness parity](docs/harness-parity.md) maps
+  what it needed.
 - **Not a credential store.** Credentials come from a resolver the caller injects; llm never runs
   a login flow. One adapter reads through the
   [Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets))
@@ -76,12 +77,8 @@ The [crate reference](https://beyond10x.github.io/llm/docs/reference/crates) is 
 
 ## Build and check
 
-```bash
-cargo test --workspace --locked
-task check
-```
-
-`task check` is the full gate. Besides Rust it needs [Task](https://taskfile.dev),
+The gate and the toolchain it runs on are in [AGENTS.md](AGENTS.md#gate). Besides Rust it needs
+[Task](https://taskfile.dev),
 [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.56.0 and
 [AEP](https://beyond10x.github.io/ecosystem/aep/) ([GitHub](https://github.com/beyond10x/aep))
 0.68.0; [Run the checks](https://beyond10x.github.io/llm/docs/guides/run-the-checks) says what it

@@ -132,10 +132,13 @@ The HTTP transport marks these as retriable:
 | Failure | Dispatch |
 | --- | --- |
 | No response at all | `unknown` |
-| `429` | `rejected` |
+| `429`, unless the protocol client reads its body as an exhausted quota, spend limit or subscription usage limit (then `refused`, not retriable) | `rejected` |
 | `408` and every `5xx` status | `unknown`: the work may have run |
 | A response body that fails mid-stream | `accepted` |
 | A stream that ends inside an event | `unknown` |
+
+Any error status whose answer carries `x-should-retry: false` is not retriable, whatever the table
+says; the header never makes another status retriable.
 
 A server's `Retry-After` is kept as a hint (`retry_after_ms`); routing honours it, capped, only for
 a failure that is already retriable. A client never retries by itself: one call is one attempt, and
