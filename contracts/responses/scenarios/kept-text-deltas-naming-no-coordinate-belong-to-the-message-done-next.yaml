@@ -1,0 +1,25 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next
+summary: deltas naming neither an item nor an index belong to the message whose output_item.done comes next, so two messages stay two, with no warning
+timeline:
+- at: '2026-10-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.output_text.delta","content_index":0,"delta":"A"},{"type":"response.output_item.done","item":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"A"}]}},{"type":"response.output_text.delta","content_index":0,"delta":"B"},{"type":"response.output_item.done","item":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"B"}]}},{"type":"response.completed","response":{"status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"A"}]},{"type":"message","role":"assistant","content":[{"type":"output_text","text":"B"}]}]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stop_reason: end-turn
+    items_json: '[{"kind":"assistant-text","text":"A"},{"kind":"assistant-text","text":"B"}]'
+    stream_events:
+    - text-delta:A
+    - text-delta:B

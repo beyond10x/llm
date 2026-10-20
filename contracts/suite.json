@@ -161,6 +161,7 @@
       "llm.chat/authored/ingress-a-tool-choice-of-none-is-refused",
       "llm.chat/authored/ingress-a-tool-choice-that-is-not-a-function-is-refused",
       "llm.chat/authored/ingress-a-tool-message-answering-no-call-is-refused",
+      "llm.chat/authored/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed",
       "llm.chat/authored/ingress-a-tool-that-is-not-a-function-is-refused",
       "llm.chat/authored/ingress-an-accepted-encoding-carries-no-refusal",
       "llm.chat/authored/ingress-an-accepted-request-carries-no-refusal",
@@ -189,6 +190,7 @@
       "llm.chat/authored/ingress-encoding-reports-exactly-the-counters-it-was-given",
       "llm.chat/authored/ingress-instructions-must-precede-the-conversation",
       "llm.chat/authored/ingress-message-content-that-is-not-text-is-refused",
+      "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string",
       "llm.chat/authored/ingress-stream-options-that-are-not-an-object-are-refused",
       "llm.chat/authored/ingress-streamed-closing-chunks-carry-calls-then-the-finish-reason",
       "llm.chat/authored/outgoing-a-refused-projection-builds-no-body",
@@ -273,6 +275,7 @@
       "llm.messages/authored/a-subscription-token-travels-as-a-bearer-with-the-oauth-beta-and-the-client-preamble",
       "llm.messages/authored/a-tail-with-nothing-markable-carries-no-rolling-breakpoint",
       "llm.messages/authored/a-terminal-reason-while-a-block-is-open-is-refused",
+      "llm.messages/authored/a-text-block-that-opens-with-text-shows-it-as-a-delta",
       "llm.messages/authored/a-tool-name-of-the-maximum-length-is-projected",
       "llm.messages/authored/a-tool-name-one-byte-too-long-is-refused",
       "llm.messages/authored/a-tool-name-outside-the-character-class-is-refused",
@@ -364,6 +367,8 @@
       "llm.models/authored/the-catalog-builder-refuses-a-credentialed-account-without-a-resolver",
       "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header",
       "llm.providers/authored/a-bearer-account-with-an-api-key-header-is-refused",
+      "llm.providers/authored/a-binding-claiming-input-during-output-is-refused",
+      "llm.providers/authored/a-binding-whose-output-does-not-stream-is-refused",
       "llm.providers/authored/a-cancellation-during-resolution-ends-preparation",
       "llm.providers/authored/a-cancellation-that-arrives-with-the-credential-discards-it",
       "llm.providers/authored/a-cancelled-caller-is-refused-before-the-resolver-is-called",
@@ -550,11 +555,17 @@
       "llm.responses/authored/ingress-round-trips-verbosity",
       "llm.responses/authored/ingress-round-trips-xhigh",
       "llm.responses/authored/ingress-under-a-repointed-binding-does-not-reinstate-opaque-state",
+      "llm.responses/authored/kept-text-a-message-no-delta-showed-keeps-its-own-text",
       "llm.responses/authored/kept-text-a-second-message-shown-only-as-deltas-is-kept",
-      "llm.responses/authored/kept-text-a-terminal-message-outranks-the-shown-deltas",
+      "llm.responses/authored/kept-text-a-streamed-message-gives-way-to-the-shown-deltas",
+      "llm.responses/authored/kept-text-a-terminal-message-gives-way-to-the-shown-deltas",
+      "llm.responses/authored/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas",
+      "llm.responses/authored/kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next",
+      "llm.responses/authored/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages",
       "llm.responses/authored/kept-text-of-two-shown-messages-stays-two-messages",
       "llm.responses/authored/kept-text-shown-before-an-incomplete-end-stays-in-the-turn",
       "llm.responses/authored/kept-text-shown-beside-a-terminal-call-stays-ahead-of-it",
+      "llm.responses/authored/kept-text-shown-text-more-than-one-message-could-be-is-carried-in-none",
       "llm.responses/authored/kept-text-the-caller-was-shown-stays-in-the-turn",
       "llm.responses/authored/matching-opaque-state-is-carried-out-verbatim",
       "llm.responses/authored/message-content-outside-the-subset-is-refused-not-emptied",
@@ -579,9 +590,11 @@
       "llm.routes/authored/a-missing-file-secret-is-refused-unauthorized",
       "llm.routes/authored/a-name-naming-an-undeclared-endpoint-is-refused",
       "llm.routes/authored/a-present-file-secret-prepares-the-endpoints-api-key-header",
+      "llm.routes/authored/a-route-claiming-input-during-output-is-refused-naming-the-route",
       "llm.routes/authored/a-route-mapping-declares-its-own-capabilities",
       "llm.routes/authored/a-route-to-an-undeclared-endpoint-is-refused",
       "llm.routes/authored/a-route-value-splits-on-its-first-slash-only",
+      "llm.routes/authored/a-route-whose-output-does-not-stream-is-refused-naming-the-route",
       "llm.routes/authored/a-string-route-declares-the-default-capabilities",
       "llm.routes/authored/a-subscription-oauth-endpoint-is-refused",
       "llm.routes/authored/an-anonymous-endpoint-prepares-nothing-and-succeeds",
@@ -600,6 +613,8 @@
       "llm.routes/authored/the-three-endpoint-example-loads-and-each-route-answers-its-endpoint-protocol-and-model",
       "llm.routing/authored/a-caller-attempt-bound-above-sixty-four-is-refused",
       "llm.routing/authored/a-caller-attempt-bound-of-zero-is-refused",
+      "llm.routing/authored/a-catalog-claiming-input-during-output-is-refused",
+      "llm.routing/authored/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision",
       "llm.routing/authored/a-falling-back-route-between-subscription-billed-targets-is-accepted",
       "llm.routing/authored/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused",
       "llm.routing/authored/a-falling-back-route-from-a-subscription-target-to-a-metered-one-is-refused",
@@ -1370,7 +1385,7 @@
         "scenario": "llm.chat/authored/ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices"
       },
       "chat/scenarios/ingress-a-client-request-decodes-onto-the-neutral-subset.yaml": {
-        "digest": "sha256:6c6377a929f8677614787448af01d71009bb0ef5a0a337a434f4b1939fb4ffc5",
+        "digest": "sha256:187e0169391dece22a765e3a9566bdf2d641cc01880e2213f252d3f2e1dcd0ff",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-client-request-decodes-onto-the-neutral-subset"
       },
@@ -1458,6 +1473,11 @@
         "digest": "sha256:2c35480bfa9aad2af2484e1048fec678902ba0846e5925b3b0bcab8f85bd9dd9",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-tool-message-answering-no-call-is-refused"
+      },
+      "chat/scenarios/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed.yaml": {
+        "digest": "sha256:888dc0c38f622edccd30cd87b1ed2c0475f2d8e7fa76703e00115ac558229c33",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed"
       },
       "chat/scenarios/ingress-a-tool-that-is-not-a-function-is-refused.yaml": {
         "digest": "sha256:67b6839e62010c5c06065070059f1e3a50c298f63ee0591e367b3aa4297ab5ad",
@@ -1598,6 +1618,11 @@
         "digest": "sha256:37f0071ab3ee2aee3512c6360f31898322ba84a38563592301fce901c351e0ac",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-message-content-that-is-not-text-is-refused"
+      },
+      "chat/scenarios/ingress-other-json-in-a-tool-message-stays-a-successful-string.yaml": {
+        "digest": "sha256:ca28394f494474edf20f21ad7f8a59771f587851033b4af4af94ec7b6a1541b2",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string"
       },
       "chat/scenarios/ingress-stream-options-that-are-not-an-object-are-refused.yaml": {
         "digest": "sha256:7f32b33666c4ece8702dd6cd64ae0ffc84418d35ea9423f61aaf909c4dad946f",
@@ -1993,6 +2018,11 @@
         "digest": "sha256:9a088160c62362c40a411c5a81b810860ea7125cf22a03b19678d679aece8b2c",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-terminal-reason-while-a-block-is-open-is-refused"
+      },
+      "messages/scenarios/a-text-block-that-opens-with-text-shows-it-as-a-delta.yaml": {
+        "digest": "sha256:1b6aefe3fd94eb2d7b4a27fa21ab4483a1ed05b1c3f2b989acbb748bcf3ca6a1",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-text-block-that-opens-with-text-shows-it-as-a-delta"
       },
       "messages/scenarios/a-tool-name-of-the-maximum-length-is-projected.yaml": {
         "digest": "sha256:355209acd7a18dc9ac8ce832cda245f246b4bb5f476371641670b0d9312f9af9",
@@ -2703,6 +2733,16 @@
         "digest": "sha256:c9d41bd3d0a210a84944b6b3c84116c30430a6d8bd9cffecec747b35185ecedd",
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-bearer-account-with-an-api-key-header-is-refused"
+      },
+      "providers/scenarios/a-binding-claiming-input-during-output-is-refused.yaml": {
+        "digest": "sha256:0706253f7d1082a2faf118f7491b5eed761f0f1af498fdcdbd063d96cbb55c2b",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-binding-claiming-input-during-output-is-refused"
+      },
+      "providers/scenarios/a-binding-whose-output-does-not-stream-is-refused.yaml": {
+        "digest": "sha256:1c5541e134d6167c33e09f7e9a847ee044cca9cfcb46207efe6a3d95265e6705",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-binding-whose-output-does-not-stream-is-refused"
       },
       "providers/scenarios/a-cancellation-during-resolution-ends-preparation.yaml": {
         "digest": "sha256:8d48089407cf078f739f1caf37ee37e6740406ace47bc73270be5fa34f6ef8cb",
@@ -3609,15 +3649,40 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/ingress-under-a-repointed-binding-does-not-reinstate-opaque-state"
       },
+      "responses/scenarios/kept-text-a-message-no-delta-showed-keeps-its-own-text.yaml": {
+        "digest": "sha256:b2628438cc9aca12aa65bb313b75c2ffc8065e3423401526fe245095522836bd",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-a-message-no-delta-showed-keeps-its-own-text"
+      },
       "responses/scenarios/kept-text-a-second-message-shown-only-as-deltas-is-kept.yaml": {
         "digest": "sha256:f9e3e57688e6fb44ad22770b410b24b51afb73c578d103643ea61caeec370405",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/kept-text-a-second-message-shown-only-as-deltas-is-kept"
       },
-      "responses/scenarios/kept-text-a-terminal-message-outranks-the-shown-deltas.yaml": {
-        "digest": "sha256:19af5b85470ad366fb96df4cccee16ff4f9b98b95adeda62af5c2bc607c01cc4",
+      "responses/scenarios/kept-text-a-streamed-message-gives-way-to-the-shown-deltas.yaml": {
+        "digest": "sha256:40daa9918de6ce77e3381cc7221a9c9ff150e0bc89e9f702af68650b7d3c2fe6",
         "disposition": "accepted",
-        "scenario": "llm.responses/authored/kept-text-a-terminal-message-outranks-the-shown-deltas"
+        "scenario": "llm.responses/authored/kept-text-a-streamed-message-gives-way-to-the-shown-deltas"
+      },
+      "responses/scenarios/kept-text-a-terminal-message-gives-way-to-the-shown-deltas.yaml": {
+        "digest": "sha256:40606f092dbbf0594613d4944060020f8c91e914970365d258e9c9ba2bb84dff",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-a-terminal-message-gives-way-to-the-shown-deltas"
+      },
+      "responses/scenarios/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas.yaml": {
+        "digest": "sha256:115cb725922a69bf38b1735430d4db5459a517a58325642fb65ad031d327069f",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas"
+      },
+      "responses/scenarios/kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next.yaml": {
+        "digest": "sha256:43cd07c36adf1d3c93999117c87bb9350fa003e6677396c035b82b1c0f63c492",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next"
+      },
+      "responses/scenarios/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages.yaml": {
+        "digest": "sha256:de1ffd5132537f9167e56327e5fc294b92814e862cfef7c87000aaa256e4e2d7",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages"
       },
       "responses/scenarios/kept-text-of-two-shown-messages-stays-two-messages.yaml": {
         "digest": "sha256:68b6d0f61e951d26eaa77ad0bc29e42eb7a012542a4a14f1afe02f1fec6bf5d6",
@@ -3633,6 +3698,11 @@
         "digest": "sha256:eb779bc98e5bf1e0eea6d6008509f861ac4f4867e8054263b7815f3cb588a019",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/kept-text-shown-beside-a-terminal-call-stays-ahead-of-it"
+      },
+      "responses/scenarios/kept-text-shown-text-more-than-one-message-could-be-is-carried-in-none.yaml": {
+        "digest": "sha256:0b45af2224bf0b082d0bd139bd34080259046df3bb64f2799c556d38ee5017dc",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/kept-text-shown-text-more-than-one-message-could-be-is-carried-in-none"
       },
       "responses/scenarios/kept-text-the-caller-was-shown-stays-in-the-turn.yaml": {
         "digest": "sha256:2b3fcbe53eeaced5671636168b30ad3a9c2751476eb57bd6e6e9ed164fbe889d",
@@ -3754,8 +3824,13 @@
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-present-file-secret-prepares-the-endpoints-api-key-header"
       },
+      "routes/scenarios/a-route-claiming-input-during-output-is-refused-naming-the-route.yaml": {
+        "digest": "sha256:5299d7b9f99de36c4b380032e5d44cbc93334541ff2db57212dd6d5b15e2b20e",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-route-claiming-input-during-output-is-refused-naming-the-route"
+      },
       "routes/scenarios/a-route-mapping-declares-its-own-capabilities.yaml": {
-        "digest": "sha256:8efb89e5cc1fb5a137304572e70767f0d1b29420fde26c51ed598729949bd5c9",
+        "digest": "sha256:1d81d3dbb36370e0afd3f8c27aff727cf1f79bb59cc86f6cb1db62d443634752",
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-route-mapping-declares-its-own-capabilities"
       },
@@ -3769,8 +3844,13 @@
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-route-value-splits-on-its-first-slash-only"
       },
+      "routes/scenarios/a-route-whose-output-does-not-stream-is-refused-naming-the-route.yaml": {
+        "digest": "sha256:7c75b071d5344825ad39411a952bf8b62bbf0edc26b02d95d388551953851176",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-route-whose-output-does-not-stream-is-refused-naming-the-route"
+      },
       "routes/scenarios/a-string-route-declares-the-default-capabilities.yaml": {
-        "digest": "sha256:a6a2a3353b993ca8ac86960e0ab815627ed881c0819257ae0dfa95c3c92dd88a",
+        "digest": "sha256:19e1a4c85e7cc5b2a33a16e361251dcaa53a65ec11a50af4b30a10a577b90980",
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-string-route-declares-the-default-capabilities"
       },
@@ -3858,6 +3938,16 @@
         "digest": "sha256:cbebafa1c380c2a0e6ffa8f1f1006d3dbe5c686eaa389a6805f6bcf5310d3beb",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/a-caller-attempt-bound-of-zero-is-refused"
+      },
+      "routing/scenarios/a-catalog-claiming-input-during-output-is-refused.yaml": {
+        "digest": "sha256:88c0d5bb4e448609ac33566fd60642eea04887389fe292a429b7afe68f3a34ae",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-catalog-claiming-input-during-output-is-refused"
+      },
+      "routing/scenarios/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision.yaml": {
+        "digest": "sha256:1b3d59afa0325047d1381fd213d7c956d2fba02c83a02d3fef86df07375e32ba",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision"
       },
       "routing/scenarios/a-named-tool-choice-that-is-not-published-is-refused.yaml": {
         "digest": "sha256:ae5b9b4703763c1381747892a7a2561dab85991c91e4d785f05134704d7fb5ea",
@@ -5021,7 +5111,7 @@
       }
     },
     "counts": {
-      "authored": 836,
+      "authored": 851,
       "generated": 32,
       "outside": 0,
       "refused": 0
@@ -5074,9 +5164,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "d5775d722cc1aa8bc03287df97f9c515df85e47682f3bf1b346d1200ff97fcee",
+    "contract_digest": "01efd4cb9f9f30dab2f6a774bf0a8fc1ccf24b64b83b4c905900d8a363133306",
     "scenario_initial_state": "empty",
-    "spec_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "spec_digest": "513ece793ae0f8ce1f0194b148f48cad791d40bd127044081db49cb781495394",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -24609,6 +24699,97 @@
         }
       ]
     },
+    "llm.chat/authored/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed": {
+      "purpose": "ingress a tool message carrying the failure object decodes as failed",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"Weather?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-2\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"tool_call_id\":\"call-1\",\"content\":\"{\\\"error\\\":\\\"no such city\\\",\\\"ok\\\":false}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-2\",\"content\":\"{\\\"ok\\\":false,\\\"error\\\":{\\\"code\\\":404}}\"}],\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"description\":\"Look up\",\"parameters\":{\"type\":\"object\"}}}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user:Weather?",
+                  "tool-call:call-1:lookup:{}",
+                  "tool-call:call-2:lookup:{}",
+                  "tool-result:call-1:\"no such city\":true",
+                  "tool-result:call-2:{\"code\":404}:true"
+                ]
+              },
+              "turn_valid": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
     "llm.chat/authored/ingress-a-tool-that-is-not-a-function-is-refused": {
       "purpose": "ingress refuses a tool whose type is not function (ingress.rs decode_tools)",
       "source": [
@@ -27143,6 +27324,103 @@
               "turn_valid": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
+    "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string": {
+      "purpose": "ingress other JSON in a tool message stays a successful string",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"Weather?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-2\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-3\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-4\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-5\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"tool_call_id\":\"call-1\",\"content\":\"{\\\"ok\\\":false}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-2\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false,\\\"code\\\":404}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-3\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-4\",\"content\":\"[{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false}]\"},{\"role\":\"tool\",\"tool_call_id\":\"call-5\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true,\\\"ok\\\":false}\"}],\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"description\":\"Look up\",\"parameters\":{\"type\":\"object\"}}}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user:Weather?",
+                  "tool-call:call-1:lookup:{}",
+                  "tool-call:call-2:lookup:{}",
+                  "tool-call:call-3:lookup:{}",
+                  "tool-call:call-4:lookup:{}",
+                  "tool-call:call-5:lookup:{}",
+                  "tool-result:call-1:\"{\\\"ok\\\":false}\":false",
+                  "tool-result:call-2:\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false,\\\"code\\\":404}\":false",
+                  "tool-result:call-3:\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true}\":false",
+                  "tool-result:call-4:\"[{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false}]\":false",
+                  "tool-result:call-5:\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true,\\\"ok\\\":false}\":false"
+                ]
+              },
+              "turn_valid": {
+                "kind": "literal",
+                "value": true
               }
             }
           },
@@ -38335,6 +38613,109 @@
               "wire_request": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/a-text-block-that-opens-with-text-shows-it-as-a-delta": {
+      "purpose": "text a block opens with is shown as a delta, so the turn carries exactly the text the caller was shown and no warning",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"text\":\"Hel\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"text\":\"lo\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"input_tokens\":11,\"output_tokens\":2}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Say hello\"}],\"tools\":[]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "assistant-text:Hello"
+                ]
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "text": {
+                "kind": "literal",
+                "value": "Hello"
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
               }
             }
           },
@@ -50139,6 +50520,216 @@
               "resolver_calls": {
                 "kind": "literal",
                 "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-binding-claiming-input-during-output-is-refused": {
+      "purpose": "a binding whose capabilities claim input during output is refused at bind, because no protocol in this workspace carries input during output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"my-lab\",\"category\":\"private-compute\"},\"account\":{\"id\":\"research\",\"provider_id\":\"my-lab\",\"auth_kind\":\"anonymous\",\"billing_kind\":\"self-hosted\"},\"endpoint\":{\"id\":\"gpu-7\",\"account_id\":\"research\",\"base_url\":\"http://127.0.0.1:8000/proxy/v1\"},\"model\":{\"id\":\"code\",\"upstream_name\":\"custom-org/CustomModel-27B:revision-4\"},\"serving\":{\"id\":\"local-code\",\"endpoint_id\":\"gpu-7\",\"model_id\":\"code\",\"protocol\":\"chat-completions\",\"capabilities\":{\"tools\":false,\"tool_choice\":false,\"temperature\":false,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":32768,\"max_output_tokens\":8192,\"input_during_output\":true}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-xxxxxxxxxx"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "no protocol in this workspace carries input during output"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-binding-whose-output-does-not-stream-is-refused": {
+      "purpose": "a binding whose capabilities declare output that does not stream is refused at bind, because every protocol in this workspace streams its output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"my-lab\",\"category\":\"private-compute\"},\"account\":{\"id\":\"research\",\"provider_id\":\"my-lab\",\"auth_kind\":\"anonymous\",\"billing_kind\":\"self-hosted\"},\"endpoint\":{\"id\":\"gpu-7\",\"account_id\":\"research\",\"base_url\":\"http://127.0.0.1:8000/proxy/v1\"},\"model\":{\"id\":\"code\",\"upstream_name\":\"custom-org/CustomModel-27B:revision-4\"},\"serving\":{\"id\":\"local-code\",\"endpoint_id\":\"gpu-7\",\"model_id\":\"code\",\"protocol\":\"messages\",\"capabilities\":{\"tools\":false,\"tool_choice\":false,\"temperature\":false,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":32768,\"max_output_tokens\":8192,\"output_streaming\":false}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-xxxxxxxxxx"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "every protocol in this workspace streams its output"
               }
             }
           },
@@ -70880,6 +71471,101 @@
         }
       ]
     },
+    "llm.responses/authored/kept-text-a-message-no-delta-showed-keeps-its-own-text": {
+      "purpose": "where ids cannot pair, shown text pairs with the message at its output index, and a message no delta showed keeps its own text",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_2\",\"output_index\":1,\"content_index\":0,\"delta\":\"answer\"},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"preamble\"}]},{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"answer\"}]}]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"preamble\"},{\"kind\":\"assistant-text\",\"text\":\"answer\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:answer"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
     "llm.responses/authored/kept-text-a-second-message-shown-only-as-deltas-is-kept": {
       "purpose": "a second message shown only as deltas is kept beside a streamed first message",
       "source": [
@@ -70976,8 +71662,104 @@
         }
       ]
     },
-    "llm.responses/authored/kept-text-a-terminal-message-outranks-the-shown-deltas": {
-      "purpose": "a terminal message stays authoritative and no shown delta text is added beside it",
+    "llm.responses/authored/kept-text-a-streamed-message-gives-way-to-the-shown-deltas": {
+      "purpose": "a streamed message whose text differs from its deltas, before an empty terminal output, carries the shown text, and the caller is warned",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"a draft\"},{\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_1\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"the final text\"}]}},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"a draft\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:a draft",
+                  "warning:shown-text-kept"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-a-terminal-message-gives-way-to-the-shown-deltas": {
+      "purpose": "a terminal message naming no id whose text differs from the shown deltas carries the shown text, and the caller is warned",
       "source": [
         {
           "kind": "domain",
@@ -71052,7 +71834,7 @@
               },
               "items_json": {
                 "kind": "literal",
-                "value": "[{\"kind\":\"assistant-text\",\"text\":\"the final text\"}]"
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"a draft\"}]"
               },
               "stop_reason": {
                 "kind": "literal",
@@ -71061,7 +71843,299 @@
               "stream_events": {
                 "kind": "literal",
                 "value": [
-                  "text-delta:a draft"
+                  "text-delta:a draft",
+                  "warning:shown-text-kept"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas": {
+      "purpose": "a terminal message under the deltas' item id whose text differs carries the shown text, and the caller is warned once",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_a\",\"output_index\":0,\"content_index\":0,\"delta\":\"First\"},{\"type\":\"response.reasoning_summary_text.delta\",\"item_id\":\"rs_1\",\"output_index\":1,\"summary_index\":0,\"delta\":\"weighing\"},{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_b\",\"output_index\":2,\"content_index\":0,\"delta\":\"Sec\"},{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_b\",\"output_index\":2,\"content_index\":0,\"delta\":\"ond\"},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"id\":\"msg_a\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"First\"}]},{\"type\":\"message\",\"id\":\"msg_b\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"the final text\"}]}]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"First\"},{\"kind\":\"assistant-text\",\"text\":\"Second\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:First",
+                  "reasoning-delta:weighing",
+                  "text-delta:Sec",
+                  "text-delta:ond",
+                  "warning:shown-text-kept"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next": {
+      "purpose": "deltas naming neither an item nor an index belong to the message whose output_item.done comes next, so two messages stay two, with no warning",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"A\"},{\"type\":\"response.output_item.done\",\"item\":{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"A\"}]}},{\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"B\"},{\"type\":\"response.output_item.done\",\"item\":{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"B\"}]}},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"A\"}]},{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"B\"}]}]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"A\"},{\"kind\":\"assistant-text\",\"text\":\"B\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:A",
+                  "text-delta:B"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages": {
+      "purpose": "deltas naming no item at two output indexes are two items, each paired with the message at its index, and no warning",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"output_index\":0,\"content_index\":0,\"delta\":\"A\"},{\"type\":\"response.output_text.delta\",\"output_index\":1,\"content_index\":0,\"delta\":\"B\"},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"A\"}]},{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"B\"}]}]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"A\"},{\"kind\":\"assistant-text\",\"text\":\"B\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:A",
+                  "text-delta:B"
                 ]
               }
             }
@@ -71351,6 +72425,102 @@
                   "text-delta:Reading it.",
                   "tool-call-started:call-1:file_read",
                   "tool-arguments-delta:call-1:{\"path\":\"README.md\"}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
+    "llm.responses/authored/kept-text-shown-text-more-than-one-message-could-be-is-carried-in-none": {
+      "purpose": "shown text that more than one message could be overwrites none, the server's messages stay as sent, and the caller is warned",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.output_text.delta\",\"item_id\":\"msg_2\",\"content_index\":0,\"delta\":\"answer\"},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"preamble\"}]},{\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"the final text\"}]}]}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[{\"kind\":\"assistant-text\",\"text\":\"preamble\"},{\"kind\":\"assistant-text\",\"text\":\"the final text\"}]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": [
+                  "text-delta:answer",
+                  "warning:shown-text-unpaired"
                 ]
               }
             }
@@ -74232,6 +75402,105 @@
         }
       ]
     },
+    "llm.routes/authored/a-route-claiming-input-during-output-is-refused-naming-the-route": {
+      "purpose": "a route whose capabilities claim input during output is refused as invalid-request, naming the route, because no protocol in this workspace carries input during output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "qwen"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  gateway: {base_url: https://gateway.internal/v1, protocol: responses,\n            auth: {kind: bearer, secret: file:~/.config/b10x/gateway-token}}\nroutes:\n  qwen:\n    model: gateway/qwen\n    capabilities: {tools: true, tool_choice: true, temperature: true, top_p: true,\n                   reasoning_efforts: [], context_window: 32768, max_output_tokens: 8192,\n                   input_during_output: true}\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "capabilities": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "route `qwen`: no protocol in this workspace carries input during output"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
     "llm.routes/authored/a-route-mapping-declares-its-own-capabilities": {
       "purpose": "a route written as a mapping with capabilities declares exactly those capabilities in the expanded catalog",
       "source": [
@@ -74309,7 +75578,7 @@
               "capabilities": {
                 "kind": "literal",
                 "value": [
-                  "qwen=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:,context:32768,output:8192"
+                  "qwen=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:,context:32768,output:8192,output_streaming:true,input_during_output:false"
                 ]
               },
               "error_code": {
@@ -74531,6 +75800,105 @@
         }
       ]
     },
+    "llm.routes/authored/a-route-whose-output-does-not-stream-is-refused-naming-the-route": {
+      "purpose": "a route whose capabilities declare output that does not stream is refused as invalid-request, naming the route, because every protocol in this workspace streams its output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "small"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  lab: {base_url: http://127.0.0.1:8000/v1, protocol: chat-completions,\n        auth: {kind: anonymous}}\nroutes:\n  small:\n    model: lab/small\n    capabilities: {tools: false, tool_choice: false, temperature: true, top_p: true,\n                   reasoning_efforts: [], context_window: 8192, max_output_tokens: 2048,\n                   output_streaming: false}\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "capabilities": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "route `small`: every protocol in this workspace streams its output"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
     "llm.routes/authored/a-string-route-declares-the-default-capabilities": {
       "purpose": "a route written as a plain string declares the default capabilities in the expanded catalog",
       "source": [
@@ -74602,7 +75970,7 @@
               "capabilities": {
                 "kind": "literal",
                 "value": [
-                  "sonnet=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:low|medium|high,context:200000,output:16384"
+                  "sonnet=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:low|medium|high,context:200000,output:16384,output_streaming:true,input_during_output:false"
                 ]
               },
               "error_code": {
@@ -76840,6 +78208,216 @@
           },
           "step": "expect_view",
           "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/a-catalog-claiming-input-during-output-is-refused": {
+      "purpose": "a catalog whose serving model claims input during output is refused, because no protocol in this workspace carries input during output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\ninput_during_output = true\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "config_digest": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "no protocol in this workspace carries input during output"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision": {
+      "purpose": "a catalog that writes output_streaming true and input_during_output false keeps the digest and binding revision it had before either field existed, so opaque state stored against it is still preserved",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\noutput_streaming = true\ninput_during_output = false\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\noutput_streaming = true\ninput_during_output = false\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"},\"payload\":{\"state\":\"fixture-state\"}}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "config_digest": {
+                "kind": "literal",
+                "value": "1365b05fe63542f8211e21a9a2566c71f2a6d44ec9bdc564ba46c592a861825f"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/chat/completions"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
         }
       ]
     },

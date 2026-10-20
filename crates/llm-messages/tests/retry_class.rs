@@ -1,0 +1,215 @@
+//! The retry class of a Messages stream error (`docs/design.md` "Provider failures retried before
+//! output", story:retry-classes-harness-retried). `overloaded_error` and `api_error` are the far
+//! side's own temporary state, and Harness's wire retried both (`harness-messages/tests/
+//! provider_emulated.rs:448`, "after 4 attempts" `:463`, at Harness `2fd7235b`): before any
+//! output they may be attempted again. After any output, shown to the caller or not (a block
+//! that opens empty), the turn has answered and the failure is final. Every other stream error
+//! stays final. The same classes as an HTTP status before the stream opens are retriable too.
+//! Local sockets only; no provider is contacted.
+mod support;
+
+use llm_core::{Cancel, Dispatch, Error, ErrorCode, Item, Model, TurnRequest, VecSink};
+use llm_http::{HttpClient, Limits};
+use llm_messages::MessagesClient;
+use std::{sync::Arc, time::Duration};
+use support::{StaticResolver, binding_with, capabilities};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpListener,
+};
+
+const SSE_HEAD: &[u8] =
+    b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n";
+
+/// The message header and a keep-alive: nothing answered yet.
+const STARTED: &str = "event: message_start\n\
+data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_014a\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"example-model-20260201\",\"content\":[],\"usage\":{\"input_tokens\":11,\"output_tokens\":1}}}\n\n\
+event: ping\n\
+data: {\"type\":\"ping\"}\n\n";
+
+/// A text block that opens empty: output the caller is not shown.
+const SILENT_TEXT: &str = "event: content_block_start\n\
+data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n";
+
+/// A thinking block that opens empty: output the caller is not shown.
+const SILENT_THINKING: &str = "event: content_block_start\n\
+data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}\n\n";
+
+/// An empty text block and its first delta: output the caller is shown.
+const VISIBLE_TEXT: &str = "event: content_block_start\n\
+data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n\
+event: content_block_delta\n\
+data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hel\"}}\n\n";
+
+/// The provider prose every fixture failure carries, which no diagnostic may repeat.
+const PROSE: &str = "SECRET-UPSTREAM-TEXT";
+
+/// The two stream errors retried before output: the type, the class it reads as and the fixed
+/// diagnostic.
+const TRANSIENT: [(&str, ErrorCode, &str); 2] = [
+    (
+        "overloaded_error",
+        ErrorCode::Unavailable,
+        "the Messages route reported that it is overloaded",
+    ),
+    (
+        "api_error",
+        ErrorCode::Transport,
+        "the Messages route reported an internal failure",
+    ),
+];
+
+fn error_event(kind: &str) -> String {
+    let payload = serde_json::json!({"type": "error", "error": {"type": kind, "message": PROSE}});
+    format!("event: error\ndata: {payload}\n\n")
+}
+
+fn client(url: &str) -> MessagesClient {
+    let bound = Duration::from_secs(20);
+    MessagesClient::new(
+        binding_with(url, capabilities()),
+        HttpClient::new(Limits {
+            response_headers: bound,
+            idle: bound,
+            total: Duration::from_secs(30),
+        })
+        .expect("bounded transport"),
+        Arc::new(StaticResolver::new("fixture-key")),
+    )
+    .expect("a Messages binding")
+}
+
+/// Answers one request with `head` and `body`, closes, and returns the turn's refusal and what
+/// the caller was shown.
+async fn failed_turn(head: Vec<u8>, body: String) -> (Error, VecSink) {
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("a local port");
+    let url = format!("http://{}/v1", listener.local_addr().expect("an address"));
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.expect("an accepted connection");
+        let mut seen = Vec::new();
+        let mut buffer = vec![0; 1 << 16];
+        while !seen.windows(4).any(|w| w == b"\r\n\r\n") {
+            let length = socket.read(&mut buffer).await.expect("a readable socket");
+            assert!(length > 0, "the client closed before sending a request");
+            seen.extend_from_slice(&buffer[..length]);
+        }
+        socket.write_all(&head).await.expect("head written");
+        socket
+            .write_all(body.as_bytes())
+            .await
+            .expect("body written");
+        let _ = socket.shutdown().await;
+    });
+    let mut request = TurnRequest::new("internal-model", vec![Item::user("Summarise the log")]);
+    request.max_output_tokens = Some(512);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let error = client(&url)
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect_err("the turn failed");
+    server.await.expect("the fixture server");
+    (error, sink)
+}
+
+async fn stream_turn(body: String) -> (Error, VecSink) {
+    failed_turn(SSE_HEAD.to_vec(), body).await
+}
+
+#[tokio::test]
+async fn overloaded_and_api_errors_before_output_are_retriable_without_provider_prose() {
+    for (kind, class, message) in TRANSIENT {
+        // Before the message header and after it: neither answers the turn.
+        for opening in ["", STARTED] {
+            let (error, sink) = stream_turn(format!("{opening}{}", error_event(kind))).await;
+            assert_eq!(
+                (error.code, error.dispatch),
+                (class, Dispatch::Accepted),
+                "`{kind}`"
+            );
+            assert!(error.may_retry(), "`{kind}` before output: {error:?}");
+            assert_eq!(sink.events(), [], "`{kind}`");
+            assert_eq!(error.message, message, "`{kind}`");
+            assert!(!format!("{error:?}").contains(PROSE), "`{kind}`: {error:?}");
+        }
+    }
+}
+
+#[tokio::test]
+async fn overloaded_and_api_errors_after_visible_or_silent_output_are_final() {
+    for (kind, class, _) in TRANSIENT {
+        for (output, visible) in [
+            (SILENT_TEXT, false),
+            (SILENT_THINKING, false),
+            (VISIBLE_TEXT, true),
+        ] {
+            let (error, sink) =
+                stream_turn(format!("{STARTED}{output}{}", error_event(kind))).await;
+            assert_eq!(
+                (error.code, error.dispatch),
+                (class, Dispatch::Accepted),
+                "`{kind}`"
+            );
+            assert_eq!(!sink.events().is_empty(), visible, "`{kind}`");
+            assert!(
+                !error.retriable && !error.may_retry(),
+                "`{kind}`: an answered attempt cannot replay: {error:?}"
+            );
+            assert!(!format!("{error:?}").contains(PROSE), "`{kind}`: {error:?}");
+        }
+    }
+}
+
+/// Every other stream error is final before output too. A `rate_limit_error` may be a spend cap
+/// that "keeps failing until access resumes" (Anthropic's errors page), and Harness's wire did
+/// not retry it either; `billing_error` and an unknown or differently spelt type are refusals.
+#[tokio::test]
+async fn every_other_stream_error_stays_final_before_output() {
+    for kind in [
+        "rate_limit_error",
+        "billing_error",
+        "timeout_error",
+        "authentication_error",
+        "permission_error",
+        "invalid_request_error",
+        "request_too_large",
+        "not_found_error",
+        "unknown_failure",
+        "OVERLOADED_ERROR",
+    ] {
+        let (error, sink) = stream_turn(format!("{STARTED}{}", error_event(kind))).await;
+        assert_eq!(sink.events(), [], "`{kind}`");
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "`{kind}` is final: {error:?}"
+        );
+        assert!(!format!("{error:?}").contains(PROSE), "`{kind}`: {error:?}");
+    }
+}
+
+/// The same two classes answered as an HTTP status before any stream: 529 and 500 are retriable
+/// with dispatch `unknown`, and the error body is never read into a diagnostic.
+#[tokio::test]
+async fn the_same_classes_as_an_http_status_before_the_stream_are_retriable() {
+    for (status, kind) in [
+        ("529 Overloaded", "overloaded_error"),
+        ("500 Internal Server Error", "api_error"),
+    ] {
+        let body = serde_json::json!({"type": "error", "error": {"type": kind, "message": PROSE}})
+            .to_string();
+        let head = format!(
+            "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            body.len()
+        );
+        let (error, sink) = failed_turn(head.into_bytes(), body).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Transport, Dispatch::Unknown),
+            "{status}"
+        );
+        assert!(error.may_retry(), "{status}: {error:?}");
+        assert_eq!(sink.events(), [], "{status}");
+        assert!(!format!("{error:?}").contains(PROSE), "{status}: {error:?}");
+    }
+}

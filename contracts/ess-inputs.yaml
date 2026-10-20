@@ -94,6 +94,8 @@ scenarios:
 - chat/scenarios/ingress-a-temperature-outside-its-range-is-refused.yaml
 - chat/scenarios/ingress-a-tool-choice-of-none-is-refused.yaml
 - chat/scenarios/ingress-a-tool-message-answering-no-call-is-refused.yaml
+- chat/scenarios/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed.yaml
+- chat/scenarios/ingress-other-json-in-a-tool-message-stays-a-successful-string.yaml
 - chat/scenarios/ingress-an-accepted-encoding-carries-no-refusal.yaml
 - chat/scenarios/ingress-an-accepted-request-carries-no-refusal.yaml
 - chat/scenarios/ingress-an-outcome-leaving-out-an-announced-call-is-refused.yaml
@@ -689,8 +691,14 @@ scenarios:
 - responses/scenarios/kept-text-shown-beside-a-terminal-call-stays-ahead-of-it.yaml
 - responses/scenarios/kept-text-shown-before-an-incomplete-end-stays-in-the-turn.yaml
 - responses/scenarios/kept-text-of-two-shown-messages-stays-two-messages.yaml
-- responses/scenarios/kept-text-a-terminal-message-outranks-the-shown-deltas.yaml
+- responses/scenarios/kept-text-a-terminal-message-gives-way-to-the-shown-deltas.yaml
 - responses/scenarios/kept-text-a-second-message-shown-only-as-deltas-is-kept.yaml
+- responses/scenarios/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas.yaml
+- responses/scenarios/kept-text-a-streamed-message-gives-way-to-the-shown-deltas.yaml
+- responses/scenarios/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages.yaml
+- responses/scenarios/kept-text-a-message-no-delta-showed-keeps-its-own-text.yaml
+- responses/scenarios/kept-text-shown-text-more-than-one-message-could-be-is-carried-in-none.yaml
+- responses/scenarios/kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next.yaml
 - responses/scenarios/a-payload-after-the-terminal-object-is-not-read.yaml
 - secrets/scenarios/codex-renewal-a-due-login-is-renewed-and-written-back-in-place.yaml
 - secrets/scenarios/codex-renewal-a-kept-refresh-token-is-not-reported-rotated.yaml
@@ -813,6 +821,7 @@ scenarios:
 - messages/scenarios/no-parallel-calls-is-projected-as-disable-parallel-tool-use.yaml
 - messages/scenarios/parallel-calls-are-projected-as-disable-parallel-tool-use-false.yaml
 - messages/scenarios/thinking-with-a-budget-is-projected-as-read.yaml
+- messages/scenarios/a-text-block-that-opens-with-text-shows-it-as-a-delta.yaml
 - models/scenarios/a-chat-completions-serving-model-builds-the-chat-port.yaml
 - models/scenarios/a-credentialed-account-without-a-resolver-is-refused-unauthorized.yaml
 - models/scenarios/a-messages-serving-model-builds-the-messages-port.yaml
@@ -837,3 +846,9 @@ scenarios:
 - anthropic/scenarios/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused.yaml
 - anthropic/scenarios/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target.yaml
 - anthropic/scenarios/a-falling-back-route-between-subscription-billed-targets-is-accepted.yaml
+- providers/scenarios/a-binding-claiming-input-during-output-is-refused.yaml
+- providers/scenarios/a-binding-whose-output-does-not-stream-is-refused.yaml
+- routes/scenarios/a-route-claiming-input-during-output-is-refused-naming-the-route.yaml
+- routes/scenarios/a-route-whose-output-does-not-stream-is-refused-naming-the-route.yaml
+- routing/scenarios/a-catalog-claiming-input-during-output-is-refused.yaml
+- routing/scenarios/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision.yaml

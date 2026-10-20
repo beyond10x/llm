@@ -211,6 +211,11 @@ struct Block {
 const UNKNOWN_EVENT: &str = "unknown-stream-event";
 const UNKNOWN_BLOCK: &str = "unknown-output-item";
 
+/// Payloads that have not answered the turn: a keep-alive, and the message header before any
+/// content. Every other payload, including a block that opens without showing anything, ends
+/// retry eligibility for a stream error after it.
+const LIFECYCLE_EVENTS: [&str; 2] = ["ping", "message_start"];
+
 /// Accumulates one Messages event stream into a bound neutral outcome.
 ///
 /// A terminal `message_stop` payload is required: this route has no `[DONE]` sentinel, so
@@ -233,6 +238,8 @@ pub struct StreamDecoder {
     /// have started next when it arrived: it sits after every block that had already started.
     preserved: Vec<(u64, Item)>,
     started: bool,
+    /// Whether any payload outside [`LIFECYCLE_EVENTS`] was read, shown to the caller or not.
+    answered: bool,
     complete: bool,
 }
 
@@ -248,6 +255,7 @@ impl StreamDecoder {
             announced: Vec::new(),
             preserved: Vec::new(),
             started: false,
+            answered: false,
             complete: false,
         }
     }
@@ -293,7 +301,7 @@ impl StreamDecoder {
                 "Messages event name contradicts its payload type",
             ));
         }
-        match kind {
+        let applied = match kind {
             // A keep-alive. Its irrelevance to this subset is the route's own documentation.
             "ping" => fields(data, "ping", &["type"]),
             "message_start" => self.start_message(data),
@@ -302,7 +310,7 @@ impl StreamDecoder {
             "content_block_stop" => self.stop_block(data),
             "message_delta" => self.apply_message_delta(data),
             "message_stop" => self.stop_message(data),
-            "error" => Err(stream_error(data.get("error"))),
+            "error" => Err(stream_error(data.get("error"), self.answered)),
             // A route that adds an event type is not a broken stream: the event is kept whole
             // and the caller told it was not interpreted. Dropping it would hide it; refusing it
             // would end a turn the route is still answering.
@@ -315,7 +323,9 @@ impl StreamDecoder {
                 )
                 .await
             }
-        }
+        };
+        self.answered |= !LIFECYCLE_EVENTS.contains(&kind);
+        applied
     }
 
     /// Refuses one more item past the content bound, counting what is open and what was kept.
@@ -409,7 +419,16 @@ impl StreamDecoder {
             .ok_or_else(|| Error::protocol("Messages block start carries no block"))?
             .clone();
         let announcement = match string(&value, "type")? {
-            "text" | "thinking" | "redacted_thinking" => None,
+            // Text a block opens with is model output like any delta's: shown as the block opens
+            // and folded into it, so the turn carries exactly the text the caller was shown.
+            "text" => value
+                .get("text")
+                .and_then(Value::as_str)
+                .filter(|text| !text.is_empty())
+                .map(|text| StreamEvent::TextDelta {
+                    text: text.to_owned(),
+                }),
+            "thinking" | "redacted_thinking" => None,
             "tool_use" => {
                 let call_id = CallId::new(string(&value, "id")?)
                     .map_err(|_| Error::protocol("invalid Messages tool call id"))?;
@@ -706,11 +725,17 @@ fn append(block: &mut Value, field: &str, text: &str) -> Result<(), Error> {
 }
 
 /// Fixed diagnostics for a reported upstream failure. No response text is copied into a message.
-fn stream_error(error: Option<&Value>) -> Error {
+///
+/// `overloaded_error` and `api_error` are the route's own temporary state: retriable when the
+/// turn has not `answered`, final once it has (`docs/design.md`, provider failures retried
+/// before output). Every other type is final, a `rate_limit_error` included: on this route it
+/// may be a spend cap that keeps failing until access resumes.
+fn stream_error(error: Option<&Value>, answered: bool) -> Error {
     let kind = error
         .and_then(|error| error.get("type"))
         .and_then(Value::as_str)
         .unwrap_or_default();
+    let transient = matches!(kind, "overloaded_error" | "api_error");
     let (code, message) = match kind {
         "overloaded_error" => (
             ErrorCode::Unavailable,
@@ -747,7 +772,9 @@ fn stream_error(error: Option<&Value>) -> Error {
         ),
         _ => (ErrorCode::Refused, "the Messages route failed the message"),
     };
-    Error::new(code, message).with_dispatch(Dispatch::Accepted)
+    Error::new(code, message)
+        .with_dispatch(Dispatch::Accepted)
+        .with_retriable(transient && !answered)
 }
 
 /// Awaits the caller, bounded by both of the things that end a turn from outside it.

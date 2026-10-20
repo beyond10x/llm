@@ -3,7 +3,9 @@
 //! routing cannot count everything the provider produced: the client decides too. A cut before
 //! any output stays retriable; a cut after any output item or delta is
 //! final (Harness `a_turn_that_had_already_answered_is_never_retried`,
-//! `harness-responses/tests/provider_emulated.rs:521`). Local sockets only.
+//! `harness-responses/tests/provider_emulated.rs:521`). A provider failure the far side reports
+//! as its own temporary state (`server_is_overloaded`, `server_error`, `rate_limit_exceeded`)
+//! follows the same rule; every other code is final. Local sockets only.
 
 use llm_core::{
     AuthKind, BillingKind, BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item,
@@ -77,6 +79,8 @@ fn binding(base_url: &str) -> Binding {
                 reasoning_efforts: vec!["medium".to_owned()],
                 context_window: 32_768,
                 max_output_tokens: 2_048,
+                output_streaming: true,
+                input_during_output: false,
             },
         },
     )
@@ -102,6 +106,11 @@ impl SecretResolver for Resolver {
 
 /// Serves `body` after an event-stream head, closes, and returns the turn's refusal.
 async fn cut_turn(body: String) -> (Error, VecSink) {
+    failed_turn(SSE_HEAD.to_vec(), body).await
+}
+
+/// Answers one request with `head` and `body`, closes, and returns the turn's refusal.
+async fn failed_turn(head: Vec<u8>, body: String) -> (Error, VecSink) {
     let listener = TcpListener::bind("127.0.0.1:0")
         .await
         .expect("a local port");
@@ -115,7 +124,7 @@ async fn cut_turn(body: String) -> (Error, VecSink) {
             assert!(length > 0, "the client closed before sending a request");
             seen.extend_from_slice(&buffer[..length]);
         }
-        socket.write_all(SSE_HEAD).await.expect("head written");
+        socket.write_all(&head).await.expect("head written");
         socket
             .write_all(body.as_bytes())
             .await
@@ -138,7 +147,7 @@ async fn cut_turn(body: String) -> (Error, VecSink) {
     let error = client
         .turn(&request, &mut sink, &Cancel::new())
         .await
-        .expect_err("the stream was cut before a terminal object");
+        .expect_err("the turn failed before a terminal object");
     server.await.expect("the fixture server");
     (error, sink)
 }
@@ -228,5 +237,148 @@ async fn unknown_codes_and_actual_refusals_are_never_retryable() {
         assert_eq!(error.code, ErrorCode::Refused);
         assert!(!error.may_retry());
         assert_eq!(error.message, "the provider refused this request");
+    }
+}
+
+/// The provider failures retried before output (`docs/design.md` "Provider failures retried
+/// before output", story:retry-classes-harness-retried): the code, the class it reads as and the
+/// fixed diagnostic. Harness's wire retried `server_error` and `rate_limit_exceeded`
+/// (`harness-responses/tests/provider_emulated.rs:341`, "after 4 attempts" `:357`, at Harness
+/// `2fd7235b`); `server_is_overloaded` is the overload rule above.
+const TRANSIENT: [(&str, ErrorCode, &str); 3] = [
+    (
+        "server_is_overloaded",
+        ErrorCode::Unavailable,
+        "the provider is temporarily overloaded",
+    ),
+    (
+        "server_error",
+        ErrorCode::Unavailable,
+        "the provider failed this response on its own account",
+    ),
+    (
+        "rate_limit_exceeded",
+        ErrorCode::RateLimited,
+        "the provider asked for less traffic",
+    ),
+];
+
+const DELTA: &str =
+    "data: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"delta\":\"hello\"}\n\n";
+
+#[tokio::test]
+async fn a_transient_failure_before_output_is_retriable_without_provider_prose() {
+    for (code, class, message) in TRANSIENT {
+        for nested in [false, true] {
+            let (error, sink) = cut_turn(format!("{CREATED}{}", failure_event(code, nested))).await;
+            assert_eq!(
+                (error.code, error.dispatch),
+                (class, Dispatch::Accepted),
+                "`{code}`"
+            );
+            assert!(error.may_retry(), "`{code}` before output: {error:?}");
+            assert_eq!(sink.events(), [], "`{code}`");
+            assert_eq!(error.message, message, "`{code}`");
+            assert!(
+                !format!("{error:?}").contains("SECRET-UPSTREAM-TEXT"),
+                "`{code}`: {error:?}"
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn a_transient_failure_after_visible_or_silent_output_is_final() {
+    for (code, class, _) in TRANSIENT {
+        for (output, visible) in [(ITEM_ADDED, false), (DELTA, true)] {
+            for nested in [false, true] {
+                let (error, sink) =
+                    cut_turn(format!("{CREATED}{output}{}", failure_event(code, nested))).await;
+                assert_eq!(
+                    (error.code, error.dispatch),
+                    (class, Dispatch::Accepted),
+                    "`{code}`"
+                );
+                assert_eq!(!sink.events().is_empty(), visible, "`{code}`");
+                assert!(
+                    !error.retriable && !error.may_retry(),
+                    "`{code}`: an answered attempt cannot replay: {error:?}"
+                );
+                assert!(
+                    !format!("{error:?}").contains("SECRET-UPSTREAM-TEXT"),
+                    "`{code}`: {error:?}"
+                );
+            }
+        }
+    }
+}
+
+/// A 429 that means an exhausted quota or spend limit is not a rate limit. The `OpenAI` error
+/// codes page: "Retrying billing, spend, or quota errors won’t restore API access." Each such
+/// code is a refusal, final before any output.
+#[tokio::test]
+async fn an_exhausted_quota_or_spend_limit_stays_final_before_output() {
+    for code in [
+        "insufficient_quota",
+        "credit_balance_exhausted",
+        "organization_spend_limit_exceeded",
+        "project_spend_limit_exceeded",
+        "organization_usage_limit_exceeded",
+    ] {
+        for nested in [false, true] {
+            let (error, sink) = cut_turn(format!("{CREATED}{}", failure_event(code, nested))).await;
+            assert_eq!(error.code, ErrorCode::Refused, "`{code}`");
+            assert_eq!(sink.events(), [], "`{code}`");
+            assert!(
+                !error.retriable && !error.may_retry(),
+                "`{code}` is final: {error:?}"
+            );
+            assert_eq!(
+                error.message, "the provider refused this request",
+                "`{code}`"
+            );
+        }
+    }
+}
+
+/// The same classes answered as an HTTP status before any stream: 500, 503 and 429 are
+/// retriable by the transport's status table, and the error body is never read into a
+/// diagnostic.
+#[tokio::test]
+async fn the_same_classes_as_an_http_status_before_the_stream_are_retriable() {
+    for (status, code, class, dispatch) in [
+        (
+            "500 Internal Server Error",
+            "server_error",
+            ErrorCode::Transport,
+            Dispatch::Unknown,
+        ),
+        (
+            "503 Service Unavailable",
+            "server_is_overloaded",
+            ErrorCode::Transport,
+            Dispatch::Unknown,
+        ),
+        (
+            "429 Too Many Requests",
+            "rate_limit_exceeded",
+            ErrorCode::RateLimited,
+            Dispatch::Rejected,
+        ),
+    ] {
+        let body = serde_json::json!({"error": {"code": code, "message": "SECRET-UPSTREAM-TEXT"}})
+            .to_string();
+        let head = format!(
+            "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            body.len()
+        );
+        let (error, sink) = failed_turn(head.into_bytes(), body).await;
+        assert_eq!((error.code, error.dispatch), (class, dispatch), "{status}");
+        assert!(error.may_retry(), "{status}: {error:?}");
+        assert_eq!(sink.events(), [], "{status}");
+        assert!(
+            !format!("{error:?}").contains("SECRET-UPSTREAM-TEXT"),
+            "{status}: {error:?}"
+        );
     }
 }

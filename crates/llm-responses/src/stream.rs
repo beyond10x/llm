@@ -8,8 +8,9 @@
 use std::collections::BTreeMap;
 
 use llm_core::{
-    CallId, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, StopReason,
-    StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome, Usage, exceeds,
+    CallId, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES,
+    SHOWN_TEXT_KEPT, SHOWN_TEXT_UNPAIRED, StopReason, StreamEvent, ToolCall, ToolName,
+    TurnObservation, TurnOutcome, Usage, exceeds,
 };
 use serde_json::Value;
 
@@ -47,6 +48,7 @@ pub const ACCEPTED_STREAM_EVENTS: &[&str] = &[
     "response.output_item.done",
     "response.output_text.delta",
     "response.output_text.done",
+    "response.queued",
     "response.reasoning_part.added",
     "response.reasoning_part.done",
     "response.reasoning_summary_part.added",
@@ -83,6 +85,11 @@ pub struct StreamDecoding {
 /// This is the incremental decoder the client drives payload by payload, fed the whole
 /// sequence at once: the events and the result are the ones a live caller would get. Like the
 /// client, it reads nothing after the first terminal object.
+///
+/// It checks the turn against no request, so every turn it returns is one the client would hand
+/// over unless that check refused it. A turn whose shown text replaced a server's own text, or
+/// could not be paired with one message, ends its events with the `shown-text-kept` or
+/// `shown-text-unpaired` warning, where the client emits it once that check has passed.
 pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
     let mut decoder = Decoder::new(binding);
     for payload in payloads {
@@ -96,7 +103,31 @@ pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
             break;
         }
     }
-    decoder.finish()
+    let (mut decoding, notices) = decoder.finish();
+    decoding.events.extend(notices);
+    decoding
+}
+
+/// The warning that a returned turn carries the text the caller was shown where the server's own
+/// final text for that message differed. Fixed: it quotes neither text.
+fn shown_text_kept() -> StreamEvent {
+    StreamEvent::Warning {
+        code: SHOWN_TEXT_KEPT.to_owned(),
+        message: "a message's final text differed from the text shown for it; the shown text was \
+                  kept"
+            .to_owned(),
+    }
+}
+
+/// The warning that text the caller was shown could be more than one of the turn's messages, so
+/// it is carried in none and the server's messages are as sent. Fixed: it quotes no text.
+fn shown_text_unpaired() -> StreamEvent {
+    StreamEvent::Warning {
+        code: SHOWN_TEXT_UNPAIRED.to_owned(),
+        message: "text was shown that more than one message could be; the server's messages were \
+                  kept as sent"
+            .to_owned(),
+    }
 }
 
 /// One stream decoded payload by payload.
@@ -109,11 +140,11 @@ pub(crate) struct Decoder<'a> {
     answered: bool,
     events: Vec<StreamEvent>,
     /// Text the caller was shown through `response.output_text.delta`, one entry per output item
-    /// the deltas named, in order of first delta. Each is kept in the turn when no message the
-    /// turn carries can be that output item (row R36).
+    /// the deltas named, in order of first delta. Each is the text of the message the turn
+    /// carries for that item, or a message of its own when the turn carries none (row R36).
     shown: Vec<ShownText>,
-    /// The `id` of every message among `streamed`, absent where the message named none.
-    streamed_messages: Vec<Option<String>>,
+    /// Where every message among `streamed` sits, in order.
+    streamed_messages: Vec<Placed>,
     /// `item_id` -> `call_id`, so an arguments delta can name the call a reader is watching.
     calls: BTreeMap<String, CallId>,
     /// Every call the caller was told about, in announcement order. The outcome must carry each
@@ -147,8 +178,150 @@ struct Terminal {
 /// The text deltas of one output item, as the caller was shown them.
 struct ShownText {
     item_id: Option<String>,
+    /// The `output_index` its first delta named.
     output_index: Option<u64>,
+    /// For deltas that named neither an item nor an index: the streamed message whose
+    /// `response.output_item.done` ended them, by its place among the streamed messages.
+    ended_by: Option<usize>,
     text: String,
+}
+
+/// Where one message the turn carries sits, by every coordinate the wire gave it.
+struct Placed {
+    /// The `id` the message names.
+    id: Option<String>,
+    /// Which streamed message it is, in `response.output_item.done` order, when it is one.
+    streamed: Option<usize>,
+    /// The `output_index` its `response.output_item.done` named.
+    stream_index: Option<u64>,
+    /// Its position in the terminal `output`, kept only when no streamed message is this one. A
+    /// terminal `output` can hold items the stream never showed (Harness's emulator completes
+    /// with a reasoning item ahead of a message it streamed at index 0), so a position is a
+    /// weaker coordinate than an index the stream named.
+    position: Option<u64>,
+}
+
+/// One message the turn carries, as pairing sees it.
+struct Message<'p> {
+    /// Where it sits in the turn's items.
+    at: usize,
+    placed: &'p Placed,
+    text: String,
+}
+
+/// One way shown text and a message are found to be the same output item.
+type Pairing = fn(&ShownText, &Message<'_>) -> bool;
+
+impl ShownText {
+    /// The pairings, strongest first: each is tried for every shown text before the next. What
+    /// none of them pairs is decided by elimination ([`ShownText::could_be`]).
+    const PAIRINGS: [Pairing; 5] = [
+        Self::same_id,
+        Self::ended_by_it,
+        Self::same_stream_index,
+        Self::same_position,
+        Self::same_text,
+    ];
+
+    /// Both name the same `id`.
+    fn same_id(&self, message: &Message<'_>) -> bool {
+        self.item_id.is_some() && self.item_id == message.placed.id
+    }
+
+    /// Deltas naming no coordinate, ended by this message's `response.output_item.done`.
+    fn ended_by_it(&self, message: &Message<'_>) -> bool {
+        self.ended_by.is_some()
+            && self.ended_by == message.placed.streamed
+            && !self.ids_differ(message)
+    }
+
+    /// The deltas and the message's `response.output_item.done` named the same `output_index`.
+    fn same_stream_index(&self, message: &Message<'_>) -> bool {
+        self.output_index.is_some()
+            && self.output_index == message.placed.stream_index
+            && !self.ids_differ(message)
+    }
+
+    /// The deltas named the `output_index` the message sits at in the terminal `output`.
+    fn same_position(&self, message: &Message<'_>) -> bool {
+        self.output_index.is_some()
+            && self.output_index == message.placed.position
+            && !self.ids_differ(message)
+    }
+
+    /// The message already carries exactly the shown text, and no coordinate the stream named
+    /// tells them apart. Pairing them changes nothing, and not pairing them would carry the text
+    /// twice.
+    fn same_text(&self, message: &Message<'_>) -> bool {
+        self.text == message.text && !self.ids_differ(message) && !self.streams_differ(message)
+    }
+
+    /// No coordinate both sides name tells them apart.
+    fn could_be(&self, message: &Message<'_>) -> bool {
+        let positions = matches!(
+            (self.output_index, message.placed.position),
+            (Some(shown), Some(position)) if shown != position
+        );
+        !self.ids_differ(message) && !self.streams_differ(message) && !positions
+    }
+
+    /// Two different ids are two items.
+    fn ids_differ(&self, message: &Message<'_>) -> bool {
+        matches!((&self.item_id, &message.placed.id), (Some(shown), Some(id)) if shown != id)
+    }
+
+    /// Two different indexes the stream named, or two different streamed messages, are two
+    /// items.
+    fn streams_differ(&self, message: &Message<'_>) -> bool {
+        let indexes = matches!(
+            (self.output_index, message.placed.stream_index),
+            (Some(shown), Some(index)) if shown != index
+        );
+        let ended = matches!(
+            (self.ended_by, message.placed.streamed),
+            (Some(shown), Some(streamed)) if shown != streamed
+        );
+        indexes || ended
+    }
+}
+
+/// Gives each terminal message the coordinates of the streamed message it is: the one under the
+/// same `id`, and otherwise, only when as many terminal messages as streamed messages are left,
+/// the next one in order whose `id` does not contradict it. A message that is a streamed one
+/// drops its position: the index the stream named outranks where the terminal `output` put it.
+fn adopt_streamed(carried: &mut [Placed], streamed: &[Placed]) {
+    let mut used = vec![false; streamed.len()];
+    let adopt = |message: &mut Placed, index: usize, used: &mut [bool]| {
+        used[index] = true;
+        message.streamed = streamed[index].streamed;
+        message.stream_index = streamed[index].stream_index;
+        message.position = None;
+    };
+    for message in carried.iter_mut() {
+        let same = streamed.iter().enumerate().position(|(index, other)| {
+            !used[index] && message.id.is_some() && other.id == message.id
+        });
+        if let Some(index) = same {
+            adopt(message, index, &mut used);
+        }
+    }
+    let left = carried.iter().filter(|m| m.streamed.is_none()).count();
+    if left == 0 || left != used.iter().filter(|used| !**used).count() {
+        return;
+    }
+    let mut next = 0;
+    for message in carried.iter_mut().filter(|m| m.streamed.is_none()) {
+        while next < streamed.len()
+            && (used[next]
+                || matches!((&message.id, &streamed[next].id), (Some(a), Some(b)) if a != b))
+        {
+            next += 1;
+        }
+        if next < streamed.len() {
+            adopt(message, next, &mut used);
+            next += 1;
+        }
+    }
 }
 
 impl<'a> Decoder<'a> {
@@ -206,7 +379,7 @@ impl<'a> Decoder<'a> {
                                 self.unmodelled.push(decoded.clone());
                             }
                             if matches!(decoded, Item::AssistantText { .. }) {
-                                self.streamed_messages.push(message_id(item));
+                                self.end_message(event, item);
                             }
                             if let Err(error) = self.push_streamed(decoded) {
                                 self.defer(error);
@@ -267,56 +440,153 @@ impl<'a> Decoder<'a> {
 
     /// Decides the turn from everything read. The events are the ones produced since the last
     /// [`Decoder::take_events`], deciding the turn included.
-    pub(crate) fn finish(mut self) -> StreamDecoding {
-        let result = self.terminate();
-        StreamDecoding {
+    ///
+    /// The notices are what the caller is to be told about the returned turn's text
+    /// ([`Decoder::keep_shown_text`]). They are not events here: a caller is told about a turn
+    /// only once it is handed it, so the client emits them after checking the turn against the
+    /// request, as it emits the advisory warning, and a refused turn has none.
+    pub(crate) fn finish(mut self) -> (StreamDecoding, Vec<StreamEvent>) {
+        let (result, notices) = match self.terminate() {
+            Ok((outcome, notices)) => (Ok(outcome), notices),
+            Err(error) => (Err(error), Vec::new()),
+        };
+        let decoding = StreamDecoding {
             events: self.events,
             result,
-        }
+        };
+        (decoding, notices)
     }
 
-    /// Records text the caller is being shown, under the output item the delta names.
+    /// Records text the caller is being shown, under the output item the delta names: its
+    /// `item_id`, or, for a delta that names no item, its `output_index`. Deltas at two indexes
+    /// are two items whether or not they name one. Deltas that name neither belong to the
+    /// message whose `response.output_item.done` comes next ([`Decoder::end_message`]).
     fn show(&mut self, event: &Value, text: &str) {
         let item_id = string(event.get("item_id"));
+        let output_index = event.get("output_index").and_then(Value::as_u64);
         if let Some(shown) = self
             .shown
             .iter_mut()
-            .find(|shown| shown.item_id.as_deref() == item_id)
+            .find(|shown| match (item_id, output_index) {
+                (Some(_), _) => shown.item_id.as_deref() == item_id,
+                (None, Some(_)) => shown.item_id.is_none() && shown.output_index == output_index,
+                (None, None) => {
+                    shown.item_id.is_none()
+                        && shown.output_index.is_none()
+                        && shown.ended_by.is_none()
+                }
+            })
         {
             shown.text.push_str(text);
             return;
         }
         self.shown.push(ShownText {
             item_id: item_id.map(str::to_owned),
-            output_index: event.get("output_index").and_then(Value::as_u64),
+            output_index,
+            ended_by: None,
             text: text.to_owned(),
         });
     }
 
-    /// Keeps the text the caller was shown of every output item the turn does not carry (R36).
+    /// Records a message `response.output_item.done` finished, and ends the shown text that
+    /// named neither an item nor an index: those deltas were this message's.
+    fn end_message(&mut self, event: &Value, item: &Value) {
+        let streamed = self.streamed_messages.len();
+        for shown in &mut self.shown {
+            if shown.item_id.is_none() && shown.output_index.is_none() && shown.ended_by.is_none() {
+                shown.ended_by = Some(streamed);
+            }
+        }
+        self.streamed_messages.push(Placed {
+            id: message_id(item),
+            streamed: Some(streamed),
+            stream_index: event.get("output_index").and_then(Value::as_u64),
+            position: None,
+        });
+    }
+
+    /// Gives each output item in the turn the text the caller was shown of it, and returns what
+    /// the caller is to be told about the turn's text once it is handed the turn.
     ///
-    /// The terminal object is authoritative for what the turn carries, but a server that
-    /// streams a message only as deltas and then completes with an empty `output`, as the
-    /// Codex backend can, would otherwise hand the caller a turn without the answer it just
-    /// watched arrive. A message the turn carries for the same output item outranks that item's
-    /// deltas, which are then only what was shown on the way. `carried` holds the `id` of every
-    /// message in `items`; a message or a delta that names no item cannot be told apart from
-    /// any other, so it counts as the same item.
+    /// A shown delta is final (`StreamEvent`): a caller may already have spoken it, so the turn
+    /// it gets back carries what it was shown, not what the server finished with. This one pass
+    /// covers both ways a server's message reaches `items`: in the terminal `output`, or streamed
+    /// through `response.output_item.done` before an empty one. `carried` places every message
+    /// in `items`, in order.
     ///
-    /// Kept messages are placed by `output_index`, ascending and stable among equal indexes,
-    /// whatever order their first deltas arrived in; one without an index goes after every
-    /// other item.
-    fn keep_shown_text(&mut self, items: &mut Vec<Item>, carried: &[Option<String>]) {
-        let mut kept: Vec<ShownText> = std::mem::take(&mut self.shown)
+    /// Shown text is paired with exactly one message, by [`ShownText::PAIRINGS`] in order: the
+    /// same `id`; deltas naming nothing, ended by the message's `response.output_item.done`; the
+    /// `output_index` that `done` named; the message's position in the terminal `output`; then a
+    /// message already carrying exactly the shown text. What none of them pairs is paired by
+    /// elimination: with the one message no coordinate both sides name tells apart from it. A
+    /// paired message takes the shown text, and one that carried other text is reported with
+    /// `shown-text-kept`. A message no text was paired with keeps the server's text.
+    ///
+    /// The decoder never carries a message's text twice and never overwrites a message it cannot
+    /// tell is the one shown. Shown text that more than one message could be is carried in none:
+    /// the server's messages stay as they are and `shown-text-unpaired` says so. Shown text no
+    /// message could be is kept as a message of its own (R36): a server that streams a message
+    /// only as deltas and then completes with an empty `output`, as the Codex backend can, would
+    /// otherwise hand the caller a turn without the answer it just watched arrive. Kept messages
+    /// are placed by `output_index`, ascending and stable among equal indexes, whatever order
+    /// their first deltas arrived in; one without an index goes after every other item.
+    fn keep_shown_text(&mut self, items: &mut Vec<Item>, carried: &[Placed]) -> Vec<StreamEvent> {
+        let shown: Vec<ShownText> = std::mem::take(&mut self.shown)
             .into_iter()
-            .filter(|shown| {
-                !shown.text.is_empty()
-                    && !carried.iter().any(|id| match (id, &shown.item_id) {
-                        (Some(id), Some(item_id)) => id == item_id,
-                        _ => true,
-                    })
-            })
+            .filter(|shown| !shown.text.is_empty())
             .collect();
+        let messages: Vec<Message<'_>> = items
+            .iter()
+            .enumerate()
+            .filter_map(|(at, item)| match item {
+                Item::AssistantText { text } => Some((at, text.clone())),
+                _ => None,
+            })
+            .zip(carried)
+            .map(|((at, text), placed)| Message { at, placed, text })
+            .collect();
+        let mut taken = vec![false; messages.len()];
+        let mut pairs: Vec<Option<usize>> = vec![None; shown.len()];
+        for pairing in ShownText::PAIRINGS {
+            for (pair, text) in pairs.iter_mut().zip(&shown) {
+                if pair.is_none() {
+                    *pair = (0..messages.len())
+                        .find(|&index| !taken[index] && pairing(text, &messages[index]));
+                    if let Some(index) = *pair {
+                        taken[index] = true;
+                    }
+                }
+            }
+        }
+        let mut unpaired = false;
+        let mut kept = Vec::new();
+        let mut paired = Vec::new();
+        for (text, pair) in shown.into_iter().zip(pairs) {
+            if let Some(index) = pair {
+                paired.push((index, text));
+                continue;
+            }
+            let could_be: Vec<usize> = (0..messages.len())
+                .filter(|&index| !taken[index] && text.could_be(&messages[index]))
+                .collect();
+            match could_be.as_slice() {
+                [] => kept.push(text),
+                [index] => {
+                    taken[*index] = true;
+                    paired.push((*index, text));
+                }
+                _ => unpaired = true,
+            }
+        }
+        let mut replaced = false;
+        for (index, text) in paired {
+            if let Some(Item::AssistantText { text: carried }) = items.get_mut(messages[index].at)
+                && *carried != text.text
+            {
+                *carried = text.text;
+                replaced = true;
+            }
+        }
         kept.sort_by_key(|shown| shown.output_index.unwrap_or(u64::MAX));
         for shown in kept {
             let at = shown
@@ -325,6 +595,14 @@ impl<'a> Decoder<'a> {
                 .map_or(items.len(), |index| index.min(items.len()));
             items.insert(at, Item::assistant(shown.text));
         }
+        let mut notices = Vec::new();
+        if replaced {
+            notices.push(shown_text_kept());
+        }
+        if unpaired {
+            notices.push(shown_text_unpaired());
+        }
+        notices
     }
 
     /// Holds the first streamed-item refusal. A later one does not displace it: the first is the
@@ -335,7 +613,8 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn terminate(&mut self) -> Result<TurnOutcome, Error> {
+    /// The turn, and what the caller is to be told about its text once it is handed the turn.
+    fn terminate(&mut self) -> Result<(TurnOutcome, Vec<StreamEvent>), Error> {
         let deferred = self.deferred.take();
         let Some(terminal) = self.terminal.take() else {
             // Not a sentinel and not end of stream: this wire's terminal truth is an object, and
@@ -366,13 +645,19 @@ impl<'a> Decoder<'a> {
             Some(output) if !output.is_empty() || self.streamed.is_empty() => {
                 let mut decoded = Vec::with_capacity(output.len());
                 let mut carried = Vec::new();
-                for value in output {
+                for (position, value) in output.iter().enumerate() {
                     let item = self.output_item(value).map_err(retain)?;
                     if matches!(item, Item::AssistantText { .. }) {
-                        carried.push(message_id(value));
+                        carried.push(Placed {
+                            id: message_id(value),
+                            streamed: None,
+                            stream_index: None,
+                            position: u64::try_from(position).ok(),
+                        });
                     }
                     decoded.push(item);
                 }
+                adopt_streamed(&mut carried, &self.streamed_messages);
                 (decoded, carried)
             }
             _ => (
@@ -385,7 +670,7 @@ impl<'a> Decoder<'a> {
                 items.push(item);
             }
         }
-        self.keep_shown_text(&mut items, &carried);
+        let notices = self.keep_shown_text(&mut items, &carried);
         if items.len() > MAX_ITEMS {
             return Err(retain(
                 Error::too_large("model output exceeds its bound")
@@ -407,11 +692,12 @@ impl<'a> Decoder<'a> {
             )));
         }
         let has_tool_calls = items.iter().any(|item| item.as_tool_call().is_some());
-        Ok(TurnOutcome {
+        let outcome = TurnOutcome {
             stop_reason: stop_reason(&terminal, has_tool_calls),
             items,
             observation,
-        })
+        };
+        Ok((outcome, notices))
     }
 
     /// Attaches the only evidence there is when nothing terminal has arrived: the binding itself.
@@ -451,30 +737,42 @@ impl<'a> Decoder<'a> {
     /// Only the machine-readable code is read, and only to choose between three classes. The
     /// message is this crate's own: an upstream string relayed into a diagnostic is how a prompt
     /// or a credential eventually reaches a log.
+    ///
+    /// The three codes the far side reports as its own temporary state are retriable before
+    /// any output and final after it (`docs/design.md`, provider failures retried before
+    /// output). Every other code is final, an exhausted quota (`insufficient_quota`) included:
+    /// another identical attempt meets it again.
     fn provider_failure(&self, response: Option<&Value>, event: &Value) -> Error {
         let source = response.unwrap_or(event);
         let code = source
             .get("error")
             .and_then(|error| string(error.get("code")))
             .or_else(|| string(source.get("code")));
-        let (class, message) = match code {
+        let (class, message, transient) = match code {
             Some("server_is_overloaded") => (
                 ErrorCode::Unavailable,
                 "the provider is temporarily overloaded",
+                true,
             ),
             Some("server_error") => (
                 ErrorCode::Unavailable,
                 "the provider failed this response on its own account",
+                true,
             ),
             Some("rate_limit_exceeded") => (
                 ErrorCode::RateLimited,
                 "the provider asked for less traffic",
+                true,
             ),
-            _ => (ErrorCode::Refused, "the provider refused this request"),
+            _ => (
+                ErrorCode::Refused,
+                "the provider refused this request",
+                false,
+            ),
         };
         let error = Error::new(class, message)
             .with_dispatch(Dispatch::Accepted)
-            .with_retriable(code == Some("server_is_overloaded") && !self.answered);
+            .with_retriable(transient && !self.answered);
         // **Classified first, evidence attached second.** The provider said what kind of failure
         // this was, and that answer is kept; counters that disagree with themselves narrow what
         // the refusal can carry rather than overwriting it. Reporting a rate limit as a

@@ -34,6 +34,14 @@ in — the same JSON value, not the same bytes: it is held as a `serde_json::Val
 re-serialize sorted. The response half is unaffected: a stream or response this client read from its own bound
 endpoint is attributable, and is attributed.
 
+**A failed tool result is `is_error: true`.** The `tool_result` block carries the output as
+`content`, a string as it is and any other value as compact JSON, and the neutral `failed` flag as
+`is_error`. Ingress reads `is_error` back (absent is `false`) and the `content` string as the
+output. A call the caller rejected before running it is sent the same way, `is_error: true` with
+the reason as the caller's text: this wire has no rejected state, and ingress refuses any key
+beside `type`, `tool_use_id`, `content` and `is_error`
+([design](design.md#failed-and-rejected-tool-results)).
+
 The route requires `max_tokens`. The neutral `max_output_tokens` stays optional, and an absent one
 resolves to the binding's declared maximum — the only value in the system that is an operator's
 statement rather than a guess. Temperature above `1.0` is refused: this route's range is not the
@@ -111,9 +119,19 @@ before the message started, a delta for a block that never started, two blocks a
 block still open at the terminal event, and a payload after it. Content is assembled in
 content-block **index** order, so two blocks stopped in the opposite order to their starts do not
 reverse the turn against the deltas the caller was already shown. A `ping` is
-accepted and changes nothing: its irrelevance is the route's own documentation. A `thinking` block
-may open with `"signature": ""` or with no `signature` field at all, and its `signature_delta` signs
-it either way; a finished thinking block without a non-empty signature is still refused.
+accepted and changes nothing: its irrelevance is the route's own documentation.
+
+**The turn's text is the text the caller was shown.** A `text` block's text is its
+`content_block_start` text followed by its `text_delta`s, and both are shown: text the block opens
+with is a `StreamEvent::TextDelta` when the block opens, and is folded into the block, as a
+`thinking_delta` is shown and folded. Nothing later replaces a block's text, so the turn's text
+cannot differ from what was shown and `shown-text-kept` never appears on this route
+(`docs/design.md` "Streamed events are final"). Every pinned fixture opens a text block with
+`"text": ""`; the route's documentation does not say it always will.
+
+A `thinking` block may open with `"signature": ""` or with no `signature` field at all, and its
+`signature_delta` signs it either way; a finished thinking block without a non-empty signature is
+still refused.
 
 **An event, delta or content block this subset does not model is preserved, not refused.** A route
 that adds an event type has not broken its stream, and ending the turn on it would refuse an answer
@@ -201,6 +219,12 @@ binding's (`x-api-key` or `Authorization`), never inferred from the protocol. Ev
 `anthropic-version: 2023-06-01`, a constant rather than a setting. Diagnostics are fixed: a status
 or a reported upstream failure contributes its category, never its response text.
 
+A stream `error` of type `overloaded_error` (`unavailable`) or `api_error` (`transport`) is
+retriable when no payload but `message_start` and `ping` came before it. After any other payload
+it is final, a block that opened without showing anything included. Every other type is final,
+`rate_limit_error` included, because on this route it may be a spend cap. The provider lines this
+rests on are in [design.md](design.md#provider-failures-retried-before-output).
+
 A turn carrying hints this wire omits ends, once it has succeeded, with one `StreamEvent::Warning`
 of code `advisory-omitted` naming them (`llm_core::advisory_warning`, wire name `Messages`). Never
 before or during the turn, because a warning on the sink is visible output and ends fallback
@@ -265,7 +289,11 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
   part.
 - **Failure.** `fail` emits the `error` event; eight error codes map to an Anthropic error type the
   decoder reads back as the same code, and `protocol`, `cancelled` and `unsupported` take the nearest
-  (`api_error`, `api_error`, `invalid_request_error`).
+  (`api_error`, `api_error`, `invalid_request_error`). No wire field carries the gateway's retry
+  decision, so a relayed failure reads back by the receiving decoder's rules. With nothing streamed
+  first, `overloaded_error` and `api_error` read back retriable, whatever the gateway decided
+  ([design.md](design.md#provider-failures-retried-before-output);
+  `story:relayed-failures-keep-their-retry-decision`).
 - **Refusals.** `UserText`, `ToolResult` and `UnattributedOpaque` items, and an outcome that
   contradicts the streamed calls. Argument fragments for a call whose block already stopped make
   `close` refuse, and redacted thinking that would precede streamed text is refused because it

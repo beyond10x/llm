@@ -1,0 +1,34 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: a-route-claiming-input-during-output-is-refused-naming-the-route
+summary: a route whose capabilities claim input during output is refused as invalid-request, naming the route, because no protocol in this workspace carries input during output
+timeline:
+- at: '2026-10-20T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        gateway: {base_url: https://gateway.internal/v1, protocol: responses,
+                  auth: {kind: bearer, secret: file:~/.config/b10x/gateway-token}}
+      routes:
+        qwen:
+          model: gateway/qwen
+          capabilities: {tools: true, tool_choice: true, temperature: true, top_p: true,
+                         reasoning_efforts: [], context_window: 32768, max_output_tokens: 8192,
+                         input_during_output: true}
+    probe_names: [qwen]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "route `qwen`: no protocol in this workspace carries input during output"
+    routes: []
+    catalog_serving_models: []
+    capabilities: []

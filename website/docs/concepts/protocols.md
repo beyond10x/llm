@@ -110,7 +110,7 @@ The widest reach: any server that speaks this wire, including an anonymous local
   reports no usage, which would look the same as a model that consumed nothing.
 - `max_output_tokens` becomes `max_completion_tokens`.
 - A failed tool result travels inside the text-only tool message as
-  `{"error": <output>, "ok": false}`.
+  `{"error": <output>, "ok": false}`, and ingress reads that object back as a failure.
 - `delta.reasoning_content`, which vLLM reasoning parsers emit, becomes a reasoning delta and is
   never joined to the answer text.
 - Opaque continuation state is refused: this wire has nowhere to carry it.

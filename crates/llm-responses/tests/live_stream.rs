@@ -5,12 +5,14 @@
 //! "Retry agreement" and "Kept text": each payload's events reach the caller's sink before the
 //! next payload is read (Harness `harness-responses/src/lib.rs:353`-`359`); a sink refusal or a
 //! cancel ends the turn at once with the evidence decoded so far; the transport's bounds hold
-//! while events are handed over; a cut after the answer was shown is final; and text the caller
-//! was shown stays in the turn when the terminal `output` omits it.
+//! while events are handed over; a cut after the answer was shown is final; text the caller
+//! was shown stays in the turn when the terminal `output` omits it; and every event is final:
+//! the turn's text is the text the caller was shown, and a server's own text that differed is
+//! replaced and reported with `shown-text-kept`.
 
 use llm_core::{
     AuthKind, BillingKind, BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item,
-    Model, Protocol, StopReason, StreamEvent, StreamSink, TurnRequest, VecSink,
+    Model, Protocol, StopReason, StreamEvent, StreamSink, TurnOutcome, TurnRequest, VecSink,
 };
 use llm_credentials::{
     ResolvedSecret, Secret, SecretError, SecretRef, SecretResolver, SecretVersion,
@@ -19,7 +21,7 @@ use llm_http::{HttpClient, Limits, MAX_EVENT_BYTES};
 use llm_providers::{
     Account, BaseUrl, Binding, BindingDocument, Endpoint, Provider, ServedModel, ServingModel,
 };
-use llm_responses::ResponsesClient;
+use llm_responses::{IngressStream, ResponsesClient, decode_stream};
 use serde_json::{Value, json};
 use std::{
     sync::Arc,
@@ -86,6 +88,8 @@ fn binding(base_url: &str) -> Binding {
                 reasoning_efforts: vec!["medium".to_owned()],
                 context_window: 32_768,
                 max_output_tokens: 2_048,
+                output_streaming: true,
+                input_during_output: false,
             },
         },
     )
@@ -577,4 +581,299 @@ async fn a_codex_text_turn_keeps_the_text_it_showed() {
     let usage = outcome.observation.usage.expect("the terminal counters");
     assert_eq!(usage.input_tokens, Some(20));
     assert_eq!(usage.output_tokens, Some(9));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Every event is final: the turn's text is the text the caller was shown.
+// ---------------------------------------------------------------------------------------------
+
+/// The fixed code of the warning that says a server's own text gave way to the shown text.
+const SHOWN_TEXT_KEPT: &str = "shown-text-kept";
+
+/// What a server wrote in a finished message that no delta showed. No warning may quote it.
+const SERVER_TEXT: &str = "the final text";
+
+fn decoder_binding() -> llm_responses::Binding {
+    llm_responses::Binding::new(
+        binding("http://127.0.0.1:9/v1").provenance().clone(),
+        id(UPSTREAM_MODEL),
+    )
+}
+
+fn message(id: Option<&str>, text: &str) -> Value {
+    let mut message = json!({"type": "message", "role": "assistant",
+        "content": [{"type": "output_text", "text": text}]});
+    if let Some(id) = id {
+        message["id"] = json!(id);
+    }
+    message
+}
+
+fn message_done(id: &str, output_index: u64, text: &str) -> Value {
+    json!({"type": "response.output_item.done", "output_index": output_index,
+        "item": message(Some(id), text)})
+}
+
+fn reasoning_delta(output_index: u64, delta: &str) -> Value {
+    json!({"type": "response.reasoning_summary_text.delta", "item_id": "rs_1",
+        "output_index": output_index, "summary_index": 0, "delta": delta})
+}
+
+/// Every text delta the caller was shown, joined.
+fn shown_text(events: &[StreamEvent]) -> String {
+    events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::TextDelta { text } => Some(text.as_str()),
+            _ => None,
+        })
+        .collect()
+}
+
+/// The text of every assistant message the turn carries, joined.
+fn carried_text(outcome: &TurnOutcome) -> String {
+    outcome
+        .items
+        .iter()
+        .filter_map(|item| match item {
+            Item::AssistantText { text } => Some(text.as_str()),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Each warning as its code and its message.
+fn warnings(events: &[StreamEvent]) -> Vec<(&str, &str)> {
+    events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::Warning { code, message } => Some((code.as_str(), message.as_str())),
+            _ => None,
+        })
+        .collect()
+}
+
+/// One stream, the items its turn must carry, and whether a server's own text gave way.
+type ShownTextCase = (&'static str, Vec<Value>, Vec<Item>, bool);
+
+/// The ways a server's message can meet the text the caller was shown, and the ways it cannot.
+fn shown_text_cases() -> [ShownTextCase; 7] {
+    [
+        (
+            "a terminal message under the deltas' id",
+            vec![
+                created(),
+                text_delta("msg_1", 0, "a dr"),
+                text_delta("msg_1", 0, "aft"),
+                completed(&json!([message(Some("msg_1"), SERVER_TEXT)])),
+            ],
+            vec![Item::assistant("a draft")],
+            true,
+        ),
+        (
+            "a terminal message that names no id",
+            vec![
+                created(),
+                text_delta("msg_1", 0, "a draft"),
+                completed(&json!([message(None, SERVER_TEXT)])),
+            ],
+            vec![Item::assistant("a draft")],
+            true,
+        ),
+        (
+            "a streamed message before an empty terminal output",
+            vec![
+                created(),
+                text_delta("msg_1", 0, "a draft"),
+                message_done("msg_1", 0, SERVER_TEXT),
+                completed(&json!([])),
+            ],
+            vec![Item::assistant("a draft")],
+            true,
+        ),
+        (
+            "two messages, the second one rewritten",
+            vec![
+                created(),
+                text_delta("msg_a", 0, "A"),
+                reasoning_delta(1, "weighing"),
+                text_delta("msg_b", 2, "B"),
+                completed(&json!([
+                    message(Some("msg_a"), "A"),
+                    message(Some("msg_b"), SERVER_TEXT)
+                ])),
+            ],
+            vec![Item::assistant("A"), Item::assistant("B")],
+            true,
+        ),
+        (
+            "a terminal message equal to its deltas",
+            vec![
+                created(),
+                text_delta("msg_1", 0, "Hel"),
+                text_delta("msg_1", 0, "lo"),
+                completed(&hello_message()),
+            ],
+            vec![Item::assistant("Hello")],
+            false,
+        ),
+        (
+            "deltas and an empty terminal output (R36)",
+            vec![
+                created(),
+                text_delta("msg_1", 0, "a draft"),
+                completed(&json!([])),
+            ],
+            vec![Item::assistant("a draft")],
+            false,
+        ),
+        (
+            "a message no delta showed",
+            vec![
+                created(),
+                completed(&json!([message(Some("msg_1"), SERVER_TEXT)])),
+            ],
+            vec![Item::assistant(SERVER_TEXT)],
+            false,
+        ),
+    ]
+}
+
+/// On a successful turn each assistant message carries exactly the text its deltas showed,
+/// paired by `id` where both sides name one and by `output_index` otherwise, whichever way the
+/// server's own message reached the decoder: in the terminal `output`, or streamed before an
+/// empty one. A message no delta showed carries the server's text. `shown-text-kept` appears
+/// exactly when a server's text gave way, once, after every delta, quoting nothing either side
+/// wrote. The same events, relayed by the ingress encoder, close on the turn: a gateway relaying
+/// this stream can answer it.
+#[test]
+fn the_turn_carries_the_text_the_caller_was_shown_and_says_when_the_server_wrote_other_text() {
+    for (case, payloads, items, replaced) in shown_text_cases() {
+        let decoded = decode_stream(&decoder_binding(), &payloads);
+        let outcome = decoded
+            .result
+            .unwrap_or_else(|error| panic!("{case}: {error:?}"));
+        assert_eq!(
+            outcome.items, items,
+            "{case}: the turn's text is not the text the caller was shown"
+        );
+        let shown = shown_text(&decoded.events);
+        assert!(
+            carried_text(&outcome).starts_with(&shown),
+            "{case}: the caller was shown {shown:?}, the turn carries {:?}",
+            outcome.items
+        );
+        let warnings = warnings(&decoded.events);
+        let codes: Vec<&str> = warnings.iter().map(|(code, _)| *code).collect();
+        let expected: &[&str] = if replaced { &[SHOWN_TEXT_KEPT] } else { &[] };
+        assert_eq!(codes, expected, "{case}: {:?}", decoded.events);
+        for (_, message) in &warnings {
+            assert!(
+                !message.contains(SERVER_TEXT) && !message.contains("draft"),
+                "{case}: the warning quotes the text: {message:?}"
+            );
+        }
+        if replaced {
+            assert!(
+                matches!(decoded.events.last(), Some(StreamEvent::Warning { .. })),
+                "{case}: the warning comes before a delta: {:?}",
+                decoded.events
+            );
+        }
+        let mut relay = IngressStream::new("resp_gateway_1", 1_700_000_000);
+        for event in &decoded.events {
+            relay.chunk(event);
+        }
+        relay.close(&outcome).unwrap_or_else(|error| {
+            panic!("{case}: the relayed stream cannot close on the turn: {error:?}")
+        });
+    }
+}
+
+/// Where shown text could be more than one message and none carries its exact text, the decoder
+/// cannot tell which message was shown: it overwrites none, keeps the server's messages as sent,
+/// adds no message of its own, and says so with `shown-text-unpaired`. Where exactly one of them
+/// carries the shown text, that one is the message shown and nothing is said.
+#[test]
+fn shown_text_no_single_message_can_be_leaves_the_server_messages_as_sent_and_says_so() {
+    let ambiguous = [
+        created(),
+        json!({"type": "response.output_text.delta", "item_id": "msg_2", "content_index": 0,
+            "delta": "answer"}),
+        completed(&json!([
+            message(None, "preamble"),
+            message(None, SERVER_TEXT)
+        ])),
+    ];
+    let decoded = decode_stream(&decoder_binding(), &ambiguous);
+    let outcome = decoded.result.expect("a completed turn");
+    assert_eq!(
+        outcome.items,
+        vec![Item::assistant("preamble"), Item::assistant(SERVER_TEXT)],
+        "a message no delta showed was overwritten, or the shown text was added beside them"
+    );
+    let codes: Vec<&str> = warnings(&decoded.events)
+        .iter()
+        .map(|(code, _)| *code)
+        .collect();
+    assert_eq!(codes, ["shown-text-unpaired"], "{:?}", decoded.events);
+    for (_, message) in warnings(&decoded.events) {
+        assert!(
+            !message.contains("answer") && !message.contains(SERVER_TEXT),
+            "the warning quotes the text: {message:?}"
+        );
+    }
+
+    let resolved = [
+        created(),
+        json!({"type": "response.output_text.delta", "item_id": "msg_2", "content_index": 0,
+            "delta": "answer"}),
+        completed(&json!([message(None, "preamble"), message(None, "answer")])),
+    ];
+    let decoded = decode_stream(&decoder_binding(), &resolved);
+    let outcome = decoded.result.expect("a completed turn");
+    assert_eq!(
+        outcome.items,
+        vec![Item::assistant("preamble"), Item::assistant("answer")]
+    );
+    assert!(warnings(&decoded.events).is_empty(), "{:?}", decoded.events);
+}
+
+/// The live client hands the warning to the caller's sink before it returns, and the turn it
+/// returns carries the text the sink was shown, not the text the server finished with.
+#[tokio::test]
+async fn the_live_client_says_so_before_it_returns_a_turn_whose_server_text_gave_way() {
+    let (listener, url) = listener().await;
+    let server = tokio::spawn(async move {
+        let mut socket = accept(&listener).await;
+        send(&mut socket, SSE_HEAD).await;
+        send(
+            &mut socket,
+            &sse(&[
+                created(),
+                text_delta("msg_1", 0, "a draft"),
+                completed(&json!([message(Some("msg_1"), SERVER_TEXT)])),
+            ]),
+        )
+        .await;
+        let _ = socket.shutdown().await;
+    });
+    let model = client(&url);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let outcome = model
+        .turn(&request(), &mut sink, &Cancel::new())
+        .await
+        .expect("a completed turn");
+    server.await.expect("the fixture server");
+    assert_eq!(outcome.items, vec![Item::assistant("a draft")]);
+    assert_eq!(sink.text(), "a draft");
+    assert!(
+        matches!(
+            sink.events(),
+            [StreamEvent::TextDelta { .. }, StreamEvent::Warning { code, .. }]
+                if code == SHOWN_TEXT_KEPT
+        ),
+        "{:?}",
+        sink.events()
+    );
 }

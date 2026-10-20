@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T04:33:47Z",
+  "actor": "human:timo",
+  "artifact": "story:tool-result-rejected-or-failed",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-chat --test ingress",
+    "reference": "VERIFIED: base 51a8f5b4 red (a failure object the Chat encoder sent read back failed: false), ~/.cache/llm-w09/tool-result/scratch/red.log; unit green, scratch/c2-gate-test.log"
+  }
+}

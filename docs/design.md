@@ -18,6 +18,110 @@ adapters implement Responses, Messages and Chat Completions with one documented 
 subset. Unsupported fields and provider-specific opaque continuation state must be preserved or
 refused, never dropped to make translation appear successful.
 
+### Streaming declarations
+
+A caller, such as a graph deciding how to schedule a model node, reads two declarations from
+`Model::capabilities()` (`llm_core::Capabilities`), beside the settings a route admits:
+
+| Declaration | Means | Every client in this workspace |
+| --- | --- | --- |
+| `output_streaming` | the model's text reaches the sink incrementally, as it is generated, not only at the end | true: Responses, Messages and Chat Completions all request a streamed answer |
+| `input_during_output` | input can reach a turn that is still producing output | false, until story:input-into-a-running-turn decides otherwise |
+
+`Capabilities::text` declares both as the clients do. In an `llm.binding/1`, `llm.catalog/1` or
+`llm.routes/1` document both are optional: absent means `output_streaming` true and
+`input_during_output` false, and neither is written at that value. A document written before the
+two fields therefore reads unchanged and serializes to the same bytes, so its binding revision and
+configuration digest do not move and opaque state stored against it stays valid.
+
+The rule depends on the protocol, so one check, `Capabilities::validate_protocol`, applies it
+where a declaration meets one: `BindingDocument::bind` (and with it every catalog), and
+`Routes::parse`, whose refusal names the route. A declaration of input during output is refused
+(`no protocol in this workspace carries input during output`), and so is one of output that does
+not stream (`every protocol in this workspace streams its output`): a document claiming it about
+one of these clients would be untrue, and refusing it keeps every accepted document at the
+defaults, so no digest moves and a 0.7.0 reader reads everything llm writes. Lifting either
+refusal later breaks no document. `Capabilities::validate` checks neither, so a `Model`
+implemented elsewhere keeps its own claim.
+
+### Streamed events are final
+
+Every `StreamEvent` is final: no later event retracts, replaces or reorders one already emitted,
+and the vocabulary has no event that could. A caller may act on each event as it arrives, and one
+that speaks text deltas aloud cannot unsay them. So on a successful turn each assistant message in
+the `TurnOutcome` carries exactly the concatenation of the `TextDelta`s shown for it, and the
+history a caller stores is the text it showed. A message no delta was shown for carries the text
+the server sent.
+
+Where a server's own final text for a message differs from the deltas it streamed, the decoder
+keeps the shown text, and the client emits `StreamEvent::Warning` with the fixed code
+`shown-text-kept` (`llm_core::SHOWN_TEXT_KEPT`) once the turn has passed its checks against the
+request and before the outcome is returned, as it emits `advisory-omitted`: a warning about a turn
+is for a turn the caller is handed, so a refused turn carries none. Its message is fixed and quotes
+neither text.
+
+A decoder never carries a message's text twice and never overwrites a message it cannot tell is the
+one shown. Where it cannot pair shown text with exactly one message (deltas and messages that name
+no coordinate telling them apart, and no message already carrying that text), it keeps the server's
+messages as sent, carries the shown text in none, and emits a second fixed code,
+`shown-text-unpaired` (`llm_core::SHOWN_TEXT_UNPAIRED`), under the same rule. A second code rather
+than `shown-text-kept`, because no shown text was kept: the turn's text differs from what was shown
+in the other direction, and a caller storing history needs to tell the two apart. Overwriting the
+first candidate was the earlier shape and, with a message no delta showed ahead of the shown one,
+it carried the answer twice and lost the first message.
+
+The other answers to the first case, and why they were not taken:
+
+| Option | Why not |
+| --- | --- |
+| The server's text outranks the deltas, plus a warning | The caller's history differs from what it spoke, and an ingress encoder relaying the stream refuses at `close`, because the outcome contradicts what it already streamed |
+| A field on `TurnOutcome` | Changes `llm.outcome/4` and every place that builds an outcome, for a fact one warning carries; the relaying encoder still refuses |
+| Refuse a turn whose text diverged | A turn the caller already spoke becomes an error |
+
+Only Responses can replace a server's text ([responses.md](responses.md)). Messages shows a text
+block's opening text as a delta ([messages.md](messages.md)), and Chat Completions carries text
+only as deltas ([chat.md](chat.md)).
+
+### Failed and rejected tool results
+
+A tool result (`Item::ToolResult`) succeeded or failed (`failed: true`). A call the caller rejected
+before running it, refused by a policy or an approval or given a bad argument, is sent as a failed
+result: `failed: true`, with the reason as the caller's own text in `output`. llm adds no wording
+of its own. No wire in scope carries a separate rejected state: Messages has only `is_error`, and a
+Responses `function_call_output` and a Chat Completions `tool` message carry text only. A caller
+that needs to tell a rejected call from a failed one keeps that fact beside the item, in its own
+loop's record; the model is sent the same failed result either way.
+
+| Wire | A failed result is sent as | How ingress reads a result back |
+| --- | --- | --- |
+| Messages | a `tool_result` block with `is_error: true`, the output as `content` (a string as it is, any other value as compact JSON) | `is_error: true` is a failure; absent or `false` is a success. The output is the `content` string |
+| Responses | a `function_call_output` whose `output` is the string `{"ok":false,"output":<output>}`; a success is the same envelope with `ok` true | a string that parses to exactly that envelope, an object of a boolean `ok` and an `output`, is a failure when `ok` is false and a success when it is true, either carrying the `output` value. Any other string is a success carrying that string |
+| Chat Completions | a `tool` message whose content is `{"error":<output>,"ok":false}`; a success is its output as text (a string as it is, any other value as compact JSON) | content that parses to an object of exactly the keys `error` and `ok`, each once, `ok` being `false`, is a failure carrying the `error` value. Any other content is a success carrying it as a string |
+
+Each ingress reads back as failed what its own encoder sends for a failure, within the bounds it
+keeps on client input. The output comes back unchanged on Responses, which envelopes every result,
+and for a failed Chat Completions result; Messages, and a successful Chat Completions result, send
+an output that is not a string as its JSON text, which reads back as that string. Two bounds make
+exceptions:
+
+- Ingress parses the Responses envelope and the Chat Completions failure object at most 127 levels
+  deep (`serde_json`'s recursion limit of 128). On Responses, which envelopes every result, an
+  output nested more than 126 levels deep, failed or not, reads back as a successful string
+  carrying the envelope's text; on Chat Completions a failed output nested that deep reads back as
+  a successful string carrying the failure object's text. Messages carries `is_error` beside the
+  text, so the flag survives any depth.
+- Chat Completions parses a tool message only up to the tool-result bound (256 KiB). The failure
+  object adds 21 bytes around the output's JSON, so a failed output whose JSON is within 21 bytes
+  of the bound is sent and then refused by ingress as too large.
+
+A successful Chat Completions result whose text is exactly the failure object reads back as failed:
+the wire cannot tell the two apart.
+
+A typed rejected state was considered and not taken
+(`docs/plan/wave-2026-10-20-w09-design-review.md`, Layer 3): a key added to the Responses envelope
+makes a 0.7.0 reader take it for a successful plain string, Messages ingress refuses a key it does
+not know, and changing `Item` would break every consumer for nothing a model is sent.
+
 ## Credentials and configuration
 
 Inference accepts an injected SecretResolver trait. A SecretReference is an opaque lookup name,
@@ -57,6 +161,90 @@ Version price inputs; distinguish measured usage, estimates, subscription charge
 Unknown is never zero. Define budget scope, reservations/concurrency, restart policy and uncertain
 charges before claiming enforcement. An admission bound is not a promise about a provider's final
 invoice. Product-level cheapest-model optimization is outside the first milestone.
+
+### Provider failures retried before output
+
+Decided 2026-10-20 (`story:retry-classes-harness-retried`). A provider can fail a turn inside a
+stream it already opened with status 200, so the HTTP status table above never sees it. Each class
+below is the far side reporting its own temporary state. Each is retriable while the attempt has
+produced no output and final once it has, whether or not the caller was shown that output. Responses
+`server_is_overloaded` has followed this rule since 0.3.1. The other four are the classes
+Harness's wire crates retried, and they now follow it too:
+
+| Protocol | Stream error | Reads as | Provider documentation, read 2026-10-20 |
+| --- | --- | --- | --- |
+| Responses | `server_is_overloaded` | `unavailable` | [OpenAI error codes][openai-errors], "503 - Model temporarily overloaded": "Follow the Retry-After header when it’s present, then retry your request." |
+| Responses | `server_error` | `unavailable` | [OpenAI error codes][openai-errors], "500 - The server had an error while processing your request": "Retry your request after a brief wait and contact us if the issue persists." |
+| Responses | `rate_limit_exceeded` | `rate-limited` | [OpenAI error codes][openai-errors], "429 - Rate limit reached for requests": "If a Retry-After header is present, wait at least as long as it specifies before trying again. If it’s missing, use exponential backoff with jitter and limit the number of retries." |
+| Messages | `overloaded_error` | `unavailable` | [Anthropic errors][anthropic-errors]: "529 - overloaded_error: The API is temporarily overloaded.", and "The official SDK automatically retries transient failures (such as connection errors, rate limits, and 5xx server errors) with exponential backoff" |
+| Messages | `api_error` | `transport` | [Anthropic errors][anthropic-errors]: "500 - api_error: An unexpected error has occurred internal to Anthropic's systems. Retry the request with exponential backoff; if the error persists, contact support with the request ID." |
+
+OpenAI's guide names HTTP statuses, not stream codes. The [Responses reference][openai-responses]
+lists `server_error` and `rate_limit_exceeded` among a failed response's `error.code` values;
+pairing them with the 500 and 429 entries above is a reading.
+
+Output is counted as the overload rule counts it. On Responses it is any payload but
+`response.created`, `response.in_progress`, `response.queued` and `keepalive`. On Messages it is
+any payload but `message_start` and `ping`. A block that opens empty shows nothing, but the
+attempt has started answering, and a second attempt would bill again. The decoders set the mark:
+`provider_failure` in `crates/llm-responses/src/stream.rs` and `stream_error` in
+`crates/llm-messages/src/decode.rs`. The client still makes one attempt; routing retries on the
+same target and falls back in the declared compatible order, as above.
+
+These stay final:
+
+- **An exhausted quota or spend limit** reported on Responses (`insufficient_quota`,
+  `credit_balance_exhausted`, `organization_spend_limit_exceeded`, `project_spend_limit_exceeded`,
+  `organization_usage_limit_exceeded`) reads as `refused`. It is a 429, but not a rate limit.
+  [OpenAI][openai-errors]: "Retrying billing, spend, or quota errors won’t restore API access."
+- **A Messages `rate_limit_error`.** [Anthropic][anthropic-errors]: "A tier spend-cap 429 has no
+  retry-after header and keeps failing until access resumes". A stream error carries no header
+  that tells the two apart, and Harness's wire did not retry it either.
+- **Every other code or type**, `billing_error` and `timeout_error` included, and a known code in
+  another spelling.
+
+**Before the stream opens** these classes arrive as an HTTP status, and the transport's status
+table already marks it retriable: 429, and 500-599 with 529. That is `status_error` in
+`crates/llm-http/src/transport.rs`, held by
+`every_status_harness_maps_has_its_code_dispatch_and_retry_class` in
+`crates/llm-http/tests/retry_classes.rs`. The transport never reads an error body. So a 429 whose
+body says the quota is exhausted is retried up to the retry policy's bound and then falls back,
+while the same quota reported inside a stream is final. Classifying a 429 by its body needs a
+transport change that this decision does not make (`story:quota-429-is-final`).
+
+**A relayed failure reads back by the receiving decoder's rules.** The ingress encoders write a
+failure under the wire code that reads back as its class. No wire field carries the relaying
+side's retry decision, so a downstream llm client applies its own rules. A Responses `fail` writes
+`unavailable` as `server_is_overloaded` or `server_error`, and `rate-limited` as
+`rate_limit_exceeded`. A Messages `fail` writes `unavailable` as `overloaded_error`, and
+`transport`, `protocol` and `cancelled` as `api_error`. When the gateway streamed nothing before
+the failure, a downstream llm client reads each of these back as retriable, whatever the gateway
+decided.
+
+Other clients decide for themselves, and they differ:
+
+- Codex CLI classes a failed response's `server_error`, and every code it does not name, as
+  `ApiError::Retryable` ([`codex-api/src/sse/responses_error.rs:98`-`101`][codex-errors]).
+  `rate_limit_exceeded` and `server_is_overloaded` get variants of their own (`:87`-`97`).
+- The official Python SDKs do not retry an error inside a 200 stream. Each decides a retry from the
+  HTTP status and headers alone (`_should_retry` in [openai-python][openai-python-retry] and
+  [anthropic-sdk-python][anthropic-python-retry]). Each raises an `error` event read from a
+  200 stream to the caller ([openai-python][openai-python-stream],
+  [anthropic-sdk-python][anthropic-python-stream]). Anthropic's errors page says such an error
+  "doesn't follow these standard mechanisms" ([Anthropic errors][anthropic-errors]).
+
+The accepted risk is that llm's own routing may call a gateway again after the gateway has already
+spent its retries on the same failure, and each such call can spend them again. Keeping the
+relaying side's decision across the hop is `story:relayed-failures-keep-their-retry-decision`.
+
+[openai-errors]: https://developers.openai.com/api/docs/guides/error-codes
+[openai-responses]: https://developers.openai.com/api/reference/resources/responses/methods/create
+[anthropic-errors]: https://platform.claude.com/docs/en/api/errors
+[codex-errors]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/sse/responses_error.rs#L87-L101
+[openai-python-retry]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_base_client.py#L899-L941
+[openai-python-stream]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_streaming.py#L78-L90
+[anthropic-python-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L929-L962
+[anthropic-python-stream]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_streaming.py#L160-L173
 
 ## Client request fields
 
@@ -151,7 +339,9 @@ The per-wire pages hold the full tables: `docs/messages.md` "What the declared s
   successful result carrying that string. A tool of a type other than `function` is refused by its
   type.
 - Chat Completions: `parallel_tool_calls`, `prompt_cache_key` and `verbosity` are carried; every
-  object below the top is closed, and a `strict` function schema is refused.
+  object below the top is closed, and a `strict` function schema is refused. A `tool` message whose
+  content is exactly the failure object `{"error":<output>,"ok":false}` is a failed result
+  ("Failed and rejected tool results" above); any other content is a successful string.
 
 Still refused, by name, and outside this design: structured output (`output_config.format`,
 `text.format`, `response_format`), server-side context editing (`context_management`), hosted and

@@ -6,6 +6,111 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `b10x-llm-core`: `Capabilities` declares `output_streaming` (the model's text reaches the sink
+  as it is generated) and `input_during_output` (input can reach a turn still producing output).
+  `Capabilities::text` and every client in this workspace declare `true` and `false`;
+  `with_output_streaming` and `with_input_during_output` set them. In `llm.binding/1`,
+  `llm.catalog/1` and `llm.routes/1` documents both are optional, default `true` and `false`, and
+  are not written at their defaults, so a document written before them keeps its bytes, its
+  binding revision and its configuration digest.
+- `Capabilities::validate_protocol(Protocol)`: refuses `input_during_output: true` ("no protocol
+  in this workspace carries input during output") and `output_streaming: false` ("every protocol
+  in this workspace streams its output"). `BindingDocument::bind` (and so every catalog) and
+  `Routes::parse` call it; a routes refusal names the route. `Capabilities::validate` does not.
+- `b10x-llm-core`: `SHOWN_TEXT_KEPT` and `SHOWN_TEXT_UNPAIRED`. `StreamEvent` and `Model::turn`
+  document that every event is final and that a successful turn's assistant text is the text
+  deltas shown for it (`docs/design.md` "Streamed events are final").
+- A call the caller rejected before running it (a policy, an approval, a bad argument) is sent as
+  `failed: true` with the reason as the caller's text in `output`. No wire in scope carries a
+  separate rejected state, and `Item::ToolResult` is unchanged (`docs/design.md` "Failed and
+  rejected tool results", with what each wire sends for a failure and how each ingress reads it).
+- 15 conformance scenarios (883 in all; baseline floors 868 → 883). Six for the streaming
+  declarations: both refusals at bind, in a catalog and in a routes document naming the route,
+  and a catalog writing the defaults out keeps its pinned digest and revision; the `llm.routes`
+  capabilities projection reports both declarations. Seven for shown text:
+  `kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas`,
+  `kept-text-a-streamed-message-gives-way-to-the-shown-deltas`,
+  `kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages`,
+  `kept-text-a-message-no-delta-showed-keeps-its-own-text`,
+  `kept-text-shown-text-more-than-one-message-could-be-is-carried-in-none`,
+  `kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next` and
+  `a-text-block-that-opens-with-text-shows-it-as-a-delta`. Two authored Chat ingress scenarios for
+  the failure object.
+
+### Changed
+
+- **Breaking for struct literals:** `Capabilities` has two more public fields, so a full
+  `Capabilities { … }` literal no longer compiles. Write
+  `Capabilities { tools: true, …, ..Capabilities::text(context_window, max_output_tokens) }`, or
+  set both fields. Known consumer literals: Loom
+  `loom-intake-router/tests/adversary_classify.rs:49`, `loom-intake-router/tests/classify.rs:42`,
+  `loom-plugin/tests/support/mod.rs:277`, `loom-plugin-slack/tests/support/mod.rs:266`;
+  llm-gateway `llm-gateway-cli/src/translate.rs:226`; the Harness spike
+  `harness-cli/src/llm_port.rs:286`. Literals that already use `..Capabilities::text(…)` are
+  unaffected.
+- `b10x-llm-models`: a string route's default capabilities are stated per field (tools, tool
+  choice, temperature and `top_p` allowed; output streamed; no input during output), not as "every
+  boolean true".
+- `b10x-llm-responses`: a streamed turn's assistant text is the text deltas the caller was shown.
+  Shown text is paired with exactly one message: by `id`; for deltas naming neither an item nor
+  an index, the message whose `response.output_item.done` came next; the `output_index` the stream
+  named (a terminal message takes the index of the streamed message it is); the terminal
+  position; equal text; then by elimination. A message the server finished with other text takes
+  the shown text, and `ResponsesClient` emits one `StreamEvent::Warning` `shown-text-kept`. Shown
+  text more than one message could be overwrites none: the server's messages stay as sent and the
+  client emits `shown-text-unpaired`. Both come after the turn passed its checks, before
+  `advisory-omitted`, never for a refused turn; `decode_stream` ends its events with them. Before,
+  the server's message outranked the deltas. The scenario
+  `kept-text-a-terminal-message-outranks-the-shown-deltas` is renamed
+  `kept-text-a-terminal-message-gives-way-to-the-shown-deltas` and asserts the shown text and the
+  warning.
+- `b10x-llm-messages`: text a `text` block opens with in `content_block_start` is shown as a
+  `StreamEvent::TextDelta` when the block opens; it was folded into the turn without being shown.
+- `b10x-llm-responses`: a provider failure with code `server_error` (`Unavailable`) or
+  `rate_limit_exceeded` (`RateLimited`), whether a top-level `error` or inside `response.failed`,
+  is now retriable before any output and final after it, the rule `server_is_overloaded` already
+  followed. Inside a stream an exhausted quota or spend limit (`insufficient_quota` and the other
+  billing codes) stays a final `Refused`; as an HTTP 429 before the stream it is still the
+  transport's retriable `RateLimited` (`story:quota-429-is-final`).
+- `b10x-llm-responses`: `response.queued` is in `ACCEPTED_STREAM_EVENTS`. It was already a
+  lifecycle payload for the retry rule, but it reached the caller as an `unknown-stream-event`
+  warning and an opaque item; it is now ignored like `response.in_progress`.
+- `b10x-llm-messages`: a stream `error` of type `overloaded_error` (`Unavailable`) or `api_error`
+  (`Transport`) is now retriable when no payload but `message_start` and `ping` came before it,
+  and final after any other, a block that opened without showing anything included. Every other
+  type stays final, `rate_limit_error` included. Harness's wire crates retried these four classes
+  (rows R28 and M27 of `docs/harness-parity.md`); the provider documentation for each is in
+  `docs/design.md` "Provider failures retried before output". No wire field carries a gateway's
+  retry decision, so a downstream llm client applies its own rules: a gateway's `fail` of these
+  classes reads back retriable when it streamed nothing first, whatever the gateway decided, and
+  llm's routing may call the gateway again after it spent its retries
+  (`story:relayed-failures-keep-their-retry-decision`).
+
+### Fixed
+
+- `b10x-llm-chat`: gateway ingress reads a `tool` message whose content parses to exactly the
+  failure object `{"error": <output>, "ok": false}`, which the Chat projection itself sends for a
+  failed result, as `failed: true` with the `error` value as the output. It read every tool
+  message as succeeded, so a failed result `project_request` sent decoded back as a success. Any
+  other content, JSON or not (`{"ok": false}` alone, an object with a third key or a repeated
+  `error` or `ok` key, `ok` true), is still a successful result carrying the content as a string,
+  byte for byte. Content is parsed only when it opens with `{`, fits the 256 KiB tool-result bound
+  and is at most 127 levels deep; a failed output nested deeper than 126 levels reads back as a
+  successful string. On Responses, as before, any output nested that deep, failed or not, reads
+  back as the envelope's text.
+
+### Known
+
+- The Responses ingress encoder still refuses `close` on two messages streamed back to back with
+  nothing between them (`story:ingress-block-boundaries`); pinned by
+  `two_messages_shown_back_to_back_are_refused_by_the_relay_until_ingress_block_boundaries`.
+- A client on 0.8.0 calling an llm-gateway may retry a failure the gateway already retried: the
+  four newly retriable classes read back retriable when relayed with nothing streamed first, and
+  no wire field carries the gateway's decision (`story:relayed-failures-keep-their-retry-decision`,
+  next wave).
+
 ## [0.7.0] - 2026-10-17
 
 Every field a coding-agent client sends now has one written rule: carried, translated, advisory

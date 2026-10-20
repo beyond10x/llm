@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.responses
-scenario: kept-text-a-terminal-message-outranks-the-shown-deltas
-summary: a terminal message stays authoritative and no shown delta text is added beside it
+scenario: kept-text-a-terminal-message-gives-way-to-the-shown-deltas
+summary: a terminal message naming no id whose text differs from the shown deltas carries the shown text, and the caller is warned
 timeline:
 - at: '2026-10-05T12:00:00Z'
   command: llm.responses.DecodeStream
@@ -19,6 +19,7 @@ assert:
   contains:
     accepted: true
     stop_reason: end-turn
-    items_json: '[{"kind":"assistant-text","text":"the final text"}]'
+    items_json: '[{"kind":"assistant-text","text":"a draft"}]'
     stream_events:
     - text-delta:a draft
+    - warning:shown-text-kept

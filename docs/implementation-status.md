@@ -15,7 +15,9 @@ out of the text, which is public.
 
 ## Evidence
 
-The Responses overload correction in 0.3.1 recognizes `server_is_overloaded` as availability.
+The Responses overload correction in 0.3.1 recognizes `server_is_overloaded` as availability, and
+the next release retries Responses `server_error` and `rate_limit_exceeded` and Messages
+`overloaded_error` and `api_error` by the same rule (`story:retry-classes-harness-retried`).
 Loopback tests pin retry eligibility before output and finality after visible or silent output;
 the default gate remains independent of live provider availability.
 
@@ -37,9 +39,11 @@ including successful API and subscription qualification. Missing qualification i
 remaining requirement, not a successful negative test. An ordinary local or CI gate makes no paid
 provider call and provisions no external resource.
 
-Consumers pin a release tag: Loom depends on llm's client crates by tag, and Harness plans to
-(`harness-builds-on-llm`). Serving, hosting and their qualification are llm-gateway's
-([GitHub](https://github.com/beyond10x/llm-gateway)).
+Consumers pin a release tag and move only on their own change. Loom, inference and llm-gateway
+depend on llm's crates by tag (Atlas ADRs 0098 and 0100 for the first two). Harness's cutover
+onto 0.7.0 is decided (Atlas ADR 0097) and is Harness's own work; `docs/harness-parity.md` is
+current to 0.7.0 for it (`harness-cutover-on-llm-0-7`). Serving, hosting and their qualification
+are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 
 ## Status at 0.7.0 (2026-10-17)
 
@@ -53,6 +57,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | `parity-retry-classes` | **Every failure says whether it may be retried.** `Error::retriable` and `Error::may_retry`: the transport marks 408, 429, 5xx, no response, a body failing mid-stream and a stream ending inside an event; unauthorized, refused, invalid and cancelled failures never are. |
 | `neutral-turn-controls` | **Thinking, parallel tool calls and advisory hints in the neutral turn.** `TurnRequest.controls` carries a thinking mode, the parallel-tool-call choice and advisory hints (prompt cache, cache key, verbosity, reasoning summary, unforwarded field names); `wire_effort` is the one reasoning table (`max` reaches Chat Completions and Responses as `xhigh`), and a turn with controls is `llm.turn/4`. |
 | `runtime-contracts` | **A written contract and compatibility policy.** `docs/contract-v1.md` states turn ownership, validation, accounting, pricing, credentials and compatibility; the versioned envelopes (`llm.turn/3` and `/4`, `llm.outcome/4`, `llm.usage/2`, `llm.cost/2`, `llm.binding/1`, `llm.catalog/1`) refuse unknown versions and fields. |
+| `capabilities-declare-streaming` | **A model declares whether its output streams and whether input can reach a running turn.** `Capabilities` carries `output_streaming` and `input_during_output`; every client here declares `true` and `false`, a document written before them keeps its binding revision and configuration digest, and a binding, catalog or route claiming input during output or unstreamed output is refused. |
 
 ### Transport
 
@@ -60,7 +65,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | --- | --- |
 | `http-streaming` | **Bounded HTTP and server-sent events.** One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails. |
 | `parity-http-timeouts-cancel` | **Connect and idle bounds, and cancellation.** A 15-second connect timeout (`HttpClient::with_connect_timeout`), a 180-second idle bound by default, and cancellation that wins over a pending read. |
-| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 868 scenarios against the real crates three times and skips none. |
+| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 883 scenarios against the real crates three times and skips none. |
 
 ### Protocols
 
@@ -71,15 +76,18 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | `parity-messages-wire` | **Messages prompt caching and unknown events.** Cache breakpoints on the standing instruction and on the conversation tail; an unknown stream event, delta or content block is kept as an opaque item with a warning. |
 | `responses-projection` | **Responses projection.** Request bodies and stream decoding for the declared subset, stateless (`store: false`) and always streamed. |
 | `responses-client` | **Responses client.** `ResponsesClient` implements `Model` over one Responses endpoint: the request is checked against its binding and bounded before the credential is resolved. |
-| `parity-responses-live-stream` | **Live Responses streaming.** Each event reaches the caller as it arrives, and text the caller was shown stays in the turn when the terminal output omits it. |
+| `parity-responses-live-stream` | **Live Responses streaming.** Each event reaches the caller as it arrives, and the turn carries the text the caller was shown: kept when the terminal output omits it, and kept over a server's own message whose text differs, with a `shown-text-kept` warning; text it cannot tie to one message overwrites none, with a `shown-text-unpaired` warning. |
+| `text-deltas-are-final` | **Streamed text is final.** No event retracts or replaces one already emitted; a successful turn's assistant text is exactly the text deltas shown for it, on Responses, Messages and Chat Completions, and Responses says when it is not. |
 | `parity-responses-wire` | **Responses request encoding and conversation identity.** `encode_request` gives the exact bytes the client sends; opt-in conversation identity sends `prompt_cache_key`, `session-id` and `x-client-request-id`. |
 | `responses-ingress-encoder` | **A server answers a Responses caller.** `encode_ingress_response` and `IngressStream` encode neutral events and an outcome as the Responses event payloads and response object this crate's decoder reads back as the same turn; partial usage and the error's message are never relayed. |
 | `messages-ingress-encoder` | **A server answers a Messages caller.** `encode_ingress_message` and `IngressStream` encode the Messages event stream and message, each block, reason and usage report checked against this crate's decoder; `without_reasoning_relay` for an upstream that cannot sign reasoning. |
 | `messages-ingress-client-fields` | **Claude Code's first turn under written Messages rules.** Ingress carries `thinking`, a `system` of text blocks, `cache_control` as the prompt-cache hint, effort `max` and `disable_parallel_tool_use`; `metadata` is reported, never sent; everything else is refused by its path. Checked against llm-gateway's authored fixture, not a captured session. |
 | `responses-ingress-client-fields` | **Codex's requests under written Responses rules.** Ingress carries `instructions`, `parallel_tool_calls`, `prompt_cache_key`, `text.verbosity` and `reasoning.summary`, reads a plain-string tool result, reports item ids and `client_metadata` as unsent, and refuses every unknown key at every level by its path and hosted tools by type. Checked against requests captured from Codex 0.160.0 at a loopback recorder; no provider was called. |
 | `chat-ingress-closed-levels` | **Chat ingress closed at every level.** Every unknown key below the top is refused by its path, `strict` schemas are refused, and `parallel_tool_calls`, `prompt_cache_key` and `verbosity` are carried both ways. |
+| `tool-result-rejected-or-failed` | **A failed tool result reads back as failed, and a rejected call has one encoding.** Chat ingress reads its own failure object as `failed: true`; a call rejected before it ran is sent as `failed: true` with the caller's reason in `output`, on every wire, because none carries a rejected state. |
 | `client-turns-cross-wire` | **A Claude Code and a Codex first turn cross wires.** Each decodes on its own wire and projects onto the other two with every field under a written rule; each projection lists the advisory hints it omits, and each client warns `advisory-omitted` after a successful turn. |
 | `codex-stream` | **Responses turns against the Codex backend.** A success without a content type is read as an event stream when one was asked for, and an empty terminal output after streamed items keeps the streamed items. |
+| `retry-classes-harness-retried` | **The provider failures Harness retried are retriable before output.** A Responses `server_error` or `rate_limit_exceeded` and a Messages `overloaded_error` or `api_error` stream error may be retried before any output and are final after it, the rule Responses `server_is_overloaded` already followed; an exhausted quota inside a stream stays final. No wire field carries a gateway's retry decision, so a failure an llm gateway relays with nothing streamed first reads back retriable whatever the gateway decided. |
 
 ### Credentials
 
@@ -113,7 +121,7 @@ Consumers pin a release tag: Loom depends on llm's client crates by tag, and Har
 | --- | --- |
 | `call-tool-helper` | **One forced tool call.** `b10x-llm-tool-call`: `call_tool` forces one named tool on any `Model` and returns that call's JSON arguments or a typed `ModelError`; `codex_model` binds a Responses model to the operator's Codex login. |
 | `parity-blocking-adapters` | **A blocking adapter for a synchronous loop.** `b10x-llm-blocking`: `BlockingModel` runs one turn on the calling thread, hands events to a `BlockingSink` as they arrive, takes cancellation from any thread, and forks for concurrent turns. |
-| `harness-builds-on-llm` | Pending: **Harness builds on llm.** A Harness branch replacing its own model wire crates with llm 0.1.7 builds and passes its tests, and the parity matrix maps every capability they need; Harness has not merged it. |
+| `harness-builds-on-llm` | Pending: **Harness builds on llm 0.7.0.** Atlas ADR 0097 decides the cutover: Harness drops its own model wire and credential crates and rebases the bridge of its spike, which built and passed its tests on llm 0.1.7, onto 0.7.0, in Harness's own work. `docs/harness-parity.md` cites every llm cell against 0.7.0 and lists the llm API changes the bridge meets; one needs an edit (`TurnRequest.controls`). Rows R28 and M27 are partial at 0.7.0, which marks fewer provider failures retriable than Harness's wires did; the next release retries those classes before any output. Harness has not merged it. |
 
 ### Accounting
 

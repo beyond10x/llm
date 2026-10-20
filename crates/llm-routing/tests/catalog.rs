@@ -250,6 +250,63 @@ fn changed_endpoint_auth_capability_or_upstream_name_changes_configuration_ident
     }
 }
 
+/// `examples/catalog.toml` was written before capabilities declared output streaming and input
+/// during output; the routing scenarios pin its digest and its `local-small` revision.
+const BEFORE_DIGEST: &str = "1365b05fe63542f8211e21a9a2566c71f2a6d44ec9bdc564ba46c592a861825f";
+const BEFORE_REVISION: &str = "1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1";
+
+/// The example with `lines` added to each serving model's capabilities table.
+fn declaring(lines: &str) -> String {
+    let declared = EXAMPLE.replace(
+        "[serving_models.capabilities]\n",
+        &format!("[serving_models.capabilities]\n{lines}"),
+    );
+    assert_ne!(declared, EXAMPLE);
+    declared
+}
+
+#[test]
+fn a_catalog_written_before_the_streaming_declarations_keeps_its_digest_and_revisions() {
+    for source in [
+        EXAMPLE.to_owned(),
+        declaring("output_streaming = true\ninput_during_output = false\n"),
+    ] {
+        let catalog = Catalog::parse(&source).unwrap();
+        assert_eq!(catalog.digest(), BEFORE_DIGEST);
+        assert_eq!(
+            catalog
+                .binding(&id("local-small"))
+                .unwrap()
+                .provenance()
+                .binding_revision
+                .as_str(),
+            BEFORE_REVISION
+        );
+        for (_, binding) in catalog.bindings() {
+            assert!(binding.capabilities().output_streaming);
+            assert!(!binding.capabilities().input_during_output);
+        }
+    }
+}
+
+#[test]
+fn a_catalog_claiming_input_during_output_or_unstreamed_output_is_refused() {
+    for (line, message) in [
+        (
+            "input_during_output = true\n",
+            "no protocol in this workspace carries input during output",
+        ),
+        (
+            "output_streaming = false\n",
+            "every protocol in this workspace streams its output",
+        ),
+    ] {
+        let error = Catalog::parse(&declaring(line)).unwrap_err();
+        assert_eq!(error.code, ErrorCode::InvalidRequest);
+        assert_eq!(error.message, message);
+    }
+}
+
 // Use the public serialized declaration to change a reference without adding credential I/O.
 fn account_with_rotated_reference(doc: &CatalogDocument) -> llm_providers::Account {
     let mut value = serde_json::to_value(&doc.accounts[1]).unwrap();

@@ -39,6 +39,12 @@
       "status": "shipped"
     },
     {
+      "area": "Neutral turn",
+      "detail": "Capabilities carries output_streaming and input_during_output; every client here declares true and false, a document written before them keeps its binding revision and configuration digest, and a binding, catalog or route claiming input during output or unstreamed output is refused.",
+      "label": "A model declares whether its output streams and whether input can reach a running turn",
+      "status": "shipped"
+    },
+    {
       "area": "Transport",
       "detail": "One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails.",
       "label": "Bounded HTTP and server-sent events",
@@ -52,7 +58,7 @@
     },
     {
       "area": "Transport",
-      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 868 scenarios against the real crates three times and skips none.",
+      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 883 scenarios against the real crates three times and skips none.",
       "label": "Every library crate is specified in ESS",
       "status": "shipped"
     },
@@ -88,8 +94,14 @@
     },
     {
       "area": "Protocols",
-      "detail": "Each event reaches the caller as it arrives, and text the caller was shown stays in the turn when the terminal output omits it.",
+      "detail": "Each event reaches the caller as it arrives, and the turn carries the text the caller was shown: kept when the terminal output omits it, and kept over a server's own message whose text differs, with a shown-text-kept warning; text it cannot tie to one message overwrites none, with a shown-text-unpaired warning.",
       "label": "Live Responses streaming",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "No event retracts or replaces one already emitted; a successful turn's assistant text is exactly the text deltas shown for it, on Responses, Messages and Chat Completions, and Responses says when it is not.",
+      "label": "Streamed text is final",
       "status": "shipped"
     },
     {
@@ -130,6 +142,12 @@
     },
     {
       "area": "Protocols",
+      "detail": "Chat ingress reads its own failure object as failed: true; a call rejected before it ran is sent as failed: true with the caller's reason in output, on every wire, because none carries a rejected state.",
+      "label": "A failed tool result reads back as failed, and a rejected call has one encoding",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
       "detail": "Each decodes on its own wire and projects onto the other two with every field under a written rule; each projection lists the advisory hints it omits, and each client warns advisory-omitted after a successful turn.",
       "label": "A Claude Code and a Codex first turn cross wires",
       "status": "shipped"
@@ -138,6 +156,12 @@
       "area": "Protocols",
       "detail": "A success without a content type is read as an event stream when one was asked for, and an empty terminal output after streamed items keeps the streamed items.",
       "label": "Responses turns against the Codex backend",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "A Responses server_error or rate_limit_exceeded and a Messages overloaded_error or api_error stream error may be retried before any output and are final after it, the rule Responses server_is_overloaded already followed; an exhausted quota inside a stream stays final. No wire field carries a gateway's retry decision, so a failure an llm gateway relays with nothing streamed first reads back retriable whatever the gateway decided.",
+      "label": "The provider failures Harness retried are retriable before output",
       "status": "shipped"
     },
     {
@@ -250,8 +274,8 @@
     },
     {
       "area": "Helpers for agent loops",
-      "detail": "A Harness branch replacing its own model wire crates with llm 0.1.7 builds and passes its tests, and the parity matrix maps every capability they need; Harness has not merged it.",
-      "label": "Harness builds on llm",
+      "detail": "Atlas ADR 0097 decides the cutover: Harness drops its own model wire and credential crates and rebases the bridge of its spike, which built and passed its tests on llm 0.1.7, onto 0.7.0, in Harness's own work. docs/harness-parity.md cites every llm cell against 0.7.0 and lists the llm API changes the bridge meets; one needs an edit (TurnRequest.controls). Rows R28 and M27 are partial at 0.7.0, which marks fewer provider failures retriable than Harness's wires did; the next release retries those classes before any output. Harness has not merged it.",
+      "label": "Harness builds on llm 0.7.0",
       "status": "planned"
     },
     {

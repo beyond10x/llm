@@ -17,6 +17,12 @@ types:
     variants: [NotSent, Rejected, Unknown, Accepted]
   - name: llm.catalog.Capabilities
     kind: struct
+    # output_streaming: the model's text reaches the sink as it is generated; absent means true.
+    # input_during_output: input can reach a turn still producing output; absent means false.
+    # Neither is written at its default, so a document from before them keeps its binding
+    # revision and configuration digest. A binding, catalog or routes document claiming input
+    # during output, or output that does not stream, is refused as `invalid-request`: no
+    # protocol in this workspace carries input during output, and every one streams its output.
     fields:
       - { name: tools, type: Boolean }
       - { name: tool_choice, type: Boolean }
@@ -25,6 +31,8 @@ types:
       - { name: reasoning_efforts, type: 'List<String>' }
       - { name: context_window, type: Integer }
       - { name: max_output_tokens, type: Integer }
+      - { name: output_streaming, type: 'Optional<Boolean>' }
+      - { name: input_during_output, type: 'Optional<Boolean>' }
   - name: llm.catalog.RouteRejection
     kind: enum
     variants: [Tools, ToolChoice, Temperature, TopP, ReasoningEffort, OutputLimit, InputTokensUnknown, ContextWindow, OpaqueState, FallbackDisabled]

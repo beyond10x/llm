@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T04:49:35Z",
+  "actor": "human:timo",
+  "artifact": "story:text-deltas-are-final",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 task check steps run one by one on wave/2026-10-20-w09 at 0199fbf9 (tree of 44f641f7 plus docs): 974 workspace tests passed, conformance 883/883 x3, every step exit 0",
+    "reference": "0199fbf9; logs ~/.cache/llm-w09/integrate/gate/"
+  }
+}

@@ -205,6 +205,8 @@ pub fn codex_model_at(
                 reasoning_efforts: Vec::new(),
                 context_window: CONTEXT_WINDOW,
                 max_output_tokens: MAX_OUTPUT_TOKENS,
+                output_streaming: true,
+                input_during_output: false,
             },
         },
     )

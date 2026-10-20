@@ -8,8 +8,9 @@ use llm_chat::{
     decode_ingress_request, encode_ingress_completion, omitted_advisories, project_request,
 };
 use llm_core::{
-    Advisory, CallId, Controls, Dispatch, ErrorCode, Hints, Id, Item, Protocol, StopReason,
-    StreamEvent, ToolCall, ToolChoice, ToolName, TurnObservation, TurnOutcome, Usage, Verbosity,
+    Advisory, CallId, Controls, Dispatch, ErrorCode, Hints, Id, Item, MAX_TOOL_RESULT_BYTES,
+    Protocol, StopReason, StreamEvent, ToolCall, ToolChoice, ToolName, ToolSpec, TurnObservation,
+    TurnOutcome, TurnRequest, Usage, Verbosity,
 };
 use serde_json::{Value, json};
 
@@ -1057,5 +1058,202 @@ fn each_carried_option_survives_a_round_trip_through_the_projection() {
         assert_eq!(back.model, "Qwen/Qwen3-8B");
         back.model = request.model.clone();
         assert_eq!(back, request, "{field}");
+    }
+}
+
+// ---------------------------------------------------------------- tool results
+
+/// A turn answering one `lookup` call with a failed result carrying `output`.
+fn failed_result_turn(output: Value) -> TurnRequest {
+    let mut request = TurnRequest::new(
+        "small",
+        vec![
+            Item::ToolCall(ToolCall {
+                call_id: call_id("call-1"),
+                name: ToolName::new("lookup").expect("fixture tool"),
+                arguments: json!({}),
+            }),
+            Item::ToolResult {
+                call_id: call_id("call-1"),
+                output,
+                failed: true,
+            },
+        ],
+    );
+    request.tools = vec![ToolSpec {
+        name: ToolName::new("lookup").expect("fixture tool"),
+        description: "Look up".to_owned(),
+        input_schema: json!({"type": "object"}),
+    }];
+    request
+}
+
+/// A request whose `tool` message answers `lookup_call()` with `content` as sent.
+fn tool_message_body(content: &Value) -> Value {
+    let mut body = with_messages(json!([
+        {"role": "user", "content": "Weather?"},
+        {"role": "assistant", "content": null, "tool_calls": [lookup_call()]},
+        {"role": "tool", "tool_call_id": "call-1", "content": content}
+    ]));
+    body["tools"] = json!([lookup_tool()]);
+    body
+}
+
+/// The result a `tool` message answering `lookup_call()` decodes to, `content` as sent.
+fn decoded_result(content: &Value) -> Item {
+    decode_ingress_request(&tool_message_body(content))
+        .expect("decoded")
+        .request
+        .items
+        .pop()
+        .expect("the tool result")
+}
+
+/// The Chat encoder sends a failed result as `{"error": <output>, "ok": false}`, and ingress
+/// reads that object back as the failure it was, with the output the caller gave, of any type.
+#[test]
+fn a_failed_result_the_chat_encoder_sent_decodes_back_failed_with_its_output() {
+    for output in [
+        json!("no such city"),
+        json!(""),
+        json!("{\"city\":\"Oslo\"}"),
+        json!({"code": 404, "reason": "missing"}),
+        json!({"error": "nested", "ok": false}),
+        json!(["a", 1]),
+        json!(7),
+        json!(false),
+        Value::Null,
+    ] {
+        let request = failed_result_turn(output.clone());
+        let projected = project_request(&request, &binding(), false).expect("projected");
+        let back = decode_ingress_request(&projected)
+            .expect("the projected body decodes")
+            .request;
+        assert_eq!(back.items, request.items, "{output}");
+    }
+}
+
+/// The failure object is read by its parsed shape: key order, spacing and how the content was
+/// split into text parts do not change it.
+#[test]
+fn a_tool_message_carrying_the_failure_object_decodes_as_failed() {
+    let cases = [
+        (
+            json!(r#"{"error":"no such city","ok":false}"#),
+            json!("no such city"),
+        ),
+        (
+            json!(r#"{ "ok": false, "error": {"code": 404} }"#),
+            json!({"code": 404}),
+        ),
+        (
+            json!("\n  {\"error\":\"no such city\",\"ok\":false}\n"),
+            json!("no such city"),
+        ),
+        (
+            json!([
+                {"type": "text", "text": "{\"error\":\"no such"},
+                {"type": "text", "text": " city\",\"ok\":false}"}
+            ]),
+            json!("no such city"),
+        ),
+    ];
+    for (content, output) in cases {
+        assert_eq!(
+            decoded_result(&content),
+            Item::ToolResult {
+                call_id: call_id("call-1"),
+                output,
+                failed: true,
+            },
+            "{content}"
+        );
+    }
+}
+
+/// Only an object of exactly `error` and `ok`, `ok` being `false`, is a failure. Any other
+/// content, JSON or not, is a successful result carrying that content as a string.
+#[test]
+fn tool_content_that_is_not_exactly_the_failure_object_stays_a_successful_string() {
+    for content in [
+        r#"{"ok":false}"#,
+        r#"{"error":"no such city"}"#,
+        r#"{"error":"no such city","ok":false,"code":404}"#,
+        r#"{"error":"no such city","ok":true}"#,
+        r#"{"error":"no such city","ok":"false"}"#,
+        r#"{"error":"no such city","ok":null}"#,
+        r#"{"ok":false,"output":"no such city"}"#,
+        r#"[{"error":"no such city","ok":false}]"#,
+        // The two values in order, as a sequence rather than the object.
+        r#"["no such city",false]"#,
+        r#""{\"error\":\"no such city\",\"ok\":false}""#,
+        r#"{"error":"no such city","ok":false"#,
+        "false",
+        "null",
+        "42",
+        "sunny",
+        "",
+    ] {
+        assert_eq!(
+            decoded_result(&json!(content)),
+            Item::ToolResult {
+                call_id: call_id("call-1"),
+                output: json!(content),
+                failed: false,
+            },
+            "{content}"
+        );
+    }
+}
+
+/// The failure object `{"error":"<text>","ok":false}` around `length` bytes of text.
+fn failure_object_around(length: usize) -> String {
+    format!(r#"{{"error":"{}","ok":false}}"#, "a".repeat(length))
+}
+
+/// Content is read as the failure object only up to the tool-result bound. Longer content is
+/// not parsed first: it is left to the bound, which refuses it as at the base.
+#[test]
+fn the_failure_object_is_read_up_to_the_result_bound_and_left_to_the_bound_past_it() {
+    let frame = failure_object_around(0).len();
+
+    let at_bound = failure_object_around(MAX_TOOL_RESULT_BYTES - frame);
+    assert_eq!(at_bound.len(), MAX_TOOL_RESULT_BYTES);
+    assert_eq!(
+        decoded_result(&json!(at_bound)),
+        Item::ToolResult {
+            call_id: call_id("call-1"),
+            output: json!("a".repeat(MAX_TOOL_RESULT_BYTES - frame)),
+            failed: true,
+        }
+    );
+
+    let past_bound = failure_object_around(MAX_TOOL_RESULT_BYTES - frame + 1);
+    assert_eq!(past_bound.len(), MAX_TOOL_RESULT_BYTES + 1);
+    let error = decode_ingress_request(&tool_message_body(&json!(past_bound)))
+        .expect_err("content past the bound is refused");
+    assert_eq!(error.code, ErrorCode::TooLarge, "{}", error.message);
+}
+
+/// What `docs/chat.md` states the bound costs: the failure object adds 21 bytes around the
+/// output's encoding, so a failed output encoded within 21 bytes of the bound is sent, and its
+/// failure object, past the bound, is refused by ingress as too large. One byte shorter, it
+/// round-trips failed.
+#[test]
+fn a_failed_output_within_the_failure_objects_frame_of_the_bound_is_sent_and_refused_back() {
+    // A string of `length` bytes encodes to `length + 2`, its quotes.
+    for (length, round_trips) in [
+        (MAX_TOOL_RESULT_BYTES - 21 - 2, true),
+        (MAX_TOOL_RESULT_BYTES - 20 - 2, false),
+    ] {
+        let request = failed_result_turn(json!("a".repeat(length)));
+        let projected = project_request(&request, &binding(), false).expect("projected");
+        let back = decode_ingress_request(&projected);
+        if round_trips {
+            assert_eq!(back.expect("decodes").request.items, request.items);
+        } else {
+            let error = back.expect_err("the failure object is past the bound");
+            assert_eq!(error.code, ErrorCode::TooLarge, "{}", error.message);
+        }
     }
 }

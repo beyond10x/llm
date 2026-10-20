@@ -153,7 +153,16 @@ shaped like one, and a round trip that can flip `failed` corrupts the conversati
 translating it. On ingress a `function_call_output` string that parses to exactly this envelope
 (an object of exactly a boolean `ok` and an `output`) is read as one; any other string is a
 successful result whose output is that string, which is how Codex sends a command's output. It
-goes back out inside the envelope. An `output` that is not a string is refused.
+goes back out inside the envelope. An `output` that is not a string is refused. Ingress parses the
+envelope at most 127 levels deep (`serde_json`'s recursion limit of 128), so an output nested more
+than 126 levels deep, failed or not, reads back as a successful string carrying the envelope's
+text.
+
+A call the caller rejected before running it is a failed result like any other: `failed: true`
+with the reason as the caller's text in `output`, sent as `{"ok": false, "output": <reason>}` and
+read back as failed. This wire has no rejected state, and llm adds none: a third key in the
+envelope would make a 0.7.0 reader take the whole string for a successful result
+([design](design.md#failed-and-rejected-tool-results)).
 
 Each modelled item names its keys: a message `type`, `id`, `role` and `content`; a content part
 `type` and `text`; a `function_call` `type`, `id`, `call_id`, `name` and `arguments`; a
@@ -316,14 +325,43 @@ none — `output` absent, or an empty array after items were streamed through
 An empty `output` with nothing streamed stays an empty turn, and a forced tool that was never
 called is then refused by `TurnOutcome::validate_for`.
 
-**Text the caller was shown stays in the turn.** Text shown through `response.output_text.delta`
-belongs to the output item its `item_id` names. Each such item's text is kept as one assistant
-message, its deltas in arrival order, whenever no message the turn carries is that item. A message
-the turn carries under the same `id`, from the terminal `output` or the streamed items, outranks
-its deltas; a message or a delta that names no item counts as the same item as any other. Kept
-messages are placed by the `output_index` of their first delta, ascending and stable among equal
-indexes, whatever order they arrived in; one without an index, or with one past the end, goes last.
-A server that streams a message only as deltas and completes with an empty `output` would
+**The turn's text is the text the caller was shown.** Text shown through
+`response.output_text.delta` belongs to the output item its `item_id` names; for a delta that names
+no item, to the item at its `output_index`; for a delta that names neither, to the message whose
+`response.output_item.done` comes next. Every delta is final (`docs/design.md` "Streamed events are
+final"), so each such item's text in the turn is its deltas in arrival order, whatever the server
+finished with.
+
+Shown text is paired with exactly one message the turn carries, from the terminal `output` or the
+streamed items, by the first of these that finds one: the same `id`; the message whose
+`response.output_item.done` ended deltas that named neither coordinate; the `output_index` that
+message's `response.output_item.done` named; the message's position in the terminal `output`; a
+message that already carries exactly the shown text. A terminal message takes the coordinates of
+the streamed message it is (the same `id`, or, when as many terminal messages as streamed ones are
+left, the next in order), and its position counts only when it is no streamed message, because a
+terminal `output` can hold items the stream never showed. What none of these pairs is paired by
+elimination, with the one message no coordinate both sides name tells apart from it: two different
+ids, two different indexes or two different streamed messages are two items.
+
+The decoder never carries a message's text twice and never overwrites a message it cannot tell is
+the one shown. A message no shown text is paired with keeps the server's text, with no warning.
+Shown text that more than one message could be is carried in none: the server's messages stay as
+sent and the caller is told with one `shown-text-unpaired` warning.
+
+This is the one protocol where the turn's text can differ from what was shown, by two routes: a
+terminal `output` whose message carries other text than its deltas, or an empty terminal `output`
+after a `response.output_item.done` message that does. Either way the message takes the shown text,
+and the client tells the caller with one `shown-text-kept` warning once the turn has passed its
+checks against the request, before any `advisory-omitted` warning and before the turn is returned.
+A turn the client refuses, a forced tool never called for example, carries none.
+`shown-text-unpaired` follows the same rule. Both messages are fixed and quote no text.
+`decode_stream`, which checks no request, ends its events with them. Whether a real server ever sends final text that differs from
+its deltas is not known: no recorded Responses stream was found to check it against.
+
+Shown text no message could be is kept as an assistant message of its own (row R36), with no
+warning. Kept messages are placed by the `output_index` of their first delta, ascending and stable
+among equal indexes, whatever order they arrived in; one without an index, or with one past the end,
+goes last. A server that streams a message only as deltas and completes with an empty `output` would
 otherwise return a turn without the answer the caller just watched arrive.
 
 `final_usage` is true only for a terminal or failed response object: it says the reported counters
@@ -369,9 +407,15 @@ A provider failure is classified from its machine-readable code alone:
 | anything else, or absent | `Refused` |
 
 Only these codes are widened beyond refusal, because they describe the far side's
-own state. `server_is_overloaded` also marks the failure retriable. The client clears that mark
-after any prior output payload, including an opening item that emitted no visible event; a caller
-may retry the identical request only before output. The client itself still makes one attempt.
+own state, and each of the three also marks the failure retriable. The decoder sets that mark only
+when nothing but `response.created`, `response.in_progress`, `response.queued` and `keepalive`
+came before the failure. An opening item that emitted no visible event counts as output, so a
+caller may retry the identical request only before output. Every other code is
+final, an exhausted quota (`insufficient_quota`) or spend limit included. That holds inside a
+stream. The same quota answered as an HTTP 429 before the stream is the transport's retriable
+`RateLimited` (`story:quota-429-is-final`). The provider lines this
+rests on are in [design.md](design.md#provider-failures-retried-before-output). The client itself
+still makes one attempt.
 **The provider's message is never relayed.** Diagnostics are fixed strings this
 crate wrote; an upstream string relayed into a diagnostic is how a prompt or a credential
 eventually reaches a log. `incomplete_details.reason` is treated the same way: it is kept when it
@@ -394,6 +438,13 @@ comes with `close` or `fail` when nothing was streamed. `close` ends with exactl
 `response.completed` or `response.incomplete`; `fail` ends with `response.failed`, whose code the
 decoder reads back as the same class of failure, and never carries the error's own message. A
 refused `close` sends nothing and leaves the stream open for `fail`.
+
+No wire field carries the gateway's retry decision, so a relayed failure reads back by the
+receiving decoder's rules. With nothing streamed first, `server_is_overloaded`, `server_error` and
+`rate_limit_exceeded` read back retriable, whatever the gateway decided. That covers an
+`unavailable` it marked final and a failure whose retries it had spent
+([design.md](design.md#provider-failures-retried-before-output);
+`story:relayed-failures-keep-their-retry-decision`).
 
 What the encoder refuses rather than approximates or drops:
 

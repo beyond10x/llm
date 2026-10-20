@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T02:15:04Z",
+  "actor": "human:timo",
+  "artifact": "story:capabilities-declare-streaming",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-core --test capabilities -p b10x-llm-providers --test bindings -p b10x-llm-routing --test catalog -p b10x-llm-models --test routes",
+    "reference": "VERIFIED, new behaviour: base 787ac412 fails to compile the new cases (E0609) and a stub without defaults or refusal fails 29 of 54; unit 1b851083 passes all; ~/.cache/llm-w09/capabilities/scratch/red-stub.log vs gate-test.log"
+  }
+}

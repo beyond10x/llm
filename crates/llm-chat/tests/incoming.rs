@@ -2,7 +2,7 @@
 mod common;
 
 use common::binding;
-use llm_chat::{decode_completion, project_response_bytes};
+use llm_chat::{IngressStream, decode_completion, project_response_bytes};
 use llm_core::{Dispatch, ErrorCode, Item, StopReason, StreamEvent, Usage};
 use serde_json::json;
 
@@ -78,6 +78,58 @@ fn a_vllm_stream_without_include_usage_leaves_every_counter_absent() {
     // `usage: null` on every chunk is an absent report, never a zero one.
     assert_eq!(outcome.observation.usage, None);
     assert!(outcome.observation.final_usage);
+}
+
+/// Chat Completions carries a turn's text only as `delta.content`, so the turn's text is the
+/// deltas joined and cannot differ from what the caller was shown: on every pinned stream the
+/// outcome's text is exactly the text deltas, and no warning says otherwise. The same events,
+/// relayed by the ingress encoder, close on the turn.
+#[test]
+fn the_turn_carries_exactly_the_text_its_deltas_showed() {
+    for (fixture, bytes) in [
+        ("openai text", OPENAI_TEXT),
+        ("openai tools", OPENAI_TOOLS),
+        ("vllm text", VLLM_TEXT),
+        ("vllm tools", VLLM_TOOLS),
+    ] {
+        let binding = binding();
+        let (events, outcome) = project_response_bytes(bytes, binding.provenance());
+        let outcome = outcome.unwrap_or_else(|error| panic!("{fixture}: {error:?}"));
+        let shown: String = events
+            .iter()
+            .filter_map(|event| match event {
+                StreamEvent::TextDelta { text } => Some(text.as_str()),
+                _ => None,
+            })
+            .collect();
+        let carried: Vec<&str> = outcome
+            .items
+            .iter()
+            .filter_map(|item| match item {
+                Item::AssistantText { text } => Some(text.as_str()),
+                _ => None,
+            })
+            .collect();
+        let expected: Vec<&str> = if shown.is_empty() {
+            Vec::new()
+        } else {
+            vec![shown.as_str()]
+        };
+        assert_eq!(carried, expected, "{fixture}");
+        assert!(
+            !events
+                .iter()
+                .any(|event| matches!(event, StreamEvent::Warning { .. })),
+            "{fixture}: {events:?}"
+        );
+        let mut relay = IngressStream::new("chatcmpl-relay", 1_700_000_000);
+        for event in &events {
+            relay.chunk(event);
+        }
+        relay.close(&outcome, true).unwrap_or_else(|error| {
+            panic!("{fixture}: the relayed stream cannot close on the turn: {error:?}")
+        });
+    }
 }
 
 #[test]

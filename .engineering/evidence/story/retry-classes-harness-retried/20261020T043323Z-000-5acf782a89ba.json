@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-20T04:33:23Z",
+  "actor": "human:timo",
+  "artifact": "story:retry-classes-harness-retried",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:adversary-w09-retry-pass-2",
+    "review": "review-result:adversary-w09-retry-pass-2",
+    "outcome": "fixed"
+  }
+}

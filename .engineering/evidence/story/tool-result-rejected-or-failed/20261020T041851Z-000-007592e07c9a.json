@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-20T04:18:51Z",
+  "actor": "human:timo",
+  "artifact": "story:tool-result-rejected-or-failed",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:adversary-w09-tool-result-pass-1",
+    "review": "review-result:adversary-w09-tool-result-pass-1",
+    "outcome": "fixed"
+  }
+}

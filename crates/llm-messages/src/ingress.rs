@@ -263,6 +263,14 @@ impl IngressStream {
     /// `cancelled` are this side's own failure (`api_error`, read as `transport`), and
     /// `unsupported` is a request outside the subset (`invalid_request_error`). The message is
     /// the error's own fixed diagnostic.
+    ///
+    /// The error's retry mark is not sent: no wire field carries this side's retry decision, so a
+    /// relayed failure reads back retriable or final by the receiving decoder's rules. With
+    /// nothing streamed before it, `unavailable` (`overloaded_error`) and `transport`,
+    /// `protocol` and `cancelled` (`api_error`) read back retriable, whatever this side decided,
+    /// a failure it marked final or whose retries it had spent included. Every other code reads
+    /// back final. Carrying the decision across the hop is
+    /// story:relayed-failures-keep-their-retry-decision.
     pub fn fail(&mut self, error: &Error) -> Vec<Value> {
         if self.ended {
             return Vec::new();
