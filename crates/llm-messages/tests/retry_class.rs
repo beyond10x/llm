@@ -391,3 +391,98 @@ async fn a_gateway_502_that_says_do_not_retry_is_final_and_without_it_is_retriab
         );
     }
 }
+
+/// The start of the next event, cut before its payload ends.
+const PARTIAL: &str = "event: content_block_delta\n\
+data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\"";
+
+/// A chunked stream head: a chunk the server stops writing is a body that failed in transit.
+const CHUNKED_HEAD: &[u8] = b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n\
+Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n";
+
+/// The two ways a connection is cut mid-turn, each read by the transport as a retriable failure
+/// with dispatch `accepted`.
+#[derive(Clone, Copy, Debug)]
+enum Cut {
+    /// The body ends inside an event: `protocol`.
+    InsideAnEvent,
+    /// A chunked body ends inside a chunk: `transport`.
+    InsideAChunk,
+}
+
+impl Cut {
+    const ALL: [Self; 2] = [Self::InsideAnEvent, Self::InsideAChunk];
+
+    const fn code(self) -> ErrorCode {
+        match self {
+            Self::InsideAnEvent => ErrorCode::Protocol,
+            Self::InsideAChunk => ErrorCode::Transport,
+        }
+    }
+
+    /// Serves `before` whole, then cuts the connection inside the next event.
+    async fn turn(self, before: &str) -> (Error, VecSink) {
+        match self {
+            Self::InsideAnEvent => stream_turn(format!("{before}{PARTIAL}")).await,
+            Self::InsideAChunk => {
+                // A zero-length chunk would end the body cleanly, so an empty prefix sends none.
+                let whole = if before.is_empty() {
+                    String::new()
+                } else {
+                    format!("{:x}\r\n{before}\r\n", before.len())
+                };
+                // The last chunk promises 1024 bytes and carries a few.
+                failed_turn(CHUNKED_HEAD.to_vec(), format!("{whole}400\r\n{PARTIAL}")).await
+            }
+        }
+    }
+}
+
+/// H8 on this wire (story:messages-cut-after-silent-output-is-final): a cut before any payload
+/// but `message_start` and `ping` keeps the transport's retry class, as on Responses
+/// (`a_cut_after_only_lifecycle_events_stays_retriable`).
+#[tokio::test]
+async fn a_cut_before_any_block_stays_retriable() {
+    for cut in Cut::ALL {
+        for opening in ["", STARTED] {
+            let (error, sink) = cut.turn(opening).await;
+            assert_eq!(
+                (error.code, error.dispatch),
+                (cut.code(), Dispatch::Accepted),
+                "{cut:?} after {opening:?}"
+            );
+            assert!(
+                error.may_retry(),
+                "{cut:?} after {opening:?}: nothing was answered yet: {error:?}"
+            );
+            assert_eq!(sink.events(), [], "{cut:?} after {opening:?}");
+        }
+    }
+}
+
+/// H8 and H18 on this wire: after any other payload the attempt has answered, whether the caller
+/// was shown it or not, so a cut is final, as on Responses (`a_cut_after_an_output_item_is_final`).
+/// Another attempt would answer, and bill, again. The failure keeps the attempt's evidence.
+#[tokio::test]
+async fn a_cut_after_silent_or_visible_output_is_final() {
+    for cut in Cut::ALL {
+        for (label, output, visible) in [
+            ("an empty text block", SILENT_TEXT, false),
+            ("an empty thinking block", SILENT_THINKING, false),
+            ("a text delta", VISIBLE_TEXT, true),
+        ] {
+            let (error, sink) = cut.turn(&format!("{STARTED}{output}")).await;
+            assert_eq!(
+                (error.code, error.dispatch),
+                (cut.code(), Dispatch::Accepted),
+                "{cut:?} after {label}"
+            );
+            assert_eq!(!sink.events().is_empty(), visible, "{cut:?} after {label}");
+            assert!(
+                !error.retriable && !error.may_retry(),
+                "{cut:?} after {label}: an answered attempt cannot replay: {error:?}"
+            );
+            assert!(error.observation.is_some(), "{cut:?} after {label}");
+        }
+    }
+}

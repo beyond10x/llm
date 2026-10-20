@@ -193,6 +193,13 @@ attempt has started answering, and a second attempt would bill again. The decode
 `crates/llm-messages/src/decode.rs`. The client still makes one attempt; routing retries on the
 same target and falls back in the declared compatible order, as above.
 
+A connection cut mid-stream follows the same count (`story:messages-cut-after-silent-output-is-final`).
+The transport marks a cut retriable: a body that ends inside an event, or fails in transit. Each
+client keeps that mark until its decoder has answered and drops it after, in its stream loop:
+`ResponsesClient`, `MessagesClient` and `ChatClient`. On Chat Completions output is non-empty
+`content` or `reasoning_content`, any `tool_calls` fragment, or a finish reason; the chunk that
+opens the stream, `role` with an empty or null `content`, answers nothing.
+
 These stay final:
 
 - **An exhausted quota or spend limit** reported on Responses (`insufficient_quota`,

@@ -182,7 +182,17 @@ impl MessagesClient {
                     .map_err(|error| decoder.attach(error))?,
                 // End of body. `finish` refuses unless the terminal event actually arrived.
                 Ok(None) => break,
-                Err(error) => return Err(decoder.attach(error)),
+                // A cut. Once the decoder has answered, shown to the caller or not (a block that
+                // opened empty), it is final: another attempt would answer, and bill, again. As
+                // on Responses, this is stricter than routing's rule, which sees only events.
+                Err(error) => {
+                    let error = if decoder.has_answered() {
+                        error.with_retriable(false)
+                    } else {
+                        error
+                    };
+                    return Err(decoder.attach(error));
+                }
             }
             if decoder.is_complete() {
                 break;

@@ -537,6 +537,32 @@ fn a_cut_stream_that_showed_nothing_is_retried() {
     );
 }
 
+/// H8 and H18: the same cut after output the caller was not shown (a block that opened empty)
+/// reaches routing with its mark cleared by the protocol client
+/// (story:messages-cut-after-silent-output-is-final). It halts on its first attempt with fallback
+/// enabled: no same-target retry, no wait, no retry warning and no fallback.
+#[test]
+fn a_cut_stream_whose_client_cleared_the_mark_halts_without_retry_or_fallback() {
+    let catalog = catalog(true);
+    for code in [ErrorCode::Protocol, ErrorCode::Transport] {
+        let mut cleared = failure(code, Dispatch::Accepted);
+        cleared.retriable = false;
+        let models = Fleet::new(&catalog, Some(cleared), None, 0);
+        let outcome = run(&catalog, FallbackPolicy::default(), &models);
+        assert_eq!(outcome.run.halt, Halt::IneligibleFailure, "{code:?}");
+        assert_eq!(attempted(&outcome.run), ["coding-primary"], "{code:?}");
+        assert_eq!(
+            (models.calls("local-small"), models.calls("remote-large")),
+            (1, 0),
+            "{code:?}"
+        );
+        assert_eq!(outcome.waits, [] as [Duration; 0], "{code:?}");
+        assert_eq!(outcome.warnings, [] as [(String, String); 0], "{code:?}");
+        let error = outcome.run.result.unwrap_err();
+        assert_eq!((error.code, error.retriable), (code, false), "{code:?}");
+    }
+}
+
 /// A retriable class falls back even with unknown dispatch; one attempt per target disables
 /// same-target retry. An unmarked failure keeps today's rules: an eligible one falls back with no
 /// same-target retry, and an unknown dispatch still halts as ambiguous.

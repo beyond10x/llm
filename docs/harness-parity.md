@@ -335,7 +335,7 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
 - **M27.** A Messages `overloaded_error` (`Unavailable`) or `api_error` (`Transport`) stream error
   is retriable when no payload but `message_start` and `ping` came before it. After any other
   payload, a block that opened empty included, it is final. The code is `stream_error`
-  `llm-messages/src/decode.rs:733`, the mark is set at `:777`, and the payloads that do not count
+  `llm-messages/src/decode.rs:738`, the mark is set at `:782`, and the payloads that do not count
   are at `:217`. Tests:
   `overloaded_and_api_errors_before_output_are_retriable_without_provider_prose`
   `llm-messages/tests/retry_class.rs:121`,
@@ -373,6 +373,26 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `a_gateway_502_that_says_do_not_retry_is_attempted_once_on_every_wire`
   `llm-models/tests/relayed_failure.rs:185` and
   `the_same_502_without_the_signal_is_retried_on_its_target` `:206`.
+
+Rows H8 and H18 (`story:messages-cut-after-silent-output-is-final`; llm lines at this branch, not
+at 0.7.0):
+
+- **H8, H18.** A stream cut, inside an event or inside a chunk, after output that showed nothing
+  is final on Messages and Chat Completions, as it already was on Responses
+  (`llm-responses/src/client.rs:258`). At 0.7.0 both clients returned the transport's retry mark
+  unchanged (`client.rs:158` and `:96` there). So routing retried on its target a Messages turn
+  whose block had opened empty, or a Chat turn whose finish reason or nameless tool call had
+  arrived, and on Messages the bridge's `may_retry` read true. Messages counts any payload but `message_start` and `ping` (`llm-messages/src/decode.rs:217`,
+  `:332`), read through `has_answered` `:275` and cleared at `llm-messages/src/client.rs:189`.
+  Chat Completions counts non-empty `content` or `reasoning_content`, any `tool_calls` fragment and
+  a finish reason; the opening `role` chunk is not output. It is read through `has_answered`
+  `llm-chat/src/incoming.rs:82` and cleared at `llm-chat/src/client.rs:100`. A cut before output
+  keeps the transport's class on every wire. Tests: `a_cut_before_any_block_stays_retriable`
+  `llm-messages/tests/retry_class.rs:445`, `a_cut_after_silent_or_visible_output_is_final` `:467`,
+  `a_cut_before_any_output_stays_retriable` `llm-chat/tests/retry_class.rs:181`,
+  `a_cut_after_silent_or_visible_output_is_final` `:202`, and through routing
+  `a_cut_stream_whose_client_cleared_the_mark_halts_without_retry_or_fallback`
+  `llm-routing/tests/retry.rs:545`. Both rows stay covered.
 
 Row R36 (`story:text-deltas-are-final`; llm lines at this branch, not at 0.7.0):
 

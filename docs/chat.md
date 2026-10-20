@@ -241,6 +241,14 @@ turn there again; the header never makes a final status retriable
 ([design.md](design.md#provider-failures-retried-before-output)). Every 429 stays a retriable
 rate limit on this wire: no quota rule reads its body.
 
+A connection cut inside the stream, inside an event or inside a chunk, keeps the transport's retry
+class until the stream has carried output, shown to the caller or not: non-empty `content` or
+`reasoning_content`, any `tool_calls` fragment, or a finish reason. After that the cut is final,
+because another attempt would answer, and bill, again; a call whose name has not arrived and a
+finish reason show nothing but count. The chunk that opens the stream, `role` with an empty or
+null `content`, is not output. This is the rule Responses and Messages apply
+(`story:messages-cut-after-silent-output-is-final`).
+
 A turn carrying hints this wire does not send ends, once it has succeeded, with one `Warning`
 event of code `advisory-omitted` naming them (`Chat Completions carries no prompt-cache; the
 advisory hint was not sent`). Never before or during the turn: a warning counts as visible
