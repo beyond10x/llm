@@ -42,7 +42,7 @@ The gate makes no paid provider call and starts no GPU. No provider route is qua
 | [Loom](https://beyond10x.github.io/loom/) ([GitHub](https://github.com/beyond10x/loom)) | Consumes llm: Loom's crates depend on llm's client crates at a release tag. |
 | inference ([GitHub](https://github.com/beyond10x/inference)) | Consumes llm: its LLM node wraps `llm_core::Model` from llm at a release tag. |
 | [Harness](https://beyond10x.github.io/ecosystem/harness/) ([GitHub](https://github.com/beyond10x/harness)) | Consumes llm once its cutover lands: Atlas ADR 0097 decides that Harness drops its own model wire and credential crates and pins llm 0.7.0, in Harness's own work. |
-| llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) | Serves models to clients; it reads Runpod's provider description from `b10x-llm-providers` at a release tag. |
+| llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) | Consumes llm: serves models to clients through llm's client crates at a release tag, and reads Runpod's provider description from `b10x-llm-providers`. |
 | [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) | Specifies llm: every library crate has an ESS domain, run by the conformance suite. |
 | [Secrets](https://beyond10x.github.io/secrets/) ([GitHub](https://github.com/beyond10x/secrets)) | A credential source: `b10x-llm-credentials` feature `secrets` resolves references by name in its storage. |
 
