@@ -82,6 +82,46 @@ Only Responses can replace a server's text ([responses.md](responses.md)). Messa
 block's opening text as a delta ([messages.md](messages.md)), and Chat Completions carries text
 only as deltas ([chat.md](chat.md)).
 
+### Failed and rejected tool results
+
+A tool result (`Item::ToolResult`) succeeded or failed (`failed: true`). A call the caller rejected
+before running it, refused by a policy or an approval or given a bad argument, is sent as a failed
+result: `failed: true`, with the reason as the caller's own text in `output`. llm adds no wording
+of its own. No wire in scope carries a separate rejected state: Messages has only `is_error`, and a
+Responses `function_call_output` and a Chat Completions `tool` message carry text only. A caller
+that needs to tell a rejected call from a failed one keeps that fact beside the item, in its own
+loop's record; the model is sent the same failed result either way.
+
+| Wire | A failed result is sent as | How ingress reads a result back |
+| --- | --- | --- |
+| Messages | a `tool_result` block with `is_error: true`, the output as `content` (a string as it is, any other value as compact JSON) | `is_error: true` is a failure; absent or `false` is a success. The output is the `content` string |
+| Responses | a `function_call_output` whose `output` is the string `{"ok":false,"output":<output>}`; a success is the same envelope with `ok` true | a string that parses to exactly that envelope, an object of a boolean `ok` and an `output`, is a failure when `ok` is false and a success when it is true, either carrying the `output` value. Any other string is a success carrying that string |
+| Chat Completions | a `tool` message whose content is `{"error":<output>,"ok":false}`; a success is its output as text (a string as it is, any other value as compact JSON) | content that parses to an object of exactly the keys `error` and `ok`, each once, `ok` being `false`, is a failure carrying the `error` value. Any other content is a success carrying it as a string |
+
+Each ingress reads back as failed what its own encoder sends for a failure, within the bounds it
+keeps on client input. The output comes back unchanged on Responses, which envelopes every result,
+and for a failed Chat Completions result; Messages, and a successful Chat Completions result, send
+an output that is not a string as its JSON text, which reads back as that string. Two bounds make
+exceptions:
+
+- Ingress parses the Responses envelope and the Chat Completions failure object at most 127 levels
+  deep (`serde_json`'s recursion limit of 128). On Responses, which envelopes every result, an
+  output nested more than 126 levels deep, failed or not, reads back as a successful string
+  carrying the envelope's text; on Chat Completions a failed output nested that deep reads back as
+  a successful string carrying the failure object's text. Messages carries `is_error` beside the
+  text, so the flag survives any depth.
+- Chat Completions parses a tool message only up to the tool-result bound (256 KiB). The failure
+  object adds 21 bytes around the output's JSON, so a failed output whose JSON is within 21 bytes
+  of the bound is sent and then refused by ingress as too large.
+
+A successful Chat Completions result whose text is exactly the failure object reads back as failed:
+the wire cannot tell the two apart.
+
+A typed rejected state was considered and not taken
+(`docs/plan/wave-2026-10-20-w09-design-review.md`, Layer 3): a key added to the Responses envelope
+makes a 0.7.0 reader take it for a successful plain string, Messages ingress refuses a key it does
+not know, and changing `Item` would break every consumer for nothing a model is sent.
+
 ## Credentials and configuration
 
 Inference accepts an injected SecretResolver trait. A SecretReference is an opaque lookup name,
@@ -299,7 +339,9 @@ The per-wire pages hold the full tables: `docs/messages.md` "What the declared s
   successful result carrying that string. A tool of a type other than `function` is refused by its
   type.
 - Chat Completions: `parallel_tool_calls`, `prompt_cache_key` and `verbosity` are carried; every
-  object below the top is closed, and a `strict` function schema is refused.
+  object below the top is closed, and a `strict` function schema is refused. A `tool` message whose
+  content is exactly the failure object `{"error":<output>,"ok":false}` is a failed result
+  ("Failed and rejected tool results" above); any other content is a successful string.
 
 Still refused, by name, and outside this design: structured output (`output_config.format`,
 `text.format`, `response_format`), server-side context editing (`context_management`), hosted and

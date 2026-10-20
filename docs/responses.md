@@ -153,7 +153,16 @@ shaped like one, and a round trip that can flip `failed` corrupts the conversati
 translating it. On ingress a `function_call_output` string that parses to exactly this envelope
 (an object of exactly a boolean `ok` and an `output`) is read as one; any other string is a
 successful result whose output is that string, which is how Codex sends a command's output. It
-goes back out inside the envelope. An `output` that is not a string is refused.
+goes back out inside the envelope. An `output` that is not a string is refused. Ingress parses the
+envelope at most 127 levels deep (`serde_json`'s recursion limit of 128), so an output nested more
+than 126 levels deep, failed or not, reads back as a successful string carrying the envelope's
+text.
+
+A call the caller rejected before running it is a failed result like any other: `failed: true`
+with the reason as the caller's text in `output`, sent as `{"ok": false, "output": <reason>}` and
+read back as failed. This wire has no rejected state, and llm adds none: a third key in the
+envelope would make a 0.7.0 reader take the whole string for a successful result
+([design](design.md#failed-and-rejected-tool-results)).
 
 Each modelled item names its keys: a message `type`, `id`, `role` and `content`; a content part
 `type` and `text`; a `function_call` `type`, `id`, `call_id`, `name` and `arguments`; a

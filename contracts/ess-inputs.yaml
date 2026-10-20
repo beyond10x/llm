@@ -94,6 +94,8 @@ scenarios:
 - chat/scenarios/ingress-a-temperature-outside-its-range-is-refused.yaml
 - chat/scenarios/ingress-a-tool-choice-of-none-is-refused.yaml
 - chat/scenarios/ingress-a-tool-message-answering-no-call-is-refused.yaml
+- chat/scenarios/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed.yaml
+- chat/scenarios/ingress-other-json-in-a-tool-message-stays-a-successful-string.yaml
 - chat/scenarios/ingress-an-accepted-encoding-carries-no-refusal.yaml
 - chat/scenarios/ingress-an-accepted-request-carries-no-refusal.yaml
 - chat/scenarios/ingress-an-outcome-leaving-out-an-announced-call-is-refused.yaml
