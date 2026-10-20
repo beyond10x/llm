@@ -373,9 +373,11 @@ impl SseStream {
 ///
 /// An answer carrying `x-should-retry: false` is final whatever its status: the far side says
 /// another attempt will not help, as a gateway does once it has spent its own retries. The
-/// official `OpenAI` and Anthropic SDKs obey the header before any status rule (`docs/design.md`).
-/// It only narrows: `x-should-retry: true`, which those SDKs also obey, never makes a final
-/// status retriable here. Code, dispatch and retry hint are unchanged.
+/// official `OpenAI` and Anthropic SDKs obey the header ahead of their status rules, except that
+/// the Anthropic TypeScript SDK first retries a 401 once to refresh a cached bearer token, and
+/// the `OpenAI` Python SDK first declines a `Retry-After` past its maximum delay (lines in
+/// `docs/design.md`). It only narrows: `x-should-retry: true`, which those SDKs also obey, never
+/// makes a final status retriable here. Code, dispatch and retry hint are unchanged.
 pub fn status_error(status: u16, headers: &HeaderMap, now: SystemTime) -> Error {
     let (code, dispatch, retriable) = match status {
         401 | 403 => (ErrorCode::Unauthorized, Dispatch::Rejected, false),

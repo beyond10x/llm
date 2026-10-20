@@ -562,8 +562,9 @@ async fn the_quota_rule_is_consulted_for_a_429_only() {
 
 // ---------------------------------------------------------------------------------------------
 // A do-not-retry signal on an error status (story:relayed-failures-keep-their-retry-decision):
-// `x-should-retry: false`, which the official OpenAI and Anthropic SDKs obey before any status
-// rule (`docs/design.md`). It only narrows: it never makes a final status retriable.
+// `x-should-retry: false`, which the official OpenAI and Anthropic SDKs obey ahead of their status
+// rules (`docs/design.md` names the one case each of two SDKs decides first). It only narrows: it
+// never makes a final status retriable.
 // ---------------------------------------------------------------------------------------------
 
 /// Headers carrying one `x-should-retry` field per value.

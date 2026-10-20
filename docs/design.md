@@ -262,15 +262,17 @@ Other clients decide for themselves, and they differ:
 design option D, decided 2026-10-20). A failure before any output reaches a client as an HTTP
 status, not as a stream: llm-gateway answers it 502 `upstream-failed`, which the status table
 marks retriable. So without a signal llm's routing may call a gateway again after the gateway has
-spent its retries on the same failure, and each such call can spend them again. The signal is the
-header the official SDKs already read before any status rule, `x-should-retry`:
+spent its retries on the same failure, and each such call can spend them again. The signal is
+`x-should-retry`, which each official SDK reads in its retry decision ahead of its status rules
+(408, 409, 429 and 5xx retried). Two of them decide one case before they read it, as the last
+column says:
 
-| SDK | Where it reads the header, at the commit read 2026-10-20 |
-| --- | --- |
-| openai-python | `_should_retry`, [`src/openai/_base_client.py:909`-`918`][openai-python-should-retry] |
-| anthropic-sdk-python | `_should_retry`, [`src/anthropic/_base_client.py:930`-`939`][anthropic-python-should-retry] |
-| openai-node | `shouldRetry`, [`src/client.ts:2076`-`2081`][openai-node-should-retry] |
-| anthropic-sdk-typescript | `shouldRetry`, [`src/client.ts:1765`-`1770`][anthropic-ts-should-retry] |
+| SDK | Where it reads the header, at the commit read 2026-10-20 | Decided before the header |
+| --- | --- | --- |
+| openai-python | `_should_retry`, [`src/openai/_base_client.py:909`-`918`][openai-python-should-retry] | no retry when `Retry-After` exceeds its maximum delay ([`:900`-`907`][openai-python-retry-after]) |
+| anthropic-sdk-python | `_should_retry`, [`src/anthropic/_base_client.py:930`-`939`][anthropic-python-should-retry] | nothing |
+| openai-node | `shouldRetry`, [`src/client.ts:2076`-`2081`][openai-node-should-retry] | nothing |
+| anthropic-sdk-typescript | `shouldRetry`, [`src/client.ts:1765`-`1770`][anthropic-ts-should-retry] | a 401 on a request that used its cached bearer token is retried once, after the cache is invalidated, whatever the header says ([`:1753`-`1763`][anthropic-ts-refresh]) |
 
 Each SDK obeys `false` as "do not retry" and `true` as "retry", under the comment "If the server
 explicitly says whether or not to retry, obey." llm reads `false` only. `status_error` marks an
@@ -303,6 +305,8 @@ back by the receiving decoder's rules, as above.
 [anthropic-python-should-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L930-L939
 [openai-node-should-retry]: https://github.com/openai/openai-node/blob/e8c295c97159d56738d69aa18522f1acd4a1d093/src/client.ts#L2076-L2081
 [anthropic-ts-should-retry]: https://github.com/anthropics/anthropic-sdk-typescript/blob/04a4c28c70de498d6d0e930e43edb5edb9ac545e/src/client.ts#L1765-L1770
+[openai-python-retry-after]: https://github.com/openai/openai-python/blob/0e5794dc48b8f8d51f6047f8a0b1814eb1e65850/src/openai/_base_client.py#L900-L907
+[anthropic-ts-refresh]: https://github.com/anthropics/anthropic-sdk-typescript/blob/04a4c28c70de498d6d0e930e43edb5edb9ac545e/src/client.ts#L1753-L1763
 
 ## Client request fields
 
