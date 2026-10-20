@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T13:49:33Z",
+  "actor": "human:timo",
+  "artifact": "story:codex-renewal-test-load-independent",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-credentials --all-features --test adversary_codex_renewal",
+    "reference": "VERIFIED: the old case red with a 1 s injected delay (the w09 failure text), the new case green; red when the RefreshUncertain bound is removed; 20 of 20 at load average 43-54; adversary: base red 5 of 5 under one-CPU starvation, unit green 20 of 20; ~/.cache/llm-w10/codex-test/scratch/"
+  }
+}

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:routes-refusal-test-names-its-field
 kind: story
-status: active
+status: implemented
 title: The routes refusal test is refused for the field each case names
 summary: The ROUTE case passes on a YAML error in the auth line because the helper's AUTH default contains ROUTE
 relations:
@@ -11,10 +11,11 @@ relations:
 scope:
 - confidence: cited
   path: crates/llm-models/tests/routes.rs
-revision: 5
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T07:47:11Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-20T07:47:11Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-20T13:49:44Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 

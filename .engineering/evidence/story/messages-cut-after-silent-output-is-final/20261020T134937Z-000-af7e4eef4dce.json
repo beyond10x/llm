@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T13:49:37Z",
+  "actor": "human:timo",
+  "artifact": "story:messages-cut-after-silent-output-is-final",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-messages --test retry_class -p b10x-llm-chat --test retry_class -p b10x-llm-routing --test retry",
+    "reference": "VERIFIED: base 9cd7dbe8 red (Messages 1 failed, Chat 1 failed: retriable true after an empty text block / a tool call fragment); unit d8f79616 green; ~/.cache/llm-w10/messages-cut/scratch/red.log, gate2.log"
+  }
+}

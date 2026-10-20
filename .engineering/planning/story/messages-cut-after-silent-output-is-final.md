@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:messages-cut-after-silent-output-is-final
 kind: story
-status: active
+status: implemented
 title: A Messages turn cut after a silent block is final, as on Responses
 summary: The Messages client does not clear the retry mark once its decoder has answered; Responses does
 relations:
@@ -23,10 +23,11 @@ scope:
   path: docs/harness-parity.md
 - confidence: inferred
   path: docs/messages.md
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T07:47:11Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T07:47:11Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T13:49:44Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 
@@ -65,3 +66,17 @@ Derived 2026-10-20 by `story-scoper`. Every line is **cited** (read from the sto
 - **Confidence:** high
 - **Would collide with:** the Messages stream decoder (`decode.rs`, additive accessor) and `crates/llm-messages/src/client.rs:121-171`; no code shared with the Messages ingress encoder (`crates/llm-messages/src/ingress.rs`); shares `docs/messages.md`, `CHANGELOG.md`, `AGENTS.md` — cited
 - **Safety fact:** clearing the mark on an `Accepted` error turns routing's same-target retry (`crates/llm-routing/src/fallback.rs:527`) into a halt and opens no fallback (`fallback.rs:230-235`); a cut before any block keeps `answered` false (`decode.rs:217`, `:327`) — walked, not run
+
+## Design decisions
+
+Taken 2026-10-20 by the wave's coordinator inside the approved design:
+
+- **Chat joins the unit.** The implementor found the same unconditional `Err` arm in
+  `crates/llm-chat/src/client.rs` and measured it: a Chat stream cut after output read
+  `retriable: true`. It is fixed the same way (an accessor on the Chat decoder, the mark cleared
+  once it has answered), with its own tests. Chat counts non-empty `content` or
+  `reasoning_content`, any `tool_calls` fragment and a finish reason as output; the opening `role`
+  chunk with empty or null content does not.
+- **Left as they are.** `decode_stream` (`crates/llm-messages/src/decode.rs`) and Chat's
+  `project_response_bytes` keep a retriable cut after output: their only callers outside tests are
+  the conformance checks, and no local consumer checkout calls them.

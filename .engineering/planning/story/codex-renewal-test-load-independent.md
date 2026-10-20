@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:codex-renewal-test-load-independent
 kind: story
-status: active
+status: implemented
 title: The Codex renewal resend test decides its claim under load
 summary: adversary_codex_renewal's dropped-resolve case failed once at load average 31 on a 500 ms loopback bound
 relations:
@@ -11,10 +11,11 @@ relations:
 scope:
 - confidence: cited
   path: crates/llm-credentials/tests/adversary_codex_renewal.rs
-revision: 5
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T07:47:11Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-20T07:47:11Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-20T13:49:44Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 

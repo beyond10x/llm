@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:relayed-failures-keep-their-retry-decision
 kind: story
-status: active
+status: implemented
 title: A failure relayed through an ingress encoder reads back with the relaying side's retry decision
 summary: A relayed unavailable, rate-limited, transport, protocol or cancelled failure reads back retriable in a downstream llm client
 relations:
@@ -33,10 +33,11 @@ scope:
   path: docs/messages.md
 - confidence: cited
   path: docs/responses.md
-revision: 8
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T07:47:10Z", actor: "human:timo", revision: 7}
 - {from: "proposed", to: "active", at: "2026-10-20T07:47:10Z", actor: "human:timo", revision: 8}
+- {from: "active", to: "implemented", at: "2026-10-20T13:49:44Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 
@@ -60,9 +61,15 @@ made, or the encoder documents per code what a downstream llm client will decide
 
 ## Acceptance
 
-- A test per protocol relays each failure class the encoder can write, decodes it with that
-  protocol's client decoder, and asserts the retry mark equals the relaying side's.
-- `docs/responses.md` and `docs/messages.md` state the mapping.
+Rewritten 2026-10-20 for design option D (`## Design decisions`); the first wording assumed the
+signal travelled in the failure payload (options A to C).
+
+- An error status carrying the do-not-retry signal reads not retriable in the Responses, Messages
+  and Chat clients, whatever its class; a test sends a gateway-style 502 with the signal and asserts
+  the client and routing make no second attempt, and the same 502 without it is still retried.
+- The signal only narrows: it never makes a final status retriable.
+- `docs/design.md`, `docs/responses.md` and `docs/messages.md` name the signal and cite where the
+  official SDKs read it, or say that llm named its own header and why.
 
 ## Next wave
 

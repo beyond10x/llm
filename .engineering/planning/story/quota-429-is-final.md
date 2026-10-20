@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:quota-429-is-final
 kind: story
-status: active
+status: implemented
 title: An HTTP 429 a provider documents as an exhausted quota is final
 summary: The transport retries every 429 and reads no body, so an insufficient_quota 429 is retried
 relations:
@@ -39,10 +39,11 @@ scope:
   path: docs/responses.md
 - confidence: inferred
   path: spec/domains/transport.yaml
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T07:47:07Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T07:47:07Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T13:49:43Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 
@@ -89,3 +90,27 @@ Derived 2026-10-20 by `story-scoper`. Every line is **cited** (read from the sto
 - How the classification reaches the client: `Error` is serialized with `deny_unknown_fields`
   (`crates/llm-core/src/error.rs:38`), so a new field is a format change; a parameter on
   `post_sse_until` reaches more callers.
+
+## Design decisions
+
+Taken 2026-10-20 by the wave's coordinator inside the design `adr-changes` approved (wave
+2026-10-20-w10). Each answers one item of `## Open for the design`.
+
+1. **Responses.** A 429 whose bounded error body carries, as `error.code`, one of the five billing,
+   spend or quota codes `docs/design.md` already lists for the stream (`insufficient_quota`,
+   `credit_balance_exhausted`, `organization_spend_limit_exceeded`, `project_spend_limit_exceeded`,
+   `organization_usage_limit_exceeded`) is final. Any other 429 keeps today's class.
+2. **Messages.** A 429 is final when its bounded body's `error.type` is `rate_limit_error` and the
+   response carries no `retry-after` header, on Anthropic's own statement that a tier spend-cap 429
+   has no retry-after header and keeps failing until access resumes. The implementor re-reads
+   Anthropic's errors and rate-limits pages and cites the line; if the page does not say it,
+   Messages 429s keep today's class and `docs/design.md` says why. The wrong-preamble 429 (no
+   rate-limit headers) then reads final too, which is right: the identical request meets it again.
+3. **Class.** A final quota 429 reads `refused`, dispatch `rejected`, not retriable: the class the
+   same quota already has inside a Responses stream, so routing ends the run as it does there.
+   Whether a quota should instead fall back to another account is a separate decision, not taken
+   here.
+4. **Delivery.** No `Error` format change (`deny_unknown_fields`). The transport reads the body only
+   for a 429, bounded in bytes and in time (a stalled body must not hold the caller: the guard at
+   `crates/llm-responses/tests/adversary_client.rs:624` stays green); a body it cannot read in that
+   bound leaves today's class. Provider prose never reaches a diagnostic.

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T13:49:32Z",
+  "actor": "human:timo",
+  "artifact": "story:quota-429-is-final",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-http --test retry_classes -p b10x-llm-responses --test retry_class --test adversary_w09_retry_http_quota -p b10x-llm-messages --test retry_class",
+    "reference": "VERIFIED: base 5e00283d red (left (RateLimited, Rejected) right (Refused, Rejected); llm-http cases did not compile, E0432/E0599); unit 6da06c03, fd17bf92 green; ~/.cache/llm-w10/http/scratch/red-s1-*.log, red-r2-*.log, gate-r2-*.log"
+  }
+}
