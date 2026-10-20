@@ -19,8 +19,9 @@ pub const SHOWN_TEXT_KEPT: &str = "shown-text-kept";
 /// [`TurnOutcome`] carries exactly the concatenation of the [`StreamEvent::TextDelta`]s shown for
 /// it; a message no delta was shown for carries the text the server sent. Where a server's own
 /// final text for a message differed from its deltas, the shown text is kept and a
-/// [`StreamEvent::Warning`] with the code [`SHOWN_TEXT_KEPT`] says so before the outcome is
-/// returned. Its message is fixed and quotes neither text.
+/// [`StreamEvent::Warning`] with the code [`SHOWN_TEXT_KEPT`] says so once the turn has passed its
+/// checks and before the outcome is returned; a refused turn carries none. Its message is fixed
+/// and quotes neither text.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
 pub enum StreamEvent {
@@ -62,7 +63,7 @@ pub trait Model: Send + Sync {
     /// Every emitted event is final: nothing later in the turn retracts or replaces it. A
     /// successful outcome's assistant text is the text deltas shown for each message, and a
     /// server's own text that differed is reported with [`SHOWN_TEXT_KEPT`] on the sink before
-    /// this returns (see [`StreamEvent`]).
+    /// this returns that outcome, never for a turn it refuses (see [`StreamEvent`]).
     fn turn<'a>(
         &'a self,
         request: &'a TurnRequest,

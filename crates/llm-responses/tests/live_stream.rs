@@ -740,12 +740,12 @@ fn shown_text_cases() -> [ShownTextCase; 7] {
 }
 
 /// On a successful turn each assistant message carries exactly the text its deltas showed,
-/// paired by `id` where both sides name one and by order otherwise, whichever way the server's
-/// own message reached the decoder: in the terminal `output`, or streamed before an empty one. A
-/// message no delta showed carries the server's text. `shown-text-kept` appears exactly when a
-/// server's text gave way, once, after every delta, quoting nothing either side wrote. The same
-/// events, relayed by the ingress encoder, close on the turn: a gateway relaying this stream can
-/// answer it.
+/// paired by `id` where both sides name one and by `output_index` otherwise, whichever way the
+/// server's own message reached the decoder: in the terminal `output`, or streamed before an
+/// empty one. A message no delta showed carries the server's text. `shown-text-kept` appears
+/// exactly when a server's text gave way, once, after every delta, quoting nothing either side
+/// wrote. The same events, relayed by the ingress encoder, close on the turn: a gateway relaying
+/// this stream can answer it.
 #[test]
 fn the_turn_carries_the_text_the_caller_was_shown_and_says_when_the_server_wrote_other_text() {
     for (case, payloads, items, replaced) in shown_text_cases() {

@@ -693,6 +693,8 @@ scenarios:
 - responses/scenarios/kept-text-a-second-message-shown-only-as-deltas-is-kept.yaml
 - responses/scenarios/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas.yaml
 - responses/scenarios/kept-text-a-streamed-message-gives-way-to-the-shown-deltas.yaml
+- responses/scenarios/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages.yaml
+- responses/scenarios/kept-text-a-message-no-delta-showed-keeps-its-own-text.yaml
 - responses/scenarios/a-payload-after-the-terminal-object-is-not-read.yaml
 - secrets/scenarios/codex-renewal-a-due-login-is-renewed-and-written-back-in-place.yaml
 - secrets/scenarios/codex-renewal-a-kept-refresh-token-is-not-reported-rotated.yaml

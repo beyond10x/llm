@@ -43,15 +43,21 @@ domain: llm.responses
 # The client still makes one attempt; routing or the caller owns any bounded retry policy.
 #
 # Kept text (row R36). The caller was shown text through `response.output_text.delta`, one
-# output item per `item_id`. Every event is final, so on a turn that is returned the text of each
-# such item is the item's deltas in arrival order, whatever the server finished with. Shown text
-# is paired with a message the turn carries, from the terminal `output` or from the streamed
-# items, by `id` where both name one (the message's `id` equals the deltas' `item_id`), and
-# otherwise by order: a message or a delta that names no item pairs with the first unpaired one
-# that does not name another. A paired message whose text differs takes the shown text, and the
-# caller is shown one `shown-text-kept` warning, after every delta and before the turn is
-# returned; its message is fixed and quotes neither text. A message no delta was shown for keeps
-# the server's text, with no warning. Shown text no message is paired with is kept as an
+# output item per `item_id`, or, for deltas that name no item, per `output_index`. Every event
+# is final, so on a turn that is returned the text of each such item is the item's deltas in
+# arrival order, whatever the server finished with. Shown text is paired with a message the turn
+# carries, from the terminal `output` or from the streamed items: by `id` where both name one
+# (the message's `id` equals the deltas' `item_id`); then by `output_index` where both name one
+# (the message's position in the terminal `output`, or the index its
+# `response.output_item.done` named); then by order, only where no coordinate both sides name
+# tells them apart. A message and shown text that name different ids, or different indexes, are
+# two items and never pair. A paired message whose text differs takes the shown text, and the
+# caller is shown one `shown-text-kept` warning, after every delta; its message is fixed and
+# quotes neither text. `DecodeStream` checks the turn against no request and ends its
+# `stream_events` with the warning; the client emits it only after the turn passed its checks
+# against the request, before any `advisory-omitted` warning, and a turn it refuses carries none.
+# A message no delta was shown for keeps the server's text, with no warning. Shown text no
+# message is paired with is kept as an
 # assistant message of its own, with no warning, placed by the `output_index` of its first
 # delta, ascending and stable among equal indexes, whatever order their first deltas arrived
 # in; one whose delta names no index, or an index past the end, goes after every other item.

@@ -84,6 +84,11 @@ pub struct StreamDecoding {
 /// This is the incremental decoder the client drives payload by payload, fed the whole
 /// sequence at once: the events and the result are the ones a live caller would get. Like the
 /// client, it reads nothing after the first terminal object.
+///
+/// It checks the turn against no request, so every turn it returns is one the client would hand
+/// over unless that check refused it. A turn whose shown text replaced a server's own text ends
+/// its events with the `shown-text-kept` warning, where the client emits it once that check has
+/// passed.
 pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
     let mut decoder = Decoder::new(binding);
     for payload in payloads {
@@ -97,7 +102,22 @@ pub fn decode_stream(binding: &Binding, payloads: &[Value]) -> StreamDecoding {
             break;
         }
     }
-    decoder.finish()
+    let (mut decoding, kept) = decoder.finish();
+    if kept {
+        decoding.events.push(shown_text_kept());
+    }
+    decoding
+}
+
+/// The warning that a returned turn carries the text the caller was shown where the server's own
+/// final text for that message differed. Fixed: it quotes neither text.
+pub(crate) fn shown_text_kept() -> StreamEvent {
+    StreamEvent::Warning {
+        code: SHOWN_TEXT_KEPT.to_owned(),
+        message: "a message's final text differed from the text shown for it; the shown text was \
+                  kept"
+            .to_owned(),
+    }
 }
 
 /// One stream decoded payload by payload.
@@ -113,8 +133,8 @@ pub(crate) struct Decoder<'a> {
     /// the deltas named, in order of first delta. Each is the text of the message the turn
     /// carries for that item, or a message of its own when the turn carries none (row R36).
     shown: Vec<ShownText>,
-    /// The `id` of every message among `streamed`, absent where the message named none.
-    streamed_messages: Vec<Option<String>>,
+    /// Where every message among `streamed` sits, in order.
+    streamed_messages: Vec<Placed>,
     /// `item_id` -> `call_id`, so an arguments delta can name the call a reader is watching.
     calls: BTreeMap<String, CallId>,
     /// Every call the caller was told about, in announcement order. The outcome must carry each
@@ -148,8 +168,47 @@ struct Terminal {
 /// The text deltas of one output item, as the caller was shown them.
 struct ShownText {
     item_id: Option<String>,
+    /// The `output_index` its first delta named.
     output_index: Option<u64>,
     text: String,
+}
+
+/// Where one message the turn carries sits: the `id` it names, and its `output_index`, which is
+/// its position in the terminal `output` or the index its `response.output_item.done` named.
+struct Placed {
+    id: Option<String>,
+    output_index: Option<u64>,
+}
+
+/// One way shown text and a message can be found to be the same output item.
+type Pairing = fn(&ShownText, &Placed) -> bool;
+
+impl ShownText {
+    /// The pairings, strongest first: each one is tried for every shown text before the next.
+    const PAIRINGS: [Pairing; 3] = [Self::same_id, Self::same_index, Self::not_told_apart];
+
+    /// Both name the same `id`.
+    fn same_id(&self, message: &Placed) -> bool {
+        self.item_id.is_some() && self.item_id == message.id
+    }
+
+    /// Both name the same `output_index`, and no `id` tells them apart.
+    fn same_index(&self, message: &Placed) -> bool {
+        self.output_index.is_some()
+            && self.output_index == message.output_index
+            && self.not_told_apart(message)
+    }
+
+    /// No coordinate both sides name tells them apart: two different ids, or two different
+    /// indexes, are two items.
+    fn not_told_apart(&self, message: &Placed) -> bool {
+        let ids = matches!((&self.item_id, &message.id), (Some(shown), Some(id)) if shown != id);
+        let indexes = matches!(
+            (self.output_index, message.output_index),
+            (Some(shown), Some(index)) if shown != index
+        );
+        !ids && !indexes
+    }
 }
 
 impl<'a> Decoder<'a> {
@@ -207,7 +266,10 @@ impl<'a> Decoder<'a> {
                                 self.unmodelled.push(decoded.clone());
                             }
                             if matches!(decoded, Item::AssistantText { .. }) {
-                                self.streamed_messages.push(message_id(item));
+                                self.streamed_messages.push(Placed {
+                                    id: message_id(item),
+                                    output_index: event.get("output_index").and_then(Value::as_u64),
+                                });
                             }
                             if let Err(error) = self.push_streamed(decoded) {
                                 self.defer(error);
@@ -268,28 +330,39 @@ impl<'a> Decoder<'a> {
 
     /// Decides the turn from everything read. The events are the ones produced since the last
     /// [`Decoder::take_events`], deciding the turn included.
-    pub(crate) fn finish(mut self) -> StreamDecoding {
-        let result = self.terminate();
-        StreamDecoding {
+    ///
+    /// The flag says whether the returned turn carries shown text where the server's own text for
+    /// that message differed. It is not an event here: the caller is told with
+    /// [`shown_text_kept`] only about a turn it is handed, so the client emits it after checking
+    /// the turn against the request, as it emits the advisory warning.
+    pub(crate) fn finish(mut self) -> (StreamDecoding, bool) {
+        let (result, kept) = match self.terminate() {
+            Ok((outcome, kept)) => (Ok(outcome), kept),
+            Err(error) => (Err(error), false),
+        };
+        let decoding = StreamDecoding {
             events: self.events,
             result,
-        }
+        };
+        (decoding, kept)
     }
 
-    /// Records text the caller is being shown, under the output item the delta names.
+    /// Records text the caller is being shown, under the output item the delta names: its
+    /// `item_id`, or, for a delta that names no item, its `output_index`. Deltas at two indexes
+    /// are two items whether or not they name one.
     fn show(&mut self, event: &Value, text: &str) {
         let item_id = string(event.get("item_id"));
-        if let Some(shown) = self
-            .shown
-            .iter_mut()
-            .find(|shown| shown.item_id.as_deref() == item_id)
-        {
+        let output_index = event.get("output_index").and_then(Value::as_u64);
+        if let Some(shown) = self.shown.iter_mut().find(|shown| match item_id {
+            Some(_) => shown.item_id.as_deref() == item_id,
+            None => shown.item_id.is_none() && shown.output_index == output_index,
+        }) {
             shown.text.push_str(text);
             return;
         }
         self.shown.push(ShownText {
             item_id: item_id.map(str::to_owned),
-            output_index: event.get("output_index").and_then(Value::as_u64),
+            output_index,
             text: text.to_owned(),
         });
     }
@@ -300,11 +373,15 @@ impl<'a> Decoder<'a> {
     /// A shown delta is final (`StreamEvent`): a caller may already have spoken it, so the turn
     /// it gets back carries what it was shown, not what the server finished with. This one pass
     /// covers both ways a server's message reaches `items`: in the terminal `output`, or streamed
-    /// through `response.output_item.done` before an empty one. `carried` holds the `id` of
-    /// every message in `items`, in order. Shown text is paired with a message by `id` where both
-    /// name one, and otherwise by order: the first unpaired message that does not name another
-    /// item. A paired message takes the shown text, and one that carried other text is reported;
-    /// a message no text was shown for keeps the server's.
+    /// through `response.output_item.done` before an empty one. `carried` places every message
+    /// in `items`, in order.
+    ///
+    /// Shown text is paired with a message by `id` where both name one; then by `output_index`
+    /// where both name one; then, only where neither coordinate tells them apart (one side names
+    /// neither an id nor an index the other names), by order. Two sides that name different ids,
+    /// or different indexes, are two items and never pair. A paired message takes the shown text,
+    /// and one that carried other text is reported; a message no text was shown for keeps the
+    /// server's.
     ///
     /// Shown text no message is paired with is kept as a message of its own (R36): a server that
     /// streams a message only as deltas and then completes with an empty `output`, as the Codex
@@ -312,37 +389,29 @@ impl<'a> Decoder<'a> {
     /// arrive. Kept messages are placed by `output_index`, ascending and stable among equal
     /// indexes, whatever order their first deltas arrived in; one without an index goes after
     /// every other item.
-    fn keep_shown_text(&mut self, items: &mut Vec<Item>, carried: &[Option<String>]) -> bool {
+    fn keep_shown_text(&mut self, items: &mut Vec<Item>, carried: &[Placed]) -> bool {
         let shown: Vec<ShownText> = std::mem::take(&mut self.shown)
             .into_iter()
             .filter(|shown| !shown.text.is_empty())
             .collect();
-        // Where each message sits in `items`, beside the `id` it names.
-        let messages: Vec<(usize, Option<&str>)> = items
+        // Where each message sits in `items`, beside where the wire placed it.
+        let messages: Vec<(usize, &Placed)> = items
             .iter()
             .enumerate()
             .filter(|(_, item)| matches!(item, Item::AssistantText { .. }))
             .map(|(at, _)| at)
-            .zip(carried.iter().map(Option::as_deref))
+            .zip(carried)
             .collect();
         let mut taken = vec![false; messages.len()];
         let mut pairs: Vec<Option<usize>> = vec![None; shown.len()];
-        for (pair, text) in pairs.iter_mut().zip(&shown) {
-            if let Some(item_id) = text.item_id.as_deref() {
-                *pair = (0..messages.len())
-                    .find(|&index| !taken[index] && messages[index].1 == Some(item_id));
-                if let Some(index) = *pair {
-                    taken[index] = true;
-                }
-            }
-        }
-        for (pair, text) in pairs.iter_mut().zip(&shown) {
-            if pair.is_none() {
-                *pair = (0..messages.len()).find(|&index| {
-                    !taken[index] && (messages[index].1.is_none() || text.item_id.is_none())
-                });
-                if let Some(index) = *pair {
-                    taken[index] = true;
+        for pairing in ShownText::PAIRINGS {
+            for (pair, text) in pairs.iter_mut().zip(&shown) {
+                if pair.is_none() {
+                    *pair = (0..messages.len())
+                        .find(|&index| !taken[index] && pairing(text, messages[index].1));
+                    if let Some(index) = *pair {
+                        taken[index] = true;
+                    }
                 }
             }
         }
@@ -379,7 +448,8 @@ impl<'a> Decoder<'a> {
         }
     }
 
-    fn terminate(&mut self) -> Result<TurnOutcome, Error> {
+    /// The turn, and whether shown text replaced a server's own text in it.
+    fn terminate(&mut self) -> Result<(TurnOutcome, bool), Error> {
         let deferred = self.deferred.take();
         let Some(terminal) = self.terminal.take() else {
             // Not a sentinel and not end of stream: this wire's terminal truth is an object, and
@@ -410,10 +480,13 @@ impl<'a> Decoder<'a> {
             Some(output) if !output.is_empty() || self.streamed.is_empty() => {
                 let mut decoded = Vec::with_capacity(output.len());
                 let mut carried = Vec::new();
-                for value in output {
+                for (position, value) in output.iter().enumerate() {
                     let item = self.output_item(value).map_err(retain)?;
                     if matches!(item, Item::AssistantText { .. }) {
-                        carried.push(message_id(value));
+                        carried.push(Placed {
+                            id: message_id(value),
+                            output_index: u64::try_from(position).ok(),
+                        });
                     }
                     decoded.push(item);
                 }
@@ -450,22 +523,13 @@ impl<'a> Decoder<'a> {
                 "a finished function call contradicts its announcement",
             )));
         }
-        // Once, and only for a turn that is returned: the caller is told before it holds the turn
-        // that the text it carries is the shown text and not the server's own.
-        if replaced {
-            self.events.push(StreamEvent::Warning {
-                code: SHOWN_TEXT_KEPT.to_owned(),
-                message: "a message's final text differed from the text shown for it; the shown \
-                          text was kept"
-                    .to_owned(),
-            });
-        }
         let has_tool_calls = items.iter().any(|item| item.as_tool_call().is_some());
-        Ok(TurnOutcome {
+        let outcome = TurnOutcome {
             stop_reason: stop_reason(&terminal, has_tool_calls),
             items,
             observation,
-        })
+        };
+        Ok((outcome, replaced))
     }
 
     /// Attaches the only evidence there is when nothing terminal has arrived: the binding itself.

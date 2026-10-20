@@ -317,20 +317,25 @@ An empty `output` with nothing streamed stays an empty turn, and a forced tool t
 called is then refused by `TurnOutcome::validate_for`.
 
 **The turn's text is the text the caller was shown.** Text shown through
-`response.output_text.delta` belongs to the output item its `item_id` names, and every delta is
-final (`docs/design.md` "Streamed events are final"). So each such item's text in the turn is its
-deltas in arrival order, whatever the server finished with. Shown text is paired with a message the
-turn carries, from the terminal `output` or the streamed items, by `id` where both name one, and
-otherwise by order: a message or a delta that names no item pairs with the first unpaired one that
-does not name another.
+`response.output_text.delta` belongs to the output item its `item_id` names, or, for a delta that
+names no item, to the item at its `output_index`; every delta is final (`docs/design.md` "Streamed
+events are final"). So each such item's text in the turn is its deltas in arrival order, whatever
+the server finished with. Shown text is paired with a message the turn carries, from the terminal
+`output` or the streamed items: by `id` where both name one; then by `output_index` where both name
+one (a message's position in the terminal `output`, or the index its `response.output_item.done`
+named); then by order, only where no coordinate both sides name tells them apart. A message and
+shown text that name different ids, or different indexes, are two items and never pair, so a
+message no delta showed keeps the server's text, with no warning, wherever it sits.
 
 This is the one protocol where the turn's text can differ from what was shown, by two routes: a
 terminal `output` whose message carries other text than its deltas, or an empty terminal `output`
 after a `response.output_item.done` message that does. Either way the message takes the shown text,
-and the caller is shown one `shown-text-kept` warning after every delta and before the turn is
-returned; its message is fixed and quotes neither text. Whether a real server ever sends final text
-that differs from its deltas is not known: no recorded Responses stream was found to check it
-against. A message no delta showed keeps the server's text, with no warning.
+and the client tells the caller with one `shown-text-kept` warning once the turn has passed its
+checks against the request, before any `advisory-omitted` warning and before the turn is returned.
+A turn the client refuses, a forced tool never called for example, carries none. The warning's
+message is fixed and quotes neither text. `decode_stream`, which checks no request, ends its
+events with it. Whether a real server ever sends final text that differs from its deltas is not
+known: no recorded Responses stream was found to check it against.
 
 Shown text no message is paired with is kept as an assistant message of its own (row R36), with no
 warning. Kept messages are placed by the `output_index` of their first delta, ascending and stable

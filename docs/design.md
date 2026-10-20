@@ -54,8 +54,10 @@ history a caller stores is the text it showed. A message no delta was shown for 
 the server sent.
 
 Where a server's own final text for a message differs from the deltas it streamed, the decoder
-keeps the shown text and emits `StreamEvent::Warning` with the fixed code `shown-text-kept`
-(`llm_core::SHOWN_TEXT_KEPT`) before the outcome is returned. Its message is fixed and quotes
+keeps the shown text, and the client emits `StreamEvent::Warning` with the fixed code
+`shown-text-kept` (`llm_core::SHOWN_TEXT_KEPT`) once the turn has passed its checks against the
+request and before the outcome is returned, as it emits `advisory-omitted`: a warning about a turn
+is for a turn the caller is handed, so a refused turn carries none. Its message is fixed and quotes
 neither text. The other answers, and why they were not taken:
 
 | Option | Why not |
