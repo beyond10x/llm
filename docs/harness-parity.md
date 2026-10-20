@@ -306,6 +306,7 @@ retriable, so through the bridge each gets one attempt.
 | `llm_core::Capabilities` | gains `output_streaming` and `input_during_output` (`story:capabilities-declare-streaming`); a document without them reads as `true` and `false` | the full struct literal `llm_port.rs:286`-`297` | add `output_streaming: true, input_during_output: false`, or end the literal with `..Capabilities::text(…)`. A binding that declares `output_streaming: false` or `input_during_output: true` is refused |
 | `llm_core::Item::ToolResult` | no change (`story:tool-result-rejected-or-failed` documents a rejected call as `failed: true` without changing `Item`) | `llm_port.rs:479`-`487`, `:568`-`577` | nothing |
 | `llm_messages` response decoding (0.8.1) | `container` and `stop_details` on a message and on `message_delta.delta`, `diagnostics`, `usage.speed`, and a `tool_use` block's `toolset_name` and `caller: {"type":"direct"}` are accepted in their documented empty shapes and not consumed; a refusal's `stop_details` is refused (`docs/messages.md` "Usage") | none | nothing: a Messages turn 0.8.0 refused with `Unsupported` at `message_start.message.container` decodes, with no signature change |
+| `llm_messages` usage decoding (row M25, below) | with `cache_creation_input_tokens` absent, a `cache_creation` breakdown that reports both of its counts gives the cache-write count, their sum, and with it the inclusive `Usage::input_tokens` (`docs/messages.md` "Usage") | none | nothing: a turn whose usage carries no breakdown, as every emulator turn's does, keeps the total unknown |
 
 Rows R28 and M27 (`story:retry-classes-harness-retried`; llm lines at this branch, not at 0.7.0,
 and the provider documentation in `docs/design.md` "Provider failures retried before output"):
@@ -424,6 +425,32 @@ Row R36 (`story:text-deltas-are-final`; llm lines at this branch, not at 0.7.0):
   `deltas_naming_neither_item_nor_index_do_not_put_two_messages_text_into_the_first` `:191`, and
   `a_message_no_delta_showed_keeps_its_text_when_the_deltas_name_no_index` `:218`. The row stays
   covered.
+
+Row M25 (`story:messages-input-total-derived-from-what-llm-observed`; llm lines at this branch,
+not at 0.7.0):
+
+- **M25.** With `cache_creation_input_tokens` absent, llm takes the cache-write count from the
+  `cache_creation` breakdown when it reports both `ephemeral_1h_input_tokens` and
+  `ephemeral_5m_input_tokens`, and the inclusive total follows: `Snapshot::update`
+  `llm-messages/src/usage.rs:64`-`77`, `Snapshot::normalized` `:109`-`128`. The contract is
+  Anthropic's API reference, quoted with its lines in `docs/messages.md` "Usage". An absent or
+  partial breakdown leaves both unknown, and a reported count outranks the breakdown. **This does
+  not reach the Harness emulator.** `fake_messages.py` sends no `cache_creation` object in any
+  scenario, at the spike (`spike/builds-on-llm-0.1.7` `8989d138`,
+  `crates/harness-cli/tests/fixtures/fake_messages.py:69`-`78`, where `usage_object` leaves
+  `cache_creation_input_tokens` out unless a caller passes it, and none does) or on Harness `main`
+  (`f0870131`, `:76`-`87`). Harness closed the reported gap on its own side: since `36a587c5` the
+  emulator sends `cache_creation_input_tokens: 0` by default and leaves it out only in scenario
+  `absent-cache-write` (`:827`-`834`), whose turn still files no usage and no cost through llm.
+  No upstream is known to send the breakdown without the count. Tests:
+  `a_complete_cache_breakdown_gives_an_absent_write_count_and_the_inclusive_total`
+  `llm-messages/tests/streaming.rs:470`,
+  `a_write_count_reported_after_a_breakdown_replaces_the_derived_one` `:523`,
+  `an_absent_or_partial_cache_breakdown_leaves_the_write_count_and_the_total_unknown` `:541` and
+  `a_derived_write_count_that_goes_backwards_or_contradicts_a_reported_one_is_refused` `:580`.
+  `each_component_of_the_inclusive_input_absent_in_turn_leaves_it_unknown`
+  `llm-messages/tests/adversary_streaming.rs:137` is unchanged: its usage carries no breakdown.
+  The row stays covered.
 
 ## Gaps
 

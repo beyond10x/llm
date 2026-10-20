@@ -442,6 +442,165 @@ async fn a_five_minute_cache_breakdown_that_contradicts_its_total_is_refused() {
     assert_eq!(outcome.expect_err("refused").code, ErrorCode::Protocol);
 }
 
+/// A complete message answering one text turn with `usage`.
+fn answered_with(usage: Value) -> Value {
+    let mut message = json!({"id":"msg_014a","type":"message","role":"assistant",
+        "model":"example-model-20260201","content":[{"type":"text","text":"Hello"}],
+        "stop_reason":"end_turn","stop_sequence":null});
+    message["usage"] = usage;
+    message
+}
+
+/// 11 fresh, 4 read and 8 output tokens, `cache_creation` set to `breakdown`, and no
+/// `cache_creation_input_tokens`: the one counter the Harness spike's emulator left out.
+fn without_the_write_count(breakdown: Option<Value>) -> Value {
+    let mut usage = json!({"input_tokens":11,"cache_read_input_tokens":4,"output_tokens":8});
+    if let Some(breakdown) = breakdown {
+        usage["cache_creation"] = breakdown;
+    }
+    usage
+}
+
+/// Anthropic's API reference (`docs/messages.md` "Usage") documents the total input as the sum of
+/// `input_tokens`, `cache_creation_input_tokens` and `cache_read_input_tokens`, and
+/// `cache_creation` as the cache write broken down by TTL. With the write count itself absent, a
+/// breakdown that reports both of its counts is that count, so the inclusive total is known:
+/// 11 fresh + 4 read + (0 + 6) written.
+#[tokio::test]
+async fn a_complete_cache_breakdown_gives_an_absent_write_count_and_the_inclusive_total() {
+    let derived = Usage {
+        input_tokens: Some(21),
+        output_tokens: Some(8),
+        cached_input_tokens: Some(4),
+        cache_creation_input_tokens: Some(6),
+        reasoning_output_tokens: None,
+    };
+    let usage = without_the_write_count(Some(
+        json!({"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":6}),
+    ));
+    let whole = decode_message(
+        &answered_with(usage.clone()),
+        &request(),
+        binding().provenance(),
+    )
+    .expect("decoded");
+    assert_eq!(
+        whole.observation.usage,
+        Some(derived.clone()),
+        "a complete message"
+    );
+
+    // As the route streams it: the breakdown on `message_start`, then a `message_delta` whose
+    // usage has no breakdown field at all (`MessageDeltaUsage`).
+    let mut start = usage.clone();
+    start["output_tokens"] = json!(1);
+    let (streamed, _) = decode(&text_turn(start, json!({"output_tokens":8}))).await;
+    let streamed = streamed.expect("decoded");
+    assert!(streamed.observation.final_usage);
+    assert_eq!(
+        streamed.observation.usage,
+        Some(derived.clone()),
+        "the breakdown on message_start"
+    );
+
+    // The same breakdown arriving only on the terminal `message_delta` is read the same way.
+    let (late, _) = decode(&text_turn(
+        json!({"input_tokens":11,"cache_read_input_tokens":4,"output_tokens":1}),
+        usage,
+    ))
+    .await;
+    assert_eq!(
+        late.expect("decoded").observation.usage,
+        Some(derived),
+        "the breakdown on message_delta"
+    );
+}
+
+/// Usage is cumulative and a reported write count outranks a derived one: a later event that
+/// reports `cache_creation_input_tokens` replaces the count the breakdown gave, as any later report
+/// replaces an earlier one.
+#[tokio::test]
+async fn a_write_count_reported_after_a_breakdown_replaces_the_derived_one() {
+    let (outcome, _) = decode(&text_turn(
+        json!({"input_tokens":11,"cache_read_input_tokens":4,"output_tokens":1,
+            "cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":6}}),
+        json!({"input_tokens":11,"cache_read_input_tokens":4,
+            "cache_creation_input_tokens":7,"output_tokens":8}),
+    ))
+    .await;
+    let usage = outcome.expect("decoded").observation.usage.expect("usage");
+    assert_eq!(usage.cache_creation_input_tokens, Some(7));
+    assert_eq!(usage.input_tokens, Some(22));
+}
+
+/// The other way: a breakdown that is absent, null, or missing either of its counts does not say
+/// what was written, so the write count and the inclusive total stay unknown, never zero, and the
+/// counters that were reported are kept. Each count is documented `default: 0`; a documented
+/// default is not an observation.
+#[tokio::test]
+async fn an_absent_or_partial_cache_breakdown_leaves_the_write_count_and_the_total_unknown() {
+    for breakdown in [
+        None,
+        Some(json!(null)),
+        Some(json!({})),
+        Some(json!({"ephemeral_5m_input_tokens":6})),
+        Some(json!({"ephemeral_1h_input_tokens":0})),
+        Some(json!({"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":null})),
+        Some(json!({"ephemeral_1h_input_tokens":null,"ephemeral_5m_input_tokens":6})),
+    ] {
+        let usage = without_the_write_count(breakdown.clone());
+        let whole = decode_message(
+            &answered_with(usage.clone()),
+            &request(),
+            binding().provenance(),
+        )
+        .unwrap_or_else(|error| panic!("{breakdown:?}: {error:?}"));
+        let (streamed, _) = decode(&text_turn(usage, json!({"output_tokens":8}))).await;
+        let streamed = streamed.unwrap_or_else(|error| panic!("{breakdown:?}: {error:?}"));
+        for (how, outcome) in [("a complete message", whole), ("a stream", streamed)] {
+            let usage = outcome
+                .observation
+                .usage
+                .expect("the reported counters are kept");
+            assert_eq!(
+                usage.cache_creation_input_tokens, None,
+                "{how}, {breakdown:?}"
+            );
+            assert_eq!(usage.input_tokens, None, "{how}, {breakdown:?}");
+            assert_eq!(usage.cached_input_tokens, Some(4), "{how}, {breakdown:?}");
+            assert_eq!(usage.output_tokens, Some(8), "{how}, {breakdown:?}");
+        }
+    }
+}
+
+/// A derived write count is a cumulative counter like a reported one: a later breakdown that sums
+/// to less is refused rather than lowering the total. A breakdown that contradicts a write count
+/// an earlier event reported is still refused, as it was before the derivation.
+#[tokio::test]
+async fn a_derived_write_count_that_goes_backwards_or_contradicts_a_reported_one_is_refused() {
+    let backwards = decode(&text_turn(
+        json!({"input_tokens":11,"cache_read_input_tokens":4,"output_tokens":1,
+            "cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":6}}),
+        json!({"output_tokens":8,
+            "cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":2}}),
+    ))
+    .await
+    .0;
+    assert_eq!(backwards.expect_err("refused").code, ErrorCode::Protocol);
+    let contradicting = decode(&text_turn(
+        json!({"input_tokens":11,"cache_read_input_tokens":4,
+            "cache_creation_input_tokens":6,"output_tokens":1}),
+        json!({"output_tokens":8,
+            "cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":8}}),
+    ))
+    .await
+    .0;
+    assert_eq!(
+        contradicting.expect_err("refused").code,
+        ErrorCode::Protocol
+    );
+}
+
 #[tokio::test]
 async fn a_charged_server_tool_use_is_refused_and_an_unused_one_is_not() {
     let charged = decode(&text_turn(

@@ -167,6 +167,26 @@ component is unknown the inclusive total stays unknown rather than collapsing to
 A counter the route never reported is absent. It is never zero, and a configured model name never
 fills in an unreported serving model.
 
+**The cache-write count is also known from its breakdown.** Anthropic's API reference
+(`https://platform.claude.com/docs/en/api/messages.md`, read 2026-10-20) documents a message's
+`usage` this way: "Total input tokens in a request is the summation of `input_tokens`,
+`cache_creation_input_tokens`, and `cache_read_input_tokens`" (line 4119);
+`cache_creation_input_tokens` is "number or null" (lines 4137-4141); and `cache_creation`,
+"Breakdown of cached tokens by TTL", holds `ephemeral_1h_input_tokens` and
+`ephemeral_5m_input_tokens`, each "default: 0" (lines 4121-4135). So with
+`cache_creation_input_tokens` absent or `null` and a breakdown that reports both of its counts,
+the write count is their sum, and the inclusive total is known when `input_tokens` and
+`cache_read_input_tokens` are reported too. A breakdown that is absent, `null` or missing either
+count leaves the write count and the total unknown: a documented default is not an observation. A
+reported `cache_creation_input_tokens`, in the same event or a later one, outranks the breakdown;
+a breakdown that contradicts a write count already reported is refused, and one that sums to less
+than an earlier breakdown is refused as any counter that goes backwards is. In a stream the
+documented place for the breakdown is `message_start`, because a `message_delta`'s usage
+(`MessageDeltaUsage`, lines 4255-4300) has no `cache_creation`; one that arrives there anyway is
+read the same way. No upstream is known to send the breakdown without the count. The one known to
+omit the count, the Harness spike's Messages emulator, sends no breakdown either, so its total
+stays unknown ([parity row M25](harness-parity.md#what-the-next-llm-release-changes-for-the-bridge)).
+
 One-hour cache creation and any nonzero server-tool use are outside this first pricing subset and
 are refused rather than approximated. A five-minute breakdown that contradicts its own total is
 refused.
