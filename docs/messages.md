@@ -211,6 +211,12 @@ binding's (`x-api-key` or `Authorization`), never inferred from the protocol. Ev
 `anthropic-version: 2023-06-01`, a constant rather than a setting. Diagnostics are fixed: a status
 or a reported upstream failure contributes its category, never its response text.
 
+A stream `error` of type `overloaded_error` (`unavailable`) or `api_error` (`transport`) is
+retriable when no payload but `message_start` and `ping` came before it. After any other payload
+it is final, a block that opened without showing anything included. Every other type is final,
+`rate_limit_error` included, because on this route it may be a spend cap. The provider lines this
+rests on are in [design.md](design.md#provider-failures-retried-before-output).
+
 A turn carrying hints this wire omits ends, once it has succeeded, with one `StreamEvent::Warning`
 of code `advisory-omitted` naming them (`llm_core::advisory_warning`, wire name `Messages`). Never
 before or during the turn, because a warning on the sink is visible output and ends fallback

@@ -398,9 +398,13 @@ A provider failure is classified from its machine-readable code alone:
 | anything else, or absent | `Refused` |
 
 Only these codes are widened beyond refusal, because they describe the far side's
-own state. `server_is_overloaded` also marks the failure retriable. The client clears that mark
-after any prior output payload, including an opening item that emitted no visible event; a caller
-may retry the identical request only before output. The client itself still makes one attempt.
+own state, and each of the three also marks the failure retriable. The decoder sets that mark only
+when nothing but `response.created`, `response.in_progress`, `response.queued` and `keepalive`
+came before the failure. An opening item that emitted no visible event counts as output, so a
+caller may retry the identical request only before output. Every other code is
+final, an exhausted quota (`insufficient_quota`) or spend limit included. The provider lines this
+rests on are in [design.md](design.md#provider-failures-retried-before-output). The client itself
+still makes one attempt.
 **The provider's message is never relayed.** Diagnostics are fixed strings this
 crate wrote; an upstream string relayed into a diagnostic is how a prompt or a credential
 eventually reaches a log. `incomplete_details.reason` is treated the same way: it is kept when it

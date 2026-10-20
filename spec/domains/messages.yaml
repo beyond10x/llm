@@ -170,6 +170,14 @@ commands:
           llm.messages.Inspected:
             accepted: {generated: true}
         summary: Observe actual shared request projection or ingress under the fixture Messages binding.
+  # A stream `error` event is a failure with accepted dispatch and a fixed diagnostic that carries
+  # no provider prose. Provider failures retried before output
+  # (story:retry-classes-harness-retried): `overloaded_error` (`unavailable`) and `api_error`
+  # (`transport`) permit another identical attempt only when no payload but `message_start` and
+  # `ping` came before them; after any other payload, including a content block that opens
+  # without showing anything, they are final. Every other error type is final,
+  # `rate_limit_error` included. Retriability is held by the crate's tests
+  # (`crates/llm-messages/tests/retry_class.rs`); this view does not carry it.
   - name: llm.messages.DecodeStream
     input:
       - {name: request_json, type: String}

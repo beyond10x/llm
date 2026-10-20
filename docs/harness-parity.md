@@ -306,14 +306,46 @@ retriable, so through the bridge each gets one attempt.
 | `llm_core::Capabilities` | gains `output_streaming` and `input_during_output` (`story:capabilities-declare-streaming`); a document without them reads as `true` and `false` | the full struct literal `llm_port.rs:286`-`297` | add `output_streaming: true, input_during_output: false`, or end the literal with `..Capabilities::text(…)`. A binding that declares `output_streaming: false` or `input_during_output: true` is refused |
 | `llm_core::Item::ToolResult` | no change (`story:tool-result-rejected-or-failed` documents a rejected call as `failed: true` without changing `Item`) | `llm_port.rs:479`-`487`, `:568`-`577` | nothing |
 
+Rows R28 and M27 (`story:retry-classes-harness-retried`; llm lines at this branch, not at 0.7.0,
+and the provider documentation in `docs/design.md` "Provider failures retried before output"):
+
+- **R28.** A Responses `server_error` (`Unavailable`) or `rate_limit_exceeded` (`RateLimited`),
+  whether a top-level `error` or inside `response.failed`, is retriable before any output and final
+  after any payload but `response.created`, `response.in_progress`, `response.queued` and
+  `keepalive`, as `server_is_overloaded` already was at 0.7.0. The code is `provider_failure`
+  `llm-responses/src/stream.rs:744`, and the mark is set at `:774`. Tests:
+  `a_transient_failure_before_output_is_retriable_without_provider_prose`
+  `llm-responses/tests/retry_class.rs:270`,
+  `a_transient_failure_after_visible_or_silent_output_is_final` `:291`, and
+  `an_exhausted_quota_or_spend_limit_stays_final_before_output` `:320`. An exhausted quota
+  (`insufficient_quota`) stays a final `Refused`. The bridge keeps `may_retry`
+  (`llm_port.rs:622`-`627`), so Harness's loop retries both classes before output again, as its
+  wire did. The bridge's code mapping does not change.
+- **M27.** A Messages `overloaded_error` (`Unavailable`) or `api_error` (`Transport`) stream error
+  is retriable when no payload but `message_start` and `ping` came before it. After any other
+  payload, a block that opened empty included, it is final. The code is `stream_error`
+  `llm-messages/src/decode.rs:733`, the mark is set at `:777`, and the payloads that do not count
+  are at `:217`. Tests:
+  `overloaded_and_api_errors_before_output_are_retriable_without_provider_prose`
+  `llm-messages/tests/retry_class.rs:121`,
+  `overloaded_and_api_errors_after_visible_or_silent_output_are_final` `:140`, and
+  `every_other_stream_error_stays_final_before_output` `:168`. `rate_limit_error` stays final.
+  The bridge passes `may_retry` on, so Harness's loop retries both before output again. llm still
+  reads `overloaded_error` as `Unavailable`, where Harness had `RateLimited`.
+- For both rows, routing retries such a failure on its target and then falls back only in the
+  declared compatible order. Unmarked, as after silent output, the failure halts. An
+  `unauthorized` failure halts whatever its mark:
+  `a_provider_failure_marked_before_output_falls_back_in_the_declared_order_and_unmarked_halts`
+  `llm-routing/tests/fallback.rs:497`.
+
 ## Gaps
 
 One line per `gap` or `partial` row, phrased as a story title.
 
 - R35: llm keeps a streamed call when the terminal `output` is empty, deliberately (`story:codex-stream`); no llm change: Harness test `lib.rs:865` asserts the opposite and changes when Harness builds on llm
 - R45: llm refuses a forced tool choice answered in prose, deliberately; no llm change: Harness's port maps the refusal to `unstructured`, and `a_run_asked_for_a_schema_that_answers_in_prose_stops_without_an_answer` waits on that mapping, not on llm
-- R28: a Responses `server_error` or `rate_limit_exceeded` failure before any output is retriable, as Harness's wire had it, or is final by a recorded decision; not decided here
-- M27: a Messages `overloaded_error` or `api_error` stream error before any output is retriable, as Harness's wire had it, or is final by a recorded decision; not decided here
+- R28: Harness builds on the llm release that retries a Responses `server_error` or `rate_limit_exceeded` failure before any output and keeps it final after (decided and built by `story:retry-classes-harness-retried`, see "What the next llm release changes for the bridge"); `partial` at 0.7.0, the tag this record cites
+- M27: Harness builds on the llm release that retries a Messages `overloaded_error` or `api_error` stream error before any output and keeps it final after (decided and built by `story:retry-classes-harness-retried`, see "What the next llm release changes for the bridge"); `partial` at 0.7.0, the tag this record cites
 
 ## Counts
 

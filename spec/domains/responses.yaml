@@ -35,12 +35,15 @@ domain: llm.responses
 # the caller's sink is never retried, sees the same events live; the client's rule is the
 # stricter of the two and covers a payload that produced output without a visible event.
 #
-# Provider overload. The exact machine code `server_is_overloaded`, whether on a top-level
-# `error` or inside `response.failed`, is `unavailable`, with accepted dispatch and no provider
-# prose in its diagnostic. It permits another identical attempt only before output: the client
-# clears retriability after any prior payload outside the lifecycle-only set above, including an
-# opening item that emits no sink event. Unknown codes and actual refusals remain non-retriable.
-# The client still makes one attempt; routing or the caller owns any bounded retry policy.
+# Provider failures retried before output (story:retry-classes-harness-retried). The exact
+# machine codes `server_is_overloaded` and `server_error`, whether on a top-level `error` or
+# inside `response.failed`, are `unavailable`; `rate_limit_exceeded` is `rate-limited`. Each has
+# accepted dispatch and no provider prose in its diagnostic. Each permits another identical
+# attempt only before output: the decoder marks it retriable only when no payload outside the
+# lifecycle-only set above came before it, including an opening item that emits no sink event.
+# Unknown codes, an exhausted quota or spend limit (`insufficient_quota` and the other billing
+# codes) and actual refusals remain non-retriable. The client still makes one attempt; routing
+# or the caller owns any bounded retry policy.
 #
 # Kept text (row R36). The caller was shown text through `response.output_text.delta`, one
 # output item per `item_id`; for deltas that name no item, per `output_index`; for deltas that
