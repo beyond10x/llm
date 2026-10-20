@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:tool-result-rejected-or-failed
 kind: story
-status: active
+status: implemented
 title: A rejected tool call has one documented encoding, and Chat ingress reads a failed result back as failed
 summary: 'No wire carries a rejected state; document failed: true with the reason in output, and fix Chat ingress reading every tool message as succeeded'
 relations:
@@ -37,10 +37,11 @@ scope:
   path: website/data/status.json
 - confidence: inferred
   path: website/docs/status.mdx
-revision: 9
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T01:03:34Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T01:03:34Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T04:49:35Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 

@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T03:28:34Z",
+  "actor": "human:timo",
+  "artifact": "story:text-deltas-are-final",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-responses --test live_stream --test adversary_w09_shown_text --test adversary_w09_pass2 -p b10x-llm-messages --test streaming --test adversary_w09_opening_text",
+    "reference": "VERIFIED: base 0d444964 red (live_stream 2 failed: outcome carried the server's text not the shown deltas; streaming 1 failed: opening text not shown), ~/.cache/llm-w09/deltas/scratch/red-*.log; unit green, scratch/gate/"
+  }
+}

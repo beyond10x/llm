@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T02:32:35Z",
+  "actor": "human:timo",
+  "artifact": "story:harness-cutover-on-llm-0-7",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "~/.cache/llm-w09/harness/scratch/reanchor <tree> 0.7.0 --against 787ac412 --hand hand-record.txt",
+    "reference": "VERIFIED: base 787ac412 SUMMARY moved=272 changed=26 unresolved=1 exit 1 (scratch/before.txt); unit SUMMARY moved=0 changed=0 unresolved=0 unexpected=0 exit 0 (scratch/r2-final.txt)"
+  }
+}

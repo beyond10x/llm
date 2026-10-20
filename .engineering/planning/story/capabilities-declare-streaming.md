@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:capabilities-declare-streaming
 kind: story
-status: active
+status: implemented
 title: A model's declaration says whether its output streams and whether input can reach a running turn
 summary: Capabilities cannot declare output streaming or input during output; a graph node over Model cannot schedule from the declaration
 relations:
@@ -91,10 +91,11 @@ scope:
   path: website/docs/reference/formats.md
 - confidence: inferred
   path: website/docs/status.mdx
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T04:49:34Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Context
 

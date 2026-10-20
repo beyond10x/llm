@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:text-deltas-are-final
 kind: story
-status: active
+status: implemented
 title: A streamed text delta is never revised, and a caller is told when the outcome's text differs from what it was shown
 summary: Nothing states that a TextDelta is final; on Responses the outcome's message outranks the deltas the caller was shown
 relations:
@@ -39,10 +39,11 @@ scope:
   path: spec/domains/responses.yaml
 - confidence: inferred
   path: website/docs/concepts/neutral-boundary.md
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T01:03:33Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T04:49:35Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 

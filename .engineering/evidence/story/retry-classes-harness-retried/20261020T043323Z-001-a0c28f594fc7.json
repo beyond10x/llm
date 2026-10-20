@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T04:33:23Z",
+  "actor": "human:timo",
+  "artifact": "story:retry-classes-harness-retried",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-responses --test retry_class -p b10x-llm-messages --test retry_class",
+    "reference": "VERIFIED: base 51a8f5b4 red (server_error before output retriable: false; overloaded_error before output retriable: false), ~/.cache/llm-w09/retry/scratch/red-*.log; unit green, scratch/corr2/gate/"
+  }
+}
