@@ -6,6 +6,26 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-20
+
+### Fixed
+
+- `b10x-llm-messages`: a Messages response carrying `container` is no longer refused. 0.8.0
+  refused a live streamed turn with `Unsupported` ("Messages field is outside the declared subset:
+  message_start.message.container"). `decode_message` and `StreamDecoder` accept `container` on a
+  message, on `message_start.message` and on `message_delta.delta` as `null`, or as an object
+  holding exactly `id` and `expires_at` (strings) and `skills` only as `null`, and do not consume
+  it: Anthropic documents it as the container a container tool ran in, and llm declares no such
+  tool. Any other shape is refused as `protocol` without its value.
+- `b10x-llm-messages`: more fields Anthropic's API reference documents are accepted in the value
+  the route reports when the request asked for nothing that fills them: `diagnostics` on a message
+  (`null`), `stop_details` on a message and on `message_delta.delta` (`null`), `usage.speed`
+  (`null` or `standard`), and on a `tool_use` block `toolset_name` (`null`) and `caller`
+  (`{"type":"direct"}`, the documented default). Any other `diagnostics`, `stop_details`, `speed`
+  or `toolset_name` value is refused as `protocol` rather than dropped; a `caller` other than
+  `direct` stays `unsupported`. The block reader is shared with ingress, so a request's assistant
+  `tool_use` carrying either is accepted there too.
+
 ## [0.8.0] - 2026-10-20
 
 ### Added

@@ -9,7 +9,9 @@ use std::{collections::BTreeMap, time::Instant};
 
 /// Every field one complete message may carry. `stop_sequence` is retained producer metadata:
 /// the stop reason already names a sequence stop, so the sequence itself changes no decision.
-const MESSAGE_FIELDS: [&str; 8] = [
+/// `container`, `diagnostics` and `stop_details` are accepted only in the shapes `fields` holds them
+/// to, and are never consumed.
+const MESSAGE_FIELDS: [&str; 11] = [
     "id",
     "type",
     "role",
@@ -18,6 +20,9 @@ const MESSAGE_FIELDS: [&str; 8] = [
     "stop_reason",
     "stop_sequence",
     "usage",
+    "container",
+    "diagnostics",
+    "stop_details",
 ];
 const MAX_STOP_REASON_BYTES: usize = 64;
 // Where a streamed object sits, as a refusal names it: the event type, then the field path.
@@ -607,7 +612,7 @@ impl StreamDecoder {
         fields(
             delta,
             "message_delta.delta",
-            &["stop_reason", "stop_sequence"],
+            &["stop_reason", "stop_sequence", "container", "stop_details"],
         )?;
         // Cumulative, not incremental: the reported counters replace the previous ones.
         if let Some(usage) = data.get("usage").filter(|value| !value.is_null()) {

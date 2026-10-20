@@ -812,13 +812,15 @@ fn one_complete_message_decodes_through_the_same_codec() {
     );
 }
 
+/// The example is a metadata object no documentation of the route lists. Until 0.8.1 it was
+/// `container`, which the route documents and sends; that one is now accepted (below).
 #[test]
 fn a_complete_message_field_outside_the_declared_subset_is_refused() {
     let mut message = json!({
         "id":"msg_014a","type":"message","role":"assistant","model":"example-model-20260201",
         "content":[{"type":"text","text":"Hello"}],"stop_reason":"end_turn",
         "usage":{"input_tokens":11,"output_tokens":8},
-        "container":{"id":"container_1","expires_at":"2026-01-01T00:00:00Z"}});
+        "unlisted_metadata":{"id":"container_1","expires_at":"2026-01-01T00:00:00Z"}});
     assert_eq!(
         decode_message(&message, &request(), binding().provenance())
             .expect_err("refused")
@@ -1070,4 +1072,281 @@ fn a_complete_message_field_outside_the_declared_subset_is_refused_by_its_path()
         assert_eq!(error.code, ErrorCode::Unsupported, "{path}: {error}");
         assert_eq!(error.message, outside_the_subset(path));
     }
+}
+
+/// The fixed text of every shape refusal below: no value the route sent can be in it.
+const UNREPORTED_SHAPE: &str = "Messages accepted field has a type this route does not report";
+
+/// A complete message as the route answers one text turn, with `extra` set at its top level.
+fn complete(extra: &[(&str, Value)]) -> Value {
+    let mut message = json!({"id":"msg_014a","type":"message","role":"assistant",
+        "model":"example-model-20260201","content":[{"type":"text","text":"Hello"}],
+        "stop_reason":"end_turn","stop_sequence":null,
+        "usage":{"input_tokens":11,"output_tokens":8}});
+    for (key, value) in extra {
+        message[*key] = value.clone();
+    }
+    message
+}
+
+/// `container` in each shape the route documents (`null`, or the container a container tool ran
+/// in), then in shapes it does not.
+fn containers() -> (Vec<Value>, Vec<Value>) {
+    (
+        vec![
+            Value::Null,
+            json!({"id":"container_1","expires_at":"2026-01-01T00:00:00Z"}),
+            json!({"id":"container_1","expires_at":"2026-01-01T00:00:00Z","skills":null}),
+        ],
+        vec![
+            json!({"id":1}),
+            json!({"id":"c","expires_at":"t","x":1}),
+            json!("c"),
+            json!({"id":"c","expires_at":"t",
+                "skills":[{"type":"anthropic","skill_id":"pdf","version":"latest"}]}),
+        ],
+    )
+}
+
+/// A refusal of `value` that carries the fixed shape text, and so not the value.
+fn refused_by_its_shape(error: &Error, value: &Value) {
+    assert_eq!(error.code, ErrorCode::Protocol, "{value}: {error}");
+    assert_eq!(error.message, UNREPORTED_SHAPE, "{value}");
+}
+
+/// 0.8.0 refused a live turn: `Messages field is outside the declared subset:
+/// message_start.message.container`. The route documents `container` on every message, `null`
+/// unless a container tool ran; it is accepted in its documented shape and never consumed, and
+/// any other shape is refused without its value.
+#[tokio::test]
+async fn a_container_on_a_message_start_is_accepted_in_its_documented_shape_and_no_other() {
+    let (documented, undocumented) = containers();
+    for container in documented {
+        let mut events = text_turn(json!({"input_tokens":11}), json!({"output_tokens":8}));
+        events[0]["message"]["container"] = container.clone();
+        let (outcome, _) = decode(&events).await;
+        let outcome = outcome.unwrap_or_else(|error| panic!("{container}: {error}"));
+        assert_eq!(outcome.items, vec![Item::assistant("Hello")], "{container}");
+    }
+    for container in undocumented {
+        let mut events = text_turn(json!({"input_tokens":11}), json!({"output_tokens":8}));
+        events[0]["message"]["container"] = container.clone();
+        let (outcome, _) = decode(&events).await;
+        refused_by_its_shape(&outcome.expect_err("an undocumented container"), &container);
+    }
+}
+
+#[test]
+fn a_container_on_a_complete_message_is_accepted_in_its_documented_shape_and_no_other() {
+    let (documented, undocumented) = containers();
+    for container in documented {
+        let outcome = decode_message(
+            &complete(&[("container", container.clone())]),
+            &request(),
+            binding().provenance(),
+        )
+        .unwrap_or_else(|error| panic!("{container}: {error}"));
+        assert_eq!(outcome.items, vec![Item::assistant("Hello")], "{container}");
+    }
+    for container in undocumented {
+        let error = decode_message(
+            &complete(&[("container", container.clone())]),
+            &request(),
+            binding().provenance(),
+        )
+        .expect_err("an undocumented container");
+        refused_by_its_shape(&error, &container);
+    }
+}
+
+/// The route documents the same `container` on `message_delta.delta`; one check reads it
+/// wherever it is accepted.
+#[tokio::test]
+async fn a_container_on_a_message_delta_is_read_by_the_same_check() {
+    let (documented, undocumented) = containers();
+    for container in documented {
+        let mut events = text_turn(json!({"input_tokens":11}), json!({"output_tokens":8}));
+        events[4]["delta"]["container"] = container.clone();
+        let (outcome, _) = decode(&events).await;
+        outcome.unwrap_or_else(|error| panic!("{container}: {error}"));
+    }
+    for container in undocumented {
+        let mut events = text_turn(json!({"input_tokens":11}), json!({"output_tokens":8}));
+        events[4]["delta"]["container"] = container.clone();
+        let (outcome, _) = decode(&events).await;
+        refused_by_its_shape(&outcome.expect_err("an undocumented container"), &container);
+    }
+}
+
+/// `diagnostics` is `null` unless the request supplied `diagnostics`, which this projection never
+/// sends; a diagnosis is refused, on a stream and on a complete message.
+#[tokio::test]
+async fn diagnostics_are_accepted_only_as_null() {
+    let diagnosis = json!({"cache_miss_reason":{"type":"model_changed",
+        "cache_missed_input_tokens":0}});
+    let mut events = text_turn(json!({"input_tokens":11}), json!({"output_tokens":8}));
+    events[0]["message"]["diagnostics"] = Value::Null;
+    let (outcome, _) = decode(&events).await;
+    outcome.expect("null diagnostics on a message start");
+    decode_message(
+        &complete(&[("diagnostics", Value::Null)]),
+        &request(),
+        binding().provenance(),
+    )
+    .expect("null diagnostics on a complete message");
+
+    events[0]["message"]["diagnostics"] = diagnosis.clone();
+    let (outcome, _) = decode(&events).await;
+    refused_by_its_shape(&outcome.expect_err("a diagnosis"), &diagnosis);
+    let error = decode_message(
+        &complete(&[("diagnostics", diagnosis.clone())]),
+        &request(),
+        binding().provenance(),
+    )
+    .expect_err("a diagnosis");
+    refused_by_its_shape(&error, &diagnosis);
+}
+
+/// `usage.speed` is `standard` or `null` unless the request asked for `fast`, which this projection
+/// never sends and which prices differently.
+#[tokio::test]
+async fn a_usage_speed_is_accepted_only_as_standard_or_null() {
+    for speed in [json!("standard"), Value::Null] {
+        let (outcome, _) = decode(&text_turn(
+            json!({"input_tokens":11,"speed":speed}),
+            json!({"output_tokens":8,"speed":speed}),
+        ))
+        .await;
+        outcome.unwrap_or_else(|error| panic!("{speed}: {error}"));
+        decode_message(
+            &complete(&[(
+                "usage",
+                json!({"input_tokens":11,"output_tokens":8,"speed":speed}),
+            )]),
+            &request(),
+            binding().provenance(),
+        )
+        .unwrap_or_else(|error| panic!("{speed}: {error}"));
+    }
+    for speed in [json!("fast"), json!(1)] {
+        let (outcome, _) = decode(&text_turn(
+            json!({"input_tokens":11,"speed":speed}),
+            json!({"output_tokens":8}),
+        ))
+        .await;
+        refused_by_its_shape(
+            &outcome.expect_err("a speed this route was never asked for"),
+            &speed,
+        );
+        let (outcome, _) = decode(&text_turn(
+            json!({"input_tokens":11}),
+            json!({"output_tokens":8,"speed":speed}),
+        ))
+        .await;
+        refused_by_its_shape(
+            &outcome.expect_err("a speed this route was never asked for"),
+            &speed,
+        );
+    }
+}
+
+/// One tool turn whose `tool_use` block opens as `block`.
+fn tool_turn(block: &Value) -> Vec<Value> {
+    vec![
+        message_start(json!({"input_tokens":11,"output_tokens":1})),
+        json!({"type":"content_block_start","index":0,"content_block":block}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"input_json_delta","partial_json":"{}"}}),
+        json!({"type":"content_block_stop","index":0}),
+        message_delta(json!("tool_use"), json!({"output_tokens":8})),
+        json!({"type":"message_stop"}),
+    ]
+}
+
+/// A `tool_use` block carrying `key: value`, streamed and as a complete message.
+async fn tool_use_with(key: &str, value: &Value) -> [Result<TurnOutcome, Error>; 2] {
+    let mut block = json!({"type":"tool_use","id":"call-1","name":"lookup","input":{}});
+    block[key] = value.clone();
+    let (streamed, _) = decode(&tool_turn(&block)).await;
+    let whole = decode_message(
+        &complete(&[
+            ("content", json!([block])),
+            ("stop_reason", json!("tool_use")),
+        ]),
+        &request(),
+        binding().provenance(),
+    );
+    [streamed, whole]
+}
+
+/// `toolset_name` names the toolset a tool belongs to; this projection publishes none, so it is
+/// accepted only as `null`.
+#[tokio::test]
+async fn a_toolset_name_is_accepted_only_as_null() {
+    for outcome in tool_use_with("toolset_name", &Value::Null).await {
+        let outcome = outcome.expect("a null toolset name");
+        assert!(
+            matches!(outcome.items.as_slice(), [Item::ToolCall(call)] if call.name.as_str() == "lookup"),
+            "{:?}",
+            outcome.items
+        );
+    }
+    let toolset = json!("browser");
+    for outcome in tool_use_with("toolset_name", &toolset).await {
+        refused_by_its_shape(&outcome.expect_err("a toolset member"), &toolset);
+    }
+}
+
+/// `caller` defaults to `{"type":"direct"}`: the model called the tool itself, which is what a
+/// neutral tool call is. A server tool calling it is still outside the declared subset.
+#[tokio::test]
+async fn a_direct_caller_is_a_tool_call_and_any_other_caller_stays_unsupported() {
+    for outcome in tool_use_with("caller", &json!({"type":"direct"})).await {
+        let outcome = outcome.expect("the documented default caller");
+        assert!(
+            matches!(outcome.items.as_slice(), [Item::ToolCall(call)] if call.name.as_str() == "lookup"),
+            "{:?}",
+            outcome.items
+        );
+    }
+    for caller in [
+        json!({"type":"code_execution_20250825","tool_id":"srvtoolu_1"}),
+        json!({"type":"direct","tool_id":"srvtoolu_1"}),
+        json!("direct"),
+    ] {
+        for outcome in tool_use_with("caller", &caller).await {
+            let error = outcome.expect_err("a caller other than the model");
+            assert_eq!(error.code, ErrorCode::Unsupported, "{caller}: {error}");
+        }
+    }
+}
+
+/// `stop_details` is `null` unless the turn stopped with detail to report, a `refusal`. The null is
+/// accepted on a message start, a message delta and a complete message; a refusal's details are
+/// refused rather than dropped.
+#[tokio::test]
+async fn stop_details_are_accepted_only_as_null() {
+    let details = json!({"type":"refusal","category":null,"explanation":null});
+    let mut events = text_turn(json!({"input_tokens":11}), json!({"output_tokens":8}));
+    events[0]["message"]["stop_details"] = Value::Null;
+    events[4]["delta"]["stop_details"] = Value::Null;
+    let (outcome, _) = decode(&events).await;
+    outcome.expect("null stop details on a stream");
+    decode_message(
+        &complete(&[("stop_details", Value::Null)]),
+        &request(),
+        binding().provenance(),
+    )
+    .expect("null stop details on a complete message");
+
+    events[4]["delta"]["stop_details"] = details.clone();
+    let (outcome, _) = decode(&events).await;
+    refused_by_its_shape(&outcome.expect_err("a refusal's details"), &details);
+    let error = decode_message(
+        &complete(&[("stop_details", details.clone())]),
+        &request(),
+        binding().provenance(),
+    )
+    .expect_err("a refusal's details");
+    refused_by_its_shape(&error, &details);
 }

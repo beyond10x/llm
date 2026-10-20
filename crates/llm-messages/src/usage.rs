@@ -27,6 +27,7 @@ impl Snapshot {
                 "server_tool_use",
                 "service_tier",
                 "inference_geo",
+                "speed",
             ],
         )?;
         let mut next = self.clone();
@@ -77,8 +78,8 @@ impl Snapshot {
                 }
             }
         }
-        // `service_tier` and `inference_geo` are accepted here and read nowhere; the shape they
-        // have to arrive in is enforced by `fields` above, with the rest of that class.
+        // `service_tier`, `inference_geo` and `speed` are accepted here and read nowhere; the shape
+        // they have to arrive in is enforced by `fields` above, with the rest of that class.
         next.normalized()?.validate()?;
         Ok(next)
     }

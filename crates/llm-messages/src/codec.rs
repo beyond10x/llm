@@ -628,8 +628,17 @@ pub(crate) fn decode_block(
             })
         }
         "tool_use" if !user => {
-            fields(value, at, &["type", "id", "name", "input", "caller"])?;
-            absent(value, "caller")?;
+            fields(
+                value,
+                at,
+                &["type", "id", "name", "input", "caller", "toolset_name"],
+            )?;
+            // `{"type":"direct"}` is the route's documented default: the model called the tool
+            // itself, which is what a neutral tool call is. Any other caller is a server tool this
+            // projection never declares.
+            if value.get("caller") != Some(&json!({"type": "direct"})) {
+                absent(value, "caller")?;
+            }
             let arguments = value
                 .get("input")
                 .filter(|v| v.is_object())

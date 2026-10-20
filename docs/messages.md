@@ -175,14 +175,37 @@ refused.
 documents.** Accepting a name is not the same as ignoring its value: a value in a shape the
 producer does not send is not a field to pass over, it is evidence that the route is not the one
 this projection was written against, and it is refused. That is a contract, not an accident of the
-implementation, and the class it applies to is closed: exactly three names are accepted and never
-read — `service_tier` and `inference_geo` on the usage object, and `stop_sequence` on a message and
-on a message delta — each documented as a string, and each checked wherever it is accepted, because
-the check travels with the accept list itself rather than sitting beside one use of it. Two other
+implementation, and the class it applies to is closed: exactly three names are accepted as any
+string and never read — `service_tier` and `inference_geo` on the usage object, and
+`stop_sequence` on a message and on a message delta — each documented as a string, and each
+checked wherever it is accepted, because the check travels with the accept list itself rather than
+sitting beside one use of it. Two other
 accepted names, `citations` on a text block and `caller` on a tool call, are held to something
-stricter still: any value at all is outside the declared subset and is refused outright.
+stricter still: any value at all is outside the declared subset and is refused outright, except a
+`caller` of `{"type":"direct"}` (below).
 
-**Twenty-four of the ninety-seven producer names this projection speaks are carried, not read.**
+**A field the route leaves empty unless the request asked for a feature this projection never asks
+for is accepted empty, and in no other value** (since 0.8.1). 0.8.0 refused a live streamed turn
+with `Messages field is outside the declared subset: message_start.message.container`. Anthropic's
+API reference (`https://platform.claude.com/docs/en/api/messages`, read 2026-10-20) documents each
+of these on the response:
+
+| Field | Where | Accepted | Why it is empty here |
+| --- | --- | --- | --- |
+| `container` | a message, `message_start.message`, `message_delta.delta` | `null`, or an object holding exactly `id` and `expires_at` (strings) and `skills` only as `null`; never consumed | "Information about the container used in this request. This will be non-null if a container tool (e.g. code execution) was used." This projection declares no container tool, so no later request of its own has a use for the id |
+| `diagnostics` | a message | `null` | "`null` when the request did not supply `diagnostics`"; this projection never supplies it |
+| `speed` | the usage object | `null` or `standard` | `fast` only when the request sets `speed`, which this projection never sends; fast output prices differently |
+| `toolset_name` | a `tool_use` block | `null` | names the toolset of a toolset member; no tool this projection publishes is one |
+| `caller` | a `tool_use` block | `null` or `{"type":"direct"}`, the documented default | the model called the tool itself, which is what a neutral tool call is; any other caller is a server tool and stays `unsupported` |
+| `stop_details` | a message, `message_start.message`, `message_delta.delta` | `null` | "This is `null` when the `stop_reason` has no additional detail to report." The one field here the route fills without being asked, on a `refusal` stop; the neutral turn has no place for the detail, so such a turn is refused rather than carried without it |
+
+Any other `container`, `diagnostics`, `speed`, `toolset_name` or `stop_details` value is refused as
+`protocol` (`Messages accepted field has a type this route does not report`), never copied into the
+message. The check travels with the accept lists like the one above, and the block reader is
+shared with ingress, so a request's assistant `tool_use` block reads `caller` and `toolset_name` the
+same way.
+
+**Twenty-four of the hundred and six producer names this projection speaks are carried, not read.**
 A name is not a behaviour — the behaviour around each is tested — but a wrong name is a field
 silently never seen, or an accepted field refused, and no fixture written from the same wrong name
 can notice. Sixty-seven were read from the extraction provenance the implementation
@@ -190,7 +213,9 @@ contract names, `harness-messages` at `709a2eb`; two of those — `anthropic-ver
 `2023-06-01` it carries — are sent on every single request and were invisible to this check until
 its scan admitted a hyphen and a leading digit. Four more — `cache_control`, `ephemeral` and the
 warning codes `unknown-stream-event` and `unknown-output-item` — were read from the same crate at
-`2fd7235b` for the Harness parity rows. The remaining fourteen arrived with the carried
+`2fd7235b` for the Harness parity rows. Nine — `container`, `diagnostics`, `direct`,
+`expires_at`, `skills`, `speed`, `standard`, `stop_details` and `toolset_name` — were read from
+Anthropic's API reference for 0.8.1 (the table above). The remaining fourteen arrived with the carried
 draft and nothing read in this session supports them: `auto`, `cache_creation`,
 `ephemeral_1h_input_tokens`, `ephemeral_5m_input_tokens`, `caller`, `citations`, `inference_geo`,
 `output_tokens_details`, `thinking_tokens`, `rate_limit_error`, `service_tier`, `timeout_error`,
