@@ -1620,7 +1620,7 @@
         "scenario": "llm.chat/authored/ingress-message-content-that-is-not-text-is-refused"
       },
       "chat/scenarios/ingress-other-json-in-a-tool-message-stays-a-successful-string.yaml": {
-        "digest": "sha256:9758b2886e2bec63e7d2341562fde542fc8dcdf86e3ecedc249e043550f12db5",
+        "digest": "sha256:ca28394f494474edf20f21ad7f8a59771f587851033b4af4af94ec7b6a1541b2",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string"
       },
@@ -27361,7 +27361,7 @@
           "input": {
             "request_json": {
               "kind": "literal",
-              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"Weather?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-2\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-3\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-4\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"tool_call_id\":\"call-1\",\"content\":\"{\\\"ok\\\":false}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-2\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false,\\\"code\\\":404}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-3\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-4\",\"content\":\"[{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false}]\"}],\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"description\":\"Look up\",\"parameters\":{\"type\":\"object\"}}}]}"
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"Weather?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-2\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-3\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-4\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-5\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"tool_call_id\":\"call-1\",\"content\":\"{\\\"ok\\\":false}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-2\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false,\\\"code\\\":404}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-3\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-4\",\"content\":\"[{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false}]\"},{\"role\":\"tool\",\"tool_call_id\":\"call-5\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true,\\\"ok\\\":false}\"}],\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"description\":\"Look up\",\"parameters\":{\"type\":\"object\"}}}]}"
             }
           },
           "step": "execute_command"
@@ -27410,10 +27410,12 @@
                   "tool-call:call-2:lookup:{}",
                   "tool-call:call-3:lookup:{}",
                   "tool-call:call-4:lookup:{}",
+                  "tool-call:call-5:lookup:{}",
                   "tool-result:call-1:\"{\\\"ok\\\":false}\":false",
                   "tool-result:call-2:\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false,\\\"code\\\":404}\":false",
                   "tool-result:call-3:\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true}\":false",
-                  "tool-result:call-4:\"[{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false}]\":false"
+                  "tool-result:call-4:\"[{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false}]\":false",
+                  "tool-result:call-5:\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true,\\\"ok\\\":false}\":false"
                 ]
               },
               "turn_valid": {

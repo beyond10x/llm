@@ -6,7 +6,7 @@ timeline:
 - at: '2026-10-20T12:00:00Z'
   command: llm.chat.DecodeIngress
   input:
-    request_json: '{"model":"code","messages":[{"role":"user","content":"Weather?"},{"role":"assistant","content":null,"tool_calls":[{"id":"call-1","type":"function","function":{"name":"lookup","arguments":"{}"}},{"id":"call-2","type":"function","function":{"name":"lookup","arguments":"{}"}},{"id":"call-3","type":"function","function":{"name":"lookup","arguments":"{}"}},{"id":"call-4","type":"function","function":{"name":"lookup","arguments":"{}"}}]},{"role":"tool","tool_call_id":"call-1","content":"{\"ok\":false}"},{"role":"tool","tool_call_id":"call-2","content":"{\"error\":\"x\",\"ok\":false,\"code\":404}"},{"role":"tool","tool_call_id":"call-3","content":"{\"error\":\"x\",\"ok\":true}"},{"role":"tool","tool_call_id":"call-4","content":"[{\"error\":\"x\",\"ok\":false}]"}],"tools":[{"type":"function","function":{"name":"lookup","description":"Look up","parameters":{"type":"object"}}}]}'
+    request_json: '{"model":"code","messages":[{"role":"user","content":"Weather?"},{"role":"assistant","content":null,"tool_calls":[{"id":"call-1","type":"function","function":{"name":"lookup","arguments":"{}"}},{"id":"call-2","type":"function","function":{"name":"lookup","arguments":"{}"}},{"id":"call-3","type":"function","function":{"name":"lookup","arguments":"{}"}},{"id":"call-4","type":"function","function":{"name":"lookup","arguments":"{}"}},{"id":"call-5","type":"function","function":{"name":"lookup","arguments":"{}"}}]},{"role":"tool","tool_call_id":"call-1","content":"{\"ok\":false}"},{"role":"tool","tool_call_id":"call-2","content":"{\"error\":\"x\",\"ok\":false,\"code\":404}"},{"role":"tool","tool_call_id":"call-3","content":"{\"error\":\"x\",\"ok\":true}"},{"role":"tool","tool_call_id":"call-4","content":"[{\"error\":\"x\",\"ok\":false}]"},{"role":"tool","tool_call_id":"call-5","content":"{\"error\":\"x\",\"ok\":true,\"ok\":false}"}],"tools":[{"type":"function","function":{"name":"lookup","description":"Look up","parameters":{"type":"object"}}}]}'
   outcome: observed
 assert:
 - view: llm.chat.LastIngressRequest
@@ -21,8 +21,10 @@ assert:
     - 'tool-call:call-2:lookup:{}'
     - 'tool-call:call-3:lookup:{}'
     - 'tool-call:call-4:lookup:{}'
+    - 'tool-call:call-5:lookup:{}'
     - 'tool-result:call-1:"{\"ok\":false}":false'
     - 'tool-result:call-2:"{\"error\":\"x\",\"ok\":false,\"code\":404}":false'
     - 'tool-result:call-3:"{\"error\":\"x\",\"ok\":true}":false'
     - 'tool-result:call-4:"[{\"error\":\"x\",\"ok\":false}]":false'
+    - 'tool-result:call-5:"{\"error\":\"x\",\"ok\":true,\"ok\":false}":false'
     turn_valid: true

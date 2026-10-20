@@ -6,8 +6,8 @@
 //! That holds at every level: each object of the request is closed, and a key it does not
 //! publish is refused naming its path (`messages[].content[].cache_control`).
 use llm_core::{
-    CallId, Error, Item, Sampling, StopReason, StreamEvent, ToolChoice, ToolName, ToolSpec,
-    TurnOutcome, TurnRequest, Usage, Verbosity, field_path,
+    CallId, Error, Item, MAX_TOOL_RESULT_BYTES, Sampling, StopReason, StreamEvent, ToolChoice,
+    ToolName, ToolSpec, TurnOutcome, TurnRequest, Usage, Verbosity, field_path,
 };
 use serde_json::{Map, Value, json};
 
@@ -233,12 +233,15 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
                     .get("tool_call_id")
                     .and_then(Value::as_str)
                     .ok_or_else(|| Error::invalid("chat tool message names no call"))?;
+                // The call is checked before the content is read, so a message wrong in both
+                // is refused for its call.
+                let call_id = call_id_of(call_id)?;
                 // This wire carries the result as text and has no place to say a call failed,
                 // so the outgoing projection sends a failure as the object
                 // `{"error": <output>, "ok": false}`; only that object reads back as failed.
                 let (output, failed) = read_tool_result(content_text(message.get("content"))?);
                 request.items.push(Item::ToolResult {
-                    call_id: call_id_of(call_id)?,
+                    call_id,
                     output,
                     failed,
                 });
@@ -250,17 +253,29 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
     Ok(())
 }
 
+/// The object the outgoing projection sends for a failed result (`outgoing.rs` `result_text`):
+/// exactly `error` and `ok`, each once.
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FailureObject {
+    error: Value,
+    ok: bool,
+}
+
 /// A tool message's text read back as a result: failed with the `error` value as its output
-/// when the text parses to a JSON object of exactly the keys `error` and `ok`, `ok` being
-/// `false` (what `outgoing.rs` `result_text` sends for a failure), and otherwise successful with
-/// the text as a string. Keeping other text a string is lossless; guessing that it was meant to
-/// be JSON would not be. A successful result whose text is exactly that object reads back as
-/// failed: the wire cannot tell the two apart.
+/// when the text is a `FailureObject` whose `ok` is `false`, and otherwise successful with the
+/// text as a string, byte for byte. Keeping other text a string is lossless; guessing that it
+/// was meant to be JSON would not be. A repeated or extra key is not the failure object.
+///
+/// Only text that opens with `{` and fits the tool-result bound is parsed: longer text is left to
+/// that bound, which refuses it, and `serde_json` parses at most 127 levels deep, so a failed
+/// output nested deeper than 126 levels reads back as a successful string. A successful result
+/// whose text is exactly the failure object reads back as failed: the wire cannot tell the two
+/// apart.
 fn read_tool_result(text: String) -> (Value, bool) {
-    if let Ok(Value::Object(mut object)) = serde_json::from_str::<Value>(&text)
-        && object.len() == 2
-        && object.get("ok") == Some(&Value::Bool(false))
-        && let Some(error) = object.remove("error")
+    if text.len() <= MAX_TOOL_RESULT_BYTES
+        && text.trim_start().starts_with('{')
+        && let Ok(FailureObject { error, ok: false }) = serde_json::from_str(&text)
     {
         return (error, true);
     }

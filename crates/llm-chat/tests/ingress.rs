@@ -8,9 +8,9 @@ use llm_chat::{
     decode_ingress_request, encode_ingress_completion, omitted_advisories, project_request,
 };
 use llm_core::{
-    Advisory, CallId, Controls, Dispatch, ErrorCode, Hints, Id, Item, Protocol, StopReason,
-    StreamEvent, ToolCall, ToolChoice, ToolName, ToolSpec, TurnObservation, TurnOutcome,
-    TurnRequest, Usage, Verbosity,
+    Advisory, CallId, Controls, Dispatch, ErrorCode, Hints, Id, Item, MAX_TOOL_RESULT_BYTES,
+    Protocol, StopReason, StreamEvent, ToolCall, ToolChoice, ToolName, ToolSpec, TurnObservation,
+    TurnOutcome, TurnRequest, Usage, Verbosity,
 };
 use serde_json::{Value, json};
 
@@ -1088,15 +1088,20 @@ fn failed_result_turn(output: Value) -> TurnRequest {
     request
 }
 
-/// The result a `tool` message answering `lookup_call()` decodes to, `content` as sent.
-fn decoded_result(content: &Value) -> Item {
+/// A request whose `tool` message answers `lookup_call()` with `content` as sent.
+fn tool_message_body(content: &Value) -> Value {
     let mut body = with_messages(json!([
         {"role": "user", "content": "Weather?"},
         {"role": "assistant", "content": null, "tool_calls": [lookup_call()]},
         {"role": "tool", "tool_call_id": "call-1", "content": content}
     ]));
     body["tools"] = json!([lookup_tool()]);
-    decode_ingress_request(&body)
+    body
+}
+
+/// The result a `tool` message answering `lookup_call()` decodes to, `content` as sent.
+fn decoded_result(content: &Value) -> Item {
+    decode_ingress_request(&tool_message_body(content))
         .expect("decoded")
         .request
         .items
@@ -1142,6 +1147,10 @@ fn a_tool_message_carrying_the_failure_object_decodes_as_failed() {
             json!({"code": 404}),
         ),
         (
+            json!("\n  {\"error\":\"no such city\",\"ok\":false}\n"),
+            json!("no such city"),
+        ),
+        (
             json!([
                 {"type": "text", "text": "{\"error\":\"no such"},
                 {"type": "text", "text": " city\",\"ok\":false}"}
@@ -1175,6 +1184,8 @@ fn tool_content_that_is_not_exactly_the_failure_object_stays_a_successful_string
         r#"{"error":"no such city","ok":null}"#,
         r#"{"ok":false,"output":"no such city"}"#,
         r#"[{"error":"no such city","ok":false}]"#,
+        // The two values in order, as a sequence rather than the object.
+        r#"["no such city",false]"#,
         r#""{\"error\":\"no such city\",\"ok\":false}""#,
         r#"{"error":"no such city","ok":false"#,
         "false",
@@ -1192,5 +1203,57 @@ fn tool_content_that_is_not_exactly_the_failure_object_stays_a_successful_string
             },
             "{content}"
         );
+    }
+}
+
+/// The failure object `{"error":"<text>","ok":false}` around `length` bytes of text.
+fn failure_object_around(length: usize) -> String {
+    format!(r#"{{"error":"{}","ok":false}}"#, "a".repeat(length))
+}
+
+/// Content is read as the failure object only up to the tool-result bound. Longer content is
+/// not parsed first: it is left to the bound, which refuses it as at the base.
+#[test]
+fn the_failure_object_is_read_up_to_the_result_bound_and_left_to_the_bound_past_it() {
+    let frame = failure_object_around(0).len();
+
+    let at_bound = failure_object_around(MAX_TOOL_RESULT_BYTES - frame);
+    assert_eq!(at_bound.len(), MAX_TOOL_RESULT_BYTES);
+    assert_eq!(
+        decoded_result(&json!(at_bound)),
+        Item::ToolResult {
+            call_id: call_id("call-1"),
+            output: json!("a".repeat(MAX_TOOL_RESULT_BYTES - frame)),
+            failed: true,
+        }
+    );
+
+    let past_bound = failure_object_around(MAX_TOOL_RESULT_BYTES - frame + 1);
+    assert_eq!(past_bound.len(), MAX_TOOL_RESULT_BYTES + 1);
+    let error = decode_ingress_request(&tool_message_body(&json!(past_bound)))
+        .expect_err("content past the bound is refused");
+    assert_eq!(error.code, ErrorCode::TooLarge, "{}", error.message);
+}
+
+/// What `docs/chat.md` states the bound costs: the failure object adds 21 bytes around the
+/// output's encoding, so a failed output encoded within 21 bytes of the bound is sent, and its
+/// failure object, past the bound, is refused by ingress as too large. One byte shorter, it
+/// round-trips failed.
+#[test]
+fn a_failed_output_within_the_failure_objects_frame_of_the_bound_is_sent_and_refused_back() {
+    // A string of `length` bytes encodes to `length + 2`, its quotes.
+    for (length, round_trips) in [
+        (MAX_TOOL_RESULT_BYTES - 21 - 2, true),
+        (MAX_TOOL_RESULT_BYTES - 20 - 2, false),
+    ] {
+        let request = failed_result_turn(json!("a".repeat(length)));
+        let projected = project_request(&request, &binding(), false).expect("projected");
+        let back = decode_ingress_request(&projected);
+        if round_trips {
+            assert_eq!(back.expect("decodes").request.items, request.items);
+        } else {
+            let error = back.expect_err("the failure object is past the bound");
+            assert_eq!(error.code, ErrorCode::TooLarge, "{}", error.message);
+        }
     }
 }

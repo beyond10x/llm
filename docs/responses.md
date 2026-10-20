@@ -153,7 +153,9 @@ shaped like one, and a round trip that can flip `failed` corrupts the conversati
 translating it. On ingress a `function_call_output` string that parses to exactly this envelope
 (an object of exactly a boolean `ok` and an `output`) is read as one; any other string is a
 successful result whose output is that string, which is how Codex sends a command's output. It
-goes back out inside the envelope. An `output` that is not a string is refused.
+goes back out inside the envelope. An `output` that is not a string is refused. Ingress parses the
+envelope at most 127 levels deep (`serde_json`'s recursion limit of 128), so a failed output nested
+more than 126 levels deep reads back as a successful string carrying the envelope's text.
 
 A call the caller rejected before running it is a failed result like any other: `failed: true`
 with the reason as the caller's text in `output`, sent as `{"ok": false, "output": <reason>}` and

@@ -92,17 +92,28 @@ Responses `function_call_output` and a Chat Completions `tool` message carry tex
 that needs to tell a rejected call from a failed one keeps that fact beside the item, in its own
 loop's record; the model is sent the same failed result either way.
 
-| Wire | A failed result is sent as | Ingress reads as failed |
+| Wire | A failed result is sent as | How ingress reads a result back |
 | --- | --- | --- |
-| Messages | a `tool_result` block with `is_error: true`, the output as `content` (a string as it is, any other value as compact JSON) | `is_error: true`; absent or `false` is a success. The output is the `content` string |
-| Responses | a `function_call_output` whose `output` is the string `{"ok":false,"output":<output>}`; a success is the same envelope with `ok` true | a string that parses to exactly that envelope, an object of a boolean `ok` and an `output`, with `ok` false; the output is the `output` value. Any other string is a success carrying it |
-| Chat Completions | a `tool` message whose content is `{"error":<output>,"ok":false}`; a success is its output as text (a string as it is, any other value as compact JSON) | content that parses to an object of exactly the keys `error` and `ok`, `ok` being `false`; the output is the `error` value. Any other content is a success carrying it as a string |
+| Messages | a `tool_result` block with `is_error: true`, the output as `content` (a string as it is, any other value as compact JSON) | `is_error: true` is a failure; absent or `false` is a success. The output is the `content` string |
+| Responses | a `function_call_output` whose `output` is the string `{"ok":false,"output":<output>}`; a success is the same envelope with `ok` true | a string that parses to exactly that envelope, an object of a boolean `ok` and an `output`, is a failure when `ok` is false and a success when it is true, either carrying the `output` value. Any other string is a success carrying that string |
+| Chat Completions | a `tool` message whose content is `{"error":<output>,"ok":false}`; a success is its output as text (a string as it is, any other value as compact JSON) | content that parses to an object of exactly the keys `error` and `ok`, each once, `ok` being `false`, is a failure carrying the `error` value. Any other content is a success carrying it as a string |
 
-Each ingress reads back as failed what its own encoder sends for a failure. The output comes back
-unchanged on Responses, which envelopes every result, and for a failed Chat Completions result;
-Messages, and a successful Chat Completions result, send an output that is not a string as its JSON
-text, which reads back as that string. A successful Chat Completions result whose text is exactly
-the failure object reads back as failed: the wire cannot tell the two apart.
+Each ingress reads back as failed what its own encoder sends for a failure, within the bounds it
+keeps on client input. The output comes back unchanged on Responses, which envelopes every result,
+and for a failed Chat Completions result; Messages, and a successful Chat Completions result, send
+an output that is not a string as its JSON text, which reads back as that string. Two bounds make
+exceptions:
+
+- Ingress parses the Responses envelope and the Chat Completions failure object at most 127 levels
+  deep (`serde_json`'s recursion limit of 128), so on both wires a failed output nested more than
+  126 levels deep reads back as a successful string carrying the envelope's or the object's text.
+  Messages carries `is_error` beside the text, so the flag survives any depth.
+- Chat Completions parses a tool message only up to the tool-result bound (256 KiB). The failure
+  object adds 21 bytes around the output's JSON, so a failed output whose JSON is within 21 bytes
+  of the bound is sent and then refused by ingress as too large.
+
+A successful Chat Completions result whose text is exactly the failure object reads back as failed:
+the wire cannot tell the two apart.
 
 A typed rejected state was considered and not taken
 (`docs/plan/wave-2026-10-20-w09-design-review.md`, Layer 3): a key added to the Responses envelope
