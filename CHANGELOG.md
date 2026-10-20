@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-20
+
 ### Fixed
 
 - `b10x-llm-messages`: a Messages response carrying `container` is no longer refused. 0.8.0
