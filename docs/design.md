@@ -164,8 +164,9 @@ a call moved out of its runtime part-way is refused at its next such poll with t
 reached: `not-sent` while the credential is resolved, `unknown` while the answer is awaited,
 `accepted` for a read of the response body and for an event handed to the sink under the Responses
 or Messages turn deadline, and the 429's own `rejected` while a quota rule waits for its body.
-Events already decoded need no runtime and are still handed over; Chat Completions hands them to
-the sink without a timer. Both functions serve every client; a catalog port inherits them from the
+An event already queued on an `SseStream` is still returned outside a runtime, and Chat
+Completions hands its events to the sink without a timer; Responses and Messages hand an event to
+the sink under the turn deadline, so that hand-over is refused outside a runtime. Both functions serve every client; a catalog port inherits them from the
 client it wraps, and a routing run or `call_tool` from the turn it runs. The code is `unsupported`
 because no retry serves the call in the caller's configuration, which `Error::may_retry` already
 says of that code, and `b10x-llm-blocking` refuses the mirror case, a blocking turn inside a
@@ -185,8 +186,11 @@ its time and IO drivers passes it and still panics: `post_sse` inside
 enable timers." (the throwaway test above, run before the rule, after its first form and after
 this one). Tokio 1.53.1's `Handle` has no public method that reports whether a driver is enabled.
 A wait started in one runtime and polled on inside another after the first was dropped passes
-the check too; the one case measured (a second throwaway test), a request awaiting its answer,
-failed as a retriable `transport` error, without a panic.
+the check too. The one case first measured (a second throwaway test), a request awaiting its
+answer, failed as a retriable `transport` error without a panic; a Responses turn whose credential
+wait spans the drop panics instead ("A Tokio 1.x context was found, but it is being shutdown."), as
+it did before this rule, because the old runtime's timer is polled. No caller is known to move a
+turn between runtimes.
 
 ## Credentials and configuration
 
