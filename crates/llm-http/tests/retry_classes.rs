@@ -5,8 +5,8 @@
 
 use llm_core::{Cancel, Dispatch, Error, ErrorCode};
 use llm_http::{
-    Framing, HeaderMap, HttpClient, Limits, MAX_REFUSAL_BYTES, REFUSAL_WAIT, ResponseTap, SseEvent,
-    status_error,
+    Framing, HeaderMap, HeaderValue, HttpClient, Limits, MAX_REFUSAL_BYTES, REFUSAL_WAIT,
+    ResponseTap, SseEvent, status_error,
 };
 use serde_json::{Value, json};
 use std::{
@@ -557,5 +557,108 @@ async fn the_quota_rule_is_consulted_for_a_429_only() {
             "{status}"
         );
         assert_eq!(server.await.unwrap(), 1, "{status}");
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// A do-not-retry signal on an error status (story:relayed-failures-keep-their-retry-decision):
+// `x-should-retry: false`, which the official OpenAI and Anthropic SDKs obey before any status
+// rule (`docs/design.md`). It only narrows: it never makes a final status retriable.
+// ---------------------------------------------------------------------------------------------
+
+/// Headers carrying one `x-should-retry` field per value.
+fn signalled(values: &[&str]) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    for value in values {
+        headers.append("x-should-retry", HeaderValue::from_str(value).unwrap());
+    }
+    headers
+}
+
+/// Every status the table marks retriable reads final under the signal, with the same code,
+/// dispatch, message and retry hint.
+#[test]
+fn a_do_not_retry_signal_makes_every_retriable_status_final_and_keeps_the_rest() {
+    let now = SystemTime::now();
+    for status in [408, 429, 500, 502, 503, 504, 529, 599] {
+        let plain = status_error(status, &HeaderMap::new(), now);
+        assert!(
+            plain.may_retry(),
+            "status {status} is retriable unsignalled"
+        );
+        for value in ["false", " false ", "\tfalse"] {
+            let mut headers = signalled(&[value]);
+            headers.insert("retry-after", HeaderValue::from_static("7"));
+            let error = status_error(status, &headers, now);
+            assert_eq!(
+                (error.code, error.dispatch, &error.message),
+                (plain.code, plain.dispatch, &plain.message),
+                "status {status}, `{value}`"
+            );
+            assert!(
+                !error.retriable && !error.may_retry(),
+                "status {status}, `{value}`: {error:?}"
+            );
+            assert_eq!(error.retry_after_ms, Some(7_000), "status {status}");
+        }
+    }
+}
+
+/// The signal never widens: `x-should-retry: true` leaves a final status final. And only one
+/// field whose value is exactly `false`, surrounding whitespace aside, is the signal: another
+/// spelling or a repeated field (combined, `false, false`) changes nothing.
+#[test]
+fn the_signal_only_narrows_and_is_one_exact_false() {
+    let now = SystemTime::now();
+    for status in [400, 401, 403, 404, 409, 422, 307] {
+        let error = status_error(status, &signalled(&["true"]), now);
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "status {status}: {error:?}"
+        );
+    }
+    for values in [
+        &["true"][..],
+        &["False"],
+        &["FALSE"],
+        &["0"],
+        &["no"],
+        &[""],
+        &["falsey"],
+        &["false, true"],
+        &["false", "false"],
+        &["false", "true"],
+    ] {
+        let error = status_error(502, &signalled(values), now);
+        assert!(
+            error.retriable && error.may_retry(),
+            "{values:?}: {error:?}"
+        );
+    }
+}
+
+/// On the wire: llm-gateway's 502 before output carrying the signal reads final and is sent
+/// once; the field name is matched in any case.
+#[tokio::test]
+async fn a_502_carrying_the_signal_on_the_wire_reads_final() {
+    let body = r#"{"error":{"code":"upstream-failed","message":"SECRET-UPSTREAM-TEXT"}}"#;
+    for (field, retriable) in [
+        ("x-should-retry: false\r\n", false),
+        ("X-Should-Retry: false\r\n", false),
+        ("", true),
+    ] {
+        let head = refusal_head(
+            "502 Bad Gateway",
+            &format!("{field}Content-Length: {}\r\n", body.len()),
+        );
+        let (url, server) = serve_refusal(head, body.into(), Duration::from_millis(100)).await;
+        let (error, _) = refused(&HttpClient::new(Limits::default()).unwrap(), &url).await;
+        assert_eq!(
+            (error.code, error.dispatch, error.retriable),
+            (ErrorCode::Transport, Dispatch::Unknown, retriable),
+            "`{field}`"
+        );
+        assert!(!format!("{error:?} {error}").contains(PROSE), "`{field}`");
+        assert_eq!(server.await.unwrap(), 1, "`{field}`");
     }
 }

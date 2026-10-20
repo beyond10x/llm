@@ -444,11 +444,15 @@ comes with `close` or `fail` when nothing was streamed. `close` ends with exactl
 decoder reads back as the same class of failure, and never carries the error's own message. A
 refused `close` sends nothing and leaves the stream open for `fail`.
 
-No wire field carries the gateway's retry decision, so a relayed failure reads back by the
-receiving decoder's rules. With nothing streamed first, `server_is_overloaded`, `server_error` and
-`rate_limit_exceeded` read back retriable, whatever the gateway decided. That covers an
-`unavailable` it marked final and a failure whose retries it had spent
-([design.md](design.md#provider-failures-retried-before-output);
+No wire field carries the gateway's retry decision, so a failure relayed inside a stream reads
+back by the receiving decoder's rules. With nothing streamed first, `server_is_overloaded`,
+`server_error` and `rate_limit_exceeded` read back retriable, whatever the gateway decided. That
+covers an `unavailable` it marked final and a failure whose retries it had spent. A failure
+before any output reaches the client as an HTTP status instead, and there the gateway can state
+its decision: an error status carrying `x-should-retry: false` reads not retriable whatever its
+status, the header the official OpenAI and Anthropic SDKs already obey; llm-gateway has to send
+it. The header never makes a final status retriable
+([design.md](design.md#provider-failures-retried-before-output), with the SDK lines;
 `story:relayed-failures-keep-their-retry-decision`).
 
 What the encoder refuses rather than approximates or drops:

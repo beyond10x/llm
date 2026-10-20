@@ -350,12 +350,23 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `unauthorized` failure halts whatever its mark:
   `a_provider_failure_marked_before_output_falls_back_in_the_declared_order_and_unmarked_halts`
   `llm-routing/tests/fallback.rs:497`.
-- For both rows, a failure relayed by an llm gateway reads back by the receiving decoder's rules,
-  because no wire field carries the gateway's retry decision. With nothing streamed first, these
-  classes read back retriable even when the gateway had marked them final:
+- For both rows, a failure an llm gateway relays inside a stream reads back by the receiving
+  decoder's rules, because no wire field carries the gateway's retry decision. With nothing
+  streamed first, these classes read back retriable even when the gateway had marked them final:
   `a_failure_a_gateway_marked_final_reads_back_retriable_today`
-  `llm-responses/tests/adversary_w09_retry.rs:66` and `llm-messages/tests/adversary_w09_retry.rs:75`,
-  until `story:relayed-failures-keep-their-retry-decision`.
+  `llm-responses/tests/adversary_w09_retry.rs:66` and `llm-messages/tests/adversary_w09_retry.rs:75`.
+  A failure before output is the gateway's HTTP 502 instead, and an error status carrying
+  `x-should-retry: false` is final whatever its status (`story:relayed-failures-keep-their-retry-decision`;
+  `status_error` `llm-http/src/transport.rs:379`, `:389`): the bridge's `may_retry` is then false
+  and Harness's loop does not call the gateway again. llm-gateway has to send the header. Tests:
+  `a_do_not_retry_signal_makes_every_retriable_status_final_and_keeps_the_rest`
+  `llm-http/tests/retry_classes.rs:581`, `the_signal_only_narrows_and_is_one_exact_false` `:611`,
+  and `a_gateway_502_that_says_do_not_retry_is_final_and_without_it_is_retriable` in
+  `llm-responses/tests/retry_class.rs:524`, `llm-messages/tests/retry_class.rs:377` and
+  `llm-chat/tests/retry_signal.rs:94`; through a catalog's ports and routing,
+  `a_gateway_502_that_says_do_not_retry_is_attempted_once_on_every_wire`
+  `llm-models/tests/relayed_failure.rs:185` and
+  `the_same_502_without_the_signal_is_retried_on_its_target` `:206`.
 
 Row R36 (`story:text-deltas-are-final`; llm lines at this branch, not at 0.7.0):
 

@@ -89,7 +89,9 @@ HTTP transport marks 408, 429 and 500-599 (529 included), a request that got no 
 that failed while streaming, and an end of stream inside an event. Deadlines, cancellation,
 malformed frames, redirects and every other status (400, 401, 403 and 409 included) are final.
 So is a 429 whose bounded error body the protocol client's rule reads as an exhausted quota or
-spend limit: it is `refused` with dispatch `rejected`.
+spend limit: it is `refused` with dispatch `rejected`. Any error status carrying
+`x-should-retry: false` is final whatever its status, with its code and dispatch unchanged; the
+header never makes a final status retriable.
 `Error::may_retry` acts on the class only for transport, rate-limited, unavailable and protocol
 codes, so an unauthorized or refused failure is never retried whatever its mark says.
 

@@ -45,6 +45,12 @@ domain: llm.transport
 # time or is not JSON, stays `rate-limited` and retriable. Nothing read reaches a diagnostic or a
 # response tap. The exchanges observed here carry no rule, so their 429s stay `rate-limited`.
 #
+# Do-not-retry signal (story:relayed-failures-keep-their-retry-decision). An error status whose
+# answer carries exactly one `x-should-retry` field with the value `false` (name in any case,
+# value exact, surrounding whitespace aside) is not retriable, whatever its status; its code,
+# dispatch and retry hint are unchanged. The signal only narrows: `x-should-retry: true` never
+# makes a final status retriable. The fixture programs here script no such header.
+#
 # Connect bound and idle default (Harness harness-http/src/transport.rs:54-87,
 # `Settings::streaming`: connect 15 s, per-read 180 s). A client carries a connect bound of its
 # own beside its limits: 15 s unless the caller names another, positive and at most one day like

@@ -370,6 +370,12 @@ impl SseStream {
 /// 408, 429 and 500-599 (529 included) are retriable, as in Harness `status_error`: the far side
 /// did not get to answer. 409 and every other refusal are final: the identical request meets
 /// them again. A 5xx keeps dispatch `unknown`, because the work may have run.
+///
+/// An answer carrying `x-should-retry: false` is final whatever its status: the far side says
+/// another attempt will not help, as a gateway does once it has spent its own retries. The
+/// official `OpenAI` and Anthropic SDKs obey the header before any status rule (`docs/design.md`).
+/// It only narrows: `x-should-retry: true`, which those SDKs also obey, never makes a final
+/// status retriable here. Code, dispatch and retry hint are unchanged.
 pub fn status_error(status: u16, headers: &HeaderMap, now: SystemTime) -> Error {
     let (code, dispatch, retriable) = match status {
         401 | 403 => (ErrorCode::Unauthorized, Dispatch::Rejected, false),
@@ -380,10 +386,24 @@ pub fn status_error(status: u16, headers: &HeaderMap, now: SystemTime) -> Error 
     };
     let mut error = Error::new(code, format!("HTTP endpoint returned status {status}"))
         .with_dispatch(dispatch)
-        .with_retriable(retriable);
+        .with_retriable(retriable && !says_do_not_retry(headers));
     error.retry_after_ms = retry_after(headers, now)
         .map(|duration| u64::try_from(duration.as_millis()).unwrap_or(u64::MAX));
     error
+}
+
+/// The header by which a server says whether its error is worth another attempt.
+const SHOULD_RETRY: &str = "x-should-retry";
+
+/// Whether the answer carries exactly one `x-should-retry` field whose value is `false`,
+/// surrounding whitespace aside. The name matches in any case; the value does not. A repeated
+/// field is no signal: combined as RFC 9110 combines field lines, its value is `false, false`.
+fn says_do_not_retry(headers: &HeaderMap) -> bool {
+    let mut values = headers.get_all(SHOULD_RETRY).iter();
+    match (values.next(), values.next()) {
+        (Some(value), None) => value.to_str().is_ok_and(|value| value.trim() == "false"),
+        _ => false,
+    }
 }
 
 /// A 429 its client's [`QuotaRule`] reads as an exhausted quota: refused, dispatch `rejected`,

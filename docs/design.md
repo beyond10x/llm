@@ -147,8 +147,9 @@ attempt and preserve unknown spend. No semantic downgrade, cross-account switch 
 chain, or fallback after an exposed partial stream.
 
 One deliberate relaxation, matching Harness: a failure whose retry class is retriable (408, 429
-unless it reports an exhausted quota, 5xx including 529, a request or body that failed in transit,
-a stream cut inside an event) and
+unless it reports an exhausted quota, 5xx including 529, each unless the answer carries
+`x-should-retry: false`; a request or body that failed in transit, a stream cut inside an event)
+and
 that put nothing on the caller's sink is retried on the same target before any output is
 visible, and then falls back, even though its dispatch is `unknown` or `accepted`. It is not
 assumed free: each attempt keeps its own dispatch evidence, a possibly billed attempt stays
@@ -257,9 +258,34 @@ Other clients decide for themselves, and they differ:
   [anthropic-sdk-python][anthropic-python-stream]). Anthropic's errors page says such an error
   "doesn't follow these standard mechanisms" ([Anthropic errors][anthropic-errors]).
 
-The accepted risk is that llm's own routing may call a gateway again after the gateway has already
-spent its retries on the same failure, and each such call can spend them again. Keeping the
-relaying side's decision across the hop is `story:relayed-failures-keep-their-retry-decision`.
+**A status that says not to retry is final** (`story:relayed-failures-keep-their-retry-decision`,
+design option D, decided 2026-10-20). A failure before any output reaches a client as an HTTP
+status, not as a stream: llm-gateway answers it 502 `upstream-failed`, which the status table
+marks retriable. So without a signal llm's routing may call a gateway again after the gateway has
+spent its retries on the same failure, and each such call can spend them again. The signal is the
+header the official SDKs already read before any status rule, `x-should-retry`:
+
+| SDK | Where it reads the header, at the commit read 2026-10-20 |
+| --- | --- |
+| openai-python | `_should_retry`, [`src/openai/_base_client.py:909`-`918`][openai-python-should-retry] |
+| anthropic-sdk-python | `_should_retry`, [`src/anthropic/_base_client.py:930`-`939`][anthropic-python-should-retry] |
+| openai-node | `shouldRetry`, [`src/client.ts:2076`-`2081`][openai-node-should-retry] |
+| anthropic-sdk-typescript | `shouldRetry`, [`src/client.ts:1765`-`1770`][anthropic-ts-should-retry] |
+
+Each SDK obeys `false` as "do not retry" and `true` as "retry", under the comment "If the server
+explicitly says whether or not to retry, obey." llm reads `false` only. `status_error` marks an
+answer carrying `x-should-retry: false` not retriable whatever its status, with its code, dispatch
+and retry hint unchanged, so the Responses, Messages and Chat Completions clients all read it
+final. Routing then does not retry the target, and a 502's dispatch `unknown` halts the run as
+ambiguous instead of falling back. The signal only narrows: `x-should-retry: true` never makes a
+final status retriable, so a 400 carrying it stays final. The name matches in any case. The value
+must be exactly `false`, surrounding whitespace aside. A repeated field is no signal: combined as
+RFC 9110 combines field lines, its value is `false, false`. llm-gateway has to send the header
+when the failure it answers is final, for example once its own retries are spent; that is its own
+story, in its own repository. Until it does, a gateway's 502 stays retriable here.
+
+The failure path inside a stream is unchanged: what an ingress encoder's `fail` writes still reads
+back by the receiving decoder's rules, as above.
 
 [openai-errors]: https://developers.openai.com/api/docs/guides/error-codes
 [openai-responses]: https://developers.openai.com/api/reference/resources/responses/methods/create
@@ -270,6 +296,10 @@ relaying side's decision across the hop is `story:relayed-failures-keep-their-re
 [openai-python-stream]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_streaming.py#L78-L90
 [anthropic-python-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L929-L962
 [anthropic-python-stream]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_streaming.py#L160-L173
+[openai-python-should-retry]: https://github.com/openai/openai-python/blob/0e5794dc48b8f8d51f6047f8a0b1814eb1e65850/src/openai/_base_client.py#L909-L918
+[anthropic-python-should-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L930-L939
+[openai-node-should-retry]: https://github.com/openai/openai-node/blob/e8c295c97159d56738d69aa18522f1acd4a1d093/src/client.ts#L2076-L2081
+[anthropic-ts-should-retry]: https://github.com/anthropics/anthropic-sdk-typescript/blob/04a4c28c70de498d6d0e930e43edb5edb9ac545e/src/client.ts#L1765-L1770
 
 ## Client request fields
 

@@ -296,9 +296,13 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
 - **Failure.** `fail` emits the `error` event; eight error codes map to an Anthropic error type the
   decoder reads back as the same code, and `protocol`, `cancelled` and `unsupported` take the nearest
   (`api_error`, `api_error`, `invalid_request_error`). No wire field carries the gateway's retry
-  decision, so a relayed failure reads back by the receiving decoder's rules. With nothing streamed
-  first, `overloaded_error` and `api_error` read back retriable, whatever the gateway decided
-  ([design.md](design.md#provider-failures-retried-before-output);
+  decision, so a failure relayed inside a stream reads back by the receiving decoder's rules. With
+  nothing streamed first, `overloaded_error` and `api_error` read back retriable, whatever the
+  gateway decided. A failure before any output reaches the client as an HTTP status instead, and
+  an error status carrying `x-should-retry: false` reads not retriable whatever its status, the
+  header the official OpenAI and Anthropic SDKs already obey; llm-gateway has to send it. The
+  header never makes a final status retriable
+  ([design.md](design.md#provider-failures-retried-before-output), with the SDK lines;
   `story:relayed-failures-keep-their-retry-decision`).
 - **Refusals.** `UserText`, `ToolResult` and `UnattributedOpaque` items, and an outcome that
   contradicts the streamed calls. Argument fragments for a call whose block already stopped make

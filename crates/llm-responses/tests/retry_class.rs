@@ -456,3 +456,85 @@ async fn any_other_429_stays_a_retriable_rate_limit() {
         );
     }
 }
+
+/// llm-gateway's refusal of a failure before output: HTTP 502, code `upstream-failed`.
+const GATEWAY_502_BODY: &str =
+    r#"{"error":{"code":"upstream-failed","message":"SECRET-UPSTREAM-TEXT"}}"#;
+
+/// Answers the first request with llm-gateway's 502 carrying the head `fields`, and returns the
+/// turn's refusal, what the caller was shown and how many requests arrived.
+async fn relayed_turn(fields: &str) -> (Error, VecSink, usize) {
+    let head = format!(
+        "HTTP/1.1 502 Bad Gateway\r\ncontent-type: application/json\r\n{fields}content-length: {}\r\nconnection: close\r\n\r\n",
+        GATEWAY_502_BODY.len()
+    );
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("a local port");
+    let url = format!("http://{}/v1", listener.local_addr().expect("an address"));
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.expect("an accepted connection");
+        let mut seen = Vec::new();
+        let mut buffer = vec![0; 1 << 16];
+        while !seen.windows(4).any(|w| w == b"\r\n\r\n") {
+            let length = socket.read(&mut buffer).await.expect("a readable socket");
+            assert!(length > 0, "the client closed before sending a request");
+            seen.extend_from_slice(&buffer[..length]);
+        }
+        socket
+            .write_all(head.as_bytes())
+            .await
+            .expect("head written");
+        socket
+            .write_all(GATEWAY_502_BODY.as_bytes())
+            .await
+            .expect("body written");
+        let _ = socket.shutdown().await;
+        let resent = tokio::time::timeout(Duration::from_millis(100), listener.accept())
+            .await
+            .is_ok();
+        1 + usize::from(resent)
+    });
+    let client = ResponsesClient::new(
+        binding(&url),
+        HttpClient::new(Limits {
+            response_headers: Duration::from_secs(20),
+            idle: Duration::from_secs(20),
+            total: Duration::from_secs(30),
+        })
+        .expect("bounded transport"),
+        Arc::new(Resolver),
+    )
+    .expect("a Responses binding");
+    let request = TurnRequest::new("small", vec![Item::user("Say hello")]);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let error = client
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect_err("a 502 is a refusal");
+    let requests = server.await.expect("the fixture server");
+    (error, sink, requests)
+}
+
+/// story:relayed-failures-keep-their-retry-decision. A gateway that spent its retries on a
+/// failure before output says so with `x-should-retry: false` on its 502: the client reads it
+/// final and sends once, so routing does not call the gateway again. The same 502 without the
+/// signal stays a retriable `transport`, dispatch `unknown`.
+#[tokio::test]
+async fn a_gateway_502_that_says_do_not_retry_is_final_and_without_it_is_retriable() {
+    for (fields, retriable) in [("x-should-retry: false\r\n", false), ("", true)] {
+        let (error, sink, requests) = relayed_turn(fields).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Transport, Dispatch::Unknown),
+            "`{fields}`"
+        );
+        assert_eq!(error.may_retry(), retriable, "`{fields}`: {error:?}");
+        assert_eq!(requests, 1, "`{fields}`: the client sent the turn again");
+        assert_eq!(sink.events(), [], "`{fields}`");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "`{fields}`: {error:?}"
+        );
+    }
+}
