@@ -25,6 +25,11 @@ tool call, and fragments of that call's arguments. A tool call is announced once
 identifier and name the provider sent, before any of its argument fragments. The finished
 `TurnOutcome` then carries the complete items, the stop reason and the observation.
 
+Every event is final: nothing later in the turn retracts or replaces it, so a caller can speak or
+commit a text delta as it arrives. On a successful turn each assistant message carries exactly the
+text deltas shown for it. Where a server's own final text differed, the shown text is kept and a
+warning with the fixed code `shown-text-kept` says so before the turn is returned.
+
 ## One attempt, one port
 
 `Model::turn` is an object-safe asynchronous port taking one request, a caller-owned asynchronous

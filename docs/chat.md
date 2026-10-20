@@ -78,6 +78,11 @@ A chunk carrying more than one choice is refused however it numbers them. An ind
 not a whole count numbers nothing, and joining two completions would hand the caller one
 assistant turn assembled out of two.
 
+**The turn's text is the text the caller was shown.** A stream carries text only as
+`delta.content`, and the turn's one `AssistantText` is those deltas joined, so it cannot differ
+from what the caller was shown and `shown-text-kept` never appears on this route (`docs/design.md`
+"Streamed events are final").
+
 **Every one of those carries dispatch evidence that the request was served.** Nothing in this
 direction is reachable before the endpoint has sent bytes, and dispatch is the retry signal:
 `not-sent` on a response that arrived would invite a resend of a turn the provider already

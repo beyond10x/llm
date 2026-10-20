@@ -409,7 +409,16 @@ impl StreamDecoder {
             .ok_or_else(|| Error::protocol("Messages block start carries no block"))?
             .clone();
         let announcement = match string(&value, "type")? {
-            "text" | "thinking" | "redacted_thinking" => None,
+            // Text a block opens with is model output like any delta's: shown as the block opens
+            // and folded into it, so the turn carries exactly the text the caller was shown.
+            "text" => value
+                .get("text")
+                .and_then(Value::as_str)
+                .filter(|text| !text.is_empty())
+                .map(|text| StreamEvent::TextDelta {
+                    text: text.to_owned(),
+                }),
+            "thinking" | "redacted_thinking" => None,
             "tool_use" => {
                 let call_id = CallId::new(string(&value, "id")?)
                     .map_err(|_| Error::protocol("invalid Messages tool call id"))?;

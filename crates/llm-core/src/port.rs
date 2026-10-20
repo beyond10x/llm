@@ -7,6 +7,20 @@ use std::{future::Future, pin::Pin};
 
 pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
+/// The code of the warning a decoder emits when a server's own final text for an assistant
+/// message differed from the text deltas it streamed for it, and the shown text was kept.
+pub const SHOWN_TEXT_KEPT: &str = "shown-text-kept";
+
+/// What a turn shows its caller while it runs, in the order the wire produced it.
+///
+/// **Every event is final.** No later event retracts, replaces or reorders one already emitted,
+/// and no variant can: a caller may act on each event as it arrives, speak a text delta or commit
+/// it, and never has to take it back. On a successful turn each assistant message in the
+/// [`TurnOutcome`] carries exactly the concatenation of the [`StreamEvent::TextDelta`]s shown for
+/// it; a message no delta was shown for carries the text the server sent. Where a server's own
+/// final text for a message differed from its deltas, the shown text is kept and a
+/// [`StreamEvent::Warning`] with the code [`SHOWN_TEXT_KEPT`] says so before the outcome is
+/// returned. Its message is fixed and quotes neither text.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
 pub enum StreamEvent {
@@ -43,6 +57,12 @@ pub trait StreamSink: Send {
 pub trait Model: Send + Sync {
     fn provenance(&self) -> &Provenance;
     fn capabilities(&self) -> &Capabilities;
+    /// Runs one attempt, emitting each [`StreamEvent`] into `sink` as the turn produces it.
+    ///
+    /// Every emitted event is final: nothing later in the turn retracts or replaces it. A
+    /// successful outcome's assistant text is the text deltas shown for each message, and a
+    /// server's own text that differed is reported with [`SHOWN_TEXT_KEPT`] on the sink before
+    /// this returns (see [`StreamEvent`]).
     fn turn<'a>(
         &'a self,
         request: &'a TurnRequest,

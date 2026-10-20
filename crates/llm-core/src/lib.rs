@@ -21,7 +21,7 @@ pub use controls::{
 pub use error::{Dispatch, Error, ErrorCode};
 pub use id::{CallId, Id, InvalidId, ToolName};
 pub use item::{Item, ToolCall};
-pub use port::{BoxFuture, Model, StreamEvent, StreamSink, VecSink};
+pub use port::{BoxFuture, Model, SHOWN_TEXT_KEPT, StreamEvent, StreamSink, VecSink};
 pub use tokio_util::sync::CancellationToken as Cancel;
 pub use turn::{
     OutcomeDocument, Sampling, StopReason, ToolChoice, ToolSpec, TurnDocument, TurnObservation,

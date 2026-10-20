@@ -8,8 +8,9 @@
 use std::collections::BTreeMap;
 
 use llm_core::{
-    CallId, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, StopReason,
-    StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome, Usage, exceeds,
+    CallId, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES,
+    SHOWN_TEXT_KEPT, StopReason, StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome,
+    Usage, exceeds,
 };
 use serde_json::Value;
 
@@ -109,8 +110,8 @@ pub(crate) struct Decoder<'a> {
     answered: bool,
     events: Vec<StreamEvent>,
     /// Text the caller was shown through `response.output_text.delta`, one entry per output item
-    /// the deltas named, in order of first delta. Each is kept in the turn when no message the
-    /// turn carries can be that output item (row R36).
+    /// the deltas named, in order of first delta. Each is the text of the message the turn
+    /// carries for that item, or a message of its own when the turn carries none (row R36).
     shown: Vec<ShownText>,
     /// The `id` of every message among `streamed`, absent where the message named none.
     streamed_messages: Vec<Option<String>>,
@@ -293,30 +294,72 @@ impl<'a> Decoder<'a> {
         });
     }
 
-    /// Keeps the text the caller was shown of every output item the turn does not carry (R36).
+    /// Gives each output item in the turn the text the caller was shown of it, and says whether
+    /// a message the server sent carried other text.
     ///
-    /// The terminal object is authoritative for what the turn carries, but a server that
-    /// streams a message only as deltas and then completes with an empty `output`, as the
-    /// Codex backend can, would otherwise hand the caller a turn without the answer it just
-    /// watched arrive. A message the turn carries for the same output item outranks that item's
-    /// deltas, which are then only what was shown on the way. `carried` holds the `id` of every
-    /// message in `items`; a message or a delta that names no item cannot be told apart from
-    /// any other, so it counts as the same item.
+    /// A shown delta is final (`StreamEvent`): a caller may already have spoken it, so the turn
+    /// it gets back carries what it was shown, not what the server finished with. This one pass
+    /// covers both ways a server's message reaches `items`: in the terminal `output`, or streamed
+    /// through `response.output_item.done` before an empty one. `carried` holds the `id` of
+    /// every message in `items`, in order. Shown text is paired with a message by `id` where both
+    /// name one, and otherwise by order: the first unpaired message that does not name another
+    /// item. A paired message takes the shown text, and one that carried other text is reported;
+    /// a message no text was shown for keeps the server's.
     ///
-    /// Kept messages are placed by `output_index`, ascending and stable among equal indexes,
-    /// whatever order their first deltas arrived in; one without an index goes after every
-    /// other item.
-    fn keep_shown_text(&mut self, items: &mut Vec<Item>, carried: &[Option<String>]) {
-        let mut kept: Vec<ShownText> = std::mem::take(&mut self.shown)
+    /// Shown text no message is paired with is kept as a message of its own (R36): a server that
+    /// streams a message only as deltas and then completes with an empty `output`, as the Codex
+    /// backend can, would otherwise hand the caller a turn without the answer it just watched
+    /// arrive. Kept messages are placed by `output_index`, ascending and stable among equal
+    /// indexes, whatever order their first deltas arrived in; one without an index goes after
+    /// every other item.
+    fn keep_shown_text(&mut self, items: &mut Vec<Item>, carried: &[Option<String>]) -> bool {
+        let shown: Vec<ShownText> = std::mem::take(&mut self.shown)
             .into_iter()
-            .filter(|shown| {
-                !shown.text.is_empty()
-                    && !carried.iter().any(|id| match (id, &shown.item_id) {
-                        (Some(id), Some(item_id)) => id == item_id,
-                        _ => true,
-                    })
-            })
+            .filter(|shown| !shown.text.is_empty())
             .collect();
+        // Where each message sits in `items`, beside the `id` it names.
+        let messages: Vec<(usize, Option<&str>)> = items
+            .iter()
+            .enumerate()
+            .filter(|(_, item)| matches!(item, Item::AssistantText { .. }))
+            .map(|(at, _)| at)
+            .zip(carried.iter().map(Option::as_deref))
+            .collect();
+        let mut taken = vec![false; messages.len()];
+        let mut pairs: Vec<Option<usize>> = vec![None; shown.len()];
+        for (pair, text) in pairs.iter_mut().zip(&shown) {
+            if let Some(item_id) = text.item_id.as_deref() {
+                *pair = (0..messages.len())
+                    .find(|&index| !taken[index] && messages[index].1 == Some(item_id));
+                if let Some(index) = *pair {
+                    taken[index] = true;
+                }
+            }
+        }
+        for (pair, text) in pairs.iter_mut().zip(&shown) {
+            if pair.is_none() {
+                *pair = (0..messages.len()).find(|&index| {
+                    !taken[index] && (messages[index].1.is_none() || text.item_id.is_none())
+                });
+                if let Some(index) = *pair {
+                    taken[index] = true;
+                }
+            }
+        }
+        let mut replaced = false;
+        let mut kept = Vec::new();
+        for (text, pair) in shown.into_iter().zip(pairs) {
+            let Some(index) = pair else {
+                kept.push(text);
+                continue;
+            };
+            if let Some(Item::AssistantText { text: carried }) = items.get_mut(messages[index].0)
+                && *carried != text.text
+            {
+                *carried = text.text;
+                replaced = true;
+            }
+        }
         kept.sort_by_key(|shown| shown.output_index.unwrap_or(u64::MAX));
         for shown in kept {
             let at = shown
@@ -325,6 +368,7 @@ impl<'a> Decoder<'a> {
                 .map_or(items.len(), |index| index.min(items.len()));
             items.insert(at, Item::assistant(shown.text));
         }
+        replaced
     }
 
     /// Holds the first streamed-item refusal. A later one does not displace it: the first is the
@@ -385,7 +429,7 @@ impl<'a> Decoder<'a> {
                 items.push(item);
             }
         }
-        self.keep_shown_text(&mut items, &carried);
+        let replaced = self.keep_shown_text(&mut items, &carried);
         if items.len() > MAX_ITEMS {
             return Err(retain(
                 Error::too_large("model output exceeds its bound")
@@ -405,6 +449,16 @@ impl<'a> Decoder<'a> {
             return Err(retain(protocol(
                 "a finished function call contradicts its announcement",
             )));
+        }
+        // Once, and only for a turn that is returned: the caller is told before it holds the turn
+        // that the text it carries is the shown text and not the server's own.
+        if replaced {
+            self.events.push(StreamEvent::Warning {
+                code: SHOWN_TEXT_KEPT.to_owned(),
+                message: "a message's final text differed from the text shown for it; the shown \
+                          text was kept"
+                    .to_owned(),
+            });
         }
         let has_tool_calls = items.iter().any(|item| item.as_tool_call().is_some());
         Ok(TurnOutcome {

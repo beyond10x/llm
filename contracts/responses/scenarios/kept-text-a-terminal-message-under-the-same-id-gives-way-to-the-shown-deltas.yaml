@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas
+summary: a terminal message under the deltas' item id whose text differs carries the shown text, and the caller is warned once
+timeline:
+- at: '2026-10-20T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.output_text.delta","item_id":"msg_a","output_index":0,"content_index":0,"delta":"First"},{"type":"response.reasoning_summary_text.delta","item_id":"rs_1","output_index":1,"summary_index":0,"delta":"weighing"},{"type":"response.output_text.delta","item_id":"msg_b","output_index":2,"content_index":0,"delta":"Sec"},{"type":"response.output_text.delta","item_id":"msg_b","output_index":2,"content_index":0,"delta":"ond"},{"type":"response.completed","response":{"status":"completed","output":[{"type":"message","id":"msg_a","role":"assistant","content":[{"type":"output_text","text":"First"}]},{"type":"message","id":"msg_b","role":"assistant","content":[{"type":"output_text","text":"the final text"}]}]}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: true
+    stop_reason: end-turn
+    items_json: '[{"kind":"assistant-text","text":"First"},{"kind":"assistant-text","text":"Second"}]'
+    stream_events:
+    - text-delta:First
+    - reasoning-delta:weighing
+    - text-delta:Sec
+    - text-delta:ond
+    - warning:shown-text-kept
