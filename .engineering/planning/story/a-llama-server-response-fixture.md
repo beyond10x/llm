@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:a-llama-server-response-fixture
 kind: story
-status: active
+status: implemented
 title: The Chat Completions client is pinned against a llama-server-shaped stream
 relations:
 - decomposes: epic:inference
@@ -26,10 +26,11 @@ scope:
   path: crates/llm-chat/tests
 - confidence: cited
   path: docs/verification/chat.md
-revision: 7
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T15:37:10Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T15:37:10Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T21:51:17Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 
@@ -58,5 +59,16 @@ The Chat Completions client is pinned against a llama-server-shaped stream whose
 
 Approved with wave 2026-10-20-w11 by session `b10x-chef-orchestrator` under the owner's grant: the
 fixture is authored from llama.cpp's server source at a cited commit (no llama-server is installed
-on the build machine, and no paid call is made), and says so. A field llama-server adds to a
-streamed chunk is carried or refused under the workspace rule, never dropped, as the unit finds it.
+on the build machine, and no paid call is made), and says so.
+
+Taken by the coordinator during the wave:
+
+- `timings` counters (`prompt_n`, `cache_n`, `predicted_n`) are read: they fill a counter the
+  `usage` report leaves out, and must agree with it where both name one.
+- The eight other documented `timings` fields (durations, rates, draft counts) are accepted and not
+  read, with a shape check, following `UNCONSUMED` in `b10x-llm-messages`: refusing them would refuse
+  every llama-server turn, and the neutral `Usage` has no place for durations and rates. A value in
+  a shape llama-server does not write is refused by field name. This reads the acceptance's
+  "carried or refused, never dropped" as satisfied by an accepted, checked, documented field.
+- After adversary pass 1: a contradiction between `usage` and `timings` is refused before either is
+  stored, so the refused turn reports neither count.

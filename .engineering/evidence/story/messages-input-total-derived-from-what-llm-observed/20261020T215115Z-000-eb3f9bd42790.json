@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T21:51:15Z",
+  "actor": "human:timo",
+  "artifact": "story:messages-input-total-derived-from-what-llm-observed",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-messages --test streaming --test adversary_w11_u3_input_total",
+    "reference": "VERIFIED: base 640fff2b left the total unknown with a complete breakdown (2 failed); a later lower count lowered the total at b93c6ff9; green at 5962651c; ~/.cache/llm-w11/u3/scratch/red.log, r1-red.log"
+  }
+}

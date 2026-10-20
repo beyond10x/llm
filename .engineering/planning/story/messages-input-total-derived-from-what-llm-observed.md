@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:messages-input-total-derived-from-what-llm-observed
 kind: story
-status: active
+status: implemented
 title: A Messages input total is known whenever llm can derive it from what it observed
 summary: llm 0.7.0 leaves the total unknown with cache_creation_input_tokens absent; deriving 0 from a request without cache_control rarely fires, because llm marks cache_control on nearly every request
 relations:
@@ -20,10 +20,11 @@ scope:
   path: docs/harness-parity.md
 - confidence: cited
   path: docs/messages.md
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T15:37:08Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T15:37:08Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T21:51:17Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 

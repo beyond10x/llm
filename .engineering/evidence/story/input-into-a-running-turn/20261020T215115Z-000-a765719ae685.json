@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T21:51:15Z",
+  "actor": "human:timo",
+  "artifact": "story:input-into-a-running-turn",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p llm-docs --example interrupt_turn --test adversary_w11_interrupt_wire -p b10x-llm-core --test adversary_w11_interrupt_pattern",
+    "reference": "VERIFIED: the next turn red without the shown text, red when a finished turn ended in a tool call (refused before sending), red under the one-call mutant; green at c868af54; ~/.cache/llm-w11/u4/scratch/red.log, r1-*-red.log, r2-n6-red.log"
+  }
+}

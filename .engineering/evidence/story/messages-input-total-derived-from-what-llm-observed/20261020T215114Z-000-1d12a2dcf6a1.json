@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T21:51:14Z",
+  "actor": "human:timo",
+  "artifact": "story:messages-input-total-derived-from-what-llm-observed",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 task check steps run one by one through b10x-build-slot on wave/2026-10-20-w11 at be587384 (tree llm-w11-plan)",
+    "reference": "be587384; 1071 workspace tests passed, 0 failed, 3 ignored; conformance 888/888; every step exit 0; logs ~/.cache/llm-w11/integrate/gate/"
+  }
+}

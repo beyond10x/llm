@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T21:51:15Z",
+  "actor": "human:timo",
+  "artifact": "story:async-clients-without-a-tokio-runtime",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-http --test no_tokio_runtime -p b10x-llm-models --test no_tokio_runtime --test adversary_w11_no_runtime",
+    "reference": "VERIFIED: base a4835807 panicked on every wire (\"there is no reactor running\"); a turn moved out of its runtime panicked at b1c1ddd1; all refused as unsupported at 74ad3b12; ~/.cache/llm-w11/u2/scratch/red-*.log, r1-red-*.log"
+  }
+}

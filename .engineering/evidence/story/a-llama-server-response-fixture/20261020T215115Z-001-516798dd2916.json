@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T21:51:15Z",
+  "actor": "human:timo",
+  "artifact": "story:a-llama-server-response-fixture",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-chat --test incoming --test local_endpoint --test adversary_w11_llama_timings; b10x-llm-conformance check",
+    "reference": "VERIFIED: the base decoder dropped timings (5 failed, 1 failed) and 3 of 5 llama-server scenarios fail against it; a refused contradiction kept a count at 5010e372; green at 2bd1dc63, conformance 888/888; ~/.cache/llm-w11/u5/scratch/red*.log"
+  }
+}

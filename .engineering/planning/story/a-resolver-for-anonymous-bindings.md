@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:a-resolver-for-anonymous-bindings
 kind: story
-status: active
+status: implemented
 title: A caller building a client for an anonymous binding uses a resolver llm exports
 relations:
 - decomposes: epic:inference
@@ -20,10 +20,11 @@ scope:
   path: crates/llm-models/src/lib.rs
 - confidence: cited
   path: website/docs/guides/call-a-local-endpoint.md
-revision: 7
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T15:37:04Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T15:37:05Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T21:51:16Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 
@@ -51,6 +52,12 @@ A caller building a protocol client for an anonymous binding uses a resolver llm
 ## Design decisions
 
 Approved with wave 2026-10-20-w11 by session `b10x-chef-orchestrator` under the owner's grant:
-export the resolver `b10x-llm-models` keeps private (`Anonymous`, `crates/llm-models/src/lib.rs:49-60`
-at 0.8.2) from `b10x-llm-credentials`, refusing every resolve with a typed error as it does today;
-`b10x-llm-models` uses the exported one and drops its copy.
+export the resolver `b10x-llm-models` kept private (`Anonymous`, `crates/llm-models/src/lib.rs:49-60`
+at 0.8.2) from `b10x-llm-credentials` as `AnonymousResolver`; `b10x-llm-models` uses it and drops
+its copy.
+
+Changed by the coordinator after adversary pass 1 (`review-result:adversary-w11-resolver-pass-1`):
+it refuses every resolve with `SecretError::Missing`, not `InvalidReference` as the private copy did.
+Exported, it can be handed to a credentialed binding by mistake; `Missing` maps to `unauthorized`,
+which stops the run before sending and takes no fallback (`crates/llm-providers/src/auth.rs:109-121`),
+where `InvalidReference` read as `unavailable` and fell back to the next target.

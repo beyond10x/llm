@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:input-into-a-running-turn
 kind: story
-status: active
+status: implemented
 title: Input reaches a running turn, or llm records that it does not and names the supported pattern
 summary: Model::turn takes a fixed TurnRequest; no input reaches a turn in progress, and no protocol in scope can carry it
 relations:
@@ -18,10 +18,11 @@ scope:
   path: docs/design.md
 - confidence: inferred
   path: website/docs/guides
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T15:37:08Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-20T15:37:09Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-20T21:51:17Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 

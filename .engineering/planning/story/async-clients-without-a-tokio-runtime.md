@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:async-clients-without-a-tokio-runtime
 kind: story
-status: active
+status: implemented
 title: A caller without a Tokio runtime can run a turn, or is told by a typed error which adapter it needs
 relations:
 - decomposes: epic:inference
@@ -18,10 +18,11 @@ scope:
   path: crates/llm-http/tests
 - confidence: cited
   path: docs/design.md
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T15:37:06Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-20T15:37:06Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-20T21:51:16Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 

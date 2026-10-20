@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T21:51:15Z",
+  "actor": "human:timo",
+  "artifact": "story:a-resolver-for-anonymous-bindings",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-credentials --test injected -p b10x-llm-chat --test local_endpoint -p b10x-llm-models --test adversary_w11_anonymous_resolver",
+    "reference": "VERIFIED: base f88f6907 fails to compile the new cases (E0432 unresolved AnonymousResolver); the misused-resolver cases red at 1f871e33 (Unavailable instead of Unauthorized; fell back); green at 28ab63e2; ~/.cache/llm-w11/u1/scratch/red*.log, r1-red.log"
+  }
+}
