@@ -11,14 +11,14 @@ use llm_models::{
 use std::{collections::BTreeMap, fmt::Write as _, path::PathBuf, sync::Arc};
 
 /// No test environment sets this; every `env:` reference in the shared document names it.
-const NEVER_SET: &str = "LLM_ROUTES_TEST_NEVER_SET";
+const NEVER_SET: &str = "LLM_MODELS_TEST_NEVER_SET";
 
 const DOCUMENT: &str = "format: llm.routes/1
 endpoints:
   anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
-              auth: {kind: api-key, header: x-api-key, secret: env:LLM_ROUTES_TEST_NEVER_SET}}
+              auth: {kind: api-key, header: x-api-key, secret: env:LLM_MODELS_TEST_NEVER_SET}}
   openrouter: {base_url: https://openrouter.ai/api/v1, protocol: chat-completions,
-               auth: {kind: bearer, secret: env:LLM_ROUTES_TEST_NEVER_SET}}
+               auth: {kind: bearer, secret: env:LLM_MODELS_TEST_NEVER_SET}}
   gateway:
     base_url: https://gateway.example.invalid/v1
     protocol: responses
@@ -50,27 +50,52 @@ routes:
   r: ROUTE
 ";
 
+/// Each placeholder of [`SINGLE`], in the order [`single`] replaces it, and the text it stands for
+/// unless a case replaces it.
+const DEFAULTS: [(&str, &str); 6] = [
+    ("FORMAT", "llm.routes/1"),
+    ("PROTOCOL", "messages"),
+    (
+        "AUTH",
+        "{kind: bearer, secret: env:LLM_MODELS_TEST_NEVER_SET}",
+    ),
+    ("ENDPOINT_EXTRA", ""),
+    ("TOP", ""),
+    ("ROUTE", "p/m"),
+];
+
+/// [`SINGLE`] with each placeholder replaced. A later placeholder would rewrite its own name
+/// inside text an earlier one wrote, so no text written may hold a placeholder's name, and a
+/// replacement must name a placeholder rather than leave the default in place unnoticed.
 fn single(replacements: &[(&str, &str)]) -> String {
+    for (name, _) in replacements {
+        assert!(
+            DEFAULTS.iter().any(|(placeholder, _)| placeholder == name),
+            "`{name}` is not a placeholder"
+        );
+    }
     let mut document = SINGLE.to_owned();
-    for (placeholder, value) in [
-        ("FORMAT", "llm.routes/1"),
-        ("PROTOCOL", "messages"),
-        (
-            "AUTH",
-            "{kind: bearer, secret: env:LLM_ROUTES_TEST_NEVER_SET}",
-        ),
-        ("ENDPOINT_EXTRA", ""),
-        ("TOP", ""),
-        ("ROUTE", "p/m"),
-    ] {
+    for (placeholder, value) in DEFAULTS {
+        assert_eq!(SINGLE.matches(placeholder).count(), 1, "{placeholder}");
         let value = replacements
             .iter()
             .find(|(name, _)| *name == placeholder)
             .map_or(value, |(_, replaced)| *replaced);
+        for (other, _) in DEFAULTS {
+            assert!(
+                !value.contains(other),
+                "the text for {placeholder} holds the placeholder {other}: {value}"
+            );
+        }
         document = document.replace(placeholder, value);
     }
     document
 }
+
+/// Every required capability of a declared route, so a route that writes them is refused only
+/// for what it adds.
+const LIMITS: &str = "tools: true, tool_choice: true, temperature: true, top_p: true, \
+reasoning_efforts: [], context_window: 32768, max_output_tokens: 8192";
 
 fn id(value: &str) -> Id {
     Id::new(value).unwrap()
@@ -256,9 +281,11 @@ fn the_retired_providers_field_is_refused_as_an_unknown_field() {
 
 /// A refusal's kind comes from where it arose, never from searching the parser's message, which
 /// quotes an unknown field's name: a field named after any refusal this module raises is an
-/// unknown field, at every level, and nothing else.
+/// unknown field, at every level, and nothing else. Each document loads without its field, so
+/// the field alone is what is refused, at the line that holds it.
 #[test]
 fn no_refusal_is_classified_by_the_text_of_the_field_it_names() {
+    let route = |field: &str| format!("{{model: p/m, {field}capabilities: {{{LIMITS}}}}}");
     for marker in [
         "llm.routes expansion bound",
         "llm.routes duplicate mapping key",
@@ -268,26 +295,42 @@ fn no_refusal_is_classified_by_the_text_of_the_field_it_names() {
         "the document declares it more than once",
         "a mapping key is repeated",
     ] {
-        for document in [
-            single(&[("TOP", &format!("\"{marker}\": 1"))]),
-            single(&[("ENDPOINT_EXTRA", &format!("\"{marker}\": 1"))]),
-            single(&[("AUTH", &format!("{{kind: anonymous, \"{marker}\": 1}}"))]),
-            single(&[(
-                "ROUTE",
-                &format!("{{model: p/m, \"{marker}\": 1, capabilities: {{}}}}"),
-            )]),
+        let field = format!("\"{marker}\": 1");
+        for (placeholder, with, without) in [
+            ("TOP", field.clone(), String::new()),
+            ("ENDPOINT_EXTRA", field.clone(), String::new()),
+            (
+                "AUTH",
+                format!("{{kind: anonymous, {field}}}"),
+                "{kind: anonymous}".to_owned(),
+            ),
+            ("ROUTE", route(&format!("{field}, ")), route("")),
         ] {
-            let error = refused(&document);
+            let loads = single(&[(placeholder, &without)]);
+            if let Err(error) = Routes::parse(&loads) {
+                panic!(
+                    "{placeholder} without the field: {}\n{loads}",
+                    error.message
+                );
+            }
+            let document = single(&[(placeholder, &with)]);
+            let Err(error) = Routes::parse(&document) else {
+                panic!("{placeholder} {marker}: the field was accepted\n{document}");
+            };
             assert_eq!(
                 error.code,
                 ErrorCode::InvalidRequest,
-                "{marker}: {document}"
+                "{placeholder} {marker}: {document}"
             );
+            let line = 1 + SINGLE
+                .lines()
+                .position(|line| line.contains(placeholder))
+                .unwrap();
             assert!(
-                error
-                    .message
-                    .starts_with("invalid llm.routes/1 YAML document at line "),
-                "{marker}: {}",
+                error.message.starts_with(&format!(
+                    "invalid llm.routes/1 YAML document at line {line} column "
+                )),
+                "{placeholder} {marker}: {}\n{document}",
                 error.message
             );
         }
@@ -311,7 +354,7 @@ fn strict_parsing_refuses_each_malformed_document_without_echoing_its_value() {
             "unknown auth field",
             single(&[(
                 "AUTH",
-                "{kind: bearer, secret: env:LLM_ROUTES_TEST_NEVER_SET, token: sk-unknown-auth}",
+                "{kind: bearer, secret: env:LLM_MODELS_TEST_NEVER_SET, token: sk-unknown-auth}",
             )]),
             "sk-unknown-auth",
         ),
@@ -387,6 +430,7 @@ fn strict_parsing_refuses_each_malformed_document_without_echoing_its_value() {
             "sk-host",
         ),
     ] {
+        assert!(document.contains(value), "{case}: {document}");
         let error = refused(&document);
         assert_eq!(error.code, ErrorCode::InvalidRequest, "{case}");
         assert!(
@@ -420,10 +464,7 @@ fn a_routes_document_written_before_the_streaming_declarations_loads_with_the_cl
 
 #[test]
 fn a_route_claiming_input_during_output_or_unstreamed_output_is_refused_naming_the_route() {
-    // The default `AUTH` names `LLM_ROUTES_TEST_NEVER_SET`, which holds the `ROUTE` placeholder.
     const ANONYMOUS: &str = "{kind: anonymous}";
-    const LIMITS: &str = "tools: true, tool_choice: true, temperature: true, top_p: true, \
-reasoning_efforts: [], context_window: 32768, max_output_tokens: 8192";
     for protocol in ["responses", "messages", "chat-completions"] {
         for (claim, message) in [
             (
@@ -666,7 +707,12 @@ fn building_resolvers_for_a_keychain_reference_without_an_injected_store_is_refu
 #[cfg(not(feature = "environment"))]
 #[test]
 fn an_environment_reference_is_refused_by_name_when_its_feature_is_compiled_out() {
-    let routes = Routes::parse(&single(&[])).unwrap();
+    let document = single(&[]);
+    assert!(
+        document.contains(&format!("secret: env:{NEVER_SET}}}")),
+        "{document}"
+    );
+    let routes = Routes::parse(&document).unwrap();
     let error = routes
         .resolvers(&SecretSources::new().with_home(unread_home()))
         .unwrap_err();
@@ -793,7 +839,12 @@ fn the_catalog_builder_answers_one_port_per_route_with_the_routes_protocol() {
 #[cfg(feature = "environment")]
 #[test]
 fn an_unset_variable_is_refused_at_turn_time_by_the_endpoints_reference() {
-    let routes = Routes::parse(&single(&[])).unwrap();
+    let document = single(&[]);
+    assert!(
+        document.contains(&format!("secret: env:{NEVER_SET}}}")),
+        "{document}"
+    );
+    let routes = Routes::parse(&document).unwrap();
     let resolvers = routes.resolvers(&SecretSources::new()).unwrap();
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
