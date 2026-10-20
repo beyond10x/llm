@@ -151,7 +151,8 @@ is the model:
 4. Verify the tag's commit, `Gate`, `Shared source gates` and `Documentation validation` on it, and
    the Release; only then report it released.
 
-Consumers (Loom today) pin a release tag; a consumer moves only on its own change.
+Consumers pin a release tag and move only on their own change: Loom, inference and llm-gateway
+today, and Harness once its cutover onto 0.7.0 (Atlas ADR 0097) lands in Harness.
 
 ## Publishing
 
