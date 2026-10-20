@@ -1,19 +1,23 @@
 //! Interrupt a turn that is still answering: cancel it, keep the text it already showed, and send
 //! the new input in the next turn.
 //!
-//! Run with `cargo run --locked -p llm-docs --example interrupt_turn`. No protocol llm speaks
-//! carries input into a turn that is still producing output, so this is the supported pattern. The
-//! model streams in-process, so nothing is sent and no credential is read; any `Model`, such as a
-//! `ResponsesClient` or a `MessagesClient`, goes in its place.
+//! Run with `cargo run --locked -p llm-docs --example interrupt_turn`. llm's clients send a request
+//! and read its streamed answer over HTTP, and cannot send input into an answer still streaming, so
+//! this is the supported pattern. The model streams in-process, so nothing is sent and no
+//! credential is read; any `Model`, such as a `ResponsesClient` or a `MessagesClient`, goes in its
+//! place.
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, InvalidId, Item, Model,
-    Protocol, Provenance, StopReason, StreamEvent, StreamSink, TurnObservation, TurnOutcome,
-    TurnRequest,
+    Protocol, Provenance, StopReason, StreamEvent, StreamSink, ToolName, ToolSpec, TurnObservation,
+    TurnOutcome, TurnRequest,
 };
+use serde_json::json;
 use std::sync::Mutex;
 
 const QUESTION: &str = "What will the weather be like tomorrow?";
 const NEW_INPUT: &str = "Sorry, I meant on Sunday.";
+/// The reason this caller gives for a tool call it rejects because the user changed the request.
+const NOT_RUN: &str = "Not run: the user changed the question.";
 /// The text deltas of the model's first answer, and of every later one.
 const FIRST_ANSWER: &[&str] = &[
     "Tomorrow", " starts", " dry,", " then", " rain", " moves", " in", " from", " the", " west.",
@@ -55,7 +59,7 @@ impl Model for Speaking {
                 }
             };
             for word in answer {
-                // A cancel wins over handing the sink its next event, as on Responses and Messages.
+                // As on Responses and Messages: the cancel races the sink's `emit` and wins a tie.
                 tokio::select! {
                     biased;
                     () = cancel.cancelled() => {
@@ -100,6 +104,9 @@ impl Listener {
 impl StreamSink for Listener {
     fn emit(&mut self, event: StreamEvent) -> BoxFuture<'_, Result<(), Error>> {
         Box::pin(async move {
+            // A delta is shown once this `emit` completes: a client may drop an `emit` still in
+            // progress when the cancel fires, so a sink that shows text across an `.await`
+            // records it after that `.await`. This one shows it at once.
             if let StreamEvent::TextDelta { text } = event {
                 self.shown.push_str(&text);
                 self.deltas += 1;
@@ -120,12 +127,17 @@ struct Turn {
 
 /// Asks a question, interrupts the answer with new input after three words, and continues.
 async fn converse(model: &dyn Model) -> Result<[Turn; 2], Error> {
-    let first = TurnRequest::new("example", vec![Item::user(QUESTION)]);
+    let mut first = TurnRequest::new("example", vec![Item::user(QUESTION)]);
+    first.tools = vec![ToolSpec {
+        name: ToolName::new("forecast").map_err(|_| Error::invalid("tool name"))?,
+        description: "The forecast for one day.".to_owned(),
+        input_schema: json!({"type": "object", "properties": {"day": {"type": "string"}}}),
+    }];
     let cancel = Cancel::new();
     let mut listener = Listener::new(Some(3), &cancel);
     let returned = model.turn(&first, &mut listener, &cancel).await;
 
-    // The next turn carries the conversation so far, what the first turn showed, then the input.
+    // The next turn carries the conversation so far, what the first turn left, then the input.
     let mut items = first.items.clone();
     let ended = match returned {
         // Cancelled part-way: the text it showed is what the model said, so it is carried as
@@ -136,9 +148,27 @@ async fn converse(model: &dyn Model) -> Result<[Turn; 2], Error> {
             }
             Err(error.code)
         }
-        // It finished before the cancel reached it: its assistant text is the text it showed.
+        // It finished before the cancel reached it, so its outcome's items are carried: each
+        // message carries the text shown for it (the server's, where none was shown), unless a
+        // `shown-text-unpaired` warning said shown text could not be paired with one message.
+        // Every call it proposed needs a result before the next turn, or that turn is refused
+        // before it is sent. This caller runs none of them now, so each is rejected with its
+        // reason, as a failed result.
         Ok(outcome) => {
+            let open: Vec<_> = outcome
+                .items
+                .iter()
+                .filter_map(Item::as_tool_call)
+                .map(|call| call.call_id.clone())
+                .collect();
             items.extend(outcome.items);
+            for call_id in open {
+                items.push(Item::ToolResult {
+                    call_id,
+                    output: json!(NOT_RUN),
+                    failed: true,
+                });
+            }
             Ok(outcome.stop_reason)
         }
         Err(error) => return Err(error),
@@ -149,7 +179,8 @@ async fn converse(model: &dyn Model) -> Result<[Turn; 2], Error> {
         ended,
     };
 
-    let next = TurnRequest::new("example", items);
+    let mut next = first.clone();
+    next.items = items;
     let cancel = Cancel::new();
     let mut listener = Listener::new(None, &cancel);
     let outcome = model.turn(&next, &mut listener, &cancel).await?;
@@ -170,7 +201,10 @@ fn model() -> Result<Speaking, InvalidId> {
             model: Id::new("example")?,
             binding_revision: Id::new("speaking-v1")?,
         },
-        capabilities: Capabilities::text(4096, 1024),
+        capabilities: Capabilities {
+            tools: true,
+            ..Capabilities::text(4096, 1024)
+        },
         sent: Mutex::new(Vec::new()),
     })
 }
@@ -196,28 +230,160 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use llm_core::{CallId, ToolCall};
 
     #[tokio::test]
-    async fn the_next_turn_carries_the_shown_text_as_assistant_text_then_the_new_input() {
+    async fn the_next_turn_carries_exactly_the_text_shown_then_the_new_input() {
         let model = model().unwrap();
         let [first, _] = converse(&model).await.unwrap();
-        let sent = model.sent.lock().unwrap();
-        assert_eq!(sent.len(), 2, "two turns were sent");
-
-        // The first turn was cancelled part-way: it showed some of its answer, not all of it.
-        let whole = FIRST_ANSWER.concat();
         assert_eq!(first.ended, Err(ErrorCode::Cancelled));
-        assert!(
-            !first.shown.is_empty() && first.shown != whole && whole.starts_with(&first.shown),
-            "shown: {:?}",
-            first.shown
+        assert_eq!(first.shown, "Tomorrow starts dry,");
+        let sent = model.sent.lock().unwrap();
+        assert_eq!(
+            sent[1].items,
+            vec![
+                Item::user(QUESTION),
+                Item::assistant("Tomorrow starts dry,"),
+                Item::user(NEW_INPUT)
+            ]
         );
+    }
 
-        // The second request: the first one's items, the shown text as assistant text, then the
-        // new input, and nothing else.
-        let mut expected = sent[0].items.clone();
-        expected.push(Item::assistant(first.shown.as_str()));
-        expected.push(Item::user(NEW_INPUT));
-        assert_eq!(sent[1].items, expected);
+    /// How the first turn of a [`Racing`] model ends.
+    #[derive(Clone, Copy)]
+    enum First {
+        /// It shows three words and finishes before the caller's cancel reaches it.
+        Finished,
+        /// The same, ending in a call to the `forecast` tool.
+        FinishedInACall,
+        /// It is cancelled before it shows anything.
+        CancelledAtOnce,
+    }
+
+    /// A model whose first turn ends as [`First`] says; later turns answer in full. Like a
+    /// client, it refuses a request it could not send and checks its own outcome.
+    struct Racing {
+        inner: Speaking,
+        first: First,
+    }
+
+    fn forecast_call() -> ToolCall {
+        ToolCall {
+            call_id: CallId::new("call-1").unwrap(),
+            name: ToolName::new("forecast").unwrap(),
+            arguments: json!({"day": "tomorrow"}),
+        }
+    }
+
+    impl Model for Racing {
+        fn provenance(&self) -> &Provenance {
+            &self.inner.target
+        }
+        fn capabilities(&self) -> &Capabilities {
+            &self.inner.capabilities
+        }
+        fn turn<'a>(
+            &'a self,
+            request: &'a TurnRequest,
+            sink: &'a mut dyn StreamSink,
+            _cancel: &'a Cancel,
+        ) -> BoxFuture<'a, Result<TurnOutcome, Error>> {
+            Box::pin(async move {
+                request.validate_for(&self.inner.target, &self.inner.capabilities)?;
+                let number = {
+                    let mut sent = self.inner.sent.lock().unwrap();
+                    sent.push(request.clone());
+                    sent.len()
+                };
+                if number == 1 && matches!(self.first, First::CancelledAtOnce) {
+                    return Err(Error::cancelled().with_dispatch(Dispatch::Accepted));
+                }
+                let answer: &[&str] = if number == 1 {
+                    &FIRST_ANSWER[..3]
+                } else {
+                    LATER_ANSWER
+                };
+                for word in answer {
+                    sink.emit(StreamEvent::TextDelta {
+                        text: (*word).to_owned(),
+                    })
+                    .await?;
+                }
+                let mut outcome = TurnOutcome {
+                    stop_reason: StopReason::EndTurn,
+                    items: vec![Item::assistant(answer.concat())],
+                    observation: TurnObservation {
+                        final_usage: true,
+                        ..TurnObservation::new(self.inner.target.clone())
+                    },
+                };
+                if number == 1 && matches!(self.first, First::FinishedInACall) {
+                    outcome.stop_reason = StopReason::ToolCalls;
+                    outcome.items.push(Item::ToolCall(forecast_call()));
+                }
+                outcome.validate_for(request, &self.inner.target)?;
+                Ok(outcome)
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn a_turn_that_finished_before_the_cancel_reached_it_is_carried_as_its_outcome() {
+        let model = Racing {
+            inner: model().unwrap(),
+            first: First::Finished,
+        };
+        let [first, _] = converse(&model).await.unwrap();
+        assert_eq!(first.ended, Ok(StopReason::EndTurn));
+        let sent = model.inner.sent.lock().unwrap();
+        assert_eq!(
+            sent[1].items,
+            vec![
+                Item::user(QUESTION),
+                Item::assistant("Tomorrow starts dry,"),
+                Item::user(NEW_INPUT)
+            ]
+        );
+    }
+
+    #[tokio::test]
+    async fn a_call_a_finished_turn_proposed_is_answered_as_rejected_before_the_new_input() {
+        let model = Racing {
+            inner: model().unwrap(),
+            first: First::FinishedInACall,
+        };
+        let [first, _] = converse(&model).await.unwrap();
+        assert_eq!(first.ended, Ok(StopReason::ToolCalls));
+        let sent = model.inner.sent.lock().unwrap();
+        assert_eq!(
+            sent[1].items,
+            vec![
+                Item::user(QUESTION),
+                Item::assistant("Tomorrow starts dry,"),
+                Item::ToolCall(forecast_call()),
+                Item::ToolResult {
+                    call_id: forecast_call().call_id,
+                    output: json!(NOT_RUN),
+                    failed: true,
+                },
+                Item::user(NEW_INPUT)
+            ]
+        );
+    }
+
+    #[tokio::test]
+    async fn a_turn_cancelled_before_it_showed_anything_carries_no_assistant_item() {
+        let model = Racing {
+            inner: model().unwrap(),
+            first: First::CancelledAtOnce,
+        };
+        let [first, _] = converse(&model).await.unwrap();
+        assert_eq!(first.ended, Err(ErrorCode::Cancelled));
+        assert_eq!(first.shown, "");
+        let sent = model.inner.sent.lock().unwrap();
+        assert_eq!(
+            sent[1].items,
+            vec![Item::user(QUESTION), Item::user(NEW_INPUT)]
+        );
     }
 }
