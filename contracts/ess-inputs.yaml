@@ -77,6 +77,8 @@ scenarios:
 - chat/scenarios/incoming-framed-payloads-project-the-same-text-as-bytes-do.yaml
 - chat/scenarios/incoming-llama-server-a-timings-duration-that-is-not-a-number-is-refused-by-name.yaml
 - chat/scenarios/incoming-llama-server-stream-carries-text-reasoning-and-counters.yaml
+- chat/scenarios/incoming-llama-server-timings-before-a-usage-chunk-yield-to-its-usage.yaml
+- chat/scenarios/incoming-llama-server-timings-before-the-last-chunk-leave-usage-unknown.yaml
 - chat/scenarios/incoming-llama-server-timings-report-the-counters-of-a-stream-without-usage.yaml
 - chat/scenarios/incoming-llama-server-timings-that-contradict-usage-are-refused.yaml
 - chat/scenarios/incoming-llama-server-tool-stream-preserves-its-call-and-counters.yaml

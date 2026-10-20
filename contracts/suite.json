@@ -138,6 +138,8 @@
       "llm.chat/authored/incoming-framed-payloads-project-the-same-text-as-bytes-do",
       "llm.chat/authored/incoming-llama-server-a-timings-duration-that-is-not-a-number-is-refused-by-name",
       "llm.chat/authored/incoming-llama-server-stream-carries-text-reasoning-and-counters",
+      "llm.chat/authored/incoming-llama-server-timings-before-a-usage-chunk-yield-to-its-usage",
+      "llm.chat/authored/incoming-llama-server-timings-before-the-last-chunk-leave-usage-unknown",
       "llm.chat/authored/incoming-llama-server-timings-report-the-counters-of-a-stream-without-usage",
       "llm.chat/authored/incoming-llama-server-timings-that-contradict-usage-are-refused",
       "llm.chat/authored/incoming-llama-server-tool-stream-preserves-its-call-and-counters",
@@ -1363,6 +1365,16 @@
         "digest": "sha256:143afc1636290b64b0c4832e6ed38878f72dd388531d3f071cdc91ec16cba3d0",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/incoming-llama-server-stream-carries-text-reasoning-and-counters"
+      },
+      "chat/scenarios/incoming-llama-server-timings-before-a-usage-chunk-yield-to-its-usage.yaml": {
+        "digest": "sha256:8bb61ece10ce7c6522f34ea67aef8c775c91953ee6e6ea68d6a0e749a2336f56",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/incoming-llama-server-timings-before-a-usage-chunk-yield-to-its-usage"
+      },
+      "chat/scenarios/incoming-llama-server-timings-before-the-last-chunk-leave-usage-unknown.yaml": {
+        "digest": "sha256:726dedb3fca8e26b1872c688b75ab16805784f3a1f6dba06004c6480c0a58a1c",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/incoming-llama-server-timings-before-the-last-chunk-leave-usage-unknown"
       },
       "chat/scenarios/incoming-llama-server-timings-report-the-counters-of-a-stream-without-usage.yaml": {
         "digest": "sha256:b86b4ddd89865beef30f0f76fa31d0a6043aebddb3c01a58a0e15cc289666737",
@@ -5141,7 +5153,7 @@
       }
     },
     "counts": {
-      "authored": 856,
+      "authored": 858,
       "generated": 32,
       "outside": 0,
       "refused": 0
@@ -22476,6 +22488,264 @@
               "usage_reported": {
                 "kind": "literal",
                 "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        }
+      ]
+    },
+    "llm.chat/authored/incoming-llama-server-timings-before-a-usage-chunk-yield-to-its-usage": {
+      "purpose": "incoming llama-server timings before a usage chunk yield to its usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectResponse"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastResponseProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectResponse",
+          "input": {
+            "response": {
+              "kind": "literal",
+              "value": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null}}],\"created\":1792600100,\"id\":\"chatcmpl-timingsmidstream0000000000000002\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"Hel\"}}],\"created\":1792600100,\"id\":\"chatcmpl-timingsmidstream0000000000000002\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"lo\"}}],\"created\":1792600100,\"id\":\"chatcmpl-timingsmidstream0000000000000002\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\",\"timings\":{\"cache_n\":0,\"prompt_n\":35,\"prompt_ms\":301.5,\"prompt_per_token_ms\":8.614285714285714,\"prompt_per_second\":116.08623548922056,\"predicted_n\":2,\"predicted_ms\":140.2,\"predicted_per_token_ms\":70.1,\"predicted_per_second\":14.265335235378032}}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" there\"}}],\"created\":1792600101,\"id\":\"chatcmpl-timingsmidstream0000000000000002\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\".\"}}],\"created\":1792600101,\"id\":\"chatcmpl-timingsmidstream0000000000000002\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{}}],\"created\":1792600101,\"id\":\"chatcmpl-timingsmidstream0000000000000002\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[],\"created\":1792600101,\"id\":\"chatcmpl-timingsmidstream0000000000000002\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\",\"usage\":{\"completion_tokens\":4,\"prompt_tokens\":35,\"total_tokens\":39,\"prompt_tokens_details\":{\"cached_tokens\":0}}}\n\ndata: [DONE]\n\n"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "assistant_text": {
+                "kind": "literal",
+                "value": "Hello there."
+              },
+              "cache_creation_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": "0"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": "35"
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": "4"
+              },
+              "reasoning_output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "chatcmpl-timingsmidstream0000000000000002"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "{\"kind\":\"end-turn\"}"
+              },
+              "stream_text": {
+                "kind": "literal",
+                "value": "Hello there."
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "qwen3-1.7b"
+              },
+              "usage_reported": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        }
+      ]
+    },
+    "llm.chat/authored/incoming-llama-server-timings-before-the-last-chunk-leave-usage-unknown": {
+      "purpose": "incoming llama-server timings before the last chunk leave usage unknown",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectResponse"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastResponseProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectResponse",
+          "input": {
+            "response": {
+              "kind": "literal",
+              "value": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null}}],\"created\":1792600000,\"id\":\"chatcmpl-timingsmidstream0000000000000001\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"Hel\"}}],\"created\":1792600000,\"id\":\"chatcmpl-timingsmidstream0000000000000001\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"lo\"}}],\"created\":1792600000,\"id\":\"chatcmpl-timingsmidstream0000000000000001\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\",\"timings\":{\"cache_n\":0,\"prompt_n\":35,\"prompt_ms\":301.5,\"prompt_per_token_ms\":8.614285714285714,\"prompt_per_second\":116.08623548922056,\"predicted_n\":2,\"predicted_ms\":140.2,\"predicted_per_token_ms\":70.1,\"predicted_per_second\":14.265335235378032}}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\" there\"}}],\"created\":1792600001,\"id\":\"chatcmpl-timingsmidstream0000000000000001\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\".\"}}],\"created\":1792600001,\"id\":\"chatcmpl-timingsmidstream0000000000000001\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{}}],\"created\":1792600001,\"id\":\"chatcmpl-timingsmidstream0000000000000001\",\"model\":\"qwen3-1.7b\",\"system_fingerprint\":\"b11752-7879491cf\",\"object\":\"chat.completion.chunk\"}\n\ndata: [DONE]\n\n"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectResponse",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastResponseProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "assistant_text": {
+                "kind": "literal",
+                "value": "Hello there."
+              },
+              "cache_creation_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning_output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "chatcmpl-timingsmidstream0000000000000001"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "{\"kind\":\"end-turn\"}"
+              },
+              "stream_text": {
+                "kind": "literal",
+                "value": "Hello there."
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "qwen3-1.7b"
+              },
+              "usage_reported": {
+                "kind": "literal",
+                "value": false
               }
             }
           },

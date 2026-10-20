@@ -1,0 +1,44 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: incoming-llama-server-timings-before-the-last-chunk-leave-usage-unknown
+summary: incoming llama-server timings before the last chunk leave usage unknown
+timeline:
+- at: '2026-10-21T12:00:00Z'
+  command: llm.chat.ProjectResponse
+  input:
+    response: |+
+      data: {"choices":[{"finish_reason":null,"index":0,"delta":{"role":"assistant","content":null}}],"created":1792600000,"id":"chatcmpl-timingsmidstream0000000000000001","model":"qwen3-1.7b","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+      data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":"Hel"}}],"created":1792600000,"id":"chatcmpl-timingsmidstream0000000000000001","model":"qwen3-1.7b","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+      data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":"lo"}}],"created":1792600000,"id":"chatcmpl-timingsmidstream0000000000000001","model":"qwen3-1.7b","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk","timings":{"cache_n":0,"prompt_n":35,"prompt_ms":301.5,"prompt_per_token_ms":8.614285714285714,"prompt_per_second":116.08623548922056,"predicted_n":2,"predicted_ms":140.2,"predicted_per_token_ms":70.1,"predicted_per_second":14.265335235378032}}
+
+      data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":" there"}}],"created":1792600001,"id":"chatcmpl-timingsmidstream0000000000000001","model":"qwen3-1.7b","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+      data: {"choices":[{"finish_reason":null,"index":0,"delta":{"content":"."}}],"created":1792600001,"id":"chatcmpl-timingsmidstream0000000000000001","model":"qwen3-1.7b","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+      data: {"choices":[{"finish_reason":"stop","index":0,"delta":{}}],"created":1792600001,"id":"chatcmpl-timingsmidstream0000000000000001","model":"qwen3-1.7b","system_fingerprint":"b11752-7879491cf","object":"chat.completion.chunk"}
+
+      data: [DONE]
+
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.chat.LastResponseProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastResponseProjection
+  contains:
+    accepted: true
+    error_code: null
+    stream_text: Hello there.
+    assistant_text: Hello there.
+    stop_reason: '{"kind":"end-turn"}'
+    upstream_model: qwen3-1.7b
+    response_id: chatcmpl-timingsmidstream0000000000000001
+    final_usage: true
+    usage_reported: false
+    input_tokens: null
+    output_tokens: null
+    cached_input_tokens: null
+    reasoning_output_tokens: null
+    cache_creation_input_tokens: null
