@@ -176,7 +176,10 @@ name: a response that names no model leaves `upstream_model` absent, and the con
 is never substituted for it.
 
 `final_usage` becomes true when the stream terminates. Before that, `observation()` exposes a
-partial snapshot, which is what a failure after dispatch retains.
+partial snapshot, which is what a failure after dispatch retains. A chunk whose own report is
+refused — an unusable identifier or model, a counter or `timings` field in the wrong shape, or
+`timings` contradicting `usage` — adds nothing to it: the failure carries the snapshot as it
+stood before that chunk, so a figure the refusal declined to believe is never reported as known.
 
 ## Gateway ingress
 

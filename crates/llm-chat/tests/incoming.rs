@@ -1161,3 +1161,79 @@ fn a_timings_field_in_a_shape_the_server_does_not_write_is_refused_by_name() {
         assert!(!error.message.contains(VALUE), "{}", error.message);
     }
 }
+
+/// The class of `adversary_w11_a_contradiction_refusal_does_not_report_the_contradicted_count`,
+/// stated as a rule. A chunk refused while its own report is read — its identifier, its model,
+/// its `usage`, its `timings`, or the two reports against each other — leaves the evidence
+/// exactly as it was before that chunk. A failure carries that evidence (`client.rs` `retain`),
+/// so a part kept from a refused report would be a figure the refusal said not to believe.
+#[test]
+fn a_chunk_refused_while_its_report_is_read_leaves_the_evidence_as_it_was() {
+    let report = json!({
+        "choices": [],
+        "id": "chatcmpl-report",
+        "model": "qwen3-1.7b",
+        "usage": {"completion_tokens": 14, "prompt_tokens": 23,
+            "prompt_tokens_details": {"cached_tokens": 8}},
+        "timings": {"cache_n": 8, "prompt_n": 15, "prompt_ms": 143.862, "predicted_n": 14}
+    });
+    // The report with one part replaced, each refused when the chunk is read; every other part
+    // of the chunk is one the report above shows is accepted on its own.
+    let refused = [
+        ("an unusable identifier", "id", json!("has space")),
+        ("an unusable model", "model", json!("has space")),
+        (
+            "a usage counter that is not a count",
+            "usage",
+            json!({"prompt_tokens": "many"}),
+        ),
+        (
+            "a timings counter that is not a count",
+            "timings",
+            json!({"predicted_n": "many"}),
+        ),
+        (
+            "a timings duration that is not a number",
+            "timings",
+            json!({"cache_n": 8, "prompt_n": 15, "prompt_ms": "slow", "predicted_n": 14}),
+        ),
+        (
+            "timings prompt counters that overflow",
+            "timings",
+            json!({"prompt_n": u64::MAX, "cache_n": 1}),
+        ),
+        (
+            "timings that contradict usage",
+            "timings",
+            json!({"cache_n": 8, "prompt_n": 15, "predicted_n": 13}),
+        ),
+    ];
+    let binding = binding();
+    let payload = |data: serde_json::Value| llm_http::SseEvent::Payload { event: None, data };
+    let opened = || {
+        let mut projection = llm_chat::StreamProjection::new(binding.provenance().clone());
+        projection
+            .accept(&payload(
+                json!({"choices": [{"index": 0, "delta": {"content": "hi"}}]}),
+            ))
+            .expect("a text chunk");
+        projection
+    };
+
+    // Not vacuous: the report itself is accepted and changes the evidence.
+    let mut accepted = opened();
+    let before = accepted.observation();
+    accepted
+        .accept(&payload(report.clone()))
+        .expect("the report");
+    assert_ne!(accepted.observation(), before);
+
+    for (case, part, value) in refused {
+        let mut projection = opened();
+        let before = projection.observation();
+        let mut chunk = report.clone();
+        chunk[part] = value;
+        projection.accept(&payload(chunk)).expect_err(case);
+        assert_eq!(projection.observation(), before, "{case}");
+    }
+}

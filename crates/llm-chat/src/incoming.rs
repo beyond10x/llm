@@ -429,28 +429,41 @@ fn nonempty(value: Option<&Value>) -> Option<&str> {
         .filter(|text| !text.is_empty())
 }
 
+/// Reads the whole report a response or chunk makes about itself before keeping any of it. A
+/// report refused anywhere — an unusable identifier or model, a counter, `timings` in the wrong
+/// shape, or `timings` contradicting `usage` — leaves `into` as it was: a failure carries what
+/// `into` holds as its evidence, and a part kept from a refused report would be a figure the
+/// refusal said not to believe.
 fn read_reported(value: &Value, into: &mut Reported) -> Result<(), Error> {
-    if let Some(text) = nonempty(value.get("id")) {
-        into.response_id = Some(identifier(text)?);
-    }
+    let response_id = nonempty(value.get("id")).map(identifier).transpose()?;
     // An unreported model stays unreported. The configured alias never fills this in.
-    if let Some(text) = nonempty(value.get("model")) {
-        into.upstream_model = Some(identifier(text)?);
-    }
-    if let Some(usage) = value.get("usage")
-        && !usage.is_null()
-    {
-        into.usage = Some(usage_of(usage)?);
-    }
-    if let Some(timings) = value.get("timings")
-        && !timings.is_null()
-    {
-        into.timings = Some(timings_of(timings)?);
-    }
-    if let (Some(usage), Some(timings)) = (&into.usage, &into.timings) {
+    let upstream_model = nonempty(value.get("model")).map(identifier).transpose()?;
+    let usage = present(value.get("usage")).map(usage_of).transpose()?;
+    let timings = present(value.get("timings")).map(timings_of).transpose()?;
+    if let (Some(usage), Some(timings)) = (
+        usage.as_ref().or(into.usage.as_ref()),
+        timings.as_ref().or(into.timings.as_ref()),
+    ) {
         agree(usage, timings)?;
     }
+    if response_id.is_some() {
+        into.response_id = response_id;
+    }
+    if upstream_model.is_some() {
+        into.upstream_model = upstream_model;
+    }
+    if usage.is_some() {
+        into.usage = usage;
+    }
+    if timings.is_some() {
+        into.timings = timings;
+    }
     Ok(())
+}
+
+/// A field that is there and not `null`.
+fn present(value: Option<&Value>) -> Option<&Value> {
+    value.filter(|value| !value.is_null())
 }
 
 /// How llama-server writes a `timings` field this subset accepts and never reads.
