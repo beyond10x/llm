@@ -689,8 +689,14 @@ scenarios:
 - responses/scenarios/kept-text-shown-beside-a-terminal-call-stays-ahead-of-it.yaml
 - responses/scenarios/kept-text-shown-before-an-incomplete-end-stays-in-the-turn.yaml
 - responses/scenarios/kept-text-of-two-shown-messages-stays-two-messages.yaml
-- responses/scenarios/kept-text-a-terminal-message-outranks-the-shown-deltas.yaml
+- responses/scenarios/kept-text-a-terminal-message-gives-way-to-the-shown-deltas.yaml
 - responses/scenarios/kept-text-a-second-message-shown-only-as-deltas-is-kept.yaml
+- responses/scenarios/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas.yaml
+- responses/scenarios/kept-text-a-streamed-message-gives-way-to-the-shown-deltas.yaml
+- responses/scenarios/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages.yaml
+- responses/scenarios/kept-text-a-message-no-delta-showed-keeps-its-own-text.yaml
+- responses/scenarios/kept-text-shown-text-more-than-one-message-could-be-is-carried-in-none.yaml
+- responses/scenarios/kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next.yaml
 - responses/scenarios/a-payload-after-the-terminal-object-is-not-read.yaml
 - secrets/scenarios/codex-renewal-a-due-login-is-renewed-and-written-back-in-place.yaml
 - secrets/scenarios/codex-renewal-a-kept-refresh-token-is-not-reported-rotated.yaml
@@ -813,6 +819,7 @@ scenarios:
 - messages/scenarios/no-parallel-calls-is-projected-as-disable-parallel-tool-use.yaml
 - messages/scenarios/parallel-calls-are-projected-as-disable-parallel-tool-use-false.yaml
 - messages/scenarios/thinking-with-a-budget-is-projected-as-read.yaml
+- messages/scenarios/a-text-block-that-opens-with-text-shows-it-as-a-delta.yaml
 - models/scenarios/a-chat-completions-serving-model-builds-the-chat-port.yaml
 - models/scenarios/a-credentialed-account-without-a-resolver-is-refused-unauthorized.yaml
 - models/scenarios/a-messages-serving-model-builds-the-messages-port.yaml

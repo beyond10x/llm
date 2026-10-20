@@ -44,6 +44,44 @@ defaults, so no digest moves and a 0.7.0 reader reads everything llm writes. Lif
 refusal later breaks no document. `Capabilities::validate` checks neither, so a `Model`
 implemented elsewhere keeps its own claim.
 
+### Streamed events are final
+
+Every `StreamEvent` is final: no later event retracts, replaces or reorders one already emitted,
+and the vocabulary has no event that could. A caller may act on each event as it arrives, and one
+that speaks text deltas aloud cannot unsay them. So on a successful turn each assistant message in
+the `TurnOutcome` carries exactly the concatenation of the `TextDelta`s shown for it, and the
+history a caller stores is the text it showed. A message no delta was shown for carries the text
+the server sent.
+
+Where a server's own final text for a message differs from the deltas it streamed, the decoder
+keeps the shown text, and the client emits `StreamEvent::Warning` with the fixed code
+`shown-text-kept` (`llm_core::SHOWN_TEXT_KEPT`) once the turn has passed its checks against the
+request and before the outcome is returned, as it emits `advisory-omitted`: a warning about a turn
+is for a turn the caller is handed, so a refused turn carries none. Its message is fixed and quotes
+neither text.
+
+A decoder never carries a message's text twice and never overwrites a message it cannot tell is the
+one shown. Where it cannot pair shown text with exactly one message (deltas and messages that name
+no coordinate telling them apart, and no message already carrying that text), it keeps the server's
+messages as sent, carries the shown text in none, and emits a second fixed code,
+`shown-text-unpaired` (`llm_core::SHOWN_TEXT_UNPAIRED`), under the same rule. A second code rather
+than `shown-text-kept`, because no shown text was kept: the turn's text differs from what was shown
+in the other direction, and a caller storing history needs to tell the two apart. Overwriting the
+first candidate was the earlier shape and, with a message no delta showed ahead of the shown one,
+it carried the answer twice and lost the first message.
+
+The other answers to the first case, and why they were not taken:
+
+| Option | Why not |
+| --- | --- |
+| The server's text outranks the deltas, plus a warning | The caller's history differs from what it spoke, and an ingress encoder relaying the stream refuses at `close`, because the outcome contradicts what it already streamed |
+| A field on `TurnOutcome` | Changes `llm.outcome/4` and every place that builds an outcome, for a fact one warning carries; the relaying encoder still refuses |
+| Refuse a turn whose text diverged | A turn the caller already spoke becomes an error |
+
+Only Responses can replace a server's text ([responses.md](responses.md)). Messages shows a text
+block's opening text as a delta ([messages.md](messages.md)), and Chat Completions carries text
+only as deltas ([chat.md](chat.md)).
+
 ## Credentials and configuration
 
 Inference accepts an injected SecretResolver trait. A SecretReference is an opaque lookup name,

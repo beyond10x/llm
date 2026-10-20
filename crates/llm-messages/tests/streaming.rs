@@ -5,7 +5,7 @@ use llm_core::{
     Cancel, Dispatch, Error, ErrorCode, Item, MAX_ITEMS, StopReason, StreamEvent, ToolName,
     ToolSpec, TurnOutcome, TurnRequest, Usage, VecSink,
 };
-use llm_messages::{decode_message, decode_stream};
+use llm_messages::{IngressStream, decode_message, decode_stream};
 use serde_json::{Value, json};
 use support::binding;
 
@@ -173,6 +173,63 @@ async fn a_streamed_turn_preserves_text_thinking_tools_and_terminal_usage() {
             },
         ]
     );
+}
+
+/// Text a `text` block opens with is model output like any delta's: the caller is shown it as
+/// the block opens, so the turn carries exactly the text the caller was shown and nothing it was
+/// not, with no warning. Every pinned fixture opens with `"text": ""`; a route that opens with
+/// text is not known, and nothing says one never will. The same events, relayed by the ingress
+/// encoder, close on the turn.
+#[tokio::test]
+async fn text_a_block_opens_with_is_shown_so_the_turn_carries_only_what_was_shown() {
+    let cases: [(&str, &str, &[&str]); 3] = [
+        ("opening text, then a delta", "Hel", &["lo"]),
+        ("opening text alone", "Hello", &[]),
+        ("no opening text", "", &["Hel", "lo"]),
+    ];
+    for (case, opening, deltas) in cases {
+        let mut events = vec![
+            message_start(json!({"input_tokens":11,"output_tokens":1})),
+            json!({"type":"content_block_start","index":0,
+                "content_block":{"type":"text","text":opening}}),
+        ];
+        for delta in deltas {
+            events.push(json!({"type":"content_block_delta","index":0,
+                "delta":{"type":"text_delta","text":delta}}));
+        }
+        events.extend([
+            json!({"type":"content_block_stop","index":0}),
+            message_delta(
+                json!("end_turn"),
+                json!({"input_tokens":11,"output_tokens":2}),
+            ),
+            json!({"type":"message_stop"}),
+        ]);
+        let (outcome, sink) = decode(&events).await;
+        let outcome = outcome.unwrap_or_else(|error| panic!("{case}: {error:?}"));
+        assert_eq!(outcome.items, vec![Item::assistant("Hello")], "{case}");
+        let shown: Vec<StreamEvent> = std::iter::once(opening)
+            .chain(deltas.iter().copied())
+            .filter(|text| !text.is_empty())
+            .map(|text| StreamEvent::TextDelta {
+                text: text.to_owned(),
+            })
+            .collect();
+        assert_eq!(
+            sink.events(),
+            shown.as_slice(),
+            "{case}: the caller was not shown the text the turn carries"
+        );
+        assert_eq!(sink.text(), "Hello", "{case}");
+        let mut relay = IngressStream::new("msg_014a", Some("example-model-20260201"))
+            .expect("a relay for the route's model");
+        for event in sink.events() {
+            relay.chunk(event);
+        }
+        relay.close(&outcome).unwrap_or_else(|error| {
+            panic!("{case}: the relayed stream cannot close on the turn: {error:?}")
+        });
+    }
 }
 
 /// The thinking block exactly as Harness's emulator opens it (`crates/harness-cli/tests/fixtures/

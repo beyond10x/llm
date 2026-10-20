@@ -43,12 +43,30 @@ domain: llm.responses
 # The client still makes one attempt; routing or the caller owns any bounded retry policy.
 #
 # Kept text (row R36). The caller was shown text through `response.output_text.delta`, one
-# output item per `item_id`. The text of each such item is kept in the turn whenever no message
-# the turn carries is that item: one assistant message, its text the item's deltas in arrival
-# order. A message the turn carries for the same item (its `id` equals the deltas' `item_id`),
-# from the terminal `output` or from the streamed items, outranks that item's deltas, and they
-# add nothing. A message or a delta that names no item cannot be told apart from any other, so
-# it counts as the same item. Kept messages are placed by the `output_index` of their first
+# output item per `item_id`; for deltas that name no item, per `output_index`; for deltas that
+# name neither, per message: they belong to the message whose `response.output_item.done` comes
+# next. Every event is final, so on a turn that is returned the text of each such item is the
+# item's deltas in arrival order, whatever the server finished with. Shown text is paired with
+# exactly one message the turn carries, from the terminal `output` or from the streamed items, by
+# the first of these that finds one: the same `id`; the message whose `response.output_item.done`
+# ended deltas that named neither coordinate; the `output_index` that message's
+# `response.output_item.done` named; the message's position in the terminal `output`; a message
+# already carrying exactly the shown text. A terminal message takes the coordinates of the
+# streamed message it is (the same `id`, or, when as many terminal messages as streamed ones are
+# left, the next in order), and its position counts only when it is no streamed message. What
+# none of these pairs is paired by elimination, with the one message no coordinate both sides
+# name tells apart from it; two different ids, indexes or streamed messages are two items. A
+# paired message whose text differs takes the shown text, and the caller is shown one
+# `shown-text-kept` warning. The decoder never carries a message's text twice and never
+# overwrites a message it cannot tell is the one shown: shown text that more than one message
+# could be is carried in none, the server's messages stay as sent, and the caller is shown one
+# `shown-text-unpaired` warning. Both warnings come after every delta, their messages are fixed
+# and quote no text. `DecodeStream` checks the turn against no request and ends its
+# `stream_events` with them; the client emits them only after the turn passed its checks against
+# the request, before any `advisory-omitted` warning, and a turn it refuses carries neither. A
+# message no shown text is paired with keeps the server's text, with no warning. Shown text no
+# message could be is kept as an
+# assistant message of its own, with no warning, placed by the `output_index` of its first
 # delta, ascending and stable among equal indexes, whatever order their first deltas arrived
 # in; one whose delta names no index, or an index past the end, goes after every other item.
 # This holds whether the terminal `output` was empty, absent, or carried other items, and for

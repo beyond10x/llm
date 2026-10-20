@@ -57,7 +57,10 @@ const FINAL_EVENTS: &[&str] = &[
 ///
 /// When the turn carries hints this wire does not send ([`crate::omitted_advisories`]), the
 /// client emits one `advisory-omitted` warning naming them after the turn has succeeded, and none
-/// when the turn failed. A sink that refuses the warning fails the turn with its own error.
+/// when the turn failed. A sink that refuses the warning fails the turn with its own error. When
+/// the turn carries text the caller was shown where the server's own text differed, one
+/// `shown-text-kept` warning comes first, under the same rule, and so does `shown-text-unpaired`
+/// when shown text could be more than one message and is carried in none.
 pub struct ResponsesClient {
     binding: llm_providers::Binding,
     projection: crate::Binding,
@@ -139,7 +142,7 @@ impl ResponsesClient {
                 .map_err(|_| Error::invalid("a request header value is not sendable"))?;
             headers.insert(HeaderName::from_static(name), value);
         }
-        let decoding = self.exchange(headers, body, sink, cancel, deadline).await?;
+        let (decoding, notices) = self.exchange(headers, body, sink, cancel, deadline).await?;
         // Every event before the terminal object was handed over while the stream arrived. What
         // is left was produced by deciding the turn, so the provider's counters are known: a
         // sink refusal or a cancel now keeps them.
@@ -155,10 +158,16 @@ impl ResponsesClient {
             .validate_for(request, self.binding.provenance())
             .map_err(|error| keep(error.with_dispatch(Dispatch::Accepted), &evidence))?;
         // Once, after the turn succeeded and never before: a warning on the sink is visible
-        // output, and an attempt that showed output is no longer eligible for fallback.
-        if let Some(warning) = advisory_warning(PROTOCOL_NAME, &omitted_advisories(request)) {
-            hand_over(sink, vec![warning], cancel, deadline, &evidence).await?;
-        }
+        // output, and an attempt that showed output is no longer eligible for fallback. A warning
+        // about the returned turn's text is about a turn the caller is handed, so it waits too.
+        let warnings = notices
+            .into_iter()
+            .chain(advisory_warning(
+                PROTOCOL_NAME,
+                &omitted_advisories(request),
+            ))
+            .collect();
+        hand_over(sink, warnings, cancel, deadline, &evidence).await?;
         Ok(outcome)
     }
 
@@ -168,6 +177,9 @@ impl ResponsesClient {
     /// A sink refusal, a cancel or the deadline while an event is handed over ends the turn
     /// there: nothing more is read. No terminal object has been decoded yet, so the failure
     /// carries the binding and no counters; counters that were never read stay unknown.
+    ///
+    /// The notices are the decoder's: what the caller is to be told about the turn's text once
+    /// it is handed the turn ([`Decoder::finish`]).
     async fn exchange(
         &self,
         headers: HeaderMap,
@@ -175,7 +187,7 @@ impl ResponsesClient {
         sink: &mut dyn StreamSink,
         cancel: &Cancel,
         deadline: Instant,
-    ) -> Result<StreamDecoding, Error> {
+    ) -> Result<(StreamDecoding, Vec<StreamEvent>), Error> {
         // This route sends no `[DONE]` sentinel: terminal truth is the response object.
         let mut stream = self
             .http
@@ -216,10 +228,11 @@ impl ResponsesClient {
             };
             hand_over(sink, decoder.take_events(), cancel, deadline, &evidence).await?;
             if let Err(error) = applied {
-                return Ok(StreamDecoding {
+                let decoding = StreamDecoding {
                     events: Vec::new(),
                     result: Err(error),
-                });
+                };
+                return Ok((decoding, Vec::new()));
             }
             if last {
                 break;
