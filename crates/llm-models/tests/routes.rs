@@ -283,6 +283,12 @@ fn the_retired_providers_field_is_refused_as_an_unknown_field() {
 /// quotes an unknown field's name: a field named after any refusal this module raises is an
 /// unknown field, at every level, and nothing else. Each document loads without its field, so
 /// the field alone is what is refused, at the line that holds it.
+///
+/// That line tells the field from the mapping holding it only for the top-level and endpoint
+/// fields: the auth and route fields sit on their mapping's first line. The route check covers a
+/// route on the first line of the `routes:` mapping only. A later route, or one written as a
+/// block, is refused at the line where that mapping starts, its first route's line, until
+/// story:routes-refusal-names-a-later-route-field-line is done.
 #[test]
 fn no_refusal_is_classified_by_the_text_of_the_field_it_names() {
     let route = |field: &str| format!("{{model: p/m, {field}capabilities: {{{LIMITS}}}}}");
