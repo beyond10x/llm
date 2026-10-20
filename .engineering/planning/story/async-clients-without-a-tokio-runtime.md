@@ -2,12 +2,26 @@
 format: aep.planning-md/3
 id: story:async-clients-without-a-tokio-runtime
 kind: story
-status: draft
+status: active
 title: A caller without a Tokio runtime can run a turn, or is told by a typed error which adapter it needs
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 2
+scope:
+- confidence: inferred
+  path: CHANGELOG.md
+- confidence: inferred
+  path: crates/llm-http/src/lib.rs
+- confidence: cited
+  path: crates/llm-http/src/transport.rs
+- confidence: inferred
+  path: crates/llm-http/tests
+- confidence: cited
+  path: docs/design.md
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-20T15:37:06Z", actor: "human:timo", revision: 5}
+- {from: "proposed", to: "active", at: "2026-10-20T15:37:06Z", actor: "human:timo", revision: 6}
 ---
 ## Context
 
@@ -37,3 +51,10 @@ and from a typed error, not a panic, that the clients need one and which adapter
   `BlockingModel` does), with a test on a non-Tokio executor; or the call returns a typed error
   naming the requirement, and the crate documentation of `b10x-llm-http` and each protocol client
   states it and points at `b10x-llm-blocking`.
+
+## Design decisions
+
+Approved with wave 2026-10-20-w11 by session `b10x-chef-orchestrator` under the owner's grant:
+option B. A client call outside a Tokio runtime returns a typed error that names the requirement
+and `b10x-llm-blocking`, in place of what it does today (measured first and recorded in
+`docs/design.md`); the asynchronous clients do not own a runtime. No new `ErrorCode` variant.

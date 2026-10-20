@@ -2,14 +2,26 @@
 format: aep.planning-md/3
 id: story:input-into-a-running-turn
 kind: story
-status: draft
+status: active
 title: Input reaches a running turn, or llm records that it does not and names the supported pattern
 summary: Model::turn takes a fixed TurnRequest; no input reaches a turn in progress, and no protocol in scope can carry it
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
 - depends_on: story:capabilities-declare-streaming
-revision: 1
+scope:
+- confidence: inferred
+  path: CHANGELOG.md
+- confidence: inferred
+  path: crates/llm-docs/examples
+- confidence: cited
+  path: docs/design.md
+- confidence: inferred
+  path: website/docs/guides
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-20T15:37:08Z", actor: "human:timo", revision: 4}
+- {from: "proposed", to: "active", at: "2026-10-20T15:37:09Z", actor: "human:timo", revision: 5}
 ---
 ## Context
 
@@ -48,3 +60,11 @@ The input-during-output declaration in `Capabilities` (story capabilities-declar
 
 `docs/design.md`; for the offered branch also `crates/llm-core/src/port.rs` and a new protocol
 crate; for the other branch `crates/llm-docs/examples/` and a guide page.
+
+## Design decisions
+
+Approved with wave 2026-10-20-w11 by session `b10x-chef-orchestrator` under the owner's grant:
+option B, not offered. None of the three protocols in scope carries input into a response that is
+still streaming; `docs/design.md` says so and names the supported pattern (cancel, then a new turn
+carrying the input), and a guide example in `crates/llm-docs/examples/` shows it, keeping what the
+cancelled turn already streamed.

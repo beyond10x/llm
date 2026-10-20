@@ -2,12 +2,28 @@
 format: aep.planning-md/3
 id: story:a-resolver-for-anonymous-bindings
 kind: story
-status: draft
+status: active
 title: A caller building a client for an anonymous binding uses a resolver llm exports
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 2
+scope:
+- confidence: inferred
+  path: CHANGELOG.md
+- confidence: inferred
+  path: crates/llm-chat/tests
+- confidence: cited
+  path: crates/llm-credentials/src/lib.rs
+- confidence: inferred
+  path: crates/llm-credentials/tests
+- confidence: cited
+  path: crates/llm-models/src/lib.rs
+- confidence: cited
+  path: website/docs/guides/call-a-local-endpoint.md
+revision: 7
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-20T15:37:04Z", actor: "human:timo", revision: 5}
+- {from: "proposed", to: "active", at: "2026-10-20T15:37:05Z", actor: "human:timo", revision: 6}
 ---
 ## Context
 
@@ -31,3 +47,10 @@ A caller building a protocol client for an anonymous binding uses a resolver llm
 - A test builds `ChatClient` with it against a local fixture server and runs a turn with no
   `Authorization` header sent; a test asserts it refuses a resolve.
 - The local-endpoint guide names it for a caller that does not go through the catalog.
+
+## Design decisions
+
+Approved with wave 2026-10-20-w11 by session `b10x-chef-orchestrator` under the owner's grant:
+export the resolver `b10x-llm-models` keeps private (`Anonymous`, `crates/llm-models/src/lib.rs:49-60`
+at 0.8.2) from `b10x-llm-credentials`, refusing every resolve with a typed error as it does today;
+`b10x-llm-models` uses the exported one and drops its copy.
