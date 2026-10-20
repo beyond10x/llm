@@ -3,7 +3,7 @@ use llm_core::{
     CallId, Cancel, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES,
     Provenance, StopReason, StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
 };
-use llm_http::{Framing, SseDecoder, SseEvent};
+use llm_http::{Framing, SseDecoder, SseEvent, within_tokio_runtime};
 use serde_json::{Value, json};
 use std::{collections::BTreeMap, time::Instant};
 
@@ -790,19 +790,30 @@ fn stream_error(error: Option<&Value>, answered: bool) -> Error {
 /// Awaits the caller, bounded by both of the things that end a turn from outside it.
 ///
 /// Backpressure is still awaited: this is a bound on the wait, not a reason to drop an event.
+/// A deadline is a Tokio timer, so with one each poll asks for the runtime first: on a thread
+/// in no runtime the wait is refused, after dispatch, before the timer is created or the sink
+/// polled. Without one ([`decode_stream`]) nothing here needs Tokio.
 pub(crate) async fn emit(
     sink: &mut dyn StreamSink,
     event: StreamEvent,
     cancel: &Cancel,
     deadline: Option<Instant>,
 ) -> Result<(), Error> {
-    tokio::select! {
-        biased;
-        () = cancel.cancelled() => Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
-        () = expiry(deadline) => Err(Error::new(ErrorCode::Deadline, "the Messages turn deadline expired")
-            .with_dispatch(Dispatch::Accepted)),
-        result = sink.emit(event) => result,
+    let wait = async move {
+        tokio::select! {
+            biased;
+            () = cancel.cancelled() => Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
+            () = expiry(deadline) => Err(Error::new(ErrorCode::Deadline, "the Messages turn deadline expired")
+                .with_dispatch(Dispatch::Accepted)),
+            result = sink.emit(event) => result,
+        }
+    };
+    if deadline.is_none() {
+        return wait.await;
     }
+    within_tokio_runtime(wait)
+        .await
+        .map_err(|refusal| refusal.with_dispatch(Dispatch::Accepted))?
 }
 
 /// Completes at the turn's deadline, or never when the caller configured none.

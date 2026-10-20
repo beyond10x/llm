@@ -1,4 +1,4 @@
-use crate::{Framing, SseDecoder, SseEvent};
+use crate::{Framing, SseDecoder, SseEvent, require_tokio_runtime, within_tokio_runtime};
 use llm_core::{Cancel, Dispatch, Error, ErrorCode, MAX_REQUEST_BYTES};
 use reqwest::{
     Client, Response, Url,
@@ -172,6 +172,10 @@ impl HttpClient {
     /// header asked for `text/event-stream`; a success naming any other media type is refused.
     /// # Errors
     /// Refuses invalid URLs/body bounds, cancellation, timeout, transport failure and non-SSE replies.
+    /// Polled on a thread in no Tokio runtime it is refused: on its first poll before anything
+    /// else ([`require_tokio_runtime`]), dispatch `not-sent`; on a later poll at that poll
+    /// ([`within_tokio_runtime`]), dispatch `unknown` while the answer is awaited and the 429's
+    /// own `rejected` while a [`QuotaRule`] waits for its body.
     pub async fn post_sse(
         &self,
         url: &str,
@@ -193,7 +197,8 @@ impl HttpClient {
     /// the two drift apart. A caller holding no such instant passes `None`.
     ///
     /// # Errors
-    /// As [`HttpClient::post_sse`]; the caller's instant expiring reports `Deadline`.
+    /// As [`HttpClient::post_sse`], outside a Tokio runtime included; the caller's instant
+    /// expiring reports `Deadline`.
     pub async fn post_sse_until(
         &self,
         url: &str,
@@ -203,6 +208,7 @@ impl HttpClient {
         cancel: &Cancel,
         until: Option<std::time::Instant>,
     ) -> Result<SseStream, Error> {
+        require_tokio_runtime()?;
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
         }
@@ -240,11 +246,15 @@ impl HttpClient {
             .body(body)
             .build()
             .map_err(|_| Error::invalid("HTTP request could not be constructed"))?;
+        let headers_by = deadline.min(started + self.limits.response_headers);
+        // Each poll of the wait for the answer asks for the runtime: a wait moved out of it is
+        // refused, dispatch `unknown`, as the request may be on the wire.
         let mut response = tokio::select! {
             biased;
             () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),
-            reply = tokio::time::timeout_at(deadline.min(started + self.limits.response_headers), self.client.execute(request)) => {
-                reply.map_err(|_| Error::new(ErrorCode::Deadline, "HTTP response-header deadline exceeded").with_dispatch(Dispatch::Unknown))?
+            reply = within_tokio_runtime(async move { tokio::time::timeout_at(headers_by, self.client.execute(request)).await }) => {
+                reply.map_err(|refusal| refusal.with_dispatch(Dispatch::Unknown))?
+                    .map_err(|_| Error::new(ErrorCode::Deadline, "HTTP response-header deadline exceeded").with_dispatch(Dispatch::Unknown))?
                     .map_err(|_| Error::new(ErrorCode::Transport, "HTTP request failed").with_dispatch(Dispatch::Unknown).with_retriable(true))?
             }
         };
@@ -262,6 +272,7 @@ impl HttpClient {
             };
             let quota = refusal_document(&mut response, cancel, deadline)
                 .await
+                .map_err(|refusal| refusal.with_dispatch(error.dispatch))?
                 .is_some_and(|document| rule(response.headers(), &document));
             return Err(if quota { quota_refusal(&error) } else { error });
         }
@@ -309,6 +320,9 @@ pub struct SseStream {
 impl SseStream {
     /// # Errors
     /// Reports cancellation, deadline, framing and transport failures; never synthesizes completion.
+    /// A read that has to wait for the wire is refused at any poll on a thread in no Tokio runtime
+    /// ([`within_tokio_runtime`]), dispatch `accepted`: the request was answered. Events already
+    /// decoded are returned without one.
     pub async fn next(&mut self) -> Result<Option<SseEvent>, Error> {
         if let Some(error) = &self.failure {
             return Err(error.clone());
@@ -341,11 +355,15 @@ impl SseStream {
             let Some(response) = self.response.as_mut() else {
                 return Ok(None);
             };
+            // Only a read that waits for the wire needs the runtime; queued events above do not.
+            // Each poll of that read asks for it.
+            let until = self.deadline.min(Instant::now() + self.idle);
             let chunk = tokio::select! {
                 biased;
                 () = self.cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
-                chunk = tokio::time::timeout_at(self.deadline.min(Instant::now() + self.idle), response.chunk()) => {
-                    chunk.map_err(|_| Error::new(ErrorCode::Deadline, "HTTP idle or total deadline exceeded").with_dispatch(Dispatch::Accepted))?
+                chunk = within_tokio_runtime(async move { tokio::time::timeout_at(until, response.chunk()).await }) => {
+                    chunk.map_err(|refusal| refusal.with_dispatch(Dispatch::Accepted))?
+                        .map_err(|_| Error::new(ErrorCode::Deadline, "HTTP idle or total deadline exceeded").with_dispatch(Dispatch::Accepted))?
                         .map_err(|_| Error::new(ErrorCode::Transport, "HTTP response body failed").with_dispatch(Dispatch::Accepted).with_retriable(true))?
                 }
             };
@@ -424,16 +442,17 @@ fn quota_refusal(rate_limited: &Error) -> Error {
 /// A refused answer's body as JSON, read up to [`MAX_REFUSAL_BYTES`] and for at most
 /// [`REFUSAL_WAIT`], within `deadline` and the caller's cancellation. `None` when it is declared
 /// or found larger, has not ended in time, fails, or is not JSON. Nothing read is shown to a tap.
+/// A poll on a thread in no Tokio runtime is refused ([`within_tokio_runtime`]).
 async fn refusal_document(
     response: &mut Response,
     cancel: &Cancel,
     deadline: Instant,
-) -> Option<Value> {
+) -> Result<Option<Value>, Error> {
     if response
         .content_length()
         .is_some_and(|length| length > MAX_REFUSAL_BYTES as u64)
     {
-        return None;
+        return Ok(None);
     }
     let read = async {
         let mut body = Vec::new();
@@ -445,11 +464,15 @@ async fn refusal_document(
         }
         serde_json::from_slice(&body).ok()
     };
-    tokio::select! {
-        biased;
-        () = cancel.cancelled() => None,
-        document = tokio::time::timeout_at(deadline.min(Instant::now() + REFUSAL_WAIT), read) => document.ok().flatten(),
-    }
+    let until = deadline.min(Instant::now() + REFUSAL_WAIT);
+    within_tokio_runtime(async move {
+        tokio::select! {
+            biased;
+            () = cancel.cancelled() => None,
+            document = tokio::time::timeout_at(until, read) => document.ok().flatten(),
+        }
+    })
+    .await
 }
 
 /// Parses Retry-After with a caller-supplied clock. A hint is a delay, never a reason to retry:
@@ -483,6 +506,10 @@ impl HttpClient {
     /// # Errors
     /// Refuses invalid URLs and bounds, cancellation, deadlines, transport failures, a failing
     /// status (as [`status_error`]), an answer over the bound and a success that is not JSON.
+    /// Polled on a thread in no Tokio runtime it is refused: on its first poll before anything
+    /// else ([`require_tokio_runtime`]), dispatch `not-sent`; on a later poll at that poll
+    /// ([`within_tokio_runtime`]), dispatch `unknown` while the answer is awaited and `accepted`
+    /// while its body is read.
     pub async fn post_json(
         &self,
         url: &str,
@@ -502,6 +529,7 @@ impl HttpClient {
         body: Vec<u8>,
         cancel: &Cancel,
     ) -> Result<serde_json::Value, Error> {
+        require_tokio_runtime()?;
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
         }
@@ -523,11 +551,14 @@ impl HttpClient {
             )))
             .build()
             .map_err(|_| Error::invalid("HTTP request could not be constructed"))?;
+        let headers_by = deadline.min(started + self.limits.response_headers);
+        // As in `post_sse_until`: each poll of the wait for the answer asks for the runtime.
         let mut response = tokio::select! {
             biased;
             () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),
-            reply = tokio::time::timeout_at(deadline.min(started + self.limits.response_headers), self.client.execute(request)) => {
-                reply.map_err(|_| Error::new(ErrorCode::Deadline, "HTTP response-header deadline exceeded").with_dispatch(Dispatch::Unknown))?
+            reply = within_tokio_runtime(async move { tokio::time::timeout_at(headers_by, self.client.execute(request)).await }) => {
+                reply.map_err(|refusal| refusal.with_dispatch(Dispatch::Unknown))?
+                    .map_err(|_| Error::new(ErrorCode::Deadline, "HTTP response-header deadline exceeded").with_dispatch(Dispatch::Unknown))?
                     .map_err(|_| Error::new(ErrorCode::Transport, "HTTP request failed").with_dispatch(Dispatch::Unknown))?
             }
         };
@@ -554,11 +585,13 @@ impl HttpClient {
         // Allocated once at the bound, so it is never reallocated and every byte is zeroized.
         let mut answer = zeroize::Zeroizing::new(Vec::with_capacity(MAX_EXCHANGE_BYTES));
         loop {
+            let until = deadline.min(Instant::now() + self.limits.idle);
             let chunk = tokio::select! {
                 biased;
                 () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
-                chunk = tokio::time::timeout_at(deadline.min(Instant::now() + self.limits.idle), response.chunk()) => {
-                    chunk.map_err(|_| Error::new(ErrorCode::Deadline, "HTTP idle or total deadline exceeded").with_dispatch(Dispatch::Accepted))?
+                chunk = within_tokio_runtime(async { tokio::time::timeout_at(until, response.chunk()).await }) => {
+                    chunk.map_err(|refusal| refusal.with_dispatch(Dispatch::Accepted))?
+                        .map_err(|_| Error::new(ErrorCode::Deadline, "HTTP idle or total deadline exceeded").with_dispatch(Dispatch::Accepted))?
                         .map_err(|_| Error::new(ErrorCode::Transport, "HTTP response body failed").with_dispatch(Dispatch::Accepted))?
                 }
             };
