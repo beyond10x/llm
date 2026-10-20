@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-20
+
 ### Added
 
 - `b10x-llm-core`: `Capabilities` declares `output_streaming` (the model's text reaches the sink
