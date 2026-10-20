@@ -4,6 +4,7 @@ use reqwest::{
     Client, Response, Url,
     header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue, RETRY_AFTER},
 };
+use serde_json::Value;
 use std::{
     collections::VecDeque,
     sync::Arc,
@@ -53,7 +54,7 @@ impl Default for Limits {
 /// and neither does a JSON exchange: that is the shape a credential refresh takes, and its answer
 /// is a credential. Only [`HttpClient::post_sse`] and [`HttpClient::post_sse_until`] show a tap
 /// anything, and an answer they refuse by its status or media type shows it the head alone: that
-/// body is never read.
+/// body is never shown to it, also when a [`QuotaRule`] reads a 429's.
 pub trait ResponseTap: Send + Sync {
     /// The response line (`HTTP/1.1 200 OK`) and the response headers, before any body, whatever
     /// the status.
@@ -62,13 +63,34 @@ pub trait ResponseTap: Send + Sync {
     fn chunk(&self, bytes: &[u8]);
 }
 
-/// Cloning shares a connection pool and a response tap, never retry policy or credentials.
+/// Whether a 429's error document reports an exhausted quota or spend limit: a refusal the far
+/// side repeats for every identical request until something about the account changes, rather
+/// than a request for less traffic.
+///
+/// The transport knows no provider's error document, so a protocol client states its own rule
+/// ([`HttpClient::with_quota_rule`]). It is shown the response headers and the body parsed as
+/// JSON, and only for a 429 whose body arrived whole within [`MAX_REFUSAL_BYTES`] and
+/// [`REFUSAL_WAIT`]. It answers yes or no; nothing it reads reaches a diagnostic.
+pub type QuotaRule = fn(&HeaderMap, &Value) -> bool;
+
+/// The most of a 429's body the transport reads for a [`QuotaRule`]: 16 KiB, inclusive. A body
+/// declared or found larger is not read further, and the 429 keeps its rate-limit class.
+pub const MAX_REFUSAL_BYTES: usize = 16 * 1024;
+
+/// How long the transport waits for a 429's body after its head, for a [`QuotaRule`], within the
+/// exchange's own deadline and the caller's cancellation. A body that has not ended by then is
+/// not waited for, and the 429 keeps its rate-limit class.
+pub const REFUSAL_WAIT: Duration = Duration::from_secs(1);
+
+/// Cloning shares a connection pool, a response tap and a quota rule, never retry policy or
+/// credentials.
 #[derive(Clone)]
 pub struct HttpClient {
     client: Client,
     limits: Limits,
     connect: Duration,
     tap: Option<Arc<dyn ResponseTap>>,
+    quota: Option<QuotaRule>,
 }
 impl HttpClient {
     /// A client with the default connect bound, [`CONNECT_TIMEOUT`].
@@ -110,6 +132,7 @@ impl HttpClient {
             limits,
             connect,
             tap: None,
+            quota: None,
         })
     }
 
@@ -119,6 +142,16 @@ impl HttpClient {
     #[must_use]
     pub fn with_response_tap(mut self, tap: Arc<dyn ResponseTap>) -> Self {
         self.tap = Some(tap);
+        self
+    }
+
+    /// Read a streamed request's 429 by `rule`: a 429 whose bounded body the rule calls an
+    /// exhausted quota is refused as `refused`, dispatch `rejected`, and is final, the class a
+    /// quota reported inside a stream has. Every other 429, and every 429 without a rule, stays
+    /// a retriable `rate-limited`. A JSON exchange never reads a refused body.
+    #[must_use]
+    pub fn with_quota_rule(mut self, rule: QuotaRule) -> Self {
+        self.quota = Some(rule);
         self
     }
 
@@ -207,7 +240,7 @@ impl HttpClient {
             .body(body)
             .build()
             .map_err(|_| Error::invalid("HTTP request could not be constructed"))?;
-        let response = tokio::select! {
+        let mut response = tokio::select! {
             biased;
             () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),
             reply = tokio::time::timeout_at(deadline.min(started + self.limits.response_headers), self.client.execute(request)) => {
@@ -222,11 +255,15 @@ impl HttpClient {
             );
         }
         if !response.status().is_success() {
-            return Err(status_error(
-                response.status().as_u16(),
-                response.headers(),
-                SystemTime::now(),
-            ));
+            let status = response.status().as_u16();
+            let error = status_error(status, response.headers(), SystemTime::now());
+            let Some(rule) = self.quota.filter(|_| status == 429) else {
+                return Err(error);
+            };
+            let quota = refusal_document(&mut response, cancel, deadline)
+                .await
+                .is_some_and(|document| rule(response.headers(), &document));
+            return Err(if quota { quota_refusal(&error) } else { error });
         }
         // A success that names a media type must name an event stream. One that names none is
         // read as the event stream the request asked for (the Codex backend answers that way);
@@ -347,6 +384,50 @@ pub fn status_error(status: u16, headers: &HeaderMap, now: SystemTime) -> Error 
     error.retry_after_ms = retry_after(headers, now)
         .map(|duration| u64::try_from(duration.as_millis()).unwrap_or(u64::MAX));
     error
+}
+
+/// A 429 its client's [`QuotaRule`] reads as an exhausted quota: refused, dispatch `rejected`,
+/// final. The retry hint stays, as a hint never causes a retry.
+fn quota_refusal(rate_limited: &Error) -> Error {
+    let mut error = Error::new(
+        ErrorCode::Refused,
+        "HTTP endpoint returned status 429 for an exhausted quota or spend limit",
+    )
+    .with_dispatch(Dispatch::Rejected)
+    .with_retriable(false);
+    error.retry_after_ms = rate_limited.retry_after_ms;
+    error
+}
+
+/// A refused answer's body as JSON, read up to [`MAX_REFUSAL_BYTES`] and for at most
+/// [`REFUSAL_WAIT`], within `deadline` and the caller's cancellation. `None` when it is declared
+/// or found larger, has not ended in time, fails, or is not JSON. Nothing read is shown to a tap.
+async fn refusal_document(
+    response: &mut Response,
+    cancel: &Cancel,
+    deadline: Instant,
+) -> Option<Value> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > MAX_REFUSAL_BYTES as u64)
+    {
+        return None;
+    }
+    let read = async {
+        let mut body = Vec::new();
+        while let Some(chunk) = response.chunk().await.ok()? {
+            if body.len() + chunk.len() > MAX_REFUSAL_BYTES {
+                return None;
+            }
+            body.extend_from_slice(&chunk);
+        }
+        serde_json::from_slice(&body).ok()
+    };
+    tokio::select! {
+        biased;
+        () = cancel.cancelled() => None,
+        document = tokio::time::timeout_at(deadline.min(Instant::now() + REFUSAL_WAIT), read) => document.ok().flatten(),
+    }
 }
 
 /// Parses Retry-After with a caller-supplied clock. A hint is a delay, never a reason to retry:

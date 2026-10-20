@@ -222,8 +222,14 @@ or a reported upstream failure contributes its category, never its response text
 A stream `error` of type `overloaded_error` (`unavailable`) or `api_error` (`transport`) is
 retriable when no payload but `message_start` and `ping` came before it. After any other payload
 it is final, a block that opened without showing anything included. Every other type is final,
-`rate_limit_error` included, because on this route it may be a spend cap. The provider lines this
-rests on are in [design.md](design.md#provider-failures-retried-before-output).
+`rate_limit_error` included, because on this route it may be a spend cap. Before the stream, a
+429 whose error body says `rate_limit_error` with `error.details.error_code`
+`enforced_spend_limit_reached` is that spend cap: a final `Refused` with dispatch `rejected`,
+with or without a `retry-after` (`story:quota-429-is-final`). Every other 429 stays a retriable
+`RateLimited`: a `rate_limit_error` without that code, with or without a `retry-after`, the 429 a
+subscription token meets without the preamble, and a body that cannot be read within the
+transport's bound. The provider lines this rests on are in
+[design.md](design.md#provider-failures-retried-before-output).
 
 A turn carrying hints this wire omits ends, once it has succeeded, with one `StreamEvent::Warning`
 of code `advisory-omitted` naming them (`llm_core::advisory_warning`, wire name `Messages`). Never

@@ -25,6 +25,29 @@ use crate::{
 /// The wire's name in an `advisory-omitted` warning.
 const PROTOCOL_NAME: &str = "Responses";
 
+/// The `error.code` values of a 429 that reports an exhausted quota or spend limit rather than a
+/// rate limit: the billing, spend and quota codes the `OpenAI` error codes page lists as 429
+/// entries, of which it says "Retrying billing, spend, or quota errors won’t restore API access"
+/// (`docs/design.md`, provider failures retried before output). Inside a stream the decoder
+/// already reads every code but the three transient ones as a final refusal.
+const QUOTA_CODES: [&str; 5] = [
+    "insufficient_quota",
+    "credit_balance_exhausted",
+    "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded",
+    "organization_usage_limit_exceeded",
+];
+
+/// This wire's [`llm_http::QuotaRule`]: a 429 whose error document names one of
+/// [`QUOTA_CODES`], exactly, as its `error.code`.
+fn exhausted_quota(_: &HeaderMap, document: &Value) -> bool {
+    document
+        .get("error")
+        .and_then(|error| error.get("code"))
+        .and_then(Value::as_str)
+        .is_some_and(|code| QUOTA_CODES.contains(&code))
+}
+
 /// The stream events after which this wire sends nothing the decoder reads.
 ///
 /// Reading stops at the first of them rather than at end of body, so a server that keeps the
@@ -51,6 +74,12 @@ const FINAL_EVENTS: &[&str] = &[
 ///
 /// It never retries, never refreshes a credential, never changes account or endpoint, and never
 /// falls back: those belong to routing and to the caller.
+///
+/// A 429 whose bounded error body names an exhausted quota or spend limit as its `error.code`
+/// (`insufficient_quota` and the four other billing codes) is a final `refused`, dispatch
+/// `rejected`, as the same code inside a stream is; every other 429 stays a retriable
+/// `rate-limited`. The transport reads that body for this client's rule
+/// ([`HttpClient::with_quota_rule`]), and no text of it reaches a diagnostic.
 ///
 /// Each payload is decoded as it arrives and the [`StreamEvent`]s it produced reach the sink
 /// before the next payload is read, in wire order, as the Messages client does.
@@ -95,7 +124,7 @@ impl ResponsesClient {
         Ok(Self {
             binding,
             projection,
-            http,
+            http: http.with_quota_rule(exhausted_quota),
             resolver,
             conversation: None,
             requests: AtomicU64::new(0),

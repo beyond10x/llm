@@ -319,10 +319,13 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `a_transient_failure_after_visible_or_silent_output_is_final` `:291`, and
   `an_exhausted_quota_or_spend_limit_stays_final_before_output` `:320`. Inside a stream, an
   exhausted quota (`insufficient_quota`) stays a final `Refused`. As an HTTP 429 before the
-  stream, it is a retriable `RateLimited`: the transport reads no error body
-  (`llm-http/src/transport.rs:339`), held by
-  `an_exhausted_quota_answered_as_a_429_before_the_stream_is_retriable_today`
-  `llm-responses/tests/adversary_w09_retry_http_quota.rs:156`, until `story:quota-429-is-final`.
+  stream it is a final `Refused` too (`story:quota-429-is-final`): the client's rule
+  `exhausted_quota` `llm-responses/src/client.rs:43` reads `error.code` from the 429's body,
+  which the transport reads for it only, bounded (`llm-http/src/transport.rs:260`). Tests:
+  `an_exhausted_quota_answered_as_a_429_before_the_stream_is_final`
+  `llm-responses/tests/retry_class.rs:411` and
+  `llm-responses/tests/adversary_w09_retry_http_quota.rs:156`, and
+  `any_other_429_stays_a_retriable_rate_limit` `llm-responses/tests/retry_class.rs:437`.
   The bridge keeps `may_retry` (`llm_port.rs:622`-`627`), so Harness's loop retries both classes
   before output again, as its wire did. The bridge's code mapping does not change.
 - **M27.** A Messages `overloaded_error` (`Unavailable`) or `api_error` (`Transport`) stream error
@@ -334,6 +337,12 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `llm-messages/tests/retry_class.rs:121`,
   `overloaded_and_api_errors_after_visible_or_silent_output_are_final` `:140`, and
   `every_other_stream_error_stays_final_before_output` `:168`. `rate_limit_error` stays final.
+  Before the stream, a 429 whose body says `rate_limit_error` with `error.details.error_code`
+  `enforced_spend_limit_reached` is Anthropic's spend cap and a final `Refused`
+  (`story:quota-429-is-final`; rule `spend_cap` `llm-messages/src/client.rs:40`), where Harness
+  retried every 429; every other 429 stays retriable:
+  `a_spend_cap_429_is_final_with_or_without_retry_after`
+  `llm-messages/tests/retry_class.rs:236`, `any_other_429_stays_a_retriable_rate_limit` `:267`.
   The bridge passes `may_retry` on, so Harness's loop retries both before output again. llm still
   reads `overloaded_error` as `Unavailable`, where Harness had `RateLimited`.
 - For both rows, routing retries such a failure on its target and then falls back only in the

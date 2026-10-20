@@ -7,9 +7,10 @@
 //! access." The unit made these codes final inside a stream. As the 429 before any stream, the
 //! path that page describes, the transport marks every 429 retriable without reading the body
 //! (`crates/llm-http/src/transport.rs:339`), so routing retries the target and then falls back.
-//! `docs/design.md` says so and defers the transport change. The coordinator kept the transport
-//! as it is (correction round 1); this case records today's behaviour until
-//! story:quota-429-is-final.
+//! `docs/design.md` said so and deferred the transport change. The coordinator kept the transport
+//! as it was (correction round 1), and this case recorded that behaviour until
+//! story:quota-429-is-final, which flipped it: the transport now reads a 429's bounded body for
+//! the Responses client's quota rule, and each code reads as a final refusal.
 
 use llm_core::{
     AuthKind, BillingKind, BoxFuture, Cancel, Capabilities, Error, ErrorCode, Id, Item, Model,
@@ -149,11 +150,10 @@ async fn quota_turn(code: &str) -> Error {
     error
 }
 
-/// Today's behaviour, accepted by the coordinator: the transport is not changed, so each billing
-/// code answered as a 429 before the stream is a retriable `RateLimited`. Reading the code out of
-/// the 429 body is story:quota-429-is-final, and this case flips to final when that story lands.
+/// Flipped by story:quota-429-is-final: each billing code answered as a 429 before the stream is
+/// a final `Refused`, as the same code inside a stream is, and its prose reaches no diagnostic.
 #[tokio::test]
-async fn an_exhausted_quota_answered_as_a_429_before_the_stream_is_retriable_today() {
+async fn an_exhausted_quota_answered_as_a_429_before_the_stream_is_final() {
     for code in [
         "insufficient_quota",
         "credit_balance_exhausted",
@@ -166,11 +166,10 @@ async fn an_exhausted_quota_answered_as_a_429_before_the_stream_is_retriable_tod
             !format!("{error:?}").contains("SECRET-UPSTREAM-TEXT"),
             "`{code}`: {error:?}"
         );
-        assert_eq!(error.code, ErrorCode::RateLimited, "`{code}`: {error:?}");
+        assert_eq!(error.code, ErrorCode::Refused, "`{code}`: {error:?}");
         assert!(
-            error.may_retry(),
-            "`{code}`: the transport marks every 429 retriable without reading its body until \
-             story:quota-429-is-final lands; then this case flips to final: {error:?}"
+            !error.may_retry(),
+            "`{code}`: an exhausted quota is final before the stream too: {error:?}"
         );
     }
 }

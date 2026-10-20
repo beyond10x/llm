@@ -213,3 +213,110 @@ async fn the_same_classes_as_an_http_status_before_the_stream_are_retriable() {
         assert!(!format!("{error:?}").contains(PROSE), "{status}: {error:?}");
     }
 }
+
+/// A 429 answer before any stream, with `body` (sent as is) and the head fields in `fields`.
+async fn answered_429(fields: &str, body: String) -> (Error, VecSink) {
+    let head = format!(
+        "HTTP/1.1 429 Too Many Requests\r\nContent-Type: application/json\r\n{fields}Content-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    );
+    failed_turn(head.into_bytes(), body).await
+}
+
+/// Anthropic's spend-cap error document, as the rate-limits page shows it, with `error` replaced.
+fn anthropic_error(error: &serde_json::Value) -> String {
+    serde_json::json!({"type": "error", "error": error, "request_id": "req_fixture"}).to_string()
+}
+
+/// story:quota-429-is-final. Anthropic's rate-limits page, "Reaching your spend cap": "On the
+/// Messages API, `error.details.error_code` is `enforced_spend_limit_reached`. Use it to tell this
+/// response apart from a rate limit." A 429 whose error says `rate_limit_error` with that code is
+/// a final refusal with dispatch `rejected`, with or without a `retry-after` (whose hint is kept).
+#[tokio::test]
+async fn a_spend_cap_429_is_final_with_or_without_retry_after() {
+    let spend_cap = anthropic_error(&serde_json::json!({
+        "type": "rate_limit_error", "message": PROSE,
+        "details": {"error_code": "enforced_spend_limit_reached"}
+    }));
+    for (fields, hint) in [("", None), ("retry-after: 7\r\n", Some(7_000))] {
+        let (error, sink) = answered_429(fields, spend_cap.clone()).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Refused, Dispatch::Rejected),
+            "`{fields}`"
+        );
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "`{fields}`: a spend cap keeps failing: {error:?}"
+        );
+        assert_eq!(error.retry_after_ms, hint, "`{fields}`");
+        assert_eq!(sink.events(), [], "`{fields}`");
+        assert!(
+            !format!("{error:?} {error}").contains(PROSE),
+            "`{fields}`: {error:?}"
+        );
+    }
+}
+
+/// Every other 429 keeps the rate-limit class, with or without a `retry-after`: a
+/// `rate_limit_error` without the spend-cap code (so a rate limit answered without the header,
+/// and the 429 Harness measured for a subscription token without the preamble, which carried no
+/// rate-limit headers), the code under another type, in another spelling or outside `details`,
+/// another type, no error at all, and a body that is not JSON.
+#[tokio::test]
+async fn any_other_429_stays_a_retriable_rate_limit() {
+    let rate_limit =
+        anthropic_error(&serde_json::json!({"type": "rate_limit_error", "message": PROSE}));
+    for (fields, body, hint) in [
+        ("", rate_limit.clone(), None),
+        ("retry-after: 7\r\n", rate_limit, Some(7_000)),
+        (
+            "",
+            anthropic_error(&serde_json::json!({"type": "rate_limit_error",
+                "details": {"error_code": "rate_limit_exceeded"}})),
+            None,
+        ),
+        (
+            "",
+            anthropic_error(&serde_json::json!({"type": "rate_limit_error",
+                "details": {"error_code": "ENFORCED_SPEND_LIMIT_REACHED"}})),
+            None,
+        ),
+        (
+            "",
+            anthropic_error(&serde_json::json!({"type": "rate_limit_error",
+                "error_code": "enforced_spend_limit_reached"})),
+            None,
+        ),
+        (
+            "",
+            anthropic_error(
+                &serde_json::json!({"type": "overloaded_error", "message": PROSE,
+                "details": {"error_code": "enforced_spend_limit_reached"}}),
+            ),
+            None,
+        ),
+        (
+            "",
+            anthropic_error(&serde_json::json!({"type": "RATE_LIMIT_ERROR",
+                "details": {"error_code": "enforced_spend_limit_reached"}})),
+            None,
+        ),
+        ("", "{}".to_owned(), None),
+        ("", format!("{PROSE}, not a document"), None),
+    ] {
+        let (error, sink) = answered_429(fields, body.clone()).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::RateLimited, Dispatch::Rejected),
+            "`{fields}` {body}"
+        );
+        assert!(error.may_retry(), "`{fields}` {body}: {error:?}");
+        assert_eq!(error.retry_after_ms, hint, "`{fields}` {body}");
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains(PROSE),
+            "{body}: {error:?}"
+        );
+    }
+}

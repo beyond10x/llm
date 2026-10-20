@@ -382,3 +382,77 @@ async fn the_same_classes_as_an_http_status_before_the_stream_are_retriable() {
         );
     }
 }
+
+/// The billing, spend and quota codes `docs/design.md` lists, each an HTTP 429 entry on the
+/// `OpenAI` error codes page.
+const QUOTA: [&str; 5] = [
+    "insufficient_quota",
+    "credit_balance_exhausted",
+    "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded",
+    "organization_usage_limit_exceeded",
+];
+
+/// A 429 answer before any stream, with `body` and a declared length.
+async fn answered_429(body: &serde_json::Value) -> (Error, VecSink) {
+    let body = body.to_string();
+    let head = format!(
+        "HTTP/1.1 429 Too Many Requests\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    );
+    failed_turn(head.into_bytes(), body).await
+}
+
+/// story:quota-429-is-final. The same quota answered as an HTTP 429 before any stream is final
+/// too, a refusal with dispatch `rejected`, so routing ends the run as it does for the quota
+/// inside a stream. Only the machine-readable `error.code` decides; the prose never reaches a
+/// diagnostic.
+#[tokio::test]
+async fn an_exhausted_quota_answered_as_a_429_before_the_stream_is_final() {
+    for code in QUOTA {
+        let (error, sink) = answered_429(&serde_json::json!({"error": {
+            "message": "SECRET-UPSTREAM-TEXT", "type": "insufficient_quota", "param": null, "code": code
+        }}))
+        .await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Refused, Dispatch::Rejected),
+            "`{code}`"
+        );
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "`{code}` is final: {error:?}"
+        );
+        assert_eq!(sink.events(), [], "`{code}`");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "`{code}`: {error:?}"
+        );
+    }
+}
+
+/// Only those codes, exactly spelt, as `error.code`: every other 429 stays a retriable rate
+/// limit, a quota named only by `error.type` or outside `error` included.
+#[tokio::test]
+async fn any_other_429_stays_a_retriable_rate_limit() {
+    for body in [
+        serde_json::json!({"error": {"code": "rate_limit_exceeded", "type": "insufficient_quota", "message": "SECRET-UPSTREAM-TEXT"}}),
+        serde_json::json!({"error": {"code": null, "type": "insufficient_quota"}}),
+        serde_json::json!({"error": {"code": "INSUFFICIENT_QUOTA"}}),
+        serde_json::json!({"code": "insufficient_quota"}),
+        serde_json::json!({}),
+    ] {
+        let (error, sink) = answered_429(&body).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::RateLimited, Dispatch::Rejected),
+            "{body}"
+        );
+        assert!(error.may_retry(), "{body}: {error:?}");
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "{body}: {error:?}"
+        );
+    }
+}

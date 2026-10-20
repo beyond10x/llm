@@ -10,6 +10,6 @@ mod transport;
 pub use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 pub use sse::{Framing, MAX_EVENT_BYTES, MAX_STREAM_BYTES, SseDecoder, SseEvent};
 pub use transport::{
-    CONNECT_TIMEOUT, HttpClient, Limits, MAX_EXCHANGE_BYTES, ResponseTap, SseStream, retry_after,
-    status_error,
+    CONNECT_TIMEOUT, HttpClient, Limits, MAX_EXCHANGE_BYTES, MAX_REFUSAL_BYTES, QuotaRule,
+    REFUSAL_WAIT, ResponseTap, SseStream, retry_after, status_error,
 };

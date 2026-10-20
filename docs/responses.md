@@ -412,10 +412,15 @@ when nothing but `response.created`, `response.in_progress`, `response.queued` a
 came before the failure. An opening item that emitted no visible event counts as output, so a
 caller may retry the identical request only before output. Every other code is
 final, an exhausted quota (`insufficient_quota`) or spend limit included. That holds inside a
-stream. The same quota answered as an HTTP 429 before the stream is the transport's retriable
-`RateLimited` (`story:quota-429-is-final`). The provider lines this
-rests on are in [design.md](design.md#provider-failures-retried-before-output). The client itself
-still makes one attempt.
+stream and before it: a 429 whose error body names one of the five billing, spend or quota codes
+(`insufficient_quota`, `credit_balance_exhausted`, `organization_spend_limit_exceeded`,
+`project_spend_limit_exceeded`, `organization_usage_limit_exceeded`) as its `error.code` is a
+final `Refused` with dispatch `rejected`. The client hands the transport that rule, and the
+transport reads the 429's body for it only, bounded in bytes and time; every other 429, and one
+whose body cannot be read in that bound, stays a retriable `RateLimited`
+(`story:quota-429-is-final`). The provider lines this rests on are in
+[design.md](design.md#provider-failures-retried-before-output). The client itself still makes one
+attempt.
 **The provider's message is never relayed.** Diagnostics are fixed strings this
 crate wrote; an upstream string relayed into a diagnostic is how a prompt or a credential
 eventually reaches a log. `incomplete_details.reason` is treated the same way: it is kept when it
