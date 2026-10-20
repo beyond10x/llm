@@ -14,8 +14,8 @@ missing.
 
 ## What it is not
 
-- **Not an agent loop.** llm never runs a tool. Its consumers run the loop and execute the tools
-  the model asks for:
+- **Not an agent loop.** llm never runs a tool. The agent loops among its consumers run the loop
+  and execute the tools the model asks for:
   [Harness](https://beyond10x.github.io/ecosystem/harness/) ([GitHub](https://github.com/beyond10x/harness)),
   [Loom](https://beyond10x.github.io/loom/) ([GitHub](https://github.com/beyond10x/loom)) and
   inference ([GitHub](https://github.com/beyond10x/inference)). Loom and inference pin an llm
