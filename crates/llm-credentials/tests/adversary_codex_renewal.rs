@@ -30,10 +30,12 @@ const CLIENT: &str = "fixture-client";
 const OLD_REFRESH: &str = "fixture-refresh-token-one";
 const NEW_REFRESH: &str = "fixture-refresh-token-two";
 /// How long one wait on the code under test may take before its case fails. No case decides on
-/// it: each decides on an answer, or on the endpoint having read a request. It ends a stall the
-/// code under test never ends itself, well above the exchange's own 30 s bound
-/// (`EXCHANGE_TIMEOUT` in `src/codex/renewal.rs`), which ended a resolve whose request the
-/// endpoint never read at 30.01 s when measured.
+/// it: each decides on an answer, or on the endpoint having read a request. It ends a stall in
+/// the async code under test, well above the exchange's own 30 s bound (`EXCHANGE_TIMEOUT` in
+/// `src/codex/renewal.rs`), which ended a resolve whose request the endpoint never read at
+/// 30.01 s when measured. A stall inside the renewal's blocking file I/O (`spawn_blocking`) still
+/// holds the process after the case fails: dropping the test runtime waits for its blocking
+/// threads.
 const STALL: Duration = Duration::from_mins(2);
 
 fn reference() -> SecretRef {
