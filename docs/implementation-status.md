@@ -73,7 +73,7 @@ are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 
 | Story | Capability |
 | --- | --- |
-| `chat-projection` | **Chat Completions projection and client.** `ChatClient` and an ingress codec for any compatible endpoint, including an anonymous local vLLM server; usage is always requested on a stream. |
+| `chat-projection` | **Chat Completions projection and client.** `ChatClient` and an ingress codec for any compatible endpoint, including an anonymous local vLLM server or llama.cpp `llama-server`; usage is always requested on a stream, and llama-server's `timings` counters are read beside it. |
 | `messages-projection` | **Messages projection and client.** `MessagesClient` and an ingress codec; signed and redacted thinking cross as bound opaque state. |
 | `parity-messages-wire` | **Messages prompt caching and unknown events.** Cache breakpoints on the standing instruction and on the conversation tail; an unknown stream event, delta or content block is kept as an opaque item with a warning. |
 | `responses-projection` | **Responses projection.** Request bodies and stream decoding for the declared subset, stateless (`store: false`) and always streamed. |

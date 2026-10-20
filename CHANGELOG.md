@@ -6,6 +6,70 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `b10x-llm-credentials`: `AnonymousResolver`, the resolver a caller hands a protocol client it
+  builds itself (`ChatClient::new`, `ResponsesClient::new`, `MessagesClient::new`) for an
+  anonymous binding, such as a keyless local server. It holds no secret and refuses every resolve
+  with `SecretError::Missing`, so a credentialed binding handed it by mistake stops as
+  `unauthorized` before sending and never falls back; refresh is unsupported. It is not
+  feature-gated. `b10x-llm-models` now hands this resolver to the client of an anonymous
+  account in place of its private copy; ports behave as before.
+- `b10x-llm-http`: `require_tokio_runtime`, the check every protocol client and exchange makes
+  first, and `within_tokio_runtime`, which runs a wait only while a Tokio runtime is current and
+  refuses it otherwise (below).
+- `docs/design.md` "Input into a running turn": llm does not carry input into a turn that is
+  still producing output. Each client posts the whole request once over HTTP and reads the
+  answer's server-sent events, and over that exchange none of Responses, Messages or Chat
+  Completions takes input into a response still streaming. OpenAI's mid-turn steering for Responses
+  (`response.steer`, GPT-6 models) needs a Responses WebSocket connection, which llm does not
+  implement (`story:responses-websocket-steering`). `Capabilities::input_during_output` stays
+  `false`. The supported pattern: cancel the running turn, carry the text its sink was shown as
+  assistant text (a delta counts once its `emit` completed), or, for a turn that finished first,
+  its outcome's items with a result for every tool call it proposed, then the new input. The guide
+  "Interrupt a turn with new input" runs it offline (`crates/llm-docs/examples/interrupt_turn.rs`,
+  five tests, one per way the first turn can end, two proposed calls included).
+- `b10x-llm-chat`: three response streams in llama.cpp `llama-server`'s shape
+  (`crates/llm-chat/fixtures/llama-server-*.sse`): a reasoning model's text turn, a tool call, and
+  a stream answering a request without `stream_options.include_usage`. They are authored from
+  llama.cpp's server source at `7879491cf` (release `b11752`), not captured; every field's source
+  line is in `docs/verification/chat.md`. Five ESS scenarios carry them; `contracts/baseline.json`
+  rises from 883 to 888.
+
+### Changed
+
+- `b10x-llm-messages`: a usage report without `cache_creation_input_tokens` whose `cache_creation`
+  breakdown reports both `ephemeral_1h_input_tokens` and `ephemeral_5m_input_tokens` now has a
+  cache-write count, their sum, and so an inclusive `input_tokens` when `input_tokens` and
+  `cache_read_input_tokens` are reported too. Anthropic documents the total input as the sum of the
+  three counts and the breakdown as the write split by TTL (`docs/messages.md` "Usage"). A
+  breakdown that is absent or missing either count leaves the write count and the total unknown,
+  never zero. The derived count is cumulative like a reported one: a reported
+  `cache_creation_input_tokens` in the same event has to equal the breakdown sum, a later one may
+  raise the derived count but never lower it, and a breakdown that contradicts a reported count is
+  refused as `protocol`. The Harness emulator sends no
+  breakdown, so its `absent-cache-write` scenario still reports no total.
+- `b10x-llm-chat`: llama-server's `timings` object is read for its counters: `prompt_n` plus
+  `cache_n` is the input, `cache_n` the cached input and `predicted_n` the output; a counter the
+  `usage` report does not name is taken from there, so a llama-server stream without a usage chunk
+  no longer reports every counter unknown. Where `usage` and `timings` both name a counter they
+  must agree, or the turn is refused (`chat completion timings contradict its usage report`) and
+  the failure reports neither. The other documented `timings` fields (durations, rates, draft
+  counts) are accepted and not read, in the shape llama-server writes; any other shape is refused
+  naming the field, not its value. A chunk refused while its report is read adds nothing to the
+  evidence a failure carries.
+
+### Fixed
+
+- A turn of the Responses, Messages or Chat Completions client, or an exchange of
+  `b10x-llm-http`, polled on a thread in no Tokio runtime is refused with `unsupported`, not
+  retriable, and the message "an llm client needs a Tokio runtime; run the call inside one, or use
+  b10x-llm-blocking for a single model", where it used to panic ("there is no reactor running").
+  The first poll is refused before a credential is resolved or a connection opened (dispatch
+  `not-sent`); a call moved out of its runtime part-way is refused at its next wait on Tokio, with
+  the dispatch it had reached. The clients still start no runtime; `docs/design.md` "Executor"
+  records the measured behaviour and the rule.
+
 ## [0.8.2] - 2026-10-20
 
 ### Added
