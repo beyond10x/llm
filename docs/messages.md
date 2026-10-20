@@ -281,7 +281,11 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
   part.
 - **Failure.** `fail` emits the `error` event; eight error codes map to an Anthropic error type the
   decoder reads back as the same code, and `protocol`, `cancelled` and `unsupported` take the nearest
-  (`api_error`, `api_error`, `invalid_request_error`).
+  (`api_error`, `api_error`, `invalid_request_error`). No wire field carries the gateway's retry
+  decision, so a relayed failure reads back by the receiving decoder's rules. With nothing streamed
+  first, `overloaded_error` and `api_error` read back retriable, whatever the gateway decided
+  ([design.md](design.md#provider-failures-retried-before-output);
+  `story:relayed-failures-keep-their-retry-decision`).
 - **Refusals.** `UserText`, `ToolResult` and `UnattributedOpaque` items, and an outcome that
   contradicts the streamed calls. Argument fragments for a call whose block already stopped make
   `close` refuse, and redacted thinking that would precede streamed text is refused because it

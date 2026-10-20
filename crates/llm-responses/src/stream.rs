@@ -48,6 +48,7 @@ pub const ACCEPTED_STREAM_EVENTS: &[&str] = &[
     "response.output_item.done",
     "response.output_text.delta",
     "response.output_text.done",
+    "response.queued",
     "response.reasoning_part.added",
     "response.reasoning_part.done",
     "response.reasoning_summary_part.added",

@@ -402,7 +402,9 @@ own state, and each of the three also marks the failure retriable. The decoder s
 when nothing but `response.created`, `response.in_progress`, `response.queued` and `keepalive`
 came before the failure. An opening item that emitted no visible event counts as output, so a
 caller may retry the identical request only before output. Every other code is
-final, an exhausted quota (`insufficient_quota`) or spend limit included. The provider lines this
+final, an exhausted quota (`insufficient_quota`) or spend limit included. That holds inside a
+stream. The same quota answered as an HTTP 429 before the stream is the transport's retriable
+`RateLimited` (`story:quota-429-is-final`). The provider lines this
 rests on are in [design.md](design.md#provider-failures-retried-before-output). The client itself
 still makes one attempt.
 **The provider's message is never relayed.** Diagnostics are fixed strings this
@@ -427,6 +429,13 @@ comes with `close` or `fail` when nothing was streamed. `close` ends with exactl
 `response.completed` or `response.incomplete`; `fail` ends with `response.failed`, whose code the
 decoder reads back as the same class of failure, and never carries the error's own message. A
 refused `close` sends nothing and leaves the stream open for `fail`.
+
+No wire field carries the gateway's retry decision, so a relayed failure reads back by the
+receiving decoder's rules. With nothing streamed first, `server_is_overloaded`, `server_error` and
+`rate_limit_exceeded` read back retriable, whatever the gateway decided. That covers an
+`unavailable` it marked final and a failure whose retries it had spent
+([design.md](design.md#provider-failures-retried-before-output);
+`story:relayed-failures-keep-their-retry-decision`).
 
 What the encoder refuses rather than approximates or drops:
 

@@ -170,15 +170,18 @@ table already marks it retriable: 429, and 500-599 with 529. That is `status_err
 `crates/llm-http/tests/retry_classes.rs`. The transport never reads an error body. So a 429 whose
 body says the quota is exhausted is retried up to the retry policy's bound and then falls back,
 while the same quota reported inside a stream is final. Classifying a 429 by its body needs a
-transport change that this decision does not make.
+transport change that this decision does not make (`story:quota-429-is-final`).
 
-**Through a gateway**, the ingress encoders write a failure under the wire code that reads back
-as its class, whatever its own retry mark. A Responses `fail` writes `unavailable` (when not
-retriable) as `server_error` and `rate-limited` as `rate_limit_exceeded`. A Messages `fail` writes
-`unavailable` as `overloaded_error`, and `transport`, `protocol` and `cancelled` as `api_error`.
-When the gateway streamed nothing before the failure, a caller reads each of these back as
-retriable, including a failure the gateway had marked final or one whose retries it had already
-spent. The caller's own routing may then attempt the gateway again.
+**A relayed failure reads back by the receiving decoder's rules.** The ingress encoders write a
+failure under the wire code that reads back as its class. No wire field carries the relaying
+side's retry decision. A Responses `fail` writes `unavailable` as `server_is_overloaded` or
+`server_error`, and `rate-limited` as `rate_limit_exceeded`. A Messages `fail` writes `unavailable`
+as `overloaded_error`, and `transport`, `protocol` and `cancelled` as `api_error`. When the gateway
+streamed nothing before the failure, a caller reads each of these back as retriable, whatever the
+gateway decided, including a failure it had marked final or one whose retries it had already spent.
+The caller's own routing may then attempt the gateway again. This is accepted: vendor clients
+already retry these provider codes. Keeping the relaying side's decision across the hop is
+`story:relayed-failures-keep-their-retry-decision`.
 
 [openai-errors]: https://developers.openai.com/api/docs/guides/error-codes
 [openai-responses]: https://developers.openai.com/api/reference/resources/responses/methods/create

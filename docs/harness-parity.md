@@ -313,14 +313,18 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   whether a top-level `error` or inside `response.failed`, is retriable before any output and final
   after any payload but `response.created`, `response.in_progress`, `response.queued` and
   `keepalive`, as `server_is_overloaded` already was at 0.7.0. The code is `provider_failure`
-  `llm-responses/src/stream.rs:744`, and the mark is set at `:774`. Tests:
+  `llm-responses/src/stream.rs:745`, and the mark is set at `:775`. Tests:
   `a_transient_failure_before_output_is_retriable_without_provider_prose`
   `llm-responses/tests/retry_class.rs:270`,
   `a_transient_failure_after_visible_or_silent_output_is_final` `:291`, and
-  `an_exhausted_quota_or_spend_limit_stays_final_before_output` `:320`. An exhausted quota
-  (`insufficient_quota`) stays a final `Refused`. The bridge keeps `may_retry`
-  (`llm_port.rs:622`-`627`), so Harness's loop retries both classes before output again, as its
-  wire did. The bridge's code mapping does not change.
+  `an_exhausted_quota_or_spend_limit_stays_final_before_output` `:320`. Inside a stream, an
+  exhausted quota (`insufficient_quota`) stays a final `Refused`. As an HTTP 429 before the
+  stream, it is a retriable `RateLimited`: the transport reads no error body
+  (`llm-http/src/transport.rs:339`), held by
+  `an_exhausted_quota_answered_as_a_429_before_the_stream_is_retriable_today`
+  `llm-responses/tests/adversary_w09_retry_http_quota.rs:156`, until `story:quota-429-is-final`.
+  The bridge keeps `may_retry` (`llm_port.rs:622`-`627`), so Harness's loop retries both classes
+  before output again, as its wire did. The bridge's code mapping does not change.
 - **M27.** A Messages `overloaded_error` (`Unavailable`) or `api_error` (`Transport`) stream error
   is retriable when no payload but `message_start` and `ping` came before it. After any other
   payload, a block that opened empty included, it is final. The code is `stream_error`
@@ -337,6 +341,12 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `unauthorized` failure halts whatever its mark:
   `a_provider_failure_marked_before_output_falls_back_in_the_declared_order_and_unmarked_halts`
   `llm-routing/tests/fallback.rs:497`.
+- For both rows, a failure relayed by an llm gateway reads back by the receiving decoder's rules,
+  because no wire field carries the gateway's retry decision. With nothing streamed first, these
+  classes read back retriable even when the gateway had marked them final:
+  `a_failure_a_gateway_marked_final_reads_back_retriable_today`
+  `llm-responses/tests/adversary_w09_retry.rs:66` and `llm-messages/tests/adversary_w09_retry.rs:75`,
+  until `story:relayed-failures-keep-their-retry-decision`.
 
 ## Gaps
 
