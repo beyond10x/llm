@@ -1,4 +1,4 @@
-use crate::{Framing, SseDecoder, SseEvent};
+use crate::{Framing, SseDecoder, SseEvent, require_tokio_runtime};
 use llm_core::{Cancel, Dispatch, Error, ErrorCode, MAX_REQUEST_BYTES};
 use reqwest::{
     Client, Response, Url,
@@ -171,7 +171,8 @@ impl HttpClient {
     /// A success with no `content-type` is read as an event stream when the caller's `accept`
     /// header asked for `text/event-stream`; a success naming any other media type is refused.
     /// # Errors
-    /// Refuses invalid URLs/body bounds, cancellation, timeout, transport failure and non-SSE replies.
+    /// Refuses invalid URLs/body bounds, cancellation, timeout, transport failure and non-SSE replies,
+    /// and first a call outside a Tokio runtime ([`require_tokio_runtime`]).
     pub async fn post_sse(
         &self,
         url: &str,
@@ -193,7 +194,8 @@ impl HttpClient {
     /// the two drift apart. A caller holding no such instant passes `None`.
     ///
     /// # Errors
-    /// As [`HttpClient::post_sse`]; the caller's instant expiring reports `Deadline`.
+    /// As [`HttpClient::post_sse`]; the caller's instant expiring reports `Deadline`, and a call
+    /// outside a Tokio runtime is refused as [`require_tokio_runtime`] says, before anything else.
     pub async fn post_sse_until(
         &self,
         url: &str,
@@ -203,6 +205,7 @@ impl HttpClient {
         cancel: &Cancel,
         until: Option<std::time::Instant>,
     ) -> Result<SseStream, Error> {
+        require_tokio_runtime()?;
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
         }
@@ -309,6 +312,8 @@ pub struct SseStream {
 impl SseStream {
     /// # Errors
     /// Reports cancellation, deadline, framing and transport failures; never synthesizes completion.
+    /// A read that has to wait for the wire on a thread outside a Tokio runtime is refused as
+    /// [`require_tokio_runtime`] says, with dispatch `accepted`: the request was answered.
     pub async fn next(&mut self) -> Result<Option<SseEvent>, Error> {
         if let Some(error) = &self.failure {
             return Err(error.clone());
@@ -341,6 +346,8 @@ impl SseStream {
             let Some(response) = self.response.as_mut() else {
                 return Ok(None);
             };
+            // Only a read that waits for the wire needs the runtime; queued events do not.
+            require_tokio_runtime().map_err(|error| error.with_dispatch(Dispatch::Accepted))?;
             let chunk = tokio::select! {
                 biased;
                 () = self.cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
@@ -482,7 +489,8 @@ impl HttpClient {
     ///
     /// # Errors
     /// Refuses invalid URLs and bounds, cancellation, deadlines, transport failures, a failing
-    /// status (as [`status_error`]), an answer over the bound and a success that is not JSON.
+    /// status (as [`status_error`]), an answer over the bound and a success that is not JSON,
+    /// and first a call outside a Tokio runtime ([`require_tokio_runtime`]).
     pub async fn post_json(
         &self,
         url: &str,
@@ -502,6 +510,7 @@ impl HttpClient {
         body: Vec<u8>,
         cancel: &Cancel,
     ) -> Result<serde_json::Value, Error> {
+        require_tokio_runtime()?;
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
         }

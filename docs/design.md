@@ -122,6 +122,49 @@ A typed rejected state was considered and not taken
 makes a 0.7.0 reader take it for a successful plain string, Messages ingress refuses a key it does
 not know, and changing `Item` would break every consumer for nothing a model is sent.
 
+## Executor
+
+Decided 2026-10-20 (`story:async-clients-without-a-tokio-runtime`, option B). The asynchronous
+clients run on Tokio and do not own a runtime.
+
+Measured before the rule, at `a4835807`: each call below was polled by a standard-library executor
+on a thread in no Tokio runtime (`crates/llm-models/tests/no_tokio_runtime.rs`,
+`crates/llm-http/tests/no_tokio_runtime.rs`). Every one panicked with "there is no reactor
+running, must be called from the context of a Tokio 1.x runtime"; none returned an error, and none
+reached the endpoint.
+
+| Call | Panicked at | What it was |
+| --- | --- | --- |
+| Responses turn, client or catalog port | `crates/llm-responses/src/client.rs:352` | `tokio::time::timeout_at`, the turn deadline around credential resolution; the resolver was not reached |
+| Messages turn, client or catalog port | `crates/llm-messages/src/client.rs:220` | the same, the Messages turn deadline |
+| Chat Completions turn, client or catalog port | `crates/llm-http/src/transport.rs:246` | `timeout_at`, the response-header deadline; the credential had already been resolved |
+| Chat Completions turn with a file credential | `crates/llm-credentials/src/local.rs:70` | `tokio::task::spawn_blocking`, the file read |
+| `HttpClient::post_sse` and `post_sse_until`; `post_json` | `transport.rs:246`; `transport.rs:529` | the response-header deadline |
+| `SseStream::next` on a stream opened inside a runtime | `transport.rs:347` | the deadline of a read that waits for the wire |
+| `reqwest` alone, `Client::post(…).send()` (a throwaway test, not kept) | tokio 1.53.1 `src/net/tcp/stream.rs:164` | `TcpStream::connect`: taking the timers out would not have been enough |
+
+The rule: a turn of each protocol client, and each exchange of `b10x-llm-http`, polled on a thread
+in no Tokio runtime is refused before anything that needs one runs, credential resolution
+included: `unsupported`, dispatch `not-sent`, not retriable, with the fixed message "an llm client
+needs a Tokio runtime; a caller without one uses b10x-llm-blocking". A read of an open stream that
+has to wait for the wire gets the same refusal with dispatch `accepted`. One check,
+`llm_http::require_tokio_runtime`, serves every client; a catalog port inherits it from the client
+it wraps. The code is `unsupported` because no retry serves the call in the caller's
+configuration, which `Error::may_retry` already says of that code, and `b10x-llm-blocking` refuses
+the mirror case, a blocking turn inside a runtime, with it. `unavailable` is a temporary state of
+the far side and is retried; `invalid-request` is about the request. No `ErrorCode` was added.
+
+A caller without a runtime runs its turn through `b10x-llm-blocking`: `BlockingModel::new` owns a
+one-worker runtime, `BlockingModel::on_runtime` borrows a multi-thread one, and either blocks the
+calling thread for the turn.
+
+The check asks only whether a runtime is entered on the calling thread. A runtime built without
+its time and IO drivers passes it and still panics: `post_sse` inside
+`Builder::new_current_thread().build()` panicked at the response-header deadline with "A Tokio
+1.x context was found, but timers are disabled. Call `enable_time` on the runtime builder to
+enable timers.", before the rule and after it (the same throwaway test, run on both). Tokio
+1.53.1's `Handle` has no public method that reports whether a driver is enabled.
+
 ## Credentials and configuration
 
 Inference accepts an injected SecretResolver trait. A SecretReference is an opaque lookup name,

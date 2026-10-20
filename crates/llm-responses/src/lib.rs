@@ -20,6 +20,14 @@
 //! projection and the decoder perform no I/O; only [`ResponsesClient`] does, through `llm-http`
 //! and an injected `llm_credentials::SecretResolver`.
 //!
+//! # A Tokio runtime is required
+//!
+//! [`ResponsesClient`] runs its turn on Tokio and does not start a runtime of its own. A turn
+//! polled on a thread that is in no Tokio runtime is refused before it validates, resolves a
+//! credential or sends anything: `unsupported`, dispatch `not-sent`, not retriable, with a
+//! message naming the requirement (`llm_http::require_tokio_runtime`). A caller without a
+//! runtime runs its turn through `b10x-llm-blocking`, whose `BlockingModel` owns one.
+//!
 //! # Where the pinned subset comes from
 //!
 //! The request and stream shapes are adapted from `beyond10x/harness` commit

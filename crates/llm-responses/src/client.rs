@@ -14,7 +14,9 @@ use llm_core::{
     advisory_warning,
 };
 use llm_credentials::SecretResolver;
-use llm_http::{Framing, HeaderMap, HeaderName, HeaderValue, HttpClient, SseEvent};
+use llm_http::{
+    Framing, HeaderMap, HeaderName, HeaderValue, HttpClient, SseEvent, require_tokio_runtime,
+};
 use serde_json::Value;
 
 use crate::{
@@ -161,6 +163,8 @@ impl ResponsesClient {
         sink: &mut dyn StreamSink,
         cancel: &Cancel,
     ) -> Result<TurnOutcome, Error> {
+        // The turn deadline below is a Tokio timer: outside a runtime, refused before anything.
+        require_tokio_runtime()?;
         // Refused before any I/O, and before a credential is resolved: the neutral contract for
         // this binding, then the projection, then the bound the transport would refuse anyway.
         request.validate_for(self.binding.provenance(), self.binding.capabilities())?;

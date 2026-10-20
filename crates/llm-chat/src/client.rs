@@ -12,7 +12,7 @@ use llm_core::{
     TurnRequest, advisory_warning,
 };
 use llm_credentials::SecretResolver;
-use llm_http::{Framing, HttpClient};
+use llm_http::{Framing, HttpClient, require_tokio_runtime};
 use llm_providers::Binding;
 use std::sync::Arc;
 
@@ -57,6 +57,9 @@ impl Model for ChatClient {
         cancel: &'a Cancel,
     ) -> BoxFuture<'a, Result<TurnOutcome, Error>> {
         Box::pin(async move {
+            // The credential may be read on Tokio's blocking pool and the exchange runs on Tokio:
+            // outside a runtime, refused before either.
+            require_tokio_runtime()?;
             let target = self.binding.provenance();
             let body = project_request(request, &self.binding, true)?;
             let body = serde_json::to_vec(&body)

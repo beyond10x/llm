@@ -1,6 +1,14 @@
 #![forbid(unsafe_code)]
 
 //! Bounded Messages text/tool projection. Authentication and billing come from the binding.
+//!
+//! # A Tokio runtime is required
+//!
+//! [`MessagesClient`] runs its turn on Tokio and does not start a runtime of its own. A turn
+//! polled on a thread that is in no Tokio runtime is refused before it encodes, resolves a
+//! credential or sends anything: `unsupported`, dispatch `not-sent`, not retriable, with a
+//! message naming the requirement (`llm_http::require_tokio_runtime`). A caller without a
+//! runtime runs its turn through `b10x-llm-blocking`, whose `BlockingModel` owns one.
 
 mod client;
 mod codec;

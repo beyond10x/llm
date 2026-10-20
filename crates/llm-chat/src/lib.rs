@@ -17,6 +17,14 @@
 //! What the subset covers, and what it refuses by name, is documented in `docs/chat.md`.
 //! An unreported counter, identifier or model name stays unreported everywhere here: no
 //! configured value is ever substituted for an observation the upstream did not make.
+//!
+//! # A Tokio runtime is required
+//!
+//! [`ChatClient`] runs its turn on Tokio and does not start a runtime of its own. A turn polled
+//! on a thread that is in no Tokio runtime is refused before it projects, resolves a credential
+//! or sends anything: `unsupported`, dispatch `not-sent`, not retriable, with a message naming
+//! the requirement (`llm_http::require_tokio_runtime`). A caller without a runtime runs its turn
+//! through `b10x-llm-blocking`, whose `BlockingModel` owns one.
 
 mod client;
 mod incoming;

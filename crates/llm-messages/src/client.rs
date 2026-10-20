@@ -8,7 +8,7 @@ use llm_core::{
     Provenance, StreamSink, TurnOutcome, TurnRequest, advisory_warning,
 };
 use llm_credentials::SecretResolver;
-use llm_http::{Framing, HttpClient};
+use llm_http::{Framing, HttpClient, require_tokio_runtime};
 use llm_providers::Binding;
 use std::{
     future::Future,
@@ -117,6 +117,8 @@ impl MessagesClient {
         sink: &mut dyn StreamSink,
         cancel: &Cancel,
     ) -> Result<TurnOutcome, Error> {
+        // The turn deadline below is a Tokio timer: outside a runtime, refused before anything.
+        require_tokio_runtime()?;
         // Refused before any I/O, and before a credential is resolved.
         let body = encode_request(request, &self.binding)?;
         let deadline = self.turn_limit.map(|total| Instant::now() + total);
