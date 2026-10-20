@@ -11,8 +11,8 @@ source: crates/llm-core (port.rs, vocabulary.rs, turn.rs), crates/llm-docs/examp
 A voice or chat front end can receive new input while the model is still answering. llm cannot
 send that input into the running turn. Each client sends one request over HTTP and reads the answer
 as server-sent events, and over that exchange none of Responses, Messages and Chat Completions
-accepts input into an answer that is still streaming. So every model declares
-`input_during_output: false`.
+accepts input into an answer that is still streaming. So every client in llm declares
+`input_during_output: false`; a `Model` built in code keeps its own claim.
 
 :::note[Not offered: Responses steering]
 OpenAI documents [mid-turn steering](https://developers.openai.com/api/docs/guides/steering) for
@@ -47,9 +47,11 @@ full.
 
 ## The program
 
-The model streams in-process, so the run sends nothing and reads no credential. Any `Model`, such
-as a `ResponsesClient`, a `MessagesClient` or a `ChatClient`, goes in its place. The first request
-offers one tool, `forecast`, so a turn can also end in a tool call. The sink cancels the turn after
+The model streams in-process, so the run sends nothing and reads no credential. The first request
+offers one tool, `forecast`, so a turn can also end in a tool call. Any `Model` that supports
+tools, such as a `ResponsesClient`, a `MessagesClient` or a `ChatClient` whose binding declares
+them, goes in its place; a model whose capabilities declare no tools refuses that request before
+sending it. The sink cancels the turn after
 the third word to stand in for input arriving; in a real program the task that receives the input
 calls `cancel.cancel()`. The tests at the end check each way the first turn can end.
 
@@ -60,8 +62,9 @@ calls `cancel.cancel()`. The tests at the end check each way the first turn can 
 //! Run with `cargo run --locked -p llm-docs --example interrupt_turn`. llm's clients send a request
 //! and read its streamed answer over HTTP, and cannot send input into an answer still streaming, so
 //! this is the supported pattern. The model streams in-process, so nothing is sent and no
-//! credential is read; any `Model`, such as a `ResponsesClient` or a `MessagesClient`, goes in its
-//! place.
+//! credential is read. Any `Model` that supports tools, such as a `ResponsesClient` or a
+//! `MessagesClient` whose binding declares them, goes in its place: the first request offers one
+//! tool, and a model whose capabilities declare no tools refuses it before sending.
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, InvalidId, Item, Model,
     Protocol, Provenance, StopReason, StreamEvent, StreamSink, ToolName, ToolSpec, TurnObservation,
@@ -312,6 +315,8 @@ mod tests {
         Finished,
         /// The same, ending in a call to the `forecast` tool.
         FinishedInACall,
+        /// The same, ending in two calls to it.
+        FinishedInTwoCalls,
         /// It is cancelled before it shows anything.
         CancelledAtOnce,
     }
@@ -323,11 +328,19 @@ mod tests {
         first: First,
     }
 
-    fn forecast_call() -> ToolCall {
+    /// A call to the `forecast` tool, and the result that rejects it.
+    fn call(id: &str) -> ToolCall {
         ToolCall {
-            call_id: CallId::new("call-1").unwrap(),
+            call_id: CallId::new(id).unwrap(),
             name: ToolName::new("forecast").unwrap(),
-            arguments: json!({"day": "tomorrow"}),
+            arguments: json!({"day": id}),
+        }
+    }
+    fn rejected(id: &str) -> Item {
+        Item::ToolResult {
+            call_id: CallId::new(id).unwrap(),
+            output: json!(NOT_RUN),
+            failed: true,
         }
     }
 
@@ -373,9 +386,14 @@ mod tests {
                         ..TurnObservation::new(self.inner.target.clone())
                     },
                 };
-                if number == 1 && matches!(self.first, First::FinishedInACall) {
+                let calls: &[&str] = match (number, self.first) {
+                    (1, First::FinishedInACall) => &["call-1"],
+                    (1, First::FinishedInTwoCalls) => &["call-1", "call-2"],
+                    _ => &[],
+                };
+                for id in calls {
                     outcome.stop_reason = StopReason::ToolCalls;
-                    outcome.items.push(Item::ToolCall(forecast_call()));
+                    outcome.items.push(Item::ToolCall(call(id)));
                 }
                 outcome.validate_for(request, &self.inner.target)?;
                 Ok(outcome)
@@ -416,12 +434,31 @@ mod tests {
             vec![
                 Item::user(QUESTION),
                 Item::assistant("Tomorrow starts dry,"),
-                Item::ToolCall(forecast_call()),
-                Item::ToolResult {
-                    call_id: forecast_call().call_id,
-                    output: json!(NOT_RUN),
-                    failed: true,
-                },
+                Item::ToolCall(call("call-1")),
+                rejected("call-1"),
+                Item::user(NEW_INPUT)
+            ]
+        );
+    }
+
+    #[tokio::test]
+    async fn every_call_a_finished_turn_proposed_is_answered_before_the_new_input() {
+        let model = Racing {
+            inner: model().unwrap(),
+            first: First::FinishedInTwoCalls,
+        };
+        let [first, _] = converse(&model).await.unwrap();
+        assert_eq!(first.ended, Ok(StopReason::ToolCalls));
+        let sent = model.inner.sent.lock().unwrap();
+        assert_eq!(
+            sent[1].items,
+            vec![
+                Item::user(QUESTION),
+                Item::assistant("Tomorrow starts dry,"),
+                Item::ToolCall(call("call-1")),
+                Item::ToolCall(call("call-2")),
+                rejected("call-1"),
+                rejected("call-2"),
                 Item::user(NEW_INPUT)
             ]
         );

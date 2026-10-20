@@ -104,8 +104,8 @@ Why it is not offered:
   runs, for the GPT-6 model family only (<https://developers.openai.com/api/docs/guides/steering>,
   read 2026-10-20). llm's Responses client speaks HTTP with server-sent events and does not
   implement WebSocket mode, so llm does not offer steering; offering it is the draft
-  story:responses-websocket-steering. Anthropic's Messages and Chat Completions document nothing
-  like it.
+  story:responses-websocket-steering. Anthropic documents nothing like it for Messages, and
+  OpenAI nothing like it for Chat Completions.
 - **So the declaration says no.** `Capabilities::input_during_output` is `false` on every binding
   (`Capabilities::text`, `crates/llm-core/src/vocabulary.rs:86-98`), and since 0.8.0
   `Capabilities::validate_protocol` refuses `true` for all three protocols
