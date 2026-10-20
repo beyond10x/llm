@@ -1,9 +1,10 @@
 //! A turn driven by an executor that is not Tokio (story:async-clients-without-a-tokio-runtime).
 //!
 //! Every protocol client and every catalog port, polled by [`block_on`] below on a thread that is
-//! in no Tokio runtime, is refused with the typed error that names the requirement and the
-//! adapter that serves such a caller, before it resolves a credential or opens a connection, and
-//! without a panic. Each test runs every wire before it asserts, so a failure reports all of them.
+//! in no Tokio runtime, is refused with the typed error that names the requirement and the ways
+//! out of it, before it resolves a credential or opens a connection, and without a panic. So is a
+//! turn moved out of its runtime while its credential resolution waits. Each test runs every wire
+//! before it asserts, so a failure reports all of them.
 //! `docs/design.md` ("Executor") records what the same calls did before. Local sockets only; no
 //! provider call.
 
@@ -24,22 +25,22 @@ use llm_routing::{Catalog, Models};
 use std::{
     any::Any,
     collections::BTreeMap,
-    future::Future,
+    future::{Future, poll_fn},
     io::ErrorKind,
     net::TcpListener,
     panic::{AssertUnwindSafe, catch_unwind},
-    pin::pin,
+    pin::{Pin, pin},
     sync::{
         Arc,
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
     task::{Context, Poll, Wake, Waker},
     thread::{self, Thread},
+    time::Duration,
 };
 
-/// The error's whole message: the requirement, and the adapter a caller without Tokio uses.
-const REQUIREMENT: &str =
-    "an llm client needs a Tokio runtime; a caller without one uses b10x-llm-blocking";
+/// The error's whole message: the requirement and the two ways out of it.
+const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single model";
 
 /// Wakes the thread [`block_on`] parked.
 struct Unpark(Thread);
@@ -343,6 +344,111 @@ fn a_file_credential_is_never_read_outside_a_tokio_runtime() {
         let binding = catalog.binding(&id(serving)).expect("declared").clone();
         let model = client(binding, resolver.clone());
         found.extend(findings(serving, &*model, None, &listener));
+    }
+    assert_no_findings(&found);
+}
+
+// ---------------------------------------------------------------------------------------------
+// A turn moved out of its runtime while it waits.
+// ---------------------------------------------------------------------------------------------
+
+/// Pending once, waking its task and setting its flag; ready on the next poll.
+struct PendingOnce(Option<Arc<AtomicBool>>);
+
+impl Future for PendingOnce {
+    type Output = ();
+    fn poll(mut self: Pin<&mut Self>, context: &mut Context<'_>) -> Poll<()> {
+        match self.0.take() {
+            Some(held) => {
+                held.store(true, Ordering::SeqCst);
+                context.waker().wake_by_ref();
+                Poll::Pending
+            }
+            None => Poll::Ready(()),
+        }
+    }
+}
+
+/// A resolver that waits once and then needs Tokio, as a file read waits for a permit and then
+/// runs on Tokio's blocking pool. `held` is set while it waits.
+struct WaitsThenNeedsTokio {
+    held: Arc<AtomicBool>,
+}
+
+impl SecretResolver for WaitsThenNeedsTokio {
+    fn resolve<'a>(
+        &'a self,
+        _reference: &'a SecretRef,
+    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
+        let held = self.held.clone();
+        Box::pin(async move {
+            PendingOnce(Some(held)).await;
+            tokio::time::sleep(Duration::ZERO).await;
+            Ok(ResolvedSecret {
+                secret: Secret::new(b"fixture-token".to_vec())?,
+                version: SecretVersion::new("fixture-1".to_owned())?,
+            })
+        })
+    }
+}
+
+/// Polls `turn` inside a current-thread runtime until `moved` is set, then to completion with
+/// [`block_on`] on this thread, which is then in no runtime. The runtime stays alive until the
+/// turn is dropped. A panic is caught and returned as its message.
+fn moved_out_of_its_runtime(
+    mut turn: BoxFuture<'_, Result<TurnOutcome, Error>>,
+    moved: &AtomicBool,
+) -> Result<Result<TurnOutcome, Error>, String> {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("a runtime");
+    let inside = runtime.block_on(poll_fn(|context| match turn.as_mut().poll(context) {
+        Poll::Ready(result) => Poll::Ready(Some(result)),
+        Poll::Pending if moved.load(Ordering::SeqCst) => Poll::Ready(None),
+        Poll::Pending => Poll::Pending,
+    }));
+    assert!(
+        inside.is_none(),
+        "fixture: the turn ended inside the runtime: {inside:?}"
+    );
+    assert!(
+        tokio::runtime::Handle::try_current().is_err(),
+        "fixture: this thread is still in a runtime"
+    );
+    let outcome = catch_unwind(AssertUnwindSafe(|| block_on(turn.as_mut())))
+        .map_err(|payload| panic_message(&*payload));
+    drop(turn);
+    drop(runtime);
+    outcome
+}
+
+/// A turn whose credential resolution was started inside a runtime and is polled on outside one
+/// is refused at that wait, on every wire, before the resolver's next step needs Tokio: nothing
+/// sent, no panic.
+#[test]
+fn a_turn_moved_out_of_its_runtime_while_its_resolver_waits_is_refused_not_a_panic() {
+    let (listener, url) = endpoint();
+    let catalog = catalog(&url);
+    let mut found = Vec::new();
+    for serving in SERVING {
+        let held = Arc::new(AtomicBool::new(false));
+        let resolver = Arc::new(WaitsThenNeedsTokio { held: held.clone() });
+        let binding = catalog.binding(&id(serving)).expect("declared").clone();
+        let model = client(binding, resolver);
+        let mut request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+        request.max_output_tokens = Some(64);
+        let mut sink = VecSink::new(64, 64 * 1024);
+        let cancel = Cancel::new();
+        let outcome = moved_out_of_its_runtime(model.turn(&request, &mut sink, &cancel), &held);
+        found.extend(
+            departures(&outcome)
+                .into_iter()
+                .map(|finding| format!("{serving}: {finding}")),
+        );
+        if connected(&listener) {
+            found.push(format!("{serving}: reached the endpoint"));
+        }
     }
     assert_no_findings(&found);
 }

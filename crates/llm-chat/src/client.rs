@@ -12,7 +12,7 @@ use llm_core::{
     TurnRequest, advisory_warning,
 };
 use llm_credentials::SecretResolver;
-use llm_http::{Framing, HttpClient, require_tokio_runtime};
+use llm_http::{Framing, HttpClient, require_tokio_runtime, within_tokio_runtime};
 use llm_providers::Binding;
 use std::sync::Arc;
 
@@ -64,11 +64,11 @@ impl Model for ChatClient {
             let body = project_request(request, &self.binding, true)?;
             let body = serde_json::to_vec(&body)
                 .map_err(|_| Error::invalid("chat request could not be encoded"))?;
-            let (mut headers, _generation) = self
-                .binding
-                .prepare_auth(self.resolver.as_ref(), cancel)
-                .await?
-                .into_parts();
+            // A resolver may need Tokio after a wait of its own: each poll asks for the runtime.
+            let (mut headers, _generation) =
+                within_tokio_runtime(self.binding.prepare_auth(self.resolver.as_ref(), cancel))
+                    .await??
+                    .into_parts();
             headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
             headers.insert(ACCEPT, HeaderValue::from_static("text/event-stream"));
             let mut stream = self

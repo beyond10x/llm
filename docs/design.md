@@ -143,27 +143,50 @@ reached the endpoint.
 | `SseStream::next` on a stream opened inside a runtime | `transport.rs:347` | the deadline of a read that waits for the wire |
 | `reqwest` alone, `Client::post(…).send()` (a throwaway test, not kept) | tokio 1.53.1 `src/net/tcp/stream.rs:164` | `TcpStream::connect`: taking the timers out would not have been enough |
 
-The rule: a turn of each protocol client, and each exchange of `b10x-llm-http`, polled on a thread
-in no Tokio runtime is refused before anything that needs one runs, credential resolution
-included: `unsupported`, dispatch `not-sent`, not retriable, with the fixed message "an llm client
-needs a Tokio runtime; a caller without one uses b10x-llm-blocking". A read of an open stream that
-has to wait for the wire gets the same refusal with dispatch `accepted`. One check,
-`llm_http::require_tokio_runtime`, serves every client; a catalog port inherits it from the client
-it wraps. The code is `unsupported` because no retry serves the call in the caller's
-configuration, which `Error::may_retry` already says of that code, and `b10x-llm-blocking` refuses
-the mirror case, a blocking turn inside a runtime, with it. `unavailable` is a temporary state of
-the far side and is retried; `invalid-request` is about the request. No `ErrorCode` was added.
+A turn or exchange started inside a runtime and polled on outside it, measured at `b1c1ddd1`, which
+checked only a call's first poll and a stream read before it waited for the wire
+(`crates/llm-models/tests/adversary_w11_no_runtime.rs`, `crates/llm-models/tests/no_tokio_runtime.rs`,
+`crates/llm-http/tests/no_tokio_runtime.rs`):
 
-A caller without a runtime runs its turn through `b10x-llm-blocking`: `BlockingModel::new` owns a
-one-worker runtime, `BlockingModel::on_runtime` borrows a multi-thread one, and either blocks the
-calling thread for the turn.
+| Moved out while | What it did |
+| --- | --- |
+| the caller's sink held an event back, Responses and Messages | panicked creating the next turn-deadline timer: `crates/llm-responses/src/client.rs:356` (`bounded`), `crates/llm-messages/src/decode.rs:812` (`emit`) |
+| its credential resolution waited, then the resolver needed Tokio, every wire | panicked in the resolver |
+| the request awaited its answer (`post_sse`, `post_json`), a stream read awaited a chunk, a quota rule awaited a 429's body | no panic: each waited on the runtime nobody drove; the cases gave up after two seconds |
+
+The rule: the asynchronous clients and `b10x-llm-http` refuse, rather than panic or wait, when
+polled on a thread in no Tokio runtime: `unsupported`, not retriable, with the fixed message "an
+llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single
+model". The first poll of a turn or an exchange is refused before anything that needs Tokio runs,
+credential resolution included, dispatch `not-sent` (`llm_http::require_tokio_runtime`). After
+that every wait that runs on Tokio asks again on each poll (`llm_http::within_tokio_runtime`), so
+a call moved out of its runtime part-way is refused at its next such poll with the dispatch it had
+reached: `not-sent` while the credential is resolved, `unknown` while the answer is awaited,
+`accepted` for a read of the response body and for an event handed to the sink under the Responses
+or Messages turn deadline, and the 429's own `rejected` while a quota rule waits for its body.
+Events already decoded need no runtime and are still handed over; Chat Completions hands them to
+the sink without a timer. Both functions serve every client; a catalog port inherits them from the
+client it wraps, and a routing run or `call_tool` from the turn it runs. The code is `unsupported`
+because no retry serves the call in the caller's configuration, which `Error::may_retry` already
+says of that code, and `b10x-llm-blocking` refuses the mirror case, a blocking turn inside a
+runtime, with it. `unavailable` is a temporary state of the far side and is retried;
+`invalid-request` is about the request. No `ErrorCode` was added.
+
+The message names two ways out. A caller without a runtime runs the call inside one it starts, or
+runs a single model through `b10x-llm-blocking`: `BlockingModel::new` owns a one-worker runtime,
+`BlockingModel::on_runtime` borrows a multi-thread one, and either blocks the calling thread for
+the turn. A routing run and `call_tool` are not a `Model`, so `BlockingModel` cannot run them; their
+caller takes the first way.
 
 The check asks only whether a runtime is entered on the calling thread. A runtime built without
 its time and IO drivers passes it and still panics: `post_sse` inside
 `Builder::new_current_thread().build()` panicked at the response-header deadline with "A Tokio
 1.x context was found, but timers are disabled. Call `enable_time` on the runtime builder to
-enable timers.", before the rule and after it (the same throwaway test, run on both). Tokio
-1.53.1's `Handle` has no public method that reports whether a driver is enabled.
+enable timers." (the throwaway test above, run before the rule, after its first form and after
+this one). Tokio 1.53.1's `Handle` has no public method that reports whether a driver is enabled.
+A wait started in one runtime and polled on inside another after the first was dropped passes
+the check too; the one case measured (a second throwaway test), a request awaiting its answer,
+failed as a retriable `transport` error, without a panic.
 
 ## Credentials and configuration
 

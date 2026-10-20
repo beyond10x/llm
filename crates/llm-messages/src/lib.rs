@@ -5,10 +5,14 @@
 //! # A Tokio runtime is required
 //!
 //! [`MessagesClient`] runs its turn on Tokio and does not start a runtime of its own. A turn
-//! polled on a thread that is in no Tokio runtime is refused before it encodes, resolves a
-//! credential or sends anything: `unsupported`, dispatch `not-sent`, not retriable, with a
-//! message naming the requirement (`llm_http::require_tokio_runtime`). A caller without a
-//! runtime runs its turn through `b10x-llm-blocking`, whose `BlockingModel` owns one.
+//! polled on a thread that is in no Tokio runtime is refused, `unsupported` and not retriable,
+//! and does not panic: on its first poll before it encodes, resolves a credential or sends
+//! anything, dispatch `not-sent` (`llm_http::require_tokio_runtime`); moved out of its runtime
+//! part-way, at its next wait (the credential, the answer, a read of the stream, an event handed
+//! to the sink under the turn deadline) with the dispatch it had reached
+//! (`llm_http::within_tokio_runtime`). A caller without a runtime runs the turn inside one it
+//! starts, or through `b10x-llm-blocking`, whose `BlockingModel` owns one. [`decode_stream`],
+//! which has no deadline, needs no runtime.
 
 mod client;
 mod codec;

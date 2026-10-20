@@ -8,7 +8,7 @@ use llm_core::{
     Provenance, StreamSink, TurnOutcome, TurnRequest, advisory_warning,
 };
 use llm_credentials::SecretResolver;
-use llm_http::{Framing, HttpClient, require_tokio_runtime};
+use llm_http::{Framing, HttpClient, require_tokio_runtime, within_tokio_runtime};
 use llm_providers::Binding;
 use std::{
     future::Future,
@@ -210,23 +210,29 @@ impl MessagesClient {
     }
 }
 
-/// Runs one wait under the turn's absolute deadline, when the caller configured one.
+/// Runs one wait under the turn's absolute deadline, when the caller configured one. Each poll
+/// asks for the runtime first, so a wait polled on a thread in no runtime is refused with
+/// `dispatch` before the timer is created and whenever it is moved out part-way.
 async fn bounded<T>(
     deadline: Option<Instant>,
     work: impl Future<Output = Result<T, Error>>,
     dispatch: Dispatch,
 ) -> Result<T, Error> {
-    let Some(deadline) = deadline else {
-        return work.await;
-    };
-    tokio::time::timeout_at(tokio::time::Instant::from_std(deadline), work)
-        .await
-        .unwrap_or_else(|_| {
-            Err(
-                Error::new(ErrorCode::Deadline, "the Messages turn deadline expired")
-                    .with_dispatch(dispatch),
-            )
-        })
+    within_tokio_runtime(async move {
+        let Some(deadline) = deadline else {
+            return work.await;
+        };
+        tokio::time::timeout_at(tokio::time::Instant::from_std(deadline), work)
+            .await
+            .unwrap_or_else(|_| {
+                Err(
+                    Error::new(ErrorCode::Deadline, "the Messages turn deadline expired")
+                        .with_dispatch(dispatch),
+                )
+            })
+    })
+    .await
+    .map_err(|refusal| refusal.with_dispatch(dispatch))?
 }
 
 fn version_header() -> HeaderName {
