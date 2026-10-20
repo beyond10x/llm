@@ -412,10 +412,17 @@ when nothing but `response.created`, `response.in_progress`, `response.queued` a
 came before the failure. An opening item that emitted no visible event counts as output, so a
 caller may retry the identical request only before output. Every other code is
 final, an exhausted quota (`insufficient_quota`) or spend limit included. That holds inside a
-stream. The same quota answered as an HTTP 429 before the stream is the transport's retriable
-`RateLimited` (`story:quota-429-is-final`). The provider lines this
-rests on are in [design.md](design.md#provider-failures-retried-before-output). The client itself
-still makes one attempt.
+stream and before it: a 429 whose error body names one of the five billing, spend or quota codes
+(`insufficient_quota`, `credit_balance_exhausted`, `organization_spend_limit_exceeded`,
+`project_spend_limit_exceeded`, `organization_usage_limit_exceeded`) as its `error.code`, or
+`insufficient_quota`, `usage_limit_reached` or `usage_not_included` (the Codex backend's
+subscription limits) as its `error.type`, is a final `Refused` with dispatch `rejected`, as the
+official Codex CLI treats it. The client hands the transport that rule, and the
+transport reads the 429's body for it only, bounded in bytes and time; every other 429, and one
+whose body cannot be read in that bound, stays a retriable `RateLimited`
+(`story:quota-429-is-final`). The provider lines this rests on are in
+[design.md](design.md#provider-failures-retried-before-output). The client itself still makes one
+attempt.
 **The provider's message is never relayed.** Diagnostics are fixed strings this
 crate wrote; an upstream string relayed into a diagnostic is how a prompt or a credential
 eventually reaches a log. `incomplete_details.reason` is treated the same way: it is kept when it
@@ -439,11 +446,15 @@ comes with `close` or `fail` when nothing was streamed. `close` ends with exactl
 decoder reads back as the same class of failure, and never carries the error's own message. A
 refused `close` sends nothing and leaves the stream open for `fail`.
 
-No wire field carries the gateway's retry decision, so a relayed failure reads back by the
-receiving decoder's rules. With nothing streamed first, `server_is_overloaded`, `server_error` and
-`rate_limit_exceeded` read back retriable, whatever the gateway decided. That covers an
-`unavailable` it marked final and a failure whose retries it had spent
-([design.md](design.md#provider-failures-retried-before-output);
+No wire field carries the gateway's retry decision, so a failure relayed inside a stream reads
+back by the receiving decoder's rules. With nothing streamed first, `server_is_overloaded`,
+`server_error` and `rate_limit_exceeded` read back retriable, whatever the gateway decided. That
+covers an `unavailable` it marked final and a failure whose retries it had spent. A failure
+before any output reaches the client as an HTTP status instead, and there the gateway can state
+its decision: an error status carrying `x-should-retry: false` reads not retriable whatever its
+status, the header the official OpenAI and Anthropic SDKs already obey; llm-gateway has to send
+it. The header never makes a final status retriable
+([design.md](design.md#provider-failures-retried-before-output), with the SDK lines;
 `story:relayed-failures-keep-their-retry-decision`).
 
 What the encoder refuses rather than approximates or drops:

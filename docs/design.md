@@ -146,8 +146,10 @@ alternative. Do not replay an ambiguously accepted request by assuming it was fr
 attempt and preserve unknown spend. No semantic downgrade, cross-account switch outside the named
 chain, or fallback after an exposed partial stream.
 
-One deliberate relaxation, matching Harness: a failure whose retry class is retriable (408, 429,
-5xx including 529, a request or body that failed in transit, a stream cut inside an event) and
+One deliberate relaxation, matching Harness: a failure whose retry class is retriable (408, 429
+unless it reports an exhausted quota, 5xx including 529, each unless the answer carries
+`x-should-retry: false`; a request or body that failed in transit, a stream cut inside an event)
+and
 that put nothing on the caller's sink is retried on the same target before any output is
 visible, and then falls back, even though its dispatch is `unknown` or `accepted`. It is not
 assumed free: each attempt keeps its own dispatch evidence, a possibly billed attempt stays
@@ -207,10 +209,33 @@ These stay final:
 table already marks it retriable: 429, and 500-599 with 529. That is `status_error` in
 `crates/llm-http/src/transport.rs`, held by
 `every_status_harness_maps_has_its_code_dispatch_and_retry_class` in
-`crates/llm-http/tests/retry_classes.rs`. The transport never reads an error body. So a 429 whose
-body says the quota is exhausted is retried up to the retry policy's bound and then falls back,
-while the same quota reported inside a stream is final. Classifying a 429 by its body needs a
-transport change that this decision does not make (`story:quota-429-is-final`).
+`crates/llm-http/tests/retry_classes.rs`.
+
+**A 429 that reports an exhausted quota is final** (`story:quota-429-is-final`, decided
+2026-10-20). It reads `refused`, dispatch `rejected`, not retriable: the class the same quota has
+inside a Responses stream, so routing ends the run as it does there. Whether a quota should fall
+back to another account instead is a separate decision, not taken. The transport knows no
+provider's error document: each protocol client states its rule (`QuotaRule`,
+`HttpClient::with_quota_rule`), and the transport reads a 429's body for it only, up to
+`MAX_REFUSAL_BYTES` (16 KiB) and for at most `REFUSAL_WAIT` (1 s), within the exchange's own
+deadline and the caller's cancellation. A body declared or found larger, one that has not ended
+in time, and one that is not JSON leave the 429 a retriable `rate-limited`. The rule answers yes
+or no; nothing it reads reaches a diagnostic, and a response tap is still shown the head alone.
+
+| Protocol | A 429 is final when | Provider documentation, read 2026-10-20 |
+| --- | --- | --- |
+| Responses | its body's `error.code` is one of the five billing, spend and quota codes above, or its `error.type` is `insufficient_quota`, `usage_limit_reached` or `usage_not_included`, each exactly spelt | [OpenAI error codes][openai-errors]: "Retrying billing, spend, or quota errors won’t restore API access." The official Codex CLI at the commit cited below maps a 429 with either kind of name to a quota or usage-limit error ([`codex-api/src/api_bridge.rs:185`-`238`][codex-quota-429]) and gives each no retry delay ([`protocol/src/error.rs:410`-`437`][codex-terminal]); its test `map_api_error_distinguishes_http_quota_errors_from_rate_limits` keeps `{"type": "insufficient_quota"}` without a code apart from a rate limit ([`api_bridge_tests.rs:503`][codex-quota-test]) |
+| Messages | its body's `error.type` is `rate_limit_error` and its `error.details.error_code` is `enforced_spend_limit_reached`, whatever its headers | [Anthropic rate limits][anthropic-spend-cap], "Reaching your spend cap": "On the Messages API, `error.details.error_code` is `enforced_spend_limit_reached`. Use it to tell this response apart from a rate limit." The same section: "Retrying, including the SDK's automatic retries, fails until access resumes." |
+| Chat Completions | never: no rule is stated, and every 429 stays retriable | — |
+
+The Messages rule reads the body field the page names, not the absence of `retry-after`. Both
+pages also say the spend-cap 429 has no `retry-after` header, but the page's header table says of
+it: "Not every 429 carries it; the spend-cap 429 never does", so a missing header does not tell a
+spend cap from a rate limit. A `rate_limit_error` 429 without that code stays a retriable
+`rate-limited` with or without a `retry-after`. That includes the 429 a subscription token meets
+without the preamble (measured by Harness with no rate-limit headers,
+`crates/llm-messages/tests/subscription.rs:308`), which keeps its retriable class. A spend-cap
+body is final with or without a `retry-after`, whose hint is kept.
 
 **A relayed failure reads back by the receiving decoder's rules.** The ingress encoders write a
 failure under the wire code that reads back as its class. No wire field carries the relaying
@@ -233,18 +258,55 @@ Other clients decide for themselves, and they differ:
   [anthropic-sdk-python][anthropic-python-stream]). Anthropic's errors page says such an error
   "doesn't follow these standard mechanisms" ([Anthropic errors][anthropic-errors]).
 
-The accepted risk is that llm's own routing may call a gateway again after the gateway has already
-spent its retries on the same failure, and each such call can spend them again. Keeping the
-relaying side's decision across the hop is `story:relayed-failures-keep-their-retry-decision`.
+**A status that says not to retry is final** (`story:relayed-failures-keep-their-retry-decision`,
+design option D, decided 2026-10-20). A failure before any output reaches a client as an HTTP
+status, not as a stream: llm-gateway answers it 502 `upstream-failed`, which the status table
+marks retriable. So without a signal llm's routing may call a gateway again after the gateway has
+spent its retries on the same failure, and each such call can spend them again. The signal is
+`x-should-retry`, which each official SDK reads in its retry decision ahead of its status rules
+(408, 409, 429 and 5xx retried). Two of them decide one case before they read it, as the last
+column says:
+
+| SDK | Where it reads the header, at the commit read 2026-10-20 | Decided before the header |
+| --- | --- | --- |
+| openai-python | `_should_retry`, [`src/openai/_base_client.py:909`-`918`][openai-python-should-retry] | no retry when `Retry-After` exceeds its maximum delay ([`:900`-`907`][openai-python-retry-after]) |
+| anthropic-sdk-python | `_should_retry`, [`src/anthropic/_base_client.py:930`-`939`][anthropic-python-should-retry] | nothing |
+| openai-node | `shouldRetry`, [`src/client.ts:2076`-`2081`][openai-node-should-retry] | nothing |
+| anthropic-sdk-typescript | `shouldRetry`, [`src/client.ts:1765`-`1770`][anthropic-ts-should-retry] | a 401 on a request that used its cached bearer token is retried once, after the cache is invalidated, whatever the header says ([`:1753`-`1763`][anthropic-ts-refresh]) |
+
+Each SDK obeys `false` as "do not retry" and `true` as "retry", under the comment "If the server
+explicitly says whether or not to retry, obey." llm reads `false` only. `status_error` marks an
+answer carrying `x-should-retry: false` not retriable whatever its status, with its code, dispatch
+and retry hint unchanged, so the Responses, Messages and Chat Completions clients all read it
+final. Routing then does not retry the target, and a 502's dispatch `unknown` halts the run as
+ambiguous instead of falling back. The signal only narrows: `x-should-retry: true` never makes a
+final status retriable, so a 400 carrying it stays final. The name matches in any case. The value
+must be exactly `false`, surrounding whitespace aside. A repeated field is no signal: combined as
+RFC 9110 combines field lines, its value is `false, false`. llm-gateway has to send the header
+when the failure it answers is final, for example once its own retries are spent; that is its own
+story, in its own repository. Until it does, a gateway's 502 stays retriable here.
+
+The failure path inside a stream is unchanged: what an ingress encoder's `fail` writes still reads
+back by the receiving decoder's rules, as above.
 
 [openai-errors]: https://developers.openai.com/api/docs/guides/error-codes
 [openai-responses]: https://developers.openai.com/api/reference/resources/responses/methods/create
 [anthropic-errors]: https://platform.claude.com/docs/en/api/errors
+[anthropic-spend-cap]: https://platform.claude.com/docs/en/api/rate-limits#reaching-your-spend-cap
 [codex-errors]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/sse/responses_error.rs#L87-L101
+[codex-quota-429]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/api_bridge.rs#L185-L238
+[codex-terminal]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/protocol/src/error.rs#L410-L437
+[codex-quota-test]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/api_bridge_tests.rs#L503
 [openai-python-retry]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_base_client.py#L899-L941
 [openai-python-stream]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_streaming.py#L78-L90
 [anthropic-python-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L929-L962
 [anthropic-python-stream]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_streaming.py#L160-L173
+[openai-python-should-retry]: https://github.com/openai/openai-python/blob/0e5794dc48b8f8d51f6047f8a0b1814eb1e65850/src/openai/_base_client.py#L909-L918
+[anthropic-python-should-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L930-L939
+[openai-node-should-retry]: https://github.com/openai/openai-node/blob/e8c295c97159d56738d69aa18522f1acd4a1d093/src/client.ts#L2076-L2081
+[anthropic-ts-should-retry]: https://github.com/anthropics/anthropic-sdk-typescript/blob/04a4c28c70de498d6d0e930e43edb5edb9ac545e/src/client.ts#L1765-L1770
+[openai-python-retry-after]: https://github.com/openai/openai-python/blob/0e5794dc48b8f8d51f6047f8a0b1814eb1e65850/src/openai/_base_client.py#L900-L907
+[anthropic-ts-refresh]: https://github.com/anthropics/anthropic-sdk-typescript/blob/04a4c28c70de498d6d0e930e43edb5edb9ac545e/src/client.ts#L1753-L1763
 
 ## Client request fields
 

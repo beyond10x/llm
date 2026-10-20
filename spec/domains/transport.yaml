@@ -36,6 +36,21 @@ domain: llm.transport
 # whether another attempt is made, and only before any output is visible, is routing's
 # decision (llm.routing).
 #
+# Exhausted quota (story:quota-429-is-final). A client may give the transport a quota rule
+# (`HttpClient::with_quota_rule`); the transport knows no provider's error document. For a 429
+# only, it then reads the body up to 16 KiB inclusive and for at most 1 s, within the exchange's
+# deadline and the caller's cancellation, and shows the rule the headers and the body as JSON.
+# A 429 the rule calls an exhausted quota is `refused` with dispatch `rejected` and not
+# retriable; every other 429, and one whose body is declared or found larger, has not ended in
+# time or is not JSON, stays `rate-limited` and retriable. Nothing read reaches a diagnostic or a
+# response tap. The exchanges observed here carry no rule, so their 429s stay `rate-limited`.
+#
+# Do-not-retry signal (story:relayed-failures-keep-their-retry-decision). An error status whose
+# answer carries exactly one `x-should-retry` field with the value `false` (name in any case,
+# value exact, surrounding whitespace aside) is not retriable, whatever its status; its code,
+# dispatch and retry hint are unchanged. The signal only narrows: `x-should-retry: true` never
+# makes a final status retriable. The fixture programs here script no such header.
+#
 # Connect bound and idle default (Harness harness-http/src/transport.rs:54-87,
 # `Settings::streaming`: connect 15 s, per-read 180 s). A client carries a connect bound of its
 # own beside its limits: 15 s unless the caller names another, positive and at most one day like

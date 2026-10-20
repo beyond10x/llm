@@ -32,10 +32,37 @@ pub const BETA_HEADER: &str = "anthropic-beta";
 /// for a `subscription-oauth` account; without it the route refuses the token as unauthenticated.
 pub const OAUTH_BETA: &str = "oauth-2025-04-20";
 
+/// This wire's [`llm_http::QuotaRule`]: a 429 whose error document says `rate_limit_error` as its
+/// `error.type` and `enforced_spend_limit_reached` as its `error.details.error_code`, whatever
+/// its headers. Anthropic's rate-limits page names that code as the way to tell its tier spend
+/// cap from a rate limit, and says the spend cap keeps failing, the SDK's own retries included,
+/// until access resumes (quoted in `docs/design.md`, provider failures retried before output).
+fn spend_cap(_: &HeaderMap, document: &serde_json::Value) -> bool {
+    let error = document.get("error");
+    let says = |field: Option<&serde_json::Value>, value: &str| {
+        field.and_then(serde_json::Value::as_str) == Some(value)
+    };
+    says(
+        error.and_then(|error| error.get("type")),
+        "rate_limit_error",
+    ) && says(
+        error
+            .and_then(|error| error.get("details"))
+            .and_then(|details| details.get("error_code")),
+        "enforced_spend_limit_reached",
+    )
+}
+
 /// One bound Messages endpoint.
 ///
 /// One attempt. It never retries, never refreshes a credential, never changes account and
 /// never infers billing from the protocol: those belong to routing and to the binding.
+///
+/// A 429 whose bounded error body says `rate_limit_error` with the code
+/// `enforced_spend_limit_reached` is Anthropic's spend cap, which keeps failing until access
+/// resumes: a final `refused`, dispatch `rejected`, with or without a `retry-after`. Every other
+/// 429 stays a retriable `rate-limited`. The transport reads that body for this client's rule
+/// ([`HttpClient::with_quota_rule`]), and no text of it reaches a diagnostic.
 pub struct MessagesClient {
     binding: Binding,
     http: HttpClient,
@@ -62,7 +89,7 @@ impl MessagesClient {
             // One absolute instant for the whole turn, taken from the transport's own total
             // limit so the two cannot drift apart. `with_turn_limit` overrides it.
             turn_limit: Some(http.limits().total),
-            http,
+            http: http.with_quota_rule(spend_cap),
         })
     }
 

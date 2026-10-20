@@ -25,6 +25,44 @@ use crate::{
 /// The wire's name in an `advisory-omitted` warning.
 const PROTOCOL_NAME: &str = "Responses";
 
+/// The `error.code` values of a 429 that reports an exhausted quota or spend limit rather than a
+/// rate limit: the billing, spend and quota codes the `OpenAI` error codes page lists as 429
+/// entries, of which it says "Retrying billing, spend, or quota errors won’t restore API access"
+/// (`docs/design.md`, provider failures retried before output). Inside a stream the decoder
+/// already reads every code but the three transient ones as a final refusal.
+const QUOTA_CODES: [&str; 5] = [
+    "insufficient_quota",
+    "credit_balance_exhausted",
+    "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded",
+    "organization_usage_limit_exceeded",
+];
+
+/// The `error.type` values of a 429 that reports an exhausted quota or a subscription usage
+/// limit: `insufficient_quota`, and the Codex backend's `usage_limit_reached` and
+/// `usage_not_included`. The official Codex CLI reads each as terminal, never retried
+/// (`openai/codex` 8196bcdc, `codex-rs/codex-api/src/api_bridge.rs:185`-`238` and
+/// `codex-rs/protocol/src/error.rs:410`-`437`; `docs/design.md`).
+const QUOTA_TYPES: [&str; 3] = [
+    "insufficient_quota",
+    "usage_limit_reached",
+    "usage_not_included",
+];
+
+/// This wire's [`llm_http::QuotaRule`]: a 429 whose error document names one of
+/// [`QUOTA_CODES`], exactly, as its `error.code`, or one of [`QUOTA_TYPES`], exactly, as its
+/// `error.type`.
+fn exhausted_quota(_: &HeaderMap, document: &Value) -> bool {
+    let error = document.get("error");
+    let names = |field: &str, values: &[&str]| {
+        error
+            .and_then(|error| error.get(field))
+            .and_then(Value::as_str)
+            .is_some_and(|value| values.contains(&value))
+    };
+    names("code", &QUOTA_CODES) || names("type", &QUOTA_TYPES)
+}
+
 /// The stream events after which this wire sends nothing the decoder reads.
 ///
 /// Reading stops at the first of them rather than at end of body, so a server that keeps the
@@ -51,6 +89,13 @@ const FINAL_EVENTS: &[&str] = &[
 ///
 /// It never retries, never refreshes a credential, never changes account or endpoint, and never
 /// falls back: those belong to routing and to the caller.
+///
+/// A 429 whose bounded error body names an exhausted quota or spend limit as its `error.code`
+/// (`insufficient_quota` and the four other billing codes), or a quota or subscription usage
+/// limit as its `error.type` (`insufficient_quota`, `usage_limit_reached`, `usage_not_included`),
+/// is a final `refused`, dispatch `rejected`, as the same document inside a stream is; every other
+/// 429 stays a retriable `rate-limited`. The transport reads that body for this client's rule
+/// ([`HttpClient::with_quota_rule`]), and no text of it reaches a diagnostic.
 ///
 /// Each payload is decoded as it arrives and the [`StreamEvent`]s it produced reach the sink
 /// before the next payload is read, in wire order, as the Messages client does.
@@ -95,7 +140,7 @@ impl ResponsesClient {
         Ok(Self {
             binding,
             projection,
-            http,
+            http: http.with_quota_rule(exhausted_quota),
             resolver,
             conversation: None,
             requests: AtomicU64::new(0),

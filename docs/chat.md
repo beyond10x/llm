@@ -235,7 +235,11 @@ an invented name.
 
 `ChatClient` joins the outgoing projection and the response projection over the shared bounded
 HTTP/SSE transport: one attempt, no redirects, no automatic retry, explicit deadlines, and
-cancellation. Retries, alternates and fallback belong to routing.
+cancellation. Retries, alternates and fallback belong to routing. An error status carrying
+`x-should-retry: false` reads not retriable whatever its status, so routing does not send the
+turn there again; the header never makes a final status retriable
+([design.md](design.md#provider-failures-retried-before-output)). Every 429 stays a retriable
+rate limit on this wire: no quota rule reads its body.
 
 A turn carrying hints this wire does not send ends, once it has succeeded, with one `Warning`
 event of code `advisory-omitted` naming them (`Chat Completions carries no prompt-cache; the

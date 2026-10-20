@@ -319,10 +319,17 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `a_transient_failure_after_visible_or_silent_output_is_final` `:291`, and
   `an_exhausted_quota_or_spend_limit_stays_final_before_output` `:320`. Inside a stream, an
   exhausted quota (`insufficient_quota`) stays a final `Refused`. As an HTTP 429 before the
-  stream, it is a retriable `RateLimited`: the transport reads no error body
-  (`llm-http/src/transport.rs:339`), held by
-  `an_exhausted_quota_answered_as_a_429_before_the_stream_is_retriable_today`
-  `llm-responses/tests/adversary_w09_retry_http_quota.rs:156`, until `story:quota-429-is-final`.
+  stream it is a final `Refused` too (`story:quota-429-is-final`): the client's rule
+  `exhausted_quota` `llm-responses/src/client.rs:55` reads `error.code` and `error.type` from the
+  429's body (the five codes; the types `insufficient_quota`, `usage_limit_reached` and
+  `usage_not_included`, as the Codex CLI does), which the transport reads for it only, bounded
+  (`llm-http/src/transport.rs:260`). Tests:
+  `an_exhausted_quota_answered_as_a_429_before_the_stream_is_final`
+  `llm-responses/tests/retry_class.rs:411` and
+  `llm-responses/tests/adversary_w09_retry_http_quota.rs:156`,
+  `a_quota_or_usage_limit_named_by_its_error_type_is_final_as_a_429`
+  `llm-responses/tests/retry_class.rs:440` and `llm-responses/tests/adversary_w10_quota_type.rs`,
+  and `any_other_429_stays_a_retriable_rate_limit` `llm-responses/tests/retry_class.rs:469`.
   The bridge keeps `may_retry` (`llm_port.rs:622`-`627`), so Harness's loop retries both classes
   before output again, as its wire did. The bridge's code mapping does not change.
 - **M27.** A Messages `overloaded_error` (`Unavailable`) or `api_error` (`Transport`) stream error
@@ -334,6 +341,12 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `llm-messages/tests/retry_class.rs:121`,
   `overloaded_and_api_errors_after_visible_or_silent_output_are_final` `:140`, and
   `every_other_stream_error_stays_final_before_output` `:168`. `rate_limit_error` stays final.
+  Before the stream, a 429 whose body says `rate_limit_error` with `error.details.error_code`
+  `enforced_spend_limit_reached` is Anthropic's spend cap and a final `Refused`
+  (`story:quota-429-is-final`; rule `spend_cap` `llm-messages/src/client.rs:40`), where Harness
+  retried every 429; every other 429 stays retriable:
+  `a_spend_cap_429_is_final_with_or_without_retry_after`
+  `llm-messages/tests/retry_class.rs:236`, `any_other_429_stays_a_retriable_rate_limit` `:267`.
   The bridge passes `may_retry` on, so Harness's loop retries both before output again. llm still
   reads `overloaded_error` as `Unavailable`, where Harness had `RateLimited`.
 - For both rows, routing retries such a failure on its target and then falls back only in the
@@ -341,12 +354,25 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `unauthorized` failure halts whatever its mark:
   `a_provider_failure_marked_before_output_falls_back_in_the_declared_order_and_unmarked_halts`
   `llm-routing/tests/fallback.rs:497`.
-- For both rows, a failure relayed by an llm gateway reads back by the receiving decoder's rules,
-  because no wire field carries the gateway's retry decision. With nothing streamed first, these
-  classes read back retriable even when the gateway had marked them final:
+- For both rows, a failure an llm gateway relays inside a stream reads back by the receiving
+  decoder's rules, because no wire field carries the gateway's retry decision. With nothing
+  streamed first, these classes read back retriable even when the gateway had marked them final:
   `a_failure_a_gateway_marked_final_reads_back_retriable_today`
-  `llm-responses/tests/adversary_w09_retry.rs:66` and `llm-messages/tests/adversary_w09_retry.rs:75`,
-  until `story:relayed-failures-keep-their-retry-decision`.
+  `llm-responses/tests/adversary_w09_retry.rs:66` and `llm-messages/tests/adversary_w09_retry.rs:75`.
+  A failure before output is the gateway's HTTP 502 instead, and an error status carrying
+  `x-should-retry: false` is final whatever its status (`story:relayed-failures-keep-their-retry-decision`;
+  `status_error` `llm-http/src/transport.rs:381`, `:391`): the bridge's `may_retry` is then false
+  and Harness's loop does not call the gateway again. llm-gateway has to send the header. Tests:
+  `a_do_not_retry_signal_makes_every_retriable_status_final_and_keeps_the_rest`
+  `llm-http/tests/retry_classes.rs:582`, `the_signal_only_narrows_and_is_one_exact_false` `:612`,
+  `the_signal_on_the_wire_is_one_exact_false_and_only_narrows`
+  `llm-http/tests/adversary_w10_refusal_bounds.rs`,
+  and `a_gateway_502_that_says_do_not_retry_is_final_and_without_it_is_retriable` in
+  `llm-responses/tests/retry_class.rs:559`, `llm-messages/tests/retry_class.rs:377` and
+  `llm-chat/tests/retry_signal.rs:94`; through a catalog's ports and routing,
+  `a_gateway_502_that_says_do_not_retry_is_attempted_once_on_every_wire`
+  `llm-models/tests/relayed_failure.rs:185` and
+  `the_same_502_without_the_signal_is_retried_on_its_target` `:206`.
 
 Row R36 (`story:text-deltas-are-final`; llm lines at this branch, not at 0.7.0):
 

@@ -382,3 +382,194 @@ async fn the_same_classes_as_an_http_status_before_the_stream_are_retriable() {
         );
     }
 }
+
+/// The billing, spend and quota codes `docs/design.md` lists, each an HTTP 429 entry on the
+/// `OpenAI` error codes page.
+const QUOTA: [&str; 5] = [
+    "insufficient_quota",
+    "credit_balance_exhausted",
+    "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded",
+    "organization_usage_limit_exceeded",
+];
+
+/// A 429 answer before any stream, with `body` and a declared length.
+async fn answered_429(body: &serde_json::Value) -> (Error, VecSink) {
+    let body = body.to_string();
+    let head = format!(
+        "HTTP/1.1 429 Too Many Requests\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    );
+    failed_turn(head.into_bytes(), body).await
+}
+
+/// story:quota-429-is-final. The same quota answered as an HTTP 429 before any stream is final
+/// too, a refusal with dispatch `rejected`, so routing ends the run as it does for the quota
+/// inside a stream. The machine-readable `error.code` decides here, with no `error.type` beside
+/// it; the prose never reaches a diagnostic.
+#[tokio::test]
+async fn an_exhausted_quota_answered_as_a_429_before_the_stream_is_final() {
+    for code in QUOTA {
+        let (error, sink) = answered_429(&serde_json::json!({"error": {
+            "message": "SECRET-UPSTREAM-TEXT", "param": null, "code": code
+        }}))
+        .await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Refused, Dispatch::Rejected),
+            "`{code}`"
+        );
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "`{code}` is final: {error:?}"
+        );
+        assert_eq!(sink.events(), [], "`{code}`");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "`{code}`: {error:?}"
+        );
+    }
+}
+
+/// The quota and subscription usage limits named by `error.type`, which the official Codex CLI
+/// reads as terminal (`openai/codex` 8196bcdc `codex-rs/codex-api/src/api_bridge.rs:185`-`238`,
+/// `codex-rs/protocol/src/error.rs:410`-`437`): `insufficient_quota` with no code or beside a
+/// rate-limit code, `usage_limit_reached` and `usage_not_included`. Each is a final refusal as a
+/// 429, as the same document is inside a stream.
+#[tokio::test]
+async fn a_quota_or_usage_limit_named_by_its_error_type_is_final_as_a_429() {
+    for body in [
+        serde_json::json!({"error": {"code": null, "type": "insufficient_quota", "message": "SECRET-UPSTREAM-TEXT"}}),
+        serde_json::json!({"error": {"code": "rate_limit_exceeded", "type": "insufficient_quota", "message": "SECRET-UPSTREAM-TEXT"}}),
+        serde_json::json!({"error": {"type": "usage_limit_reached", "message": "SECRET-UPSTREAM-TEXT", "plan_type": "pro", "resets_at": 1_900_000_000}}),
+        serde_json::json!({"error": {"type": "usage_not_included", "message": "SECRET-UPSTREAM-TEXT"}}),
+    ] {
+        let (error, sink) = answered_429(&body).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Refused, Dispatch::Rejected),
+            "{body}"
+        );
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "{body} is final: {error:?}"
+        );
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "{body}: {error:?}"
+        );
+    }
+}
+
+/// Every other 429 stays a retriable rate limit: a genuine rate limit (`OpenAI`'s shape, and the
+/// two the Codex CLI's own test keeps apart from a quota, `api_bridge_tests.rs:503`), a quota
+/// code or type in another spelling, either one outside `error`, and no error at all.
+#[tokio::test]
+async fn any_other_429_stays_a_retriable_rate_limit() {
+    for body in [
+        serde_json::json!({"error": {"code": "rate_limit_exceeded", "type": "requests", "param": null, "message": "SECRET-UPSTREAM-TEXT"}}),
+        serde_json::json!({"error": {"code": "rate_limit_exceeded", "type": "rate_limit_error"}}),
+        serde_json::json!({"error": {"code": "slow_down", "type": "rate_limit_error"}}),
+        serde_json::json!({"error": {"code": "INSUFFICIENT_QUOTA"}}),
+        serde_json::json!({"error": {"type": "USAGE_LIMIT_REACHED"}}),
+        serde_json::json!({"code": "insufficient_quota"}),
+        serde_json::json!({"type": "usage_limit_reached"}),
+        serde_json::json!({}),
+    ] {
+        let (error, sink) = answered_429(&body).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::RateLimited, Dispatch::Rejected),
+            "{body}"
+        );
+        assert!(error.may_retry(), "{body}: {error:?}");
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "{body}: {error:?}"
+        );
+    }
+}
+
+/// llm-gateway's refusal of a failure before output: HTTP 502, code `upstream-failed`.
+const GATEWAY_502_BODY: &str =
+    r#"{"error":{"code":"upstream-failed","message":"SECRET-UPSTREAM-TEXT"}}"#;
+
+/// Answers the first request with llm-gateway's 502 carrying the head `fields`, and returns the
+/// turn's refusal, what the caller was shown and how many requests arrived.
+async fn relayed_turn(fields: &str) -> (Error, VecSink, usize) {
+    let head = format!(
+        "HTTP/1.1 502 Bad Gateway\r\ncontent-type: application/json\r\n{fields}content-length: {}\r\nconnection: close\r\n\r\n",
+        GATEWAY_502_BODY.len()
+    );
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("a local port");
+    let url = format!("http://{}/v1", listener.local_addr().expect("an address"));
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.expect("an accepted connection");
+        let mut seen = Vec::new();
+        let mut buffer = vec![0; 1 << 16];
+        while !seen.windows(4).any(|w| w == b"\r\n\r\n") {
+            let length = socket.read(&mut buffer).await.expect("a readable socket");
+            assert!(length > 0, "the client closed before sending a request");
+            seen.extend_from_slice(&buffer[..length]);
+        }
+        socket
+            .write_all(head.as_bytes())
+            .await
+            .expect("head written");
+        socket
+            .write_all(GATEWAY_502_BODY.as_bytes())
+            .await
+            .expect("body written");
+        let _ = socket.shutdown().await;
+        let resent = tokio::time::timeout(Duration::from_millis(100), listener.accept())
+            .await
+            .is_ok();
+        1 + usize::from(resent)
+    });
+    let client = ResponsesClient::new(
+        binding(&url),
+        HttpClient::new(Limits {
+            response_headers: Duration::from_secs(20),
+            idle: Duration::from_secs(20),
+            total: Duration::from_secs(30),
+        })
+        .expect("bounded transport"),
+        Arc::new(Resolver),
+    )
+    .expect("a Responses binding");
+    let request = TurnRequest::new("small", vec![Item::user("Say hello")]);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let error = client
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect_err("a 502 is a refusal");
+    let requests = server.await.expect("the fixture server");
+    (error, sink, requests)
+}
+
+/// story:relayed-failures-keep-their-retry-decision. A gateway that spent its retries on a
+/// failure before output says so with `x-should-retry: false` on its 502: the client reads it
+/// final and sends once, so routing does not call the gateway again. The same 502 without the
+/// signal stays a retriable `transport`, dispatch `unknown`.
+#[tokio::test]
+async fn a_gateway_502_that_says_do_not_retry_is_final_and_without_it_is_retriable() {
+    for (fields, retriable) in [("x-should-retry: false\r\n", false), ("", true)] {
+        let (error, sink, requests) = relayed_turn(fields).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Transport, Dispatch::Unknown),
+            "`{fields}`"
+        );
+        assert_eq!(error.may_retry(), retriable, "`{fields}`: {error:?}");
+        assert_eq!(requests, 1, "`{fields}`: the client sent the turn again");
+        assert_eq!(sink.events(), [], "`{fields}`");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "`{fields}`: {error:?}"
+        );
+    }
+}
