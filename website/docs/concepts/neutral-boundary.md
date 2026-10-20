@@ -28,7 +28,9 @@ identifier and name the provider sent, before any of its argument fragments. The
 Every event is final: nothing later in the turn retracts or replaces it, so a caller can speak or
 commit a text delta as it arrives. On a successful turn each assistant message carries exactly the
 text deltas shown for it. Where a server's own final text differed, the shown text is kept and a
-warning with the fixed code `shown-text-kept` says so before the turn is returned.
+warning with the fixed code `shown-text-kept` says so before the turn is returned. Where shown
+text could belong to more than one message, no message is overwritten: the server's messages are
+kept as sent and `shown-text-unpaired` says so.
 
 ## One attempt, one port
 

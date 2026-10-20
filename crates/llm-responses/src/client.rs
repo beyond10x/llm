@@ -19,7 +19,7 @@ use serde_json::Value;
 
 use crate::{
     Conversation, PROTOCOL, StreamDecoding, encode_request, omitted_advisories, request_headers,
-    stream::{Decoder, shown_text_kept},
+    stream::Decoder,
 };
 
 /// The wire's name in an `advisory-omitted` warning.
@@ -59,7 +59,8 @@ const FINAL_EVENTS: &[&str] = &[
 /// client emits one `advisory-omitted` warning naming them after the turn has succeeded, and none
 /// when the turn failed. A sink that refuses the warning fails the turn with its own error. When
 /// the turn carries text the caller was shown where the server's own text differed, one
-/// `shown-text-kept` warning comes first, under the same rule.
+/// `shown-text-kept` warning comes first, under the same rule, and so does `shown-text-unpaired`
+/// when shown text could be more than one message and is carried in none.
 pub struct ResponsesClient {
     binding: llm_providers::Binding,
     projection: crate::Binding,
@@ -141,7 +142,7 @@ impl ResponsesClient {
                 .map_err(|_| Error::invalid("a request header value is not sendable"))?;
             headers.insert(HeaderName::from_static(name), value);
         }
-        let (decoding, kept) = self.exchange(headers, body, sink, cancel, deadline).await?;
+        let (decoding, notices) = self.exchange(headers, body, sink, cancel, deadline).await?;
         // Every event before the terminal object was handed over while the stream arrived. What
         // is left was produced by deciding the turn, so the provider's counters are known: a
         // sink refusal or a cancel now keeps them.
@@ -159,8 +160,7 @@ impl ResponsesClient {
         // Once, after the turn succeeded and never before: a warning on the sink is visible
         // output, and an attempt that showed output is no longer eligible for fallback. A warning
         // about the returned turn's text is about a turn the caller is handed, so it waits too.
-        let warnings = kept
-            .then(shown_text_kept)
+        let warnings = notices
             .into_iter()
             .chain(advisory_warning(
                 PROTOCOL_NAME,
@@ -178,8 +178,8 @@ impl ResponsesClient {
     /// there: nothing more is read. No terminal object has been decoded yet, so the failure
     /// carries the binding and no counters; counters that were never read stay unknown.
     ///
-    /// The flag is the decoder's: whether the turn carries shown text where the server's own text
-    /// differed ([`Decoder::finish`]).
+    /// The notices are the decoder's: what the caller is to be told about the turn's text once
+    /// it is handed the turn ([`Decoder::finish`]).
     async fn exchange(
         &self,
         headers: HeaderMap,
@@ -187,7 +187,7 @@ impl ResponsesClient {
         sink: &mut dyn StreamSink,
         cancel: &Cancel,
         deadline: Instant,
-    ) -> Result<(StreamDecoding, bool), Error> {
+    ) -> Result<(StreamDecoding, Vec<StreamEvent>), Error> {
         // This route sends no `[DONE]` sentinel: terminal truth is the response object.
         let mut stream = self
             .http
@@ -232,7 +232,7 @@ impl ResponsesClient {
                     events: Vec::new(),
                     result: Err(error),
                 };
-                return Ok((decoding, false));
+                return Ok((decoding, Vec::new()));
             }
             if last {
                 break;

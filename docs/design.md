@@ -58,7 +58,19 @@ keeps the shown text, and the client emits `StreamEvent::Warning` with the fixed
 `shown-text-kept` (`llm_core::SHOWN_TEXT_KEPT`) once the turn has passed its checks against the
 request and before the outcome is returned, as it emits `advisory-omitted`: a warning about a turn
 is for a turn the caller is handed, so a refused turn carries none. Its message is fixed and quotes
-neither text. The other answers, and why they were not taken:
+neither text.
+
+A decoder never carries a message's text twice and never overwrites a message it cannot tell is the
+one shown. Where it cannot pair shown text with exactly one message (deltas and messages that name
+no coordinate telling them apart, and no message already carrying that text), it keeps the server's
+messages as sent, carries the shown text in none, and emits a second fixed code,
+`shown-text-unpaired` (`llm_core::SHOWN_TEXT_UNPAIRED`), under the same rule. A second code rather
+than `shown-text-kept`, because no shown text was kept: the turn's text differs from what was shown
+in the other direction, and a caller storing history needs to tell the two apart. Overwriting the
+first candidate was the earlier shape and, with a message no delta showed ahead of the shown one,
+it carried the answer twice and lost the first message.
+
+The other answers to the first case, and why they were not taken:
 
 | Option | Why not |
 | --- | --- |

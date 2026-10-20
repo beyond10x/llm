@@ -790,6 +790,55 @@ fn the_turn_carries_the_text_the_caller_was_shown_and_says_when_the_server_wrote
     }
 }
 
+/// Where shown text could be more than one message and none carries its exact text, the decoder
+/// cannot tell which message was shown: it overwrites none, keeps the server's messages as sent,
+/// adds no message of its own, and says so with `shown-text-unpaired`. Where exactly one of them
+/// carries the shown text, that one is the message shown and nothing is said.
+#[test]
+fn shown_text_no_single_message_can_be_leaves_the_server_messages_as_sent_and_says_so() {
+    let ambiguous = [
+        created(),
+        json!({"type": "response.output_text.delta", "item_id": "msg_2", "content_index": 0,
+            "delta": "answer"}),
+        completed(&json!([
+            message(None, "preamble"),
+            message(None, SERVER_TEXT)
+        ])),
+    ];
+    let decoded = decode_stream(&decoder_binding(), &ambiguous);
+    let outcome = decoded.result.expect("a completed turn");
+    assert_eq!(
+        outcome.items,
+        vec![Item::assistant("preamble"), Item::assistant(SERVER_TEXT)],
+        "a message no delta showed was overwritten, or the shown text was added beside them"
+    );
+    let codes: Vec<&str> = warnings(&decoded.events)
+        .iter()
+        .map(|(code, _)| *code)
+        .collect();
+    assert_eq!(codes, ["shown-text-unpaired"], "{:?}", decoded.events);
+    for (_, message) in warnings(&decoded.events) {
+        assert!(
+            !message.contains("answer") && !message.contains(SERVER_TEXT),
+            "the warning quotes the text: {message:?}"
+        );
+    }
+
+    let resolved = [
+        created(),
+        json!({"type": "response.output_text.delta", "item_id": "msg_2", "content_index": 0,
+            "delta": "answer"}),
+        completed(&json!([message(None, "preamble"), message(None, "answer")])),
+    ];
+    let decoded = decode_stream(&decoder_binding(), &resolved);
+    let outcome = decoded.result.expect("a completed turn");
+    assert_eq!(
+        outcome.items,
+        vec![Item::assistant("preamble"), Item::assistant("answer")]
+    );
+    assert!(warnings(&decoded.events).is_empty(), "{:?}", decoded.events);
+}
+
 /// The live client hands the warning to the caller's sink before it returns, and the turn it
 /// returns carries the text the sink was shown, not the text the server finished with.
 #[tokio::test]
