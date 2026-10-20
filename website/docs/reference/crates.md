@@ -1,7 +1,7 @@
 ---
 title: Crates
 sidebar_position: 1
-description: "Every package in the llm workspace at 0.8.2: what it is, its library name and its optional features."
+description: "Every package in the llm workspace at 0.8.3: what it is, its library name and its optional features."
 custom_edit_url: null
 ---
 
@@ -9,7 +9,7 @@ custom_edit_url: null
 
 # Crates
 
-The workspace holds 15 packages at version `0.8.2`. None is published to a registry: a project depends on them from Git at a release tag. Package names start with `b10x-`; library names do not, so `b10x-llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
+The workspace holds 15 packages at version `0.8.3`. None is published to a registry: a project depends on them from Git at a release tag. Package names start with `b10x-`; library names do not, so `b10x-llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
 
 | Package | Library | Directory | What it is |
 | --- | --- | --- | --- |

@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-10-21
+
 ### Added
 
 - `b10x-llm-credentials`: `AnonymousResolver`, the resolver a caller hands a protocol client it
