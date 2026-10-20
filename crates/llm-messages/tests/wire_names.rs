@@ -29,6 +29,21 @@ const CONFIRMED: &[&str] = &[
     // beta a subscription token requires, `crates/harness-messages/src/lib.rs:86` and `:93`.
     "anthropic-beta",
     "oauth-2025-04-20",
+    // Read for llm 0.8.1 in Anthropic's own API reference, fetched 2026-10-20 from
+    // `https://platform.claude.com/docs/en/api/messages.md` (lines of that file): the message's
+    // `container` (`:3118`) with its `id`, `expires_at` and `skills` (`:3124`-`:3134`),
+    // `diagnostics` (`:3873`) and `stop_details` (`:4031`); `usage.speed` and its `standard` mode
+    // (`:4213`); a `tool_use` block's `toolset_name` (`:3405`) and its `caller` default
+    // `{"type":"direct"}` (`:3371`).
+    "container",
+    "diagnostics",
+    "direct",
+    "expires_at",
+    "skills",
+    "speed",
+    "standard",
+    "stop_details",
+    "toolset_name",
     "unknown-output-item",
     "unknown-stream-event",
     "any",

@@ -36,6 +36,40 @@ fn object(value: &Value) -> Result<&Map<String, Value>, Error> {
 /// any value at all is outside the declared subset, so `decode_block` refuses them outright.
 const UNCONSUMED: [&str; 3] = ["inference_geo", "service_tier", "stop_sequence"];
 
+/// Whether `found` is a value this subset may pass over for the accepted, never-read field `key`.
+///
+/// Each name here is one the route documents as empty unless the request asked for a feature this
+/// projection never asks for: a container tool, prompt-cache diagnostics, fast inference, a
+/// toolset. Empty is `null`, and for `speed` its `standard` mode. Any other value is evidence of a
+/// request this projection did not send, and is refused like a wrong type of an [`UNCONSUMED`]
+/// field. `container` alone is accepted when filled too: the route names in it the container a
+/// container tool ran in, which no later request of this projection has a use for
+/// (`docs/messages.md`, "Usage"). `stop_details` is the one name the route fills without being
+/// asked, on a `refusal` stop; it is accepted only as `null`, so a refusal's details are refused
+/// rather than dropped. Like [`UNCONSUMED`], the check travels with [`fields`], so every accept
+/// list that names one of these holds it to the same shape.
+fn unrequested(key: &str, found: &Value) -> bool {
+    match key {
+        "container" => found.is_null() || container(found),
+        "diagnostics" | "stop_details" | "toolset_name" => found.is_null(),
+        "speed" => found.is_null() || found.as_str() == Some("standard"),
+        _ => true,
+    }
+}
+
+/// The documented container object: `id` and `expires_at`, and `skills` only when empty.
+fn container(found: &Value) -> bool {
+    found.as_object().is_some_and(|container| {
+        container.get("id").is_some_and(Value::is_string)
+            && container.get("expires_at").is_some_and(Value::is_string)
+            && container.iter().all(|(key, value)| match key.as_str() {
+                "id" | "expires_at" => true,
+                "skills" => value.is_null(),
+                _ => false,
+            })
+    })
+}
+
 /// Refuses a field `value` carries that `allowed` does not name, and an accepted-but-unread one
 /// in a shape the route does not report.
 ///
@@ -54,6 +88,11 @@ fn fields(value: &Value, at: &str, allowed: &[&str]) -> Result<(), Error> {
     if object.iter().any(|(key, found)| {
         UNCONSUMED.contains(&key.as_str()) && !found.is_null() && !found.is_string()
     }) {
+        return Err(Error::protocol(
+            "Messages accepted field has a type this route does not report",
+        ));
+    }
+    if object.iter().any(|(key, found)| !unrequested(key, found)) {
         return Err(Error::protocol(
             "Messages accepted field has a type this route does not report",
         ));
