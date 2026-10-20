@@ -364,6 +364,8 @@
       "llm.models/authored/the-catalog-builder-refuses-a-credentialed-account-without-a-resolver",
       "llm.providers/authored/a-bearer-account-presents-its-credential-once-as-a-sensitive-bearer-header",
       "llm.providers/authored/a-bearer-account-with-an-api-key-header-is-refused",
+      "llm.providers/authored/a-binding-claiming-input-during-output-is-refused",
+      "llm.providers/authored/a-binding-whose-output-does-not-stream-is-refused",
       "llm.providers/authored/a-cancellation-during-resolution-ends-preparation",
       "llm.providers/authored/a-cancellation-that-arrives-with-the-credential-discards-it",
       "llm.providers/authored/a-cancelled-caller-is-refused-before-the-resolver-is-called",
@@ -579,9 +581,11 @@
       "llm.routes/authored/a-missing-file-secret-is-refused-unauthorized",
       "llm.routes/authored/a-name-naming-an-undeclared-endpoint-is-refused",
       "llm.routes/authored/a-present-file-secret-prepares-the-endpoints-api-key-header",
+      "llm.routes/authored/a-route-claiming-input-during-output-is-refused-naming-the-route",
       "llm.routes/authored/a-route-mapping-declares-its-own-capabilities",
       "llm.routes/authored/a-route-to-an-undeclared-endpoint-is-refused",
       "llm.routes/authored/a-route-value-splits-on-its-first-slash-only",
+      "llm.routes/authored/a-route-whose-output-does-not-stream-is-refused-naming-the-route",
       "llm.routes/authored/a-string-route-declares-the-default-capabilities",
       "llm.routes/authored/a-subscription-oauth-endpoint-is-refused",
       "llm.routes/authored/an-anonymous-endpoint-prepares-nothing-and-succeeds",
@@ -600,6 +604,8 @@
       "llm.routes/authored/the-three-endpoint-example-loads-and-each-route-answers-its-endpoint-protocol-and-model",
       "llm.routing/authored/a-caller-attempt-bound-above-sixty-four-is-refused",
       "llm.routing/authored/a-caller-attempt-bound-of-zero-is-refused",
+      "llm.routing/authored/a-catalog-claiming-input-during-output-is-refused",
+      "llm.routing/authored/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision",
       "llm.routing/authored/a-falling-back-route-between-subscription-billed-targets-is-accepted",
       "llm.routing/authored/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused",
       "llm.routing/authored/a-falling-back-route-from-a-subscription-target-to-a-metered-one-is-refused",
@@ -2704,6 +2710,16 @@
         "disposition": "accepted",
         "scenario": "llm.providers/authored/a-bearer-account-with-an-api-key-header-is-refused"
       },
+      "providers/scenarios/a-binding-claiming-input-during-output-is-refused.yaml": {
+        "digest": "sha256:0706253f7d1082a2faf118f7491b5eed761f0f1af498fdcdbd063d96cbb55c2b",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-binding-claiming-input-during-output-is-refused"
+      },
+      "providers/scenarios/a-binding-whose-output-does-not-stream-is-refused.yaml": {
+        "digest": "sha256:1c5541e134d6167c33e09f7e9a847ee044cca9cfcb46207efe6a3d95265e6705",
+        "disposition": "accepted",
+        "scenario": "llm.providers/authored/a-binding-whose-output-does-not-stream-is-refused"
+      },
       "providers/scenarios/a-cancellation-during-resolution-ends-preparation.yaml": {
         "digest": "sha256:8d48089407cf078f739f1caf37ee37e6740406ace47bc73270be5fa34f6ef8cb",
         "disposition": "accepted",
@@ -3754,8 +3770,13 @@
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-present-file-secret-prepares-the-endpoints-api-key-header"
       },
+      "routes/scenarios/a-route-claiming-input-during-output-is-refused-naming-the-route.yaml": {
+        "digest": "sha256:5299d7b9f99de36c4b380032e5d44cbc93334541ff2db57212dd6d5b15e2b20e",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-route-claiming-input-during-output-is-refused-naming-the-route"
+      },
       "routes/scenarios/a-route-mapping-declares-its-own-capabilities.yaml": {
-        "digest": "sha256:8efb89e5cc1fb5a137304572e70767f0d1b29420fde26c51ed598729949bd5c9",
+        "digest": "sha256:1d81d3dbb36370e0afd3f8c27aff727cf1f79bb59cc86f6cb1db62d443634752",
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-route-mapping-declares-its-own-capabilities"
       },
@@ -3769,8 +3790,13 @@
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-route-value-splits-on-its-first-slash-only"
       },
+      "routes/scenarios/a-route-whose-output-does-not-stream-is-refused-naming-the-route.yaml": {
+        "digest": "sha256:7c75b071d5344825ad39411a952bf8b62bbf0edc26b02d95d388551953851176",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-route-whose-output-does-not-stream-is-refused-naming-the-route"
+      },
       "routes/scenarios/a-string-route-declares-the-default-capabilities.yaml": {
-        "digest": "sha256:a6a2a3353b993ca8ac86960e0ab815627ed881c0819257ae0dfa95c3c92dd88a",
+        "digest": "sha256:19e1a4c85e7cc5b2a33a16e361251dcaa53a65ec11a50af4b30a10a577b90980",
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-string-route-declares-the-default-capabilities"
       },
@@ -3858,6 +3884,16 @@
         "digest": "sha256:cbebafa1c380c2a0e6ffa8f1f1006d3dbe5c686eaa389a6805f6bcf5310d3beb",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/a-caller-attempt-bound-of-zero-is-refused"
+      },
+      "routing/scenarios/a-catalog-claiming-input-during-output-is-refused.yaml": {
+        "digest": "sha256:88c0d5bb4e448609ac33566fd60642eea04887389fe292a429b7afe68f3a34ae",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-catalog-claiming-input-during-output-is-refused"
+      },
+      "routing/scenarios/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision.yaml": {
+        "digest": "sha256:1b3d59afa0325047d1381fd213d7c956d2fba02c83a02d3fef86df07375e32ba",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision"
       },
       "routing/scenarios/a-named-tool-choice-that-is-not-published-is-refused.yaml": {
         "digest": "sha256:ae5b9b4703763c1381747892a7a2561dab85991c91e4d785f05134704d7fb5ea",
@@ -5021,7 +5057,7 @@
       }
     },
     "counts": {
-      "authored": 836,
+      "authored": 842,
       "generated": 32,
       "outside": 0,
       "refused": 0
@@ -5074,9 +5110,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "d5775d722cc1aa8bc03287df97f9c515df85e47682f3bf1b346d1200ff97fcee",
+    "contract_digest": "01efd4cb9f9f30dab2f6a774bf0a8fc1ccf24b64b83b4c905900d8a363133306",
     "scenario_initial_state": "empty",
-    "spec_digest": "14fbc5d96af1e71043e59359a588f5998cf4c632b99558b330e2b68af1722d71",
+    "spec_digest": "513ece793ae0f8ce1f0194b148f48cad791d40bd127044081db49cb781495394",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -50147,6 +50183,216 @@
         }
       ]
     },
+    "llm.providers/authored/a-binding-claiming-input-during-output-is-refused": {
+      "purpose": "a binding whose capabilities claim input during output is refused at bind, because no protocol in this workspace carries input during output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"my-lab\",\"category\":\"private-compute\"},\"account\":{\"id\":\"research\",\"provider_id\":\"my-lab\",\"auth_kind\":\"anonymous\",\"billing_kind\":\"self-hosted\"},\"endpoint\":{\"id\":\"gpu-7\",\"account_id\":\"research\",\"base_url\":\"http://127.0.0.1:8000/proxy/v1\"},\"model\":{\"id\":\"code\",\"upstream_name\":\"custom-org/CustomModel-27B:revision-4\"},\"serving\":{\"id\":\"local-code\",\"endpoint_id\":\"gpu-7\",\"model_id\":\"code\",\"protocol\":\"chat-completions\",\"capabilities\":{\"tools\":false,\"tool_choice\":false,\"temperature\":false,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":32768,\"max_output_tokens\":8192,\"input_during_output\":true}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-xxxxxxxxxx"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "no protocol in this workspace carries input during output"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
+    "llm.providers/authored/a-binding-whose-output-does-not-stream-is-refused": {
+      "purpose": "a binding whose capabilities declare output that does not stream is refused at bind, because every protocol in this workspace streams its output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.providers"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.CancelPoint"
+        },
+        {
+          "kind": "type",
+          "name": "llm.providers.SecretFailure"
+        },
+        {
+          "kind": "command",
+          "name": "llm.providers.Prepare"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.providers.LastPreparation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.providers.Prepare",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.binding/1\",\"provider\":{\"id\":\"my-lab\",\"category\":\"private-compute\"},\"account\":{\"id\":\"research\",\"provider_id\":\"my-lab\",\"auth_kind\":\"anonymous\",\"billing_kind\":\"self-hosted\"},\"endpoint\":{\"id\":\"gpu-7\",\"account_id\":\"research\",\"base_url\":\"http://127.0.0.1:8000/proxy/v1\"},\"model\":{\"id\":\"code\",\"upstream_name\":\"custom-org/CustomModel-27B:revision-4\"},\"serving\":{\"id\":\"local-code\",\"endpoint_id\":\"gpu-7\",\"model_id\":\"code\",\"protocol\":\"messages\",\"capabilities\":{\"tools\":false,\"tool_choice\":false,\"temperature\":false,\"top_p\":false,\"reasoning_efforts\":[],\"context_window\":32768,\"max_output_tokens\":8192,\"output_streaming\":false}}}"
+            },
+            "cancel": {
+              "kind": "literal",
+              "value": "Never"
+            },
+            "secret": {
+              "kind": "literal",
+              "value": "llm-fixture-private-marker-xxxxxxxxxx"
+            },
+            "secret_error": {
+              "kind": "literal",
+              "value": null
+            },
+            "secret_length": {
+              "kind": "literal",
+              "value": null
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.providers.Prepare",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.providers.LastPreparation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "bound": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "every protocol in this workspace streams its output"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.providers.LastPreparation"
+        }
+      ]
+    },
     "llm.providers/authored/a-cancellation-during-resolution-ends-preparation": {
       "purpose": "a resolver that never answers is abandoned when the caller cancels",
       "source": [
@@ -74232,6 +74478,105 @@
         }
       ]
     },
+    "llm.routes/authored/a-route-claiming-input-during-output-is-refused-naming-the-route": {
+      "purpose": "a route whose capabilities claim input during output is refused as invalid-request, naming the route, because no protocol in this workspace carries input during output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "qwen"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  gateway: {base_url: https://gateway.internal/v1, protocol: responses,\n            auth: {kind: bearer, secret: file:~/.config/b10x/gateway-token}}\nroutes:\n  qwen:\n    model: gateway/qwen\n    capabilities: {tools: true, tool_choice: true, temperature: true, top_p: true,\n                   reasoning_efforts: [], context_window: 32768, max_output_tokens: 8192,\n                   input_during_output: true}\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "capabilities": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "route `qwen`: no protocol in this workspace carries input during output"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
     "llm.routes/authored/a-route-mapping-declares-its-own-capabilities": {
       "purpose": "a route written as a mapping with capabilities declares exactly those capabilities in the expanded catalog",
       "source": [
@@ -74309,7 +74654,7 @@
               "capabilities": {
                 "kind": "literal",
                 "value": [
-                  "qwen=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:,context:32768,output:8192"
+                  "qwen=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:,context:32768,output:8192,output_streaming:true,input_during_output:false"
                 ]
               },
               "error_code": {
@@ -74531,6 +74876,105 @@
         }
       ]
     },
+    "llm.routes/authored/a-route-whose-output-does-not-stream-is-refused-naming-the-route": {
+      "purpose": "a route whose capabilities declare output that does not stream is refused as invalid-request, naming the route, because every protocol in this workspace streams its output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "small"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  lab: {base_url: http://127.0.0.1:8000/v1, protocol: chat-completions,\n        auth: {kind: anonymous}}\nroutes:\n  small:\n    model: lab/small\n    capabilities: {tools: false, tool_choice: false, temperature: true, top_p: true,\n                   reasoning_efforts: [], context_window: 8192, max_output_tokens: 2048,\n                   output_streaming: false}\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "capabilities": {
+                "kind": "literal",
+                "value": []
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "route `small`: every protocol in this workspace streams its output"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
     "llm.routes/authored/a-string-route-declares-the-default-capabilities": {
       "purpose": "a route written as a plain string declares the default capabilities in the expanded catalog",
       "source": [
@@ -74602,7 +75046,7 @@
               "capabilities": {
                 "kind": "literal",
                 "value": [
-                  "sonnet=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:low|medium|high,context:200000,output:16384"
+                  "sonnet=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:low|medium|high,context:200000,output:16384,output_streaming:true,input_during_output:false"
                 ]
               },
               "error_code": {
@@ -76840,6 +77284,216 @@
           },
           "step": "expect_view",
           "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/a-catalog-claiming-input-during-output-is-refused": {
+      "purpose": "a catalog whose serving model claims input during output is refused, because no protocol in this workspace carries input during output",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\ninput_during_output = true\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": false
+              },
+              "config_digest": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "no protocol in this workspace carries input during output"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision": {
+      "purpose": "a catalog that writes output_streaming true and input_during_output false keeps the digest and binding revision it had before either field existed, so opaque state stored against it is still preserved",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\noutput_streaming = true\ninput_during_output = false\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\noutput_streaming = true\ninput_during_output = false\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"Keep instructions\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Keep message\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"chat-completions\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"},\"payload\":{\"state\":\"fixture-state\"}}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "auth_kind": {
+                "kind": "literal",
+                "value": "anonymous"
+              },
+              "billing_kind": {
+                "kind": "literal",
+                "value": "self-hosted"
+              },
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "config_digest": {
+                "kind": "literal",
+                "value": "1365b05fe63542f8211e21a9a2566c71f2a6d44ec9bdc564ba46c592a861825f"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "http://127.0.0.1:8000/v1/chat/completions"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
         }
       ]
     },

@@ -18,6 +18,32 @@ adapters implement Responses, Messages and Chat Completions with one documented 
 subset. Unsupported fields and provider-specific opaque continuation state must be preserved or
 refused, never dropped to make translation appear successful.
 
+### Streaming declarations
+
+A caller, such as a graph deciding how to schedule a model node, reads two declarations from
+`Model::capabilities()` (`llm_core::Capabilities`), beside the settings a route admits:
+
+| Declaration | Means | Every client in this workspace |
+| --- | --- | --- |
+| `output_streaming` | the model's text reaches the sink incrementally, as it is generated, not only at the end | true: Responses, Messages and Chat Completions all request a streamed answer |
+| `input_during_output` | input can reach a turn that is still producing output | false, until story:input-into-a-running-turn decides otherwise |
+
+`Capabilities::text` declares both as the clients do. In an `llm.binding/1`, `llm.catalog/1` or
+`llm.routes/1` document both are optional: absent means `output_streaming` true and
+`input_during_output` false, and neither is written at that value. A document written before the
+two fields therefore reads unchanged and serializes to the same bytes, so its binding revision and
+configuration digest do not move and opaque state stored against it stays valid.
+
+The rule depends on the protocol, so one check, `Capabilities::validate_protocol`, applies it
+where a declaration meets one: `BindingDocument::bind` (and with it every catalog), and
+`Routes::parse`, whose refusal names the route. A declaration of input during output is refused
+(`no protocol in this workspace carries input during output`), and so is one of output that does
+not stream (`every protocol in this workspace streams its output`): a document claiming it about
+one of these clients would be untrue, and refusing it keeps every accepted document at the
+defaults, so no digest moves and a 0.7.0 reader reads everything llm writes. Lifting either
+refusal later breaks no document. `Capabilities::validate` checks neither, so a `Model`
+implemented elsewhere keeps its own claim.
+
 ## Credentials and configuration
 
 Inference accepts an injected SecretResolver trait. A SecretReference is an opaque lookup name,

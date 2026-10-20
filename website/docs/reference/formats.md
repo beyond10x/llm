@@ -84,5 +84,9 @@ Two digests appear in output and both are SHA-256 over validated canonical data:
   reference and capabilities. Secret bytes and credential generations are excluded, so rotating the
   same reference does not invalidate a continuation, while repointing an id does.
 
+The capabilities `output_streaming` (default `true`) and `input_during_output` (default `false`)
+are left out of the canonical data at their defaults, so a document written before those fields
+keeps both digests.
+
 A local `SecretVersion` is a third digest, but it is redacted, non-serializable and must never be
 logged or used as a public fingerprint.

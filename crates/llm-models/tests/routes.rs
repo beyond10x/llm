@@ -408,6 +408,56 @@ fn refusals_name_the_endpoint_or_route_they_concern() {
 }
 
 #[test]
+fn a_routes_document_written_before_the_streaming_declarations_loads_with_the_client_values() {
+    assert!(default_capabilities().output_streaming);
+    assert!(!default_capabilities().input_during_output);
+    let routes = Routes::parse(DOCUMENT).unwrap();
+    for (route, binding) in routes.catalog().bindings() {
+        assert!(binding.capabilities().output_streaming, "{route}");
+        assert!(!binding.capabilities().input_during_output, "{route}");
+    }
+}
+
+#[test]
+fn a_route_claiming_input_during_output_or_unstreamed_output_is_refused_naming_the_route() {
+    // The default `AUTH` names `LLM_ROUTES_TEST_NEVER_SET`, which holds the `ROUTE` placeholder.
+    const ANONYMOUS: &str = "{kind: anonymous}";
+    const LIMITS: &str = "tools: true, tool_choice: true, temperature: true, top_p: true, \
+reasoning_efforts: [], context_window: 32768, max_output_tokens: 8192";
+    for protocol in ["responses", "messages", "chat-completions"] {
+        for (claim, message) in [
+            (
+                "input_during_output: true",
+                "route `r`: no protocol in this workspace carries input during output",
+            ),
+            (
+                "output_streaming: false",
+                "route `r`: every protocol in this workspace streams its output",
+            ),
+        ] {
+            let route = format!("{{model: p/m, capabilities: {{{LIMITS}, {claim}}}}}");
+            let error = refused(&single(&[
+                ("PROTOCOL", protocol),
+                ("AUTH", ANONYMOUS),
+                ("ROUTE", &route),
+            ]));
+            assert_eq!(error.code, ErrorCode::InvalidRequest, "{protocol}");
+            assert_eq!(error.message, message, "{protocol}");
+        }
+        let route = format!(
+            "{{model: p/m, capabilities: {{{LIMITS}, output_streaming: true, \
+input_during_output: false}}}}"
+        );
+        Routes::parse(&single(&[
+            ("PROTOCOL", protocol),
+            ("AUTH", ANONYMOUS),
+            ("ROUTE", &route),
+        ]))
+        .unwrap();
+    }
+}
+
+#[test]
 fn an_oversized_document_is_refused_before_parsing() {
     let document = format!("{DOCUMENT}#{}\n", "x".repeat(llm_routing::MAX_CONFIG_BYTES));
     assert_eq!(refused(&document).code, ErrorCode::TooLarge);
