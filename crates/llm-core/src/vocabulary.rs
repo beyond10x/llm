@@ -61,8 +61,9 @@ pub struct Capabilities {
     #[serde(default = "streams", skip_serializing_if = "is_true")]
     pub output_streaming: bool,
     /// Whether input can reach a turn that is still producing output. False for every protocol
-    /// in this workspace until story:input-into-a-running-turn decides otherwise. Absent from a
-    /// document means false, and false is not written.
+    /// in this workspace: none carries input into a response that is still streaming, so a caller
+    /// cancels and starts a new turn (`docs/design.md`, "Input into a running turn"). Absent from
+    /// a document means false, and false is not written.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub input_during_output: bool,
 }
