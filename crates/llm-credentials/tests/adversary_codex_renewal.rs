@@ -21,6 +21,7 @@ use std::{
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
+    sync::Notify,
 };
 
 const NOW: u64 = 1_790_985_600;
@@ -28,6 +29,14 @@ const MARGIN: Duration = Duration::from_mins(15);
 const CLIENT: &str = "fixture-client";
 const OLD_REFRESH: &str = "fixture-refresh-token-one";
 const NEW_REFRESH: &str = "fixture-refresh-token-two";
+/// How long one wait on the code under test may take before its case fails. No case decides on
+/// it: each decides on an answer, or on the endpoint having read a request. It ends a stall in
+/// the async code under test, well above the exchange's own 30 s bound (`EXCHANGE_TIMEOUT` in
+/// `src/codex/renewal.rs`), which ended a resolve whose request the endpoint never read at
+/// 30.01 s when measured. A stall inside the renewal's blocking file I/O (`spawn_blocking`) still
+/// holds the process after the case fails: dropping the test runtime waits for its blocking
+/// threads.
+const STALL: Duration = Duration::from_mins(2);
 
 fn reference() -> SecretRef {
     SecretRef::new("codex-login").unwrap()
@@ -92,6 +101,14 @@ fn renewal(url: &str) -> CodexRenewal {
         .with_margin(MARGIN)
 }
 
+/// Awaits `future`, failing the case and naming `what` stalled if it has no outcome within
+/// [`STALL`].
+async fn bounded<T>(what: &str, future: impl Future<Output = T>) -> T {
+    tokio::time::timeout(STALL, future)
+        .await
+        .unwrap_or_else(|_| panic!("stalled for {STALL:?}: {what}"))
+}
+
 fn login(access: &str, refresh: &str) -> String {
     format!(
         "{{\"tokens\": {{\"access_token\": \"{access}\", \"refresh_token\": \"{refresh}\"}}, \"last_refresh\": \"2026-10-01T00:00:00Z\"}}\n"
@@ -110,6 +127,8 @@ struct Endpoint {
     url: String,
     requests: Arc<AtomicUsize>,
     bodies: Arc<Mutex<Vec<Vec<u8>>>>,
+    /// Raised each time a request has been read whole, counted and logged.
+    read: Arc<Notify>,
 }
 
 impl Endpoint {
@@ -119,7 +138,8 @@ impl Endpoint {
         let url = format!("http://{}/oauth/token", listener.local_addr().unwrap());
         let requests = Arc::new(AtomicUsize::new(0));
         let bodies = Arc::new(Mutex::new(Vec::new()));
-        let (count, log) = (requests.clone(), bodies.clone());
+        let read = Arc::new(Notify::new());
+        let (count, log, seen) = (requests.clone(), bodies.clone(), read.clone());
         tokio::spawn(async move {
             let mut index = 0usize;
             loop {
@@ -133,6 +153,7 @@ impl Endpoint {
                 };
                 count.fetch_add(1, Ordering::SeqCst);
                 log.lock().unwrap().push(body);
+                seen.notify_one();
                 match act {
                     Act::Answer(status, answer) => {
                         let head = format!(
@@ -155,6 +176,7 @@ impl Endpoint {
             url,
             requests,
             bodies,
+            read,
         }
     }
 
@@ -168,6 +190,15 @@ impl Endpoint {
 
     fn requests(&self) -> usize {
         self.requests.load(Ordering::SeqCst)
+    }
+
+    /// Returns once the endpoint has read `count` requests, however long that takes. A raise
+    /// with no waiter keeps its permit, so one that lands between the check and the wait is not
+    /// lost.
+    async fn reached(&self, count: usize) {
+        while self.requests() < count {
+            self.read.notified().await;
+        }
     }
 
     fn body(&self, index: usize) -> Value {
@@ -227,12 +258,16 @@ async fn a_refused_grant_is_not_sent_again_by_the_next_resolve_of_the_same_login
     let endpoint = Endpoint::answering("400 Bad Request", &json!({"error": "invalid_grant"})).await;
     let renewing = resolver(&path).renewing(renewal(&endpoint.url));
 
-    let first = renewing.resolve(&reference()).await.unwrap_err();
+    let first = bounded("the first resolve", renewing.resolve(&reference()))
+        .await
+        .unwrap_err();
     assert_eq!(first, SecretError::RefreshRejected);
     assert_eq!(endpoint.requests(), 1);
     assert_eq!(fs::read_to_string(&path).unwrap(), before);
 
-    let second = renewing.resolve(&reference()).await.unwrap_err();
+    let second = bounded("the second resolve", renewing.resolve(&reference()))
+        .await
+        .unwrap_err();
     assert_eq!(second, SecretError::RefreshRejected);
     assert_eq!(
         endpoint.requests(),
@@ -260,17 +295,33 @@ async fn a_dropped_resolve_does_not_let_the_next_resolve_resend_the_grant() {
     ])
     .await;
     let renewing = resolver(&path).renewing(renewal(&endpoint.url));
+    let secret = reference();
 
-    let dropped =
-        tokio::time::timeout(Duration::from_millis(500), renewing.resolve(&reference())).await;
-    assert!(dropped.is_err(), "the first resolve was expected to hang");
+    // The first resolve is dropped once the endpoint has read its grant, not after a fixed time:
+    // a loaded machine may take any time to get the request there. A resolve that returns first,
+    // on the exchange's own 30 s bound included, fails the assertion below; one that neither
+    // returns nor reaches the endpoint fails on `STALL`.
+    let first = bounded(
+        "the first resolve neither returned nor reached the endpoint",
+        async {
+            tokio::select! {
+                () = endpoint.reached(1) => None,
+                outcome = renewing.resolve(&secret) => Some(outcome),
+            }
+        },
+    )
+    .await;
+    assert!(
+        first.is_none(),
+        "the first resolve was expected to hang: {first:?}"
+    );
     assert_eq!(
         endpoint.requests(),
         1,
         "the first grant reached the endpoint"
     );
 
-    let second = renewing.resolve(&reference()).await;
+    let second = bounded("the second resolve", renewing.resolve(&secret)).await;
     assert_eq!(
         endpoint.requests(),
         1,
@@ -301,10 +352,12 @@ async fn hostile_token_characters_are_written_as_valid_json_with_the_right_value
         &json!({"access_token": access, "refresh_token": refresh, "scope": "x", "expires_in": 3600}),
     )
     .await;
-    let outcome = resolver(&path)
-        .renew(&renewal(&endpoint.url), &Cancel::new())
-        .await
-        .unwrap();
+    let outcome = bounded(
+        "the renewal",
+        resolver(&path).renew(&renewal(&endpoint.url), &Cancel::new()),
+    )
+    .await
+    .unwrap();
     assert!(matches!(outcome, Renewal::Renewed(_)), "{outcome:?}");
     let after = fs::read_to_string(&path).unwrap();
     let parsed: Value = serde_json::from_str(&after).unwrap();
@@ -333,10 +386,12 @@ async fn escaped_keys_and_values_on_disk_are_found_and_sent_unescaped() {
     write_fixture(&path, &before, 0o600);
     let fresh = token(3600, "fresh");
     let endpoint = Endpoint::answering("200 OK", &json!({"access_token": fresh})).await;
-    let outcome = resolver(&path)
-        .renew(&renewal(&endpoint.url), &Cancel::new())
-        .await
-        .unwrap();
+    let outcome = bounded(
+        "the renewal",
+        resolver(&path).renew(&renewal(&endpoint.url), &Cancel::new()),
+    )
+    .await
+    .unwrap();
     assert!(matches!(outcome, Renewal::Renewed(_)), "{outcome:?}");
     assert_eq!(
         endpoint.body(0)["refresh_token"],
@@ -364,10 +419,12 @@ async fn a_symlinked_parent_directory_is_renewed_in_the_real_directory() {
     );
     let fresh = token(3600, "fresh");
     let endpoint = Endpoint::answering("200 OK", &json!({"access_token": fresh})).await;
-    let outcome = resolver(&linked.join("auth.json"))
-        .renew(&renewal(&endpoint.url), &Cancel::new())
-        .await
-        .unwrap();
+    let outcome = bounded(
+        "the renewal",
+        resolver(&linked.join("auth.json")).renew(&renewal(&endpoint.url), &Cancel::new()),
+    )
+    .await
+    .unwrap();
     assert!(matches!(outcome, Renewal::Renewed(_)), "{outcome:?}");
     assert_eq!(names(&real), vec!["auth.json".to_owned()]);
     assert!(
@@ -392,10 +449,12 @@ async fn unusual_modes_are_kept_exactly() {
         write_fixture(&path, &login(&token(-60, "expired"), OLD_REFRESH), mode);
         let endpoint =
             Endpoint::answering("200 OK", &json!({"access_token": token(3600, "fresh")})).await;
-        resolver(&path)
-            .renew(&renewal(&endpoint.url), &Cancel::new())
-            .await
-            .unwrap();
+        bounded(
+            "the renewal",
+            resolver(&path).renew(&renewal(&endpoint.url), &Cancel::new()),
+        )
+        .await
+        .unwrap();
         assert_eq!(
             fs::metadata(&path).unwrap().permissions().mode() & 0o7777,
             mode,
@@ -417,9 +476,11 @@ async fn an_unwritable_directory_refuses_uncertain_and_leaves_nothing_behind() {
     fs::set_permissions(&inner, fs::Permissions::from_mode(0o500)).unwrap();
     let endpoint =
         Endpoint::answering("200 OK", &json!({"access_token": token(3600, "fresh")})).await;
-    let result = resolver(&path)
-        .renew(&renewal(&endpoint.url), &Cancel::new())
-        .await;
+    let result = bounded(
+        "the renewal",
+        resolver(&path).renew(&renewal(&endpoint.url), &Cancel::new()),
+    )
+    .await;
     fs::set_permissions(&inner, fs::Permissions::from_mode(0o700)).unwrap();
     let error = result.unwrap_err();
     assert_eq!(error.refusal(), RenewalRefusal::WriteFailed);
@@ -459,10 +520,12 @@ async fn odd_answers_refuse_before_writing_and_quote_nothing() {
         let before = login(&token(-60, "expired"), OLD_REFRESH);
         write_fixture(&path, &before, 0o600);
         let endpoint = Endpoint::raw("200 OK", answer.clone()).await;
-        let error = resolver(&path)
-            .renew(&renewal(&endpoint.url), &Cancel::new())
-            .await
-            .unwrap_err();
+        let error = bounded(
+            "the renewal",
+            resolver(&path).renew(&renewal(&endpoint.url), &Cancel::new()),
+        )
+        .await
+        .unwrap_err();
         assert_eq!(
             error.refusal(),
             refusal,
@@ -500,10 +563,12 @@ async fn far_expiries_and_a_pre_epoch_clock_decide_without_overflow() {
             &json!({"access_token": token(3600, "fresh"), "refresh_token": NEW_REFRESH}),
         )
         .await;
-        let outcome = resolver(&path)
-            .renew(&renewal(&endpoint.url), &Cancel::new())
-            .await
-            .unwrap();
+        let outcome = bounded(
+            "the renewal",
+            resolver(&path).renew(&renewal(&endpoint.url), &Cancel::new()),
+        )
+        .await
+        .unwrap();
         assert_eq!(
             matches!(outcome, Renewal::Renewed(_)),
             due,
@@ -522,13 +587,15 @@ async fn far_expiries_and_a_pre_epoch_clock_decide_without_overflow() {
         Endpoint::answering("200 OK", &json!({"access_token": token(3600, "fresh")})).await;
     let early = CodexAuthFile::new(reference(), &path)
         .with_clock(|| SystemTime::UNIX_EPOCH - Duration::from_secs(1000));
-    let outcome = early
-        .renew(
+    let outcome = bounded(
+        "the renewal",
+        early.renew(
             &renewal(&endpoint.url).with_margin(Duration::ZERO),
             &Cancel::new(),
-        )
-        .await
-        .unwrap();
+        ),
+    )
+    .await
+    .unwrap();
     assert_eq!(outcome, Renewal::NotDue);
     assert_eq!(endpoint.requests(), 0);
 }
@@ -547,13 +614,18 @@ async fn a_duplicated_key_is_refused_before_sending_with_the_read_rules_kind() {
     write_fixture(&path, &before, 0o600);
     let endpoint =
         Endpoint::answering("200 OK", &json!({"access_token": token(3600, "fresh")})).await;
-    let error = resolver(&path)
-        .renew(&renewal(&endpoint.url), &Cancel::new())
-        .await
-        .unwrap_err();
+    let error = bounded(
+        "the renewal",
+        resolver(&path).renew(&renewal(&endpoint.url), &Cancel::new()),
+    )
+    .await
+    .unwrap_err();
     assert_eq!(endpoint.requests(), 0);
     assert_eq!(fs::read_to_string(&path).unwrap(), before);
-    let read = resolver(&path).read(&reference()).await.unwrap_err().kind();
+    let read = bounded("the read", resolver(&path).read(&reference()))
+        .await
+        .unwrap_err()
+        .kind();
     assert_eq!(read, SecretError::Malformed);
     assert_eq!(
         error.kind(),
