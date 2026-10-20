@@ -7,7 +7,7 @@ visible, and never turns an unknown usage count into a zero.
 
 **Documentation: <https://beyond10x.github.io/llm/>**
 
-**Status: 0.8.2. Libraries tested against fixtures; no provider route is qualified yet.** The
+**Status: 0.8.3. Libraries tested against fixtures; no provider route is qualified yet.** The
 [status page](https://beyond10x.github.io/llm/docs/status) lists every capability as shipped or
 planned, and [Limitations](https://beyond10x.github.io/llm/docs/status/limitations) says what is
 missing.
@@ -35,8 +35,8 @@ Nothing is published to crates.io. Depend on a crate from Git at a release tag:
 
 ```toml
 [dependencies]
-llm-core = { package = "b10x-llm-core", git = "https://github.com/beyond10x/llm", tag = "0.8.2" }
-llm-responses = { package = "b10x-llm-responses", git = "https://github.com/beyond10x/llm", tag = "0.8.2" }
+llm-core = { package = "b10x-llm-core", git = "https://github.com/beyond10x/llm", tag = "0.8.3" }
+llm-responses = { package = "b10x-llm-responses", git = "https://github.com/beyond10x/llm", tag = "0.8.3" }
 ```
 
 Package names start with `b10x-`; library names do not, so the code says `use llm_core::…`. The
@@ -79,7 +79,7 @@ The [crate reference](https://beyond10x.github.io/llm/docs/reference/crates) is 
 
 The gate and the toolchain it runs on are in [AGENTS.md](AGENTS.md#gate). Besides Rust it needs
 [Task](https://taskfile.dev),
-[ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.56.0 and
+[ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.66.0 and
 [AEP](https://beyond10x.github.io/ecosystem/aep/) ([GitHub](https://github.com/beyond10x/aep))
 0.68.0; [Run the checks](https://beyond10x.github.io/llm/docs/guides/run-the-checks) says what it
 proves and what it does not. The site builds with

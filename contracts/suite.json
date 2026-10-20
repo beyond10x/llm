@@ -19547,10 +19547,6 @@
         {
           "command": "llm.chat.EncodeIngress",
           "input": {
-            "events_json": {
-              "kind": "literal",
-              "value": "events_json"
-            },
             "include_usage": {
               "kind": "literal",
               "value": true
@@ -20025,10 +20021,6 @@
         {
           "command": "llm.chat.ProjectResponse",
           "input": {
-            "framed": {
-              "kind": "literal",
-              "value": true
-            },
             "response": {
               "kind": "literal",
               "value": "response"
@@ -36160,18 +36152,6 @@
         {
           "command": "llm.messages.EncodeIngress",
           "input": {
-            "events_json": {
-              "kind": "literal",
-              "value": "events_json"
-            },
-            "fail_code": {
-              "kind": "literal",
-              "value": "fail_code"
-            },
-            "model": {
-              "kind": "literal",
-              "value": "model"
-            },
             "outcome_json": {
               "kind": "literal",
               "value": "outcome_json"
@@ -50487,20 +50467,6 @@
       "steps": [
         {
           "command": "llm.providers.Describe",
-          "input": {
-            "description_toml": {
-              "kind": "literal",
-              "value": "description_toml"
-            },
-            "instance": {
-              "kind": "literal",
-              "value": "instance"
-            },
-            "shipped": {
-              "kind": "literal",
-              "value": "shipped"
-            }
-          },
           "step": "execute_command"
         },
         {
@@ -50736,18 +50702,6 @@
             "cancel": {
               "kind": "literal",
               "value": "Never"
-            },
-            "secret": {
-              "kind": "literal",
-              "value": "secret"
-            },
-            "secret_error": {
-              "kind": "literal",
-              "value": "InvalidReference"
-            },
-            "secret_length": {
-              "kind": "literal",
-              "value": 1.0
             }
           },
           "step": "execute_command"
@@ -59427,18 +59381,6 @@
               "kind": "literal",
               "value": "binding_json"
             },
-            "events_json": {
-              "kind": "literal",
-              "value": "events_json"
-            },
-            "failure_json": {
-              "kind": "literal",
-              "value": "failure_json"
-            },
-            "outcome_json": {
-              "kind": "literal",
-              "value": "outcome_json"
-            },
             "streamed": {
               "kind": "literal",
               "value": true
@@ -59904,14 +59846,6 @@
             "binding_json": {
               "kind": "literal",
               "value": "binding_json"
-            },
-            "conversation_id": {
-              "kind": "literal",
-              "value": "conversation_id"
-            },
-            "originator": {
-              "kind": "literal",
-              "value": "originator"
             },
             "turn_json": {
               "kind": "literal",
@@ -78219,10 +78153,6 @@
               "kind": "literal",
               "value": "catalog_toml"
             },
-            "input_tokens": {
-              "kind": "literal",
-              "value": 1.0
-            },
             "turn_json": {
               "kind": "literal",
               "value": "turn_json"
@@ -78451,10 +78381,6 @@
             "catalog_toml": {
               "kind": "literal",
               "value": "catalog_toml"
-            },
-            "input_tokens": {
-              "kind": "literal",
-              "value": 1.0
             },
             "program_json": {
               "kind": "literal",
@@ -87863,10 +87789,6 @@
               "kind": "literal",
               "value": true
             },
-            "mode": {
-              "kind": "literal",
-              "value": "ParentGroupWritable"
-            },
             "oversized": {
               "kind": "literal",
               "value": true
@@ -87878,10 +87800,6 @@
             "public_readable": {
               "kind": "literal",
               "value": true
-            },
-            "replacement": {
-              "kind": "literal",
-              "value": "replacement"
             },
             "shape": {
               "kind": "literal",
@@ -88127,10 +88045,6 @@
             "oversized": {
               "kind": "literal",
               "value": true
-            },
-            "replacement": {
-              "kind": "literal",
-              "value": "replacement"
             }
           },
           "step": "execute_command"
@@ -88614,10 +88528,6 @@
               "kind": "literal",
               "value": "reference"
             },
-            "replacement": {
-              "kind": "literal",
-              "value": "replacement"
-            },
             "storage": {
               "kind": "literal",
               "value": "Keychain"
@@ -88879,14 +88789,6 @@
               "kind": "literal",
               "value": "Renew"
             },
-            "expires_in_s": {
-              "kind": "literal",
-              "value": 1.0
-            },
-            "fixture": {
-              "kind": "literal",
-              "value": "RelativePath"
-            },
             "group_readable": {
               "kind": "literal",
               "value": true
@@ -88900,10 +88802,6 @@
               "value": 1.0
             },
             "refresh_token_present": {
-              "kind": "literal",
-              "value": true
-            },
-            "resolve_twice": {
               "kind": "literal",
               "value": true
             }
