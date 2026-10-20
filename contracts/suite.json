@@ -161,6 +161,7 @@
       "llm.chat/authored/ingress-a-tool-choice-of-none-is-refused",
       "llm.chat/authored/ingress-a-tool-choice-that-is-not-a-function-is-refused",
       "llm.chat/authored/ingress-a-tool-message-answering-no-call-is-refused",
+      "llm.chat/authored/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed",
       "llm.chat/authored/ingress-a-tool-that-is-not-a-function-is-refused",
       "llm.chat/authored/ingress-an-accepted-encoding-carries-no-refusal",
       "llm.chat/authored/ingress-an-accepted-request-carries-no-refusal",
@@ -189,6 +190,7 @@
       "llm.chat/authored/ingress-encoding-reports-exactly-the-counters-it-was-given",
       "llm.chat/authored/ingress-instructions-must-precede-the-conversation",
       "llm.chat/authored/ingress-message-content-that-is-not-text-is-refused",
+      "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string",
       "llm.chat/authored/ingress-stream-options-that-are-not-an-object-are-refused",
       "llm.chat/authored/ingress-streamed-closing-chunks-carry-calls-then-the-finish-reason",
       "llm.chat/authored/outgoing-a-refused-projection-builds-no-body",
@@ -1383,7 +1385,7 @@
         "scenario": "llm.chat/authored/ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices"
       },
       "chat/scenarios/ingress-a-client-request-decodes-onto-the-neutral-subset.yaml": {
-        "digest": "sha256:6c6377a929f8677614787448af01d71009bb0ef5a0a337a434f4b1939fb4ffc5",
+        "digest": "sha256:187e0169391dece22a765e3a9566bdf2d641cc01880e2213f252d3f2e1dcd0ff",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-client-request-decodes-onto-the-neutral-subset"
       },
@@ -1471,6 +1473,11 @@
         "digest": "sha256:2c35480bfa9aad2af2484e1048fec678902ba0846e5925b3b0bcab8f85bd9dd9",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-tool-message-answering-no-call-is-refused"
+      },
+      "chat/scenarios/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed.yaml": {
+        "digest": "sha256:888dc0c38f622edccd30cd87b1ed2c0475f2d8e7fa76703e00115ac558229c33",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed"
       },
       "chat/scenarios/ingress-a-tool-that-is-not-a-function-is-refused.yaml": {
         "digest": "sha256:67b6839e62010c5c06065070059f1e3a50c298f63ee0591e367b3aa4297ab5ad",
@@ -1611,6 +1618,11 @@
         "digest": "sha256:37f0071ab3ee2aee3512c6360f31898322ba84a38563592301fce901c351e0ac",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-message-content-that-is-not-text-is-refused"
+      },
+      "chat/scenarios/ingress-other-json-in-a-tool-message-stays-a-successful-string.yaml": {
+        "digest": "sha256:9758b2886e2bec63e7d2341562fde542fc8dcdf86e3ecedc249e043550f12db5",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string"
       },
       "chat/scenarios/ingress-stream-options-that-are-not-an-object-are-refused.yaml": {
         "digest": "sha256:7f32b33666c4ece8702dd6cd64ae0ffc84418d35ea9423f61aaf909c4dad946f",
@@ -5099,7 +5111,7 @@
       }
     },
     "counts": {
-      "authored": 849,
+      "authored": 851,
       "generated": 32,
       "outside": 0,
       "refused": 0
@@ -24687,6 +24699,97 @@
         }
       ]
     },
+    "llm.chat/authored/ingress-a-tool-message-carrying-the-failure-object-decodes-as-failed": {
+      "purpose": "ingress a tool message carrying the failure object decodes as failed",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"Weather?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-2\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"tool_call_id\":\"call-1\",\"content\":\"{\\\"error\\\":\\\"no such city\\\",\\\"ok\\\":false}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-2\",\"content\":\"{\\\"ok\\\":false,\\\"error\\\":{\\\"code\\\":404}}\"}],\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"description\":\"Look up\",\"parameters\":{\"type\":\"object\"}}}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user:Weather?",
+                  "tool-call:call-1:lookup:{}",
+                  "tool-call:call-2:lookup:{}",
+                  "tool-result:call-1:\"no such city\":true",
+                  "tool-result:call-2:{\"code\":404}:true"
+                ]
+              },
+              "turn_valid": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
     "llm.chat/authored/ingress-a-tool-that-is-not-a-function-is-refused": {
       "purpose": "ingress refuses a tool whose type is not function (ingress.rs decode_tools)",
       "source": [
@@ -27221,6 +27324,101 @@
               "turn_valid": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
+    "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string": {
+      "purpose": "ingress other JSON in a tool message stays a successful string",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"Weather?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-2\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-3\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}},{\"id\":\"call-4\",\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"tool_call_id\":\"call-1\",\"content\":\"{\\\"ok\\\":false}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-2\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false,\\\"code\\\":404}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-3\",\"content\":\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true}\"},{\"role\":\"tool\",\"tool_call_id\":\"call-4\",\"content\":\"[{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false}]\"}],\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"lookup\",\"description\":\"Look up\",\"parameters\":{\"type\":\"object\"}}}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user:Weather?",
+                  "tool-call:call-1:lookup:{}",
+                  "tool-call:call-2:lookup:{}",
+                  "tool-call:call-3:lookup:{}",
+                  "tool-call:call-4:lookup:{}",
+                  "tool-result:call-1:\"{\\\"ok\\\":false}\":false",
+                  "tool-result:call-2:\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false,\\\"code\\\":404}\":false",
+                  "tool-result:call-3:\"{\\\"error\\\":\\\"x\\\",\\\"ok\\\":true}\":false",
+                  "tool-result:call-4:\"[{\\\"error\\\":\\\"x\\\",\\\"ok\\\":false}]\":false"
+                ]
+              },
+              "turn_valid": {
+                "kind": "literal",
+                "value": true
               }
             }
           },

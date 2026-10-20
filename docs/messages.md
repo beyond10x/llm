@@ -34,6 +34,14 @@ in — the same JSON value, not the same bytes: it is held as a `serde_json::Val
 re-serialize sorted. The response half is unaffected: a stream or response this client read from its own bound
 endpoint is attributable, and is attributed.
 
+**A failed tool result is `is_error: true`.** The `tool_result` block carries the output as
+`content`, a string as it is and any other value as compact JSON, and the neutral `failed` flag as
+`is_error`. Ingress reads `is_error` back (absent is `false`) and the `content` string as the
+output. A call the caller rejected before running it is sent the same way, `is_error: true` with
+the reason as the caller's text: this wire has no rejected state, and ingress refuses any key
+beside `type`, `tool_use_id`, `content` and `is_error`
+([design](design.md#failed-and-rejected-tool-results)).
+
 The route requires `max_tokens`. The neutral `max_output_tokens` stays optional, and an absent one
 resolves to the binding's declared maximum — the only value in the system that is an operator's
 statement rather than a guess. Temperature above `1.0` is refused: this route's range is not the

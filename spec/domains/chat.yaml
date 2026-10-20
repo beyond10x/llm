@@ -85,6 +85,13 @@ entities:
       - {name: dispatch, type: Optional<String>}
       - {name: model, type: Optional<String>}
       - {name: instructions, type: Optional<String>}
+      # One entry per decoded item; a result is `tool-result:<call>:<output as JSON>:<failed>`.
+      # A `tool` message is a result answering its `tool_call_id`. Its content, text parts
+      # joined, is a failed result when it parses to a JSON object of exactly the keys `error`
+      # and `ok`, `ok` being `false`, which is what `ProjectRequest` sends for a failed result;
+      # the output is then the `error` value. Any other content, JSON or not, is a successful
+      # result whose output is that content as a string. A call rejected before it ran travels
+      # as a failed result too: this wire has no separate rejected state.
       - {name: items, type: List<String>}
       - {name: tools, type: List<String>}
       - {name: tool_choice, type: Optional<String>}

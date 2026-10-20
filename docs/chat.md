@@ -48,7 +48,12 @@ A tool message carries text only, so a failed result travels inside it as
 `{"error": <output>, "ok": false}`. This is the envelope `beyond10x/harness` `9e401e40` uses on
 the equally text-only Responses wire (`crates/harness-responses/src/project.rs`), for the same
 reason: an empty failed result must never read to the model as an empty success. A successful
-string result is passed through unquoted; any other value is compact JSON.
+string result is passed through unquoted; any other value is compact JSON. Gateway ingress reads
+the failure object back as a failed result ([below](#gateway-ingress)).
+
+A call the caller rejected before running it is sent the same way: `failed: true`, with the reason
+as the caller's text in `output`, so the model reads `{"error": <reason>, "ok": false}`. This wire
+has no separate rejected state, and llm adds none ([design](design.md#failed-and-rejected-tool-results)).
 
 ## Reading a response
 
@@ -185,9 +190,14 @@ would only move the same refusal into `project_request`, after the client has be
 and after a route has been chosen. An ingress refusal is `not-sent`: nothing has been
 dispatched anywhere.
 
-A `tool` message decodes to a result with `failed: false`, because this wire has no place to
-say a call failed. Its content stays a string: keeping it is lossless, and guessing that it
-was meant to be JSON would not be.
+A `tool` message decodes to a result answering its `tool_call_id`. Its content, its text parts
+joined, is a failed result when it parses to a JSON object of exactly the keys `error` and `ok`,
+`ok` being `false`: the object the outgoing projection sends for a failure. The output is then the
+`error` value, whatever its type, so a failed result `project_request` sends decodes to the result
+it was. Any other content, JSON or not (`{"ok": false}` alone, an object with a third key, `ok`
+true, an array), is a successful result whose output is that content as a string: keeping it is
+lossless, and guessing that it was meant to be JSON would not be. A successful result whose text
+is exactly the failure object therefore reads back as failed; the wire cannot tell the two apart.
 
 `encode_ingress_completion` and `IngressStream` answer on the same wire. The caller supplies
 the response identity and creation time; this library owns no clock and mints no identity.

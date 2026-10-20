@@ -233,13 +233,14 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
                     .get("tool_call_id")
                     .and_then(Value::as_str)
                     .ok_or_else(|| Error::invalid("chat tool message names no call"))?;
+                // This wire carries the result as text and has no place to say a call failed,
+                // so the outgoing projection sends a failure as the object
+                // `{"error": <output>, "ok": false}`; only that object reads back as failed.
+                let (output, failed) = read_tool_result(content_text(message.get("content"))?);
                 request.items.push(Item::ToolResult {
                     call_id: call_id_of(call_id)?,
-                    // This wire carries the result as text. Keeping it a string is lossless;
-                    // guessing that it was meant to be JSON would not be.
-                    output: Value::String(content_text(message.get("content"))?),
-                    // The wire has no place to say a call failed, so no result claims one did.
-                    failed: false,
+                    output,
+                    failed,
                 });
             }
             // Every other role was refused above, before its keys were read.
@@ -247,6 +248,23 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
         }
     }
     Ok(())
+}
+
+/// A tool message's text read back as a result: failed with the `error` value as its output
+/// when the text parses to a JSON object of exactly the keys `error` and `ok`, `ok` being
+/// `false` (what `outgoing.rs` `result_text` sends for a failure), and otherwise successful with
+/// the text as a string. Keeping other text a string is lossless; guessing that it was meant to
+/// be JSON would not be. A successful result whose text is exactly that object reads back as
+/// failed: the wire cannot tell the two apart.
+fn read_tool_result(text: String) -> (Value, bool) {
+    if let Ok(Value::Object(mut object)) = serde_json::from_str::<Value>(&text)
+        && object.len() == 2
+        && object.get("ok") == Some(&Value::Bool(false))
+        && let Some(error) = object.remove("error")
+    {
+        return (error, true);
+    }
+    (Value::String(text), false)
 }
 
 /// Whether a `type` key leaves its object in the subset: absent, `null` or `function`.

@@ -9,7 +9,8 @@ use llm_chat::{
 };
 use llm_core::{
     Advisory, CallId, Controls, Dispatch, ErrorCode, Hints, Id, Item, Protocol, StopReason,
-    StreamEvent, ToolCall, ToolChoice, ToolName, TurnObservation, TurnOutcome, Usage, Verbosity,
+    StreamEvent, ToolCall, ToolChoice, ToolName, ToolSpec, TurnObservation, TurnOutcome,
+    TurnRequest, Usage, Verbosity,
 };
 use serde_json::{Value, json};
 
@@ -1057,5 +1058,139 @@ fn each_carried_option_survives_a_round_trip_through_the_projection() {
         assert_eq!(back.model, "Qwen/Qwen3-8B");
         back.model = request.model.clone();
         assert_eq!(back, request, "{field}");
+    }
+}
+
+// ---------------------------------------------------------------- tool results
+
+/// A turn answering one `lookup` call with a failed result carrying `output`.
+fn failed_result_turn(output: Value) -> TurnRequest {
+    let mut request = TurnRequest::new(
+        "small",
+        vec![
+            Item::ToolCall(ToolCall {
+                call_id: call_id("call-1"),
+                name: ToolName::new("lookup").expect("fixture tool"),
+                arguments: json!({}),
+            }),
+            Item::ToolResult {
+                call_id: call_id("call-1"),
+                output,
+                failed: true,
+            },
+        ],
+    );
+    request.tools = vec![ToolSpec {
+        name: ToolName::new("lookup").expect("fixture tool"),
+        description: "Look up".to_owned(),
+        input_schema: json!({"type": "object"}),
+    }];
+    request
+}
+
+/// The result a `tool` message answering `lookup_call()` decodes to, `content` as sent.
+fn decoded_result(content: &Value) -> Item {
+    let mut body = with_messages(json!([
+        {"role": "user", "content": "Weather?"},
+        {"role": "assistant", "content": null, "tool_calls": [lookup_call()]},
+        {"role": "tool", "tool_call_id": "call-1", "content": content}
+    ]));
+    body["tools"] = json!([lookup_tool()]);
+    decode_ingress_request(&body)
+        .expect("decoded")
+        .request
+        .items
+        .pop()
+        .expect("the tool result")
+}
+
+/// The Chat encoder sends a failed result as `{"error": <output>, "ok": false}`, and ingress
+/// reads that object back as the failure it was, with the output the caller gave, of any type.
+#[test]
+fn a_failed_result_the_chat_encoder_sent_decodes_back_failed_with_its_output() {
+    for output in [
+        json!("no such city"),
+        json!(""),
+        json!("{\"city\":\"Oslo\"}"),
+        json!({"code": 404, "reason": "missing"}),
+        json!({"error": "nested", "ok": false}),
+        json!(["a", 1]),
+        json!(7),
+        json!(false),
+        Value::Null,
+    ] {
+        let request = failed_result_turn(output.clone());
+        let projected = project_request(&request, &binding(), false).expect("projected");
+        let back = decode_ingress_request(&projected)
+            .expect("the projected body decodes")
+            .request;
+        assert_eq!(back.items, request.items, "{output}");
+    }
+}
+
+/// The failure object is read by its parsed shape: key order, spacing and how the content was
+/// split into text parts do not change it.
+#[test]
+fn a_tool_message_carrying_the_failure_object_decodes_as_failed() {
+    let cases = [
+        (
+            json!(r#"{"error":"no such city","ok":false}"#),
+            json!("no such city"),
+        ),
+        (
+            json!(r#"{ "ok": false, "error": {"code": 404} }"#),
+            json!({"code": 404}),
+        ),
+        (
+            json!([
+                {"type": "text", "text": "{\"error\":\"no such"},
+                {"type": "text", "text": " city\",\"ok\":false}"}
+            ]),
+            json!("no such city"),
+        ),
+    ];
+    for (content, output) in cases {
+        assert_eq!(
+            decoded_result(&content),
+            Item::ToolResult {
+                call_id: call_id("call-1"),
+                output,
+                failed: true,
+            },
+            "{content}"
+        );
+    }
+}
+
+/// Only an object of exactly `error` and `ok`, `ok` being `false`, is a failure. Any other
+/// content, JSON or not, is a successful result carrying that content as a string.
+#[test]
+fn tool_content_that_is_not_exactly_the_failure_object_stays_a_successful_string() {
+    for content in [
+        r#"{"ok":false}"#,
+        r#"{"error":"no such city"}"#,
+        r#"{"error":"no such city","ok":false,"code":404}"#,
+        r#"{"error":"no such city","ok":true}"#,
+        r#"{"error":"no such city","ok":"false"}"#,
+        r#"{"error":"no such city","ok":null}"#,
+        r#"{"ok":false,"output":"no such city"}"#,
+        r#"[{"error":"no such city","ok":false}]"#,
+        r#""{\"error\":\"no such city\",\"ok\":false}""#,
+        r#"{"error":"no such city","ok":false"#,
+        "false",
+        "null",
+        "42",
+        "sunny",
+        "",
+    ] {
+        assert_eq!(
+            decoded_result(&json!(content)),
+            Item::ToolResult {
+                call_id: call_id("call-1"),
+                output: json!(content),
+                failed: false,
+            },
+            "{content}"
+        );
     }
 }

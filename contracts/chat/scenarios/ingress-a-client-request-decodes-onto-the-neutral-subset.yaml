@@ -21,7 +21,7 @@ assert:
     - 'user:Weather?'
     - 'assistant:Looking.'
     - 'tool-call:call-1:lookup:{"city":"Oslo"}'
-    # This wire cannot say a call failed, so no decoded result claims one did.
+    # Text that is not the failure object `{"error":…,"ok":false}` is a successful result.
     - 'tool-result:call-1:"sunny":false'
     tools:
     - 'lookup:Look up:{"type":"object"}'
