@@ -25,3 +25,7 @@ llm-credentials.workspace = true
 llm-http.workspace = true
 llm-routing = { package = "b10x-llm-routing", path = "../llm-routing" }
 tokio.workspace = true
+
+[[example]]
+name = "interrupt_turn"
+test = true

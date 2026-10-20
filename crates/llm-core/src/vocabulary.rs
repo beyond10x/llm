@@ -60,9 +60,10 @@ pub struct Capabilities {
     /// true, and true is not written, so a document from before the field keeps its bytes.
     #[serde(default = "streams", skip_serializing_if = "is_true")]
     pub output_streaming: bool,
-    /// Whether input can reach a turn that is still producing output. False for every protocol
-    /// in this workspace until story:input-into-a-running-turn decides otherwise. Absent from a
-    /// document means false, and false is not written.
+    /// Whether input can reach a turn still producing output. False for every client here: each
+    /// posts one HTTP request and reads server-sent events, and none speaks the Responses WebSocket
+    /// mode steering needs (`docs/design.md`, "Input into a running turn"). Absent from a document
+    /// means false, and false is not written.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub input_during_output: bool,
 }

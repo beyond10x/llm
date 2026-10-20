@@ -26,7 +26,7 @@ A caller, such as a graph deciding how to schedule a model node, reads two decla
 | Declaration | Means | Every client in this workspace |
 | --- | --- | --- |
 | `output_streaming` | the model's text reaches the sink incrementally, as it is generated, not only at the end | true: Responses, Messages and Chat Completions all request a streamed answer |
-| `input_during_output` | input can reach a turn that is still producing output | false, until story:input-into-a-running-turn decides otherwise |
+| `input_during_output` | input can reach a turn that is still producing output | false: no client here can send it ([Input into a running turn](#input-into-a-running-turn)) |
 
 `Capabilities::text` declares both as the clients do. In an `llm.binding/1`, `llm.catalog/1` or
 `llm.routes/1` document both are optional: absent means `output_streaming` true and
@@ -81,6 +81,83 @@ The other answers to the first case, and why they were not taken:
 Only Responses can replace a server's text ([responses.md](responses.md)). Messages shows a text
 block's opening text as a delta ([messages.md](messages.md)), and Chat Completions carries text
 only as deltas ([chat.md](chat.md)).
+
+### Input into a running turn
+
+llm does not carry input into a turn that is still producing output. A caller with new input
+cancels the running turn and starts a new one carrying what the first turn left and the new input.
+
+Why it is not offered:
+
+- **The port takes one fixed request.** `Model::turn(&self, request: &TurnRequest, sink, cancel)`
+  (`crates/llm-core/src/port.rs:75-80`) receives the whole request when the turn starts. The only
+  signal a caller sends while it runs is `cancel`, a `CancellationToken`
+  (`crates/llm-core/src/lib.rs:27`).
+- **The exchange llm speaks has no way in.** Each client encodes the whole request into one body
+  before it sends (`crates/llm-responses/src/client.rs:172`,
+  `crates/llm-messages/src/client.rs:123`, `crates/llm-chat/src/client.rs:64`), posts that finished
+  `Vec<u8>` once (`crates/llm-http/src/transport.rs:202-210`), and from then on only reads the
+  answer's server-sent events. Over that exchange none of Responses, Messages or Chat Completions
+  takes input into a response that is still streaming.
+- **Steering needs a transport llm does not implement.** OpenAI documents mid-turn steering for
+  Responses: a `response.steer` event sent on a Responses WebSocket connection while a response
+  runs, for the GPT-6 model family only (<https://developers.openai.com/api/docs/guides/steering>,
+  read 2026-10-20). llm's Responses client speaks HTTP with server-sent events and does not
+  implement WebSocket mode, so llm does not offer steering; offering it is the draft
+  story:responses-websocket-steering. Anthropic documents nothing like it for Messages, and
+  OpenAI nothing like it for Chat Completions.
+- **So the declaration says no.** `Capabilities::input_during_output` is `false` on every binding
+  (`Capabilities::text`, `crates/llm-core/src/vocabulary.rs:86-98`), and since 0.8.0
+  `Capabilities::validate_protocol` refuses `true` for all three protocols
+  (`crates/llm-core/src/vocabulary.rs:120-136`) in every binding, catalog and routes document
+  ([Streaming declarations](#streaming-declarations)). A caller that schedules from the
+  declaration reads `false` and uses the pattern below.
+
+The supported pattern, cancel then continue:
+
+1. **Keep what was shown.** Every `StreamEvent` is final
+   ([Streamed events are final](#streamed-events-are-final)), so the `TextDelta`s the caller's sink
+   accepted are what the model said, whatever happens to the turn afterwards. A delta is accepted
+   when its `emit` completes, and only then is it recorded as shown (step 2 says why).
+2. **Cancel when the input arrives.** Every client checks the `Cancel` at each read of the stream
+   (`crates/llm-http/src/transport.rs:341-342` and `:363`). The Responses and Messages clients also
+   race it against each `emit`, the cancel first, and drop an `emit` still in progress when it
+   fires (`crates/llm-responses/src/client.rs:343-349`,
+   `crates/llm-messages/src/decode.rs:803-809`): a sink that shows a delta across an `.await`
+   records it only after that `.await` returns. The Chat Completions client hands over the events
+   of the payload it last read before it reads again (`crates/llm-chat/src/client.rs:87-96`). The
+   turn ends `cancelled` with dispatch `accepted` and returns no `TurnOutcome`. It is never
+   retried (`Error::may_retry`, `crates/llm-core/src/error.rs:84-93`), and a routed run starts no
+   further attempt (`crates/llm-routing/src/fallback.rs:413-415`).
+3. **Start the next turn.** Its items are the conversation so far, then what the first turn left,
+   then the new input as `Item::UserText`. What the first turn left depends on how it ended:
+   - **Cancelled:** the shown text as one `Item::AssistantText`; nothing shown, no assistant item.
+   - **Finished before the cancel reached it:** its outcome's items. Each assistant message in them
+     carries the text deltas shown for it, and a message no delta was shown for carries the
+     server's text; on Responses, shown text the decoder cannot pair with exactly one message is
+     carried in none, and `shown-text-unpaired` says so
+     ([Streamed events are final](#streamed-events-are-final)). A caller that must store exactly
+     what it showed checks for that warning.
+   - **Finished in tool calls:** its outcome's items, then a result for every call it proposed,
+     because a request with an unanswered call is refused before it is sent (`every prior tool
+     call needs a result before the next turn`, `crates/llm-core/src/turn.rs:152-156`). Run the
+     tool and carry its result, or carry the call as rejected: a failed `Item::ToolResult` whose
+     output is the caller's reason
+     ([Failed and rejected tool results](#failed-and-rejected-tool-results)). The new input comes
+     after the results.
+
+Each client sends the request's whole conversation on every turn (Responses with `store: false`,
+`crates/llm-responses/src/request.rs:154-155`; Messages, `crates/llm-messages/src/codec.rs:84`;
+Chat Completions, `crates/llm-chat/src/outgoing.rs:124`), so the next turn needs nothing from the
+first beyond what the caller kept. From a cancelled turn only text crosses: it returned no outcome,
+so no tool call, reasoning or opaque state of it reaches the next request.
+
+`crates/llm-docs/examples/interrupt_turn.rs` runs the pattern in-process. Its tests check each
+branch: the second request carries the shown text as assistant text followed by the new input, a
+finished turn's outcome in its place, no assistant item when nothing was shown, and a rejected
+result for each call a finished turn proposed. The guide
+[Interrupt a turn with new input](../website/docs/guides/interrupt-a-turn-with-new-input.md) quotes
+it with its output.
 
 ### Failed and rejected tool results
 
