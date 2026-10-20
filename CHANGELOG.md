@@ -6,6 +6,8 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-10-20
+
 ### Added
 
 - `b10x-llm-http`: `QuotaRule`, `HttpClient::with_quota_rule`, `MAX_REFUSAL_BYTES` (16 KiB) and
