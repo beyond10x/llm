@@ -58,6 +58,8 @@ are source releases at bare-version tags.
   counts) are accepted and not read, in the shape llama-server writes; any other shape is refused
   naming the field, not its value. A chunk refused while its report is read adds nothing to the
   evidence a failure carries.
+- Specification tooling: CI installs ess 0.66.0 and the conformance runner builds on the ess 0.66.0
+  crates (both 0.56.0 before); `contracts/suite.json` is regenerated with it (888 scenarios, all pass).
 
 ### Fixed
 
