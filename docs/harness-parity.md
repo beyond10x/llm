@@ -348,6 +348,36 @@ and the provider documentation in `docs/design.md` "Provider failures retried be
   `llm-responses/tests/adversary_w09_retry.rs:66` and `llm-messages/tests/adversary_w09_retry.rs:75`,
   until `story:relayed-failures-keep-their-retry-decision`.
 
+Row R36 (`story:text-deltas-are-final`; llm lines at this branch, not at 0.7.0):
+
+- **R36.** Each delta is shown live (R30) and recorded per `item_id`, per `output_index` when it
+  names no item, and per message (up to the next `response.output_item.done`) when it names
+  neither: `llm-responses/src/stream.rs:464`, `:493`. On a returned turn each item's text is its
+  shown deltas. One post-pass pairs shown text with exactly one message the turn carries, by `id`,
+  the ending `output_item.done`, the index the stream named, the terminal position, equal text,
+  then elimination (`:179`-`:325`, `:533`, `:673`). A server text that differed gives way
+  (`shown-text-kept`). Shown text more than one message could be is carried in none, and the
+  server's messages stay as sent (`shown-text-unpaired`). The client emits both after
+  `validate_for`, never for a refused turn (`llm-responses/src/client.rs:163`). Shown text no
+  message could be is kept, placed by `output_index`. Where the server's own message carries other
+  text than its deltas, llm carries the shown text and warns `shown-text-kept`, where Harness
+  carries the terminal `output`'s (`harness-responses/src/lib.rs:483`-`489`); at 0.7.0 the
+  server's message outranked the deltas. Spec `spec/domains/responses.yaml` "Kept text";
+  `docs/design.md` "Streamed events are final". New tests:
+  `the_turn_carries_the_text_the_caller_was_shown_and_says_when_the_server_wrote_other_text`
+  `llm-responses/tests/live_stream.rs:750`,
+  `shown_text_no_single_message_can_be_leaves_the_server_messages_as_sent_and_says_so` `:798`,
+  `the_live_client_says_so_before_it_returns_a_turn_whose_server_text_gave_way` `:845`,
+  `deltas_that_name_no_item_do_not_put_two_messages_text_into_the_first`
+  `llm-responses/tests/adversary_w09_shown_text.rs:134`,
+  `a_message_no_delta_showed_keeps_its_own_text_when_ids_cannot_pair` `:174`,
+  `a_refused_turn_does_not_tell_the_caller_its_shown_text_was_kept` `:435`,
+  `an_index_the_deltas_and_the_terminal_output_disagree_on_does_not_carry_the_answer_twice`
+  `llm-responses/tests/adversary_w09_pass2.rs:153`,
+  `deltas_naming_neither_item_nor_index_do_not_put_two_messages_text_into_the_first` `:191`, and
+  `a_message_no_delta_showed_keeps_its_text_when_the_deltas_name_no_index` `:218`. The row stays
+  covered.
+
 ## Gaps
 
 One line per `gap` or `partial` row, phrased as a story title.

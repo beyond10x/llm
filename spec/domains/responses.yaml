@@ -120,7 +120,9 @@ domain: llm.responses
 # and a successful string from a successful number or object, so reading a body back could flip
 # `failed` or change the value. One envelope for every result is what lets ingress return the turn
 # that was projected, field for field. On ingress a `function_call_output` string that parses to
-# exactly that envelope (an object of exactly a boolean `ok` and an `output`) is read as one; any
+# exactly that envelope (an object of exactly a boolean `ok` and an `output`) is read as one.
+# Ingress parses the envelope at most 127 levels deep, so an output nested more than 126 levels
+# deep, failed or not, reads back as a successful string carrying the envelope's text. Any
 # other string is a successful result whose output is that string, as Codex sends a command's
 # output. It goes back out in the envelope, so `body_preserved` is false for it. An `output` that
 # is not a string is refused.
