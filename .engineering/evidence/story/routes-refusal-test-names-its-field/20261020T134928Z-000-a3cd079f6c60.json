@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T13:49:28Z",
+  "actor": "human:timo",
+  "artifact": "story:routes-refusal-test-names-its-field",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 task check steps run one by one through b10x-build-slot on wave/2026-10-20-w10 at dad108a9 (tree llm-w10-http, detached)",
+    "reference": "dad108a9; 1022 workspace tests passed, 0 failed, 3 ignored; conformance 883/883; every step exit 0; logs ~/.cache/llm-w10/integrate/gate/"
+  }
+}

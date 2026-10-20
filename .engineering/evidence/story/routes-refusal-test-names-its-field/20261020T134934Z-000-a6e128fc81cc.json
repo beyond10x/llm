@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T13:49:34Z",
+  "actor": "human:timo",
+  "artifact": "story:routes-refusal-test-names-its-field",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-models --all-features --test routes",
+    "reference": "VERIFIED: at base 5e00283d the ROUTE case stayed green with deny_unknown_fields dropped from RawDeclaredRoute (M4) and the env: echo mutant (M5); at ca6f83d0 both red; ~/.cache/llm-w10/routes-test/scratch/mut-M*.log"
+  }
+}

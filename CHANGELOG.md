@@ -6,6 +6,53 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `b10x-llm-http`: `QuotaRule`, `HttpClient::with_quota_rule`, `MAX_REFUSAL_BYTES` (16 KiB) and
+  `REFUSAL_WAIT` (1 s). With a rule, the transport reads a 429's body, and only a 429's, up to
+  `MAX_REFUSAL_BYTES` and for at most `REFUSAL_WAIT` within the exchange's deadline and the
+  caller's cancellation, and asks the rule whether it reports an exhausted quota. The transport
+  knows no provider's error document; a response tap is still shown the head alone.
+
+### Changed
+
+- An HTTP 429 that reports an exhausted quota, spend limit or subscription usage limit is now
+  final: `refused`, dispatch `rejected`, not retriable, the class the same document already had
+  inside a Responses stream, so routing ends the run instead of retrying and falling back.
+  `b10x-llm-responses`: a 429 whose body's `error.code` is `insufficient_quota`,
+  `credit_balance_exhausted`, `organization_spend_limit_exceeded`, `project_spend_limit_exceeded`
+  or `organization_usage_limit_exceeded`, or whose `error.type` is `insufficient_quota`,
+  `usage_limit_reached` or `usage_not_included` (the Codex backend's subscription limits), as the
+  official Codex CLI treats them (`openai/codex` 8196bcdc,
+  `codex-rs/codex-api/src/api_bridge.rs:185`-`238`). `b10x-llm-messages`: a 429 whose body's
+  `error.type` is `rate_limit_error` and whose `error.details.error_code` is
+  `enforced_spend_limit_reached`, Anthropic's tier spend cap. Every other 429 (a
+  `rate_limit_error` without that code included, with or without `retry-after`), a Chat
+  Completions 429, and a 429 whose body is larger, slower or not JSON stay a retriable
+  `rate-limited` (`docs/design.md` "Provider failures retried before output").
+- `b10x-llm-http`: an error status whose answer carries `x-should-retry: false` is not retriable,
+  whatever its status; code, dispatch and retry hint are unchanged. It is the header the official
+  OpenAI and Anthropic SDKs obey ahead of their status rules (lines and commits in
+  `docs/design.md`, with the two cases two SDKs decide first). It only narrows:
+  `x-should-retry: true` never makes a final status retriable. The Responses, Messages and Chat
+  Completions clients all read it, so routing neither retries such a failure nor, for a 502 with
+  dispatch `unknown`, falls back. This closes the 0.8.0 "Known" risk for a failure before output
+  once llm-gateway sends `x-should-retry: false` on the 502 it answers after its own retries are
+  spent; until it does, its 502 stays retriable. A failure a gateway relays inside a stream still
+  reads back by the receiving decoder's rules.
+
+### Fixed
+
+- `b10x-llm-messages`, `b10x-llm-chat`: a stream cut after output the caller was not shown is
+  final, as on Responses. The transport marks a cut retriable (a body that ends inside an event,
+  or fails in transit); `MessagesClient` and `ChatClient` now drop that mark once their decoder
+  has answered. Messages counts any payload but `message_start` and `ping`, so a block that
+  opened empty counts. Chat Completions counts non-empty `content` or `reasoning_content`, any
+  `tool_calls` fragment, and a finish reason; the chunk that opens the stream (`role` with an
+  empty or null `content`) does not. Before this, routing retried such a turn on its target. A
+  cut before output keeps its retry class (`docs/design.md` "Provider failures retried before
+  output").
+
 ## [0.8.1] - 2026-10-20
 
 ### Fixed

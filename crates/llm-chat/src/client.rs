@@ -93,7 +93,17 @@ impl Model for ChatClient {
                         }
                     }
                     Ok(None) => break,
-                    Err(error) => return Err(retain(error, &projection, target)),
+                    // A cut. Once the stream has carried output, shown to the caller or not (a
+                    // call whose name has not arrived, a finish reason), it is final: another
+                    // attempt would answer, and bill, again. As on Responses and Messages.
+                    Err(error) => {
+                        let error = if projection.has_answered() {
+                            error.with_retriable(false)
+                        } else {
+                            error
+                        };
+                        return Err(retain(error, &projection, target));
+                    }
                 }
             }
             let outcome = projection

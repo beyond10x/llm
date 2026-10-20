@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-20T13:49:33Z",
+  "actor": "human:timo",
+  "artifact": "story:relayed-failures-keep-their-retry-decision",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p b10x-llm-http --test retry_classes -p b10x-llm-responses --test retry_class -p b10x-llm-messages --test retry_class -p b10x-llm-chat --test retry_signal -p b10x-llm-models --test relayed_failure",
+    "reference": "VERIFIED: base red (left (Transport, Unknown, true) right (..., false); routing asked the gateway 4 times, left 4 right 1); unit c0ed9f3d green; ~/.cache/llm-w10/http/scratch/red-s2.log, gate-r2-*.log"
+  }
+}

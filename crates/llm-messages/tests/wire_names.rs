@@ -29,6 +29,13 @@ const CONFIRMED: &[&str] = &[
     // beta a subscription token requires, `crates/harness-messages/src/lib.rs:86` and `:93`.
     "anthropic-beta",
     "oauth-2025-04-20",
+    // Read 2026-10-20 for story:quota-429-is-final on Anthropic's rate-limits page, section
+    // "Reaching your spend cap" (platform.claude.com/docs/en/api/rate-limits): the spend-cap 429
+    // body carries `"details": { "error_code": "enforced_spend_limit_reached" }` inside `error`,
+    // and the page says to use that code to tell the response apart from a rate limit.
+    "details",
+    "enforced_spend_limit_reached",
+    "error_code",
     // Read for llm 0.8.1 in Anthropic's own API reference, fetched 2026-10-20 from
     // `https://platform.claude.com/docs/en/api/messages.md` (lines of that file): the message's
     // `container` (`:3118`) with its `id`, `expires_at` and `skills` (`:3124`-`:3134`),

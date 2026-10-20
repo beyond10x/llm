@@ -15,9 +15,11 @@ out of the text, which is public.
 
 ## Evidence
 
-The Responses overload correction in 0.3.1 recognizes `server_is_overloaded` as availability, and
-the next release retries Responses `server_error` and `rate_limit_exceeded` and Messages
-`overloaded_error` and `api_error` by the same rule (`story:retry-classes-harness-retried`).
+The Responses overload correction in 0.3.1 recognizes `server_is_overloaded` as availability;
+0.8.0 retries Responses `server_error` and `rate_limit_exceeded` and Messages `overloaded_error`
+and `api_error` by the same rule (`story:retry-classes-harness-retried`); the next release makes a
+quota 429 final (`story:quota-429-is-final`) and honours `x-should-retry: false`
+(`story:relayed-failures-keep-their-retry-decision`).
 Loopback tests pin retry eligibility before output and finality after visible or silent output;
 the default gate remains independent of live provider availability.
 
@@ -54,7 +56,7 @@ are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 | `neutral-inference` | **A neutral model turn.** `Model::turn` takes one request, a caller-owned sink and a cancellation token, and makes one attempt: bounded text and tool items, streamed events, typed failures with independent dispatch evidence, and opaque state bound to its protocol, provider, account, endpoint, model and binding revision. |
 | `streamed-tool-call-name` | **Streamed tool calls carry their announced name.** The start of a streamed tool call names the tool before any argument fragment, in all three protocol projections. |
 | `unattributed-opaque-state` | **Opaque state from ingress cannot be sent until bound.** Reasoning state that arrives in a client request is held unattributed, and every egress path refuses it until the caller binds it to a target of the same protocol. |
-| `parity-retry-classes` | **Every failure says whether it may be retried.** `Error::retriable` and `Error::may_retry`: the transport marks 408, 429, 5xx, no response, a body failing mid-stream and a stream ending inside an event; unauthorized, refused, invalid and cancelled failures never are. |
+| `parity-retry-classes` | **Every failure says whether it may be retried.** `Error::retriable` and `Error::may_retry`: the transport marks 408, 429 (a 429 a client's quota rule reads as an exhausted quota excepted), 5xx, no response, a body failing mid-stream and a stream ending inside an event; unauthorized, refused, invalid and cancelled failures never are. An error status carrying `x-should-retry: false` is final whatever its status. |
 | `neutral-turn-controls` | **Thinking, parallel tool calls and advisory hints in the neutral turn.** `TurnRequest.controls` carries a thinking mode, the parallel-tool-call choice and advisory hints (prompt cache, cache key, verbosity, reasoning summary, unforwarded field names); `wire_effort` is the one reasoning table (`max` reaches Chat Completions and Responses as `xhigh`), and a turn with controls is `llm.turn/4`. |
 | `runtime-contracts` | **A written contract and compatibility policy.** `docs/contract-v1.md` states turn ownership, validation, accounting, pricing, credentials and compatibility; the versioned envelopes (`llm.turn/3` and `/4`, `llm.outcome/4`, `llm.usage/2`, `llm.cost/2`, `llm.binding/1`, `llm.catalog/1`) refuse unknown versions and fields. |
 | `capabilities-declare-streaming` | **A model declares whether its output streams and whether input can reach a running turn.** `Capabilities` carries `output_streaming` and `input_during_output`; every client here declares `true` and `false`, a document written before them keeps its binding revision and configuration digest, and a binding, catalog or route claiming input during output or unstreamed output is refused. |
@@ -87,7 +89,7 @@ are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 | `tool-result-rejected-or-failed` | **A failed tool result reads back as failed, and a rejected call has one encoding.** Chat ingress reads its own failure object as `failed: true`; a call rejected before it ran is sent as `failed: true` with the caller's reason in `output`, on every wire, because none carries a rejected state. |
 | `client-turns-cross-wire` | **A Claude Code and a Codex first turn cross wires.** Each decodes on its own wire and projects onto the other two with every field under a written rule; each projection lists the advisory hints it omits, and each client warns `advisory-omitted` after a successful turn. |
 | `codex-stream` | **Responses turns against the Codex backend.** A success without a content type is read as an event stream when one was asked for, and an empty terminal output after streamed items keeps the streamed items. |
-| `retry-classes-harness-retried` | **The provider failures Harness retried are retriable before output.** A Responses `server_error` or `rate_limit_exceeded` and a Messages `overloaded_error` or `api_error` stream error may be retried before any output and are final after it, the rule Responses `server_is_overloaded` already followed; an exhausted quota inside a stream stays final. No wire field carries a gateway's retry decision, so a failure an llm gateway relays with nothing streamed first reads back retriable whatever the gateway decided. |
+| `retry-classes-harness-retried` | **The provider failures Harness retried are retriable before output.** A Responses `server_error` or `rate_limit_exceeded` and a Messages `overloaded_error` or `api_error` stream error may be retried before any output and are final after it, the rule Responses `server_is_overloaded` already followed; an exhausted quota stays final inside a stream and, since `story:quota-429-is-final`, as an HTTP 429 before it (Responses by `error.code`, or by `error.type` for `insufficient_quota` and the Codex backend's `usage_limit_reached` and `usage_not_included`; Messages a `rate_limit_error` whose `error.details.error_code` is `enforced_spend_limit_reached`). A failure an llm gateway relays inside a stream with nothing streamed first still reads back retriable; a failure before output, the gateway's HTTP 502, reads final when it carries `x-should-retry: false`, which llm-gateway has to send. |
 
 ### Credentials
 
@@ -121,7 +123,7 @@ are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 | --- | --- |
 | `call-tool-helper` | **One forced tool call.** `b10x-llm-tool-call`: `call_tool` forces one named tool on any `Model` and returns that call's JSON arguments or a typed `ModelError`; `codex_model` binds a Responses model to the operator's Codex login. |
 | `parity-blocking-adapters` | **A blocking adapter for a synchronous loop.** `b10x-llm-blocking`: `BlockingModel` runs one turn on the calling thread, hands events to a `BlockingSink` as they arrive, takes cancellation from any thread, and forks for concurrent turns. |
-| `harness-builds-on-llm` | Pending: **Harness builds on llm 0.7.0.** Atlas ADR 0097 decides the cutover: Harness drops its own model wire and credential crates and rebases the bridge of its spike, which built and passed its tests on llm 0.1.7, onto 0.7.0, in Harness's own work. `docs/harness-parity.md` cites every llm cell against 0.7.0 and lists the llm API changes the bridge meets; one needs an edit (`TurnRequest.controls`). Rows R28 and M27 are partial at 0.7.0, which marks fewer provider failures retriable than Harness's wires did; the next release retries those classes before any output. Harness has not merged it. |
+| `harness-builds-on-llm` | **Harness builds on llm.** Atlas ADR 0097 decided the cutover: Harness dropped its own model wire and credential crates and builds on llm 0.8.0 since Harness commit `97ff3d7f` on its `main` (2026-10-20); its spike had built and passed its tests on llm 0.1.7. `docs/harness-parity.md` cites every llm cell against 0.7.0 and lists the llm API changes the bridge meets; one needs an edit (`TurnRequest.controls`). Rows R28 and M27 are partial at 0.7.0, which marks fewer provider failures retriable than Harness's wires did; 0.8.0 retries those classes before any output. |
 
 ### Accounting
 

@@ -58,6 +58,10 @@ pub struct StreamProjection {
     stop_reason: Option<StopReason>,
     reported: Reported,
     terminated: bool,
+    /// Whether the stream carried output, shown to the caller or not: non-empty `content` or
+    /// `reasoning_content`, any `tool_calls` fragment, or a finish reason. The chunk that opens
+    /// a stream, `role` with an empty or null `content`, is not output.
+    answered: bool,
 }
 
 impl StreamProjection {
@@ -70,7 +74,13 @@ impl StreamProjection {
             stop_reason: None,
             reported: Reported::default(),
             terminated: false,
+            answered: false,
         }
+    }
+
+    /// Whether any chunk carried output, including output with no stream event.
+    pub(crate) const fn has_answered(&self) -> bool {
+        self.answered
     }
 
     /// Accept one framed server-sent event and return the neutral deltas it completed.
@@ -109,6 +119,7 @@ impl StreamProjection {
             if let Some(reason) = choice.get("finish_reason")
                 && !reason.is_null()
             {
+                self.answered = true;
                 self.stop_reason = Some(stop_reason(reason)?);
             }
             if let Some(delta) = choice.get("delta") {
@@ -123,6 +134,7 @@ impl StreamProjection {
         if let Some(text) = delta.get("content").and_then(Value::as_str)
             && !text.is_empty()
         {
+            self.answered = true;
             self.text.push_str(text);
             events.push(StreamEvent::TextDelta {
                 text: text.to_owned(),
@@ -133,6 +145,7 @@ impl StreamProjection {
         if let Some(text) = delta.get("reasoning_content").and_then(Value::as_str)
             && !text.is_empty()
         {
+            self.answered = true;
             events.push(StreamEvent::ReasoningDelta {
                 text: text.to_owned(),
             });
@@ -140,6 +153,7 @@ impl StreamProjection {
         let Some(calls) = delta.get("tool_calls").and_then(Value::as_array) else {
             return Ok(events);
         };
+        self.answered |= !calls.is_empty();
         for call in calls {
             // The wire correlates the fragments of one call by index; the identifier and the
             // name arrive once, in the fragment that opens it.

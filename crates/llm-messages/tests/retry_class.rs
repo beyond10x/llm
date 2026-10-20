@@ -213,3 +213,276 @@ async fn the_same_classes_as_an_http_status_before_the_stream_are_retriable() {
         assert!(!format!("{error:?}").contains(PROSE), "{status}: {error:?}");
     }
 }
+
+/// A 429 answer before any stream, with `body` (sent as is) and the head fields in `fields`.
+async fn answered_429(fields: &str, body: String) -> (Error, VecSink) {
+    let head = format!(
+        "HTTP/1.1 429 Too Many Requests\r\nContent-Type: application/json\r\n{fields}Content-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    );
+    failed_turn(head.into_bytes(), body).await
+}
+
+/// Anthropic's spend-cap error document, as the rate-limits page shows it, with `error` replaced.
+fn anthropic_error(error: &serde_json::Value) -> String {
+    serde_json::json!({"type": "error", "error": error, "request_id": "req_fixture"}).to_string()
+}
+
+/// story:quota-429-is-final. Anthropic's rate-limits page, "Reaching your spend cap": "On the
+/// Messages API, `error.details.error_code` is `enforced_spend_limit_reached`. Use it to tell this
+/// response apart from a rate limit." A 429 whose error says `rate_limit_error` with that code is
+/// a final refusal with dispatch `rejected`, with or without a `retry-after` (whose hint is kept).
+#[tokio::test]
+async fn a_spend_cap_429_is_final_with_or_without_retry_after() {
+    let spend_cap = anthropic_error(&serde_json::json!({
+        "type": "rate_limit_error", "message": PROSE,
+        "details": {"error_code": "enforced_spend_limit_reached"}
+    }));
+    for (fields, hint) in [("", None), ("retry-after: 7\r\n", Some(7_000))] {
+        let (error, sink) = answered_429(fields, spend_cap.clone()).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Refused, Dispatch::Rejected),
+            "`{fields}`"
+        );
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "`{fields}`: a spend cap keeps failing: {error:?}"
+        );
+        assert_eq!(error.retry_after_ms, hint, "`{fields}`");
+        assert_eq!(sink.events(), [], "`{fields}`");
+        assert!(
+            !format!("{error:?} {error}").contains(PROSE),
+            "`{fields}`: {error:?}"
+        );
+    }
+}
+
+/// Every other 429 keeps the rate-limit class, with or without a `retry-after`: a
+/// `rate_limit_error` without the spend-cap code (so a rate limit answered without the header,
+/// and the 429 Harness measured for a subscription token without the preamble, which carried no
+/// rate-limit headers), the code under another type, in another spelling or outside `details`,
+/// another type, no error at all, and a body that is not JSON.
+#[tokio::test]
+async fn any_other_429_stays_a_retriable_rate_limit() {
+    let rate_limit =
+        anthropic_error(&serde_json::json!({"type": "rate_limit_error", "message": PROSE}));
+    for (fields, body, hint) in [
+        ("", rate_limit.clone(), None),
+        ("retry-after: 7\r\n", rate_limit, Some(7_000)),
+        (
+            "",
+            anthropic_error(&serde_json::json!({"type": "rate_limit_error",
+                "details": {"error_code": "rate_limit_exceeded"}})),
+            None,
+        ),
+        (
+            "",
+            anthropic_error(&serde_json::json!({"type": "rate_limit_error",
+                "details": {"error_code": "ENFORCED_SPEND_LIMIT_REACHED"}})),
+            None,
+        ),
+        (
+            "",
+            anthropic_error(&serde_json::json!({"type": "rate_limit_error",
+                "error_code": "enforced_spend_limit_reached"})),
+            None,
+        ),
+        (
+            "",
+            anthropic_error(
+                &serde_json::json!({"type": "overloaded_error", "message": PROSE,
+                "details": {"error_code": "enforced_spend_limit_reached"}}),
+            ),
+            None,
+        ),
+        (
+            "",
+            anthropic_error(&serde_json::json!({"type": "RATE_LIMIT_ERROR",
+                "details": {"error_code": "enforced_spend_limit_reached"}})),
+            None,
+        ),
+        ("", "{}".to_owned(), None),
+        ("", format!("{PROSE}, not a document"), None),
+    ] {
+        let (error, sink) = answered_429(fields, body.clone()).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::RateLimited, Dispatch::Rejected),
+            "`{fields}` {body}"
+        );
+        assert!(error.may_retry(), "`{fields}` {body}: {error:?}");
+        assert_eq!(error.retry_after_ms, hint, "`{fields}` {body}");
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains(PROSE),
+            "{body}: {error:?}"
+        );
+    }
+}
+
+/// Answers the first request with llm-gateway's refusal of a failure before output (HTTP 502,
+/// code `upstream-failed`) carrying the head `fields`, and returns the turn's refusal, what the
+/// caller was shown and how many requests arrived.
+async fn relayed_turn(fields: &str) -> (Error, VecSink, usize) {
+    let body =
+        serde_json::json!({"error": {"code": "upstream-failed", "message": PROSE}}).to_string();
+    let head = format!(
+        "HTTP/1.1 502 Bad Gateway\r\ncontent-type: application/json\r\n{fields}content-length: {}\r\nconnection: close\r\n\r\n",
+        body.len()
+    );
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("a local port");
+    let url = format!("http://{}/v1", listener.local_addr().expect("an address"));
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.expect("an accepted connection");
+        let mut seen = Vec::new();
+        let mut buffer = vec![0; 1 << 16];
+        while !seen.windows(4).any(|w| w == b"\r\n\r\n") {
+            let length = socket.read(&mut buffer).await.expect("a readable socket");
+            assert!(length > 0, "the client closed before sending a request");
+            seen.extend_from_slice(&buffer[..length]);
+        }
+        socket
+            .write_all(head.as_bytes())
+            .await
+            .expect("head written");
+        socket
+            .write_all(body.as_bytes())
+            .await
+            .expect("body written");
+        let _ = socket.shutdown().await;
+        let resent = tokio::time::timeout(Duration::from_millis(100), listener.accept())
+            .await
+            .is_ok();
+        1 + usize::from(resent)
+    });
+    let mut request = TurnRequest::new("internal-model", vec![Item::user("Summarise the log")]);
+    request.max_output_tokens = Some(512);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let error = client(&url)
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect_err("a 502 is a refusal");
+    let requests = server.await.expect("the fixture server");
+    (error, sink, requests)
+}
+
+/// story:relayed-failures-keep-their-retry-decision. A gateway that spent its retries on a
+/// failure before output says so with `x-should-retry: false` on its 502: the client reads it
+/// final and sends once, so routing does not call the gateway again. The same 502 without the
+/// signal stays a retriable `transport`, dispatch `unknown`.
+#[tokio::test]
+async fn a_gateway_502_that_says_do_not_retry_is_final_and_without_it_is_retriable() {
+    for (fields, retriable) in [("x-should-retry: false\r\n", false), ("", true)] {
+        let (error, sink, requests) = relayed_turn(fields).await;
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Transport, Dispatch::Unknown),
+            "`{fields}`"
+        );
+        assert_eq!(error.may_retry(), retriable, "`{fields}`: {error:?}");
+        assert_eq!(requests, 1, "`{fields}`: the client sent the turn again");
+        assert_eq!(sink.events(), [], "`{fields}`");
+        assert!(
+            !format!("{error:?} {error}").contains(PROSE),
+            "`{fields}`: {error:?}"
+        );
+    }
+}
+
+/// The start of the next event, cut before its payload ends.
+const PARTIAL: &str = "event: content_block_delta\n\
+data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\"";
+
+/// A chunked stream head: a chunk the server stops writing is a body that failed in transit.
+const CHUNKED_HEAD: &[u8] = b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\n\
+Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n";
+
+/// The two ways a connection is cut mid-turn, each read by the transport as a retriable failure
+/// with dispatch `accepted`.
+#[derive(Clone, Copy, Debug)]
+enum Cut {
+    /// The body ends inside an event: `protocol`.
+    InsideAnEvent,
+    /// A chunked body ends inside a chunk: `transport`.
+    InsideAChunk,
+}
+
+impl Cut {
+    const ALL: [Self; 2] = [Self::InsideAnEvent, Self::InsideAChunk];
+
+    const fn code(self) -> ErrorCode {
+        match self {
+            Self::InsideAnEvent => ErrorCode::Protocol,
+            Self::InsideAChunk => ErrorCode::Transport,
+        }
+    }
+
+    /// Serves `before` whole, then cuts the connection inside the next event.
+    async fn turn(self, before: &str) -> (Error, VecSink) {
+        match self {
+            Self::InsideAnEvent => stream_turn(format!("{before}{PARTIAL}")).await,
+            Self::InsideAChunk => {
+                // A zero-length chunk would end the body cleanly, so an empty prefix sends none.
+                let whole = if before.is_empty() {
+                    String::new()
+                } else {
+                    format!("{:x}\r\n{before}\r\n", before.len())
+                };
+                // The last chunk promises 1024 bytes and carries a few.
+                failed_turn(CHUNKED_HEAD.to_vec(), format!("{whole}400\r\n{PARTIAL}")).await
+            }
+        }
+    }
+}
+
+/// H8 on this wire (story:messages-cut-after-silent-output-is-final): a cut before any payload
+/// but `message_start` and `ping` keeps the transport's retry class, as on Responses
+/// (`a_cut_after_only_lifecycle_events_stays_retriable`).
+#[tokio::test]
+async fn a_cut_before_any_block_stays_retriable() {
+    for cut in Cut::ALL {
+        for opening in ["", STARTED] {
+            let (error, sink) = cut.turn(opening).await;
+            assert_eq!(
+                (error.code, error.dispatch),
+                (cut.code(), Dispatch::Accepted),
+                "{cut:?} after {opening:?}"
+            );
+            assert!(
+                error.may_retry(),
+                "{cut:?} after {opening:?}: nothing was answered yet: {error:?}"
+            );
+            assert_eq!(sink.events(), [], "{cut:?} after {opening:?}");
+        }
+    }
+}
+
+/// H8 and H18 on this wire: after any other payload the attempt has answered, whether the caller
+/// was shown it or not, so a cut is final, as on Responses (`a_cut_after_an_output_item_is_final`).
+/// Another attempt would answer, and bill, again. The failure keeps the attempt's evidence.
+#[tokio::test]
+async fn a_cut_after_silent_or_visible_output_is_final() {
+    for cut in Cut::ALL {
+        for (label, output, visible) in [
+            ("an empty text block", SILENT_TEXT, false),
+            ("an empty thinking block", SILENT_THINKING, false),
+            ("a text delta", VISIBLE_TEXT, true),
+        ] {
+            let (error, sink) = cut.turn(&format!("{STARTED}{output}")).await;
+            assert_eq!(
+                (error.code, error.dispatch),
+                (cut.code(), Dispatch::Accepted),
+                "{cut:?} after {label}"
+            );
+            assert_eq!(!sink.events().is_empty(), visible, "{cut:?} after {label}");
+            assert!(
+                !error.retriable && !error.may_retry(),
+                "{cut:?} after {label}: an answered attempt cannot replay: {error:?}"
+            );
+            assert!(error.observation.is_some(), "{cut:?} after {label}");
+        }
+    }
+}

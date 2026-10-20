@@ -247,8 +247,17 @@ or a reported upstream failure contributes its category, never its response text
 A stream `error` of type `overloaded_error` (`unavailable`) or `api_error` (`transport`) is
 retriable when no payload but `message_start` and `ping` came before it. After any other payload
 it is final, a block that opened without showing anything included. Every other type is final,
-`rate_limit_error` included, because on this route it may be a spend cap. The provider lines this
-rests on are in [design.md](design.md#provider-failures-retried-before-output).
+`rate_limit_error` included, because on this route it may be a spend cap. A connection cut inside
+the stream, inside an event or inside a chunk, counts output the same way: before any payload but
+`message_start` and `ping` it keeps the transport's retry class, and after one it is final, as on
+Responses (`story:messages-cut-after-silent-output-is-final`). Before the stream, a
+429 whose error body says `rate_limit_error` with `error.details.error_code`
+`enforced_spend_limit_reached` is that spend cap: a final `Refused` with dispatch `rejected`,
+with or without a `retry-after` (`story:quota-429-is-final`). Every other 429 stays a retriable
+`RateLimited`: a `rate_limit_error` without that code, with or without a `retry-after`, the 429 a
+subscription token meets without the preamble, and a body that cannot be read within the
+transport's bound. The provider lines this rests on are in
+[design.md](design.md#provider-failures-retried-before-output).
 
 A turn carrying hints this wire omits ends, once it has succeeded, with one `StreamEvent::Warning`
 of code `advisory-omitted` naming them (`llm_core::advisory_warning`, wire name `Messages`). Never
@@ -315,9 +324,13 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
 - **Failure.** `fail` emits the `error` event; eight error codes map to an Anthropic error type the
   decoder reads back as the same code, and `protocol`, `cancelled` and `unsupported` take the nearest
   (`api_error`, `api_error`, `invalid_request_error`). No wire field carries the gateway's retry
-  decision, so a relayed failure reads back by the receiving decoder's rules. With nothing streamed
-  first, `overloaded_error` and `api_error` read back retriable, whatever the gateway decided
-  ([design.md](design.md#provider-failures-retried-before-output);
+  decision, so a failure relayed inside a stream reads back by the receiving decoder's rules. With
+  nothing streamed first, `overloaded_error` and `api_error` read back retriable, whatever the
+  gateway decided. A failure before any output reaches the client as an HTTP status instead, and
+  an error status carrying `x-should-retry: false` reads not retriable whatever its status, the
+  header the official OpenAI and Anthropic SDKs already obey; llm-gateway has to send it. The
+  header never makes a final status retriable
+  ([design.md](design.md#provider-failures-retried-before-output), with the SDK lines;
   `story:relayed-failures-keep-their-retry-decision`).
 - **Refusals.** `UserText`, `ToolResult` and `UnattributedOpaque` items, and an outcome that
   contradicts the streamed calls. Argument fragments for a call whose block already stopped make
