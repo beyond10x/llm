@@ -24,4 +24,4 @@ assert:
   contains:
     loaded: true
     error_code: null
-    capabilities: ["sonnet=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:low|medium|high,context:200000,output:16384"]
+    capabilities: ["sonnet=tools:true,tool_choice:true,temperature:true,top_p:true,efforts:low|medium|high,context:200000,output:16384,output_streaming:true,input_during_output:false"]

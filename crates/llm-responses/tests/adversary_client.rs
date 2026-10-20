@@ -68,6 +68,8 @@ fn capabilities() -> Capabilities {
         reasoning_efforts: vec!["medium".to_owned()],
         context_window: 32_768,
         max_output_tokens: 2_048,
+        output_streaming: true,
+        input_during_output: false,
     }
 }
 

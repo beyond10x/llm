@@ -1,0 +1,34 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: a-route-whose-output-does-not-stream-is-refused-naming-the-route
+summary: a route whose capabilities declare output that does not stream is refused as invalid-request, naming the route, because every protocol in this workspace streams its output
+timeline:
+- at: '2026-10-20T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        lab: {base_url: http://127.0.0.1:8000/v1, protocol: chat-completions,
+              auth: {kind: anonymous}}
+      routes:
+        small:
+          model: lab/small
+          capabilities: {tools: false, tool_choice: false, temperature: true, top_p: true,
+                         reasoning_efforts: [], context_window: 8192, max_output_tokens: 2048,
+                         output_streaming: false}
+    probe_names: [small]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "route `small`: every protocol in this workspace streams its output"
+    routes: []
+    catalog_serving_models: []
+    capabilities: []

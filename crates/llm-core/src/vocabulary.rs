@@ -55,10 +55,33 @@ pub struct Capabilities {
     pub reasoning_efforts: Vec<String>,
     pub context_window: u64,
     pub max_output_tokens: u64,
+    /// Whether the model's text reaches the sink incrementally, as it is generated, rather than
+    /// only at the end. Every client in this workspace streams. Absent from a document means
+    /// true, and true is not written, so a document from before the field keeps its bytes.
+    #[serde(default = "streams", skip_serializing_if = "is_true")]
+    pub output_streaming: bool,
+    /// Whether input can reach a turn that is still producing output. False for every protocol
+    /// in this workspace until story:input-into-a-running-turn decides otherwise. Absent from a
+    /// document means false, and false is not written.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub input_during_output: bool,
+}
+
+const fn streams() -> bool {
+    true
+}
+
+#[expect(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde's skip_serializing_if passes the field by reference"
+)]
+const fn is_true(value: &bool) -> bool {
+    *value
 }
 
 impl Capabilities {
-    /// A text-only declaration, with all optional settings refused until explicitly enabled.
+    /// A text-only declaration: output streams and no input reaches a running turn, as every
+    /// client in this workspace does; every optional setting is refused until explicitly enabled.
     pub const fn text(context_window: u64, max_output_tokens: u64) -> Self {
         Self {
             tools: false,
@@ -68,7 +91,47 @@ impl Capabilities {
             reasoning_efforts: Vec::new(),
             context_window,
             max_output_tokens,
+            output_streaming: true,
+            input_during_output: false,
         }
+    }
+
+    #[must_use]
+    pub const fn with_output_streaming(mut self, output_streaming: bool) -> Self {
+        self.output_streaming = output_streaming;
+        self
+    }
+
+    #[must_use]
+    pub const fn with_input_during_output(mut self, input_during_output: bool) -> Self {
+        self.input_during_output = input_during_output;
+        self
+    }
+
+    /// Checks the declaration against what `protocol` can carry. Binding, catalog and routes
+    /// documents are checked with it; [`Capabilities::validate`] does not apply it, so a model
+    /// built in code keeps its own claim.
+    ///
+    /// # Errors
+    /// Refuses input during output, which no protocol in this workspace carries, and output that
+    /// does not stream, since every protocol in this workspace streams its output. The message
+    /// names the rule and never a value.
+    pub fn validate_protocol(&self, protocol: Protocol) -> Result<(), Error> {
+        match protocol {
+            Protocol::Responses | Protocol::Messages | Protocol::ChatCompletions => {
+                if self.input_during_output {
+                    return Err(Error::invalid(
+                        "no protocol in this workspace carries input during output",
+                    ));
+                }
+                if !self.output_streaming {
+                    return Err(Error::invalid(
+                        "every protocol in this workspace streams its output",
+                    ));
+                }
+            }
+        }
+        Ok(())
     }
 
     /// # Errors

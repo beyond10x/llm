@@ -28,12 +28,16 @@
 //! route without fallback, each with the route's name as id. Ports are then built by
 //! [`crate::port`] and [`crate::CatalogModels::build`] on their unchanged rules.
 //!
+//! A route's `capabilities` may leave out `output_streaming` (true) and `input_during_output`
+//! (false); a string route declares [`default_capabilities`].
+//!
 //! Parsing is strict and performs no I/O: an unknown field, a repeated key, an unknown format,
-//! protocol, authentication kind or secret source, a literal secret and a route to an undeclared
-//! endpoint are refused as `invalid-request`, naming the field, endpoint or route and never
-//! echoing a value. [`Routes::resolvers`] turns the references into the caller's resolvers
-//! without reading anything; an unset variable or a missing file is refused at turn time, as
-//! `unauthorized`, by the endpoint's reference, before any request is sent.
+//! protocol, authentication kind or secret source, a literal secret, a capability the endpoint's
+//! protocol cannot carry and a route to an undeclared endpoint are refused as `invalid-request`,
+//! naming the field, endpoint or route and never echoing a value. [`Routes::resolvers`] turns the
+//! references into the caller's resolvers without reading anything; an unset variable or a
+//! missing file is refused at turn time, as `unauthorized`, by the endpoint's reference, before
+//! any request is sent.
 
 use crate::{Port, Resolvers, port};
 use llm_core::{AuthKind, BillingKind, Capabilities, Error, ErrorCode, Id, Protocol};
@@ -69,9 +73,10 @@ const REPEATED: &str = "the document declares it more than once";
 const SECRET_FORMS: &str = "`auth.secret` must be a reference: env:<VARIABLE>, \
 file:<absolute or ~/ path> or keychain:<service>/<entry>";
 
-/// The capabilities a route written as a plain `<endpoint>/<model-id>` string declares: every
-/// boolean true, reasoning efforts `low`, `medium` and `high`, a context window of 200000 tokens
-/// and at most 16384 output tokens. A route whose model differs writes its own `capabilities`.
+/// The capabilities a route written as a plain `<endpoint>/<model-id>` string declares: tools,
+/// tool choice, temperature and `top_p` allowed, reasoning efforts `low`, `medium` and `high`, a
+/// context window of 200000 tokens, at most 16384 output tokens, streamed output and no input
+/// during output. A route whose model differs writes its own `capabilities`.
 pub fn default_capabilities() -> Capabilities {
     Capabilities {
         tools: true,
@@ -81,6 +86,8 @@ pub fn default_capabilities() -> Capabilities {
         reasoning_efforts: ["low", "medium", "high"].map(str::to_owned).into(),
         context_window: DEFAULT_CONTEXT_WINDOW,
         max_output_tokens: DEFAULT_MAX_OUTPUT_TOKENS,
+        output_streaming: true,
+        input_during_output: false,
     }
 }
 
@@ -674,8 +681,10 @@ impl Routes {
     /// each kind: a few thousand routes); otherwise `invalid-request` for malformed YAML, an
     /// unknown field (`providers` included), a repeated key, an unknown format, protocol,
     /// authentication kind or secret source, a literal secret, contradictory authentication
-    /// fields, an invalid name, base URL, header or capability declaration, and a route to an
-    /// undeclared endpoint. The message names the field, endpoint or route and never a value.
+    /// fields, an invalid name, base URL, header or capability declaration, a capability its
+    /// endpoint's protocol cannot carry (input during output, or output that does not stream),
+    /// and a route to an undeclared endpoint. The message names the field, endpoint or route and
+    /// never a value.
     pub fn parse(source: &str) -> Result<Self, Error> {
         if source.len() > MAX_CONFIG_BYTES {
             return Err(Error::too_large("routes document exceeds its byte bound"));
@@ -729,6 +738,7 @@ impl Routes {
                 .map_err(|_| refuse("its model id must be 1..=256 printable ASCII bytes"))?;
             capabilities
                 .validate()
+                .and_then(|()| capabilities.validate_protocol(endpoints[&endpoint].protocol))
                 .map_err(|error| refuse(&error.message))?;
             routes.insert(
                 route.clone(),

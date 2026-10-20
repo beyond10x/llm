@@ -40,10 +40,14 @@ impl BindingDocument {
     }
 
     /// # Errors
-    /// Refuses broken references, contradictory authentication and invalid capabilities.
+    /// Refuses broken references, contradictory authentication, invalid capabilities and
+    /// capabilities the serving protocol cannot carry ([`Capabilities::validate_protocol`]).
     pub fn bind(self) -> Result<Binding, Error> {
         self.account.validate()?;
         self.serving.capabilities.validate()?;
+        self.serving
+            .capabilities
+            .validate_protocol(self.serving.protocol)?;
         if self.account.provider_id != self.provider.id {
             return Err(Error::invalid("account references a different provider"));
         }

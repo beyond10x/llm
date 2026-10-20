@@ -19,6 +19,8 @@ pub fn capable() -> Capabilities {
         reasoning_efforts: vec!["low".to_owned(), "high".to_owned()],
         context_window: 32_768,
         max_output_tokens: 4_096,
+        output_streaming: true,
+        input_during_output: false,
     }
 }
 

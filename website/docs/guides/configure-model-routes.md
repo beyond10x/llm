@@ -55,10 +55,14 @@ A route value splits on its **first** `/` only: `openrouter/anthropic/claude-son
 without a route entry. Any other name is refused as `invalid-request`.
 
 A route written as a string declares the default capabilities: tools, tool choice, temperature and
-`top_p` allowed, reasoning efforts `low`, `medium` and `high`, a 200000-token context window and
-16384 output tokens. Capabilities decide which requests a route admits, and a Messages endpoint
-sends `max_output_tokens` as its default `max_tokens`, so a model that does not fit the default is
-written as a mapping with its own `capabilities` (all seven fields, as in a catalog).
+`top_p` allowed, reasoning efforts `low`, `medium` and `high`, a 200000-token context window,
+16384 output tokens, streamed output and no input during output. Capabilities decide which requests
+a route admits, and a Messages endpoint sends `max_output_tokens` as its default `max_tokens`, so a
+model that does not fit the default is written as a mapping with its own `capabilities`, as in a
+catalog: the seven settings, plus `output_streaming` (default `true`) and `input_during_output`
+(default `false`), which may be left out. A route claiming input during output, or output that does
+not stream, is refused by name: no protocol here carries input during output, and every one streams
+its output.
 
 ## Expansion
 

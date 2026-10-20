@@ -837,3 +837,9 @@ scenarios:
 - anthropic/scenarios/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused.yaml
 - anthropic/scenarios/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target.yaml
 - anthropic/scenarios/a-falling-back-route-between-subscription-billed-targets-is-accepted.yaml
+- providers/scenarios/a-binding-claiming-input-during-output-is-refused.yaml
+- providers/scenarios/a-binding-whose-output-does-not-stream-is-refused.yaml
+- routes/scenarios/a-route-claiming-input-during-output-is-refused-naming-the-route.yaml
+- routes/scenarios/a-route-whose-output-does-not-stream-is-refused-naming-the-route.yaml
+- routing/scenarios/a-catalog-claiming-input-during-output-is-refused.yaml
+- routing/scenarios/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision.yaml

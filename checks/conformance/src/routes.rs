@@ -72,7 +72,8 @@ fn refuse(facts: &mut Value, error: &Error) {
 
 fn capabilities(route: &Id, capabilities: &Capabilities) -> String {
     format!(
-        "{route}=tools:{},tool_choice:{},temperature:{},top_p:{},efforts:{},context:{},output:{}",
+        "{route}=tools:{},tool_choice:{},temperature:{},top_p:{},efforts:{},context:{},output:{},\
+output_streaming:{},input_during_output:{}",
         capabilities.tools,
         capabilities.tool_choice,
         capabilities.temperature,
@@ -80,6 +81,8 @@ fn capabilities(route: &Id, capabilities: &Capabilities) -> String {
         capabilities.reasoning_efforts.join("|"),
         capabilities.context_window,
         capabilities.max_output_tokens,
+        capabilities.output_streaming,
+        capabilities.input_during_output,
     )
 }
 

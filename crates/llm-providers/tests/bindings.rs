@@ -241,6 +241,71 @@ fn every_reference_and_capability_limit_is_checked() {
     }
 }
 
+/// The `local-small` serving model of `examples/catalog.toml`, as an `llm.binding/1` document
+/// written before capabilities declared output streaming and input during output. Opaque state
+/// stored against it carries [`BEFORE_REVISION`], the revision the routing scenarios pin.
+const BEFORE: &str = r#"{"format":"llm.binding/1","provider":{"id":"my-lab","category":"self-hosted"},"account":{"id":"local","provider_id":"my-lab","auth_kind":"anonymous","billing_kind":"self-hosted"},"endpoint":{"id":"local-vllm","account_id":"local","base_url":"http://127.0.0.1:8000/v1"},"model":{"id":"small","upstream_name":"example/Small-Model"},"serving":{"id":"local-small","endpoint_id":"local-vllm","model_id":"small","protocol":"chat-completions","capabilities":{"tools":false,"tool_choice":false,"temperature":false,"top_p":false,"reasoning_efforts":[],"context_window":4096,"max_output_tokens":1024}}}"#;
+const BEFORE_REVISION: &str = "1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1";
+
+#[test]
+fn a_binding_written_before_the_streaming_declarations_keeps_its_revision() {
+    let binding = serde_json::from_str::<BindingDocument>(BEFORE)
+        .unwrap()
+        .bind()
+        .unwrap();
+    assert_eq!(
+        binding.provenance().binding_revision.as_str(),
+        BEFORE_REVISION
+    );
+    assert!(binding.capabilities().output_streaming);
+    assert!(!binding.capabilities().input_during_output);
+    let explicit = BEFORE.replace(
+        "\"max_output_tokens\":1024}",
+        "\"max_output_tokens\":1024,\"output_streaming\":true,\"input_during_output\":false}",
+    );
+    let binding = serde_json::from_str::<BindingDocument>(&explicit)
+        .unwrap()
+        .bind()
+        .unwrap();
+    assert_eq!(
+        binding.provenance().binding_revision.as_str(),
+        BEFORE_REVISION
+    );
+}
+
+#[test]
+fn a_binding_claiming_input_during_output_or_unstreamed_output_is_refused_on_every_protocol() {
+    for protocol in [
+        Protocol::Responses,
+        Protocol::Messages,
+        Protocol::ChatCompletions,
+    ] {
+        let mut accepted = document();
+        accepted.serving.protocol = protocol;
+        accepted.bind().unwrap();
+        for (change, message) in [
+            (
+                0,
+                "no protocol in this workspace carries input during output",
+            ),
+            (1, "every protocol in this workspace streams its output"),
+        ] {
+            let mut doc = document();
+            doc.serving.protocol = protocol;
+            let capabilities = &mut doc.serving.capabilities;
+            if change == 0 {
+                capabilities.input_during_output = true;
+            } else {
+                capabilities.output_streaming = false;
+            }
+            let error = doc.bind().unwrap_err();
+            assert_eq!(error.code, ErrorCode::InvalidRequest, "{protocol:?}");
+            assert_eq!(error.message, message, "{protocol:?}");
+            assert_eq!(error.dispatch, Dispatch::NotSent);
+        }
+    }
+}
+
 #[test]
 fn urls_are_validated_when_deserialized_and_diagnostics_do_not_echo_credentials() {
     for url in [
