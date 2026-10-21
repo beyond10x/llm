@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-21T09:54:38Z",
+  "actor": "human:timo",
+  "artifact": "story:live-provider-captures",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check (exit 0, 2026-10-21)",
+    "reference": "crates/llm-messages/tests/live_capture.rs::the_recorded_turns_replay_a_cache_write_and_then_a_cache_read"
+  }
+}

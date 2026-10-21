@@ -9,6 +9,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 ### Added
 
 - `b10x-llm-responses`: a live Codex text turn (`gpt-6-astra`, 2026-10-21), scrubbed, as a replayed fixture
+- `b10x-llm-messages`: two live Messages turns (`claude-haiku-4-5`, 2026-10-21), a cache write and a cache read of 13027 tokens, scrubbed, as replayed fixtures
 
 ## [0.8.4] - 2026-10-21
 

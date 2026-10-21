@@ -2,12 +2,14 @@
 format: aep.planning-md/3
 id: credential-blocker:messages-cache-capture
 kind: credential-blocker
-status: open
+status: cleared
 title: The live Messages cache capture needs subscription quota or another account's token
 relations:
 - blocks: story:live-provider-captures
 withholds: test_result
-revision: 1
+revision: 2
+transitions:
+- {from: "open", to: "cleared", at: "2026-10-21T09:51:40Z", actor: "human:timo", revision: 2}
 ---
 ## What is missing
 

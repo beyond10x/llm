@@ -162,10 +162,22 @@ makes `every_wire_name_the_projection_speaks_carries_its_evidence` name it.
 Fallback after a failed attempt, gateway serving and budget admission are other stories and are
 absent here by design.
 
-## Live capture, 2026-10-21: not recorded
+## Live capture, 2026-10-21
 
-The Messages turn with cache figures that `story:live-provider-captures` asks for was not recorded.
-Both attempts through the subscription token held for `llm` returned `429`. The rate-limit headers
-said the account's 7-day window was used up (`anthropic-ratelimit-unified-7d-status: rejected`,
-overage `out_of_credits`, `retry-after: 262858`). Recording it needs that window to reset or a
-token for another account.
+Two Messages turns with cache figures, the half of `story:live-provider-captures` that the first
+attempt could not record: the token held for `llm` returned `429` (7-day window used up). The
+recording used the active Claude login's token once, under
+`approval-record:live-capture-claude-login-2026-10-21`; no committed code reads a login file.
+
+The same request was sent twice in one process against `claude-haiku-4-5`. `MessagesClient` put
+its rolling breakpoint on the 400-line prompt, so the first turn wrote it to the cache and the
+second read it back:
+
+| Turn | `input_tokens` | cache write | cache read | `output_tokens` | Reply |
+|---|---|---|---|---|---|
+| 1 | 3 | 13027 | 0 | 4 | `ok` |
+| 2 | 3 | 0 | 13027 | 4 | `ok` |
+
+The client reports `input_tokens` 13030 per turn (uncached plus both cache figures) and the
+upstream model `claude-haiku-4-5-20251001`. `tests/live_capture.rs` replays both scrubbed turns
+from `tests/fixtures/live/`, whose `README.md` lists every scrubbed field, and pins those figures.

@@ -2,15 +2,16 @@
 format: aep.planning-md/3
 id: story:live-provider-captures
 kind: story
-status: active
+status: implemented
 title: A live Codex Responses stream and a live Messages turn with cache figures are pinned as fixtures
 relations:
 - serves: vision:portable-model-inference
 - decomposes: epic:access
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-21T08:56:08Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-21T08:56:08Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-21T09:54:38Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":2}}}
 ---
 ## Context
 
