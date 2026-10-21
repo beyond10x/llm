@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-21T00:13:07Z",
+  "actor": "human:timo",
+  "artifact": "story:timings-before-the-last-chunk",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 b10x-build-slot task check on wave/2026-10-21-w12 at 9543f2c7, ess 0.66.0",
+    "reference": "exit 0; workspace 1080 passed 0 failed; conformance 890/890 x3; ~/.cache/llm-w12/integrate/gate.log"
+  }
+}

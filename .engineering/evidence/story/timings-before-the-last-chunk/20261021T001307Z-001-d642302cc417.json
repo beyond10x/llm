@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-21T00:13:07Z",
+  "actor": "human:timo",
+  "artifact": "story:timings-before-the-last-chunk",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 b10x-build-slot cargo test --locked -p b10x-llm-chat --test incoming --test adversary_w12_timings; b10x-llm-conformance run",
+    "reference": "VERIFIED: base d7f06314 red (incoming 35 passed 5 failed: output 2 reported for the first fixture, contradiction refusal for the second); conformance 888/890 on the old decoder; green at 4ab4168a, 890/890; ~/.cache/llm-w12/u1/scratch/red.log, red-conformance.log"
+  }
+}

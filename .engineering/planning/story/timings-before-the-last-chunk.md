@@ -2,16 +2,17 @@
 format: aep.planning-md/3
 id: story:timings-before-the-last-chunk
 kind: story
-status: active
+status: implemented
 title: A llama-server timings before the last chunk is not the turn's count
 summary: Read timings only from the report that ends a stream
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 5
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-20T23:38:46Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-20T23:38:46Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-21T00:13:07Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 
