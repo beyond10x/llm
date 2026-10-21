@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-21T09:14:26Z",
+  "actor": "human:timo",
+  "artifact": "story:live-provider-captures",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check (Rust 1.98.0, ess 0.66.0), EXIT=0",
+    "reference": "crates/llm-responses/tests/live_capture.rs"
+  }
+}

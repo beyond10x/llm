@@ -161,3 +161,11 @@ makes `every_wire_name_the_projection_speaks_carries_its_evidence` name it.
 
 Fallback after a failed attempt, gateway serving and budget admission are other stories and are
 absent here by design.
+
+## Live capture, 2026-10-21: not recorded
+
+The Messages turn with cache figures that `story:live-provider-captures` asks for was not recorded.
+Both attempts through the subscription token held for `llm` returned `429`. The rate-limit headers
+said the account's 7-day window was used up (`anthropic-ratelimit-unified-7d-status: rejected`,
+overage `out_of_credits`, `retry-after: 262858`). Recording it needs that window to reset or a
+token for another account.

@@ -199,9 +199,30 @@ fixtures were checked for a second guard that could fire first with the same cod
 found at the time. That last property is now a machine check rather than a review finding, since
 this round's fixed-field rule is exactly the change that would have broken it.
 
+## Live capture, 2026-10-21
+
+One text turn was recorded from the Codex backend with `gpt-6-astra` through `ResponsesClient`
+and the operator's Codex login (`story:live-provider-captures`). The scrubbed head and stream are in
+`crates/llm-responses/tests/fixtures/live/`, whose README lists every replaced value.
+`tests/live_capture.rs` replays them over loopback in 512-byte chunks. The replay asserts what the
+live run returned:
+
+| Observation | Value |
+|---|---|
+| events | 35; the one `response.metadata` is outside the pinned subset |
+| items | reasoning (`Opaque`), the answer text, `response.metadata` (`Opaque`, with one `unknown-stream-event` warning) |
+| stop reason | `EndTurn` |
+| usage | input 34, output 80, cached 0, reasoning 50 |
+| content type | none sent, as in the 2026-10-04 probe |
+
+The terminal usage also reports `cache_write_tokens` and a per-item `attribution` object. The
+projection does not read either of them. `gpt-5.5` was refused for this login with `400`: "The
+'gpt-5.5' model is not supported when using Codex with a ChatGPT account."
+
 ## What this does not establish
 
-- Nothing about a live `OpenAI` or vLLM endpoint. No request was sent; the fixtures are literals.
+- Nothing about a live `OpenAI` or vLLM endpoint beyond the one Codex turn above. The other
+  fixtures are literals.
 - Nothing about server-sent-event framing, which is `llm-http`'s and is verified there. This crate
   consumes decoded payloads.
 - Nothing about an HTTP client, retry, fallback, credential presentation or billing, each of which

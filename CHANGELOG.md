@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `b10x-llm-responses`: a live Codex text turn (`gpt-6-astra`, 2026-10-21), scrubbed, as a replayed fixture
+
 ## [0.8.4] - 2026-10-21
 
 ### Fixed
