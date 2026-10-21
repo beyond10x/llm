@@ -132,7 +132,10 @@ fn a_text_part_without_text_is_refused() {
             {"type": "text", "text": "Hi"}, part
         ]}]})
     };
-    for part in [json!({"type": "text"}), json!({"type": "text", "text": null})] {
+    for part in [
+        json!({"type": "text"}),
+        json!({"type": "text", "text": null}),
+    ] {
         let error = decode_ingress_request(&with(part.clone())).expect_err("refused");
         assert_eq!(error.code, ErrorCode::InvalidRequest, "{part}");
         assert!(error.message.contains("carries no text"), "{error}");

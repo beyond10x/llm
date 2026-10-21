@@ -785,11 +785,16 @@ fn tool_specs_read_from_the_capture_keep_their_schemas() {
 #[test]
 fn a_tool_without_a_parameters_schema_is_refused() {
     let mut tool = wire_body(&[])["tools"][0].clone();
-    tool.as_object_mut().expect("an object").remove("parameters");
+    tool.as_object_mut()
+        .expect("an object")
+        .remove("parameters");
     let error = ingest_request(&binding(), &wire_body(&[("tools", json!([tool]))]))
         .expect_err("an omitted schema is refused");
     assert_eq!(error.code, ErrorCode::InvalidRequest);
-    assert_eq!(error.message, "a published tool omits its parameters schema");
+    assert_eq!(
+        error.message,
+        "a published tool omits its parameters schema"
+    );
 
     tool["parameters"] = Value::Null;
     let error = ingest_request(&binding(), &wire_body(&[("tools", json!([tool]))]))
