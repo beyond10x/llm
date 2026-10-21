@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-10-21
+
 ### Fixed
 
 - `b10x-llm-chat`: llama-server `timings` counts the turn only on the report ending the stream; earlier ones are dropped
@@ -319,7 +321,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.8.3...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.8.4...HEAD
+[0.8.4]: https://github.com/beyond10x/llm/compare/0.8.3...0.8.4
 [0.8.3]: https://github.com/beyond10x/llm/compare/0.8.2...0.8.3
 [0.8.2]: https://github.com/beyond10x/llm/compare/0.8.1...0.8.2
 [0.8.1]: https://github.com/beyond10x/llm/compare/0.8.0...0.8.1
