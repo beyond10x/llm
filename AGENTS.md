@@ -123,6 +123,8 @@ Writing rules and the end-to-end procedure are the workspace `docs` skill.
 A release or a wave that changes a crate, a command, a default or a capability updates, in the same
 change: `CHANGELOG.md` (under Unreleased), `docs/implementation-status.md` and then
 `task docs-generate`, the hand-written pages it affects, README.md and this file.
+`CHANGELOG.md` follows Keep a Changelog 1.1.0 with its six headings only; one bullet per change on
+one line of at most about 120 characters; a breaking change starts with `**Breaking:**`.
 
 ## Planning store and waves
 
