@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-21
+
 ### Added
 
 - `b10x-llm-responses`: a live Codex text turn (`gpt-6-astra`, 2026-10-21), scrubbed, as a replayed fixture
@@ -13,8 +15,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ### Changed
 
-- `b10x-llm-responses`: `ingest_request` refuses a `function` tool without a `parameters` key (`InvalidRequest`), as the chat ingress does; a present `null` is still refused by the schema check
-- `b10x-llm-chat`: `decode_ingress_request` refuses a `text` content part whose `text` is absent or `null` (`InvalidRequest`); an empty string is still text
+- **Breaking:** `b10x-llm-responses`: `ingest_request` refuses a `function` tool without a `parameters` key (`InvalidRequest`), as the chat ingress does; a present `null` is still refused by the schema check
+- **Breaking:** `b10x-llm-chat`: `decode_ingress_request` refuses a `text` content part whose `text` is absent or `null` (`InvalidRequest`); an empty string is still text
 - The conformance check and CI run ess 0.67.0 (was 0.66.0)
 
 ## [0.8.4] - 2026-10-21
@@ -332,7 +334,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.8.4...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.9.0...HEAD
+[0.9.0]: https://github.com/beyond10x/llm/compare/0.8.4...0.9.0
 [0.8.4]: https://github.com/beyond10x/llm/compare/0.8.3...0.8.4
 [0.8.3]: https://github.com/beyond10x/llm/compare/0.8.2...0.8.3
 [0.8.2]: https://github.com/beyond10x/llm/compare/0.8.1...0.8.2
