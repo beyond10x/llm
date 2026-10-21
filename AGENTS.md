@@ -146,8 +146,9 @@ is the model:
    workspace version (and `Cargo.lock`), dates the CHANGELOG section, moves README.md's status line,
    the `## Status at` heading of `docs/implementation-status.md` and the `source` line of
    `website/docs/index.md`, then runs `task docs-generate`.
-2. Bot pull request, green checks, merged through the App.
-3. Tag `<version>` on the merge commit and publish the GitHub Release `LLM <version>`, both as the
+2. Bot pull request; once its checks are green, `main` is fast-forwarded to the release commit by
+   a bot push, not merged through the pull request. Waves land on `main` the same way.
+3. Tag `<version>` on the release commit and publish the GitHub Release `LLM <version>`, both as the
    bot.
 4. Verify the tag's commit, `Gate`, `Shared source gates` and `Documentation validation` on it, and
    the Release; only then report it released.

@@ -6,6 +6,19 @@ are source releases at bare-version tags.
 
 ## [Unreleased]
 
+### Fixed
+
+- `b10x-llm-chat`: a llama-server stream's `timings` counts the turn only on the report that ends
+  the stream, the chunk carrying the finish reason or the usage chunk after it. llama-server
+  writes `timings` on every earlier chunk as well when the request sets `timings_per_token`
+  (llama.cpp `7879491cf`), counting the turn only so far. In 0.8.3 such a `timings` was read as
+  the turn's count: a stream with no later report ended with a partial output count marked final,
+  and one with a later usage chunk failed as `chat completion timings contradict its usage
+  report`. An earlier `timings` is now held to its shape and dropped, so the first stream's usage
+  is unknown, as in 0.8.2, and the second ends with the usage chunk's counts. A partial snapshot
+  before the stream ends no longer carries a per-token count. Two fixtures and two ESS scenarios
+  (888 to 890).
+
 ## [0.8.3] - 2026-10-21
 
 ### Added

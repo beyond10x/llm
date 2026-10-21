@@ -141,13 +141,20 @@ there, and a counter deleted on read-back is a counter this wire lost.
 
 `llama-server` reports its counters twice. Beside `usage` it writes a `timings` object, on the
 last chunk of a stream: the usage chunk when the request set `stream_options.include_usage`, as
-every streamed request here does, and the chunk carrying the finish reason when it did not.
-`prompt_n` (prompt tokens processed) and `cache_n` (prompt tokens reused) are the input
+every streamed request here does, and the chunk carrying the finish reason when it did not (and,
+with `timings_per_token`, on every earlier chunk too, below). `prompt_n` (prompt tokens processed) and `cache_n` (prompt tokens reused) are the input
 together, `cache_n` the cached part of it, and `predicted_n` the output. A counter `usage` does
 not name is taken from `timings`, the input only when both its parts are there. A counter both
 name has to agree, because the server writes both from the same count, so a pair that differs is
 refused (`chat completion timings contradict its usage report`) rather than one of the two
 believed.
+
+`timings` is read only from the report that ends a stream: the chunk carrying the finish reason
+or the usage chunk after it. With `timings_per_token` the server writes `timings` on every
+earlier chunk as well (`server-context.cpp:2222-2225`, `server-task.cpp:1146-1148` at
+`7879491cf`), counting the turn only so far. One there is held to its shape, below, and then
+dropped: it is neither the turn's count, so a stream with no later report leaves its usage
+unknown, nor evidence against the `usage` the stream ends with.
 
 The other `timings` fields llama.cpp documents at `7879491cf` are accepted and not read, because
 `Usage` has no place for a duration, a rate or a count of speculative decoding:
