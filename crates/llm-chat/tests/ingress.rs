@@ -124,6 +124,24 @@ fn a_non_text_content_part_is_refused() {
     );
 }
 
+/// A text part without its text is refused rather than read as empty; an empty string is text.
+#[test]
+fn a_text_part_without_text_is_refused() {
+    let with = |part: Value| {
+        json!({"model": "code", "messages": [{"role": "user", "content": [
+            {"type": "text", "text": "Hi"}, part
+        ]}]})
+    };
+    for part in [json!({"type": "text"}), json!({"type": "text", "text": null})] {
+        let error = decode_ingress_request(&with(part.clone())).expect_err("refused");
+        assert_eq!(error.code, ErrorCode::InvalidRequest, "{part}");
+        assert!(error.message.contains("carries no text"), "{error}");
+    }
+    let decoded = decode_ingress_request(&with(json!({"type": "text", "text": ""})))
+        .expect("an empty string is text");
+    assert_eq!(decoded.request.items, vec![Item::user("Hi")]);
+}
+
 #[test]
 fn a_tool_choice_of_none_is_refused_because_the_neutral_subset_cannot_express_it() {
     let body = json!({

@@ -518,14 +518,13 @@ fn sse(events: &[Value]) -> Vec<u8> {
     body
 }
 
-/// Story Acceptance: "an empty terminal `output` with no streamed items is still refused as a
-/// turn without output". The phase-1 case proves it only for a forced tool, where
-/// `TurnOutcome::validate_for` refuses for a different reason (the tool obligation). A request
-/// whose `tool_choice` is `auto`, answered the Codex way with nothing in it, is accepted as an
-/// `EndTurn` turn with no items.
+/// An empty terminal `output` with no streamed items is refused only under a forced tool
+/// (`an_empty_terminal_output_with_no_streamed_items_is_still_refused`, `codex_stream.rs`), where
+/// the tool obligation is what fails. A request whose `tool_choice` is `auto`, answered the Codex
+/// way with nothing in it, is an `EndTurn` turn with no items, as `docs/responses.md` states.
+/// Wave 2026-10-04-w18 declined refusing it; this pins the behaviour it kept.
 #[tokio::test]
-#[ignore = "declined in wave 2026-10-04-w18: an empty auto turn stays an empty EndTurn turn as docs/responses.md states; the story acceptance wording is corrected"]
-async fn an_empty_untyped_turn_without_a_forced_tool_is_still_refused() {
+async fn an_empty_untyped_turn_without_a_forced_tool_is_an_empty_end_turn() {
     let in_progress = json!({"id": "resp_fixture_0001", "object": "response",
         "status": "in_progress", "model": UPSTREAM_MODEL, "output": [], "usage": null});
     let body = sse(&[
@@ -538,9 +537,14 @@ async fn an_empty_untyped_turn_without_a_forced_tool_is_still_refused() {
     let mut sink = VecSink::new(32, 4096);
     let returned = model.turn(&auto_request(), &mut sink, &Cancel::new()).await;
     server.await.expect("the fixture server");
-    let error = returned.expect_err("a turn without output is refused");
-    assert_eq!(error.code, ErrorCode::Protocol, "{error}");
-    assert_eq!(error.validate_for(model.provenance()), Ok(()));
+    let outcome = returned.expect("an empty auto turn is accepted");
+    assert_eq!(outcome.stop_reason, StopReason::EndTurn);
+    assert_eq!(outcome.items, vec![]);
+    assert_eq!(
+        outcome.validate_for(&auto_request(), model.provenance()),
+        Ok(())
+    );
+    assert_eq!(sink.text(), "");
 }
 
 /// An untyped `200` whose body is JSON, not an event stream: it is now read as an event stream

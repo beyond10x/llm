@@ -552,12 +552,19 @@ fn wire_to_tool(value: &Value) -> Result<ToolSpec, Error> {
     check_fixed(object, "strict", &json!(false))?;
     let name =
         string(object.get("name")).ok_or_else(|| Error::invalid("a published tool has no name"))?;
+    // A schema is required rather than invented, as on the chat ingress: an omitted one would be
+    // published to the model as a null the operator never declared. A present `null` is refused
+    // by the turn's own schema check, as it was before.
+    let input_schema = object
+        .get("parameters")
+        .cloned()
+        .ok_or_else(|| Error::invalid("a published tool omits its parameters schema"))?;
     Ok(ToolSpec {
         name: ToolName::new(name).map_err(|_| Error::invalid("invalid tool name"))?,
         description: string(object.get("description"))
             .unwrap_or_default()
             .to_owned(),
-        input_schema: object.get("parameters").cloned().unwrap_or(Value::Null),
+        input_schema,
     })
 }
 
