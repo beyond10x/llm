@@ -45,13 +45,15 @@ fn null_and_absent(base: &Value, parent: &str, key: &str) -> (Value, Value) {
 
 /// `docs/chat.md`: "an explicit `null` for an optional key is absent". Every optional key the
 /// decoder reads, at every level, is set to `null` and compared with the same request without
-/// it. `tools` is the documented exception (an array when present), so its row is left out.
+/// it. `tools` is the documented exception (an array when present), so its row is left out, and
+/// a text part's `text` is required, not optional (`a_text_part_without_text_is_refused`,
+/// `tests/ingress.rs`).
 #[test]
 fn an_explicit_null_for_every_optional_key_is_read_as_absent() {
     let mut with_choice = base();
     with_choice["tool_choice"] = json!({"type": "function", "function": {"name": "lookup"}});
 
-    let rows: [(&str, Value, &str, &str); 19] = [
+    let rows: [(&str, Value, &str, &str); 18] = [
         ("tool_choice", base(), "", "tool_choice"),
         ("max_completion_tokens", base(), "", "max_completion_tokens"),
         ("max_tokens", base(), "", "max_tokens"),
@@ -63,12 +65,6 @@ fn an_explicit_null_for_every_optional_key_is_read_as_absent() {
         ("parallel_tool_calls", base(), "", "parallel_tool_calls"),
         ("prompt_cache_key", base(), "", "prompt_cache_key"),
         ("verbosity", base(), "", "verbosity"),
-        (
-            "messages[].content[].text",
-            base(),
-            "/messages/0/content/0",
-            "text",
-        ),
         ("messages[].content", base(), "/messages/3", "content"),
         ("messages[].tool_calls", base(), "/messages/3", "tool_calls"),
         (

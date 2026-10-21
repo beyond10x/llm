@@ -446,8 +446,12 @@ fn content_text(content: Option<&Value>) -> Result<String, Error> {
                     ));
                 }
                 closed(part, "messages[].content[]", CONTENT_PART_KEYS)?;
+                // A text part carries its text: an absent or null one is a part nobody wrote,
+                // and reading it as empty would invent the content.
                 match part.get("text") {
-                    None | Some(Value::Null) => {}
+                    None | Some(Value::Null) => {
+                        return Err(Error::invalid("chat content part carries no text"));
+                    }
                     Some(Value::String(part)) => text.push_str(part),
                     Some(_) => return Err(Error::invalid("chat content part text is not text")),
                 }
