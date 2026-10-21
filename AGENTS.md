@@ -154,6 +154,9 @@ is the model:
    bot.
 4. Verify the tag's commit, `Gate`, `Shared source gates` and `Documentation validation` on it, and
    the Release; only then report it released.
+5. Delete the remote `release/<version>` with
+   `b10x-gates bot --repository beyond10x/llm -- delete-branch release/<version>` once `main` holds
+   its head.
 
 Consumers pin a release tag and move only on their own change: Harness (on 0.8.0 since its
 cutover, Atlas ADR 0097), Loom, inference and llm-gateway.
