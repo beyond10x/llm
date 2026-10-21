@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-21T11:37:11Z",
+  "actor": "human:timo",
+  "artifact": "story:review-2026-10-21-ingress-strictness",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 b10x-build-slot task check on wave/2026-10-21-w13 at caba897d, ess 0.66.0",
+    "reference": "exit 0; workspace 1236 passed 0 failed 2 ignored; conformance 890/890 x3; aep plan artifact validate: valid"
+  }
+}
