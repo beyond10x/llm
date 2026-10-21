@@ -43,6 +43,7 @@ struct Reported {
     usage: Option<Usage>,
     /// The counters llama-server's `timings` reports: beside `usage` on a stream's last chunk,
     /// or alone on the chunk carrying the finish reason when the request did not ask for usage.
+    /// Only the report that ends a response fills it ([`read_reported`]).
     timings: Option<Usage>,
 }
 
@@ -130,7 +131,12 @@ impl StreamProjection {
     }
 
     fn chunk(&mut self, data: &Value) -> Result<Vec<StreamEvent>, Error> {
-        read_reported(data, &mut self.reported)?;
+        // The report that ends the stream is the chunk carrying the finish reason or a usage
+        // chunk after it. llama-server writes `timings` on every earlier chunk too when the
+        // request sets `timings_per_token` (llama.cpp `7879491cf`,
+        // `tools/server/server-context.cpp:2222-2225`), counting the turn only so far.
+        let ends = self.stop_reason.is_some() || finishes(data);
+        read_reported(data, &mut self.reported, ends)?;
         let mut events = Vec::new();
         let Some(choices) = data.get("choices").and_then(Value::as_array) else {
             return Ok(events);
@@ -350,7 +356,8 @@ pub fn decode_completion(body: &Value, target: &Provenance) -> Result<TurnOutcom
 
 fn completion(body: &Value, target: &Provenance) -> Result<TurnOutcome, Error> {
     let mut reported = Reported::default();
-    read_reported(body, &mut reported)?;
+    // A non-streamed body is one report, and it ends the response.
+    read_reported(body, &mut reported, true)?;
     let choices = body
         .get("choices")
         .and_then(Value::as_array)
@@ -434,12 +441,20 @@ fn nonempty(value: Option<&Value>) -> Option<&str> {
 /// shape, or `timings` contradicting `usage` — leaves `into` as it was: a failure carries what
 /// `into` holds as its evidence, and a part kept from a refused report would be a figure the
 /// refusal said not to believe.
-fn read_reported(value: &Value, into: &mut Reported) -> Result<(), Error> {
+///
+/// `timings` counts the turn only on the report that `ends` the response. One on an earlier chunk
+/// counts it so far: it is held to its shape, because a shape the server does not write says the
+/// endpoint is not that server wherever it appears, and then dropped. Kept, it would be the
+/// turn's count when no later report replaces it, and evidence against the `usage` that does.
+fn read_reported(value: &Value, into: &mut Reported, ends: bool) -> Result<(), Error> {
     let response_id = nonempty(value.get("id")).map(identifier).transpose()?;
     // An unreported model stays unreported. The configured alias never fills this in.
     let upstream_model = nonempty(value.get("model")).map(identifier).transpose()?;
     let usage = present(value.get("usage")).map(usage_of).transpose()?;
-    let timings = present(value.get("timings")).map(timings_of).transpose()?;
+    let timings = present(value.get("timings"))
+        .map(timings_of)
+        .transpose()?
+        .filter(|_| ends);
     if let (Some(usage), Some(timings)) = (
         usage.as_ref().or(into.usage.as_ref()),
         timings.as_ref().or(into.timings.as_ref()),
@@ -464,6 +479,19 @@ fn read_reported(value: &Value, into: &mut Reported) -> Result<(), Error> {
 /// A field that is there and not `null`.
 fn present(value: Option<&Value>) -> Option<&Value> {
     value.filter(|value| !value.is_null())
+}
+
+/// Whether a chunk carries a finish reason. Read before the chunk's choices are, so that its
+/// report is read as the one that ends the stream; the reason itself is checked with them.
+fn finishes(chunk: &Value) -> bool {
+    chunk
+        .get("choices")
+        .and_then(Value::as_array)
+        .is_some_and(|choices| {
+            choices
+                .iter()
+                .any(|choice| present(choice.get("finish_reason")).is_some())
+        })
 }
 
 /// How llama-server writes a `timings` field this subset accepts and never reads.

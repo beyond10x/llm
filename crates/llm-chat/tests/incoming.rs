@@ -14,6 +14,10 @@ const PARTIAL_USAGE: &[u8] = include_bytes!("../fixtures/openai-partial-usage.ss
 const LLAMA_TEXT: &[u8] = include_bytes!("../fixtures/llama-server-text-and-usage.sse");
 const LLAMA_TOOLS: &[u8] = include_bytes!("../fixtures/llama-server-tool-call-and-usage.sse");
 const LLAMA_TIMINGS: &[u8] = include_bytes!("../fixtures/llama-server-text-timings-only.sse");
+const LLAMA_TIMINGS_BEFORE_LAST: &[u8] =
+    include_bytes!("../fixtures/llama-server-timings-before-the-last-chunk.sse");
+const LLAMA_TIMINGS_BEFORE_USAGE: &[u8] =
+    include_bytes!("../fixtures/llama-server-timings-before-a-usage-chunk.sse");
 
 fn text(value: &str) -> StreamEvent {
     StreamEvent::TextDelta {
@@ -97,6 +101,14 @@ fn the_turn_carries_exactly_the_text_its_deltas_showed() {
         ("llama-server text", LLAMA_TEXT),
         ("llama-server tools", LLAMA_TOOLS),
         ("llama-server timings", LLAMA_TIMINGS),
+        (
+            "llama-server timings before the last chunk",
+            LLAMA_TIMINGS_BEFORE_LAST,
+        ),
+        (
+            "llama-server timings before a usage chunk",
+            LLAMA_TIMINGS_BEFORE_USAGE,
+        ),
     ] {
         let binding = binding();
         let (events, outcome) = project_response_bytes(bytes, binding.provenance());
@@ -996,10 +1008,12 @@ fn removing_any_one_timings_counter_leaves_unknown_exactly_what_it_counted() {
 }
 
 /// With `timings_per_token` llama-server sends `timings` on every chunk, its counters growing
-/// (`server-context.cpp:2222-2225`). Before the stream ends they are a snapshot, never a final
-/// report; the last one, on the usage chunk, is checked against `usage` and agrees with it.
+/// (`server-context.cpp:2222-2225`, `server-task.cpp:1146-1148`). One on a chunk before the
+/// report that ends the stream is not the turn's count, not even as a snapshot: a snapshot is
+/// the evidence a failure carries, and that count is not the turn's. Only the last one, on the
+/// usage chunk, is read, and it is checked against `usage` and agrees with it.
 #[test]
-fn per_token_timings_are_a_snapshot_until_the_stream_ends() {
+fn per_token_timings_count_only_on_the_report_that_ends_the_stream() {
     let binding = binding();
     let mut projection = llm_chat::StreamProjection::new(binding.provenance().clone());
     let payload = |data: serde_json::Value| llm_http::SseEvent::Payload { event: None, data };
@@ -1011,10 +1025,7 @@ fn per_token_timings_are_a_snapshot_until_the_stream_ends() {
         .expect("a chunk");
     let snapshot = projection.observation();
     assert!(!snapshot.final_usage);
-    assert_eq!(
-        snapshot.usage.and_then(|usage| usage.output_tokens),
-        Some(1)
-    );
+    assert_eq!(snapshot.usage, None);
     for data in [
         json!({"choices": [{"index": 0, "delta": {"content": "b"}, "finish_reason": null}],
             "timings": {"cache_n": 0, "prompt_n": 4, "predicted_n": 2}}),
@@ -1210,13 +1221,16 @@ fn a_chunk_refused_while_its_report_is_read_leaves_the_evidence_as_it_was() {
     ];
     let binding = binding();
     let payload = |data: serde_json::Value| llm_http::SseEvent::Payload { event: None, data };
+    // The report is the usage chunk after the finish reason, as llama-server orders them: the
+    // report that ends the stream, the only one whose `timings` is read against its `usage`.
     let opened = || {
         let mut projection = llm_chat::StreamProjection::new(binding.provenance().clone());
-        projection
-            .accept(&payload(
-                json!({"choices": [{"index": 0, "delta": {"content": "hi"}}]}),
-            ))
-            .expect("a text chunk");
+        for chunk in [
+            json!({"choices": [{"index": 0, "delta": {"content": "hi"}}]}),
+            json!({"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}),
+        ] {
+            projection.accept(&payload(chunk)).expect("a chunk");
+        }
         projection
     };
 
@@ -1235,5 +1249,220 @@ fn a_chunk_refused_while_its_report_is_read_leaves_the_evidence_as_it_was() {
         chunk[part] = value;
         projection.accept(&payload(chunk)).expect_err(case);
         assert_eq!(projection.observation(), before, "{case}");
+    }
+}
+
+// ------------------------------------------- `timings` before the report that ends a stream
+
+/// The counters both fixtures' server produced: four output tokens (`Hel`, `lo`, ` there`, `.`)
+/// for a 35-token prompt, none of it reused. Their mid-stream `timings` says two.
+const ENDING_USAGE: Usage = Usage {
+    input_tokens: Some(35),
+    output_tokens: Some(4),
+    cached_input_tokens: Some(0),
+    cache_creation_input_tokens: None,
+    reasoning_output_tokens: None,
+};
+
+/// A llama-server stream reports its counters on the chunk that ends it: the chunk carrying the
+/// finish reason, or the usage chunk after it (`server-task.cpp:494-510` at `7879491cf`). A
+/// `timings` on an earlier chunk counts the turn only so far, so with no report after it the
+/// turn's usage is unknown, as it was before `timings` was read, and never the two output
+/// tokens counted when the server had produced two of four.
+#[test]
+fn timings_before_the_last_chunk_leave_the_turns_usage_unknown() {
+    let binding = binding();
+    let (events, outcome) = project_response_bytes(LLAMA_TIMINGS_BEFORE_LAST, binding.provenance());
+    let outcome = outcome.expect("projected");
+
+    assert_eq!(
+        events,
+        vec![text("Hel"), text("lo"), text(" there"), text(".")]
+    );
+    assert_eq!(outcome.items, vec![Item::assistant("Hello there.")]);
+    assert_eq!(outcome.stop_reason, StopReason::EndTurn);
+    assert!(outcome.observation.final_usage);
+    assert_eq!(outcome.observation.usage, None);
+}
+
+/// A `timings` on an earlier chunk is not evidence against the `usage` the stream ends with: it
+/// counted two output tokens when the server had produced two, and the usage chunk counts the
+/// four it produced in all. The turn ends without error and reports the usage chunk.
+#[test]
+fn timings_before_a_usage_chunk_yield_to_the_usage_it_ends_with() {
+    let binding = binding();
+    let (events, outcome) =
+        project_response_bytes(LLAMA_TIMINGS_BEFORE_USAGE, binding.provenance());
+    let outcome = outcome.unwrap_or_else(|error| panic!("{error:?}"));
+
+    assert_eq!(
+        events,
+        vec![text("Hel"), text("lo"), text(" there"), text(".")]
+    );
+    assert_eq!(outcome.stop_reason, StopReason::EndTurn);
+    assert!(outcome.observation.final_usage);
+    assert_eq!(outcome.observation.usage, Some(ENDING_USAGE));
+}
+
+/// Dropped is not unread. A `timings` on an earlier chunk in a shape llama-server does not write
+/// is refused by the field's name, as on the chunk that ends the stream, and the refusal carries
+/// dispatch evidence and not the value.
+#[test]
+fn a_timings_in_the_wrong_shape_on_an_earlier_chunk_is_still_refused_by_name() {
+    const VALUE: &str = "slow-and-unquoted";
+    let counters = json!({"cache_n": 0, "prompt_n": 35, "predicted_n": 2});
+    let mut cases: Vec<(String, serde_json::Value)> = Vec::new();
+    for field in TIMINGS_UNREAD {
+        let wrong = if field.starts_with("draft_") {
+            json!(-1)
+        } else {
+            serde_json::Value::Null
+        };
+        for value in [json!(VALUE), wrong] {
+            let mut timings = counters.clone();
+            timings[field] = value;
+            cases.push((format!("timings.{field}"), timings));
+        }
+    }
+    cases.push(("timings".to_owned(), json!(VALUE)));
+    cases.push(("timings".to_owned(), json!([0, 35, 2])));
+    let binding = binding();
+
+    for (named, timings) in cases {
+        let bytes = format!(
+            "data: {}\n\ndata: {}\n\ndata: {}\n\ndata: [DONE]\n\n",
+            json!({"choices": [{"index": 0, "delta": {"content": "Hel"}, "finish_reason": null}],
+                "timings": timings}),
+            json!({"choices": [{"index": 0, "delta": {"content": "lo"}, "finish_reason": null}]}),
+            json!({"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}),
+        );
+        let error = project_response_bytes(bytes.as_bytes(), binding.provenance())
+            .1
+            .expect_err(&named);
+        assert_eq!(error.code, ErrorCode::Protocol, "{named}");
+        assert_eq!(error.dispatch, Dispatch::Accepted, "{named}");
+        assert_eq!(
+            error.message,
+            format!(
+                "chat completion timings field has a shape llama-server does not write: {named}"
+            ),
+            "{timings}"
+        );
+        assert!(!error.message.contains(VALUE), "{}", error.message);
+    }
+}
+
+/// The report that ends a stream is still one report. `usage` and `timings` on the usage chunk
+/// that disagree are refused, and so is a `timings` on the finish chunk that the usage chunk after
+/// it contradicts: both chunks end the stream. The three llama-server fixtures, whose `timings`
+/// are on their last chunk, still report what they did.
+#[test]
+fn usage_and_timings_ending_a_stream_that_disagree_are_still_refused() {
+    let binding = binding();
+    let contradicted = |bytes: &[u8], case: &str| {
+        let error = project_response_bytes(bytes, binding.provenance())
+            .1
+            .expect_err(case);
+        assert_eq!(error.code, ErrorCode::Protocol, "{case}");
+        assert_eq!(error.dispatch, Dispatch::Accepted, "{case}");
+        assert_eq!(
+            error.message, "chat completion timings contradict its usage report",
+            "{case}"
+        );
+    };
+
+    // `LLAMA_TEXT`'s usage chunk with its `predicted_n` moved from 14 to 13, nothing else.
+    let fixture = std::str::from_utf8(LLAMA_TEXT).expect("text");
+    assert_eq!(fixture.matches("\"predicted_n\":14").count(), 1);
+    let moved = fixture.replace("\"predicted_n\":14", "\"predicted_n\":13");
+    contradicted(moved.as_bytes(), "the usage chunk carries both");
+
+    let split = format!(
+        "data: {}\n\ndata: {}\n\ndata: {}\n\ndata: [DONE]\n\n",
+        json!({"choices": [{"index": 0, "delta": {"content": "Hel"}, "finish_reason": null}]}),
+        json!({"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+            "timings": {"cache_n": 0, "prompt_n": 35, "predicted_n": 3}}),
+        json!({"choices": [], "usage": {"completion_tokens": 4, "prompt_tokens": 35,
+            "prompt_tokens_details": {"cached_tokens": 0}}}),
+    );
+    contradicted(
+        split.as_bytes(),
+        "the finish chunk's timings, the usage chunk's usage",
+    );
+
+    for (fixture, bytes, input, output, cached) in [
+        ("llama-server text", LLAMA_TEXT, 23, 14, 8),
+        ("llama-server tools", LLAMA_TOOLS, 212, 24, 180),
+        ("llama-server timings", LLAMA_TIMINGS, 2048, 5, 0),
+    ] {
+        let outcome = project_response_bytes(bytes, binding.provenance())
+            .1
+            .unwrap_or_else(|error| panic!("{fixture}: {error:?}"));
+        assert!(outcome.observation.final_usage, "{fixture}");
+        assert_eq!(
+            outcome.observation.usage,
+            Some(Usage {
+                input_tokens: Some(input),
+                output_tokens: Some(output),
+                cached_input_tokens: Some(cached),
+                cache_creation_input_tokens: None,
+                reasoning_output_tokens: None,
+            }),
+            "{fixture}"
+        );
+    }
+}
+
+/// The `response` of an ESS scenario: the `|+` block under `response:`, de-indented.
+fn scenario_response(scenario: &str) -> String {
+    let mut lines = scenario
+        .lines()
+        .skip_while(|line| line.trim() != "response: |+");
+    lines.next().expect("a response block");
+    let block: Vec<&str> = lines
+        .take_while(|line| line.is_empty() || line.starts_with("      "))
+        .map(|line| line.get(6..).unwrap_or_default())
+        .collect();
+    block.join("\n") + "\n"
+}
+
+/// Both fixtures are conformance scenarios, byte for byte, listed where the conformance check
+/// selects its scenarios, and the suite's floor counts them: 888 before this change, 890 after.
+#[test]
+fn both_fixtures_run_as_conformance_scenarios_and_the_floor_counts_them() {
+    let contracts = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../contracts");
+    let read = |path: &str| {
+        std::fs::read_to_string(contracts.join(path))
+            .unwrap_or_else(|error| panic!("{path}: {error}"))
+    };
+    let listed = read("ess-inputs.yaml");
+    for (scenario, bytes) in [
+        (
+            "chat/scenarios/incoming-llama-server-timings-before-the-last-chunk-leave-usage-unknown.yaml",
+            LLAMA_TIMINGS_BEFORE_LAST,
+        ),
+        (
+            "chat/scenarios/incoming-llama-server-timings-before-a-usage-chunk-yield-to-its-usage.yaml",
+            LLAMA_TIMINGS_BEFORE_USAGE,
+        ),
+    ] {
+        assert!(
+            listed.lines().any(|line| line == format!("- {scenario}")),
+            "{scenario} is not listed"
+        );
+        assert_eq!(
+            scenario_response(&read(scenario)),
+            std::str::from_utf8(bytes).expect("text"),
+            "{scenario}"
+        );
+    }
+    let baseline: serde_json::Value =
+        serde_json::from_str(&read("baseline.json")).expect("the baseline");
+    for floor in ["answered_floor", "total_floor"] {
+        assert!(
+            baseline[floor].as_u64().is_some_and(|count| count >= 890),
+            "{floor}: {}",
+            baseline[floor]
+        );
     }
 }
