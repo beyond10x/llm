@@ -219,7 +219,7 @@ ignored, at any depth:
 A key the subset reads with a value of the wrong type is refused rather than read as absent
 (`invalid-request`, or `unsupported` for a `tool_choice` or a `type` outside the subset); an
 explicit `null` is absent for every optional key except `tools`, which must be an array when
-present. `strict: true` is refused
+present. A text part's `text` is not optional: absent or `null`, the part is refused. `strict: true` is refused
 (`chat strict function schemas are outside the published subset`): the neutral tool has no
 strict mode. A tool call or object tool choice whose `type` is not `function` is refused by its
 type.
@@ -229,7 +229,8 @@ string) and `verbosity` (`low`, `medium` or `high`) in its hints; `project_reque
 back under the same name, so the body it builds decodes to the same turn.
 
 Also refused: a role outside `system`/`developer`/`user`/`assistant`/`tool`, a content part
-that is not text, `tool_choice: "none"` (the neutral subset cannot express it and must not
+that is not text, a text part whose `text` is absent or `null` (an empty string is still text),
+`tool_choice: "none"` (the neutral subset cannot express it and must not
 quietly treat it as `auto`), contradictory `max_tokens` and `max_completion_tokens`, a tool
 declaration without a `parameters` schema, and system instructions that do not precede the
 conversation.

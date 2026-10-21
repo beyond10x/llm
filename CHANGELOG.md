@@ -11,6 +11,11 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-responses`: a live Codex text turn (`gpt-6-astra`, 2026-10-21), scrubbed, as a replayed fixture
 - `b10x-llm-messages`: two live Messages turns (`claude-haiku-4-5`, 2026-10-21), a cache write and a cache read of 13027 tokens, scrubbed, as replayed fixtures
 
+### Changed
+
+- `b10x-llm-responses`: `ingest_request` refuses a `function` tool without a `parameters` key (`InvalidRequest`), as the chat ingress does; a present `null` is still refused by the schema check
+- `b10x-llm-chat`: `decode_ingress_request` refuses a `text` content part whose `text` is absent or `null` (`InvalidRequest`); an empty string is still text
+
 ## [0.8.4] - 2026-10-21
 
 ### Fixed

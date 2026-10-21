@@ -120,6 +120,11 @@ developer part of another type, a developer message with no parts, and a develop
 the first item of another kind are refused: the neutral turn has no item that places an
 instruction between two turns.
 
+A `function` tool without a `parameters` key is refused with `ErrorCode::InvalidRequest` (`a
+published tool omits its parameters schema`), as the chat ingress refuses it: an omitted schema
+would reach the model as a null nobody declared. A present `null` is refused as
+before, by the turn's schema check (`tool schema must be a JSON Schema object or boolean`).
+
 A tool of another type than `function` is refused. When its type is one of `web_search`,
 `custom`, `namespace`, `tool_search`, `local_shell`, `file_search`, `computer_use_preview`, `mcp`,
 `image_generation` or `code_interpreter` (`REFUSED_TOOL_TYPES`) the diagnostic names it, copied
