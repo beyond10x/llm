@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: decision-blocker:registry-publication
 kind: decision-blocker
-status: open
+status: cleared
 title: Publishing llm's crates to a registry needs the owner's decision
 relations:
 - blocks: story:crates-from-a-registry
-revision: 1
+revision: 2
+transitions:
+- {from: "open", to: "cleared", at: "2026-10-21T23:09:10Z", actor: "human:timo", revision: 2}
 ---
 ## Missing decision
 

@@ -2,13 +2,15 @@
 format: aep.planning-md/3
 id: story:crates-from-a-registry
 kind: story
-status: draft
+status: archived
 title: Consumers can depend on llm's library crates from a registry, if the owner decides to publish them
 summary: Every crate is publish = false; consumers depend by Git tag; publishing is irreversible and the secrets Git dependency blocks it
 relations:
 - decomposes: epic:contracts
 - serves: vision:portable-model-inference
-revision: 1
+revision: 3
+transitions:
+- {from: "draft", to: "archived", at: "2026-10-21T23:09:11Z", actor: "human:timo", revision: 3}
 ---
 ## Context
 
@@ -47,3 +49,9 @@ consumer depends on them by version from that registry, and each release publish
 
 `Cargo.toml`, every crate manifest, `crates/llm-credentials/Cargo.toml`, `Taskfile.yml`,
 `.github/workflows/`, README.md, AGENTS.md.
+
+## Decision
+
+Archived 2026-10-22: the owner chose not to publish (approval-record:registry-publication-2026-10-22,
+morning-queue row 34, option A, "33+34 as you recommend"). Git release tags stay the supported way to
+depend on llm, as README.md's "Depend on it" section says.
