@@ -15,6 +15,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 - `b10x-llm-responses`: `ingest_request` refuses a `function` tool without a `parameters` key (`InvalidRequest`), as the chat ingress does; a present `null` is still refused by the schema check
 - `b10x-llm-chat`: `decode_ingress_request` refuses a `text` content part whose `text` is absent or `null` (`InvalidRequest`); an empty string is still text
+- The conformance check and CI run ess 0.67.0 (was 0.66.0)
 
 ## [0.8.4] - 2026-10-21
 
