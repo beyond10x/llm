@@ -30,10 +30,7 @@ fn inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transpor
             );
             if package["name"] == "llm-core" && dependency["kind"].is_null() {
                 assert!(
-                    !matches!(
-                        name,
-                        "reqwest" | "hyper" | "axum" | "llm-http"
-                    ),
+                    !matches!(name, "reqwest" | "hyper" | "axum" | "llm-http"),
                     "core imported transport: {name}"
                 );
             }
@@ -41,10 +38,7 @@ fn inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transpor
             // stays protocol-neutral so ordered fallback never names a client.
             if package["name"] == "llm-routing" && dependency["kind"].is_null() {
                 assert!(
-                    !matches!(
-                        name,
-                        "llm-chat" | "llm-responses" | "llm-messages"
-                    ),
+                    !matches!(name, "llm-chat" | "llm-responses" | "llm-messages"),
                     "routing imported a protocol crate: {name}"
                 );
             }
