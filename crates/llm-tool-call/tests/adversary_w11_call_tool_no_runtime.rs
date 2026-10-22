@@ -5,8 +5,8 @@
 //! refuses the turn before the Codex login is read, and `call_tool` hands the refusal on as
 //! `ModelError::Model`. Local sockets only; the login path names no file.
 
-use llm_tool_call::{ModelError, call_tool, codex_model_at};
 use llm_core::{Dispatch, ErrorCode, Item, ToolName, ToolSpec};
+use llm_tool_call::{ModelError, call_tool, codex_model_at};
 use serde_json::json;
 use std::{
     any::Any,

@@ -3,12 +3,12 @@
 //! Run with `cargo run --locked -p llm-docs --example forced_tool_call`. The model here is
 //! recorded in-process, so nothing is sent and no credential is read; swap in
 //! `llm_tool_call::codex_model("<model>")?` to ask a real model through a Codex login.
-use llm_tool_call::{ModelError, call_tool};
 use llm_core::{
     BoxFuture, CallId, Cancel, Capabilities, Error, Id, Item, Model, Protocol, Provenance,
     StopReason, StreamSink, ToolCall, ToolName, ToolSpec, TurnObservation, TurnOutcome,
     TurnRequest,
 };
+use llm_tool_call::{ModelError, call_tool};
 use serde_json::json;
 
 /// A model that answers every turn with one call to the tool the request forced.
