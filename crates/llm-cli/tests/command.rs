@@ -296,6 +296,18 @@ fn container_answer() -> Vec<u8> {
     )
 }
 
+/// Held for reading around every spawn, and for writing by a test that closes its end of a
+/// child's stdout: a child forked by another test while that pipe is open would hold a copy of
+/// its read end until it execs, and the write would not fail.
+static SPAWNING: std::sync::RwLock<()> = std::sync::RwLock::new(());
+
+fn spawn(command: &mut Command) -> std::process::Child {
+    let _spawning = SPAWNING
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    command.spawn().unwrap()
+}
+
 /// Runs `llm` with only `env` set, and `stdin` as its input.
 fn llm(args: &[&str], env: &[(&str, &str)], stdin: Option<&str>) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_llm"));
@@ -306,7 +318,7 @@ fn llm(args: &[&str], env: &[(&str, &str)], stdin: Option<&str>) -> Output {
         Stdio::null()
     });
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
-    let mut child = command.spawn().unwrap();
+    let mut child = spawn(&mut command);
     if let Some(input) = stdin {
         child
             .stdin
@@ -588,15 +600,15 @@ fn stalled_after_one_delta() -> (String, std::sync::mpsc::Sender<()>) {
 fn an_interrupt_ends_the_turn_with_130_and_keeps_the_text_already_shown() {
     let (origin, release) = stalled_after_one_delta();
     let (_directory, path) = configured(&three_routes(&origin));
-    let mut child = Command::new(env!("CARGO_BIN_EXE_llm"))
-        .env_clear()
-        .envs(KEYS.iter().copied())
-        .args(["--config", &path, "infer", "--model", "haiku", "hi"])
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
+    let mut child = spawn(
+        Command::new(env!("CARGO_BIN_EXE_llm"))
+            .env_clear()
+            .envs(KEYS.iter().copied())
+            .args(["--config", &path, "infer", "--model", "haiku", "hi"])
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()),
+    );
     let mut out = child.stdout.take().unwrap();
     let mut shown = Vec::new();
     let mut byte = [0; 1];
@@ -604,9 +616,8 @@ fn an_interrupt_ends_the_turn_with_130_and_keeps_the_text_already_shown() {
         assert_eq!(out.read(&mut byte).unwrap(), 1, "stdout ended early");
         shown.push(byte[0]);
     }
-    let interrupted = Command::new("kill")
-        .args(["-INT", &child.id().to_string()])
-        .status()
+    let interrupted = spawn(Command::new("kill").args(["-INT", &child.id().to_string()]))
+        .wait()
         .unwrap();
     assert!(interrupted.success());
     out.read_to_end(&mut shown).unwrap();
@@ -622,6 +633,114 @@ fn an_interrupt_ends_the_turn_with_130_and_keeps_the_text_already_shown() {
     assert_eq!(status.code(), Some(130), "{errors}");
     assert!(String::from_utf8(shown).unwrap().starts_with("Guten "));
     assert!(!errors.contains("route=haiku"), "{errors}");
+}
+
+/// A Messages server that streams `Guten `, waits for the test's go, then streams `Tag` and
+/// ends the turn.
+fn paused_after_one_delta() -> (String, std::sync::mpsc::Sender<()>) {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let (go, wait) = std::sync::mpsc::channel::<()>();
+    thread::spawn(move || {
+        let Ok((mut socket, _)) = listener.accept() else {
+            return;
+        };
+        read_request(&mut socket);
+        let whole = messages_stream();
+        let text = String::from_utf8(whole).unwrap();
+        let split = text.find("event: content_block_delta").unwrap();
+        let second = split
+            + 1
+            + text[split + 1..]
+                .find("event: content_block_delta")
+                .unwrap();
+        let _ = socket.write_all(&text.as_bytes()[..second]);
+        let _ = socket.flush();
+        let _ = wait.recv_timeout(std::time::Duration::from_secs(30));
+        let _ = socket.write_all(&text.as_bytes()[second..]);
+        let _ = socket.flush();
+    });
+    (origin, go)
+}
+
+/// Runs `llm` with `args` and its stdout a pipe the test holds; the caller holds [`SPAWNING`]
+/// for writing until the child is finished.
+fn spawned(args: &[&str]) -> std::process::Child {
+    Command::new(env!("CARGO_BIN_EXE_llm"))
+        .env_clear()
+        .envs(KEYS.iter().copied())
+        .args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap()
+}
+
+fn alone() -> std::sync::RwLockWriteGuard<'static, ()> {
+    SPAWNING
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+fn finished(mut child: std::process::Child) -> (Option<i32>, String) {
+    let mut errors = String::new();
+    child
+        .stderr
+        .take()
+        .unwrap()
+        .read_to_string(&mut errors)
+        .unwrap();
+    (child.wait().unwrap().code(), errors)
+}
+
+#[test]
+fn a_reader_that_closes_stdout_before_the_first_delta_stops_the_turn_with_0() {
+    let fixture = Fixture::new(vec![messages_stream()]);
+    let (_directory, path) = configured(&three_routes(&fixture.origin));
+    let _alone = alone();
+    let mut child = spawned(&["--config", &path, "infer", "--model", "haiku", "hi"]);
+    drop(child.stdout.take());
+    let (code, errors) = finished(child);
+    assert_eq!(code, Some(0), "{errors}");
+    assert_eq!(
+        errors,
+        "llm: route `haiku`: stdout closed; the turn was stopped\n"
+    );
+}
+
+#[test]
+fn a_reader_that_closes_stdout_after_a_shown_delta_stops_the_turn_with_0_and_no_panic() {
+    let (origin, go) = paused_after_one_delta();
+    let (_directory, path) = configured(&three_routes(&origin));
+    let _alone = alone();
+    let mut child = spawned(&["--config", &path, "infer", "--model", "haiku", "hi"]);
+    let mut out = child.stdout.take().unwrap();
+    let mut shown = Vec::new();
+    let mut byte = [0; 1];
+    while !shown.ends_with(b"Guten ") {
+        assert_eq!(out.read(&mut byte).unwrap(), 1, "stdout ended early");
+        shown.push(byte[0]);
+    }
+    drop(out);
+    go.send(()).unwrap();
+    let (code, errors) = finished(child);
+    assert_eq!(code, Some(0), "{errors}");
+    assert_eq!(
+        errors,
+        "llm: route `haiku`: stdout closed; the turn was stopped\n"
+    );
+}
+
+#[test]
+fn a_closed_stdout_ends_model_list_with_0_and_no_panic() {
+    let (_directory, path) = configured(&three_routes("http://127.0.0.1:9"));
+    let _alone = alone();
+    let mut child = spawned(&["--config", &path, "model", "list"]);
+    drop(child.stdout.take());
+    let (code, errors) = finished(child);
+    assert_eq!(code, Some(0), "{errors}");
+    assert_eq!(errors, "");
 }
 
 #[test]

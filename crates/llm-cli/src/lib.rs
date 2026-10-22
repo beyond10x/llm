@@ -10,7 +10,9 @@
 //! Exit codes: 0 for a completed turn or listing; 2 for a refusal before anything is sent (no
 //! configuration file, a document `llm-models` refuses, an unknown name, a credential that does
 //! not resolve, an invalid request); 1 for a provider or transport failure, reported by its
-//! `llm_core` error kind only; 130 when Ctrl-C cancelled the turn.
+//! `llm_core` error kind only; 130 when Ctrl-C cancelled the turn (a second Ctrl-C drops a turn
+//! the first did not end). A reader that closes stdout (`llm infer … | head -c 1`) stops the turn
+//! and the command exits 0, saying so on stderr; any other failure to write stdout exits 1.
 
 use clap::{Parser, Subcommand, ValueEnum};
 use llm_core::{
@@ -259,10 +261,15 @@ pub fn run(args: impl IntoIterator<Item = OsString>, environment: &Environment) 
     match execute(&cli, environment) {
         Ok(()) => ExitCode::SUCCESS,
         Err(failure) => {
-            eprintln!("{}", failure.message);
+            say(&failure.message);
             ExitCode::from(failure.code)
         }
     }
+}
+
+/// Writes one line to stderr; a stderr that cannot be written to is not reported anywhere.
+fn say(line: &str) {
+    let _ = writeln!(io::stderr().lock(), "{line}");
 }
 
 fn execute(cli: &Cli, environment: &Environment) -> Result<(), Failure> {
@@ -364,12 +371,18 @@ fn list(routes: &Routes, format: Format) -> Result<(), Failure> {
         }
         Format::Text => table(&rows),
     };
-    io::stdout()
+    let mut stdout = io::stdout().lock();
+    match stdout
         .write_all(text.as_bytes())
-        .map_err(|_| Failure {
+        .and_then(|()| stdout.flush())
+    {
+        Err(error) if error.kind() != io::ErrorKind::BrokenPipe => Err(Failure {
             code: 1,
-            message: "llm: stdout is closed".to_owned(),
-        })
+            message: format!("llm: cannot write to stdout: {}", error.kind()),
+        }),
+        // A reader that closed stdout has what it wanted.
+        _ => Ok(()),
+    }
 }
 
 fn table(rows: &[Row]) -> String {
@@ -445,6 +458,40 @@ fn code(code: ErrorCode) -> String {
         .unwrap_or_else(|| format!("{code:?}"))
 }
 
+/// Where the configuration's secret references resolve: the home, the container endpoint.
+fn sources(environment: &Environment) -> SecretSources {
+    let mut sources = SecretSources::new();
+    if let Some(home) = &environment.home {
+        sources = sources.with_home(home);
+    }
+    if let (Some(uri), Some(token_file)) = (
+        &environment.container_uri,
+        &environment.container_token_file,
+    ) {
+        sources = sources.with_container_credentials(uri, token_file);
+    }
+    sources
+}
+
+/// The prompt argument, or stdin when there is none; an empty prompt is refused.
+fn prompt(infer: &Infer) -> Result<String, Failure> {
+    let prompt = if let Some(prompt) = &infer.prompt {
+        prompt.clone()
+    } else {
+        let mut prompt = String::new();
+        io::stdin()
+            .read_to_string(&mut prompt)
+            .map_err(|_| Failure::refused("llm: the prompt on stdin is not UTF-8 text"))?;
+        prompt
+    };
+    if prompt.trim().is_empty() {
+        return Err(Failure::refused(
+            "llm: no prompt: give it as an argument or on stdin",
+        ));
+    }
+    Ok(prompt)
+}
+
 fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<(), Failure> {
     let name = infer.model.as_str();
     let target = routes.target(name).map_err(|_| {
@@ -460,33 +507,10 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
             error.message
         ))
     };
-    let mut sources = SecretSources::new();
-    if let Some(home) = &environment.home {
-        sources = sources.with_home(home);
-    }
-    if let (Some(uri), Some(token_file)) = (
-        &environment.container_uri,
-        &environment.container_token_file,
-    ) {
-        sources = sources.with_container_credentials(uri, token_file);
-    }
     let resolvers = routes
-        .resolvers(&sources)
+        .resolvers(&sources(environment))
         .map_err(|error| refused(&error))?;
-    let prompt = if let Some(prompt) = &infer.prompt {
-        prompt.clone()
-    } else {
-        let mut prompt = String::new();
-        io::stdin()
-            .read_to_string(&mut prompt)
-            .map_err(|_| Failure::refused("llm: the prompt on stdin is not UTF-8 text"))?;
-        prompt
-    };
-    if prompt.trim().is_empty() {
-        return Err(Failure::refused(
-            "llm: no prompt: give it as an argument or on stdin",
-        ));
-    }
+    let prompt = prompt(infer)?;
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -505,7 +529,23 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
             request.instructions.clone_from(system);
         }
         request.max_output_tokens = infer.max_output_tokens;
-        match streamed(&port, &request).await {
+        let (returned, closed) = streamed(&port, &request).await;
+        match closed {
+            Some(kind) if kind != io::ErrorKind::BrokenPipe => {
+                return Err(Failure {
+                    code: 1,
+                    message: format!("llm: route `{route}`: cannot write to stdout: {kind}"),
+                });
+            }
+            Some(_) if returned.is_err() => {
+                return Err(Failure {
+                    code: 0,
+                    message: format!("llm: route `{route}`: stdout closed; the turn was stopped"),
+                });
+            }
+            _ => {}
+        }
+        match returned {
             Ok(outcome) => {
                 let cost = match routes.cost(name, &outcome.observation) {
                     Ok(None) => String::new(),
@@ -515,11 +555,11 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
                     ),
                     Err(_) => " cost=unknown".to_owned(),
                 };
-                eprintln!(
+                say(&format!(
                     "route={route} protocol={}{}{cost}",
                     protocol(port.protocol()),
                     usage(outcome.observation.usage.as_ref())
-                );
+                ));
                 Ok(())
             }
             Err(error) if error.code == ErrorCode::Cancelled => Err(Failure {
@@ -535,26 +575,120 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
     })
 }
 
-/// Runs the turn, writing its text to stdout as it arrives; Ctrl-C cancels it through its
-/// [`Cancel`], and the turn then ends as the client reports it.
-async fn streamed(model: &dyn Model, request: &TurnRequest) -> Result<TurnOutcome, Error> {
-    let cancel = Cancel::new();
+/// Runs the turn, writing its text to stdout as it arrives, and ends a shown text with a
+/// newline. Ctrl-C cancels the turn through its [`Cancel`] and the turn then ends as the client
+/// reports it; a second Ctrl-C drops it. A write to stdout that fails stops the turn; its kind
+/// is returned beside the turn's result.
+async fn streamed(
+    model: &dyn Model,
+    request: &TurnRequest,
+) -> (Result<TurnOutcome, Error>, Option<io::ErrorKind>) {
     let mut sink = Stdout::default();
-    let returned = {
-        let turn = model.turn(request, &mut sink, &cancel);
-        tokio::pin!(turn);
-        tokio::select! {
-            returned = &mut turn => returned,
-            _ = tokio::signal::ctrl_c() => {
-                cancel.cancel();
-                turn.await
-            }
+    let returned = drive(model, request, &mut sink, interrupted).await;
+    if sink.closed.is_none() && sink.shown && !sink.ended_with_newline {
+        let mut stdout = io::stdout().lock();
+        if let Err(error) = writeln!(stdout).and_then(|()| stdout.flush()) {
+            sink.closed = Some(error.kind());
         }
-    };
-    if sink.shown && !sink.ended_with_newline {
-        println!();
     }
-    returned
+    (returned, sink.closed)
+}
+
+/// The next Ctrl-C; never, when no handler can be installed.
+async fn interrupted() {
+    if tokio::signal::ctrl_c().await.is_err() {
+        std::future::pending::<()>().await;
+    }
+}
+
+/// Runs the turn into `sink` until it returns. The first `interrupt` cancels it through its
+/// [`Cancel`]; a second drops it, for a turn that does not end on its cancel.
+async fn drive<F>(
+    model: &dyn Model,
+    request: &TurnRequest,
+    sink: &mut dyn StreamSink,
+    mut interrupt: impl FnMut() -> F,
+) -> Result<TurnOutcome, Error>
+where
+    F: Future<Output = ()>,
+{
+    let cancel = Cancel::new();
+    let turn = model.turn(request, sink, &cancel);
+    tokio::pin!(turn);
+    tokio::select! {
+        returned = &mut turn => return returned,
+        () = interrupt() => cancel.cancel(),
+    }
+    tokio::select! {
+        returned = &mut turn => returned,
+        () = interrupt() => Err(Error::cancelled()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use llm_core::{Capabilities, Id, Provenance, VecSink};
+    use std::time::Duration;
+
+    /// A model whose turn never returns and ignores its [`Cancel`].
+    struct Deaf {
+        provenance: Provenance,
+        capabilities: Capabilities,
+    }
+
+    impl Model for Deaf {
+        fn provenance(&self) -> &Provenance {
+            &self.provenance
+        }
+        fn capabilities(&self) -> &Capabilities {
+            &self.capabilities
+        }
+        fn turn<'a>(
+            &'a self,
+            _request: &'a TurnRequest,
+            _sink: &'a mut dyn StreamSink,
+            _cancel: &'a Cancel,
+        ) -> BoxFuture<'a, Result<TurnOutcome, Error>> {
+            Box::pin(std::future::pending())
+        }
+    }
+
+    #[test]
+    fn a_second_interrupt_drops_a_turn_that_ignored_the_first() {
+        let id = |value: &str| Id::new(value).unwrap();
+        let model = Deaf {
+            provenance: Provenance {
+                protocol: Protocol::Messages,
+                provider: id("fixture"),
+                account: id("anonymous"),
+                endpoint: id("fixture"),
+                model: id("deaf"),
+                binding_revision: id("fixture-v1"),
+            },
+            capabilities: Capabilities::text(1024, 64),
+        };
+        let request = TurnRequest::new("deaf", vec![Item::user("hi")]);
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let mut sink = VecSink::new(16, 1024);
+        let interrupts = std::cell::Cell::new(0);
+        let returned = runtime.block_on(async {
+            tokio::time::timeout(
+                Duration::from_secs(5),
+                drive(&model, &request, &mut sink, || {
+                    interrupts.set(interrupts.get() + 1);
+                    std::future::ready(())
+                }),
+            )
+            .await
+        });
+        let returned = returned.expect("the second interrupt did not end the turn");
+        assert_eq!(returned.unwrap_err().code, ErrorCode::Cancelled);
+        assert_eq!(interrupts.get(), 2);
+    }
 }
 
 /// A refusal the request never left the process for: the caller's own input or credentials.
@@ -583,6 +717,8 @@ fn usage(usage: Option<&Usage>) -> String {
 struct Stdout {
     shown: bool,
     ended_with_newline: bool,
+    /// The kind of the first failed write; the turn is stopped on it.
+    closed: Option<io::ErrorKind>,
 }
 
 impl StreamSink for Stdout {
@@ -593,10 +729,13 @@ impl StreamSink for Stdout {
                     return Ok(());
                 }
                 let mut stdout = io::stdout().lock();
-                stdout
+                if let Err(error) = stdout
                     .write_all(text.as_bytes())
                     .and_then(|()| stdout.flush())
-                    .map_err(|_| Error::cancelled())?;
+                {
+                    self.closed = Some(error.kind());
+                    return Err(Error::cancelled());
+                }
                 self.shown = true;
                 self.ended_with_newline = text.ends_with('\n');
             }
