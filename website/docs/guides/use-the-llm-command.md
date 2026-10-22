@@ -81,7 +81,9 @@ model = "bedrock-invoke/eu.anthropic.claude-sonnet-5-5"
 The model ids are example ids, not verified. `bedrock-eu` uses Bedrock's Converse wire and signs
 with the container credentials EKS Pod Identity serves. `bedrock-invoke` sends the Anthropic
 Messages body to `InvokeModel` and signs with keys from the environment. Every secret is a
-reference (`env:`, `file:` or `keychain:`), never a value; a literal key is refused.
+reference, never a value; a literal key is refused. The command reads `env:` and `file:`
+references. It reads no keychain: a file with a `keychain:` reference on any endpoint is refused by
+`llm infer`, whichever route is asked for.
 
 ## List the models
 
