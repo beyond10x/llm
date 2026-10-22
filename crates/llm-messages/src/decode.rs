@@ -276,8 +276,10 @@ impl StreamDecoder {
         self.complete
     }
 
-    /// Whether any payload outside [`LIFECYCLE_EVENTS`] was read, shown to the caller or not.
-    pub(crate) const fn has_answered(&self) -> bool {
+    /// Whether any payload other than a `ping` or the `message_start` header was read, shown to
+    /// the caller or not. Once it has, a failure is final: another attempt would answer, and
+    /// bill, again.
+    pub const fn has_answered(&self) -> bool {
         self.answered
     }
 
