@@ -2,13 +2,17 @@
 format: aep.planning-md/3
 id: story:drop-package-prefix
 kind: story
-status: draft
+status: implemented
 title: Packages are named llm-*, without the b10x- prefix
 summary: Rename every b10x-llm-* package to llm-*
 relations:
 - decomposes: epic:contracts
 - serves: vision:portable-model-inference
-revision: 2
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-22T21:19:02Z", actor: "human:timo", revision: 3}
+- {from: "proposed", to: "active", at: "2026-10-22T21:19:02Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-22T21:19:02Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Context
 
