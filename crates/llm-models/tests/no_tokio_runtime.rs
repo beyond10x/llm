@@ -194,6 +194,7 @@ fn client(binding: Binding, resolver: Arc<dyn SecretResolver>) -> Box<dyn Model>
         Protocol::Messages => {
             Box::new(MessagesClient::new(binding, http(), resolver).expect("a Messages client"))
         }
+        Protocol::BedrockConverse => panic!("no binding serves bedrock-converse"),
     }
 }
 

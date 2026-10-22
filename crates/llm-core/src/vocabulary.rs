@@ -7,7 +7,15 @@ pub enum Protocol {
     Responses,
     Messages,
     ChatCompletions,
+    /// Amazon Bedrock's Converse wire. Only `llm-bedrock`'s `BedrockClient` serves it: it is
+    /// signed per request, so no binding, catalog or routes document can name it.
+    BedrockConverse,
 }
+
+/// Why a binding, catalog or routes document cannot name [`Protocol::BedrockConverse`], and why
+/// no base URL builds a request URL for it.
+pub const BEDROCK_CONVERSE_REFUSAL: &str =
+    "bedrock-converse is served by llm-bedrock's BedrockClient, not by a binding";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -116,9 +124,13 @@ impl Capabilities {
     /// # Errors
     /// Refuses input during output, which no protocol in this workspace carries, and output that
     /// does not stream, since every protocol in this workspace streams its output. The message
-    /// names the rule and never a value.
+    /// names the rule and never a value. Refuses [`Protocol::BedrockConverse`] by name: no
+    /// document serves it.
     pub fn validate_protocol(&self, protocol: Protocol) -> Result<(), Error> {
         match protocol {
+            Protocol::BedrockConverse => {
+                return Err(Error::unsupported(BEDROCK_CONVERSE_REFUSAL));
+            }
             Protocol::Responses | Protocol::Messages | Protocol::ChatCompletions => {
                 if self.input_during_output {
                     return Err(Error::invalid(

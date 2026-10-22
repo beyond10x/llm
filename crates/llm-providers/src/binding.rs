@@ -79,7 +79,7 @@ impl BindingDocument {
             model: self.model.id.clone(),
             binding_revision: self.revision()?,
         };
-        let request_url = self.endpoint.base_url.request_url(self.serving.protocol);
+        let request_url = self.endpoint.base_url.request_url(self.serving.protocol)?;
         Ok(Binding {
             declaration: self,
             provenance,

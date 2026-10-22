@@ -1,5 +1,7 @@
 use http::HeaderName;
-use llm_core::{AuthKind, BillingKind, Capabilities, Error, Id, Protocol};
+use llm_core::{
+    AuthKind, BEDROCK_CONVERSE_REFUSAL, BillingKind, Capabilities, Error, Id, Protocol,
+};
 use llm_credentials::SecretRef;
 use serde::{Deserialize, Deserializer, Serialize};
 use url::Url;
@@ -42,13 +44,21 @@ impl BaseUrl {
         &self.0
     }
 
-    pub(crate) fn request_url(&self, protocol: Protocol) -> String {
+    /// The request URL `protocol` is served at under this prefix.
+    ///
+    /// # Errors
+    /// Refuses [`Protocol::BedrockConverse`] as [`Capabilities::validate_protocol`] does: a
+    /// Bedrock URL names the model in its path, which no base URL can.
+    pub(crate) fn request_url(&self, protocol: Protocol) -> Result<String, Error> {
         let path = match protocol {
             Protocol::Responses => "responses",
             Protocol::Messages => "messages",
             Protocol::ChatCompletions => "chat/completions",
+            Protocol::BedrockConverse => {
+                return Err(Error::unsupported(BEDROCK_CONVERSE_REFUSAL));
+            }
         };
-        format!("{}{path}", self.0)
+        Ok(format!("{}{path}", self.0))
     }
 }
 
@@ -190,4 +200,30 @@ pub struct ServingModel {
     pub model_id: Id,
     pub protocol: Protocol,
     pub capabilities: Capabilities,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::BaseUrl;
+    use llm_core::{BEDROCK_CONVERSE_REFUSAL, ErrorCode, Protocol};
+
+    /// A base URL builds no Bedrock Converse URL: the refusal is the one a binding document gets
+    /// for that protocol, not a path nothing serves. Every other protocol keeps its path.
+    #[test]
+    fn a_base_url_refuses_to_build_a_bedrock_converse_url() {
+        let base = BaseUrl::new("https://fixture.example.invalid/v1").unwrap();
+        let refused = base.request_url(Protocol::BedrockConverse).unwrap_err();
+        assert_eq!(refused.code, ErrorCode::Unsupported);
+        assert_eq!(refused.message, BEDROCK_CONVERSE_REFUSAL);
+        for (protocol, path) in [
+            (Protocol::Responses, "responses"),
+            (Protocol::Messages, "messages"),
+            (Protocol::ChatCompletions, "chat/completions"),
+        ] {
+            assert_eq!(
+                base.request_url(protocol).unwrap(),
+                format!("https://fixture.example.invalid/v1/{path}")
+            );
+        }
+    }
 }

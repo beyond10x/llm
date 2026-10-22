@@ -373,6 +373,7 @@ async fn send_next_turn(protocol: &str, ending: Ending, order: Order) -> Result<
         Protocol::Messages => messages_order(&body),
         Protocol::ChatCompletions => chat_order(&body),
         Protocol::Responses => responses_order(&body),
+        Protocol::BedrockConverse => Err("no binding serves bedrock-converse".to_owned()),
     }
     .map_err(|broken| format!("{broken}; body {body}"))
 }

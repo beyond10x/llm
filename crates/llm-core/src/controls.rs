@@ -241,7 +241,8 @@ impl Controls {
 
 /// The effort name `protocol` receives for `request`: the reasoning table of `docs/design.md`.
 ///
-/// Messages receives the neutral effort as it is, and its thinking control separately. Chat
+/// Messages receives the neutral effort as it is, and its thinking control separately; so does
+/// Bedrock Converse, whose encoder decides what of either it can carry for the model. Chat
 /// Completions and Responses have no effort `max` and no thinking control: `max` is sent as their
 /// highest, `xhigh`; adaptive thinking is their own behaviour and sends nothing; disabled thinking
 /// is the effort `none`.
@@ -252,7 +253,9 @@ impl Controls {
 pub fn wire_effort(protocol: Protocol, request: &TurnRequest) -> Result<Option<String>, Error> {
     let effort = request.sampling.reasoning_effort.as_deref();
     let wire = match protocol {
-        Protocol::Messages => return Ok(effort.map(ToOwned::to_owned)),
+        Protocol::Messages | Protocol::BedrockConverse => {
+            return Ok(effort.map(ToOwned::to_owned));
+        }
         Protocol::ChatCompletions => "Chat Completions",
         Protocol::Responses => "Responses",
     };
