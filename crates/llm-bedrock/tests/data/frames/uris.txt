@@ -1,0 +1,22 @@
+ddtrace-anthropic_message_invoke_stream.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-sonnet-20240229-v1%3A0/invoke-with-response-stream
+ddtrace-anthropic_message_invoke.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/us.anthropic.claude-3-sonnet-20240229-v1%3A0/invoke
+ddtrace-bedrock_converse_stream_prompt_caching.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/us.anthropic.claude-3-7-sonnet-20250219-v1%3A0/converse-stream
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/us.anthropic.claude-3-7-sonnet-20250219-v1%3A0/converse-stream
+ddtrace-bedrock_converse_stream.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-sonnet-20240229-v1%3A0/converse-stream
+ddtrace-bedrock_converse.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-3-sonnet-20240229-v1%3A0/converse
+pydantic-test_bedrock_model_iter_stream.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-micro-v1%3A0/converse-stream
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-micro-v1%3A0/converse-stream
+pydantic-test_bedrock_model_stream_empty_text_delta.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/openai.gpt-oss-120b-1%3A0/converse-stream
+pydantic-test_bedrock_model_stream.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/us.amazon.nova-micro-v1%3A0/converse-stream
+pydantic-test_bedrock_model_thinking_part_stream.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/us.anthropic.claude-sonnet-4-20250514-v1%3A0/converse-stream
+pydantic-test_bedrock_streaming_error.yaml
+  https://bedrock-runtime.us-east-1.amazonaws.com/model/us.does-not-exist-model-v1%3A0/converse-stream
