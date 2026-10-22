@@ -1216,8 +1216,10 @@ version = "0.11.0"
 dependencies = [
  "base64",
  "clap",
+ "keyring-core",
  "llm-bedrock",
  "llm-core",
+ "llm-credentials",
  "llm-http",
  "llm-models",
  "serde_json",

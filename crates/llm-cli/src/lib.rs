@@ -15,18 +15,23 @@
 //! and the command exits 0, saying so on stderr; any other failure to write stdout exits 1.
 
 use clap::{Parser, Subcommand, ValueEnum};
+use keyring_core::CredentialStore;
 use llm_core::{
-    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Item, Model, Protocol, StreamEvent, StreamSink,
-    TurnOutcome, TurnRequest, Usage,
+    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol, StreamEvent,
+    StreamSink, TurnOutcome, TurnRequest, Usage,
 };
 use llm_http::{HttpClient, Limits};
-use llm_models::routes::{RouteDeclaration, Routes, SecretSources};
+use llm_models::routes::{
+    BedrockEndpointDeclaration, EndpointDeclaration, RouteDeclaration, Routes, SecretKind,
+    SecretSources,
+};
 use serde_json::{Value, json};
 use std::{
     ffi::OsString,
     io::{self, Read, Write},
     path::{Path, PathBuf},
     process::ExitCode,
+    sync::Arc,
 };
 use url::Url;
 
@@ -89,7 +94,9 @@ struct Infer {
 }
 
 /// The process environment the command reads: the configuration lookup, the home a `file:~/`
-/// reference expands against, and the container credentials endpoint.
+/// reference expands against, the container credentials endpoint and the credential store a
+/// `keychain:` reference reads. With no store given, the platform keychain is opened, and only
+/// when the asked route's endpoint has a `keychain:` reference.
 #[derive(Debug, Clone, Default)]
 pub struct Environment {
     pub config: Option<OsString>,
@@ -97,6 +104,7 @@ pub struct Environment {
     pub xdg_config_home: Option<PathBuf>,
     pub container_uri: Option<String>,
     pub container_token_file: Option<PathBuf>,
+    pub keychain: Option<Arc<CredentialStore>>,
 }
 
 impl Environment {
@@ -109,6 +117,7 @@ impl Environment {
             xdg_config_home: os("XDG_CONFIG_HOME").map(PathBuf::from),
             container_uri: os(CONTAINER_URI).and_then(|value| value.into_string().ok()),
             container_token_file: os(CONTAINER_TOKEN_FILE).map(PathBuf::from),
+            keychain: None,
         }
     }
 }
@@ -458,9 +467,32 @@ fn code(code: ErrorCode) -> String {
         .unwrap_or_else(|| format!("{code:?}"))
 }
 
-/// Where the configuration's secret references resolve: the home, the container endpoint.
-fn sources(environment: &Environment) -> SecretSources {
+/// Whether the endpoint has a `keychain:` reference.
+fn reads_keychain(routes: &Routes, endpoint: &Id) -> bool {
+    let http = routes
+        .endpoints()
+        .filter(|declared| declared.name() == endpoint)
+        .filter_map(EndpointDeclaration::secret_kind);
+    let bedrock = routes
+        .bedrock_endpoints()
+        .filter(|declared| declared.name() == endpoint)
+        .flat_map(BedrockEndpointDeclaration::secret_kinds);
+    http.chain(bedrock).any(|kind| kind == SecretKind::Keychain)
+}
+
+/// Where the configuration's secret references resolve: the home, the container endpoint and,
+/// for an asked endpoint with a `keychain:` reference, the credential store. A platform keychain
+/// that cannot be opened is not injected, so only that endpoint's routes are refused.
+fn sources(environment: &Environment, routes: &Routes, endpoint: &Id) -> SecretSources {
     let mut sources = SecretSources::new();
+    let store = environment.keychain.clone().or_else(|| {
+        reads_keychain(routes, endpoint)
+            .then(llm_credentials::keychain::native_store)
+            .and_then(Result::ok)
+    });
+    if let Some(store) = store {
+        sources = sources.with_keychain(store);
+    }
     if let Some(home) = &environment.home {
         sources = sources.with_home(home);
     }
@@ -508,7 +540,7 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
         ))
     };
     let resolvers = routes
-        .resolvers(&sources(environment))
+        .resolvers(&sources(environment, routes, &target.endpoint))
         .map_err(|error| refused(&error))?;
     let prompt = prompt(infer)?;
     let runtime = tokio::runtime::Builder::new_current_thread()

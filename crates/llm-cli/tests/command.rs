@@ -814,6 +814,87 @@ fn a_literal_secret_in_the_file_is_refused_without_echoing_it() {
     assert!(!message.contains("fixture-literal-secret"), "{message}");
 }
 
+/// `three_routes` plus an endpoint on a keychain entry and one on a `file:~/` path, each with a
+/// route.
+fn beside_unbuildable_sources(origin: &str) -> String {
+    format!(
+        r#"{}
+[endpoints.vault]
+base_url = "{origin}/v1"
+protocol = "messages"
+auth = {{ kind = "api-key", header = "x-api-key", secret = "keychain:llm-cli-fixture/key" }}
+
+[endpoints.home]
+base_url = "{origin}/v1"
+protocol = "messages"
+auth = {{ kind = "api-key", header = "x-api-key", secret = "file:~/llm-cli-fixture-key" }}
+
+[routes.locked]
+model = "vault/claude-haiku-5-5"
+
+[routes.homed]
+model = "home/claude-haiku-5-5"
+"#,
+        three_routes(origin)
+    )
+}
+
+#[test]
+fn a_route_answers_beside_endpoints_whose_sources_cannot_be_built() {
+    let fixture = Fixture::new(vec![messages_stream()]);
+    let (_directory, path) = configured(&beside_unbuildable_sources(&fixture.origin));
+    let output = llm(
+        &["--config", &path, "infer", "--model", "fast", "hi"],
+        &KEYS,
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "Guten Tag\n");
+    assert_eq!(fixture.received().len(), 1);
+}
+
+#[test]
+fn a_file_route_without_a_home_is_refused_by_its_endpoint_before_any_request() {
+    let message = refused_before_sending(
+        &beside_unbuildable_sources("{origin}"),
+        &["infer", "--model", "homed", "hi"],
+        &KEYS,
+    );
+    assert!(
+        message.starts_with("llm: route `homed`: unauthorized"),
+        "{message}"
+    );
+    assert!(message.contains("`home`"), "{message}");
+    assert!(!message.contains("llm-cli-fixture-key"), "{message}");
+}
+
+#[test]
+fn a_keychain_route_reads_the_injected_store() {
+    let fixture = Fixture::new(vec![messages_stream()]);
+    let (_directory, path) = configured(&beside_unbuildable_sources(&fixture.origin));
+    let store: Arc<keyring_core::CredentialStore> = keyring_core::mock::Store::new().unwrap();
+    store
+        .build("llm-cli-fixture", "key", None)
+        .unwrap()
+        .set_secret(b"fixture-keychain-key")
+        .unwrap();
+    let environment = llm_cli::Environment {
+        keychain: Some(store),
+        ..llm_cli::Environment::default()
+    };
+    let code = llm_cli::run(
+        ["llm", "--config", &path, "infer", "--model", "locked", "hi"].map(Into::into),
+        &environment,
+    );
+    assert_eq!(code, std::process::ExitCode::SUCCESS);
+    let received = fixture.received();
+    assert_eq!(received.len(), 1);
+    assert_eq!(
+        received[0].header("x-api-key"),
+        Some("fixture-keychain-key")
+    );
+}
+
 #[test]
 fn an_unresolved_credential_is_refused_before_any_request() {
     let message = refused_before_sending(

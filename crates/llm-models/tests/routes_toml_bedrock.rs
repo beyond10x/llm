@@ -158,6 +158,43 @@ fn without_a_container_token_file_only_the_container_route_is_refused() {
     assert_eq!(error.code, ErrorCode::Unauthorized);
 }
 
+/// A relative container token file and an aws-keys field on a keychain without a store each
+/// refuse only their own endpoint's route, `unauthorized` and by the endpoint's name.
+#[cfg(all(feature = "environment", feature = "file"))]
+#[test]
+fn a_bedrock_source_that_cannot_be_built_refuses_only_its_own_route() {
+    let routes = Routes::parse_toml(&TOML.replace(
+        "secret_access_key = \"env:LLM_MODELS_TEST_NEVER_SET_KEY\"",
+        "secret_access_key = \"keychain:llm-routes-service/llm-routes-entry\"",
+    ))
+    .unwrap();
+    let sources = SecretSources::new()
+        .with_container_credentials("http://127.0.0.1:9/v1/credentials", "relative/token");
+    let resolvers = routes.resolvers(&sources).unwrap();
+    let accounts: Vec<_> = resolvers.accounts().map(ToString::to_string).collect();
+    assert_eq!(accounts, ["anthropic"]);
+    routes.port("haiku", http(), &resolvers).unwrap();
+    for (name, endpoint) in [("opus", "`bedrock-eu`"), ("sonnet", "`bedrock-keys`")] {
+        let error = routes.port(name, http(), &resolvers).err().unwrap();
+        assert_eq!(error.code, ErrorCode::Unauthorized, "{name}");
+        assert!(
+            error.message.contains(endpoint),
+            "{name}: {}",
+            error.message
+        );
+        assert!(
+            !error.message.contains("relative/token"),
+            "{}",
+            error.message
+        );
+        assert!(
+            !error.message.contains("llm-routes-service"),
+            "{}",
+            error.message
+        );
+    }
+}
+
 fn observed(routes: &Routes, usage: Usage, final_usage: bool) -> TurnObservation {
     let binding = routes.binding("haiku").unwrap();
     TurnObservation {
