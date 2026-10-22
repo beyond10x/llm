@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SignSuiteCase input",
+  "x-ess-name": "llm.bedrock.SignSuiteCase",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "case": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "case"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:a4c341437ad8fcb6f0efed9fbde222e1670d80dc160f6ffbbf6ec5389236eac1",
+    "regenerate": "ess generate"
+  }
+}

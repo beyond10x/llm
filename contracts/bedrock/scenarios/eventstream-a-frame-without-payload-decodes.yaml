@@ -1,0 +1,25 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: eventstream-a-frame-without-payload-decodes
+summary: "a frame with a header and an empty payload decodes and encodes back"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.DecodeEventStream
+  input:
+    file: "eventstream/valid_empty_payload"
+  outcome: observed
+assert:
+- view: llm.bedrock.LastFrames
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastFrames
+  contains:
+    accepted: true
+    error_code: null
+    messages: 1
+    first_headers:
+    - "some-header:int16:500"
+    first_payload: ""
+    splits_agree: true
+    round_trip: true

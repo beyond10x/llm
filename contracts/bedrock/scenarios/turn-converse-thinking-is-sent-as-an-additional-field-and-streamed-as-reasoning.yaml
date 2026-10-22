@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-converse-thinking-is-sent-as-an-additional-field-and-streamed-as-reasoning
+summary: "enabled thinking travels as additionalModelRequestFields, and reasoning deltas reach the caller apart from the text"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "us.anthropic.claude-sonnet-4-20250514-v1:0"
+    request_json: "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"us.anthropic.claude-sonnet-4-20250514-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[],\"controls\":{\"thinking\":{\"mode\":\"enabled\",\"budget_tokens\":1024}}}}"
+    recording: "pydantic-test_bedrock_model_thinking_part_stream.bin"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    request_line: "POST /model/us.anthropic.claude-sonnet-4-20250514-v1%3A0/converse-stream"
+    request_body: "{\"additionalModelRequestFields\":{\"thinking\":{\"budget_tokens\":1024,\"type\":\"enabled\"}},\"messages\":[{\"content\":[{\"text\":\"Hello\"}],\"role\":\"user\"}]}"
+    signature_verifies: true
+    reasoning: "The user has greeted me with a simple \"Hello\". I should respond in a friendly and welcoming manner. This is a straightforward greeting, so I'll respond warmly and ask how I can help them today."
+    text: "Hello! It's nice to meet you. How can I help you today?"
+    stop_reason: "end-turn"
+    final_usage: true
+    usage_json: "{\"input_tokens\":36,\"output_tokens\":73,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"

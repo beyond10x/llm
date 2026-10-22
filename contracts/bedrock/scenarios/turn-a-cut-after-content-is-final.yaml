@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-cut-after-content-is-final
+summary: "a body that ends inside a frame after text was shown is final"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "anthropic.claude-3-sonnet-20240229-v1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"anthropic.claude-3-sonnet-20240229-v1:0\",\"instructions\":\"You are an expert swe that is to use the tool fetch_concept\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Explain the concept of distributed tracing in a simple way\"}],\"tools\":[{\"name\":\"fetch_concept\",\"description\":\"Fetch an expert explanation for a concept\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"concept\":{\"type\":\"string\",\"description\":\"The concept to explain\"}},\"required\":[\"concept\"]}}],\"max_output_tokens\":1000,\"sampling\":{\"temperature\":0.7,\"top_p\":0.9}}}"
+    recording: "ddtrace-bedrock_converse_stream.bin"
+    keep_frames: 3
+    cut: true
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: false
+    retriable: false
+    text: "Okay,"

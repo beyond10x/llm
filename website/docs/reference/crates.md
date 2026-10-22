@@ -9,11 +9,12 @@ custom_edit_url: null
 
 # Crates
 
-The workspace holds 15 packages at version `0.9.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
+The workspace holds 16 packages at version `0.9.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
 
 | Package | Library | Directory | What it is |
 | --- | --- | --- | --- |
 | `llm-conformance` | binary `llm-conformance` | `checks/conformance` | — |
+| `llm-bedrock` | `llm_bedrock` | `crates/llm-bedrock` | Amazon Bedrock Runtime behind the model port: Converse and Anthropic InvokeModel, event-stream decoding and hand-written SigV4. |
 | `llm-blocking` | `llm_blocking` | `crates/llm-blocking` | A blocking turn adapter over any asynchronous model port, for a synchronous agent loop. |
 | `llm-chat` | `llm_chat` | `crates/llm-chat` | Chat Completions protocol projection and gateway ingress for the declared supported subset. |
 | `llm-cli` | `llm_cli` | `crates/llm-cli` | Operator configuration, route inspection and gateway command surface. |

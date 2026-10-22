@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: sigv4-empty-path-segments-are-dropped-before-signing
+summary: "a path with doubled slashes is signed as its normalised form, a trailing slash kept"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.SignSuiteCase
+  input:
+    case: "get-slashes-normalized"
+  outcome: observed
+assert:
+- view: llm.bedrock.LastSigning
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastSigning
+  contains:
+    accepted: true
+    error_code: null
+    authorization: "AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20150830/us-east-1/service/aws4_request, SignedHeaders=host;x-amz-date, Signature=9a624bd73a37c9a373b5312afbebe7a714a789de108f0bdfe846570885f57e84"
+    amz_date: "20150830T123600Z"
+    security_token_added: null

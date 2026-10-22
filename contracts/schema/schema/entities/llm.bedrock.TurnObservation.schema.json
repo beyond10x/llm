@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TurnObservation",
+  "x-ess-name": "llm.bedrock.TurnObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "retriable": {
+      "type": "boolean"
+    },
+    "diagnostics_safe": {
+      "type": "boolean"
+    },
+    "requests": {
+      "type": "integer"
+    },
+    "request_line": {
+      "type": "string"
+    },
+    "request_body": {
+      "type": "string"
+    },
+    "credential_scope": {
+      "type": "string"
+    },
+    "signature_verifies": {
+      "type": "boolean"
+    },
+    "security_token_sent": {
+      "type": "boolean"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "text": {
+      "type": "string"
+    },
+    "reasoning": {
+      "type": "string"
+    },
+    "tool_stream": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stop_reason": {
+      "type": "string"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "response_id": {
+      "type": "string"
+    },
+    "final_usage": {
+      "type": "boolean"
+    },
+    "usage_json": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.bedrock.TurnObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "diagnostics_safe",
+    "requests",
+    "security_token_sent",
+    "items",
+    "text",
+    "reasoning",
+    "tool_stream",
+    "warnings",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:4aed4662939a601b37bbbaffccdcab1357fbe8854813006420749e7500a83046",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.bedrock.TurnObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.bedrock.TurnObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

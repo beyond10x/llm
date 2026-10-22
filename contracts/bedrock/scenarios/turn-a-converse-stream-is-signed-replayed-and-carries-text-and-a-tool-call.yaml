@@ -1,0 +1,48 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call
+summary: "a recorded ConverseStream answer gives the shown text, the streamed tool input and the tool call, from a signed request"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "anthropic.claude-3-sonnet-20240229-v1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"anthropic.claude-3-sonnet-20240229-v1:0\",\"instructions\":\"You are an expert swe that is to use the tool fetch_concept\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Explain the concept of distributed tracing in a simple way\"}],\"tools\":[{\"name\":\"fetch_concept\",\"description\":\"Fetch an expert explanation for a concept\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"concept\":{\"type\":\"string\",\"description\":\"The concept to explain\"}},\"required\":[\"concept\"]}}],\"max_output_tokens\":1000,\"sampling\":{\"temperature\":0.7,\"top_p\":0.9}}}"
+    recording: "ddtrace-bedrock_converse_stream.bin"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    request_line: "POST /model/anthropic.claude-3-sonnet-20240229-v1%3A0/converse-stream"
+    request_body: "{\"inferenceConfig\":{\"maxTokens\":1000,\"temperature\":0.7,\"topP\":0.9},\"messages\":[{\"content\":[{\"text\":\"Explain the concept of distributed tracing in a simple way\"}],\"role\":\"user\"}],\"system\":[{\"text\":\"You are an expert swe that is to use the tool fetch_concept\"}],\"toolConfig\":{\"tools\":[{\"toolSpec\":{\"description\":\"Fetch an expert explanation for a concept\",\"inputSchema\":{\"json\":{\"properties\":{\"concept\":{\"description\":\"The concept to explain\",\"type\":\"string\"}},\"required\":[\"concept\"],\"type\":\"object\"}},\"name\":\"fetch_concept\"}}]}}"
+    credential_scope: "AKIDEXAMPLE/<date>/eu-central-1/bedrock/aws4_request"
+    signature_verifies: true
+    security_token_sent: false
+    items:
+    - "assistant-text:Okay, let me use the tool to fetch an expert explanation for the concept of distributed tracing."
+    - "tool-call:fetch_concept:tooluse_HA9wsJ32RhOvn8XgIUDpGA:{\"concept\":\"distributed tracing\"}"
+    text: "Okay, let me use the tool to fetch an expert explanation for the concept of distributed tracing."
+    tool_stream:
+    - "started:tooluse_HA9wsJ32RhOvn8XgIUDpGA:fetch_concept"
+    - "arguments:tooluse_HA9wsJ32RhOvn8XgIUDpGA:{\"concept\": "
+    - "arguments:tooluse_HA9wsJ32RhOvn8XgIUDpGA:\"distri"
+    - "arguments:tooluse_HA9wsJ32RhOvn8XgIUDpGA:buted tr"
+    - "arguments:tooluse_HA9wsJ32RhOvn8XgIUDpGA:acing"
+    - "arguments:tooluse_HA9wsJ32RhOvn8XgIUDpGA:\"}"
+    warnings: []
+    stop_reason: "tool-calls"
+    upstream_model: null
+    response_id: null
+    final_usage: true
+    usage_json: "{\"input_tokens\":259,\"output_tokens\":64,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"

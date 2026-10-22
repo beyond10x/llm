@@ -3,7 +3,7 @@ domain: llm.catalog
 types:
   - name: llm.catalog.Protocol
     kind: enum
-    variants: [Responses, Messages, ChatCompletions]
+    variants: [Responses, Messages, ChatCompletions, BedrockConverse]
   - name: llm.catalog.AuthKind
     kind: enum
     # SubscriptionOauth is a caller-supplied subscription token, served only over Messages and

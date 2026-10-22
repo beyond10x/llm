@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: sigv4-query-parameters-are-signed-in-byte-order
+summary: "query parameters are sorted by name before signing, whatever order the request names them in"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.SignSuiteCase
+  input:
+    case: "get-vanilla-query-order-key-case"
+  outcome: observed
+assert:
+- view: llm.bedrock.LastSigning
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastSigning
+  contains:
+    accepted: true
+    error_code: null
+    authorization: "AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20150830/us-east-1/service/aws4_request, SignedHeaders=host;x-amz-date, Signature=b97d918cfa904a5beff61c982a1b6f458b799221646efd99d3219ec94cdf2500"
+    amz_date: "20150830T123600Z"
+    security_token_added: null

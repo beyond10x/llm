@@ -58,7 +58,7 @@
     },
     {
       "area": "Transport",
-      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 883 scenarios against the real crates three times and skips none.",
+      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 937 scenarios against the real crates three times and skips none.",
       "label": "Every library crate is specified in ESS",
       "status": "shipped"
     },
@@ -162,6 +162,36 @@
       "area": "Protocols",
       "detail": "A Responses server_error or rate_limit_exceeded and a Messages overloaded_error or api_error stream error may be retried before any output and are final after it, the rule Responses server_is_overloaded already followed; an exhausted quota stays final inside a stream and, since story:quota-429-is-final, as an HTTP 429 before it (Responses by error.code, or by error.type for insufficient_quota and the Codex backend's usage_limit_reached and usage_not_included; Messages a rate_limit_error whose error.details.error_code is enforced_spend_limit_reached). A failure an llm gateway relays inside a stream with nothing streamed first still reads back retriable; a failure before output, the gateway's HTTP 502, reads final when it carries x-should-retry: false, which llm-gateway has to send.",
       "label": "The provider failures Harness retried are retriable before output",
+      "status": "shipped"
+    },
+    {
+      "area": "Amazon Bedrock",
+      "detail": "llm-bedrock signs each request with a signer written on ring, checked against the AWS test suite vendored from aws-c-auth (header signing only); keys come from StaticCredentials through an injected resolver or from ContainerCredentials at the container credentials endpoint. No AWS SDK crate and no aws-lc is a dependency. EKS Pod Identity is described from AWS documentation and unverified.",
+      "label": "Bedrock requests are signed with Signature Version 4",
+      "status": "shipped"
+    },
+    {
+      "area": "Amazon Bedrock",
+      "detail": "llm_bedrock::eventstream decodes frames incrementally across reads, at most 16 MiB per frame; checked against the smithy-rs vectors and recorded Bedrock bodies.",
+      "label": "AWS event-stream frames decode, bounded",
+      "status": "shipped"
+    },
+    {
+      "area": "Amazon Bedrock",
+      "detail": "BedrockClient with Api::Converse sends /converse-stream or /converse and reads text, tool calls, thinking and usage; the body carries no cachePoint, so an absent cache counter is a known 0 and the input total is known whenever inputTokens is. Fixture evidence only; no live Bedrock call was made.",
+      "label": "A turn runs on Bedrock Converse",
+      "status": "shipped"
+    },
+    {
+      "area": "Amazon Bedrock",
+      "detail": "Api::AnthropicInvoke sends the Messages body with anthropic_version: bedrock-2023-05-31 and reads the stream with the Messages decoder; invocation metrics fill only counters Messages usage left unreported. Fixture evidence only.",
+      "label": "A turn runs on Anthropic models through Bedrock InvokeModel",
+      "status": "shipped"
+    },
+    {
+      "area": "Amazon Bedrock",
+      "detail": "The llm.bedrock domain and 43 authored scenarios cover signing, frame decoding, container credentials and whole turns against loopback servers; the conformance runner answers at least 937 scenarios and skips none.",
+      "label": "Bedrock behaviour is specified in ESS",
       "status": "shipped"
     },
     {

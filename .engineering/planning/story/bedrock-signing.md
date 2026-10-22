@@ -8,7 +8,7 @@ summary: SigV4 on ring passing the AWS v4 suite; static keys through a resolver;
 relations:
 - decomposes: epic:bedrock
 - serves: vision:portable-model-inference
-revision: 2
+revision: 3
 ---
 ## Change
 
@@ -27,6 +27,6 @@ revision: 2
   v4 suite from aws-c-auth) and matches its canonical request, string to sign and signature;
   none is skipped without a named reason.
 - The container source refuses a URI outside `https` and the documented link-local and loopback
-  hosts, sends the token as `authorization`, and maps every failure to `unauthorized` before
+  hosts, sends the token as `authorization`, and maps an unreachable endpoint, a timeout, 408 and 5xx to retriable `transport` and every other failure to `unauthorized`, all before
   dispatch (`crates/llm-bedrock/tests/credentials.rs`).
 - No secret appears in a `Debug` output or an error message.

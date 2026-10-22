@@ -1,0 +1,35 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: eventstream-every-header-type-decodes-and-encodes-back
+summary: "a frame with one header of every type decodes to the values the reference states and encodes back byte for byte"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.DecodeEventStream
+  input:
+    file: "eventstream/valid_with_all_headers_and_payload"
+  outcome: observed
+assert:
+- view: llm.bedrock.LastFrames
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastFrames
+  contains:
+    accepted: true
+    error_code: null
+    messages: 1
+    event_types: []
+    first_headers:
+    - "true:bool:true"
+    - "false:bool:false"
+    - "byte:byte:50"
+    - "short:int16:20000"
+    - "int:int32:500000"
+    - "long:int64:50000000000"
+    - "bytes:byte-array:736f6d65206279746573"
+    - "str:string:some str"
+    - "time:timestamp:5000000000"
+    - "uuid:uuid:b79bc914de214e13b8b2bc47e85b7f0b"
+    first_payload: "some payload"
+    splits_agree: true
+    round_trip: true

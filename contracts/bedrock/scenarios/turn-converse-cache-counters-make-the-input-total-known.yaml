@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-converse-cache-counters-make-the-input-total-known
+summary: "an answer reporting input, cache read and cache write counts gives their sum as the input total"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.anthropic.claude-3-7-sonnet-20250219-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+    recording: "ddtrace-bedrock_converse_stream_prompt_caching-1.bin"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    stop_reason: "end-turn"
+    final_usage: true
+    usage_json: "{\"input_tokens\":1040,\"output_tokens\":250,\"cached_input_tokens\":1028,\"cache_creation_input_tokens\":0}"

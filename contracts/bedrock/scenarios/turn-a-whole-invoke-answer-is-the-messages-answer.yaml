@@ -1,0 +1,35 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-whole-invoke-answer-is-the-messages-answer
+summary: "an /invoke answer is read as a Messages message, its id and serving model kept"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "AnthropicInvoke"
+    stream: false
+    model_id: "us.anthropic.claude-3-sonnet-20240229-v1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.anthropic.claude-3-sonnet-20240229-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"summarize the plot to the lord of the rings in a dozen words\"}],\"tools\":[],\"max_output_tokens\":50}}"
+    recording: "ddtrace-anthropic_message_invoke.json"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    request_line: "POST /model/us.anthropic.claude-3-sonnet-20240229-v1%3A0/invoke"
+    signature_verifies: true
+    items:
+    - "assistant-text:Hobbits embark on epic quest to destroy powerful ring, battling dark forces."
+    text: "Hobbits embark on epic quest to destroy powerful ring, battling dark forces."
+    stop_reason: "end-turn"
+    upstream_model: "claude-3-sonnet-28k-20240229"
+    response_id: "msg_01E6sPP1ksqicYCaBrkvzna8"
+    final_usage: true
+    usage_json: "{\"output_tokens\":22}"

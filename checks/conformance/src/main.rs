@@ -1,3 +1,4 @@
+mod bedrock;
 mod budgets;
 mod chat;
 mod fallback;

@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: container-a-plain-http-uri-outside-the-allow-list-is-refused
+summary: "http to an address that is neither loopback nor a container endpoint is refused when the source is built"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.FetchContainerCredentials
+  input:
+    uri: "http://192.0.2.10/v1/credentials"
+    answer: "Valid"
+    token: true
+    fetches: 1
+  outcome: observed
+assert:
+- view: llm.bedrock.LastContainerCredentials
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastContainerCredentials
+  contains:
+    accepted: false
+    error_code: "unauthorized"
+    dispatch: "not-sent"
+    retriable: false
+    requests: 0
+    token_presented: null
+    access_key_id: null
+    diagnostics_safe: true

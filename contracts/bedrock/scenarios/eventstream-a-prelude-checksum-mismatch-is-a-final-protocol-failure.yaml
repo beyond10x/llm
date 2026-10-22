@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: eventstream-a-prelude-checksum-mismatch-is-a-final-protocol-failure
+summary: "a frame whose prelude checksum does not match is refused before its headers are read"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.DecodeEventStream
+  input:
+    file: "eventstream/invalid_prelude_checksum"
+  outcome: observed
+assert:
+- view: llm.bedrock.LastFrames
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastFrames
+  contains:
+    accepted: false
+    error_code: "protocol"
+    retriable: false
+    messages: 0
+    splits_agree: true

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SigningObservation",
+  "x-ess-name": "llm.bedrock.SigningObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "authorization": {
+      "type": "string"
+    },
+    "amz_date": {
+      "type": "string"
+    },
+    "security_token_added": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.bedrock.SigningObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:49629e281721c25ab7cf50df526a9b788c2044a05735793a030a3a2be4fdbbbe",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.bedrock.SigningObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.bedrock.SigningObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}
