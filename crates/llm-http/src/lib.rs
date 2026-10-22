@@ -2,7 +2,8 @@
 
 //! Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition.
 //!
-//! Single-attempt HTTP, bounded SSE and a one-shot JSON exchange. No credential lookup or routing.
+//! Single-attempt HTTP, bounded SSE, a bounded raw byte stream for wires that frame their own
+//! messages, and one-shot JSON exchanges. No credential lookup or routing.
 //! Every refusal carries a retry class; whether another attempt is made is routing's decision.
 //!
 //! # A Tokio runtime is required
@@ -22,10 +23,11 @@
 mod runtime;
 mod sse;
 mod transport;
+pub use bytes::Bytes;
 pub use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 pub use runtime::{require_tokio_runtime, within_tokio_runtime};
 pub use sse::{Framing, MAX_EVENT_BYTES, MAX_STREAM_BYTES, SseDecoder, SseEvent};
 pub use transport::{
-    CONNECT_TIMEOUT, HttpClient, Limits, MAX_EXCHANGE_BYTES, MAX_REFUSAL_BYTES, QuotaRule,
-    REFUSAL_WAIT, ResponseTap, SseStream, retry_after, status_error,
+    ByteStream, CONNECT_TIMEOUT, HttpClient, Limits, MAX_EXCHANGE_BYTES, MAX_REFUSAL_BYTES,
+    QuotaRule, REFUSAL_WAIT, ResponseTap, SseStream, retry_after, status_error,
 };

@@ -1,9 +1,12 @@
-use crate::{Framing, SseDecoder, SseEvent, require_tokio_runtime, within_tokio_runtime};
+use crate::{
+    Framing, MAX_STREAM_BYTES, SseDecoder, SseEvent, require_tokio_runtime, within_tokio_runtime,
+};
 use llm_core::{Cancel, Dispatch, Error, ErrorCode, MAX_REQUEST_BYTES};
 use reqwest::{
-    Client, Response, Url,
+    Client, Method, Response, Url,
     header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue, RETRY_AFTER},
 };
+use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::{
     collections::VecDeque,
@@ -52,9 +55,10 @@ impl Default for Limits {
 ///
 /// It is never shown the request. Nothing a caller sends reaches a tap, its credential included,
 /// and neither does a JSON exchange: that is the shape a credential refresh takes, and its answer
-/// is a credential. Only [`HttpClient::post_sse`] and [`HttpClient::post_sse_until`] show a tap
-/// anything, and an answer they refuse by its status or media type shows it the head alone: that
-/// body is never shown to it, also when a [`QuotaRule`] reads a 429's.
+/// is a credential. Only [`HttpClient::post_sse`], [`HttpClient::post_sse_until`] and
+/// [`HttpClient::post_stream_until`] show a tap anything, and an answer they refuse by its status
+/// or media type shows it the head alone: that body is never shown to it, also when a
+/// [`QuotaRule`] reads a 429's.
 pub trait ResponseTap: Send + Sync {
     /// The response line (`HTTP/1.1 200 OK`) and the response headers, before any body, whatever
     /// the status.
@@ -202,33 +206,92 @@ impl HttpClient {
     pub async fn post_sse_until(
         &self,
         url: &str,
-        mut headers: HeaderMap,
+        headers: HeaderMap,
         body: Vec<u8>,
         framing: Framing,
         cancel: &Cancel,
         until: Option<std::time::Instant>,
     ) -> Result<SseStream, Error> {
+        // A success that names a media type must name an event stream. One that names none is
+        // read as the event stream the request asked for (the Codex backend answers that way);
+        // a request that did not ask for one gets no such reading.
+        let media = Media {
+            name: EVENT_STREAM,
+            untyped: accepts_event_stream(&headers),
+        };
+        let (response, deadline) = self
+            .post_streamed(url, headers, body, media, cancel, until)
+            .await?;
+        Ok(SseStream {
+            response: Some(response),
+            decoder: SseDecoder::new(framing),
+            queued: VecDeque::new(),
+            cancel: cancel.clone(),
+            deadline,
+            idle: self.limits.idle,
+            failure: None,
+            tap: self.tap.clone(),
+        })
+    }
+
+    /// One attempt whose answer is read as raw body chunks rather than as an event stream: a
+    /// wire with its own framing, such as the AWS event stream (`media_type`
+    /// `application/vnd.amazon.eventstream`).
+    ///
+    /// Everything [`HttpClient::post_sse_until`] states holds here as well: the request and URL
+    /// bounds, the deadline (the shorter of `until` and this client's `total`, covering the
+    /// response headers and every read of the returned [`ByteStream`]), the status table, the
+    /// [`QuotaRule`] for a 429 and what a [`ResponseTap`] is shown. Only the media type rule
+    /// differs: a success must name `media_type` (parameters ignored, any case); one naming
+    /// another type, or none, is refused as `protocol`, dispatch `accepted`.
+    ///
+    /// # Errors
+    /// As [`HttpClient::post_sse_until`], outside a Tokio runtime included.
+    pub async fn post_stream_until(
+        &self,
+        url: &str,
+        headers: HeaderMap,
+        body: Vec<u8>,
+        media_type: &'static str,
+        cancel: &Cancel,
+        until: Option<std::time::Instant>,
+    ) -> Result<ByteStream, Error> {
+        let media = Media {
+            name: media_type,
+            untyped: false,
+        };
+        let (response, deadline) = self
+            .post_streamed(url, headers, body, media, cancel, until)
+            .await?;
+        Ok(ByteStream {
+            response: Some(response),
+            read: 0,
+            cancel: cancel.clone(),
+            deadline,
+            idle: self.limits.idle,
+            failure: None,
+            tap: self.tap.clone(),
+        })
+    }
+
+    /// The exchange both streamed POSTs share: send once, show the tap the head, refuse a failing
+    /// status (reading a 429's body for the [`QuotaRule`]) and a success of another media type.
+    /// Returns the live response and the instant that ends the exchange.
+    async fn post_streamed(
+        &self,
+        url: &str,
+        mut headers: HeaderMap,
+        body: Vec<u8>,
+        media: Media,
+        cancel: &Cancel,
+        until: Option<std::time::Instant>,
+    ) -> Result<(Response, Instant), Error> {
         require_tokio_runtime()?;
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
         }
-        let url = Url::parse(url).map_err(|_| Error::invalid("invalid HTTP endpoint URL"))?;
-        if !matches!(url.scheme(), "http" | "https")
-            || url.host_str().is_none()
-            || !url.username().is_empty()
-            || url.password().is_some()
-            || url.fragment().is_some()
-        {
-            return Err(Error::invalid(
-                "HTTP endpoint must have a host and no embedded credentials or fragment",
-            ));
-        }
-        if body.len() > MAX_REQUEST_BYTES || headers.len() > 64 {
-            return Err(Error::too_large(
-                "HTTP request body or header count exceeds bound",
-            ));
-        }
-        let asked_for_event_stream = accepts_event_stream(&headers);
+        let url = checked_url(url)?;
+        check_request_bounds(&headers, &body)?;
         for value in headers.values_mut() {
             value.set_sensitive(true);
         }
@@ -276,34 +339,31 @@ impl HttpClient {
                 .is_some_and(|document| rule(response.headers(), &document));
             return Err(if quota { quota_refusal(&error) } else { error });
         }
-        // A success that names a media type must name an event stream. One that names none is
-        // read as the event stream the request asked for (the Codex backend answers that way);
-        // a request that did not ask for one gets no such reading.
-        let event_stream = match response.headers().get(CONTENT_TYPE) {
+        let named = match response.headers().get(CONTENT_TYPE) {
             Some(value) => value
                 .to_str()
                 .ok()
                 .and_then(|v| v.split(';').next())
-                .is_some_and(|v| v.trim().eq_ignore_ascii_case(EVENT_STREAM)),
-            None => asked_for_event_stream,
+                .is_some_and(|v| v.trim().eq_ignore_ascii_case(media.name)),
+            None => media.untyped,
         };
-        if !event_stream {
+        if !named {
             return Err(
-                Error::protocol("HTTP success response is not text/event-stream")
+                Error::protocol(format!("HTTP success response is not {}", media.name))
                     .with_dispatch(Dispatch::Accepted),
             );
         }
-        Ok(SseStream {
-            response: Some(response),
-            decoder: SseDecoder::new(framing),
-            queued: VecDeque::new(),
-            cancel: cancel.clone(),
-            deadline,
-            idle: self.limits.idle,
-            failure: None,
-            tap: self.tap.clone(),
-        })
+        Ok((response, deadline))
     }
+}
+
+/// The media type a streamed exchange's success must name.
+#[derive(Clone, Copy)]
+struct Media {
+    /// Compared without parameters and in any case.
+    name: &'static str,
+    /// Whether a success that names no media type is read as `name`.
+    untyped: bool,
 }
 
 /// A live response. Dropping this value drops the HTTP body; this says nothing about billed work.
@@ -378,6 +438,83 @@ impl SseStream {
                     .finish()
                     .map_err(|error| error.with_dispatch(Dispatch::Accepted))?;
                 return Ok(None);
+            }
+        }
+    }
+}
+
+/// A live response read as raw body chunks, for a wire that frames its own messages. Bounded
+/// as an [`SseStream`] is: [`MAX_STREAM_BYTES`] for the whole body, the idle bound for each read
+/// and the exchange's deadline and cancellation for all of them. Dropping this value drops the
+/// HTTP body; this says nothing about billed work.
+pub struct ByteStream {
+    response: Option<Response>,
+    read: usize,
+    cancel: Cancel,
+    deadline: Instant,
+    idle: Duration,
+    failure: Option<Error>,
+    tap: Option<Arc<dyn ResponseTap>>,
+}
+impl ByteStream {
+    /// The next body chunk, never empty, or `None` once the body has ended. Where one chunk
+    /// ends says nothing about the wire's own framing.
+    ///
+    /// # Errors
+    /// Reports cancellation, deadline, transport failures and a body past [`MAX_STREAM_BYTES`],
+    /// dispatch `accepted`; never synthesizes completion. A failure is repeated by every later
+    /// call. A read is refused at any poll on a thread in no Tokio runtime
+    /// ([`within_tokio_runtime`]), dispatch `accepted`.
+    pub async fn next(&mut self) -> Result<Option<bytes::Bytes>, Error> {
+        if let Some(error) = &self.failure {
+            return Err(error.clone());
+        }
+        let result = self.next_inner().await;
+        if let Err(error) = &result {
+            self.response = None;
+            self.failure = Some(error.clone());
+        }
+        result
+    }
+
+    async fn next_inner(&mut self) -> Result<Option<bytes::Bytes>, Error> {
+        loop {
+            if self.cancel.is_cancelled() {
+                return Err(Error::cancelled().with_dispatch(Dispatch::Accepted));
+            }
+            if Instant::now() >= self.deadline {
+                return Err(
+                    Error::new(ErrorCode::Deadline, "HTTP stream deadline exceeded")
+                        .with_dispatch(Dispatch::Accepted),
+                );
+            }
+            let Some(response) = self.response.as_mut() else {
+                return Ok(None);
+            };
+            let until = self.deadline.min(Instant::now() + self.idle);
+            let chunk = tokio::select! {
+                biased;
+                () = self.cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
+                chunk = within_tokio_runtime(async move { tokio::time::timeout_at(until, response.chunk()).await }) => {
+                    chunk.map_err(|refusal| refusal.with_dispatch(Dispatch::Accepted))?
+                        .map_err(|_| Error::new(ErrorCode::Deadline, "HTTP idle or total deadline exceeded").with_dispatch(Dispatch::Accepted))?
+                        .map_err(|_| Error::new(ErrorCode::Transport, "HTTP response body failed").with_dispatch(Dispatch::Accepted).with_retriable(true))?
+                }
+            };
+            let Some(chunk) = chunk else {
+                self.response = None;
+                return Ok(None);
+            };
+            if let Some(tap) = &self.tap {
+                tap.chunk(&chunk);
+            }
+            self.read = self.read.saturating_add(chunk.len());
+            if self.read > MAX_STREAM_BYTES {
+                return Err(Error::too_large("HTTP stream exceeds byte bound")
+                    .with_dispatch(Dispatch::Accepted));
+            }
+            if !chunk.is_empty() {
+                return Ok(Some(chunk));
             }
         }
     }
@@ -490,8 +627,8 @@ pub fn retry_after(headers: &HeaderMap, now: SystemTime) -> Option<Duration> {
     )
 }
 
-// One JSON document exchange, beside the streaming POST above. `post_sse_until` applies the same
-// URL and request bounds inline.
+// One JSON document exchange, beside the streaming POSTs above, which apply the same URL and
+// request bounds.
 impl HttpClient {
     /// One JSON document exchange: `body` (JSON the caller serialised) out as
     /// `application/json`, one JSON document back. For a credential exchange, not a turn.
@@ -517,42 +654,74 @@ impl HttpClient {
         body: Vec<u8>,
         cancel: &Cancel,
     ) -> Result<serde_json::Value, Error> {
-        self.post_json_once(url, headers, body, cancel)
+        let answer = self
+            .json_once(Method::POST, url, headers, Some(body), cancel)
             .await
-            .map_err(|error| error.with_retriable(false))
+            .map_err(|error| error.with_retriable(false))?;
+        parse_answer(&answer)
     }
 
-    async fn post_json_once(
+    /// One JSON document fetched with `GET` and `accept: application/json`, no body sent, and
+    /// decoded as `T`: a credential endpoint, not a turn.
+    ///
+    /// Every rule of [`HttpClient::post_json`] holds: one attempt, the answer read up to
+    /// [`MAX_EXCHANGE_BYTES`] inclusive and zeroized after decoding, every refusal final, nothing
+    /// shown to a [`ResponseTap`] and no body in a diagnostic. The answer is decoded straight
+    /// from those bytes into `T`, with no [`serde_json::Value`] between them, so a `T` that keeps
+    /// a secret member in a zeroizing type holds the only copy the decoder leaves; a string with
+    /// an escape sequence passes through the decoder's own scratch buffer, which is not zeroized.
+    ///
+    /// # Errors
+    /// As [`HttpClient::post_json`], outside a Tokio runtime included; a success that is JSON but
+    /// not a `T` is `protocol` as well.
+    pub async fn get_json<T: DeserializeOwned>(
         &self,
         url: &str,
-        mut headers: HeaderMap,
-        body: Vec<u8>,
+        headers: HeaderMap,
         cancel: &Cancel,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<T, Error> {
+        let answer = self
+            .json_once(Method::GET, url, headers, None, cancel)
+            .await
+            .map_err(|error| error.with_retriable(false))?;
+        parse_answer(&answer)
+    }
+
+    /// One exchange's success answer, its bytes zeroized on drop.
+    async fn json_once(
+        &self,
+        method: Method,
+        url: &str,
+        mut headers: HeaderMap,
+        body: Option<Vec<u8>>,
+        cancel: &Cancel,
+    ) -> Result<zeroize::Zeroizing<Vec<u8>>, Error> {
         require_tokio_runtime()?;
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
         }
         let url = checked_url(url)?;
-        check_request_bounds(&headers, &body)?;
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static(JSON));
+        check_request_bounds(&headers, body.as_deref().unwrap_or_default())?;
+        if body.is_some() {
+            headers.insert(CONTENT_TYPE, HeaderValue::from_static(JSON));
+        }
         headers.insert(ACCEPT, HeaderValue::from_static(JSON));
         for value in headers.values_mut() {
             value.set_sensitive(true);
         }
         let started = Instant::now();
         let deadline = started + self.limits.total;
-        let request = self
-            .client
-            .post(url)
-            .headers(headers)
-            .body(reqwest::Body::from(bytes::Bytes::from_owner(
+        let mut request = self.client.request(method, url).headers(headers);
+        if let Some(body) = body {
+            request = request.body(reqwest::Body::from(bytes::Bytes::from_owner(
                 zeroize::Zeroizing::new(body),
-            )))
+            )));
+        }
+        let request = request
             .build()
             .map_err(|_| Error::invalid("HTTP request could not be constructed"))?;
         let headers_by = deadline.min(started + self.limits.response_headers);
-        // As in `post_sse_until`: each poll of the wait for the answer asks for the runtime.
+        // As in `post_streamed`: each poll of the wait for the answer asks for the runtime.
         let mut response = tokio::select! {
             biased;
             () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),
@@ -601,14 +770,25 @@ impl HttpClient {
             }
             answer.extend_from_slice(&chunk);
         }
-        serde_json::from_slice(&answer).map_err(|_| {
-            Error::protocol(format!(
-                "HTTP success answer of {} byte(s) is not JSON",
-                answer.len()
-            ))
-            .with_dispatch(Dispatch::Accepted)
-        })
+        Ok(answer)
     }
+}
+
+/// A success answer decoded as one `T`. A failure is `protocol`, dispatch `accepted` and final,
+/// and its message names the answer's length alone.
+fn parse_answer<T: DeserializeOwned>(answer: &[u8]) -> Result<T, Error> {
+    serde_json::from_slice(answer).map_err(|error| {
+        let shape = if error.is_data() {
+            "is not the JSON document expected"
+        } else {
+            "is not JSON"
+        };
+        Error::protocol(format!(
+            "HTTP success answer of {} byte(s) {shape}",
+            answer.len()
+        ))
+        .with_dispatch(Dispatch::Accepted)
+    })
 }
 
 /// The largest answer [`HttpClient::post_json`] reads: 64 KiB, inclusive.

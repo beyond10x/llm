@@ -29,4 +29,6 @@ pub use turn::{
     OutcomeDocument, Sampling, StopReason, ToolChoice, ToolSpec, TurnDocument, TurnObservation,
     TurnOutcome, TurnRequest, Usage,
 };
-pub use vocabulary::{AuthKind, BillingKind, Capabilities, Protocol, Provenance};
+pub use vocabulary::{
+    AuthKind, BEDROCK_CONVERSE_REFUSAL, BillingKind, Capabilities, Protocol, Provenance,
+};

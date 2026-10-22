@@ -111,6 +111,13 @@ impl Port {
                 Client::Responses(ResponsesClient::new(binding, http, attached)?)
             }
             Protocol::Messages => Client::Messages(MessagesClient::new(binding, http, attached)?),
+            // A binding never carries it (`BindingDocument::bind` refuses it); kept as a refusal
+            // so a binding built some other way still cannot reach a client here.
+            Protocol::BedrockConverse => {
+                return Err(Error::unsupported(
+                    "bedrock-converse is served by llm-bedrock's BedrockClient, not by a binding",
+                ));
+            }
         };
         Ok(Self { client, resolver })
     }

@@ -205,7 +205,7 @@ fn the_example_document_answers_each_route_and_direct_name() {
     let qwen = routes.catalog().binding(&id("qwen")).unwrap();
     assert_eq!(qwen.capabilities().context_window, 32768);
     assert_eq!(qwen.capabilities().max_output_tokens, 8192);
-    assert!(qwen.capabilities().reasoning_efforts.is_empty());
+    assert_eq!(qwen.capabilities().reasoning_efforts, [] as [String; 0]);
     let sonnet = routes.catalog().binding(&id("sonnet")).unwrap();
     assert_eq!(sonnet.capabilities(), &default_capabilities());
     assert_eq!(

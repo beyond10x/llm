@@ -435,6 +435,11 @@ impl EndpointDeclaration {
             "messages" => Protocol::Messages,
             "responses" => Protocol::Responses,
             "chat-completions" => Protocol::ChatCompletions,
+            "bedrock-converse" => {
+                return Err(refuse(
+                    "bedrock-converse is served by llm-bedrock's BedrockClient, not by a binding",
+                ));
+            }
             _ => {
                 return Err(refuse(
                     "unknown `protocol`; expected messages, responses or chat-completions",

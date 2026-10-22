@@ -308,7 +308,7 @@ fn two_messages_shown_back_to_back_are_refused_by_the_relay_until_ingress_block_
         outcome.items,
         vec![Item::assistant("A"), Item::assistant("B")]
     );
-    assert!(warning_codes(&decoded.events).is_empty());
+    assert_eq!(warning_codes(&decoded.events), [] as [&str; 0]);
     let mut relay = IngressStream::new("resp_gateway_1", 1_700_000_000);
     for event in &decoded.events {
         relay.chunk(event);
