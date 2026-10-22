@@ -83,7 +83,12 @@ fn a_toml_file_is_refused_at_the_line_of_an_unknown_key_without_echoing_its_valu
             .unwrap_err();
     assert_eq!(error.code, ErrorCode::InvalidRequest);
     assert!(
-        error.message.contains("TOML document at line 18 column 1"),
+        error.message.contains("TOML document at line 20 column 1"),
+        "{}",
+        error.message
+    );
+    assert!(
+        error.message.contains("unknown field `alias`"),
         "{}",
         error.message
     );

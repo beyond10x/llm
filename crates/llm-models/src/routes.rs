@@ -199,11 +199,34 @@ struct RawPrice {
     output: Option<String>,
 }
 
-#[derive(Deserialize)]
-#[serde(untagged)]
+/// A route is a `<endpoint>/<model-id>` string or a table. Not `#[serde(untagged)]`, which
+/// replaces the table's own refusal (an unknown key, by name) with "did not match any variant".
 enum RawRoute {
     Model(String),
     Declared(RawDeclaredRoute),
+}
+
+impl<'de> Deserialize<'de> for RawRoute {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct Route;
+        impl<'de> Visitor<'de> for Route {
+            type Value = RawRoute;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a `<endpoint>/<model-id>` string or a route table")
+            }
+
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<RawRoute, E> {
+                Ok(RawRoute::Model(value.to_owned()))
+            }
+
+            fn visit_map<A: MapAccess<'de>>(self, map: A) -> Result<RawRoute, A::Error> {
+                RawDeclaredRoute::deserialize(de::value::MapAccessDeserializer::new(map))
+                    .map(RawRoute::Declared)
+            }
+        }
+        deserializer.deserialize_any(Route)
+    }
 }
 
 #[derive(Deserialize)]
@@ -258,7 +281,7 @@ fn malformed(error: &serde_yaml::Error) -> Error {
 }
 
 /// The TOML parser's diagnostic can quote the document too: only the line and column its span
-/// starts at are kept.
+/// starts at are kept, and for an unknown key serde's own sentence, which names keys only.
 fn malformed_toml(source: &str, error: &toml::de::Error) -> Error {
     let location = error.span().map_or(String::new(), |span| {
         let before = &source[..span.start.min(source.len())];
@@ -266,7 +289,13 @@ fn malformed_toml(source: &str, error: &toml::de::Error) -> Error {
         let column = before.len() - before.rfind('\n').map_or(0, |end| end + 1) + 1;
         format!(" at line {line} column {column}")
     });
-    Error::invalid(format!("invalid {FORMAT} TOML document{location}"))
+    let message = error.message();
+    let unknown = if message.starts_with("unknown field `") && !message.contains('\n') {
+        format!(": {message}")
+    } else {
+        String::new()
+    };
+    Error::invalid(format!("invalid {FORMAT} TOML document{location}{unknown}"))
 }
 
 /// What one node is charged beyond its text. Before a value's type is known it is buffered as
@@ -1387,7 +1416,8 @@ impl Routes {
     }
 
     /// Reads the same document written in TOML: the same keys, the same bounds and the same
-    /// refusals as [`Routes::parse`]. A malformed document is refused by its line and column.
+    /// refusals as [`Routes::parse`]. A malformed document is refused by its line and column, and
+    /// an unknown key also by its name.
     ///
     /// # Errors
     /// As [`Routes::parse`]; TOML has no aliases, so nothing is refused for expanding.

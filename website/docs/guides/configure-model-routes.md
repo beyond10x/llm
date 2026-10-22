@@ -161,7 +161,7 @@ repeated key, a `format` other than `llm.routes/1`, an unknown protocol or authe
 secret without a known source prefix, an `api-key` endpoint without `header`, an `anonymous`
 endpoint with a `secret`, a route to an undeclared endpoint, a Bedrock endpoint without a
 Region or with two credential sources, an alias claimed twice, and an invalid price. A malformed
-document is refused by its line and column. The `llm.routes` ESS domain
+document is refused by its line and column, and in TOML an unknown key also by its name. The `llm.routes` ESS domain
 (`spec/domains/routes.yaml`) holds these rules, and `contracts/routes/scenarios/` checks them
 against the real crate on every `task check`.
 
