@@ -346,6 +346,9 @@ scenarios:
 - responses/scenarios/unbound-unattributed-state-is-refused-on-egress.yaml
 - responses/scenarios/vllm-reasoning-text-deltas-are-observed.yaml
 - routes/scenarios/a-bare-unknown-name-is-refused.yaml
+- routes/scenarios/a-bedrock-endpoint-loads-and-its-routes-answer-outside-the-catalog.yaml
+- routes/scenarios/a-bedrock-endpoint-naming-both-credential-sources-is-refused.yaml
+- routes/scenarios/a-bedrock-endpoint-without-a-region-is-refused.yaml
 - routes/scenarios/a-literal-secret-without-a-source-prefix-is-refused.yaml
 - routes/scenarios/a-missing-file-secret-is-refused-unauthorized.yaml
 - routes/scenarios/a-name-naming-an-undeclared-endpoint-is-refused.yaml
@@ -355,6 +358,8 @@ scenarios:
 - routes/scenarios/a-route-value-splits-on-its-first-slash-only.yaml
 - routes/scenarios/a-string-route-declares-the-default-capabilities.yaml
 - routes/scenarios/a-subscription-oauth-endpoint-is-refused.yaml
+- routes/scenarios/an-alias-answers-its-route.yaml
+- routes/scenarios/an-alias-claimed-by-two-routes-is-refused.yaml
 - routes/scenarios/an-anonymous-endpoint-prepares-nothing-and-succeeds.yaml
 - routes/scenarios/an-anonymous-endpoint-with-a-secret-is-refused.yaml
 - routes/scenarios/an-api-key-endpoint-without-a-header-is-refused.yaml

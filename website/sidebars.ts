@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
         'guides/use-llm-from-a-synchronous-loop',
         'guides/interrupt-a-turn-with-new-input',
         'guides/configure-model-routes',
+        'guides/use-the-llm-command',
         'guides/explain-a-route',
         'guides/price-recorded-usage',
         'guides/resolve-a-local-secret',

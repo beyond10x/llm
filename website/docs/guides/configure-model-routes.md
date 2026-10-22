@@ -1,9 +1,9 @@
 ---
 title: Configure model routes
 sidebar_position: 6
-description: One short llm.routes/1 YAML document names endpoints and routes; it expands into a catalog and the resolvers its secret references name.
+description: One short llm.routes/1 document, in YAML or TOML, names endpoints, routes, aliases and prices; it expands into a catalog, the Bedrock targets outside it and the resolvers its secret references name.
 lede: A gateway, a command line and an SDK read one routes document the same way, and a name reaches exactly one endpoint and model.
-source: crates/llm-models/src/routes.rs, crates/llm-models/tests/routes.rs, spec/domains/routes.yaml, contracts/routes/scenarios
+source: crates/llm-models/src/routes.rs, crates/llm-models/tests/routes.rs, crates/llm-models/tests/routes_toml_bedrock.rs, spec/domains/routes.yaml, contracts/routes/scenarios
 ---
 
 # Configure model routes
@@ -12,7 +12,9 @@ An `llm.routes/1` document is the short form of a catalog. It names endpoints (w
 how to authenticate) and routes (a name for one `<endpoint>/<model-id>`). `llm-models` reads it
 with `llm_models::routes::Routes::parse` and expands it into the same `llm.catalog/1` catalog the
 [routing](../concepts/routing.md) concept describes, so ports are built by the unchanged
-`llm_models::port` and `CatalogModels::build`.
+`llm_models::port` and `CatalogModels::build`. `Routes::parse_toml` reads the same document
+written in TOML, as the [llm command](use-the-llm-command.md) does; both forms take the same keys,
+refuse the same mistakes and give the same `digest()`.
 
 ```yaml
 format: llm.routes/1
@@ -39,13 +41,44 @@ routes:
 | Field | Values |
 | --- | --- |
 | `base_url` | An HTTP(S) API prefix with no userinfo, query or fragment |
-| `protocol` | `messages`, `responses` or `chat-completions` |
-| `auth.kind` | `anonymous`, `bearer` or `api-key` |
+| `protocol` | `messages`, `responses` or `chat-completions`; on a Bedrock endpoint `bedrock-converse` or `messages` |
+| `bedrock.region` | Makes the endpoint a Bedrock endpoint; see [Bedrock endpoints](#bedrock-endpoints) |
+| `auth.kind` | `anonymous`, `bearer` or `api-key`; on a Bedrock endpoint `aws-keys` or `aws-container` |
 | `auth.header` | The header an `api-key` endpoint sends; required for `api-key` and refused otherwise |
 | `auth.secret` | A reference, never a value: `env:<VARIABLE>`, `file:<absolute path or ~/path>` or `keychain:<service>/<entry>`; required for `bearer` and `api-key`, refused for `anonymous` |
 
 A credentialed endpoint is billed `metered` and an anonymous one `self-hosted`. A
 `subscription-oauth` kind is refused by name: subscription tokens stay a catalog account.
+
+## Bedrock endpoints
+
+An endpoint with a `bedrock` table is an Amazon Bedrock Runtime endpoint. It has no binding, so it
+stays outside the catalog, and `Routes::port` builds `llm-bedrock`'s `BedrockClient` for its routes.
+
+```yaml
+endpoints:
+  bedrock-eu:     {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+                   auth: {kind: aws-container}}
+  bedrock-invoke: {protocol: messages, bedrock: {region: eu-central-1},
+                   auth: {kind: aws-keys, access_key_id: env:AWS_ACCESS_KEY_ID,
+                          secret_access_key: env:AWS_SECRET_ACCESS_KEY,
+                          session_token: env:AWS_SESSION_TOKEN}}
+```
+
+| Field | Values |
+| --- | --- |
+| `protocol` | `bedrock-converse` for Converse; `messages` for the Anthropic body on `InvokeModel` |
+| `bedrock.region` | Required; the request is signed for it |
+| `base_url` | Optional; replaces `https://bedrock-runtime.{region}.amazonaws.com` |
+| `auth.kind` | `aws-keys` or `aws-container`; exactly one credential source |
+| `auth.access_key_id`, `auth.secret_access_key` | References, required for `aws-keys` |
+| `auth.session_token` | A reference, optional for `aws-keys` |
+
+An `aws-container` endpoint signs with the credentials the container endpoint serves (EKS Pod
+Identity, ECS task roles). The caller supplies that endpoint's URI and its token file with
+`SecretSources::with_container_credentials`; without them the endpoint gets no resolver, so
+`Routes::port` refuses its routes as `unauthorized` and every other route still builds. The
+endpoint's name is the provider, account and endpoint of its turns' provenance.
 
 ## Routes and names
 
@@ -63,6 +96,29 @@ catalog: the seven settings, plus `output_streaming` (default `true`) and `input
 (default `false`), which may be left out. A route claiming input during output, or output that does
 not stream, is refused by name: no protocol here carries input during output, and every one streams
 its output.
+
+## Aliases and prices
+
+A route written as a mapping may also carry:
+
+| Field | Values |
+| --- | --- |
+| `aliases` | Other names that reach the route. An alias names one route, is no route's name and contains no `/` |
+| `price` | `currency` and per-million-token decimal strings `input`, `cached_input`, `cache_creation_input` and `output`; any rate may be left out |
+
+```yaml
+routes:
+  haiku:
+    model: anthropic/claude-haiku-5-5
+    aliases: [fast]
+    price: {currency: USD, input: "1", cached_input: "0.1", cache_creation_input: "1.25",
+            output: "5"}
+```
+
+`Routes::cost(name, &observation)` prices one turn by the `llm-cost` rules. A counter the turn did
+not report, a rate the price leaves out and usage that is not final each leave a line unknown, and
+the complete total exists only when no line is. A route without a price has no cost, never a cost
+of 0.
 
 ## Expansion
 
@@ -103,7 +159,9 @@ Parsing performs no I/O and is strict. Each of these is refused as `invalid-requ
 field, endpoint or route and never echoing the refused value: an unknown field at any level, a
 repeated key, a `format` other than `llm.routes/1`, an unknown protocol or authentication kind, a
 secret without a known source prefix, an `api-key` endpoint without `header`, an `anonymous`
-endpoint with a `secret`, and a route to an undeclared endpoint. The `llm.routes` ESS domain
+endpoint with a `secret`, a route to an undeclared endpoint, a Bedrock endpoint without a
+Region or with two credential sources, an alias claimed twice, and an invalid price. A malformed
+document is refused by its line and column. The `llm.routes` ESS domain
 (`spec/domains/routes.yaml`) holds these rules, and `contracts/routes/scenarios/` checks them
 against the real crate on every `task check`.
 

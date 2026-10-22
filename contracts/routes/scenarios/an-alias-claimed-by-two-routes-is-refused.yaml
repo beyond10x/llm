@@ -1,0 +1,30 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-alias-claimed-by-two-routes-is-refused
+summary: two routes naming the same alias are refused as invalid-request, naming the alias, so a name never reaches two routes
+timeline:
+- at: '2026-10-23T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+      routes:
+        sonnet: {model: anthropic/claude-sonnet-4-5, aliases: [default]}
+        opus: {model: anthropic/claude-opus-4-1, aliases: [default]}
+    probe_names: [default]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "alias `default`: is repeated or names more than one route"
+    aliases: []
+    answers: []

@@ -636,6 +636,9 @@
       "llm.responses/authored/wire-an-unset-output-bound-is-absent-from-the-body",
       "llm.responses/authored/wire-the-encoded-body-is-the-bytes-the-client-sends",
       "llm.routes/authored/a-bare-unknown-name-is-refused",
+      "llm.routes/authored/a-bedrock-endpoint-loads-and-its-routes-answer-outside-the-catalog",
+      "llm.routes/authored/a-bedrock-endpoint-naming-both-credential-sources-is-refused",
+      "llm.routes/authored/a-bedrock-endpoint-without-a-region-is-refused",
       "llm.routes/authored/a-literal-secret-without-a-source-prefix-is-refused",
       "llm.routes/authored/a-missing-file-secret-is-refused-unauthorized",
       "llm.routes/authored/a-name-naming-an-undeclared-endpoint-is-refused",
@@ -647,6 +650,8 @@
       "llm.routes/authored/a-route-whose-output-does-not-stream-is-refused-naming-the-route",
       "llm.routes/authored/a-string-route-declares-the-default-capabilities",
       "llm.routes/authored/a-subscription-oauth-endpoint-is-refused",
+      "llm.routes/authored/an-alias-answers-its-route",
+      "llm.routes/authored/an-alias-claimed-by-two-routes-is-refused",
       "llm.routes/authored/an-anonymous-endpoint-prepares-nothing-and-succeeds",
       "llm.routes/authored/an-anonymous-endpoint-with-a-secret-is-refused",
       "llm.routes/authored/an-api-key-endpoint-without-a-header-is-refused",
@@ -4104,6 +4109,21 @@
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-bare-unknown-name-is-refused"
       },
+      "routes/scenarios/a-bedrock-endpoint-loads-and-its-routes-answer-outside-the-catalog.yaml": {
+        "digest": "sha256:8b5b232968ac99e6fefd912419a40b9b17b2d7bd7137d62edb441c81d3c5c2f6",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-bedrock-endpoint-loads-and-its-routes-answer-outside-the-catalog"
+      },
+      "routes/scenarios/a-bedrock-endpoint-naming-both-credential-sources-is-refused.yaml": {
+        "digest": "sha256:7189fefed15a532fa91c03a8b10bbbb3ddf440284e369731d487bdacf9793458",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-bedrock-endpoint-naming-both-credential-sources-is-refused"
+      },
+      "routes/scenarios/a-bedrock-endpoint-without-a-region-is-refused.yaml": {
+        "digest": "sha256:aedc4e059f05022e1bb8c234568d1f5a8603374c47482ec3e2bedbb82cd3b827",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/a-bedrock-endpoint-without-a-region-is-refused"
+      },
       "routes/scenarios/a-literal-secret-without-a-source-prefix-is-refused.yaml": {
         "digest": "sha256:ecaf84e9a690b0e552159b9af42a82c237edb55399e26dcba66b949f328ac0d9",
         "disposition": "accepted",
@@ -4159,6 +4179,16 @@
         "disposition": "accepted",
         "scenario": "llm.routes/authored/a-subscription-oauth-endpoint-is-refused"
       },
+      "routes/scenarios/an-alias-answers-its-route.yaml": {
+        "digest": "sha256:9364e01b24a5f9039aaf554004abefbda95cb36bfd4e6239bcb8cb751cea80fe",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-alias-answers-its-route"
+      },
+      "routes/scenarios/an-alias-claimed-by-two-routes-is-refused.yaml": {
+        "digest": "sha256:f86dafb804b854b58da9ec1187465fa60efe8d916e59f8f8f969d9214ae99623",
+        "disposition": "accepted",
+        "scenario": "llm.routes/authored/an-alias-claimed-by-two-routes-is-refused"
+      },
       "routes/scenarios/an-anonymous-endpoint-prepares-nothing-and-succeeds.yaml": {
         "digest": "sha256:c7c5ed4c2e0bd6c8efed5c673fb5048fa562fc8c976fc8d989f06d11439fd83a",
         "disposition": "accepted",
@@ -4205,7 +4235,7 @@
         "scenario": "llm.routes/authored/an-unknown-format-version-is-refused"
       },
       "routes/scenarios/an-unknown-protocol-is-refused.yaml": {
-        "digest": "sha256:001f2967d7dba07b55b5a0d15c07ce7fe107b05e691afcff5f570386611093f4",
+        "digest": "sha256:cf9238049621dd31cd82451489c4ea0985b24238e24837a3a2e67082d3d25787",
         "disposition": "accepted",
         "scenario": "llm.routes/authored/an-unknown-protocol-is-refused"
       },
@@ -5411,7 +5441,7 @@
       }
     },
     "counts": {
-      "authored": 901,
+      "authored": 906,
       "generated": 36,
       "outside": 0,
       "refused": 0
@@ -5468,9 +5498,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "81d8f3c5463518f60962c11ac5d10fdc05ac7432802fb4eff29c6f7fb9d3c7f1",
+    "contract_digest": "a110b6c81e49f513ba6056283f7bd8ba800704769b8f1b2a766e1e38e0aa7ab0",
     "scenario_initial_state": "empty",
-    "spec_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "spec_digest": "eab2b893317e1bdaa10e6b3a4bd7d6219ed4241ec161dd9e560b108cae8f83d0",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -82540,6 +82570,318 @@
         }
       ]
     },
+    "llm.routes/authored/a-bedrock-endpoint-loads-and-its-routes-answer-outside-the-catalog": {
+      "purpose": "an endpoint with a bedrock table loads with its Region and credential kind, its routes answer its endpoint, protocol and model id, and the catalog keeps only the HTTP routes",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet",
+                "nova",
+                "bedrock-sonnet",
+                "bedrock-eu/eu.amazon.nova-lite-v1:0"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\n  bedrock-eu: {protocol: bedrock-converse, bedrock: {region: eu-central-1},\n               auth: {kind: aws-container}}\n  bedrock-claude: {protocol: messages, bedrock: {region: eu-central-1},\n                   auth: {kind: aws-keys, access_key_id: env:BEDROCK_ACCESS_KEY_ID,\n                          secret_access_key: env:BEDROCK_SECRET_ACCESS_KEY}}\nroutes:\n  sonnet: anthropic/claude-sonnet-4-5\n  nova: bedrock-eu/eu.amazon.nova-pro-v1:0\n  bedrock-sonnet: bedrock-claude/eu.anthropic.claude-sonnet-4-5-20250929-v1:0\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "sonnet=anthropic:messages:claude-sonnet-4-5",
+                  "nova=bedrock-eu:bedrock-converse:eu.amazon.nova-pro-v1:0",
+                  "bedrock-sonnet=bedrock-claude:messages:eu.anthropic.claude-sonnet-4-5-20250929-v1:0",
+                  "bedrock-eu/eu.amazon.nova-lite-v1:0=bedrock-eu:bedrock-converse:eu.amazon.nova-lite-v1:0"
+                ]
+              },
+              "bedrock_endpoints": {
+                "kind": "literal",
+                "value": [
+                  "bedrock-claude:messages:eu-central-1:aws-keys",
+                  "bedrock-eu:bedrock-converse:eu-central-1:aws-container"
+                ]
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": [
+                  "sonnet"
+                ]
+              },
+              "endpoints": {
+                "kind": "literal",
+                "value": [
+                  "anthropic:messages:api-key:env"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-bedrock-endpoint-naming-both-credential-sources-is-refused": {
+      "purpose": "an aws-container endpoint that also names an access key reference is refused as invalid-request, so an endpoint has exactly one credential source",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "nova"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  bedrock-eu: {protocol: bedrock-converse, bedrock: {region: eu-central-1},\n               auth: {kind: aws-container, access_key_id: env:BEDROCK_ACCESS_KEY_ID}}\nroutes:\n  nova: bedrock-eu/eu.amazon.nova-pro-v1:0\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "bedrock_endpoints": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "endpoint `bedrock-eu`: an aws-container endpoint cannot also name `auth.access_key_id`: a Bedrock endpoint has one credential source"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/a-bedrock-endpoint-without-a-region-is-refused": {
+      "purpose": "a bedrock-converse endpoint that names no bedrock.region is refused as invalid-request, naming the endpoint and the field",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "nova"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  bedrock-eu: {protocol: bedrock-converse, auth: {kind: aws-container}}\nroutes:\n  nova: bedrock-eu/eu.amazon.nova-pro-v1:0\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "bedrock_endpoints": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "endpoint `bedrock-eu`: a Bedrock endpoint requires `bedrock.region`"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              },
+              "routes": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
     "llm.routes/authored/a-literal-secret-without-a-source-prefix-is-refused": {
       "purpose": "a secret written as a literal value with no source prefix is refused as invalid-request without echoing it",
       "source": [
@@ -83609,6 +83951,207 @@
         }
       ]
     },
+    "llm.routes/authored/an-alias-answers-its-route": {
+      "purpose": "a route mapping's aliases answer exactly as the route does, and the catalog still holds only the route's own name",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "sonnet",
+                "default",
+                "claude-sonnet-4-5"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  claude-sonnet-4-5:\n    model: anthropic/claude-sonnet-4-5\n    aliases: [sonnet, default]\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "aliases": {
+                "kind": "literal",
+                "value": [
+                  "sonnet=claude-sonnet-4-5",
+                  "default=claude-sonnet-4-5"
+                ]
+              },
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "sonnet=anthropic:messages:claude-sonnet-4-5",
+                  "default=anthropic:messages:claude-sonnet-4-5",
+                  "claude-sonnet-4-5=anthropic:messages:claude-sonnet-4-5"
+                ]
+              },
+              "catalog_serving_models": {
+                "kind": "literal",
+                "value": [
+                  "claude-sonnet-4-5"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
+    "llm.routes/authored/an-alias-claimed-by-two-routes-is-refused": {
+      "purpose": "two routes naming the same alias are refused as invalid-request, naming the alias, so a name never reaches two routes",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routes"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routes.Load"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routes.LastLoad"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routes.Load",
+          "input": {
+            "probe_names": {
+              "kind": "literal",
+              "value": [
+                "default"
+              ]
+            },
+            "routes_yaml": {
+              "kind": "literal",
+              "value": "format: llm.routes/1\nendpoints:\n  anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,\n              auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}\nroutes:\n  sonnet: {model: anthropic/claude-sonnet-4-5, aliases: [default]}\n  opus: {model: anthropic/claude-opus-4-1, aliases: [default]}\n"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routes.Load",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routes.LastLoad"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "aliases": {
+                "kind": "literal",
+                "value": []
+              },
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "alias `default`: is repeated or names more than one route"
+              },
+              "loaded": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routes.LastLoad"
+        }
+      ]
+    },
     "llm.routes/authored/an-anonymous-endpoint-prepares-nothing-and-succeeds": {
       "purpose": "a route to an anonymous endpoint prepares no credential header and succeeds",
       "source": [
@@ -84604,7 +85147,7 @@
               },
               "error_message": {
                 "kind": "literal",
-                "value": "endpoint `anthropic`: unknown `protocol`; expected messages, responses or chat-completions"
+                "value": "endpoint `anthropic`: unknown `protocol`; expected messages, responses, chat-completions or bedrock-converse"
               },
               "loaded": {
                 "kind": "literal",

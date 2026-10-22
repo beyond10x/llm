@@ -8,12 +8,13 @@ pub enum Protocol {
     Messages,
     ChatCompletions,
     /// Amazon Bedrock's Converse wire. Only `llm-bedrock`'s `BedrockClient` serves it: it is
-    /// signed per request, so no binding, catalog or routes document can name it.
+    /// signed per request, so no binding or catalog can name it. A routes document names it
+    /// only on a `bedrock` endpoint, which stays outside the catalog it expands into.
     BedrockConverse,
 }
 
-/// Why a binding, catalog or routes document cannot name [`Protocol::BedrockConverse`], and why
-/// no base URL builds a request URL for it.
+/// Why a binding or catalog cannot name [`Protocol::BedrockConverse`], and why no base URL
+/// builds a request URL for it.
 pub const BEDROCK_CONVERSE_REFUSAL: &str =
     "bedrock-converse is served by llm-bedrock's BedrockClient, not by a binding";
 

@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: a-bedrock-endpoint-without-a-region-is-refused
+summary: a bedrock-converse endpoint that names no bedrock.region is refused as invalid-request, naming the endpoint and the field
+timeline:
+- at: '2026-10-23T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        bedrock-eu: {protocol: bedrock-converse, auth: {kind: aws-container}}
+      routes:
+        nova: bedrock-eu/eu.amazon.nova-pro-v1:0
+    probe_names: [nova]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "endpoint `bedrock-eu`: a Bedrock endpoint requires `bedrock.region`"
+    routes: []
+    bedrock_endpoints: []
+    answers: []

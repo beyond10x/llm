@@ -1,0 +1,38 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: a-bedrock-endpoint-loads-and-its-routes-answer-outside-the-catalog
+summary: an endpoint with a bedrock table loads with its Region and credential kind, its routes answer its endpoint, protocol and model id, and the catalog keeps only the HTTP routes
+timeline:
+- at: '2026-10-23T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+        bedrock-eu: {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+                     auth: {kind: aws-container}}
+        bedrock-claude: {protocol: messages, bedrock: {region: eu-central-1},
+                         auth: {kind: aws-keys, access_key_id: env:BEDROCK_ACCESS_KEY_ID,
+                                secret_access_key: env:BEDROCK_SECRET_ACCESS_KEY}}
+      routes:
+        sonnet: anthropic/claude-sonnet-4-5
+        nova: bedrock-eu/eu.amazon.nova-pro-v1:0
+        bedrock-sonnet: bedrock-claude/eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+    probe_names: [sonnet, nova, bedrock-sonnet, bedrock-eu/eu.amazon.nova-lite-v1:0]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: true
+    error_code: null
+    error_message: null
+    endpoints: ["anthropic:messages:api-key:env"]
+    bedrock_endpoints: ["bedrock-claude:messages:eu-central-1:aws-keys", "bedrock-eu:bedrock-converse:eu-central-1:aws-container"]
+    answers: ["sonnet=anthropic:messages:claude-sonnet-4-5", "nova=bedrock-eu:bedrock-converse:eu.amazon.nova-pro-v1:0", "bedrock-sonnet=bedrock-claude:messages:eu.anthropic.claude-sonnet-4-5-20250929-v1:0", "bedrock-eu/eu.amazon.nova-lite-v1:0=bedrock-eu:bedrock-converse:eu.amazon.nova-lite-v1:0"]
+    catalog_serving_models: [sonnet]

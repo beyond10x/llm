@@ -6,6 +6,22 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-cli`: the `llm` command, `llm model list` (text or JSON) and `llm infer` over one `llm.toml` routes file
+- `llm-cli`: `llm infer` streams the text to stdout and ends with usage and cost on stderr; unknown counters print `unknown`
+- `llm-cli`: the file is `--config`, `LLM_CONFIG`, `~/.b10x/llm.toml` or `$XDG_CONFIG_HOME/b10x/llm.toml`, in that order
+- `llm-models`: `Routes::parse_toml` reads `llm.routes/1` written in TOML, with the same keys, refusals and digest
+- `llm-models`: route `aliases` and a per-million-token `price`; `Routes::cost` prices a turn, unknown counts stay unknown
+- `llm-models`: Bedrock endpoints (`bedrock.region`, `aws-keys` or `aws-container`); `Routes::port` builds their client
+- `llm-models`: `SecretSources::with_container_credentials` supplies the container endpoint and its token file
+- `llm-cost`: `PriceDocument::new` builds a price book in code
+- ESS domain `llm.routes`: 5 authored scenarios for aliases and Bedrock endpoints; the conformance floor rises from 937 to 942
+
+### Changed
+
+- `llm-models`: an `llm.routes/1` document may name `bedrock-converse` on a Bedrock endpoint; a binding and a catalog still refuse it
+
 ## [0.11.0] - 2026-10-22
 
 ### Added

@@ -24,7 +24,7 @@ assert:
   contains:
     loaded: false
     error_code: invalid-request
-    error_message: "endpoint `anthropic`: unknown `protocol`; expected messages, responses or chat-completions"
+    error_message: "endpoint `anthropic`: unknown `protocol`; expected messages, responses, chat-completions or bedrock-converse"
     routes: []
     endpoints: []
     answers: []
