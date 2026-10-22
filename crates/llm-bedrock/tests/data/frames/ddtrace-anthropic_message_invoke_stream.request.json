@@ -1,0 +1,1 @@
+{"messages": [{"role": "user", "content": [{"type": "text", "text": "summarize the plot to the lord of the rings in a dozen words"}]}], "anthropic_version": "bedrock-2023-05-31", "max_tokens": 50, "temperature": 0}
