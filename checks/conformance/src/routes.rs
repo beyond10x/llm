@@ -90,7 +90,8 @@ fn load(input: &Value) -> Result<Observed, TargetError> {
     let input: LoadInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
     let mut facts = json!({
         "loaded": false, "error_code": null, "error_message": null, "routes": [],
-        "endpoints": [], "answers": [], "catalog_serving_models": [], "capabilities": []
+        "endpoints": [], "answers": [], "catalog_serving_models": [], "capabilities": [],
+        "bedrock_endpoints": [], "aliases": []
     });
     match Routes::parse(&input.routes_yaml) {
         Ok(routes) => {
@@ -145,6 +146,29 @@ fn load(input: &Value) -> Result<Observed, TargetError> {
                     .catalog()
                     .bindings()
                     .map(|(id, binding)| capabilities(id, binding.capabilities()))
+                    .collect::<Vec<_>>()
+            );
+            // `<endpoint>:<protocol>:<region>:<aws-keys or aws-container>`, in name order.
+            facts["bedrock_endpoints"] = json!(
+                routes
+                    .bedrock_endpoints()
+                    .map(|endpoint| format!(
+                        "{}:{}:{}:{}",
+                        endpoint.name(),
+                        label(endpoint.protocol()),
+                        endpoint.region(),
+                        endpoint.credential_kind().as_str()
+                    ))
+                    .collect::<Vec<_>>()
+            );
+            // `<alias>=<route>`, routes in name order and each route's aliases in document order.
+            facts["aliases"] = json!(
+                routes
+                    .routes()
+                    .flat_map(|route| route
+                        .aliases()
+                        .iter()
+                        .map(move |alias| format!("{alias}={}", route.name())))
                     .collect::<Vec<_>>()
             );
         }

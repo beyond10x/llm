@@ -1213,6 +1213,18 @@ dependencies = [
 [[package]]
 name = "llm-cli"
 version = "0.11.0"
+dependencies = [
+ "base64",
+ "clap",
+ "llm-bedrock",
+ "llm-core",
+ "llm-http",
+ "llm-models",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "url",
+]
 
 [[package]]
 name = "llm-conformance"
@@ -1349,8 +1361,10 @@ name = "llm-models"
 version = "0.11.0"
 dependencies = [
  "keyring-core",
+ "llm-bedrock",
  "llm-chat",
  "llm-core",
+ "llm-cost",
  "llm-credentials",
  "llm-http",
  "llm-messages",
@@ -1360,8 +1374,11 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "sha2",
  "tempfile",
  "tokio",
+ "toml",
+ "url",
 ]
 
 [[package]]

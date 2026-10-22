@@ -68,6 +68,28 @@ pub struct PriceDocument {
     pub compute: Vec<ComputePrice>,
 }
 
+impl PriceDocument {
+    /// An `llm.prices/1` document built in code, for a caller whose prices live in another
+    /// document. [`PriceBook::from_document`] validates it as it validates a parsed one.
+    pub fn new(
+        revision: Id,
+        source: impl Into<String>,
+        as_of_unix_ms: u64,
+        currency: Currency,
+        models: Vec<ModelPrice>,
+    ) -> Self {
+        Self {
+            format: PriceFormat::V1,
+            revision,
+            source: source.into(),
+            as_of_unix_ms,
+            currency,
+            models,
+            compute: Vec::new(),
+        }
+    }
+}
+
 /// Immutable validated prices. A source/revision change also changes its content identity.
 #[derive(Debug, Clone)]
 pub struct PriceBook {

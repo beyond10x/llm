@@ -69,6 +69,8 @@ entities:
       # output_streaming true, input_during_output false. A mapping that leaves out
       # output_streaming or input_during_output declares true and false.
       - {name: capabilities, type: List<String>}
+      - {name: bedrock_endpoints, type: List<String>}
+      - {name: aliases, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 
   - name: llm.routes.Authentication

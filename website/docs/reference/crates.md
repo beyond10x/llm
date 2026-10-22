@@ -17,7 +17,7 @@ The workspace holds 16 packages at version `0.11.0`. None is published to a regi
 | `llm-bedrock` | `llm_bedrock` | `crates/llm-bedrock` | Amazon Bedrock Runtime behind the model port: Converse and Anthropic InvokeModel, event-stream decoding and hand-written SigV4. |
 | `llm-blocking` | `llm_blocking` | `crates/llm-blocking` | A blocking turn adapter over any asynchronous model port, for a synchronous agent loop. |
 | `llm-chat` | `llm_chat` | `crates/llm-chat` | Chat Completions protocol projection and gateway ingress for the declared supported subset. |
-| `llm-cli` | `llm_cli` | `crates/llm-cli` | Operator configuration, route inspection and gateway command surface. |
+| `llm-cli` | `llm_cli` | `crates/llm-cli` | The llm command: lists the models an llm.routes/1 configuration file declares and runs one streamed turn on any of them. |
 | `llm-core` | `llm_core` | `crates/llm-core` | Neutral model requests, results, streaming, capabilities and typed failures; no I/O or execution authority. |
 | `llm-cost` | `llm_cost` | `crates/llm-cost` | Usage accounting, versioned price estimates and explicit admission limits. |
 | `llm-credentials` | `llm_credentials` | `crates/llm-credentials` | Injected secret resolution and caller-managed credential refresh; optional backend adapters. |

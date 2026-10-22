@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-alias-answers-its-route
+summary: a route mapping's aliases answer exactly as the route does, and the catalog still holds only the route's own name
+timeline:
+- at: '2026-10-23T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+      routes:
+        claude-sonnet-4-5:
+          model: anthropic/claude-sonnet-4-5
+          aliases: [sonnet, default]
+    probe_names: [sonnet, default, claude-sonnet-4-5]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: true
+    error_code: null
+    aliases: ["sonnet=claude-sonnet-4-5", "default=claude-sonnet-4-5"]
+    answers: ["sonnet=anthropic:messages:claude-sonnet-4-5", "default=anthropic:messages:claude-sonnet-4-5", "claude-sonnet-4-5=anthropic:messages:claude-sonnet-4-5"]
+    catalog_serving_models: [claude-sonnet-4-5]

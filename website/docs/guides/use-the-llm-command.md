@@ -1,0 +1,145 @@
+---
+title: Use the llm command
+sidebar_position: 7
+description: The llm command reads one llm.toml routes file, lists its models and streams one turn on any of them, Anthropic, Bedrock or a local endpoint alike.
+lede: One configuration file, one command: list the models, then run a turn on any of them and see its usage and cost.
+source: crates/llm-cli (src/lib.rs, tests/command.rs), crates/llm-models/src/routes.rs
+---
+
+# Use the llm command
+
+`llm` is the command-line face of this workspace. It reads an `llm.routes/1` document, the same
+one [Configure model routes](configure-model-routes.md) describes, and does two things:
+
+- `llm model list` prints one row per route. It reads no secret and makes no network call.
+- `llm infer --model <id> "<prompt>"` sends one user turn and streams the assistant text to
+  stdout as it arrives.
+
+Build it from a checkout:
+
+```bash
+cargo build --locked --release -p llm-cli
+./target/release/llm --help
+```
+
+:::warning[Checked against fixtures only]
+
+The command's tests run against loopback fixture servers. No paid provider and no Bedrock
+account answered them.
+
+:::
+
+## The configuration file
+
+`llm` takes the first of these that is set, and does not look further:
+
+| Order | Place |
+| --- | --- |
+| 1 | `--config <path>` |
+| 2 | `LLM_CONFIG` |
+| 3 | `~/.b10x/llm.toml`, if it exists |
+| 4 | `$XDG_CONFIG_HOME/b10x/llm.toml`, if it exists; `~/.config/b10x/llm.toml` when the variable is unset or not absolute |
+
+A file named by `--config` or `LLM_CONFIG` must exist; `llm` refuses it rather than falling back
+to another place. When no place has a file, the refusal names all four and the paths it tried. A
+file ending in `.yaml` or `.yml` is read as YAML, anything else as TOML. Both forms take the same
+keys and refuse the same mistakes.
+
+This file declares one Anthropic route and two Bedrock routes:
+
+```toml
+format = "llm.routes/1"
+
+[endpoints.anthropic]
+base_url = "https://api.anthropic.com/v1"
+protocol = "messages"
+auth = { kind = "api-key", header = "x-api-key", secret = "env:ANTHROPIC_API_KEY" }
+
+[endpoints.bedrock-eu]
+protocol = "bedrock-converse"
+bedrock = { region = "eu-central-1" }
+auth = { kind = "aws-container" }
+
+[endpoints.bedrock-invoke]
+protocol = "messages"
+bedrock = { region = "eu-central-1" }
+auth = { kind = "aws-keys", access_key_id = "env:AWS_ACCESS_KEY_ID", secret_access_key = "env:AWS_SECRET_ACCESS_KEY", session_token = "env:AWS_SESSION_TOKEN" }
+
+[routes.haiku]
+model = "anthropic/claude-haiku-5-5"
+aliases = ["fast"]
+price = { currency = "USD", input = "1", cached_input = "0.1", cache_creation_input = "1.25", output = "5" }
+
+[routes.opus]
+model = "bedrock-eu/eu.anthropic.claude-opus-5-5"
+aliases = ["claude-opus"]
+
+[routes.sonnet]
+model = "bedrock-invoke/eu.anthropic.claude-sonnet-5-5"
+```
+
+The model ids are example ids, not verified. `bedrock-eu` uses Bedrock's Converse wire and signs
+with the container credentials EKS Pod Identity serves. `bedrock-invoke` sends the Anthropic
+Messages body to `InvokeModel` and signs with keys from the environment. Every secret is a
+reference (`env:`, `file:` or `keychain:`), never a value; a literal key is refused.
+
+## List the models
+
+```bash
+llm model list
+```
+
+```text
+ID      ALIASES      PROTOCOL          PROVIDER        HOST                                        MODEL                           PRICE/1M IN/OUT
+haiku   fast         messages          anthropic       api.anthropic.com                           claude-haiku-5-5                1/5 USD
+opus    claude-opus  bedrock-converse  bedrock-eu      bedrock-runtime.eu-central-1.amazonaws.com  eu.anthropic.claude-opus-5-5    unknown
+sonnet  -            messages          bedrock-invoke  bedrock-runtime.eu-central-1.amazonaws.com  eu.anthropic.claude-sonnet-5-5  unknown
+```
+
+`PROVIDER` is the endpoint's name. A route without a `price` shows `unknown`, never `0`.
+`--format json` prints the same rows as a JSON array, with `region` for a Bedrock route and
+`price_per_million` (or `null`).
+
+## Run a turn
+
+```bash
+export ANTHROPIC_API_KEY=...
+llm infer --model fast "Name one prime number."
+```
+
+`--model` takes a route id, one of its aliases, or `<endpoint>/<model-id>` for a model the file
+declares no route for. `--system` sets a system prompt and `--max-output-tokens` caps the answer.
+Without a prompt argument, `llm` reads the prompt from stdin.
+
+The text goes to stdout as it streams. One line on stderr closes the turn:
+
+```text
+route=haiku protocol=messages input_tokens=12 output_tokens=4 cost=0.000032 USD
+```
+
+A counter the provider did not report is `unknown`, not `0`. `cost` appears only for a priced
+route, and it is `unknown` when a counter it needs is missing.
+
+For `bedrock-eu`, the container credentials come from the two variables EKS Pod Identity sets,
+`AWS_CONTAINER_CREDENTIALS_FULL_URI` and `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`. Without them
+that route is refused and every other route still works. The token file must be a regular file
+owned by you or root, mode `0600` or stricter, with no symbolic link in its path. A Kubernetes
+projected token is a symbolic link with mode `0644`, so `llm` refuses it as Kubernetes mounts it.
+That is a known limitation of this release.
+
+## Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | The turn completed, or the list was printed |
+| `1` | The provider failed after the request was sent; stderr names the route and the error code only |
+| `2` | Refused before anything was sent: no or bad configuration, an unknown model, a missing credential, an invalid request |
+| `130` | Interrupted with Ctrl-C; the text shown so far stays on stdout |
+
+A refusal names the field, route or reference and never prints a secret value or a provider's
+error text.
+
+## Next
+
+- Every key of the file: [Configure model routes](configure-model-routes.md).
+- What a Bedrock turn reports: [Call a model on Bedrock](call-a-model-on-bedrock.md).

@@ -29,7 +29,32 @@
 //! [`crate::port`] and [`crate::CatalogModels::build`] on their unchanged rules.
 //!
 //! A route's `capabilities` may leave out `output_streaming` (true) and `input_during_output`
-//! (false); a string route declares [`default_capabilities`].
+//! (false); a string route, and a mapping without `capabilities`, declares
+//! [`default_capabilities`] (without reasoning efforts on `bedrock-converse`). A mapping may also
+//! name `aliases`, further names that reach the route, and a `price` per million tokens.
+//!
+//! An endpoint with a `bedrock` table is an Amazon Bedrock Runtime endpoint:
+//!
+//! ```yaml
+//! endpoints:
+//!   bedrock-eu: {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+//!                auth: {kind: aws-container}}
+//!   bedrock-keys: {protocol: messages, bedrock: {region: eu-central-1},
+//!                  auth: {kind: aws-keys, access_key_id: env:AWS_ACCESS_KEY_ID,
+//!                         secret_access_key: env:AWS_SECRET_ACCESS_KEY}}
+//! ```
+//!
+//! Its `protocol` is `bedrock-converse` (Converse) or `messages` (the Anthropic body on
+//! `InvokeModel`), its `base_url`, optional, replaces the Region's origin, and its route's model id
+//! is the Bedrock model or inference-profile id. It authenticates with `aws-keys` (an access key
+//! id, a secret access key and optionally a session token, each a secret reference) or
+//! `aws-container` (the container credentials endpoint and its token file, which the caller
+//! supplies through [`SecretSources::with_container_credentials`]). Its routes are served by
+//! `llm-bedrock`'s `BedrockClient` and stay out of the catalog, whose bindings are the three
+//! HTTP wires.
+//!
+//! [`Routes::parse_toml`] reads the same document written in TOML, with the same keys and the
+//! same refusals.
 //!
 //! Parsing is strict and performs no I/O: an unknown field, a repeated key, an unknown format,
 //! protocol, authentication kind or secret source, a literal secret, a capability the endpoint's
@@ -39,9 +64,17 @@
 //! missing file is refused at turn time, as `unauthorized`, by the endpoint's reference, before
 //! any request is sent.
 
-use crate::{Port, Resolvers, port};
-use llm_core::{AuthKind, BillingKind, Capabilities, Error, ErrorCode, Id, Protocol};
-use llm_credentials::{SecretRef, SecretResolver};
+use crate::{AwsReferences, Port, Resolvers, port};
+use llm_bedrock::{Api, BedrockTarget};
+use llm_core::{
+    AuthKind, BillingKind, BoxFuture, Capabilities, Dispatch, Error, ErrorCode, Id, Protocol,
+    Provenance, TurnObservation,
+};
+use llm_cost::{
+    AccountingInput, Amount, AttemptUsage, Currency, ModelPrice, Observation, PriceBook,
+    PriceDocument, Rate, Total,
+};
+use llm_credentials::{ResolvedSecret, SecretError, SecretRef, SecretResolver};
 use llm_http::HttpClient;
 use llm_providers::{
     Account, ApiKeyHeader, BaseUrl, Binding, Endpoint, Provider, ServedModel, ServingModel,
@@ -51,6 +84,8 @@ use serde::{
     Deserialize, Deserializer,
     de::{self, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess, Visitor},
 };
+use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 use std::{
     cell::Cell,
     collections::BTreeMap,
@@ -59,6 +94,7 @@ use std::{
     path::{Component, Path, PathBuf},
     sync::Arc,
 };
+use url::Url;
 
 /// The format a routes document declares in its `format` field.
 pub const FORMAT: &str = "llm.routes/1";
@@ -72,6 +108,10 @@ const CATALOG_BOUND: &str = "llm.routes/1 document expands beyond the catalog's 
 const REPEATED: &str = "the document declares it more than once";
 const SECRET_FORMS: &str = "`auth.secret` must be a reference: env:<VARIABLE>, \
 file:<absolute or ~/ path> or keychain:<service>/<entry>";
+const REFERENCE_FORMS: &str = "must be a reference: env:<VARIABLE>, \
+file:<absolute or ~/ path> or keychain:<service>/<entry>";
+const PER_MILLION: u64 = 1_000_000;
+const AWS_KEY_FIELDS: [&str; 3] = ["access_key_id", "secret_access_key", "session_token"];
 
 /// The capabilities a route written as a plain `<endpoint>/<model-id>` string declares: tools,
 /// tool choice, temperature and `top_p` allowed, reasoning efforts `low`, `medium` and `high`, a
@@ -103,9 +143,19 @@ struct RawDocument {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawEndpoint {
-    base_url: String,
+    #[serde(default)]
+    base_url: Option<String>,
     protocol: String,
     auth: RawAuth,
+    #[serde(default)]
+    bedrock: Option<RawBedrock>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawBedrock {
+    #[serde(default)]
+    region: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -116,6 +166,37 @@ struct RawAuth {
     header: Option<String>,
     #[serde(default)]
     secret: Option<String>,
+    #[serde(default)]
+    access_key_id: Option<String>,
+    #[serde(default)]
+    secret_access_key: Option<String>,
+    #[serde(default)]
+    session_token: Option<String>,
+}
+
+impl RawAuth {
+    /// The AWS key fields the document names, in [`AWS_KEY_FIELDS`] order.
+    fn key_fields(&self) -> [(&'static str, Option<&String>); 3] {
+        [
+            (AWS_KEY_FIELDS[0], self.access_key_id.as_ref()),
+            (AWS_KEY_FIELDS[1], self.secret_access_key.as_ref()),
+            (AWS_KEY_FIELDS[2], self.session_token.as_ref()),
+        ]
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawPrice {
+    currency: String,
+    #[serde(default)]
+    input: Option<String>,
+    #[serde(default)]
+    cached_input: Option<String>,
+    #[serde(default)]
+    cache_creation_input: Option<String>,
+    #[serde(default)]
+    output: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -129,7 +210,12 @@ enum RawRoute {
 #[serde(deny_unknown_fields)]
 struct RawDeclaredRoute {
     model: String,
-    capabilities: Capabilities,
+    #[serde(default)]
+    capabilities: Option<Capabilities>,
+    #[serde(default)]
+    aliases: Vec<String>,
+    #[serde(default)]
+    price: Option<RawPrice>,
 }
 
 /// A mapping in document order. A repeated key is kept rather than merged, so [`Routes::parse`]
@@ -169,6 +255,18 @@ fn malformed(error: &serde_yaml::Error) -> Error {
         format!(" at line {} column {}", location.line(), location.column())
     });
     Error::invalid(format!("invalid {FORMAT} YAML document{location}"))
+}
+
+/// The TOML parser's diagnostic can quote the document too: only the line and column its span
+/// starts at are kept.
+fn malformed_toml(source: &str, error: &toml::de::Error) -> Error {
+    let location = error.span().map_or(String::new(), |span| {
+        let before = &source[..span.start.min(source.len())];
+        let line = before.matches('\n').count() + 1;
+        let column = before.len() - before.rfind('\n').map_or(0, |end| end + 1) + 1;
+        format!(" at line {line} column {column}")
+    });
+    Error::invalid(format!("invalid {FORMAT} TOML document{location}"))
 }
 
 /// What one node is charged beyond its text. Before a value's type is known it is buffered as
@@ -386,6 +484,16 @@ impl SecretSource {
             Self::Keychain { .. } => SecretKind::Keychain,
         }
     }
+
+    /// The reference as the document writes it, for [`Routes::digest`] only.
+    fn canonical(&self) -> String {
+        match self {
+            Self::Environment(variable) => format!("env:{variable}"),
+            Self::File(FilePath::Absolute(path)) => format!("file:{}", path.display()),
+            Self::File(FilePath::Home(path)) => format!("file:~/{}", path.display()),
+            Self::Keychain { service, entry } => format!("keychain:{service}/{entry}"),
+        }
+    }
 }
 
 impl fmt::Debug for SecretSource {
@@ -427,25 +535,56 @@ pub struct EndpointDeclaration {
     secret: Option<SecretSource>,
 }
 
+/// One endpoint as read: an HTTP endpoint the catalog expands, or a Bedrock Runtime endpoint.
+enum Declared {
+    Http(EndpointDeclaration),
+    Bedrock(BedrockEndpointDeclaration),
+}
+
+fn read_endpoint(name: Id, raw: RawEndpoint) -> Result<Declared, Error> {
+    let refuse = |message: &str| about("endpoint", &name, message);
+    let protocol = match raw.protocol.as_str() {
+        "messages" => Protocol::Messages,
+        "responses" => Protocol::Responses,
+        "chat-completions" => Protocol::ChatCompletions,
+        "bedrock-converse" => Protocol::BedrockConverse,
+        _ => {
+            return Err(refuse(
+                "unknown `protocol`; expected messages, responses, chat-completions or \
+                 bedrock-converse",
+            ));
+        }
+    };
+    if raw.bedrock.is_some() || protocol == Protocol::BedrockConverse {
+        return BedrockEndpointDeclaration::read(name, protocol, raw).map(Declared::Bedrock);
+    }
+    if matches!(raw.auth.kind.as_str(), "aws-keys" | "aws-container") {
+        return Err(refuse(
+            "only a Bedrock endpoint (one with a `bedrock` table) takes `auth.kind` aws-keys or \
+             aws-container",
+        ));
+    }
+    if let Some((field, _)) = raw
+        .auth
+        .key_fields()
+        .into_iter()
+        .find(|(_, value)| value.is_some())
+    {
+        return Err(refuse(&format!(
+            "only an aws-keys endpoint takes `auth.{field}`"
+        )));
+    }
+    EndpointDeclaration::read(name, protocol, raw).map(Declared::Http)
+}
+
 impl EndpointDeclaration {
-    fn read(name: Id, raw: RawEndpoint) -> Result<Self, Error> {
+    fn read(name: Id, protocol: Protocol, raw: RawEndpoint) -> Result<Self, Error> {
         let refuse = |message: &str| about("endpoint", &name, message);
-        let base_url = BaseUrl::new(&raw.base_url).map_err(|error| refuse(&error.message))?;
-        let protocol = match raw.protocol.as_str() {
-            "messages" => Protocol::Messages,
-            "responses" => Protocol::Responses,
-            "chat-completions" => Protocol::ChatCompletions,
-            "bedrock-converse" => {
-                return Err(refuse(
-                    "bedrock-converse is served by llm-bedrock's BedrockClient, not by a binding",
-                ));
-            }
-            _ => {
-                return Err(refuse(
-                    "unknown `protocol`; expected messages, responses or chat-completions",
-                ));
-            }
-        };
+        let base_url = raw
+            .base_url
+            .as_deref()
+            .ok_or_else(|| refuse("requires `base_url`"))?;
+        let base_url = BaseUrl::new(base_url).map_err(|error| refuse(&error.message))?;
         let auth_kind = match raw.auth.kind.as_str() {
             "anonymous" => AuthKind::Anonymous,
             "bearer" => AuthKind::Bearer,
@@ -527,6 +666,18 @@ impl EndpointDeclaration {
             .map_err(|_| about("endpoint", &self.name, "its name is not a secret reference"))
     }
 
+    fn canonical(&self) -> Value {
+        json!({
+            "base_url": self.base_url.as_str(),
+            "protocol": self.protocol,
+            "auth": {
+                "kind": self.auth_kind,
+                "header": self.api_key_header.as_ref().map(ApiKeyHeader::as_str),
+                "secret": self.secret.as_ref().map(SecretSource::canonical),
+            },
+        })
+    }
+
     /// The catalog provider, account and endpoint this endpoint expands into.
     fn declarations(&self) -> Result<(Provider, Account, Endpoint), Error> {
         let anonymous = self.auth_kind == AuthKind::Anonymous;
@@ -557,6 +708,415 @@ impl EndpointDeclaration {
     }
 }
 
+/// How a Bedrock endpoint gets the AWS credentials it signs with.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AwsCredentialKind {
+    /// `aws-keys`: an access key id, a secret access key and optionally a session token, each
+    /// a secret reference.
+    Keys,
+    /// `aws-container`: the container credentials endpoint (EKS Pod Identity) and its token
+    /// file, which the caller supplies.
+    Container,
+}
+
+impl AwsCredentialKind {
+    /// The `auth.kind` the document writes: `aws-keys` or `aws-container`.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Keys => "aws-keys",
+            Self::Container => "aws-container",
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum AwsCredentials {
+    Keys {
+        access_key_id: SecretSource,
+        secret_access_key: SecretSource,
+        session_token: Option<SecretSource>,
+    },
+    Container,
+}
+
+/// One declared Amazon Bedrock Runtime endpoint, as the document states it.
+#[derive(Debug, Clone)]
+pub struct BedrockEndpointDeclaration {
+    name: Id,
+    region: String,
+    protocol: Protocol,
+    endpoint: Option<Url>,
+    credentials: AwsCredentials,
+}
+
+/// The secret reference one AWS key field of a Bedrock endpoint resolves under: the endpoint's
+/// name, `/`, the field.
+fn key_reference(endpoint: &Id, field: &str) -> Result<SecretRef, Error> {
+    SecretRef::new(format!("{endpoint}/{field}")).map_err(|_| {
+        about(
+            "endpoint",
+            endpoint,
+            "its name is too long to name its aws-keys references",
+        )
+    })
+}
+
+impl BedrockEndpointDeclaration {
+    fn read(name: Id, protocol: Protocol, raw: RawEndpoint) -> Result<Self, Error> {
+        let refuse = |message: &str| about("endpoint", &name, message);
+        let api = match protocol {
+            Protocol::BedrockConverse => Api::Converse,
+            Protocol::Messages => Api::AnthropicInvoke,
+            Protocol::Responses | Protocol::ChatCompletions => {
+                return Err(refuse(
+                    "a Bedrock endpoint's `protocol` must be bedrock-converse or messages",
+                ));
+            }
+        };
+        let region = raw
+            .bedrock
+            .and_then(|bedrock| bedrock.region)
+            .ok_or_else(|| refuse("a Bedrock endpoint requires `bedrock.region`"))?;
+        let endpoint = raw
+            .base_url
+            .map(|base_url| Url::parse(&base_url).map_err(|_| refuse("`base_url` is not a URL")))
+            .transpose()?;
+        let auth = raw.auth;
+        if auth.header.is_some() {
+            return Err(refuse("a Bedrock endpoint takes no `auth.header`"));
+        }
+        if auth.secret.is_some() {
+            return Err(refuse(
+                "a Bedrock endpoint takes no `auth.secret`; aws-keys names `auth.access_key_id` \
+                 and `auth.secret_access_key`",
+            ));
+        }
+        let credentials = match auth.kind.as_str() {
+            "aws-keys" => {
+                let [access_key_id, secret_access_key, session_token] =
+                    auth.key_fields().map(|(field, value)| {
+                        value
+                            .map(|value| {
+                                SecretSource::read(value).ok_or_else(|| {
+                                    refuse(&format!("`auth.{field}` {REFERENCE_FORMS}"))
+                                })
+                            })
+                            .transpose()
+                    });
+                let required = |field: &str, value: Option<SecretSource>| {
+                    value.ok_or_else(|| {
+                        refuse(&format!("an aws-keys endpoint requires `auth.{field}`"))
+                    })
+                };
+                for field in AWS_KEY_FIELDS {
+                    key_reference(&name, field)?;
+                }
+                AwsCredentials::Keys {
+                    access_key_id: required(AWS_KEY_FIELDS[0], access_key_id?)?,
+                    secret_access_key: required(AWS_KEY_FIELDS[1], secret_access_key?)?,
+                    session_token: session_token?,
+                }
+            }
+            "aws-container" => {
+                if let Some((field, _)) = auth
+                    .key_fields()
+                    .into_iter()
+                    .find(|(_, value)| value.is_some())
+                {
+                    return Err(refuse(&format!(
+                        "an aws-container endpoint cannot also name `auth.{field}`: a Bedrock \
+                         endpoint has one credential source"
+                    )));
+                }
+                AwsCredentials::Container
+            }
+            _ => {
+                return Err(refuse(
+                    "a Bedrock endpoint's `auth.kind` must be aws-keys or aws-container",
+                ));
+            }
+        };
+        let declaration = Self {
+            name,
+            region,
+            protocol,
+            endpoint,
+            credentials,
+        };
+        // The Region and the endpoint override are checked by the client's own rules, on a
+        // probe target that names no route.
+        let probe = Id::new("probe").map_err(|_| Error::invalid("invalid probe id"))?;
+        declaration
+            .target(&probe, "probe", bedrock_capabilities(api))
+            .map_err(|error| about("endpoint", &declaration.name, &error.message))?;
+        Ok(declaration)
+    }
+
+    /// The endpoint's name; also the provenance provider, account and endpoint of its turns.
+    pub fn name(&self) -> &Id {
+        &self.name
+    }
+
+    /// The AWS Region the requests are sent to and signed for.
+    pub fn region(&self) -> &str {
+        &self.region
+    }
+
+    /// `bedrock-converse`, or `messages` for the Anthropic body on `InvokeModel`.
+    pub fn protocol(&self) -> Protocol {
+        self.protocol
+    }
+
+    /// The origin that replaces `https://bedrock-runtime.{region}.amazonaws.com`, when declared.
+    pub fn endpoint_override(&self) -> Option<&Url> {
+        self.endpoint.as_ref()
+    }
+
+    /// The host the requests go to.
+    pub fn host(&self) -> String {
+        self.endpoint.as_ref().and_then(Url::host_str).map_or_else(
+            || format!("bedrock-runtime.{}.amazonaws.com", self.region),
+            str::to_owned,
+        )
+    }
+
+    pub fn credential_kind(&self) -> AwsCredentialKind {
+        match self.credentials {
+            AwsCredentials::Keys { .. } => AwsCredentialKind::Keys,
+            AwsCredentials::Container => AwsCredentialKind::Container,
+        }
+    }
+
+    /// The source kinds of the aws-keys references, in field order; empty for aws-container.
+    pub fn secret_kinds(&self) -> Vec<SecretKind> {
+        match &self.credentials {
+            AwsCredentials::Keys {
+                access_key_id,
+                secret_access_key,
+                session_token,
+            } => [
+                Some(access_key_id),
+                Some(secret_access_key),
+                session_token.as_ref(),
+            ]
+            .into_iter()
+            .flatten()
+            .map(SecretSource::kind)
+            .collect(),
+            AwsCredentials::Container => Vec::new(),
+        }
+    }
+
+    fn api(&self) -> Api {
+        if self.protocol == Protocol::BedrockConverse {
+            Api::Converse
+        } else {
+            Api::AnthropicInvoke
+        }
+    }
+
+    /// The validated client target for one serving model of this endpoint.
+    fn target(
+        &self,
+        serving_model: &Id,
+        model_id: &str,
+        capabilities: Capabilities,
+    ) -> Result<BedrockTarget, Error> {
+        capabilities.validate()?;
+        // Every route streams its output and takes no input during it, as on the HTTP wires.
+        capabilities.validate_protocol(Protocol::Messages)?;
+        let provenance = Provenance {
+            protocol: self.protocol,
+            provider: self.name.clone(),
+            account: self.name.clone(),
+            endpoint: self.name.clone(),
+            model: serving_model.clone(),
+            binding_revision: self.revision(serving_model, model_id, &capabilities)?,
+        };
+        BedrockTarget::new(
+            provenance,
+            capabilities,
+            self.region.clone(),
+            model_id,
+            self.api(),
+            true,
+            self.endpoint.clone(),
+        )
+    }
+
+    /// What identifies the concrete definition a turn was bound to: a SHA-256 over the Region,
+    /// wire, origin, credential kind, model id and capabilities.
+    fn revision(
+        &self,
+        serving_model: &Id,
+        model_id: &str,
+        capabilities: &Capabilities,
+    ) -> Result<Id, Error> {
+        let definition = json!({
+            "serving_model": serving_model,
+            "region": self.region,
+            "protocol": self.protocol,
+            "endpoint": self.endpoint.as_ref().map(Url::as_str),
+            "credentials": self.credential_kind().as_str(),
+            "model_id": model_id,
+            "capabilities": capabilities,
+        });
+        Id::new(sha256_hex(definition.to_string().as_bytes()))
+            .map_err(|_| Error::invalid("invalid binding revision"))
+    }
+
+    fn references(&self) -> Result<AwsReferences, Error> {
+        Ok(match &self.credentials {
+            AwsCredentials::Keys { session_token, .. } => AwsReferences::Keys {
+                account: self.name.clone(),
+                access_key_id: key_reference(&self.name, AWS_KEY_FIELDS[0])?,
+                secret_access_key: key_reference(&self.name, AWS_KEY_FIELDS[1])?,
+                session_token: session_token
+                    .as_ref()
+                    .map(|_| key_reference(&self.name, AWS_KEY_FIELDS[2]))
+                    .transpose()?,
+            },
+            AwsCredentials::Container => AwsReferences::Container {
+                account: self.name.clone(),
+                token: SecretRef::new(self.name.as_str()).map_err(|_| {
+                    about("endpoint", &self.name, "its name is not a secret reference")
+                })?,
+            },
+        })
+    }
+
+    fn canonical(&self) -> Value {
+        let credentials = match &self.credentials {
+            AwsCredentials::Keys {
+                access_key_id,
+                secret_access_key,
+                session_token,
+            } => json!({
+                "kind": "aws-keys",
+                "access_key_id": access_key_id.canonical(),
+                "secret_access_key": secret_access_key.canonical(),
+                "session_token": session_token.as_ref().map(SecretSource::canonical),
+            }),
+            AwsCredentials::Container => json!({"kind": "aws-container"}),
+        };
+        json!({
+            "name": self.name,
+            "region": self.region,
+            "protocol": self.protocol,
+            "base_url": self.endpoint.as_ref().map(Url::as_str),
+            "auth": credentials,
+        })
+    }
+}
+
+/// The capabilities a Bedrock route declares when it writes none: [`default_capabilities`],
+/// without reasoning efforts on Converse, whose wire carries none.
+fn bedrock_capabilities(api: Api) -> Capabilities {
+    let mut capabilities = default_capabilities();
+    if api == Api::Converse {
+        capabilities.reasoning_efforts.clear();
+    }
+    capabilities
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut hex = String::with_capacity(64);
+    for byte in Sha256::digest(bytes) {
+        hex.push(char::from(HEX[usize::from(byte >> 4)]));
+        hex.push(char::from(HEX[usize::from(byte & 15)]));
+    }
+    hex
+}
+
+/// A route's price per million tokens, in one currency. A class it leaves out is unknown, never
+/// free.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RoutePrice {
+    currency: Currency,
+    input: Option<Amount>,
+    cached_input: Option<Amount>,
+    cache_creation_input: Option<Amount>,
+    output: Option<Amount>,
+}
+
+impl RoutePrice {
+    fn read(route: &Id, raw: RawPrice) -> Result<Self, Error> {
+        let currency = Currency::new(raw.currency).map_err(|_| {
+            about(
+                "route",
+                route,
+                "`price.currency` must be three upper-case letters",
+            )
+        })?;
+        let amount = |field: &str, value: Option<String>| {
+            value
+                .map(|value| {
+                    Amount::parse(&value).map_err(|_| {
+                        about(
+                            "route",
+                            route,
+                            &format!(
+                                "`price.{field}` must be a decimal amount per million tokens, \
+                                 written as a string"
+                            ),
+                        )
+                    })
+                })
+                .transpose()
+        };
+        Ok(Self {
+            currency,
+            input: amount("input", raw.input)?,
+            cached_input: amount("cached_input", raw.cached_input)?,
+            cache_creation_input: amount("cache_creation_input", raw.cache_creation_input)?,
+            output: amount("output", raw.output)?,
+        })
+    }
+
+    pub fn currency(&self) -> &Currency {
+        &self.currency
+    }
+
+    /// Per million uncached input tokens.
+    pub fn input(&self) -> Option<Amount> {
+        self.input
+    }
+
+    /// Per million input tokens read from the cache.
+    pub fn cached_input(&self) -> Option<Amount> {
+        self.cached_input
+    }
+
+    /// Per million input tokens written to the cache.
+    pub fn cache_creation_input(&self) -> Option<Amount> {
+        self.cache_creation_input
+    }
+
+    /// Per million output tokens.
+    pub fn output(&self) -> Option<Amount> {
+        self.output
+    }
+
+    fn canonical(&self) -> Value {
+        json!({
+            "currency": self.currency.as_str(),
+            "input": self.input.map(|amount| amount.to_string()),
+            "cached_input": self.cached_input.map(|amount| amount.to_string()),
+            "cache_creation_input": self.cache_creation_input.map(|amount| amount.to_string()),
+            "output": self.output.map(|amount| amount.to_string()),
+        })
+    }
+}
+
+/// What one turn on a priced route cost, by the `llm-cost` rules: a line whose count or rate is
+/// unknown stays unknown, and the complete total exists only when no line is.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RouteCost {
+    pub currency: Currency,
+    pub total: Total,
+}
+
 /// One declared route, as the document states it.
 #[derive(Debug, Clone)]
 pub struct RouteDeclaration {
@@ -564,9 +1124,65 @@ pub struct RouteDeclaration {
     endpoint: Id,
     upstream_model: Id,
     capabilities: Capabilities,
+    protocol: Protocol,
+    aliases: Vec<Id>,
+    price: Option<RoutePrice>,
 }
 
 impl RouteDeclaration {
+    fn read<'a>(
+        route: Id,
+        declaration: RawRoute,
+        reach: impl Fn(&Id) -> Option<Reached<'a>>,
+    ) -> Result<Self, Error> {
+        let refuse = |message: &str| about("route", &route, message);
+        let (model, capabilities, named, price) = match declaration {
+            RawRoute::Model(model) => (model, None, Vec::new(), None),
+            RawRoute::Declared(declared) => (
+                declared.model,
+                declared.capabilities,
+                declared.aliases,
+                declared.price,
+            ),
+        };
+        let (endpoint, upstream_model) = model
+            .split_once('/')
+            .ok_or_else(|| refuse("its model must read <endpoint>/<model-id>"))?;
+        let endpoint = Id::new(endpoint)
+            .ok()
+            .and_then(|endpoint| reach(&endpoint))
+            .ok_or_else(|| refuse("its model names an undeclared endpoint"))?;
+        let upstream_model = Id::new(upstream_model)
+            .map_err(|_| refuse("its model id must be 1..=256 printable ASCII bytes"))?;
+        let capabilities = capabilities.unwrap_or_else(|| endpoint.default_capabilities());
+        match endpoint {
+            Reached::Http(declaration) => capabilities
+                .validate()
+                .and_then(|()| capabilities.validate_protocol(declaration.protocol))
+                .map(drop),
+            Reached::Bedrock(declaration) => declaration
+                .target(&route, upstream_model.as_str(), capabilities.clone())
+                .map(drop),
+        }
+        .map_err(|error| refuse(&error.message))?;
+        let aliases = named
+            .iter()
+            .map(|alias| name(alias, "alias"))
+            .collect::<Result<Vec<_>, _>>()?;
+        let price = price
+            .map(|price| RoutePrice::read(&route, price))
+            .transpose()?;
+        Ok(Self {
+            name: route,
+            endpoint: endpoint.name(),
+            upstream_model,
+            capabilities,
+            protocol: endpoint.protocol(),
+            aliases,
+            price,
+        })
+    }
+
     /// The route's name; also its serving model, served model and catalog route id and alias.
     pub fn name(&self) -> &Id {
         &self.name
@@ -585,6 +1201,33 @@ impl RouteDeclaration {
     pub fn capabilities(&self) -> &Capabilities {
         &self.capabilities
     }
+
+    /// The protocol of the route's endpoint.
+    pub fn protocol(&self) -> Protocol {
+        self.protocol
+    }
+
+    /// The further names that reach the route, in document order.
+    pub fn aliases(&self) -> &[Id] {
+        &self.aliases
+    }
+
+    /// The route's price per million tokens, when it declares one.
+    pub fn price(&self) -> Option<&RoutePrice> {
+        self.price.as_ref()
+    }
+
+    fn canonical(&self) -> Value {
+        let mut aliases: Vec<&str> = self.aliases.iter().map(Id::as_str).collect();
+        aliases.sort_unstable();
+        json!({
+            "endpoint": self.endpoint,
+            "model": self.upstream_model,
+            "capabilities": self.capabilities,
+            "aliases": aliases,
+            "price": self.price.as_ref().map(RoutePrice::canonical),
+        })
+    }
 }
 
 /// What a name reaches.
@@ -602,8 +1245,41 @@ pub struct Target {
 #[derive(Debug)]
 pub struct Routes {
     endpoints: BTreeMap<Id, EndpointDeclaration>,
+    bedrock: BTreeMap<Id, BedrockEndpointDeclaration>,
     declared: BTreeMap<Id, RouteDeclaration>,
+    aliases: BTreeMap<Id, Id>,
     catalog: Catalog,
+    digest: String,
+}
+
+/// The endpoint a name reaches: one the catalog expands, or a Bedrock Runtime endpoint.
+#[derive(Clone, Copy)]
+enum Reached<'a> {
+    Http(&'a EndpointDeclaration),
+    Bedrock(&'a BedrockEndpointDeclaration),
+}
+
+impl Reached<'_> {
+    fn name(self) -> Id {
+        match self {
+            Self::Http(endpoint) => endpoint.name.clone(),
+            Self::Bedrock(endpoint) => endpoint.name.clone(),
+        }
+    }
+
+    fn protocol(self) -> Protocol {
+        match self {
+            Self::Http(endpoint) => endpoint.protocol,
+            Self::Bedrock(endpoint) => endpoint.protocol,
+        }
+    }
+
+    fn default_capabilities(self) -> Capabilities {
+        match self {
+            Self::Http(_) => default_capabilities(),
+            Self::Bedrock(endpoint) => bedrock_capabilities(endpoint.api()),
+        }
+    }
 }
 
 /// One serving model the expansion declares.
@@ -686,10 +1362,10 @@ impl Routes {
     /// each kind: a few thousand routes); otherwise `invalid-request` for malformed YAML, an
     /// unknown field (`providers` included), a repeated key, an unknown format, protocol,
     /// authentication kind or secret source, a literal secret, contradictory authentication
-    /// fields, an invalid name, base URL, header or capability declaration, a capability its
-    /// endpoint's protocol cannot carry (input during output, or output that does not stream),
-    /// and a route to an undeclared endpoint. The message names the field, endpoint or route and
-    /// never a value.
+    /// fields, an invalid name, base URL, header, Region, price or capability declaration, a
+    /// capability its endpoint's protocol cannot carry (input during output, or output that does
+    /// not stream), a route to an undeclared endpoint and an alias that names more than one
+    /// route. The message names the field, endpoint, route or alias and never a value.
     pub fn parse(source: &str) -> Result<Self, Error> {
         if source.len() > MAX_CONFIG_BYTES {
             return Err(Error::too_large("routes document exceeds its byte bound"));
@@ -707,144 +1383,201 @@ impl Routes {
             });
         }
         let raw: RawDocument = serde_yaml::from_str(source).map_err(|error| malformed(&error))?;
+        Self::from_raw(raw)
+    }
+
+    /// Reads the same document written in TOML: the same keys, the same bounds and the same
+    /// refusals as [`Routes::parse`]. A malformed document is refused by its line and column.
+    ///
+    /// # Errors
+    /// As [`Routes::parse`]; TOML has no aliases, so nothing is refused for expanding.
+    pub fn parse_toml(source: &str) -> Result<Self, Error> {
+        if source.len() > MAX_CONFIG_BYTES {
+            return Err(Error::too_large("routes document exceeds its byte bound"));
+        }
+        let raw: RawDocument =
+            toml::from_str(source).map_err(|error| malformed_toml(source, &error))?;
+        Self::from_raw(raw)
+    }
+
+    fn from_raw(raw: RawDocument) -> Result<Self, Error> {
         if raw.format != FORMAT {
             return Err(Error::invalid(format!(
                 "the document's `format` is not {FORMAT}"
             )));
         }
         let mut endpoints = BTreeMap::new();
+        let mut bedrock = BTreeMap::new();
         for (endpoint, declaration) in raw.endpoints.0 {
             let endpoint = name(&endpoint, "endpoint")?;
-            if endpoints.contains_key(&endpoint) {
+            if endpoints.contains_key(&endpoint) || bedrock.contains_key(&endpoint) {
                 return Err(about("endpoint", &endpoint, REPEATED));
             }
-            let declaration = EndpointDeclaration::read(endpoint.clone(), declaration)?;
-            endpoints.insert(endpoint, declaration);
+            match read_endpoint(endpoint.clone(), declaration)? {
+                Declared::Http(declaration) => {
+                    endpoints.insert(endpoint, declaration);
+                }
+                Declared::Bedrock(declaration) => {
+                    bedrock.insert(endpoint, declaration);
+                }
+            }
         }
         let mut routes = BTreeMap::new();
+        let mut aliases = BTreeMap::new();
         for (route, declaration) in raw.routes.0 {
             let route = name(&route, "route")?;
-            let refuse = |message: &str| about("route", &route, message);
             if routes.contains_key(&route) {
-                return Err(refuse(REPEATED));
+                return Err(about("route", &route, REPEATED));
             }
-            let (model, capabilities) = match declaration {
-                RawRoute::Model(model) => (model, default_capabilities()),
-                RawRoute::Declared(declared) => (declared.model, declared.capabilities),
+            let reach = |endpoint: &Id| {
+                endpoints
+                    .get(endpoint)
+                    .map(Reached::Http)
+                    .or_else(|| bedrock.get(endpoint).map(Reached::Bedrock))
             };
-            let (endpoint, upstream_model) = model
-                .split_once('/')
-                .ok_or_else(|| refuse("its model must read <endpoint>/<model-id>"))?;
-            let endpoint = Id::new(endpoint)
-                .ok()
-                .filter(|endpoint| endpoints.contains_key(endpoint))
-                .ok_or_else(|| refuse("its model names an undeclared endpoint"))?;
-            let upstream_model = Id::new(upstream_model)
-                .map_err(|_| refuse("its model id must be 1..=256 printable ASCII bytes"))?;
-            capabilities
-                .validate()
-                .and_then(|()| capabilities.validate_protocol(endpoints[&endpoint].protocol))
-                .map_err(|error| refuse(&error.message))?;
-            routes.insert(
-                route.clone(),
-                RouteDeclaration {
-                    name: route,
-                    endpoint,
-                    upstream_model,
-                    capabilities,
-                },
-            );
+            let declaration = RouteDeclaration::read(route.clone(), declaration, reach)?;
+            for alias in &declaration.aliases {
+                if aliases.insert(alias.clone(), route.clone()).is_some() {
+                    return Err(about(
+                        "alias",
+                        alias,
+                        "is repeated or names more than one route",
+                    ));
+                }
+            }
+            routes.insert(route, declaration);
+        }
+        if let Some(alias) = aliases.keys().find(|alias| routes.contains_key(*alias)) {
+            return Err(about(
+                "alias",
+                alias,
+                "is also a route's name, so it would name two routes",
+            ));
         }
         let served: Vec<Served<'_>> = routes
             .values()
-            .map(|route| Served {
-                id: &route.name,
-                endpoint: &endpoints[&route.endpoint],
-                upstream_model: &route.upstream_model,
-                capabilities: &route.capabilities,
+            .filter_map(|route| {
+                endpoints.get(&route.endpoint).map(|endpoint| Served {
+                    id: &route.name,
+                    endpoint,
+                    upstream_model: &route.upstream_model,
+                    capabilities: &route.capabilities,
+                })
             })
             .collect();
         let catalog = expand(endpoints.values(), &served)?;
+        let digest = digest(&endpoints, &bedrock, &routes);
         Ok(Self {
             endpoints,
+            bedrock,
             declared: routes,
+            aliases,
             catalog,
+            digest,
         })
     }
 
-    /// The `llm.catalog/1` catalog the document expands into: its serving models are the routes.
+    /// The `llm.catalog/1` catalog the document expands into: its serving models are the routes
+    /// to the HTTP endpoints. A Bedrock route has no catalog entry.
     pub fn catalog(&self) -> &Catalog {
         &self.catalog
     }
 
-    /// Every declared endpoint, in name order.
+    /// A SHA-256 over the validated document, in hex: the same for a YAML and a TOML document
+    /// that declare the same endpoints, routes, aliases and prices, whatever their order,
+    /// layout or comments.
+    pub fn digest(&self) -> &str {
+        &self.digest
+    }
+
+    /// Every declared HTTP endpoint, in name order.
     pub fn endpoints(&self) -> impl Iterator<Item = &EndpointDeclaration> {
         self.endpoints.values()
     }
 
-    /// Every declared route, in name order.
+    /// Every declared Bedrock Runtime endpoint, in name order.
+    pub fn bedrock_endpoints(&self) -> impl Iterator<Item = &BedrockEndpointDeclaration> {
+        self.bedrock.values()
+    }
+
+    /// Every declared route, Bedrock routes included, in name order.
     pub fn routes(&self) -> impl Iterator<Item = &RouteDeclaration> {
         self.declared.values()
     }
 
-    fn route(&self, name: &str) -> Option<&RouteDeclaration> {
-        Id::new(name).ok().and_then(|id| self.declared.get(&id))
+    /// The route a route name or alias reaches.
+    pub fn route(&self, name: &str) -> Option<&RouteDeclaration> {
+        let id = Id::new(name).ok()?;
+        self.declared.get(&id).or_else(|| {
+            self.aliases
+                .get(&id)
+                .and_then(|route| self.declared.get(route))
+        })
+    }
+
+    fn reached(&self, endpoint: &Id) -> Option<Reached<'_>> {
+        self.endpoints
+            .get(endpoint)
+            .map(Reached::Http)
+            .or_else(|| self.bedrock.get(endpoint).map(Reached::Bedrock))
     }
 
     /// A `<declared endpoint>/<model-id>` name of at most 256 bytes: its serving model id,
     /// endpoint and model id.
-    fn direct(&self, name: &str) -> Result<(Id, &EndpointDeclaration, Id), Error> {
+    fn direct(&self, name: &str) -> Result<(Id, Reached<'_>, Id), Error> {
         let unknown =
             || Error::invalid("the name is neither a route nor <declared endpoint>/<model-id>");
         let (endpoint, model) = name.split_once('/').ok_or_else(unknown)?;
         let endpoint = Id::new(endpoint)
             .ok()
-            .and_then(|endpoint| self.endpoints.get(&endpoint))
+            .and_then(|endpoint| self.reached(&endpoint))
             .ok_or_else(unknown)?;
         let model = Id::new(model).map_err(|_| unknown())?;
         let serving = Id::new(name).map_err(|_| unknown())?;
         Ok((serving, endpoint, model))
     }
 
-    /// The one-entry catalog a direct name expands into, by the same rules as a route.
-    fn direct_catalog(&self, name: &str) -> Result<(Catalog, Id), Error> {
-        let (serving, endpoint, model) = self.direct(name)?;
+    /// The one-entry catalog a direct name to an HTTP endpoint expands into, by the same rules
+    /// as a route.
+    fn direct_catalog(
+        endpoint: &EndpointDeclaration,
+        serving: &Id,
+        model: &Id,
+    ) -> Result<Catalog, Error> {
         let capabilities = default_capabilities();
-        let catalog = expand(
+        expand(
             [endpoint],
             &[Served {
-                id: &serving,
+                id: serving,
                 endpoint,
-                upstream_model: &model,
+                upstream_model: model,
                 capabilities: &capabilities,
             }],
-        )?;
-        Ok((catalog, serving))
+        )
     }
 
-    /// What a name reaches: a route first; else `<declared endpoint>/<model-id>`, split on the
-    /// first `/`. A direct name is itself one identifier of at most 256 bytes, its serving model
-    /// id; a longer model id is reached through a route.
+    /// What a name reaches: a route or an alias first; else `<declared endpoint>/<model-id>`,
+    /// split on the first `/`. A direct name is itself one identifier of at most 256 bytes, its
+    /// serving model id; a longer model id is reached through a route.
     ///
     /// # Errors
     /// `invalid-request` for any other name, a direct name above 256 bytes included, without
     /// echoing it.
     pub fn target(&self, name: &str) -> Result<Target, Error> {
         if let Some(route) = self.route(name) {
-            let endpoint = &self.endpoints[&route.endpoint];
             return Ok(Target {
                 serving_model: route.name.clone(),
-                endpoint: endpoint.name.clone(),
+                endpoint: route.endpoint.clone(),
                 upstream_model: route.upstream_model.clone(),
-                protocol: endpoint.protocol,
+                protocol: route.protocol,
             });
         }
         let (serving_model, endpoint, upstream_model) = self.direct(name)?;
         Ok(Target {
             serving_model,
-            endpoint: endpoint.name.clone(),
+            endpoint: endpoint.name(),
             upstream_model,
-            protocol: endpoint.protocol,
+            protocol: endpoint.protocol(),
         })
     }
 
@@ -852,26 +1585,45 @@ impl Routes {
     /// takes the default capabilities.
     ///
     /// # Errors
-    /// As [`Routes::target`].
+    /// As [`Routes::target`], and `unsupported` for a name that reaches a Bedrock endpoint,
+    /// which has no catalog binding.
     pub fn binding(&self, name: &str) -> Result<Binding, Error> {
         let absent = || Error::invalid("no such serving model in the catalog");
+        let no_binding = || {
+            Error::unsupported(
+                "a Bedrock route has no catalog binding: llm-bedrock's BedrockClient serves it",
+            )
+        };
         if let Some(route) = self.route(name) {
+            if self.bedrock.contains_key(&route.endpoint) {
+                return Err(no_binding());
+            }
             return self
                 .catalog
                 .binding(&route.name)
                 .cloned()
                 .ok_or_else(absent);
         }
-        let (catalog, serving) = self.direct_catalog(name)?;
-        catalog.binding(&serving).cloned().ok_or_else(absent)
+        match self.direct(name)? {
+            (serving, Reached::Http(endpoint), model) => {
+                Self::direct_catalog(endpoint, &serving, &model)?
+                    .binding(&serving)
+                    .cloned()
+                    .ok_or_else(absent)
+            }
+            (_, Reached::Bedrock(_), _) => Err(no_binding()),
+        }
     }
 
-    /// Builds the port a name reaches with [`crate::port`]: a route over the expanded catalog, a
-    /// direct name over the one-entry catalog it expands into, so the rules are identical.
+    /// Builds the port a name reaches: for an HTTP endpoint with [`crate::port`], a route over
+    /// the expanded catalog and a direct name over the one-entry catalog it expands into, so the
+    /// rules are identical; for a Bedrock endpoint, `llm-bedrock`'s `BedrockClient` over the
+    /// route's target, signing with the endpoint's credentials.
     ///
     /// # Errors
     /// As [`Routes::target`], and as [`crate::port`] refuses a credentialed endpoint the caller
-    /// has no resolver for (`unauthorized`).
+    /// has no resolver for (`unauthorized`); an `aws-container` endpoint without a container
+    /// credentials endpoint from the caller is `unauthorized` too. Nothing is sent.
     pub fn port(
         &self,
         name: &str,
@@ -879,10 +1631,103 @@ impl Routes {
         resolvers: &dyn Resolvers,
     ) -> Result<Port, Error> {
         if let Some(route) = self.route(name) {
+            if let Some(endpoint) = self.bedrock.get(&route.endpoint) {
+                let target = endpoint.target(
+                    &route.name,
+                    route.upstream_model.as_str(),
+                    route.capabilities.clone(),
+                )?;
+                return Port::bedrock(target, endpoint.references()?, http, resolvers);
+            }
             return port(&self.catalog, &route.name, http, resolvers);
         }
-        let (catalog, serving) = self.direct_catalog(name)?;
-        port(&catalog, &serving, http, resolvers)
+        match self.direct(name)? {
+            (serving, Reached::Http(endpoint), model) => {
+                let catalog = Self::direct_catalog(endpoint, &serving, &model)?;
+                port(&catalog, &serving, http, resolvers)
+            }
+            (serving, Reached::Bedrock(endpoint), model) => {
+                let target = endpoint.target(
+                    &serving,
+                    model.as_str(),
+                    bedrock_capabilities(endpoint.api()),
+                )?;
+                Port::bedrock(target, endpoint.references()?, http, resolvers)
+            }
+        }
+    }
+
+    /// What one turn on the route a name reaches cost, by the route's `price`: `None` when the
+    /// name is no route or alias, or its route declares no price. The price applies to the
+    /// model the route declares; a count the turn did not report, a rate the price leaves out
+    /// and usage that is not final each leave a line unknown, so the complete total is absent.
+    ///
+    /// # Errors
+    /// `invalid-request` for usage whose counters contradict each other.
+    pub fn cost(
+        &self,
+        name: &str,
+        observation: &TurnObservation,
+    ) -> Result<Option<RouteCost>, Error> {
+        let Some(route) = self.route(name) else {
+            return Ok(None);
+        };
+        let Some(price) = &route.price else {
+            return Ok(None);
+        };
+        let id = |value: &str| Id::new(value).map_err(|_| Error::invalid("invalid cost id"));
+        let rate = |amount: Option<Amount>| {
+            amount.map(|amount| Rate {
+                amount,
+                per_units: PER_MILLION,
+            })
+        };
+        let refused = |_| Error::invalid("the route's price or the turn's usage is not valid");
+        let book = PriceBook::from_document(PriceDocument::new(
+            id("route-price")?,
+            "llm.routes/1 route price",
+            0,
+            price.currency.clone(),
+            vec![ModelPrice {
+                id: route.name.clone(),
+                serving_model_id: route.name.clone(),
+                binding_revision: observation.binding.binding_revision.clone(),
+                upstream_model: route.upstream_model.clone(),
+                input: rate(price.input),
+                cached_input: rate(price.cached_input),
+                cache_creation_input: rate(price.cache_creation_input),
+                output: rate(price.output),
+            }],
+        ))
+        .map_err(refused)?;
+        let attempt = AttemptUsage {
+            id: id("turn")?,
+            usage_record_id: id("turn")?,
+            request_id: id("turn")?,
+            route_target_id: route.name.clone(),
+            serving_model_id: route.name.clone(),
+            price_id: route.name.clone(),
+            binding: observation.binding.clone(),
+            upstream_model: Some(route.upstream_model.clone()),
+            billing: BillingKind::Metered,
+            dispatch: Dispatch::Accepted,
+            failed: false,
+            final_usage: observation.final_usage,
+            usage: observation.usage.clone().unwrap_or_default(),
+        };
+        let report = book
+            .quote(&AccountingInput::new(vec![Observation::Attempt(attempt)]))
+            .map_err(refused)?;
+        let total = report
+            .records
+            .into_iter()
+            .next()
+            .map(|record| record.total)
+            .ok_or_else(|| Error::invalid("the cost report holds no record"))?;
+        Ok(Some(RouteCost {
+            currency: price.currency.clone(),
+            total,
+        }))
     }
 
     /// The caller's resolvers for every credentialed endpoint, keyed by the endpoint's name.
@@ -891,7 +1736,10 @@ impl Routes {
     /// # Errors
     /// `invalid-request` naming the endpoint for a source kind whose feature (`environment`,
     /// `file`, `keychain`) this build does not enable, a `file:~/` reference without a home, a
-    /// `keychain:` reference without an injected store, and a path the file source refuses.
+    /// `keychain:` reference without an injected store, and a path the file source refuses. An
+    /// `aws-container` endpoint gets no resolver when the caller supplied no container token
+    /// file, so [`Routes::port`] refuses its routes as `unauthorized` and every other route
+    /// still builds.
     pub fn resolvers(&self, sources: &SecretSources) -> Result<RouteResolvers, Error> {
         let mut resolvers = BTreeMap::new();
         for endpoint in self.endpoints.values() {
@@ -899,21 +1747,119 @@ impl Routes {
                 continue;
             };
             let reference = endpoint.reference()?;
-            let resolver = match secret {
-                SecretSource::Environment(variable) => {
-                    environment(&endpoint.name, &reference, variable)?
+            resolvers.insert(
+                endpoint.name.clone(),
+                resolver(&endpoint.name, &reference, secret, sources)?,
+            );
+        }
+        for endpoint in self.bedrock.values() {
+            let resolver = match (&endpoint.credentials, endpoint.references()?) {
+                (
+                    AwsCredentials::Keys {
+                        access_key_id,
+                        secret_access_key,
+                        session_token,
+                    },
+                    AwsReferences::Keys {
+                        access_key_id: access_reference,
+                        secret_access_key: secret_reference,
+                        session_token: session_reference,
+                        ..
+                    },
+                ) => {
+                    let mut by_reference = BTreeMap::new();
+                    for (reference, source) in [
+                        (Some(access_reference), Some(access_key_id)),
+                        (Some(secret_reference), Some(secret_access_key)),
+                        (session_reference, session_token.as_ref()),
+                    ] {
+                        if let (Some(reference), Some(source)) = (reference, source) {
+                            let built = resolver(&endpoint.name, &reference, source, sources)?;
+                            by_reference.insert(reference, built);
+                        }
+                    }
+                    Arc::new(ByReference(by_reference)) as Arc<dyn SecretResolver>
                 }
-                SecretSource::File(path) => {
-                    file(&endpoint.name, &reference, path, sources.home.as_deref())?
+                (AwsCredentials::Container, AwsReferences::Container { token, .. }) => {
+                    let Some(token_file) = sources.container_token_file.as_ref() else {
+                        continue;
+                    };
+                    file(
+                        &endpoint.name,
+                        &token,
+                        &FilePath::Absolute(token_file.clone()),
+                        None,
+                    )?
                 }
-                SecretSource::Keychain { service, entry } => {
-                    keychain(&endpoint.name, &reference, service, entry, sources)?
+                _ => {
+                    return Err(about(
+                        "endpoint",
+                        &endpoint.name,
+                        "its credentials and references disagree",
+                    ));
                 }
             };
             resolvers.insert(endpoint.name.clone(), resolver);
         }
-        Ok(RouteResolvers { resolvers })
+        Ok(RouteResolvers {
+            resolvers,
+            container_uri: sources.container_uri.clone(),
+        })
     }
+}
+
+/// The resolver one secret reference builds, by its source kind.
+fn resolver(
+    endpoint: &Id,
+    reference: &SecretRef,
+    secret: &SecretSource,
+    sources: &SecretSources,
+) -> Result<Arc<dyn SecretResolver>, Error> {
+    match secret {
+        SecretSource::Environment(variable) => environment(endpoint, reference, variable),
+        SecretSource::File(path) => file(endpoint, reference, path, sources.home.as_deref()),
+        SecretSource::Keychain { service, entry } => {
+            keychain(endpoint, reference, service, entry, sources)
+        }
+    }
+}
+
+/// One resolver per reference: an aws-keys endpoint's key fields may each name another source.
+struct ByReference(BTreeMap<SecretRef, Arc<dyn SecretResolver>>);
+
+impl SecretResolver for ByReference {
+    fn resolve<'a>(
+        &'a self,
+        reference: &'a SecretRef,
+    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
+        match self.0.get(reference) {
+            Some(resolver) => resolver.resolve(reference),
+            None => Box::pin(async { Err(SecretError::Missing) }),
+        }
+    }
+}
+
+/// The canonical JSON of the validated document, hashed for [`Routes::digest`].
+fn digest(
+    endpoints: &BTreeMap<Id, EndpointDeclaration>,
+    bedrock: &BTreeMap<Id, BedrockEndpointDeclaration>,
+    routes: &BTreeMap<Id, RouteDeclaration>,
+) -> String {
+    let endpoints: serde_json::Map<String, Value> = endpoints
+        .values()
+        .map(|endpoint| (endpoint.name.to_string(), endpoint.canonical()))
+        .chain(
+            bedrock
+                .values()
+                .map(|endpoint| (endpoint.name.to_string(), endpoint.canonical())),
+        )
+        .collect();
+    let routes: serde_json::Map<String, Value> = routes
+        .values()
+        .map(|route| (route.name.to_string(), route.canonical()))
+        .collect();
+    let document = json!({"format": FORMAT, "endpoints": endpoints, "routes": routes});
+    sha256_hex(document.to_string().as_bytes())
 }
 
 #[cfg(any(
@@ -1047,14 +1993,32 @@ fn keychain(
 #[derive(Clone, Default)]
 pub struct SecretSources {
     home: Option<PathBuf>,
+    container_uri: Option<String>,
+    container_token_file: Option<PathBuf>,
     #[cfg(feature = "keychain")]
     keychain: Option<Arc<keyring_core::CredentialStore>>,
 }
 
 impl SecretSources {
-    /// No home and no keychain store.
+    /// No home, no container credentials endpoint and no keychain store.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// The container credentials endpoint and the absolute path of its authorization token file
+    /// that an `aws-container` Bedrock endpoint uses: on EKS Pod Identity, the values of
+    /// `AWS_CONTAINER_CREDENTIALS_FULL_URI` and `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`. Nothing
+    /// is read here; the token file is read, and the endpoint asked, at turn time. Needs feature
+    /// `file`.
+    #[must_use]
+    pub fn with_container_credentials(
+        mut self,
+        uri: impl Into<String>,
+        token_file: impl Into<PathBuf>,
+    ) -> Self {
+        self.container_uri = Some(uri.into());
+        self.container_token_file = Some(token_file.into());
+        self
     }
 
     /// The directory a `file:~/` reference expands against.
@@ -1077,6 +2041,8 @@ impl fmt::Debug for SecretSources {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut debug = f.debug_struct("SecretSources");
         debug.field("home", &self.home.is_some());
+        debug.field("container_uri", &self.container_uri.is_some());
+        debug.field("container_token_file", &self.container_token_file.is_some());
         #[cfg(feature = "keychain")]
         debug.field("keychain", &self.keychain.is_some());
         debug.finish()
@@ -1087,6 +2053,7 @@ impl fmt::Debug for SecretSources {
 /// the endpoint's name (its account id).
 pub struct RouteResolvers {
     resolvers: BTreeMap<Id, Arc<dyn SecretResolver>>,
+    container_uri: Option<String>,
 }
 
 impl RouteResolvers {
@@ -1100,6 +2067,7 @@ impl fmt::Debug for RouteResolvers {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("RouteResolvers")
             .field("accounts", &self.resolvers.keys().collect::<Vec<_>>())
+            .field("container_uri", &self.container_uri.is_some())
             .finish()
     }
 }
@@ -1107,5 +2075,9 @@ impl fmt::Debug for RouteResolvers {
 impl Resolvers for RouteResolvers {
     fn resolver(&self, account_id: &Id) -> Option<Arc<dyn SecretResolver>> {
         self.resolvers.get(account_id).cloned()
+    }
+
+    fn container_credentials_uri(&self) -> Option<&str> {
+        self.container_uri.as_deref()
     }
 }

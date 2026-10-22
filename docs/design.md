@@ -285,6 +285,14 @@ API/subscription each have their own compatibility evidence; subscription access
 fall back to billable API credentials. The future Connectors arbitrary-secret adapter must not
 require changing route references. Core never depends on Connectors.
 
+The `llm.routes/1` document is the short form, in YAML or TOML with one digest for both. A Bedrock
+endpoint (`bedrock.region`, `aws-keys` or `aws-container`) has no binding: it stays outside the
+expanded catalog, and `Routes::port` builds `llm-bedrock`'s client for its routes. Route aliases
+are unique names for one route; a route's `price` applies to the model it declares, and a turn's
+cost stays unknown wherever a count or rate is. The `llm` command (`llm-cli`) reads one such file
+and is a caller like any other: it injects the environment and file sources and the container
+credentials endpoint from its own environment, and nothing else.
+
 ## Routing and accounting
 
 Fallback is opt-in and ordered. Only defined failures before output becomes visible are eligible;

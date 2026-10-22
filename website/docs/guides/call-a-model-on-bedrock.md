@@ -20,8 +20,11 @@ verified.
 
 :::
 
-A catalog, a binding document and an `llm.routes/1` document cannot name Bedrock yet: each refuses
-`bedrock-converse` by name. You build the client yourself.
+An `llm.routes/1` document names a Bedrock endpoint with a `bedrock` table, and
+`Routes::port` builds this client for its routes: see
+[Configure model routes](configure-model-routes.md#bedrock-endpoints), or run one from the
+[llm command](use-the-llm-command.md). A catalog and a binding document still refuse
+`bedrock-converse` by name. This page builds the client by hand.
 
 ## The target
 

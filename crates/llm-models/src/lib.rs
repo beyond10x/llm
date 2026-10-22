@@ -7,15 +7,22 @@
 //! anonymous account needs no resolver. A credentialed account without one is refused as
 //! `unauthorized` before any I/O. Construction sends nothing and resolves no secret: resolution
 //! stays at turn time, inside the client.
+//!
+//! A routes document's `bedrock` endpoint has no binding: [`routes::Routes::port`] builds
+//! `llm-bedrock`'s `BedrockClient` for its routes, signing with the endpoint's AWS keys or with
+//! the container credentials endpoint the caller supplies.
 
 pub mod routes;
 
+use llm_bedrock::{
+    BedrockClient, BedrockTarget, ContainerCredentials, CredentialSource, StaticCredentials,
+};
 use llm_chat::ChatClient;
 use llm_core::{
     AuthKind, BoxFuture, Cancel, Capabilities, Error, ErrorCode, Id, Model, Protocol, Provenance,
     StreamSink, TurnOutcome, TurnRequest,
 };
-use llm_credentials::{AnonymousResolver, SecretResolver};
+use llm_credentials::{AnonymousResolver, SecretRef, SecretResolver};
 use llm_http::HttpClient;
 use llm_messages::MessagesClient;
 use llm_providers::Binding;
@@ -29,6 +36,13 @@ use std::{collections::BTreeMap, sync::Arc};
 pub trait Resolvers {
     /// The resolver for this account, or `None` when the caller has none for it.
     fn resolver(&self, account_id: &Id) -> Option<Arc<dyn SecretResolver>>;
+
+    /// The container credentials endpoint (`AWS_CONTAINER_CREDENTIALS_FULL_URI`) an
+    /// `aws-container` Bedrock endpoint fetches its credentials from, when the caller supplies
+    /// one. None by default.
+    fn container_credentials_uri(&self) -> Option<&str> {
+        None
+    }
 }
 
 impl Resolvers for BTreeMap<Id, Arc<dyn SecretResolver>> {
@@ -50,6 +64,28 @@ enum Client {
     Chat(ChatClient),
     Responses(ResponsesClient),
     Messages(MessagesClient),
+    Bedrock(BedrockClient),
+}
+
+/// The secret references a Bedrock endpoint's credentials resolve through, under its account.
+pub(crate) enum AwsReferences {
+    Keys {
+        account: Id,
+        access_key_id: SecretRef,
+        secret_access_key: SecretRef,
+        session_token: Option<SecretRef>,
+    },
+    Container {
+        account: Id,
+        token: SecretRef,
+    },
+}
+
+fn unresolved(account: &Id) -> Error {
+    Error::new(
+        ErrorCode::Unauthorized,
+        format!("no credential resolver is supplied for account `{account}`"),
+    )
 }
 
 /// The single-attempt port one serving model declares: one client over its binding's protocol.
@@ -61,11 +97,62 @@ pub struct Port {
 impl Port {
     /// The protocol whose client this port is.
     pub fn protocol(&self) -> Protocol {
-        match self.client {
+        match &self.client {
             Client::Chat(_) => Protocol::ChatCompletions,
             Client::Responses(_) => Protocol::Responses,
             Client::Messages(_) => Protocol::Messages,
+            Client::Bedrock(client) => client.provenance().protocol,
         }
+    }
+
+    /// The port of one Bedrock Runtime target, signing with credentials from the caller's
+    /// resolver for its account: the keys themselves (`aws-keys`), or the container endpoint's
+    /// token (`aws-container`), whose URI the caller supplies too.
+    pub(crate) fn bedrock(
+        target: BedrockTarget,
+        references: AwsReferences,
+        http: HttpClient,
+        resolvers: &dyn Resolvers,
+    ) -> Result<Self, Error> {
+        let (resolver, credentials): (_, Arc<dyn CredentialSource>) = match references {
+            AwsReferences::Keys {
+                account,
+                access_key_id,
+                secret_access_key,
+                session_token,
+            } => {
+                let resolver = resolvers
+                    .resolver(&account)
+                    .ok_or_else(|| unresolved(&account))?;
+                let credentials = StaticCredentials::new(
+                    resolver.clone(),
+                    access_key_id,
+                    secret_access_key,
+                    session_token,
+                );
+                (resolver, Arc::new(credentials))
+            }
+            AwsReferences::Container { account, token } => {
+                let resolver = resolvers
+                    .resolver(&account)
+                    .ok_or_else(|| unresolved(&account))?;
+                let uri = resolvers.container_credentials_uri().ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::Unauthorized,
+                        format!(
+                            "no container credentials endpoint is supplied for account `{account}`"
+                        ),
+                    )
+                })?;
+                let credentials =
+                    ContainerCredentials::new(http.clone(), uri, resolver.clone(), token)?;
+                (resolver, Arc::new(credentials))
+            }
+        };
+        Ok(Self {
+            client: Client::Bedrock(BedrockClient::new(target, http, credentials)?),
+            resolver: Some(resolver),
+        })
     }
 
     /// The caller's resolver this port presents credentials from; `None` for an anonymous
@@ -79,6 +166,7 @@ impl Port {
             Client::Chat(client) => client,
             Client::Responses(client) => client,
             Client::Messages(client) => client,
+            Client::Bedrock(client) => client,
         }
     }
 
@@ -90,17 +178,11 @@ impl Port {
         let account = &binding.declaration().account;
         let resolver = match account.auth_kind {
             AuthKind::Anonymous => None,
-            AuthKind::Bearer | AuthKind::ApiKey | AuthKind::SubscriptionOauth => {
-                Some(resolvers.resolver(&account.id).ok_or_else(|| {
-                    Error::new(
-                        ErrorCode::Unauthorized,
-                        format!(
-                            "no credential resolver is supplied for account `{}`",
-                            account.id
-                        ),
-                    )
-                })?)
-            }
+            AuthKind::Bearer | AuthKind::ApiKey | AuthKind::SubscriptionOauth => Some(
+                resolvers
+                    .resolver(&account.id)
+                    .ok_or_else(|| unresolved(&account.id))?,
+            ),
         };
         let attached = resolver
             .clone()

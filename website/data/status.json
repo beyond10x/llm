@@ -274,6 +274,12 @@
     },
     {
       "area": "Providers and routing",
+      "detail": "llm-cli: llm model list prints the routes an llm.toml (or YAML) routes file declares, with aliases, host and price, reading no secret; llm infer streams one turn on a route, alias or <endpoint>/<model-id> and closes with its usage and cost on stderr, unknown counters printed unknown. llm.routes/1 gains TOML, aliases, per-route prices and Bedrock endpoints (aws-keys or aws-container), whose routes Routes::port serves with BedrockClient. Fixture evidence only; a Kubernetes projected token file is refused by the file source's mode and symbolic-link rules.",
+      "label": "The llm command",
+      "status": "shipped"
+    },
+    {
+      "area": "Providers and routing",
       "detail": "llm-models: port builds the Chat Completions, Responses or Messages client a catalog binding's protocol names, with the caller's resolver for its account, and refuses a credentialed account without one as unauthorized before any I/O; CatalogModels builds every serving model's port and is the Models ordered fallback takes.",
       "label": "One function builds the port a serving model declares",
       "status": "shipped"
