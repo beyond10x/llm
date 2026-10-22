@@ -2,11 +2,15 @@
 format: aep.planning-md/3
 id: story:llm-command
 kind: story
-status: draft
+status: implemented
 title: The llm command lists the configured models and runs one turn on any of them
 relations:
 - serves: vision:portable-model-inference
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-22T23:13:37Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
+- {from: "proposed", to: "active", at: "2026-10-22T23:13:37Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
+- {from: "active", to: "implemented", at: "2026-10-22T23:13:37Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
 ---
 ## Context
 
