@@ -1,8 +1,8 @@
 use crate::{absent, fields, optional, string};
 use llm_core::{
-    Advisory, AuthKind, CacheTtl, CallId, Error, Item, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES,
-    PromptCache, Protocol, Provenance, Sampling, Thinking, ToolCall, ToolChoice, ToolName,
-    ToolSpec, TurnRequest, Unforwarded, exceeds, wire_effort,
+    Advisory, AuthKind, CacheTtl, CallId, Capabilities, Error, Item, MAX_REQUEST_BYTES,
+    MAX_TOOL_ARGUMENT_BYTES, PromptCache, Protocol, Provenance, Sampling, Thinking, ToolCall,
+    ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded, exceeds, wire_effort,
 };
 use llm_providers::Binding;
 use serde_json::{Value, json};
@@ -112,8 +112,49 @@ fn user(item: &Item) -> bool {
 /// # Errors
 /// Refuses incompatible bindings, unsupported wire semantics and request bounds before I/O.
 pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8>, Error> {
-    request.validate_for(binding.provenance(), binding.capabilities())?;
-    if binding.provenance().protocol != Protocol::Messages {
+    let body = project(
+        request,
+        binding.provenance(),
+        binding.capabilities(),
+        binding.upstream_model(),
+        binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth,
+    )?;
+    serde_json::to_vec(&body).map_err(|_| Error::invalid("Messages request encoding failed"))
+}
+
+/// Project a request for a target that is not described by a [`Binding`]: the Messages body
+/// [`encode_request`] sends, as a JSON object, for a caller that frames, authenticates and
+/// sends it itself (Amazon Bedrock's `InvokeModel` carries this body under its own envelope).
+///
+/// `provenance` and `capabilities` are what the request is validated against, exactly as a
+/// binding's are; `upstream_model` is written as `model`. The body carries `"stream": true` and
+/// `model` as it does for a binding: a caller whose envelope names neither removes them. No
+/// subscription-token preamble is written, since that belongs to a `subscription-oauth`
+/// binding alone.
+///
+/// # Errors
+/// Refuses a provenance whose protocol is not Messages, unsupported wire semantics and request
+/// bounds, as [`encode_request`] does.
+pub fn encode_body(
+    request: &TurnRequest,
+    provenance: &Provenance,
+    capabilities: &Capabilities,
+    upstream_model: &str,
+) -> Result<Value, Error> {
+    project(request, provenance, capabilities, upstream_model, false)
+}
+
+/// The one Messages encoder behind [`encode_request`] and [`encode_body`]. `subscription` opens
+/// `system` with the client preamble a `subscription-oauth` account must send.
+fn project(
+    request: &TurnRequest,
+    provenance: &Provenance,
+    capabilities: &Capabilities,
+    upstream_model: &str,
+    subscription: bool,
+) -> Result<Value, Error> {
+    request.validate_for(provenance, capabilities)?;
+    if provenance.protocol != Protocol::Messages {
         return Err(Error::unsupported("Messages requires a Messages binding"));
     }
     if request.items.first().is_none_or(|item| !user(item)) {
@@ -145,7 +186,7 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
         tools.push(json!({"name":tool.name,"description":tool.description,"input_schema":tool.input_schema}));
     }
     mark_rolling_breakpoint(&mut messages, ephemeral(request));
-    let mut body = json!({"model":binding.upstream_model(),"max_tokens":request.max_output_tokens.unwrap_or(binding.capabilities().max_output_tokens),"messages":messages,"stream":true});
+    let mut body = json!({"model":upstream_model,"max_tokens":request.max_output_tokens.unwrap_or(capabilities.max_output_tokens),"messages":messages,"stream":true});
     // A block list rather than a string, so it can carry the breakpoint that caches the constant
     // head (tools, then system) of every turn. An empty instruction sends nothing to mark; the
     // rolling breakpoint below already covers the tools.
@@ -155,7 +196,7 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
     // The preamble stays unmarked so the instruction, the last block, keeps the breakpoint that
     // covers the whole constant head.
     let mut system = Vec::with_capacity(2);
-    if binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth {
+    if subscription {
         system.push(json!({"type":"text","text":SUBSCRIPTION_CLIENT_PREAMBLE}));
     }
     if !request.instructions.is_empty() {
@@ -203,7 +244,7 @@ pub fn encode_request(request: &TurnRequest, binding: &Binding) -> Result<Vec<u8
     if exceeds(&body, MAX_REQUEST_BYTES) {
         return Err(Error::too_large("Messages encoded request exceeds bound"));
     }
-    serde_json::to_vec(&body).map_err(|_| Error::invalid("Messages request encoding failed"))
+    Ok(body)
 }
 
 /// Decode only the declared neutral subset. The wire's model remains the caller's routing name.

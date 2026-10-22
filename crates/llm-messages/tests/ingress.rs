@@ -406,7 +406,7 @@ async fn fail_produces_an_error_event_the_decoder_reads_as_its_code() {
         assert_eq!(shown, [text("partial")]);
 
         // Nothing follows the error.
-        assert!(stream.chunk(&text("late")).is_empty());
+        assert_eq!(stream.chunk(&text("late")), [] as [Value; 0]);
         assert!(
             stream
                 .close(&outcome(StopReason::EndTurn, text_items()))
