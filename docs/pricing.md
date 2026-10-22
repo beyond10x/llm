@@ -16,7 +16,7 @@ Source descriptions accept nonblank Unicode text up to 2048 bytes, without contr
 The derived report is serializable; durable budget storage and report ingestion belong to the
 later spending-ledger contract. Observations and exact price input can be retained and repriced.
 
-Run `cargo run --locked -p b10x-llm-cost --example quote`. It uses
+Run `cargo run --locked -p llm-cost --example quote`. It uses
 [fictional prices](../examples/prices.toml) and [fixture observations](../examples/usage.json),
 prints an estimate of `0.00022 USD`, and makes no provider call. These price bindings are standalone
 fixtures, not a qualified price book for the separate catalog example.

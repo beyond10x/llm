@@ -51,7 +51,7 @@ names, pass the same values to the example.
 From a checkout of `beyond10x/llm`:
 
 ```console
-cargo run --locked -p b10x-llm-credentials --features secrets,native-keychain --example live_subscription_turn > live-subscription-report.json
+cargo run --locked -p llm-credentials --features secrets,native-keychain --example live_subscription_turn > live-subscription-report.json
 ```
 
 The example resolves the token through the secrets library's keychain backend, sends one turn to
@@ -96,7 +96,7 @@ request is sent.
 ## 5. Rotate and check
 
 ```console
-cargo run --locked -p b10x-llm-credentials --features secrets,native-keychain --example live_subscription_turn -- --rotate-check > live-subscription-rotation.json
+cargo run --locked -p llm-credentials --features secrets,native-keychain --example live_subscription_turn -- --rotate-check > live-subscription-rotation.json
 ```
 
 After the first turn the example asks, on stderr, for the token to be replaced. In another

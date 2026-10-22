@@ -921,7 +921,7 @@ fn compiled_out(endpoint: &Id, source: &str, feature: &str) -> Error {
         "endpoint",
         endpoint,
         &format!(
-            "`{source}` secrets need feature `{feature}` of b10x-llm-models, which this build does not enable"
+            "`{source}` secrets need feature `{feature}` of llm-models, which this build does not enable"
         ),
     )
 }

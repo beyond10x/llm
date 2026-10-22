@@ -1,5 +1,5 @@
 [package]
-name = "b10x-llm-blocking"
+name = "llm-blocking"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -22,6 +22,6 @@ tokio = { workspace = true, features = ["rt-multi-thread"] }
 llm-credentials.workspace = true
 llm-http.workspace = true
 llm-providers.workspace = true
-llm-messages = { package = "b10x-llm-messages", path = "../llm-messages" }
-llm-responses = { package = "b10x-llm-responses", path = "../llm-responses" }
+llm-messages = { path = "../llm-messages" }
+llm-responses = { path = "../llm-responses" }
 serde_json.workspace = true

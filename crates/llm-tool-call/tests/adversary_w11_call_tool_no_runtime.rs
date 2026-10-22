@@ -5,7 +5,7 @@
 //! refuses the turn before the Codex login is read, and `call_tool` hands the refusal on as
 //! `ModelError::Model`. Local sockets only; the login path names no file.
 
-use b10x_llm_tool_call::{ModelError, call_tool, codex_model_at};
+use llm_tool_call::{ModelError, call_tool, codex_model_at};
 use llm_core::{Dispatch, ErrorCode, Item, ToolName, ToolSpec};
 use serde_json::json;
 use std::{
@@ -21,7 +21,7 @@ use std::{
     thread::{self, Thread},
 };
 
-const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single model";
+const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use llm-blocking for a single model";
 
 struct Unpark(Thread);
 

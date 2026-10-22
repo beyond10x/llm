@@ -15,9 +15,9 @@ and a gateway cannot disagree about the subset.
 
 | Crate | Protocol | Request path | Client | Ingress decoder | Ingress encoder |
 | --- | --- | --- | --- | --- | --- |
-| `b10x-llm-responses` | Responses | `{base}responses` | `ResponsesClient` | `ingest_request` | `IngressStream`, `encode_ingress_response` |
-| `b10x-llm-messages` | Messages | `{base}messages` | `MessagesClient` | `decode_request` | `IngressStream`, `encode_ingress_message` |
-| `b10x-llm-chat` | Chat Completions | `{base}chat/completions` | `ChatClient` | `decode_ingress_request` | `IngressStream`, `encode_ingress_completion` |
+| `llm-responses` | Responses | `{base}responses` | `ResponsesClient` | `ingest_request` | `IngressStream`, `encode_ingress_response` |
+| `llm-messages` | Messages | `{base}messages` | `MessagesClient` | `decode_request` | `IngressStream`, `encode_ingress_message` |
+| `llm-chat` | Chat Completions | `{base}chat/completions` | `ChatClient` | `decode_ingress_request` | `IngressStream`, `encode_ingress_completion` |
 
 Every client implements `Model`. It checks the request against its binding, resolves the credential
 for the attempt, sends one request through the bounded transport, and hands each decoded event to
@@ -78,7 +78,7 @@ mints it.
 
 ### The Codex backend
 
-`b10x-llm-tool-call`'s `codex_model` binds a `ResponsesClient` to the Codex backend
+`llm-tool-call`'s `codex_model` binds a `ResponsesClient` to the Codex backend
 (`https://chatgpt.com/backend-api/codex`) with the operator's Codex login as the credential; see
 [credentials](credentials.md#a-codex-login). Two of its habits are handled: a successful answer
 with no `content-type` is read as an event stream when the request asked for one (a success naming

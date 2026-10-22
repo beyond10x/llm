@@ -58,7 +58,7 @@ checked against fixtures, but not qualified: no live turn has been recorded.
 
 ## Optional adapters
 
-The default feature set has no adapter at all. Each source is a feature of `b10x-llm-credentials`:
+The default feature set has no adapter at all. Each source is a feature of `llm-credentials`:
 
 | Feature | Resolver | Reads |
 | --- | --- | --- |
@@ -89,7 +89,7 @@ without the backend's own text.
 
 `CodexAuthFile` reads `/tokens/access_token` from a Codex `auth.json` on every request and judges
 its JWT `exp` claim against the caller's clock. There is no default location: the caller passes an
-absolute path, and a relative one is refused before anything is opened. `b10x-llm-tool-call`'s
+absolute path, and a relative one is refused before anything is opened. `llm-tool-call`'s
 `codex_auth_path` expands the usual one (`$CODEX_HOME/auth.json`, else `~/.codex/auth.json`) for a
 caller that wants it.
 

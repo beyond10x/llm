@@ -214,7 +214,7 @@
     },
     {
       "area": "Providers and routing",
-      "detail": "b10x-llm-providers: ProviderDescription parses llm.provider-description/1, an inference URL template filled only by a 1-48 byte [a-z0-9] instance, its wires and authentication, and a pinned control plane (OpenAPI URL and SHA-256, HTTPS server, four operation IDs), with no I/O. Runpod's ships as descriptions::runpod(). Fixture evidence only; no live Runpod pod or control-plane call qualifies it.",
+      "detail": "llm-providers: ProviderDescription parses llm.provider-description/1, an inference URL template filled only by a 1-48 byte [a-z0-9] instance, its wires and authentication, and a pinned control plane (OpenAPI URL and SHA-256, HTTPS server, four operation IDs), with no I/O. Runpod's ships as descriptions::runpod(). Fixture evidence only; no live Runpod pod or control-plane call qualifies it.",
       "label": "One provider description per provider",
       "status": "shipped"
     },
@@ -238,13 +238,13 @@
     },
     {
       "area": "Providers and routing",
-      "detail": "b10x-llm-models: llm_models::routes::Routes reads llm.routes/1 (YAML endpoints with base URL, protocol and a secret reference; routes as <endpoint>/<model-id>, or direct names), expands it into an llm.catalog/1 catalog and builds RouteResolvers from env:, file: and keychain: references (features environment, file, keychain), refusing an unset variable or a missing file by the endpoint's reference before any request. Fixture evidence only.",
+      "detail": "llm-models: llm_models::routes::Routes reads llm.routes/1 (YAML endpoints with base URL, protocol and a secret reference; routes as <endpoint>/<model-id>, or direct names), expands it into an llm.catalog/1 catalog and builds RouteResolvers from env:, file: and keychain: references (features environment, file, keychain), refusing an unset variable or a missing file by the endpoint's reference before any request. Fixture evidence only.",
       "label": "One routes document for every consumer",
       "status": "shipped"
     },
     {
       "area": "Providers and routing",
-      "detail": "b10x-llm-models: port builds the Chat Completions, Responses or Messages client a catalog binding's protocol names, with the caller's resolver for its account, and refuses a credentialed account without one as unauthorized before any I/O; CatalogModels builds every serving model's port and is the Models ordered fallback takes.",
+      "detail": "llm-models: port builds the Chat Completions, Responses or Messages client a catalog binding's protocol names, with the caller's resolver for its account, and refuses a credentialed account without one as unauthorized before any I/O; CatalogModels builds every serving model's port and is the Models ordered fallback takes.",
       "label": "One function builds the port a serving model declares",
       "status": "shipped"
     },
@@ -262,13 +262,13 @@
     },
     {
       "area": "Helpers for agent loops",
-      "detail": "b10x-llm-tool-call: call_tool forces one named tool on any Model and returns that call's JSON arguments or a typed ModelError; codex_model binds a Responses model to the operator's Codex login.",
+      "detail": "llm-tool-call: call_tool forces one named tool on any Model and returns that call's JSON arguments or a typed ModelError; codex_model binds a Responses model to the operator's Codex login.",
       "label": "One forced tool call",
       "status": "shipped"
     },
     {
       "area": "Helpers for agent loops",
-      "detail": "b10x-llm-blocking: BlockingModel runs one turn on the calling thread, hands events to a BlockingSink as they arrive, takes cancellation from any thread, and forks for concurrent turns.",
+      "detail": "llm-blocking: BlockingModel runs one turn on the calling thread, hands events to a BlockingSink as they arrive, takes cancellation from any thread, and forks for concurrent turns.",
       "label": "A blocking adapter for a synchronous loop",
       "status": "shipped"
     },

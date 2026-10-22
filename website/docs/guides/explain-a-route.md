@@ -9,7 +9,7 @@ source: crates/llm-routing/examples/explain.rs, examples/catalog.toml
 # Explain a route
 
 ```bash
-cargo run --locked -p b10x-llm-routing --example explain
+cargo run --locked -p llm-routing --example explain
 ```
 
 The example reads

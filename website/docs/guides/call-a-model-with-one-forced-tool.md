@@ -8,7 +8,7 @@ source: crates/llm-tool-call (lib.rs, tests/forced_tool_call.rs), crates/llm-doc
 
 # Call a model with one forced tool
 
-`b10x-llm-tool-call` asks a model for exactly one call to a tool you name, and returns that call's
+`llm-tool-call` asks a model for exactly one call to a tool you name, and returns that call's
 arguments as JSON. It is the shape an agent uses to classify, route or extract: the model fills in
 a schema, and the caller decides what to do with the result. llm never runs the tool.
 
@@ -33,8 +33,8 @@ The model here is recorded in-process, so the run sends nothing and reads no cre
 //!
 //! Run with `cargo run --locked -p llm-docs --example forced_tool_call`. The model here is
 //! recorded in-process, so nothing is sent and no credential is read; swap in
-//! `b10x_llm_tool_call::codex_model("<model>")?` to ask a real model through a Codex login.
-use b10x_llm_tool_call::{ModelError, call_tool};
+//! `llm_tool_call::codex_model("<model>")?` to ask a real model through a Codex login.
+use llm_tool_call::{ModelError, call_tool};
 use llm_core::{
     BoxFuture, CallId, Cancel, Capabilities, Error, Id, Item, Model, Protocol, Provenance,
     StopReason, StreamSink, ToolCall, ToolName, ToolSpec, TurnObservation, TurnOutcome,
@@ -142,7 +142,7 @@ output limit, because the Codex backend may refuse one.
 Replace the recorded model with the Codex preset:
 
 ```rust
-let model = b10x_llm_tool_call::codex_model("<model>")?;
+let model = llm_tool_call::codex_model("<model>")?;
 ```
 
 `codex_model` binds a `ResponsesClient` to the Codex backend and authenticates it with the access

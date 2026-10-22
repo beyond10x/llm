@@ -1,5 +1,5 @@
 [package]
-name = "b10x-llm-tool-call"
+name = "llm-tool-call"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,13 +12,13 @@ description = "One forced tool call on any model, returning the tool's JSON inpu
 workspace = true
 
 [lib]
-name = "b10x_llm_tool_call"
+name = "llm_tool_call"
 
 [dependencies]
 llm-core.workspace = true
 llm-credentials = { workspace = true, features = ["codex-auth-file"] }
 llm-http.workspace = true
 llm-providers.workspace = true
-llm-responses = { package = "b10x-llm-responses", path = "../llm-responses" }
+llm-responses = { path = "../llm-responses" }
 serde_json.workspace = true
 tokio.workspace = true

@@ -21,8 +21,8 @@ decoder reads); per-protocol detail is in `docs/responses.md`, `docs/messages.md
 
 It does not own:
 
-- **Serving.** The gateway, hosting and provisioning crates (`b10x-llm-gateway`,
-  `b10x-llm-provision`, `b10x-llm-runpod`, `b10x-llm-modal`) and the `llm.gateway`, `llm.hosting`
+- **Serving.** The gateway, hosting and provisioning crates (`llm-gateway`,
+  `llm-provision`, `llm-runpod`, `llm-modal`) and the `llm.gateway`, `llm.hosting`
   and `llm.runpod` ESS domains live in [beyond10x/llm-gateway](https://github.com/beyond10x/llm-gateway)
   since 0.2.0. Change them there; their archived stories stay in this store as history. This
   repository's site, README.md and status record describe none of it: they link that repository.
@@ -41,8 +41,8 @@ story that says so.
 
 | Invariant | Held by |
 | --- | --- |
-| No workspace crate depends on a consumer; `b10x-llm-core` has no transport dependency; `b10x-llm-routing` depends on no protocol crate | `crates/llm-core/tests/dependency_boundary.rs::inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transport` |
-| The `secrets` library is reached only through `b10x-llm-credentials` feature `secrets`: optional, off by default, tag `v0.5.0` at the commit the lockfile records, forwarded by no core crate | `crates/llm-credentials/tests/secrets_boundary.rs::the_secrets_library_is_reached_only_through_the_credentials_feature` (moving the tag means moving `TAG` and `REVISION` there) |
+| No workspace crate depends on a consumer; `llm-core` has no transport dependency; `llm-routing` depends on no protocol crate | `crates/llm-core/tests/dependency_boundary.rs::inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transport` |
+| The `secrets` library is reached only through `llm-credentials` feature `secrets`: optional, off by default, tag `v0.5.0` at the commit the lockfile records, forwarded by no core crate | `crates/llm-credentials/tests/secrets_boundary.rs::the_secrets_library_is_reached_only_through_the_credentials_feature` (moving the tag means moving `TAG` and `REVISION` there) |
 | Unknown usage stays unknown, never zero | `crates/llm-core/tests/embedding.rs::unknown_usage_stays_distinct_from_zero_and_invalid_subsets_refuse`, and per protocol `crates/llm-responses/tests/adversary.rs::an_unreported_input_count_stays_unknown_and_is_never_zero`, `crates/llm-messages/tests/streaming.rs::a_counter_the_route_never_reported_stays_unknown`, `crates/llm-chat/tests/incoming.rs::a_counter_a_present_usage_report_omits_stays_absent_and_never_becomes_zero`, `crates/llm-chat/tests/incoming.rs::removing_any_one_timings_counter_leaves_unknown_exactly_what_it_counted`; ingress encoders `crates/llm-responses/tests/ingress.rs::an_unknown_input_count_is_omitted_and_decodes_back_unknown_never_zero`, `crates/llm-messages/tests/ingress.rs::an_unknown_output_count_is_left_out_and_decodes_back_unknown` |
 | Secret material is never a configuration value | `crates/llm-credentials/tests/injected.rs::secret_material_is_not_a_config_value_and_binary_custody_is_supported`, `crates/llm-providers/tests/bindings.rs::binding_documents_have_strict_versions_and_no_literal_secret_fields`, `crates/llm-models/tests/routes.rs::no_secret_material_leaves_the_document` |
 | Opaque provider state crosses no binding coordinate, even under fallback | `crates/llm-core/tests/embedding.rs::opaque_state_cannot_cross_any_binding_coordinate`, `crates/llm-routing/tests/catalog.rs::opaque_state_never_crosses_bindings_even_with_explicit_fallback` |
@@ -53,7 +53,7 @@ story that says so.
 | Credentials never reach a redirect target or an ambient proxy | `crates/llm-http/tests/transport.rs::redirect_never_sends_credentials_to_a_second_endpoint`, `crates/llm-http/tests/ambient_proxy.rs::ambient_proxy_environment_does_not_receive_caller_credentials` |
 | No `unsafe` code | `unsafe_code = "forbid"` in the root `Cargo.toml`; Clippy `all` and `pedantic` deny |
 | No field a client sends is dropped: each ingress decoder carries, translates, reports or refuses it, and refuses an unknown key at every level by its path | `crates/llm-messages/tests/client_request_fields.rs::every_refusal_names_its_field_by_path`, `crates/llm-responses/tests/client_fields.rs::a_key_outside_the_subset_is_refused_by_its_path_at_every_level`, `crates/llm-chat/tests/ingress.rs::an_unknown_key_on_a_content_part_is_refused_by_its_path` and the other `an_unknown_key_on_*` cases there; advisory omissions `checks/conformance/tests/client_turns.rs` |
-| The conformance suite answers at least 890 scenarios and skips none | `contracts/baseline.json`, enforced by `b10x-llm-conformance check` |
+| The conformance suite answers at least 890 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.
@@ -71,14 +71,14 @@ RUSTUP_TOOLCHAIN=1.98.0 task check
 
 | Step | Alone |
 | --- | --- |
-| Workspace tests; `b10x-llm-credentials` and `b10x-llm-cost` with all features and checked with none; `cargo fmt --all --check`; Clippy on all targets and features with `-D warnings`, on the default toolchain and on 1.98.0 | `task rust` |
+| Workspace tests; `llm-credentials` and `llm-cost` with all features and checked with none; `cargo fmt --all --check`; Clippy on all targets and features with `-D warnings`, on the default toolchain and on 1.98.0 | `task rust` |
 | Generated pages and quoted guide programs are current | `task docs` (`cargo run --locked -p llm-docs -- generate --check`) |
 | The ESS specification validates | `ess specify validate --path spec` |
-| Suite and schema projections match `contracts/`, then the suite runs three times against `contracts/baseline.json` | `task conformance` (`cargo run --locked -p b10x-llm-conformance -- check`, from the repository root) |
+| Suite and schema projections match `contracts/`, then the suite runs three times against `contracts/baseline.json` | `task conformance` (`cargo run --locked -p llm-conformance -- check`, from the repository root) |
 | The planning store validates | `aep plan artifact validate` |
 
 CI installs `ess` 0.67.0 and `aep` 0.68.0 (pinned by revision in `gate.yml`). A second CI job
-tests and lints `b10x-llm-credentials` and `b10x-llm-cost` with all features on macOS and Windows;
+tests and lints `llm-credentials` and `llm-cost` with all features on macOS and Windows;
 a native keychain change cannot be checked on Linux alone. `.github/workflows/shared-gates.yml`
 runs the organisation's common Gates checks on pull requests, `main` and tags.
 
@@ -170,7 +170,7 @@ No private policy, credentials, customer names or `/home/<name>/` paths belong i
 ## Never
 
 - Add a dependency from a core crate on a consumer, on the `secrets` library, or from
-  `b10x-llm-core` on transport.
+  `llm-core` on transport.
 - Report an absent usage counter as zero, or drop opaque state or an unsupported field to make a
   translation succeed: carry it or refuse it.
 - Put a paid provider call or external provisioning into the default gate.

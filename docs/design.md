@@ -231,9 +231,9 @@ checked only a call's first poll and a stream read before it waited for the wire
 | its credential resolution waited, then the resolver needed Tokio, every wire | panicked in the resolver |
 | the request awaited its answer (`post_sse`, `post_json`), a stream read awaited a chunk, a quota rule awaited a 429's body | no panic: each waited on the runtime nobody drove; the cases gave up after two seconds |
 
-The rule: the asynchronous clients and `b10x-llm-http` refuse, rather than panic or wait, when
+The rule: the asynchronous clients and `llm-http` refuse, rather than panic or wait, when
 polled on a thread in no Tokio runtime: `unsupported`, not retriable, with the fixed message "an
-llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single
+llm client needs a Tokio runtime; run the call inside one, or use llm-blocking for a single
 model". The first poll of a turn or an exchange is refused before anything that needs Tokio runs,
 credential resolution included, dispatch `not-sent` (`llm_http::require_tokio_runtime`). After
 that every wait that runs on Tokio asks again on each poll (`llm_http::within_tokio_runtime`), so
@@ -246,12 +246,12 @@ Completions hands its events to the sink without a timer; Responses and Messages
 the sink under the turn deadline, so that hand-over is refused outside a runtime. Both functions serve every client; a catalog port inherits them from the
 client it wraps, and a routing run or `call_tool` from the turn it runs. The code is `unsupported`
 because no retry serves the call in the caller's configuration, which `Error::may_retry` already
-says of that code, and `b10x-llm-blocking` refuses the mirror case, a blocking turn inside a
+says of that code, and `llm-blocking` refuses the mirror case, a blocking turn inside a
 runtime, with it. `unavailable` is a temporary state of the far side and is retried;
 `invalid-request` is about the request. No `ErrorCode` was added.
 
 The message names two ways out. A caller without a runtime runs the call inside one it starts, or
-runs a single model through `b10x-llm-blocking`: `BlockingModel::new` owns a one-worker runtime,
+runs a single model through `llm-blocking`: `BlockingModel::new` owns a one-worker runtime,
 `BlockingModel::on_runtime` borrows a multi-thread one, and either blocks the calling thread for
 the turn. A routing run and `call_tool` are not a `Model`, so `BlockingModel` cannot run them; their
 caller takes the first way.

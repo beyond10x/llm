@@ -1,6 +1,6 @@
 //! Provider account and binding conformance observations.
 //!
-//! This module parses the authored `BindingDocument` with the real `b10x-llm-providers` types,
+//! This module parses the authored `BindingDocument` with the real `llm-providers` types,
 //! binds it, and calls `Binding::prepare_auth` with an injected in-process resolver whose answer
 //! the fixture chooses. It reports what the crate returned and never the credential value: only
 //! whether the header is the declared presentation of the fixture material. It reads no suite

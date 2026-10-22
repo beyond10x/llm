@@ -35,12 +35,12 @@ Nothing is published to crates.io. Depend on a crate from Git at a release tag:
 
 ```toml
 [dependencies]
-llm-core = { package = "b10x-llm-core", git = "https://github.com/beyond10x/llm", tag = "0.9.0" }
-llm-responses = { package = "b10x-llm-responses", git = "https://github.com/beyond10x/llm", tag = "0.9.0" }
+llm-core = { git = "https://github.com/beyond10x/llm", tag = "0.9.0" }
+llm-responses = { git = "https://github.com/beyond10x/llm", tag = "0.9.0" }
 ```
 
-Package names start with `b10x-`; library names do not, so the code says `use llm_core::…`. The
-`secrets` feature of `b10x-llm-credentials` is available in the release.
+A package name is its directory name; its library name uses underscores, so the code says `use llm_core::…`. The
+`secrets` feature of `llm-credentials` is available in the release.
 
 ## Try it
 
@@ -48,7 +48,7 @@ Rust 1.98 or newer is enough. This example implements `Model` in-process and cal
 same port a real client implements; it sends nothing and reads no credential:
 
 ```console
-$ cargo run --locked -p b10x-llm-core --example embedded
+$ cargo run --locked -p llm-core --example embedded
 An embedded model turn. (EndTurn; usage None)
 ```
 
@@ -60,17 +60,17 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 
 | Package | What it is |
 | --- | --- |
-| `b10x-llm-core` | The neutral turn: `Model`, requests, events, outcomes, typed failures; no I/O |
-| `b10x-llm-http` | Bounded single-attempt HTTP and SSE transport |
-| `b10x-llm-responses`, `b10x-llm-messages`, `b10x-llm-chat` | One protocol each: projection both ways, a gateway's ingress decoder and answer encoder, and a client |
-| `b10x-llm-credentials` | Injected secret resolution; opt-in file, keychain, environment, JSON pointer, Codex login and `secrets` adapters |
-| `b10x-llm-providers` | Provider, account and endpoint bindings, independent of protocol; provider descriptions (`llm.provider-description/1`), with Runpod's built in |
-| `b10x-llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
-| `b10x-llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account; reads `llm.routes/1` model routes ([guide](https://beyond10x.github.io/llm/docs/guides/configure-model-routes)) |
-| `b10x-llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |
-| `b10x-llm-tool-call` | `call_tool` (one forced tool, its JSON input back) and the Codex Responses preset |
-| `b10x-llm-blocking` | A blocking adapter over any `Model` for a synchronous loop |
-| `b10x-llm-cli` | Placeholder; exports no API yet |
+| `llm-core` | The neutral turn: `Model`, requests, events, outcomes, typed failures; no I/O |
+| `llm-http` | Bounded single-attempt HTTP and SSE transport |
+| `llm-responses`, `llm-messages`, `llm-chat` | One protocol each: projection both ways, a gateway's ingress decoder and answer encoder, and a client |
+| `llm-credentials` | Injected secret resolution; opt-in file, keychain, environment, JSON pointer, Codex login and `secrets` adapters |
+| `llm-providers` | Provider, account and endpoint bindings, independent of protocol; provider descriptions (`llm.provider-description/1`), with Runpod's built in |
+| `llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
+| `llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account; reads `llm.routes/1` model routes ([guide](https://beyond10x.github.io/llm/docs/guides/configure-model-routes)) |
+| `llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |
+| `llm-tool-call` | `call_tool` (one forced tool, its JSON input back) and the Codex Responses preset |
+| `llm-blocking` | A blocking adapter over any `Model` for a synchronous loop |
+| `llm-cli` | Placeholder; exports no API yet |
 
 The [crate reference](https://beyond10x.github.io/llm/docs/reference/crates) is generated from
 `cargo metadata` and lists each package's library name and features.

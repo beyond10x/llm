@@ -9,25 +9,25 @@ custom_edit_url: null
 
 # Crates
 
-The workspace holds 15 packages at version `0.9.0`. None is published to a registry: a project depends on them from Git at a release tag. Package names start with `b10x-`; library names do not, so `b10x-llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
+The workspace holds 15 packages at version `0.9.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
 
 | Package | Library | Directory | What it is |
 | --- | --- | --- | --- |
-| `b10x-llm-conformance` | binary `b10x-llm-conformance` | `checks/conformance` | — |
-| `b10x-llm-blocking` | `llm_blocking` | `crates/llm-blocking` | A blocking turn adapter over any asynchronous model port, for a synchronous agent loop. |
-| `b10x-llm-chat` | `llm_chat` | `crates/llm-chat` | Chat Completions protocol projection and gateway ingress for the declared supported subset. |
-| `b10x-llm-cli` | `b10x_llm_cli` | `crates/llm-cli` | Operator configuration, route inspection and gateway command surface. |
-| `b10x-llm-core` | `llm_core` | `crates/llm-core` | Neutral model requests, results, streaming, capabilities and typed failures; no I/O or execution authority. |
-| `b10x-llm-cost` | `llm_cost` | `crates/llm-cost` | Usage accounting, versioned price estimates and explicit admission limits. |
-| `b10x-llm-credentials` | `llm_credentials` | `crates/llm-credentials` | Injected secret resolution and caller-managed credential refresh; optional backend adapters. |
+| `llm-conformance` | binary `llm-conformance` | `checks/conformance` | — |
+| `llm-blocking` | `llm_blocking` | `crates/llm-blocking` | A blocking turn adapter over any asynchronous model port, for a synchronous agent loop. |
+| `llm-chat` | `llm_chat` | `crates/llm-chat` | Chat Completions protocol projection and gateway ingress for the declared supported subset. |
+| `llm-cli` | `llm_cli` | `crates/llm-cli` | Operator configuration, route inspection and gateway command surface. |
+| `llm-core` | `llm_core` | `crates/llm-core` | Neutral model requests, results, streaming, capabilities and typed failures; no I/O or execution authority. |
+| `llm-cost` | `llm_cost` | `crates/llm-cost` | Usage accounting, versioned price estimates and explicit admission limits. |
+| `llm-credentials` | `llm_credentials` | `crates/llm-credentials` | Injected secret resolution and caller-managed credential refresh; optional backend adapters. |
 | `llm-docs` | binary `llm-docs` | `crates/llm-docs` | Generates and drift-checks the derived pages of the llm documentation site, and holds the programs its guides quote. |
-| `b10x-llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |
-| `b10x-llm-messages` | `llm_messages` | `crates/llm-messages` | Messages protocol projection and gateway ingress for the declared supported subset. |
-| `b10x-llm-models` | `llm_models` | `crates/llm-models` | Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account, and reads llm.routes/1 model routes into a catalog and resolvers. |
-| `b10x-llm-providers` | `llm_providers` | `crates/llm-providers` | Provider/account and authentication bindings independent of protocol selection. |
-| `b10x-llm-responses` | `llm_responses` | `crates/llm-responses` | Responses protocol projection, gateway ingress and a single-attempt client for the declared supported subset. |
-| `b10x-llm-routing` | `llm_routing` | `crates/llm-routing` | TOML catalogs, capability-aware resolution and explicit ordered fallback. |
-| `b10x-llm-tool-call` | `b10x_llm_tool_call` | `crates/llm-tool-call` | One forced tool call on any model, returning the tool's JSON input, and a Responses model preset over the operator's Codex login. |
+| `llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |
+| `llm-messages` | `llm_messages` | `crates/llm-messages` | Messages protocol projection and gateway ingress for the declared supported subset. |
+| `llm-models` | `llm_models` | `crates/llm-models` | Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account, and reads llm.routes/1 model routes into a catalog and resolvers. |
+| `llm-providers` | `llm_providers` | `crates/llm-providers` | Provider/account and authentication bindings independent of protocol selection. |
+| `llm-responses` | `llm_responses` | `crates/llm-responses` | Responses protocol projection, gateway ingress and a single-attempt client for the declared supported subset. |
+| `llm-routing` | `llm_routing` | `crates/llm-routing` | TOML catalogs, capability-aware resolution and explicit ordered fallback. |
+| `llm-tool-call` | `llm_tool_call` | `crates/llm-tool-call` | One forced tool call on any model, returning the tool's JSON input, and a Responses model preset over the operator's Codex login. |
 
 ## Optional features
 
@@ -35,17 +35,17 @@ Every feature is off by default unless the package lists it as a default. A feat
 
 | Package | Feature | Turns on | Adds dependencies |
 | --- | --- | --- | --- |
-| `b10x-llm-cost` | `sqlite` | — | `rusqlite` |
-| `b10x-llm-credentials` | `codex-auth-file` | — | `base64`, `rustix`, `serde_json`, `sha2` |
-| `b10x-llm-credentials` | `codex-renewal` | `codex-auth-file` | `llm-http`, `tempfile` |
-| `b10x-llm-credentials` | `environment` | — | `sha2` |
-| `b10x-llm-credentials` | `file` | — | `rustix`, `sha2` |
-| `b10x-llm-credentials` | `json-pointer` | — | `serde_json`, `sha2` |
-| `b10x-llm-credentials` | `keychain` | — | `keyring-core`, `sha2` |
-| `b10x-llm-credentials` | `native-keychain` | `keychain` | `zbus-secret-service-keyring-store`, `apple-native-keyring-store`, `windows-native-keyring-store` |
-| `b10x-llm-credentials` | `secrets` | — | `secrets-core`, `secrets-keychain`, `keyring-core`, `sha2` |
-| `b10x-llm-models` | `environment` | `llm-credentials/environment` | — |
-| `b10x-llm-models` | `file` | `llm-credentials/file` | — |
-| `b10x-llm-models` | `keychain` | `llm-credentials/keychain` | `keyring-core` |
+| `llm-cost` | `sqlite` | — | `rusqlite` |
+| `llm-credentials` | `codex-auth-file` | — | `base64`, `rustix`, `serde_json`, `sha2` |
+| `llm-credentials` | `codex-renewal` | `codex-auth-file` | `llm-http`, `tempfile` |
+| `llm-credentials` | `environment` | — | `sha2` |
+| `llm-credentials` | `file` | — | `rustix`, `sha2` |
+| `llm-credentials` | `json-pointer` | — | `serde_json`, `sha2` |
+| `llm-credentials` | `keychain` | — | `keyring-core`, `sha2` |
+| `llm-credentials` | `native-keychain` | `keychain` | `zbus-secret-service-keyring-store`, `apple-native-keyring-store`, `windows-native-keyring-store` |
+| `llm-credentials` | `secrets` | — | `secrets-core`, `secrets-keychain`, `keyring-core`, `sha2` |
+| `llm-models` | `environment` | `llm-credentials/environment` | — |
+| `llm-models` | `file` | `llm-credentials/file` | — |
+| `llm-models` | `keychain` | `llm-credentials/keychain` | `keyring-core` |
 
 No package turns on a feature by default.

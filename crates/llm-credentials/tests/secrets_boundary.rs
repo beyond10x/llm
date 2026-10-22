@@ -1,5 +1,5 @@
 //! story:secrets-resolver: core crates gain no dependency on the `secrets` library. Every crate
-//! from its git source is reached only through `b10x-llm-credentials` feature `secrets`,
+//! from its git source is reached only through `llm-credentials` feature `secrets`,
 //! optional, off by default, pinned to one release tag whose commit the lockfile records, and no
 //! core crate forwards that feature from its own `[features]`. Read from the manifests at run
 //! time; each rule has a mutant below that shows it can fail.
@@ -10,7 +10,7 @@ use std::{
 };
 use toml::{Table, Value};
 
-/// The library crates `b10x-llm-credentials` declares. A crate counts as the library's when its
+/// The library crates `llm-credentials` declares. A crate counts as the library's when its
 /// git source is the library repository in any spelling, or when it carries one of these names.
 const LIBRARY_CRATES: [&str; 2] = ["secrets-core", "secrets-keychain"];
 const SOURCE: &str = "https://github.com/beyond10x/secrets";
@@ -19,7 +19,7 @@ const REPOSITORY: &str = "beyond10x/secrets";
 const TAG: &str = "v0.5.0";
 const REVISION: &str = "8c4eabb15e719fea1a770898bd6852e381900fb0";
 const OWNER: &str = "crates/llm-credentials";
-const CREDENTIALS: &str = "b10x-llm-credentials";
+const CREDENTIALS: &str = "llm-credentials";
 /// Not core crates: the conformance harness observes the adapter through the feature.
 const FEATURE_USERS: [&str; 1] = ["checks/conformance"];
 const DEPENDENCY_TABLES: [&str; 3] = ["dependencies", "dev-dependencies", "build-dependencies"];

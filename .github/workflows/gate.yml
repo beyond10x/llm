@@ -17,10 +17,10 @@ jobs:
       - name: Rust libraries
         run: |
           cargo test --workspace --locked
-          cargo test -p b10x-llm-credentials --all-features --locked
-          cargo check -p b10x-llm-credentials --no-default-features --locked
-          cargo test -p b10x-llm-cost --all-features --locked
-          cargo check -p b10x-llm-cost --no-default-features --locked
+          cargo test -p llm-credentials --all-features --locked
+          cargo check -p llm-credentials --no-default-features --locked
+          cargo test -p llm-cost --all-features --locked
+          cargo check -p llm-cost --no-default-features --locked
           cargo fmt --all --check
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Generated documentation
@@ -46,7 +46,7 @@ jobs:
       - name: Specification and plan
         run: |
           ess specify validate --path spec
-          cargo run --locked -p b10x-llm-conformance -- check
+          cargo run --locked -p llm-conformance -- check
           aep plan artifact validate
       - name: Conformance reports
         if: always()
@@ -75,7 +75,7 @@ jobs:
           components: clippy
       - name: Native credentials and local ledger fixtures
         run: |
-          cargo test -p b10x-llm-credentials --all-features --locked
-          cargo clippy -p b10x-llm-credentials --all-targets --all-features --locked -- -D warnings
-          cargo test -p b10x-llm-cost --all-features --locked
-          cargo clippy -p b10x-llm-cost --all-targets --all-features --locked -- -D warnings
+          cargo test -p llm-credentials --all-features --locked
+          cargo clippy -p llm-credentials --all-targets --all-features --locked -- -D warnings
+          cargo test -p llm-cost --all-features --locked
+          cargo clippy -p llm-cost --all-targets --all-features --locked -- -D warnings

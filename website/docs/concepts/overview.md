@@ -65,15 +65,15 @@ llm-gateway ([GitHub](https://github.com/beyond10x/llm-gateway)) serves models.
 
 | To… | Depend on |
 | --- | --- |
-| Write a caller that works with any model | `b10x-llm-core` |
-| Call a Responses endpoint, including a Codex login | `b10x-llm-responses`, `b10x-llm-http`, `b10x-llm-credentials`, and a binding from `b10x-llm-routing` or `b10x-llm-providers` |
-| Call a Chat Completions or vLLM endpoint | `b10x-llm-chat` and the same three |
-| Call a Messages endpoint | `b10x-llm-messages` and the same three |
-| Force one tool and read its arguments | `b10x-llm-tool-call` |
-| Run turns from a synchronous loop | `b10x-llm-blocking` |
-| Declare routes in TOML, retry and fall back between targets | `b10x-llm-routing` |
-| Build the client a catalog serving model declares, whatever its protocol | `b10x-llm-models`, `b10x-llm-routing`, `b10x-llm-http` and `b10x-llm-credentials` |
-| Price usage, or limit spend | `b10x-llm-cost`, with `sqlite` for the ledger |
+| Write a caller that works with any model | `llm-core` |
+| Call a Responses endpoint, including a Codex login | `llm-responses`, `llm-http`, `llm-credentials`, and a binding from `llm-routing` or `llm-providers` |
+| Call a Chat Completions or vLLM endpoint | `llm-chat` and the same three |
+| Call a Messages endpoint | `llm-messages` and the same three |
+| Force one tool and read its arguments | `llm-tool-call` |
+| Run turns from a synchronous loop | `llm-blocking` |
+| Declare routes in TOML, retry and fall back between targets | `llm-routing` |
+| Build the client a catalog serving model declares, whatever its protocol | `llm-models`, `llm-routing`, `llm-http` and `llm-credentials` |
+| Price usage, or limit spend | `llm-cost`, with `sqlite` for the ledger |
 
 [Crates](../reference/crates.md) lists every package with its library name and features.
 

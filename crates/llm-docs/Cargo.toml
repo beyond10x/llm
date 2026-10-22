@@ -16,14 +16,14 @@ clap = { version = "4.6", features = ["derive"] }
 serde_json.workspace = true
 
 [dev-dependencies]
-b10x-llm-tool-call = { path = "../llm-tool-call" }
-llm-blocking = { package = "b10x-llm-blocking", path = "../llm-blocking" }
-llm-chat = { package = "b10x-llm-chat", path = "../llm-chat" }
-llm-models = { package = "b10x-llm-models", path = "../llm-models" }
+llm-tool-call = { path = "../llm-tool-call" }
+llm-blocking = { path = "../llm-blocking" }
+llm-chat = { path = "../llm-chat" }
+llm-models = { path = "../llm-models" }
 llm-core.workspace = true
 llm-credentials.workspace = true
 llm-http.workspace = true
-llm-routing = { package = "b10x-llm-routing", path = "../llm-routing" }
+llm-routing = { path = "../llm-routing" }
 tokio.workspace = true
 
 [[example]]

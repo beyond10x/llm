@@ -18,10 +18,10 @@ It runs five stages. None of them makes a paid provider call or provisions an ex
 
 ```bash
 cargo test --workspace --locked
-cargo test -p b10x-llm-credentials --all-features --locked
-cargo check -p b10x-llm-credentials --no-default-features --locked
-cargo test -p b10x-llm-cost --all-features --locked
-cargo check -p b10x-llm-cost --no-default-features --locked
+cargo test -p llm-credentials --all-features --locked
+cargo check -p llm-credentials --no-default-features --locked
+cargo test -p llm-cost --all-features --locked
+cargo check -p llm-cost --no-default-features --locked
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 ```
@@ -68,7 +68,7 @@ of them is a claim that this repository publishes runtime events or runs a persi
 ## 4. Conformance
 
 ```bash
-cargo run --locked -p b10x-llm-conformance -- check
+cargo run --locked -p llm-conformance -- check
 ```
 
 The conformance runner checks generated-schema drift, then executes the authored scenarios against

@@ -32,7 +32,7 @@ use tokio::{
 };
 
 /// The error's whole message: the requirement and the two ways out of it.
-const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single model";
+const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use llm-blocking for a single model";
 
 /// How long a wait moved out of its runtime is polled outside before it counts as stuck.
 const OUTSIDE: Duration = Duration::from_secs(2);
@@ -112,7 +112,7 @@ fn panic_message(payload: &(dyn Any + Send)) -> String {
 }
 
 /// Every way `outcome` departs from the refusal a call outside a Tokio runtime gets: typed,
-/// final, with `dispatch`, and naming both the requirement and `b10x-llm-blocking`.
+/// final, with `dispatch`, and naming both the requirement and `llm-blocking`.
 fn departures(
     what: &str,
     outcome: &Result<Option<Error>, String>,

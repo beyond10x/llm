@@ -1,6 +1,6 @@
 //! Port construction conformance observations.
 //!
-//! This module parses the authored catalog with the real `Catalog`, hands `b10x-llm-models` a
+//! This module parses the authored catalog with the real `Catalog`, hands `llm-models` a
 //! resolver lookup that answers a counting resolver for each listed account and nothing for any
 //! other, and reports the port the crate built, or its refusal, and how often any resolver was
 //! called. It reads no suite and branches on no scenario name.

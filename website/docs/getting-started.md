@@ -32,7 +32,7 @@ The workspace forbids `unsafe`, and Clippy runs `all` plus `pedantic` at deny.
 ## Run a model turn with no network and no credential
 
 ```bash
-cargo run --locked -p b10x-llm-core --example embedded
+cargo run --locked -p llm-core --example embedded
 ```
 
 ```text
@@ -60,7 +60,7 @@ and how to point it at a Codex login instead.
 ## Explain a route without resolving a secret
 
 ```bash
-cargo run --locked -p b10x-llm-routing --example explain
+cargo run --locked -p llm-routing --example explain
 ```
 
 It reads [`examples/catalog.toml`](https://github.com/beyond10x/llm/blob/main/examples/catalog.toml)
@@ -70,7 +70,7 @@ candidate was rejected. [Explain a route](guides/explain-a-route.md) shows the o
 ## Price recorded usage
 
 ```bash
-cargo run --locked -p b10x-llm-cost --example quote
+cargo run --locked -p llm-cost --example quote
 ```
 
 It prices fixture observations against a fictional price book and prints an `llm.cost/2` report
@@ -84,11 +84,11 @@ at a [release tag](https://github.com/beyond10x/llm/releases), as Loom does:
 
 ```toml
 [dependencies]
-llm-core = { package = "b10x-llm-core", git = "https://github.com/beyond10x/llm", tag = "<release>" }
-llm-responses = { package = "b10x-llm-responses", git = "https://github.com/beyond10x/llm", tag = "<release>" }
+llm-core = { git = "https://github.com/beyond10x/llm", tag = "<release>" }
+llm-responses = { git = "https://github.com/beyond10x/llm", tag = "<release>" }
 ```
 
-Package names start with `b10x-`; library names do not, so the code says `use llm_core::…`.
+A package name is its directory name; its library name uses underscores, so the code says `use llm_core::…`.
 [Crates](reference/crates.md) lists every package, its library name and its features. The source
 is licensed under Apache-2.0 from 0.1.2 on; see
 [`LICENSE`](https://github.com/beyond10x/llm/blob/main/LICENSE).

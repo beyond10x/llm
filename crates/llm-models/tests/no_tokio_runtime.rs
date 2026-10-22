@@ -40,7 +40,7 @@ use std::{
 };
 
 /// The error's whole message: the requirement and the two ways out of it.
-const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single model";
+const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use llm-blocking for a single model";
 
 /// Wakes the thread [`block_on`] parked.
 struct Unpark(Thread);
@@ -219,7 +219,7 @@ fn panic_message(payload: &(dyn Any + Send)) -> String {
 }
 
 /// Every way `outcome` departs from the refusal a call outside a Tokio runtime gets: typed,
-/// final, sent nothing, and naming both the requirement and `b10x-llm-blocking`.
+/// final, sent nothing, and naming both the requirement and `llm-blocking`.
 fn departures(outcome: &Result<Result<TurnOutcome, Error>, String>) -> Vec<String> {
     let error = match outcome {
         Err(panic) => return vec![format!("panicked: {panic}")],
@@ -293,7 +293,7 @@ fn every_protocol_client_outside_a_tokio_runtime_is_refused_before_it_resolves_o
     assert_no_findings(&found);
 }
 
-/// The same through `b10x-llm-models`: a port built for one serving model, and the port the
+/// The same through `llm-models`: a port built for one serving model, and the port the
 /// catalog builder serves to routing.
 #[test]
 fn every_catalog_port_outside_a_tokio_runtime_is_refused_before_it_resolves_or_sends() {

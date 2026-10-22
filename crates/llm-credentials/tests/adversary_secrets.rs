@@ -347,7 +347,7 @@ async fn restoring_rejected_bytes_on_an_unversioned_backend_is_rejected_again() 
 
 const SOURCE: &str = "https://github.com/beyond10x/secrets";
 const OWNER: &str = "crates/llm-credentials";
-const CREDENTIALS: &str = "b10x-llm-credentials";
+const CREDENTIALS: &str = "llm-credentials";
 const FEATURE_USERS: [&str; 1] = ["checks/conformance"];
 const TABLES: [&str; 3] = ["dependencies", "dev-dependencies", "build-dependencies"];
 

@@ -49,6 +49,6 @@ flowchart TD
 
 ## Out of scope for this milestone
 
-Choosing the cheapest model automatically. An operator command line: `b10x-llm-cli` exports
+Choosing the cheapest model automatically. An operator command line: `llm-cli` exports
 nothing, and no plan builds it. A resolver backed by a connector integration product, which the
 Secrets resolver replaced.

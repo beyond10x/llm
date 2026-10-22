@@ -1,6 +1,6 @@
 # The Responses projection
 
-`b10x-llm-responses` projects the neutral turn contract onto the `OpenAI` Responses protocol and
+`llm-responses` projects the neutral turn contract onto the `OpenAI` Responses protocol and
 reads that same protocol back. The projection is pure: no I/O, no credential, no endpoint, no
 retry. One contract serves both directions, so a gateway ingress surface and an outgoing client
 disagree about nothing.

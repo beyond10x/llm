@@ -1,5 +1,5 @@
 [package]
-name = "b10x-llm-models"
+name = "llm-models"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -25,10 +25,10 @@ llm-core.workspace = true
 llm-credentials.workspace = true
 llm-http.workspace = true
 llm-providers.workspace = true
-llm-routing = { package = "b10x-llm-routing", path = "../llm-routing" }
-llm-chat = { package = "b10x-llm-chat", path = "../llm-chat" }
-llm-responses = { package = "b10x-llm-responses", path = "../llm-responses" }
-llm-messages = { package = "b10x-llm-messages", path = "../llm-messages" }
+llm-routing = { path = "../llm-routing" }
+llm-chat = { path = "../llm-chat" }
+llm-responses = { path = "../llm-responses" }
+llm-messages = { path = "../llm-messages" }
 serde.workspace = true
 serde_yaml = "0.9"
 keyring-core = { version = "1.0.0", optional = true }

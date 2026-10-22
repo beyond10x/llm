@@ -1,6 +1,6 @@
 //! HTTP transport conformance observations against a scripted local server.
 //!
-//! This module builds the real `b10x-llm-http` `HttpClient`, sends one `post_sse_until` to a
+//! This module builds the real `llm-http` `HttpClient`, sends one `post_sse_until` to a
 //! loopback listener whose answer the fixture scripts, reads the returned stream to its end and
 //! reports what the client returned: every event, the refusal that ended the exchange, its
 //! dispatch evidence, and how many connections the server saw. It decides no bound and no

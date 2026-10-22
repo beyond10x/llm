@@ -1,4 +1,4 @@
-//! Run with `cargo run -p b10x-llm-core --example embedded`; no gateway or credentials required.
+//! Run with `cargo run -p llm-core --example embedded`; no gateway or credentials required.
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Error, Id, Item, Model, Protocol, Provenance, StopReason,
     StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest, VecSink,
