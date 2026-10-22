@@ -30,10 +30,7 @@ fn inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transpor
             );
             if package["name"] == "llm-core" && dependency["kind"].is_null() {
                 assert!(
-                    !matches!(
-                        name,
-                        "reqwest" | "hyper" | "axum" | "llm-http"
-                    ),
+                    !matches!(name, "reqwest" | "hyper" | "axum" | "llm-http"),
                     "core imported transport: {name}"
                 );
             }
@@ -41,10 +38,7 @@ fn inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transpor
             // stays protocol-neutral so ordered fallback never names a client.
             if package["name"] == "llm-routing" && dependency["kind"].is_null() {
                 assert!(
-                    !matches!(
-                        name,
-                        "llm-chat" | "llm-responses" | "llm-messages"
-                    ),
+                    !matches!(name, "llm-chat" | "llm-responses" | "llm-messages"),
                     "routing imported a protocol crate: {name}"
                 );
             }
@@ -56,4 +50,27 @@ fn inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transpor
             .any(|package| package["name"] == "llm-models"),
         "the port-construction crate is a workspace member this boundary covers"
     );
+}
+
+// Bedrock signs on `ring`; an AWS SDK crate or `aws-lc` anywhere in the lockfile breaks that.
+#[test]
+fn no_package_in_the_lockfile_is_an_aws_sdk_crate_or_aws_lc() {
+    let lock =
+        std::fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../Cargo.lock"))
+            .unwrap();
+    let names: Vec<&str> = lock
+        .lines()
+        .filter_map(|line| line.strip_prefix("name = \""))
+        .filter_map(|rest| rest.strip_suffix('"'))
+        .collect();
+    assert!(
+        names.contains(&"ring"),
+        "the lockfile is read: ring is there"
+    );
+    for name in names {
+        assert!(
+            !name.starts_with("aws-"),
+            "an AWS crate entered the lockfile: {name}"
+        );
+    }
 }
