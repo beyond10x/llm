@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-22T21:19:02Z",
+  "actor": "human:timo",
+  "artifact": "story:drop-package-prefix",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 b10x-build-slot task check on wave/2026-10-22-w14 at 3e501c4d, ess 0.67.0 (exit 0; workspace 1236 passed 0 failed 2 ignored; conformance 890/890 x3; aep plan artifact validate: valid)"
+  }
+}

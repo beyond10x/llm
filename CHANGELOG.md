@@ -17,6 +17,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `llm-http`: `HttpClient::get_json`, a bounded GET that decodes the answer into the caller's type
 - ESS domain `llm.bedrock` with 43 authored scenarios; the conformance floor rises from 890 to 937
 
+## [0.10.0] - 2026-10-22
+
 ### Changed
 
 - **Breaking:** every package drops the `b10x-` prefix: `b10x-llm-core` is `llm-core`, and so on for all 14 packages
@@ -351,7 +353,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.9.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.10.0...HEAD
+[0.10.0]: https://github.com/beyond10x/llm/compare/0.9.0...0.10.0
 [0.9.0]: https://github.com/beyond10x/llm/compare/0.8.4...0.9.0
 [0.8.4]: https://github.com/beyond10x/llm/compare/0.8.3...0.8.4
 [0.8.3]: https://github.com/beyond10x/llm/compare/0.8.2...0.8.3
