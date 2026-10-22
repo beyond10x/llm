@@ -28,6 +28,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/run-a-local-turn',
         'guides/call-a-local-endpoint',
+        'guides/call-a-model-on-bedrock',
         'guides/call-a-model-with-one-forced-tool',
         'guides/use-llm-from-a-synchronous-loop',
         'guides/interrupt-a-turn-with-new-input',

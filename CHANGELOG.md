@@ -6,6 +6,17 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-bedrock`: Amazon Bedrock Runtime behind `Model::turn`, over Converse and Anthropic `InvokeModel`; fixture-checked only
+- `llm-bedrock`: Signature Version 4 signing on `ring` and AWS event-stream decoding, with no AWS SDK crate and no `aws-lc`
+- `llm-bedrock`: `StaticCredentials` through an injected resolver and `ContainerCredentials` (EKS Pod Identity, unverified)
+- `llm-core`: `Protocol::BedrockConverse`; a binding, catalog or routes document refuses it by name
+- `llm-core`: `BEDROCK_CONVERSE_REFUSAL`, the refusal a binding and a base URL both give that protocol
+- `llm-http`: `ByteStream`, a bounded raw byte stream for wires that frame their own messages
+- `llm-http`: `HttpClient::get_json`, a bounded GET that decodes the answer into the caller's type
+- ESS domain `llm.bedrock` with 43 authored scenarios; the conformance floor rises from 890 to 937
+
 ### Changed
 
 - **Breaking:** every package drops the `b10x-` prefix: `b10x-llm-core` is `llm-core`, and so on for all 14 packages

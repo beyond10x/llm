@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DecodeEventStream input",
+  "x-ess-name": "llm.bedrock.DecodeEventStream",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string"
+    },
+    "truncate_by": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "file"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:914b96917429433029cc31e2c073a5d809f087e64f58d809043b8911647a27a6",
+    "regenerate": "ess generate"
+  }
+}

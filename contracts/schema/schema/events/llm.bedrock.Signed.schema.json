@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Signed payload",
+  "x-ess-name": "llm.bedrock.Signed",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "accepted": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "accepted"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:bf86731968f11abe50c27102a56eb1a20f0eeba0707796a76e1e06db33a4e591",
+    "regenerate": "ess generate"
+  }
+}

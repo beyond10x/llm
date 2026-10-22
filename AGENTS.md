@@ -12,12 +12,14 @@ failures), as `.engineering/planning/vision/portable-model-inference.md` records
 ## Owns, and does not own
 
 llm owns the client side of model inference: the neutral turn (`llm-core`), the transport, the
-three protocol crates (each with its ingress decoder and encoder), credentials, provider bindings,
+three protocol crates (each with its ingress decoder and encoder), the Amazon Bedrock Runtime
+client (`llm-bedrock`: Converse, Anthropic `InvokeModel`, Signature Version 4, event-stream
+frames, static and container AWS credentials), credentials, provider bindings,
 routing, port construction from a catalog or an `llm.routes/1` routes document
 (`llm-models`), pricing, `call_tool` and the blocking adapter. The accepted design is
 `docs/design.md` (its "Client request fields" section is the rule for every field an ingress
-decoder reads); per-protocol detail is in `docs/responses.md`, `docs/messages.md` and
-`docs/chat.md`.
+decoder reads); per-protocol detail is in `docs/responses.md`, `docs/messages.md`,
+`docs/chat.md` and `docs/bedrock.md`.
 
 It does not own:
 
@@ -43,7 +45,7 @@ story that says so.
 | --- | --- |
 | No workspace crate depends on a consumer; `llm-core` has no transport dependency; `llm-routing` depends on no protocol crate | `crates/llm-core/tests/dependency_boundary.rs::inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transport` |
 | The `secrets` library is reached only through `llm-credentials` feature `secrets`: optional, off by default, tag `v0.5.0` at the commit the lockfile records, forwarded by no core crate | `crates/llm-credentials/tests/secrets_boundary.rs::the_secrets_library_is_reached_only_through_the_credentials_feature` (moving the tag means moving `TAG` and `REVISION` there) |
-| Unknown usage stays unknown, never zero | `crates/llm-core/tests/embedding.rs::unknown_usage_stays_distinct_from_zero_and_invalid_subsets_refuse`, and per protocol `crates/llm-responses/tests/adversary.rs::an_unreported_input_count_stays_unknown_and_is_never_zero`, `crates/llm-messages/tests/streaming.rs::a_counter_the_route_never_reported_stays_unknown`, `crates/llm-chat/tests/incoming.rs::a_counter_a_present_usage_report_omits_stays_absent_and_never_becomes_zero`, `crates/llm-chat/tests/incoming.rs::removing_any_one_timings_counter_leaves_unknown_exactly_what_it_counted`; ingress encoders `crates/llm-responses/tests/ingress.rs::an_unknown_input_count_is_omitted_and_decodes_back_unknown_never_zero`, `crates/llm-messages/tests/ingress.rs::an_unknown_output_count_is_left_out_and_decodes_back_unknown` |
+| Unknown usage stays unknown, never zero | `crates/llm-core/tests/embedding.rs::unknown_usage_stays_distinct_from_zero_and_invalid_subsets_refuse`, and per protocol `crates/llm-responses/tests/adversary.rs::an_unreported_input_count_stays_unknown_and_is_never_zero`, `crates/llm-messages/tests/streaming.rs::a_counter_the_route_never_reported_stays_unknown`, `crates/llm-chat/tests/incoming.rs::a_counter_a_present_usage_report_omits_stays_absent_and_never_becomes_zero`, `crates/llm-chat/tests/incoming.rs::removing_any_one_timings_counter_leaves_unknown_exactly_what_it_counted`; ingress encoders `crates/llm-responses/tests/ingress.rs::an_unknown_input_count_is_omitted_and_decodes_back_unknown_never_zero`, `crates/llm-messages/tests/ingress.rs::an_unknown_output_count_is_left_out_and_decodes_back_unknown`; Bedrock Converse, whose body never carries a `cachePoint`, so an absent cache counter is a known 0 and only an absent `inputTokens` leaves the input unknown: `crates/llm-bedrock/tests/converse.rs::an_absent_cache_counter_is_a_known_zero_on_converse`, `crates/llm-bedrock/tests/converse.rs::the_converse_body_never_carries_a_cache_point`, `crates/llm-bedrock/tests/converse.rs::cache_counters_add_up_to_the_whole_input` |
 | Secret material is never a configuration value | `crates/llm-credentials/tests/injected.rs::secret_material_is_not_a_config_value_and_binary_custody_is_supported`, `crates/llm-providers/tests/bindings.rs::binding_documents_have_strict_versions_and_no_literal_secret_fields`, `crates/llm-models/tests/routes.rs::no_secret_material_leaves_the_document` |
 | Opaque provider state crosses no binding coordinate, even under fallback | `crates/llm-core/tests/embedding.rs::opaque_state_cannot_cross_any_binding_coordinate`, `crates/llm-routing/tests/catalog.rs::opaque_state_never_crosses_bindings_even_with_explicit_fallback` |
 | An `unauthorized` failure never falls back | `crates/llm-routing/tests/codex_login_fallback.rs::a_misconfigured_codex_login_is_unauthorized_and_never_falls_back`, `crates/llm-routing/tests/credential_fallback.rs::a_malformed_pointer_document_is_unauthorized_and_never_falls_back` |
@@ -51,9 +53,13 @@ story that says so.
 | A streamed delta is final: a successful turn's assistant text is the text deltas shown for it; a replaced server text is reported `shown-text-kept`, shown text that cannot be tied to one message overwrites none and is reported `shown-text-unpaired`, only for a returned turn | `crates/llm-responses/tests/live_stream.rs::the_turn_carries_the_text_the_caller_was_shown_and_says_when_the_server_wrote_other_text`, `crates/llm-responses/tests/live_stream.rs::shown_text_no_single_message_can_be_leaves_the_server_messages_as_sent_and_says_so`, `crates/llm-responses/tests/adversary_w09_shown_text.rs::a_refused_turn_does_not_tell_the_caller_its_shown_text_was_kept`, `crates/llm-messages/tests/streaming.rs::text_a_block_opens_with_is_shown_so_the_turn_carries_only_what_was_shown`, `crates/llm-chat/tests/incoming.rs::the_turn_carries_exactly_the_text_its_deltas_showed` |
 | Fallback tries only the declared compatible order | `crates/llm-routing/tests/fallback.rs::eligible_failure_before_output_attempts_only_the_declared_compatible_order` |
 | Credentials never reach a redirect target or an ambient proxy | `crates/llm-http/tests/transport.rs::redirect_never_sends_credentials_to_a_second_endpoint`, `crates/llm-http/tests/ambient_proxy.rs::ambient_proxy_environment_does_not_receive_caller_credentials` |
+| A Bedrock request is signed exactly as the AWS Signature Version 4 test suite states | `crates/llm-bedrock/tests/sigv4_vectors.rs::every_case_matches_its_canonical_request_string_to_sign_and_signature`, `crates/llm-bedrock/tests/sigv4_vectors.rs::sign_writes_the_suites_headers_for_every_request_a_url_carries_as_written`; scenarios `contracts/bedrock/scenarios/sigv4-*.yaml` |
+| The event-stream decoder refuses each invalid frame by the check it breaks, decodes a recorded body alike at every chunking, and reports a body cut inside a frame as a retriable cut | `crates/llm-bedrock/tests/eventstream.rs::each_invalid_smithy_frame_is_refused_by_the_check_it_breaks`, `crates/llm-bedrock/tests/eventstream.rs::every_recorded_body_decodes_alike_at_every_split_into_two_chunks`, `crates/llm-bedrock/tests/eventstream.rs::every_recorded_body_decodes_alike_fed_one_byte_at_a_time`, `crates/llm-bedrock/tests/eventstream.rs::a_stream_cut_inside_a_frame_fails_finish_as_a_retriable_cut`; scenarios `contracts/bedrock/scenarios/eventstream-*.yaml` |
+| A Bedrock turn may be retried only before the model answered: a cut or a throttling exception after content is final | Scenarios `contracts/bedrock/scenarios/turn-a-cut-after-content-is-final.yaml`, `contracts/bedrock/scenarios/turn-a-throttling-exception-after-content-is-final.yaml` and their before-content counterparts. UNMAPPED: no `crates/llm-bedrock` test holds it yet |
+| No crate depends on an AWS SDK crate or on `aws-lc`; `llm-bedrock` signs with `ring` | `crates/llm-core/tests/dependency_boundary.rs::no_package_in_the_lockfile_is_an_aws_sdk_crate_or_aws_lc` |
 | No `unsafe` code | `unsafe_code = "forbid"` in the root `Cargo.toml`; Clippy `all` and `pedantic` deny |
 | No field a client sends is dropped: each ingress decoder carries, translates, reports or refuses it, and refuses an unknown key at every level by its path | `crates/llm-messages/tests/client_request_fields.rs::every_refusal_names_its_field_by_path`, `crates/llm-responses/tests/client_fields.rs::a_key_outside_the_subset_is_refused_by_its_path_at_every_level`, `crates/llm-chat/tests/ingress.rs::an_unknown_key_on_a_content_part_is_refused_by_its_path` and the other `an_unknown_key_on_*` cases there; advisory omissions `checks/conformance/tests/client_turns.rs` |
-| The conformance suite answers at least 890 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
+| The conformance suite answers at least 937 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.
@@ -171,8 +177,9 @@ No private policy, credentials, customer names or `/home/<name>/` paths belong i
 
 - Add a dependency from a core crate on a consumer, on the `secrets` library, or from
   `llm-core` on transport.
-- Report an absent usage counter as zero, or drop opaque state or an unsupported field to make a
-  translation succeed: carry it or refuse it.
+- Report an absent usage counter as zero (the one exception, a Bedrock Converse cache counter, is
+  in the invariants table), or drop opaque state or an unsupported field to make a translation
+  succeed: carry it or refuse it.
 - Put a paid provider call or external provisioning into the default gate.
 - Hand-edit a generated file, or lower `contracts/baseline.json` without a recorded reason in the
   CHANGELOG.

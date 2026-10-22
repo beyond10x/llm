@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: eventstream-a-body-ending-inside-a-frame-keeps-its-frames-and-may-be-retried
+summary: "a body cut inside its last frame keeps the 31 frames before it and fails as a retriable protocol failure of unknown dispatch"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.DecodeEventStream
+  input:
+    file: "frames/ddtrace-bedrock_converse_stream.bin"
+    truncate_by: 10
+  outcome: observed
+assert:
+- view: llm.bedrock.LastFrames
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastFrames
+  contains:
+    accepted: false
+    error_code: "protocol"
+    dispatch: "unknown"
+    retriable: true
+    messages: 31
+    splits_agree: true

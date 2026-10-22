@@ -1,0 +1,22 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: eventstream-an-unknown-header-value-type-is-a-final-protocol-failure
+summary: "a header value of a type the format does not define is refused"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.DecodeEventStream
+  input:
+    file: "eventstream/invalid_header_value_type"
+  outcome: observed
+assert:
+- view: llm.bedrock.LastFrames
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastFrames
+  contains:
+    accepted: false
+    error_code: "protocol"
+    retriable: false
+    messages: 0
+    splits_agree: true

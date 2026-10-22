@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.bedrock.SigningObservation.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:746a4aa8a56813e86c2bd40de3ce838572fe300eb0aee57d5061d7709293bef7",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.bedrock.SigningObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.bedrock.SigningObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

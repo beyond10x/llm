@@ -67,7 +67,7 @@ are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 | --- | --- |
 | `http-streaming` | **Bounded HTTP and server-sent events.** One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails. |
 | `parity-http-timeouts-cancel` | **Connect and idle bounds, and cancellation.** A 15-second connect timeout (`HttpClient::with_connect_timeout`), a 180-second idle bound by default, and cancellation that wins over a pending read. |
-| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 883 scenarios against the real crates three times and skips none. |
+| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 937 scenarios against the real crates three times and skips none. |
 
 ### Protocols
 
@@ -90,6 +90,16 @@ are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 | `client-turns-cross-wire` | **A Claude Code and a Codex first turn cross wires.** Each decodes on its own wire and projects onto the other two with every field under a written rule; each projection lists the advisory hints it omits, and each client warns `advisory-omitted` after a successful turn. |
 | `codex-stream` | **Responses turns against the Codex backend.** A success without a content type is read as an event stream when one was asked for, and an empty terminal output after streamed items keeps the streamed items. |
 | `retry-classes-harness-retried` | **The provider failures Harness retried are retriable before output.** A Responses `server_error` or `rate_limit_exceeded` and a Messages `overloaded_error` or `api_error` stream error may be retried before any output and are final after it, the rule Responses `server_is_overloaded` already followed; an exhausted quota stays final inside a stream and, since `story:quota-429-is-final`, as an HTTP 429 before it (Responses by `error.code`, or by `error.type` for `insufficient_quota` and the Codex backend's `usage_limit_reached` and `usage_not_included`; Messages a `rate_limit_error` whose `error.details.error_code` is `enforced_spend_limit_reached`). A failure an llm gateway relays inside a stream with nothing streamed first still reads back retriable; a failure before output, the gateway's HTTP 502, reads final when it carries `x-should-retry: false`, which llm-gateway has to send. |
+
+### Amazon Bedrock
+
+| Story | Capability |
+| --- | --- |
+| `bedrock-signing` | **Bedrock requests are signed with Signature Version 4.** `llm-bedrock` signs each request with a signer written on `ring`, checked against the AWS test suite vendored from aws-c-auth (header signing only); keys come from `StaticCredentials` through an injected resolver or from `ContainerCredentials` at the container credentials endpoint. No AWS SDK crate and no `aws-lc` is a dependency. EKS Pod Identity is described from AWS documentation and unverified. |
+| `bedrock-event-stream` | **AWS event-stream frames decode, bounded.** `llm_bedrock::eventstream` decodes frames incrementally across reads, at most 16 MiB per frame; checked against the smithy-rs vectors and recorded Bedrock bodies. |
+| `bedrock-converse` | **A turn runs on Bedrock Converse.** `BedrockClient` with `Api::Converse` sends `/converse-stream` or `/converse` and reads text, tool calls, thinking and usage; the body carries no `cachePoint`, so an absent cache counter is a known 0 and the input total is known whenever `inputTokens` is. Fixture evidence only; no live Bedrock call was made. |
+| `bedrock-anthropic-invoke` | **A turn runs on Anthropic models through Bedrock InvokeModel.** `Api::AnthropicInvoke` sends the Messages body with `anthropic_version: bedrock-2023-05-31` and reads the stream with the Messages decoder; invocation metrics fill only counters Messages usage left unreported. Fixture evidence only. |
+| `bedrock-specification` | **Bedrock behaviour is specified in ESS.** The `llm.bedrock` domain and 43 authored scenarios cover signing, frame decoding, container credentials and whole turns against loopback servers; the conformance runner answers at least 937 scenarios and skips none. |
 
 ### Credentials
 

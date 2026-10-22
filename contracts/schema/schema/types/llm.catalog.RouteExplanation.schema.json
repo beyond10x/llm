@@ -4,8 +4,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "513ece793ae0f8ce1f0194b148f48cad791d40bd127044081db49cb781495394",
-    "contract_digest": "slice-sha256/2:fa083ed6b0243df236bf040bdbc6a15aaa72cddee3b67a5099dd0001290458c1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:b02a8b716d21d1b7c0525a84bf07343cce6628e0daba08ed2d581d1f43798474",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -88,7 +88,8 @@
       "enum": [
         "Responses",
         "Messages",
-        "ChatCompletions"
+        "ChatCompletions",
+        "BedrockConverse"
       ]
     },
     "llm.catalog.Provenance": {

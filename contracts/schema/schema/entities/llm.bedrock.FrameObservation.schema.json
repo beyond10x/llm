@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FrameObservation",
+  "x-ess-name": "llm.bedrock.FrameObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "dispatch": {
+      "type": "string"
+    },
+    "retriable": {
+      "type": "boolean"
+    },
+    "messages": {
+      "type": "integer"
+    },
+    "event_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "first_headers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "first_payload": {
+      "type": "string"
+    },
+    "splits_agree": {
+      "type": "boolean"
+    },
+    "round_trip": {
+      "type": "boolean"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.bedrock.FrameObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "messages",
+    "event_types",
+    "first_headers",
+    "splits_agree",
+    "round_trip",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:2e98f39c81b4b743d4bb78d877d9af378f50ed8403fee6bb5cffb7f276b27d39",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.bedrock.FrameObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.bedrock.FrameObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

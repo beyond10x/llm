@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: container-a-token-that-does-not-resolve-is-unauthorized-before-a-request
+summary: "a token reference the resolver cannot answer refuses before the endpoint is asked"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.FetchContainerCredentials
+  input:
+    answer: "Valid"
+    token: false
+    fetches: 1
+  outcome: observed
+assert:
+- view: llm.bedrock.LastContainerCredentials
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastContainerCredentials
+  contains:
+    accepted: false
+    error_code: "unauthorized"
+    dispatch: "not-sent"
+    retriable: false
+    requests: 0
+    token_presented: null
+    access_key_id: null
+    diagnostics_safe: true

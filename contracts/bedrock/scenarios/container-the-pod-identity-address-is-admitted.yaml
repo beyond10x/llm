@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: container-the-pod-identity-address-is-admitted
+summary: "the EKS Pod Identity agent address is admitted over plain http"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.FetchContainerCredentials
+  input:
+    uri: "http://169.254.170.23/v1/credentials"
+    answer: "Valid"
+    token: true
+    fetches: 1
+  outcome: observed
+assert:
+- view: llm.bedrock.LastContainerCredentials
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastContainerCredentials
+  contains:
+    accepted: true
+    error_code: null
+    requests: 0
+    token_presented: null

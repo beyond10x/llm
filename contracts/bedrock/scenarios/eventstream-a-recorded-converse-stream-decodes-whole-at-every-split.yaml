@@ -1,0 +1,34 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: eventstream-a-recorded-converse-stream-decodes-whole-at-every-split
+summary: "a recorded ConverseStream body decodes into its 32 frames however the reads split it, each encoding back to its bytes"
+timeline:
+- at: '2026-10-22T12:00:00Z'
+  command: llm.bedrock.DecodeEventStream
+  input:
+    file: "frames/ddtrace-bedrock_converse_stream.bin"
+  outcome: observed
+assert:
+- view: llm.bedrock.LastFrames
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastFrames
+  contains:
+    accepted: true
+    error_code: null
+    messages: 32
+    event_types:
+    - "contentBlockDelta:26"
+    - "contentBlockStart:1"
+    - "contentBlockStop:2"
+    - "messageStart:1"
+    - "messageStop:1"
+    - "metadata:1"
+    first_headers:
+    - ":event-type:string:messageStart"
+    - ":content-type:string:application/json"
+    - ":message-type:string:event"
+    first_payload: "{\"p\":\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS\",\"role\":\"assistant\"}"
+    splits_agree: true
+    round_trip: true

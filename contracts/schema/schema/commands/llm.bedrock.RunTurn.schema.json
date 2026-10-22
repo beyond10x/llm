@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RunTurn input",
+  "x-ess-name": "llm.bedrock.RunTurn",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "api": {
+      "$ref": "#/$defs/llm.bedrock.Api"
+    },
+    "stream": {
+      "type": "boolean"
+    },
+    "model_id": {
+      "type": "string"
+    },
+    "request_json": {
+      "type": "string"
+    },
+    "recording": {
+      "type": "string"
+    },
+    "keep_frames": {
+      "type": "integer"
+    },
+    "frames_json": {
+      "type": "string"
+    },
+    "cut": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "integer"
+    },
+    "error_type": {
+      "type": "string"
+    },
+    "session_token": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "api",
+    "stream",
+    "model_id",
+    "request_json",
+    "cut",
+    "session_token"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:853d6766aa9170f2551e6fa519d79889a918d79a63bcde729fc97af6d58e4d3a",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.bedrock.Api": {
+      "title": "Api",
+      "x-ess-name": "llm.bedrock.Api",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Converse",
+        "AnthropicInvoke"
+      ]
+    }
+  }
+}

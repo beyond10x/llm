@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.bedrock.TurnObservation.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "1984033e382ffe330e5d09a0b2d29f66d3043c1ba14b8f726aeb74a141c586bd",
+    "contract_digest": "slice-sha256/2:beb5807d5d318abc64b4456af290b5dc814dd1ddb135a7b62a3f5a443824636c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.bedrock.TurnObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.bedrock.TurnObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

@@ -1,0 +1,284 @@
+domain: llm.bedrock
+
+# Verification adapter observations of `llm-bedrock`, never production events. Every input is
+# vendored test data under `crates/llm-bedrock/tests/data/` (the AWS Signature Version 4 suite,
+# the smithy-rs event-stream frames and recorded Bedrock Runtime answers, each with its licence)
+# or a fixture written into the scenario. Answers come from a scripted server on 127.0.0.1; no
+# scenario reaches AWS, an instance metadata address or a container credentials agent.
+types:
+  # Which Bedrock Runtime wire the client speaks: Converse (`/converse-stream`, `/converse`), or
+  # the Anthropic Messages body on `InvokeModel` (`/invoke-with-response-stream`, `/invoke`).
+  - name: llm.bedrock.Api
+    kind: enum
+    variants: [Converse, AnthropicInvoke]
+  # What the fixture container credentials endpoint does with a request: answer a credential
+  # valid for an hour, answer one that expires within the five-minute refresh window, answer
+  # 401, answer an object without `SecretAccessKey`, or not listen at all (connection refused).
+  - name: llm.bedrock.ContainerAnswer
+    kind: enum
+    variants: [Valid, ExpiresSoon, Unauthorized, MissingSecret, Unreachable]
+entities:
+  # One request signed with `llm_bedrock::sigv4::sign` from an AWS Signature Version 4 suite
+  # case (aws-c-auth `tests/aws-signing-test-suite/v4`). The adapter reads only the case's
+  # inputs, `context.json` (credentials, region, service, time) and `request.txt` (method,
+  # target, headers, body), never its expected files. The request is built as an HTTP client
+  # would build it: the target joined to `https://<Host>`, each header line trimmed of the
+  # whitespace around its value and appended in file order, a repeated name kept as repeated.
+  - name: llm.bedrock.SigningObservation
+    identity: {name: observation_id, type: String}
+    fields: &signing_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # The `authorization` header the signer added, verbatim.
+      - {name: authorization, type: Optional<String>}
+      # The `x-amz-date` header the signer added.
+      - {name: amz_date, type: Optional<String>}
+      # Whether `x-amz-security-token` carries exactly the case's session token; absent when the
+      # case has none and the header is absent.
+      - {name: security_token_added, type: Optional<Boolean>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # One AWS event-stream body (`application/vnd.amazon.eventstream`) read through
+  # `llm_bedrock::eventstream::MessageDecoder`, then `finish`.
+  #
+  # A frame is a 12-byte prelude (total length, headers length, CRC32 of those eight bytes),
+  # typed headers, the payload and the CRC32 of everything before it. Every malformed frame is a
+  # `protocol` refusal with a fixed message, whichever check it breaks: prelude checksum, a
+  # headers length that does not fit, a header name that is empty, cut off or not UTF-8, an
+  # unknown value type, a value the headers cut off, a string that is not UTF-8, the message
+  # checksum. A frame above 16 MiB, or a stream above the transport's 32 MiB bound, is
+  # `too-large`. A stream that ends inside a frame is `protocol` with dispatch `unknown` and
+  # may be retried: nothing malformed arrived, which is what a dropped connection looks like.
+  # The first failure is final; frames decoded before it stay observable.
+  - name: llm.bedrock.FrameObservation
+    identity: {name: observation_id, type: String}
+    fields: &frame_facts
+      # Whether every byte decoded into whole frames.
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: dispatch, type: Optional<String>}
+      # `Error::may_retry` of the refusal.
+      - {name: retriable, type: Optional<Boolean>}
+      # Frames decoded, before the failure when there is one.
+      - {name: messages, type: Integer}
+      # `<:event-type>:<count>` per event type, sorted; a frame without that header is not
+      # counted.
+      - {name: event_types, type: List<String>}
+      # The first frame's headers in wire order as `<name>:<type>:<value>`; types `bool`, `byte`,
+      # `int16`, `int32`, `int64`, `byte-array` (value in lowercase hex), `string`, `timestamp`
+      # (milliseconds since the epoch), `uuid` (lowercase hex).
+      - {name: first_headers, type: List<String>}
+      # The first frame's payload when it is UTF-8.
+      - {name: first_payload, type: Optional<String>}
+      # Whether the same frames and the same refusal code come out when the body arrives whole,
+      # one byte per read, and in reads of 7 and of 64 bytes.
+      - {name: splits_agree, type: Boolean}
+      # Whether `encode_message` of every decoded frame gives back that frame's bytes.
+      - {name: round_trip, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # One turn through `llm_bedrock::BedrockClient` against a scripted server on 127.0.0.1: the
+  # target's `endpoint` points there, its region is `eu-central-1`, and the credentials come
+  # from an adapter `CredentialSource` answering the suite's example key pair (`AKIDEXAMPLE`),
+  # with a fixture session token when the scenario asks for one.
+  #
+  # Requests: `POST <endpoint>/model/<model id>/<operation>`, the model id percent-encoded as
+  # one path segment (`:` is `%3A`, as the recorded request URIs show), the operation
+  # `converse-stream`, `converse`, `invoke-with-response-stream` or `invoke`. Each is signed
+  # with Signature Version 4 for service `bedrock` and the target's region, the session token
+  # sent and signed as `x-amz-security-token`.
+  #
+  # The Anthropic body is the Messages body `llm-messages` encodes (llm.messages.Project), with
+  # `anthropic_version: bedrock-2023-05-31` and without `model` (the path names it) or `stream`
+  # (the operation says it). Its streamed answer is `chunk` frames, each
+  # `{"bytes": base64(<Messages event>)}` and an optional padding field `p`; the events are read
+  # by the Messages stream decoder, so text, tools, reasoning, stop reasons, usage and refusals
+  # are the Messages wire's. Bedrock's `amazon-bedrock-invocationMetrics` on `message_stop`
+  # only fills a counter the Messages usage never reported; the input total still needs both
+  # cache counters.
+  #
+  # Failures: an exception frame (`:message-type` `exception`) has dispatch `accepted` and is
+  # final once anything but `messageStart` (Converse) or `message_start` (Anthropic) arrived.
+  # Before that, `throttlingException` is `rate-limited`; `serviceUnavailableException`,
+  # `internalServerException` and `modelNotReadyException` are `transport`, each retriable;
+  # every other exception, `validationException` and `modelStreamErrorException` included, is
+  # final. A stream that ends inside a frame may be retried only before output. An error status
+  # is `llm.transport`'s class, refined by `x-amzn-errortype`: `ThrottlingException` and
+  # `ModelNotReadyException` keep a 429's retriable `rate-limited`; `ServiceQuotaExceededException`
+  # is `refused`, dispatch `rejected`, final whatever its status; `ValidationException` is final
+  # whatever its status. No diagnostic quotes the provider's message, a payload or a credential.
+  - name: llm.bedrock.TurnObservation
+    identity: {name: observation_id, type: String}
+    fields: &turn_facts
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: dispatch, type: Optional<String>}
+      # `Error::may_retry` of the failure.
+      - {name: retriable, type: Optional<Boolean>}
+      # Whether the failure's message and debug form are free of the fixture provider message,
+      # the fixture secret key and the fixture session token.
+      - {name: diagnostics_safe, type: Boolean}
+      # Requests the scripted server received.
+      - {name: requests, type: Integer}
+      # The first request's method and target, as `<method> <path>`.
+      - {name: request_line, type: Optional<String>}
+      # The first request's body, re-encoded with sorted keys.
+      - {name: request_body, type: Optional<String>}
+      # The credential scope of its `authorization`, the date replaced by `<date>`.
+      - {name: credential_scope, type: Optional<String>}
+      # Whether `llm_bedrock::sigv4::sign` over the headers the request names as signed, its
+      # body and its `x-amz-date` gives back the `authorization` it carried.
+      - {name: signature_verifies, type: Optional<Boolean>}
+      # Whether it carried the fixture session token as `x-amz-security-token`.
+      - {name: security_token_sent, type: Boolean}
+      # The outcome, labelled as llm.messages.CodecInspection labels one.
+      - {name: items, type: List<String>}
+      - {name: text, type: String}
+      - {name: reasoning, type: String}
+      # `started:<call>:<name>` and `arguments:<call>:<fragment>` in the order the caller saw them.
+      - {name: tool_stream, type: List<String>}
+      # `<code>:<message>` per stream warning.
+      - {name: warnings, type: List<String>}
+      - {name: stop_reason, type: Optional<String>}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: response_id, type: Optional<String>}
+      - {name: final_usage, type: Optional<Boolean>}
+      # Absent counters are absent from this encoding; unknown is never reported as zero.
+      - {name: usage_json, type: Optional<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # `llm_bedrock::ContainerCredentials`, the credential source behind EKS Pod Identity and ECS
+  # task roles, against a scripted endpoint on 127.0.0.1.
+  #
+  # The full URI (`AWS_CONTAINER_CREDENTIALS_FULL_URI`) must be `https`, or `http` to a
+  # loopback address, `169.254.170.2`, `169.254.170.23` or `[fd00:ec2::23]`; a host name is not
+  # an address, `localhost` included. Any other URI is refused when the source is built, before
+  # a connection. The authorization token (the content of
+  # `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`) is resolved through the injected resolver on each
+  # fetch and sent as the `authorization` header of a GET. The answer is
+  # `{AccessKeyId, SecretAccessKey, Token, Expiration}`, kept until five minutes before
+  # `Expiration`. Every failure is `unauthorized`, dispatch `not-sent`, final, except an
+  # endpoint that did not answer, timed out, cut its answer or answered 408 or 5xx, which is
+  # `transport`, dispatch `not-sent`, retriable.
+  - name: llm.bedrock.ContainerCredentialObservation
+    identity: {name: observation_id, type: String}
+    fields: &container_facts
+      # Whether every fetch answered credentials; for a literal URI, whether the constructor
+      # admitted it.
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: dispatch, type: Optional<String>}
+      - {name: retriable, type: Optional<Boolean>}
+      # Requests the scripted endpoint received.
+      - {name: requests, type: Integer}
+      # Whether every request carried exactly the fixture token as `authorization`; absent
+      # without a request.
+      - {name: token_presented, type: Optional<Boolean>}
+      # The last credentials' access key id, and whether they carry the fixture session token.
+      - {name: access_key_id, type: Optional<String>}
+      - {name: session_token, type: Optional<Boolean>}
+      # Whether the credentials' debug form shows neither the secret key nor the session token.
+      - {name: debug_redacted, type: Optional<Boolean>}
+      # Whether the refusal's message and debug form are free of the token and every answer
+      # value.
+      - {name: diagnostics_safe, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.bedrock.SignSuiteCase
+    input:
+      # A case directory name under `tests/data/sigv4/`.
+      - {name: case, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.bedrock.Signed]
+        payload:
+          llm.bedrock.Signed:
+            accepted: {generated: true}
+        summary: Observe the Signature Version 4 headers the signer adds to one AWS suite request.
+  - name: llm.bedrock.DecodeEventStream
+    input:
+      # A file under `tests/data/`: `eventstream/<case>` or `frames/<recording>.bin`.
+      - {name: file, type: String}
+      # Bytes dropped from the end of the file, so the body ends inside a frame.
+      - {name: truncate_by, type: Optional<Integer>}
+    outcomes:
+      - name: observed
+        emits: [llm.bedrock.Decoded]
+        payload:
+          llm.bedrock.Decoded:
+            accepted: {generated: true}
+        summary: Observe the event-stream decoder on one vendored body.
+  - name: llm.bedrock.RunTurn
+    input:
+      - {name: api, type: llm.bedrock.Api}
+      - {name: stream, type: Boolean}
+      # The Bedrock model id the target names, also the turn's model.
+      - {name: model_id, type: String}
+      # Serialized llm.turn/3, or llm.turn/4 when it carries controls.
+      - {name: request_json, type: String}
+      # A recorded answer under `tests/data/frames/`: a `.bin` event-stream body, or a `.json`
+      # whole answer.
+      - {name: recording, type: Optional<String>}
+      # Only the recording's first frames are sent.
+      - {name: keep_frames, type: Optional<Integer>}
+      # Frames sent after the recording's, a JSON array of
+      # `{"event": <:event-type>, "payload": <JSON>}` or `{"exception": <:exception-type>}`; an
+      # exception frame's payload is `{"message": <fixture provider message>}`.
+      - {name: frames_json, type: Optional<String>}
+      # The body ends inside one more frame and the connection closes.
+      - {name: cut, type: Boolean}
+      # Instead of an answer, this status with `x-amzn-errortype` and a fixture message body.
+      - {name: status, type: Optional<Integer>}
+      - {name: error_type, type: Optional<String>}
+      - {name: session_token, type: Boolean}
+    outcomes:
+      - name: observed
+        emits: [llm.bedrock.Answered]
+        payload:
+          llm.bedrock.Answered:
+            accepted: {generated: true}
+        summary: Observe one Bedrock turn on the wire and the outcome the client returns.
+  - name: llm.bedrock.FetchContainerCredentials
+    input:
+      # A literal full URI, only given to the constructor and never fetched; absent means the
+      # scripted endpoint's own loopback URI.
+      - {name: uri, type: Optional<String>}
+      - {name: answer, type: llm.bedrock.ContainerAnswer}
+      # Whether the token reference resolves.
+      - {name: token, type: Boolean}
+      # Credential requests made one after another through one source, at most four.
+      - {name: fetches, type: Integer}
+    outcomes:
+      - name: observed
+        emits: [llm.bedrock.Fetched]
+        payload:
+          llm.bedrock.Fetched:
+            accepted: {generated: true}
+        summary: Observe what the container credential source asks and answers.
+events:
+  - name: llm.bedrock.Signed
+    fields:
+      - {name: accepted, type: Boolean}
+  - name: llm.bedrock.Decoded
+    fields:
+      - {name: accepted, type: Boolean}
+  - name: llm.bedrock.Answered
+    fields:
+      - {name: accepted, type: Boolean}
+  - name: llm.bedrock.Fetched
+    fields:
+      - {name: accepted, type: Boolean}
+views:
+  - name: llm.bedrock.LastSigning
+    source: llm.bedrock.SigningObservation
+    consistency: read_your_writes
+    fields: *signing_facts
+  - name: llm.bedrock.LastFrames
+    source: llm.bedrock.FrameObservation
+    consistency: read_your_writes
+    fields: *frame_facts
+  - name: llm.bedrock.LastTurn
+    source: llm.bedrock.TurnObservation
+    consistency: read_your_writes
+    fields: *turn_facts
+  - name: llm.bedrock.LastContainerCredentials
+    source: llm.bedrock.ContainerCredentialObservation
+    consistency: read_your_writes
+    fields: *container_facts
