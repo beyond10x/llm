@@ -9,7 +9,7 @@ source: crates/llm-core/examples/embedded.rs
 # Run a local turn
 
 ```bash
-cargo run --locked -p b10x-llm-core --example embedded
+cargo run --locked -p llm-core --example embedded
 ```
 
 ```text

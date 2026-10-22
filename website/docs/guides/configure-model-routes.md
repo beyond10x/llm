@@ -9,7 +9,7 @@ source: crates/llm-models/src/routes.rs, crates/llm-models/tests/routes.rs, spec
 # Configure model routes
 
 An `llm.routes/1` document is the short form of a catalog. It names endpoints (where, which wire,
-how to authenticate) and routes (a name for one `<endpoint>/<model-id>`). `b10x-llm-models` reads it
+how to authenticate) and routes (a name for one `<endpoint>/<model-id>`). `llm-models` reads it
 with `llm_models::routes::Routes::parse` and expands it into the same `llm.catalog/1` catalog the
 [routing](../concepts/routing.md) concept describes, so ports are built by the unchanged
 `llm_models::port` and `CatalogModels::build`.
@@ -76,7 +76,7 @@ its output.
 
 `Routes::resolvers(&SecretSources)` builds one resolver per credentialed endpoint, keyed by the
 endpoint's name, from the existing local adapters: features `environment`, `file` and `keychain` of
-`b10x-llm-models` (all off by default) forward to the same features of `b10x-llm-credentials`.
+`llm-models` (all off by default) forward to the same features of `llm-credentials`.
 `SecretSources::with_home` supplies the directory `file:~/` expands against; nothing reads `HOME` on
 its own. A `keychain:` reference needs a store injected with `SecretSources::with_keychain`. A
 reference whose feature is off, or a keychain reference without a store, is refused when the

@@ -15,7 +15,7 @@
 //! connection opened, dispatch `not-sent` ([`require_tokio_runtime`]). A call moved out of its
 //! runtime part-way is refused at its next poll of a wait that runs on Tokio, with the dispatch
 //! it had reached ([`within_tokio_runtime`]). A caller without a runtime runs the call inside one
-//! it starts or, for a single model, through `b10x-llm-blocking`, whose `BlockingModel` owns a
+//! it starts or, for a single model, through `llm-blocking`, whose `BlockingModel` owns a
 //! runtime and blocks the calling thread for the turn. A runtime built without its time and IO
 //! drivers counts as a runtime here, and Tokio panics in it.
 

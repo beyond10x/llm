@@ -6,6 +6,12 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** every package drops the `b10x-` prefix: `b10x-llm-core` is `llm-core`, and so on for all 14 packages
+- **Breaking:** `llm-tool-call`'s library is `llm_tool_call` (was `b10x_llm_tool_call`); other library names are unchanged
+- A consumer writes `llm-core = { git = "…", tag = "…" }` without `package = "b10x-llm-core"`
+
 ## [0.9.0] - 2026-10-21
 
 ### Added

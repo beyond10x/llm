@@ -23,7 +23,7 @@ use std::{
 };
 use support::binding;
 
-const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single model";
+const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use llm-blocking for a single model";
 
 struct Unpark(Thread);
 

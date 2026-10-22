@@ -42,8 +42,8 @@ from the repository root:
 cargo run --locked -p llm-docs --example local_endpoint
 ```
 
-In your own project it needs `b10x-llm-core`, `b10x-llm-models`, `b10x-llm-http`,
-`b10x-llm-credentials`, `b10x-llm-routing`, and `tokio` with the `rt` and `macros` features; see
+In your own project it needs `llm-core`, `llm-models`, `llm-http`,
+`llm-credentials`, `llm-routing`, and `tokio` with the `rt` and `macros` features; see
 [Getting started](../getting-started.md#depend-on-a-crate-from-your-own-project) for the Git
 dependency form.
 
@@ -137,7 +137,7 @@ The client of an anonymous binding never asks it for a secret. It holds none, so
 refused with `SecretError::Missing`: a credentialed binding handed it by mistake fails
 `unauthorized` before sending anything, and routing does not fall back from that. It is the
 resolver `llm_models::port` attaches to an anonymous account's client, and it needs no
-`b10x-llm-credentials` feature.
+`llm-credentials` feature.
 
 ## Next
 

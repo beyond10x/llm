@@ -38,12 +38,12 @@ use std::{
 };
 
 /// The refusal's whole message, as `docs/design.md` ("Executor") states it.
-const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single model";
+const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use llm-blocking for a single model";
 
 const SSE_HEAD: &[u8] =
     b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n";
 
-/// One Responses answer carrying a single `function_call` (the stream `b10x-llm-blocking`'s own
+/// One Responses answer carrying a single `function_call` (the stream `llm-blocking`'s own
 /// cases answer with): an opening item and two argument deltas, so more than one event is shown.
 const RESPONSES_STREAM: &[u8] = b"event: response.created\n\
 data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\",\"status\":\"in_progress\"}}\n\n\

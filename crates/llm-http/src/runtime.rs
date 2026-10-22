@@ -7,7 +7,7 @@ use std::{
 use tokio::runtime::Handle;
 
 /// What a call outside a Tokio runtime is told: the requirement, and the two ways out.
-const NO_RUNTIME: &str = "an llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single model";
+const NO_RUNTIME: &str = "an llm client needs a Tokio runtime; run the call inside one, or use llm-blocking for a single model";
 
 /// Refuses a call polled on a thread that is in no Tokio runtime, before it does anything that
 /// needs one.
@@ -24,7 +24,7 @@ const NO_RUNTIME: &str = "an llm client needs a Tokio runtime; run the call insi
 ///
 /// # Errors
 /// `unsupported`, dispatch `not-sent`, not retriable, with a fixed message that names the
-/// requirement, running the call inside a runtime, and `b10x-llm-blocking` for a single model,
+/// requirement, running the call inside a runtime, and `llm-blocking` for a single model,
 /// when the calling thread is in no Tokio runtime.
 pub fn require_tokio_runtime() -> Result<(), Error> {
     if Handle::try_current().is_ok() {

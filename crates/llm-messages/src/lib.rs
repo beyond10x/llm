@@ -11,7 +11,7 @@
 //! part-way, at its next wait (the credential, the answer, a read of the stream, an event handed
 //! to the sink under the turn deadline) with the dispatch it had reached
 //! (`llm_http::within_tokio_runtime`). A caller without a runtime runs the turn inside one it
-//! starts, or through `b10x-llm-blocking`, whose `BlockingModel` owns one. [`decode_stream`],
+//! starts, or through `llm-blocking`, whose `BlockingModel` owns one. [`decode_stream`],
 //! which has no deadline, needs no runtime.
 
 mod client;

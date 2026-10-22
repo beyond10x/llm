@@ -7,7 +7,7 @@
 //!   final, so the run attempts the first target once and stops, resolving and sending nothing;
 //! - a turn started inside a runtime and polled to completion outside it, after the caller's sink
 //!   held one event back for a single poll (as a sink applying backpressure does). The crate
-//!   documentation of `b10x-llm-http` says a turn polled outside a runtime "does not panic".
+//!   documentation of `llm-http` says a turn polled outside a runtime "does not panic".
 //!
 //! Local sockets only; no provider call.
 
@@ -46,12 +46,12 @@ use std::{
 };
 
 /// The refusal's whole message, as `docs/design.md` ("Executor") states it.
-const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use b10x-llm-blocking for a single model";
+const REQUIREMENT: &str = "an llm client needs a Tokio runtime; run the call inside one, or use llm-blocking for a single model";
 
 const SSE_HEAD: &[u8] =
     b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n";
 
-/// One Responses answer carrying a single `function_call` (the stream `b10x-llm-blocking`'s own
+/// One Responses answer carrying a single `function_call` (the stream `llm-blocking`'s own
 /// cases answer with): an opening item and two argument deltas, so more than one event is shown.
 const RESPONSES_STREAM: &[u8] = b"event: response.created\n\
 data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\",\"status\":\"in_progress\"}}\n\n\
@@ -565,7 +565,7 @@ fn departures(what: &str, outcome: &Result<Result<TurnOutcome, Error>, String>) 
     }
 }
 
-/// `docs/design.md` ("Executor") and the `b10x-llm-http` crate documentation: a turn polled on a
+/// `docs/design.md` ("Executor") and the `llm-http` crate documentation: a turn polled on a
 /// thread in no Tokio runtime is refused, "It does not panic". The check runs once, when the turn
 /// starts, and again only where the transport waits for the wire. A turn the caller started
 /// inside a runtime and finishes outside one creates the next Tokio timer of its own turn

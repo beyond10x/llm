@@ -9,7 +9,7 @@ source: crates/llm-blocking (lib.rs, tests/blocking.rs), crates/llm-docs/example
 # Use llm from a synchronous loop
 
 Every llm client is asynchronous. An agent loop written as plain blocking code wraps one in
-`b10x-llm-blocking`'s `BlockingModel` and calls `turn` like any other function.
+`llm-blocking`'s `BlockingModel` and calls `turn` like any other function.
 
 ## Run it
 

@@ -9,7 +9,7 @@ source: crates/llm-cost/examples/quote.rs, examples/prices.toml, examples/usage.
 # Price recorded usage
 
 ```bash
-cargo run --locked -p b10x-llm-cost --example quote
+cargo run --locked -p llm-cost --example quote
 ```
 
 It uses [fictional prices](https://github.com/beyond10x/llm/blob/main/examples/prices.toml) and

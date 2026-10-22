@@ -27,10 +27,10 @@ repository = "https://github.com/beyond10x/llm"
 publish = false
 
 [workspace.dependencies]
-llm-core = { package = "b10x-llm-core", path = "crates/llm-core" }
-llm-credentials = { package = "b10x-llm-credentials", path = "crates/llm-credentials" }
-llm-http = { package = "b10x-llm-http", path = "crates/llm-http" }
-llm-providers = { package = "b10x-llm-providers", path = "crates/llm-providers" }
+llm-core = { path = "crates/llm-core" }
+llm-credentials = { path = "crates/llm-credentials" }
+llm-http = { path = "crates/llm-http" }
+llm-providers = { path = "crates/llm-providers" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"

@@ -31,7 +31,7 @@ stopped.
 
 ## There is no operator command line
 
-`b10x-llm-cli` exports nothing. Validating, inspecting and running one configuration from a
+`llm-cli` exports nothing. Validating, inspecting and running one configuration from a
 terminal is not available; the routing example is the closest thing today.
 
 ## What the libraries deliberately do not claim

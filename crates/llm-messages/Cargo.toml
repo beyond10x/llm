@@ -1,5 +1,5 @@
 [package]
-name = "b10x-llm-messages"
+name = "llm-messages"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

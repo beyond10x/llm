@@ -52,7 +52,7 @@ An unsupported addition needs a version change before it is accepted. Nothing is
 ## Provider descriptions
 
 An `llm.provider-description/1` document is what every consumer reads about one provider.
-`ProviderDescription::parse` in `b10x-llm-providers` refuses unknown fields in every table.
+`ProviderDescription::parse` in `llm-providers` refuses unknown fields in every table.
 
 | Table | Carries |
 | --- | --- |

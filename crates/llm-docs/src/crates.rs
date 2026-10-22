@@ -141,8 +141,8 @@ pub(crate) fn page(metadata: &Value) -> Result<String> {
     let _ = write!(
         page,
         "The workspace holds {} packages at version `{version}`. None is published to a registry: \
-         a project depends on them from Git at a release tag. Package names start with `b10x-`; \
-         library names do not, so `b10x-llm-core` is `use llm_core`. This page is generated from \
+         a project depends on them from Git at a release tag. A package name is its directory name; \
+         its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from \
          `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) \
          says which crate to depend on for what.\n\n",
         packages.len()

@@ -27,7 +27,7 @@
 //! its next wait on Tokio (the credential, the answer, a read of the stream) with the dispatch it
 //! had reached (`llm_http::within_tokio_runtime`). Events already decoded still reach the sink,
 //! which this client awaits without a timer. A caller without a runtime runs the turn inside one
-//! it starts, or through `b10x-llm-blocking`, whose `BlockingModel` owns one.
+//! it starts, or through `llm-blocking`, whose `BlockingModel` owns one.
 
 mod client;
 mod incoming;

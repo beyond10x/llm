@@ -50,7 +50,7 @@ struct Baseline {
 }
 
 #[derive(clap::Parser)]
-#[command(name = "b10x-llm-conformance")]
+#[command(name = "llm-conformance")]
 struct Cli {
     #[command(subcommand)]
     command: Cmd,
