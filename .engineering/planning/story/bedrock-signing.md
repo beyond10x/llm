@@ -2,13 +2,17 @@
 format: aep.planning-md/3
 id: story:bedrock-signing
 kind: story
-status: draft
+status: implemented
 title: Requests to Bedrock are signed with hand-written SigV4 from injected credentials
 summary: SigV4 on ring passing the AWS v4 suite; static keys through a resolver; the container credentials endpoint
 relations:
 - decomposes: epic:bedrock
 - serves: vision:portable-model-inference
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-22T21:52:22Z", actor: "human:timo", revision: 4}
+- {from: "proposed", to: "active", at: "2026-10-22T21:52:23Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-22T21:52:23Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Change
 

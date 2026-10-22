@@ -2,13 +2,16 @@
 format: aep.planning-md/3
 id: epic:bedrock
 kind: epic
-status: draft
+status: active
 title: Amazon Bedrock Runtime behind the model port
 summary: 'llm-bedrock: Converse and Anthropic InvokeModel on Bedrock, event-stream decoding, hand-written SigV4, injected AWS credentials'
 relations:
 - decomposes: initiative:llm-foundation
 - serves: vision:portable-model-inference
-revision: 2
+revision: 4
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-22T21:52:22Z", actor: "human:timo", revision: 3}
+- {from: "proposed", to: "active", at: "2026-10-22T21:52:22Z", actor: "human:timo", revision: 4}
 ---
 ## Outcome
 

@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-22T21:52:25Z",
+  "actor": "human:timo",
+  "artifact": "story:bedrock-anthropic-invoke",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 b10x-build-slot task check on wave/2026-10-22-w15 at 051ad496 (main 0.10.0 merged), ess 0.67.0: exit 0; workspace 1350 passed 0 failed; conformance 937/937 x3, 0 skipped; aep plan artifact validate: valid"
+  }
+}
