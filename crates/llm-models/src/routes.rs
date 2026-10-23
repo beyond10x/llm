@@ -179,134 +179,15 @@ struct RawAuth {
     secret_access_key: Option<String>,
     #[serde(default)]
     session_token: Option<String>,
-    #[serde(default)]
-    command: Option<RawCommand>,
+    #[serde(default, deserialize_with = "present")]
+    command: Option<Value>,
 }
 
-/// An `aws-process` endpoint's `auth.command` as written: a list whose elements are strings
-/// or, marked `None`, anything else, so that a refusal can name the element by its index. A
-/// value that is not a list is `NotList`.
-enum RawCommand {
-    List(Vec<Option<String>>),
-    NotList,
-}
-
-impl<'de> Deserialize<'de> for RawCommand {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        struct Command;
-        impl<'de> Visitor<'de> for Command {
-            type Value = RawCommand;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                formatter.write_str("a list of strings")
-            }
-
-            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<RawCommand, A::Error> {
-                let mut parts = Vec::new();
-                while let Some(part) = seq.next_element::<CommandPart>()? {
-                    parts.push(part.0);
-                }
-                Ok(RawCommand::List(parts))
-            }
-
-            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<RawCommand, A::Error> {
-                while map
-                    .next_entry::<de::IgnoredAny, de::IgnoredAny>()?
-                    .is_some()
-                {}
-                Ok(RawCommand::NotList)
-            }
-
-            fn visit_some<D: Deserializer<'de>>(
-                self,
-                deserializer: D,
-            ) -> Result<RawCommand, D::Error> {
-                RawCommand::deserialize(deserializer)
-            }
-
-            fn visit_bool<E: de::Error>(self, _: bool) -> Result<RawCommand, E> {
-                Ok(RawCommand::NotList)
-            }
-            fn visit_i64<E: de::Error>(self, _: i64) -> Result<RawCommand, E> {
-                Ok(RawCommand::NotList)
-            }
-            fn visit_u64<E: de::Error>(self, _: u64) -> Result<RawCommand, E> {
-                Ok(RawCommand::NotList)
-            }
-            fn visit_f64<E: de::Error>(self, _: f64) -> Result<RawCommand, E> {
-                Ok(RawCommand::NotList)
-            }
-            fn visit_str<E: de::Error>(self, _: &str) -> Result<RawCommand, E> {
-                Ok(RawCommand::NotList)
-            }
-            fn visit_unit<E: de::Error>(self) -> Result<RawCommand, E> {
-                Ok(RawCommand::NotList)
-            }
-            fn visit_none<E: de::Error>(self) -> Result<RawCommand, E> {
-                Ok(RawCommand::NotList)
-            }
-        }
-        deserializer.deserialize_any(Command)
-    }
-}
-
-/// One element of `auth.command`: the string, or `None` for any other value, read whole.
-struct CommandPart(Option<String>);
-
-impl<'de> Deserialize<'de> for CommandPart {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        struct Part;
-        impl<'de> Visitor<'de> for Part {
-            type Value = CommandPart;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                formatter.write_str("a string")
-            }
-
-            fn visit_str<E: de::Error>(self, text: &str) -> Result<CommandPart, E> {
-                Ok(CommandPart(Some(text.to_owned())))
-            }
-            fn visit_string<E: de::Error>(self, text: String) -> Result<CommandPart, E> {
-                Ok(CommandPart(Some(text)))
-            }
-            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<CommandPart, A::Error> {
-                while seq.next_element::<de::IgnoredAny>()?.is_some() {}
-                Ok(CommandPart(None))
-            }
-            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<CommandPart, A::Error> {
-                while map
-                    .next_entry::<de::IgnoredAny, de::IgnoredAny>()?
-                    .is_some()
-                {}
-                Ok(CommandPart(None))
-            }
-            fn visit_some<D: Deserializer<'de>>(
-                self,
-                deserializer: D,
-            ) -> Result<CommandPart, D::Error> {
-                CommandPart::deserialize(deserializer)
-            }
-            fn visit_bool<E: de::Error>(self, _: bool) -> Result<CommandPart, E> {
-                Ok(CommandPart(None))
-            }
-            fn visit_i64<E: de::Error>(self, _: i64) -> Result<CommandPart, E> {
-                Ok(CommandPart(None))
-            }
-            fn visit_u64<E: de::Error>(self, _: u64) -> Result<CommandPart, E> {
-                Ok(CommandPart(None))
-            }
-            fn visit_f64<E: de::Error>(self, _: f64) -> Result<CommandPart, E> {
-                Ok(CommandPart(None))
-            }
-            fn visit_unit<E: de::Error>(self) -> Result<CommandPart, E> {
-                Ok(CommandPart(None))
-            }
-            fn visit_none<E: de::Error>(self) -> Result<CommandPart, E> {
-                Ok(CommandPart(None))
-            }
-        }
-        deserializer.deserialize_any(Part)
-    }
+/// A field that is present, whatever its value: an explicit `null` is `Some(Value::Null)`, so
+/// that only a missing field reads as absent. `auth.command` is inspected whole by
+/// `process_command`, which names a wrong element by its index.
+fn present<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Value>, D::Error> {
+    Value::deserialize(deserializer).map(Some)
 }
 
 impl RawAuth {
@@ -578,10 +459,6 @@ fn about(kind: &str, name: &Id, message: &str) -> Error {
 
 /// Where a `file:` secret lives: an absolute path, or one below the home the caller supplies.
 #[derive(Clone)]
-#[cfg_attr(
-    not(feature = "file"),
-    expect(dead_code, reason = "read only by the file source, compiled out here")
-)]
 enum FilePath {
     Absolute(PathBuf),
     Home(PathBuf),
@@ -939,25 +816,29 @@ fn key_reference(endpoint: &Id, field: &str) -> Result<SecretRef, Error> {
     })
 }
 
-/// An aws-process endpoint's `auth.command`: a list of strings whose first, the program, is not
-/// empty, on an `auth` that names no key field.
-fn process_command(auth: &RawAuth, refuse: &dyn Fn(&str) -> Error) -> Result<Vec<String>, Error> {
-    if let Some((field, _)) = auth
+/// Refuses an `auth` of `kind`, a source other than aws-keys, that also names an AWS key field.
+fn one_source(auth: &RawAuth, kind: &str, refuse: &dyn Fn(&str) -> Error) -> Result<(), Error> {
+    match auth
         .key_fields()
         .into_iter()
         .find(|(_, value)| value.is_some())
     {
-        return Err(refuse(&format!(
-            "an aws-process endpoint cannot also name `auth.{field}`: a Bedrock endpoint has one \
+        Some((field, _)) => Err(refuse(&format!(
+            "an {kind} endpoint cannot also name `auth.{field}`: a Bedrock endpoint has one \
              credential source"
-        )));
+        ))),
+        None => Ok(()),
     }
+}
+
+/// An aws-process endpoint's `auth.command`: a list of strings whose first, the program, is not
+/// empty, on an `auth` that names no key field.
+fn process_command(auth: &RawAuth, refuse: &dyn Fn(&str) -> Error) -> Result<Vec<String>, Error> {
+    one_source(auth, "aws-process", refuse)?;
     let parts = match &auth.command {
         None => return Err(refuse("an aws-process endpoint requires `auth.command`")),
-        Some(RawCommand::NotList) => {
-            return Err(refuse("`auth.command` is not a list of strings"));
-        }
-        Some(RawCommand::List(parts)) => parts,
+        Some(Value::Array(parts)) => parts,
+        Some(_) => return Err(refuse("`auth.command` is not a list of strings")),
     };
     if parts.is_empty() {
         return Err(refuse(
@@ -968,7 +849,8 @@ fn process_command(auth: &RawAuth, refuse: &dyn Fn(&str) -> Error) -> Result<Vec
         .iter()
         .enumerate()
         .map(|(index, part)| {
-            part.clone()
+            part.as_str()
+                .map(str::to_owned)
                 .ok_or_else(|| refuse(&format!("`auth.command[{index}]` is not a string")))
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -1041,16 +923,7 @@ impl BedrockEndpointDeclaration {
                 }
             }
             "aws-container" => {
-                if let Some((field, _)) = auth
-                    .key_fields()
-                    .into_iter()
-                    .find(|(_, value)| value.is_some())
-                {
-                    return Err(refuse(&format!(
-                        "an aws-container endpoint cannot also name `auth.{field}`: a Bedrock \
-                         endpoint has one credential source"
-                    )));
-                }
+                one_source(&auth, "aws-container", &refuse)?;
                 AwsCredentials::Container
             }
             _ => {
