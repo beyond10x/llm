@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-23T09:40:00Z",
+  "actor": "human:timo",
+  "artifact": "story:bedrock-credential-process",
+  "kind": "story",
+  "revision": 1,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 task check at 4bc380db: exit 0, 1500 passed, 0 failed, 2 ignored, conformance 942/942 three times"
+  }
+}

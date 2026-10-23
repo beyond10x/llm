@@ -2,13 +2,17 @@
 format: aep.planning-md/3
 id: story:bedrock-credential-process
 kind: story
-status: draft
+status: implemented
 title: A Bedrock endpoint gets its keys from a credential_process command, held in memory
 summary: ProcessCredentials in llm-bedrock behind feature process; aws-process auth kind in llm.routes/1; llm-cli opts in
 relations:
 - decomposes: epic:bedrock
 - serves: vision:portable-model-inference
-revision: 1
+revision: 4
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-23T09:48:06Z", actor: "human:timo", revision: 2, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
+- {from: "proposed", to: "active", at: "2026-10-23T09:48:06Z", actor: "human:timo", revision: 3, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
+- {from: "active", to: "implemented", at: "2026-10-23T09:48:06Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
 ---
 ## Context
 
