@@ -1,6 +1,8 @@
 //! The TOML form of `llm.routes/1`, route aliases and prices, and Bedrock endpoints.
 
-use llm_core::{ErrorCode, Id, Model, Protocol, TurnObservation, Usage};
+#[cfg(feature = "environment")]
+use llm_core::Model;
+use llm_core::{ErrorCode, Id, Protocol, TurnObservation, Usage};
 use llm_credentials::SecretResolver;
 use llm_http::{HttpClient, Limits};
 use llm_models::routes::{AwsCredentialKind, Routes, SecretSources};
