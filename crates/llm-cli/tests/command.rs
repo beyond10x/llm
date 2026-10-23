@@ -1040,6 +1040,44 @@ fn infer_on_opus_signs_a_converse_request_with_the_container_credentials() {
     signed_for_frankfurt(&received[0]);
 }
 
+/// The token file as a Kubernetes projected volume lays it out (`token` to `..data/token`,
+/// `..data` to a timestamped directory, the file `0644`), taken from the Kubernetes
+/// documentation rather than observed on a cluster.
+#[test]
+fn infer_on_opus_reads_a_container_token_from_a_projected_volume() {
+    let bedrock = Fixture::new(vec![converse_stream()]);
+    let container = Fixture::new(vec![container_answer()]);
+    let (directory, path) = configured(&bedrock_routes(&bedrock.origin));
+    let mount = directory.path().join("eks-pod-identity-token");
+    let stamped = mount.join("..2026_10_23_08_00_00.000000001");
+    write(&stamped.join("token"), CONTAINER_TOKEN);
+    std::fs::set_permissions(
+        stamped.join("token"),
+        std::fs::Permissions::from_mode(0o644),
+    )
+    .unwrap();
+    std::os::unix::fs::symlink("..2026_10_23_08_00_00.000000001", mount.join("..data")).unwrap();
+    std::os::unix::fs::symlink("..data/token", mount.join("token")).unwrap();
+    let uri = format!("{}/v1/credentials", container.origin);
+    let output = llm(
+        &["--config", &path, "infer", "--model", "opus", "hi"],
+        &[
+            ("AWS_CONTAINER_CREDENTIALS_FULL_URI", &uri),
+            (
+                "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+                mount.join("token").to_str().unwrap(),
+            ),
+        ],
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "Opus speaking\n");
+    let asked = container.received();
+    assert_eq!(asked.len(), 1);
+    assert_eq!(asked[0].header("authorization"), Some(CONTAINER_TOKEN));
+    assert_eq!(bedrock.received().len(), 1);
+}
+
 #[test]
 fn infer_on_sonnet_signs_an_invoke_model_request_with_the_static_keys() {
     let bedrock = Fixture::new(vec![invoke_stream()]);

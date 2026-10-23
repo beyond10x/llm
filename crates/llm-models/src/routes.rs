@@ -1871,13 +1871,33 @@ fn resolver(
     }
 }
 
-/// The resolver of an `aws-container` endpoint's authorization token file.
+/// The resolver of an `aws-container` endpoint's authorization token file: the platform mounts
+/// it, so links from protected directories are followed and others may read it
+/// ([`llm_credentials::file::FileResolver::mounted`]).
+#[cfg(feature = "file")]
 fn container_token(
     endpoint: &Id,
     token: &SecretRef,
     path: PathBuf,
 ) -> Result<Arc<dyn SecretResolver>, Error> {
-    file(endpoint, token, &FilePath::Absolute(path), None)
+    llm_credentials::file::FileResolver::mounted(BTreeMap::from([(token.clone(), path)]))
+        .map(|resolver| Arc::new(resolver) as Arc<dyn SecretResolver>)
+        .map_err(|_| {
+            about(
+                "endpoint",
+                endpoint,
+                "its container authorization token file is not an absolute path without `.` or `..`",
+            )
+        })
+}
+
+#[cfg(not(feature = "file"))]
+fn container_token(
+    endpoint: &Id,
+    _token: &SecretRef,
+    _path: PathBuf,
+) -> Result<Arc<dyn SecretResolver>, Error> {
+    Err(compiled_out(endpoint, "file:", "file"))
 }
 
 /// One resolver per reference: an aws-keys endpoint's key fields may each name another source.
