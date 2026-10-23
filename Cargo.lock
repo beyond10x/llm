@@ -1223,6 +1223,7 @@ dependencies = [
  "llm-credentials",
  "llm-http",
  "llm-models",
+ "rustix",
  "serde_json",
  "tempfile",
  "tokio",

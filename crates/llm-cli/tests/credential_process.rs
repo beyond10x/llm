@@ -51,8 +51,10 @@ fn main() -> ExitCode {
         .map(String::as_str)
         .filter(|arg| !arg.starts_with('-'))
         .collect();
-    let chosen: Vec<&Case> = CASES
+    let all: Vec<&Case> = CASES.iter().chain(unix_cases::CASES).collect();
+    let chosen: Vec<&Case> = all
         .iter()
+        .copied()
         .filter(|(name, _)| filters.is_empty() || filters.iter().any(|f| name.contains(f)))
         .collect();
     println!("\nrunning {} tests", chosen.len());
@@ -66,7 +68,7 @@ fn main() -> ExitCode {
         "\ntest result: {}. {} passed; {failed} failed; 0 ignored; 0 measured; {} filtered out\n",
         if failed == 0 { "ok" } else { "FAILED" },
         chosen.len() - failed,
-        CASES.len() - chosen.len()
+        all.len() - chosen.len()
     );
     if failed == 0 {
         ExitCode::SUCCESS
@@ -102,10 +104,23 @@ fn program() -> String {
 }
 
 /// Writes a configuration with `opus` on `bedrock-dev`, an aws-process endpoint at `origin`
-/// whose command is this binary in fixture mode on `directory`, and returns its path.
+/// whose command is this binary in fixture mode on `directory`, readable by its owner alone,
+/// and returns its path.
 fn configured(origin: &str, directory: &Path) -> String {
+    let path = directory.join("llm.toml");
+    std::fs::write(&path, document(origin, directory)).expect("a configuration");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))
+            .expect("the configuration's mode");
+    }
+    path.display().to_string()
+}
+
+fn document(origin: &str, directory: &Path) -> String {
     let command = json!([program(), FIXTURE_FLAG, directory.display().to_string()]);
-    let text = format!(
+    format!(
         r#"format = "llm.routes/1"
 
 [endpoints.bedrock-dev]
@@ -117,10 +132,7 @@ auth = {{ kind = "aws-process", command = {command} }}
 [routes]
 opus = "bedrock-dev/eu.anthropic.claude-opus-5-5"
 "#
-    );
-    let path = directory.join("llm.toml");
-    std::fs::write(&path, text).expect("a configuration");
-    path.display().to_string()
+    )
 }
 
 fn printed_answer() -> Vec<u8> {
@@ -315,4 +327,136 @@ fn a_failing_command_is_a_refusal_naming_the_endpoint_and_the_program_and_sends_
     assert!(!message.contains(PRINTED), "{message}");
     assert_eq!(runs(directory.path()), 1);
     assert!(bedrock.heads().is_empty(), "no request was sent");
+}
+
+/// A routes file that runs a command must be one only you or root can change, on Unix. Other
+/// platforms do not check it, so these cases run on Unix only.
+#[cfg(not(unix))]
+mod unix_cases {
+    pub(super) const CASES: &[super::Case] = &[];
+}
+
+#[cfg(unix)]
+mod unix_cases {
+    use super::{Bedrock, Case, configured, document, llm, printed_answer, runs, text};
+    use std::fs::{Permissions, set_permissions};
+    use std::os::unix::fs::{PermissionsExt, symlink};
+    use std::path::Path;
+
+    pub(super) const CASES: &[Case] = &[
+        (
+            "a_routes_file_its_group_or_others_can_write_is_refused_and_runs_nothing",
+            a_routes_file_its_group_or_others_can_write_is_refused_and_runs_nothing,
+        ),
+        (
+            "a_routes_file_in_a_directory_others_can_write_is_refused_and_runs_nothing",
+            a_routes_file_in_a_directory_others_can_write_is_refused_and_runs_nothing,
+        ),
+        (
+            "a_link_to_the_routes_file_counts_only_from_a_directory_others_cannot_write",
+            a_link_to_the_routes_file_counts_only_from_a_directory_others_cannot_write,
+        ),
+        (
+            "a_routes_file_without_an_aws_process_endpoint_is_not_checked",
+            a_routes_file_without_an_aws_process_endpoint_is_not_checked,
+        ),
+    ];
+
+    /// Runs `llm infer` and `llm model list` on `path` and expects both refused naming the file
+    /// and `reason`, with no command run and nothing sent.
+    fn refused(path: &str, directory: &Path, bedrock: &Bedrock, reason: &str) {
+        for args in [
+            vec!["--config", path, "infer", "--model", "opus", "hi"],
+            vec!["--config", path, "model", "list"],
+        ] {
+            let output = llm(&args);
+            let message = text(&output.stderr);
+            assert_eq!(output.status.code(), Some(2), "{args:?}: {message}");
+            assert!(output.stdout.is_empty(), "{args:?}");
+            assert!(message.contains(path), "{message}");
+            assert!(message.contains("aws-process"), "{message}");
+            assert!(message.contains(reason), "{message}");
+        }
+        assert_eq!(runs(directory), 0, "no command ran");
+        assert!(bedrock.heads().is_empty(), "nothing was sent");
+    }
+
+    fn a_routes_file_its_group_or_others_can_write_is_refused_and_runs_nothing() {
+        for mode in [0o620, 0o602, 0o666] {
+            let directory = tempfile::tempdir().expect("a directory");
+            std::fs::write(directory.path().join("answer"), printed_answer()).expect("an answer");
+            let bedrock = Bedrock::new();
+            let path = configured(&bedrock.origin, directory.path());
+            set_permissions(&path, Permissions::from_mode(mode)).expect("a mode");
+            refused(
+                &path,
+                directory.path(),
+                &bedrock,
+                "its group or others can write it",
+            );
+        }
+    }
+
+    fn a_routes_file_in_a_directory_others_can_write_is_refused_and_runs_nothing() {
+        for mode in [0o770, 0o777, 0o1777] {
+            let directory = tempfile::tempdir().expect("a directory");
+            std::fs::write(directory.path().join("answer"), printed_answer()).expect("an answer");
+            let shared = directory.path().join("shared");
+            std::fs::create_dir(&shared).expect("a shared directory");
+            let bedrock = Bedrock::new();
+            let path = shared.join("llm.toml");
+            std::fs::write(&path, document(&bedrock.origin, directory.path())).expect("a file");
+            set_permissions(&path, Permissions::from_mode(0o600)).expect("a mode");
+            set_permissions(&shared, Permissions::from_mode(mode)).expect("a mode");
+            refused(
+                path.to_str().expect("a path"),
+                directory.path(),
+                &bedrock,
+                "a directory on its way",
+            );
+        }
+    }
+
+    fn a_link_to_the_routes_file_counts_only_from_a_directory_others_cannot_write() {
+        let directory = tempfile::tempdir().expect("a directory");
+        std::fs::write(directory.path().join("answer"), printed_answer()).expect("an answer");
+        let bedrock = Bedrock::new();
+        let target = configured(&bedrock.origin, directory.path());
+        let own = directory.path().join("own");
+        std::fs::create_dir(&own).expect("a directory");
+        symlink(&target, own.join("llm.toml")).expect("a link");
+        let linked = own.join("llm.toml");
+        let listed = llm(&[
+            "--config",
+            linked.to_str().expect("a path"),
+            "model",
+            "list",
+        ]);
+        assert_eq!(listed.status.code(), Some(0), "{}", text(&listed.stderr));
+        let shared = directory.path().join("shared");
+        std::fs::create_dir(&shared).expect("a directory");
+        symlink(&target, shared.join("llm.toml")).expect("a link");
+        set_permissions(&shared, Permissions::from_mode(0o777)).expect("a mode");
+        refused(
+            shared.join("llm.toml").to_str().expect("a path"),
+            directory.path(),
+            &bedrock,
+            "a directory on its way",
+        );
+    }
+
+    fn a_routes_file_without_an_aws_process_endpoint_is_not_checked() {
+        let directory = tempfile::tempdir().expect("a directory");
+        let path = directory.path().join("llm.toml");
+        std::fs::write(
+            &path,
+            "format = \"llm.routes/1\"\n\n[endpoints.open]\nbase_url = \
+             \"https://open.example.invalid/v1\"\nprotocol = \"messages\"\nauth = { kind = \
+             \"anonymous\" }\n\n[routes]\nlocal = \"open/claude-haiku-5-5\"\n",
+        )
+        .expect("a file");
+        set_permissions(&path, Permissions::from_mode(0o666)).expect("a mode");
+        let listed = llm(&["--config", path.to_str().expect("a path"), "model", "list"]);
+        assert_eq!(listed.status.code(), Some(0), "{}", text(&listed.stderr));
+    }
 }
