@@ -142,6 +142,33 @@ cluster. `llm` follows a link only when it sits in a directory owned by you or r
 else can write. The file it reaches must be a regular file owned by you or root that only its
 owner can write.
 
+A Bedrock endpoint can also take its keys from a command, the way an AWS profile's
+`credential_process` does. This endpoint runs the AWS CLI for profile `dev`:
+
+```toml
+[endpoints.bedrock-dev]
+protocol = "bedrock-converse"
+bedrock = { region = "eu-central-1" }
+auth = { kind = "aws-process", command = ["aws", "configure", "export-credentials", "--profile", "dev"] }
+```
+
+`command` is the program and then its arguments; `llm` runs it without a shell. It runs at the
+first `llm infer` on the endpoint's routes, and again only when the keys it printed are about to
+expire; `llm model list` never runs it. The command prints the `credential_process` JSON answer
+(`Version` 1, `AccessKeyId`, `SecretAccessKey`, optionally `SessionToken` and `Expiration`). The
+keys stay in the `llm` process's memory and are written nowhere. A command that fails, prints
+something else, prints more than 64 KiB or runs longer than 60 seconds refuses the turn with exit
+code `2`, naming the endpoint and the program and printing none of the command's output. The
+command's stderr is passed through, so its prompts and warnings reach you.
+
+Whoever can write the routes file can make `llm` run a program, so a file that declares an
+`aws-process` endpoint is trusted only as far as a `file:` source is. It must be a regular file
+owned by you or root that neither its group nor others can write, every directory on its path must
+be owned by you or root and not writable by others, and a link on that path is followed only from
+such a directory. Otherwise `llm infer` and `llm model list` both refuse the file with exit code
+`2`, naming it and what is wrong, before anything runs. A file without an `aws-process` endpoint is
+not checked. On Windows the check is not made.
+
 ## Exit codes
 
 | Code | Meaning |

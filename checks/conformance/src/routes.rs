@@ -148,7 +148,7 @@ fn load(input: &Value) -> Result<Observed, TargetError> {
                     .map(|(id, binding)| capabilities(id, binding.capabilities()))
                     .collect::<Vec<_>>()
             );
-            // `<endpoint>:<protocol>:<region>:<aws-keys or aws-container>`, in name order.
+            // `<endpoint>:<protocol>:<region>:<aws-keys, aws-container or aws-process>`, in name order.
             facts["bedrock_endpoints"] = json!(
                 routes
                     .bedrock_endpoints()

@@ -29,3 +29,14 @@ base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
 percent-encoding = "2.3"
 ring = { version = "0.17.14", default-features = false }
 
+[features]
+default = []
+process = ["tokio/process"]
+
+[dev-dependencies]
+tempfile = "3.27"
+
+[[test]]
+name = "process_credentials"
+harness = false
+required-features = ["process"]

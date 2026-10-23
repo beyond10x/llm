@@ -71,7 +71,7 @@ case. Query-string signing and SigV4a are not implemented.
 ## Credentials
 
 A `CredentialSource` answers `AwsCredentials` (access key id, secret access key, optional session
-token) for each request, under the turn deadline. A failure there is dispatch `not-sent`. Two
+token) for each request, under the turn deadline. A failure there is dispatch `not-sent`. Three
 sources ship:
 
 - **`StaticCredentials`** resolves the three values through an injected `SecretResolver` on every
@@ -107,9 +107,24 @@ sources ship:
   Every container failure is dispatch `not-sent`, and no message quotes the URI, the token or the
   answer.
 
+- **`ProcessCredentials`**, behind feature `process`, runs a program with its arguments the way an
+  AWS profile's `credential_process` does: no shell, stdin empty, stderr inherited, stdout read up
+  to 64 KiB into a zeroizing buffer, and the child killed after 60 seconds or when the source or
+  its run is dropped. The answer is one JSON object with `Version` 1, a non-empty `AccessKeyId`
+  and `SecretAccessKey`, optionally a `SessionToken` (`null` is absent) and an RFC 3339
+  `Expiration` in any offset; other members are ignored and a member named twice is refused. It
+  is decoded straight into zeroizing strings. An answer without `Expiration` is kept for the
+  source's life; one with it is refreshed exactly as `ContainerCredentials` refreshes, by the same
+  single-flight code, so at most one run is in flight. A command that cannot start, exits non-zero,
+  times out, prints more than 64 KiB or prints an unusable answer is `unauthorized`, final,
+  dispatch `not-sent`; the message names the program and a fixed reason, never the output.
+  `ProcessCredentials::refreshing` says whether a run is in flight. The `Debug` form shows the
+  program, the argument count and the time limit.
+
 Not supported: shared credential and config files, profiles, instance metadata (IMDS), web
-identity (IRSA), SSO and `credential_process`. A caller that has one of them resolves the keys
-itself and hands them to `StaticCredentials` through a resolver.
+identity (IRSA) and SSO. A caller that has one of them names the command that resolves the keys
+(`aws configure export-credentials --profile dev`), or resolves them itself and hands them to
+`StaticCredentials` through a resolver.
 
 Secret values never appear in a `Debug` form or an error message.
 

@@ -25,6 +25,35 @@ pub(crate) fn amz_date(at: SystemTime) -> String {
 /// may be lower case. Any other offset, an impossible date or time, or anything around the
 /// instant is `None`.
 pub(crate) fn parse_rfc3339_utc(text: &str) -> Option<SystemTime> {
+    parse(text, false)
+}
+
+/// Reads an RFC 3339 instant as [`parse_rfc3339_utc`] does, with any offset `+hh:mm` or
+/// `-hh:mm` (hours up to 23, minutes up to 59) besides `Z`.
+#[cfg_attr(not(feature = "process"), allow(dead_code))]
+pub(crate) fn parse_rfc3339(text: &str) -> Option<SystemTime> {
+    parse(text, true)
+}
+
+/// Seconds east of UTC an offset names: `Z`, or `+hh:mm`/`-hh:mm` when `any_offset`, else only
+/// `+00:00`.
+fn offset_seconds(zone: &[u8], any_offset: bool) -> Option<i64> {
+    match zone {
+        b"Z" | b"z" | b"+00:00" => Some(0),
+        [sign @ (b'+' | b'-'), hours @ .., b':', _, _] if any_offset && hours.len() == 2 => {
+            let hours = number(hours)?;
+            let minutes = number(&zone[4..6])?;
+            if hours > 23 || minutes > 59 {
+                return None;
+            }
+            let seconds = hours * 3600 + minutes * 60;
+            Some(if *sign == b'+' { seconds } else { -seconds })
+        }
+        _ => None,
+    }
+}
+
+fn parse(text: &str, any_offset: bool) -> Option<SystemTime> {
     let (civil, rest) = text.as_bytes().split_at_checked(19)?;
     let separators = [(4_usize, b'-'), (7, b'-'), (13, b':'), (16, b':')];
     if separators.iter().any(|&(at, byte)| civil[at] != byte) || !matches!(civil[10], b'T' | b't') {
@@ -46,11 +75,10 @@ pub(crate) fn parse_rfc3339_utc(text: &str) -> Option<SystemTime> {
         return None;
     }
     let (nanos, zone) = fraction(rest)?;
-    if !matches!(zone, b"Z" | b"z" | b"+00:00") {
-        return None;
-    }
+    let east = offset_seconds(zone, any_offset)?;
     let seconds =
-        days_from_civil(year, month, day) * SECONDS_PER_DAY + hour * 3600 + minute * 60 + second;
+        days_from_civil(year, month, day) * SECONDS_PER_DAY + hour * 3600 + minute * 60 + second
+            - east;
     let whole = Duration::from_secs(seconds.unsigned_abs());
     let at = if seconds >= 0 {
         UNIX_EPOCH.checked_add(whole)?
@@ -137,7 +165,7 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
 
 #[cfg(test)]
 mod tests {
-    use super::{amz_date, parse_rfc3339_utc};
+    use super::{amz_date, parse_rfc3339, parse_rfc3339_utc};
     use std::time::{Duration, UNIX_EPOCH};
 
     /// The suite's signing instant, 2015-08-30T12:36:00Z (`date -u -d … +%s`).
@@ -224,6 +252,35 @@ mod tests {
             "2015-08-3\u{0661}T12:36:00Z",
         ] {
             assert_eq!(parse_rfc3339_utc(text), None, "{text}");
+        }
+    }
+
+    #[test]
+    fn any_offset_is_read_as_its_instant_where_one_is_admitted() {
+        let at = UNIX_EPOCH + Duration::from_secs(SUITE);
+        for text in [
+            "2015-08-30T12:36:00Z",
+            "2015-08-30T12:36:00+00:00",
+            "2015-08-30T12:36:00-00:00",
+            "2015-08-30T14:36:00+02:00",
+            "2015-08-30T07:06:00-05:30",
+            "2015-08-31T12:35:00+23:59",
+        ] {
+            assert_eq!(parse_rfc3339(text), Some(at), "{text}");
+        }
+        assert_eq!(
+            parse_rfc3339("2015-08-30T14:36:00.5+02:00"),
+            Some(at + Duration::from_millis(500))
+        );
+        for text in [
+            "2015-08-30T12:36:00+24:00",
+            "2015-08-30T12:36:00+02:60",
+            "2015-08-30T12:36:00+0200",
+            "2015-08-30T12:36:00+2:00",
+            "2015-08-30T12:36:00+02:00 ",
+            "2015-08-30T12:36:00",
+        ] {
+            assert_eq!(parse_rfc3339(text), None, "{text}");
         }
     }
 

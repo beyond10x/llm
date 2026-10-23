@@ -19,6 +19,7 @@ default = []
 environment = ["llm-credentials/environment"]
 file = ["llm-credentials/file"]
 keychain = ["llm-credentials/keychain", "dep:keyring-core"]
+process = ["llm-bedrock/process"]
 
 [dependencies]
 llm-core.workspace = true
@@ -44,3 +45,8 @@ keyring-core = "1.0.0"
 serde_json.workspace = true
 tempfile = "3.27"
 tokio.workspace = true
+
+[[test]]
+name = "process_routes"
+harness = false
+required-features = ["process"]

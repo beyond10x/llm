@@ -7,6 +7,10 @@
 //! `.yaml` file) reads the file, [`Routes::port`] builds the client a name reaches, and
 //! [`Routes::cost`] prices the turn. The file is found by [`locate`].
 //!
+//! `llm infer` allows credential processes: a Bedrock endpoint whose `auth.kind` is `aws-process`
+//! runs its `command` when its turn needs keys, and the keys it prints stay in this process's
+//! memory. `llm model list` builds no client and so runs no command.
+//!
 //! Exit codes: 0 for a completed turn or listing; 2 for a refusal before anything is sent (no
 //! configuration file, a document `llm-models` refuses, an unknown name, a credential that does
 //! not resolve, an invalid request); 1 for a provider or transport failure, reported by its
@@ -22,8 +26,8 @@ use llm_core::{
 };
 use llm_http::{HttpClient, Limits};
 use llm_models::routes::{
-    BedrockEndpointDeclaration, EndpointDeclaration, RouteDeclaration, Routes, SecretKind,
-    SecretSources,
+    AwsCredentialKind, BedrockEndpointDeclaration, EndpointDeclaration, RouteDeclaration, Routes,
+    SecretKind, SecretSources,
 };
 use serde_json::{Value, json};
 use std::{
@@ -34,6 +38,8 @@ use std::{
     sync::Arc,
 };
 use url::Url;
+
+mod trust;
 
 /// The variable that names the configuration file when `--config` is not given.
 pub const CONFIG_VARIABLE: &str = "LLM_CONFIG";
@@ -230,15 +236,21 @@ fn looked(places: &[Place]) -> String {
 ///
 /// # Errors
 /// A file that cannot be read, and a document `llm-models` refuses, with its error kind and
-/// message (which never echo a value).
+/// message (which never echo a value). A file whose document declares an `aws-process`
+/// endpoint, and so makes `llm` start a program, is refused on Unix unless it is a regular file
+/// owned by you or root that neither group nor others can write, reached only through
+/// directories, and links in directories, owned by you or root that nobody else can write.
 pub fn load(path: &Path) -> Result<Routes, Failure> {
-    let source = std::fs::read_to_string(path).map_err(|error| {
+    let cannot_read = |error: io::Error| {
         Failure::refused(format!(
             "llm: cannot read {}: {}",
             path.display(),
             error.kind()
         ))
-    })?;
+    };
+    let mut file = std::fs::File::open(path).map_err(cannot_read)?;
+    let mut source = String::new();
+    file.read_to_string(&mut source).map_err(cannot_read)?;
     let yaml = path
         .extension()
         .and_then(|extension| extension.to_str())
@@ -248,14 +260,26 @@ pub fn load(path: &Path) -> Result<Routes, Failure> {
     } else {
         Routes::parse_toml(&source)
     };
-    parsed.map_err(|error| {
+    let routes = parsed.map_err(|error| {
         Failure::refused(format!(
             "llm: {}: {}: {}",
             path.display(),
             code(error.code),
             error.message
         ))
-    })
+    })?;
+    let starts_programs = routes
+        .bedrock_endpoints()
+        .any(|endpoint| endpoint.credential_kind() == AwsCredentialKind::Process);
+    if starts_programs {
+        trust::check(path, &file).map_err(|reason| {
+            Failure::refused(format!(
+                "llm: {}: it declares an aws-process endpoint, which runs a command, and {reason}",
+                path.display()
+            ))
+        })?;
+    }
+    Ok(routes)
 }
 
 /// Runs the command line `args` in `environment`.
@@ -541,7 +565,8 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
     };
     let resolvers = routes
         .resolvers(&sources(environment, routes, &target.endpoint))
-        .map_err(|error| refused(&error))?;
+        .map_err(|error| refused(&error))?
+        .allow_credential_process();
     let prompt = prompt(infer)?;
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()

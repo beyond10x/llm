@@ -42,6 +42,9 @@
 //!   bedrock-keys: {protocol: messages, bedrock: {region: eu-central-1},
 //!                  auth: {kind: aws-keys, access_key_id: env:AWS_ACCESS_KEY_ID,
 //!                         secret_access_key: env:AWS_SECRET_ACCESS_KEY}}
+//!   bedrock-dev: {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+//!                 auth: {kind: aws-process,
+//!                        command: [aws, configure, export-credentials, --profile, dev]}}
 //! ```
 //!
 //! Its `protocol` is `bedrock-converse` (Converse) or `messages` (the Anthropic body on
@@ -49,7 +52,11 @@
 //! is the Bedrock model or inference-profile id. It authenticates with `aws-keys` (an access key
 //! id, a secret access key and optionally a session token, each a secret reference) or
 //! `aws-container` (the container credentials endpoint and its token file, which the caller
-//! supplies through [`SecretSources::with_container_credentials`]). Its routes are served by
+//! supplies through [`SecretSources::with_container_credentials`]) or `aws-process` (a
+//! `command`, the program and then its arguments, run without a shell when a turn needs keys;
+//! it prints them as an AWS `credential_process` answer, and they stay in this process's
+//! memory). An `aws-process` route builds only with feature `process` and only when the caller
+//! allows it through [`RouteResolvers::allow_credential_process`]. Its routes are served by
 //! `llm-bedrock`'s `BedrockClient` and stay out of the catalog, whose bindings are the three
 //! HTTP wires.
 //!
@@ -172,6 +179,15 @@ struct RawAuth {
     secret_access_key: Option<String>,
     #[serde(default)]
     session_token: Option<String>,
+    #[serde(default, deserialize_with = "present")]
+    command: Option<Value>,
+}
+
+/// A field that is present, whatever its value: an explicit `null` is `Some(Value::Null)`, so
+/// that only a missing field reads as absent. `auth.command` is inspected whole by
+/// `process_command`, which names a wrong element by its index.
+fn present<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Value>, D::Error> {
+    Value::deserialize(deserializer).map(Some)
 }
 
 impl RawAuth {
@@ -443,10 +459,6 @@ fn about(kind: &str, name: &Id, message: &str) -> Error {
 
 /// Where a `file:` secret lives: an absolute path, or one below the home the caller supplies.
 #[derive(Clone)]
-#[cfg_attr(
-    not(feature = "file"),
-    expect(dead_code, reason = "read only by the file source, compiled out here")
-)]
 enum FilePath {
     Absolute(PathBuf),
     Home(PathBuf),
@@ -587,11 +599,17 @@ fn read_endpoint(name: Id, raw: RawEndpoint) -> Result<Declared, Error> {
     if raw.bedrock.is_some() || protocol == Protocol::BedrockConverse {
         return BedrockEndpointDeclaration::read(name, protocol, raw).map(Declared::Bedrock);
     }
-    if matches!(raw.auth.kind.as_str(), "aws-keys" | "aws-container") {
+    if matches!(
+        raw.auth.kind.as_str(),
+        "aws-keys" | "aws-container" | "aws-process"
+    ) {
         return Err(refuse(
-            "only a Bedrock endpoint (one with a `bedrock` table) takes `auth.kind` aws-keys or \
-             aws-container",
+            "only a Bedrock endpoint (one with a `bedrock` table) takes `auth.kind` aws-keys, \
+             aws-container or aws-process",
         ));
+    }
+    if raw.auth.command.is_some() {
+        return Err(refuse("only an aws-process endpoint takes `auth.command`"));
     }
     if let Some((field, _)) = raw
         .auth
@@ -746,14 +764,18 @@ pub enum AwsCredentialKind {
     /// `aws-container`: the container credentials endpoint (EKS Pod Identity) and its token
     /// file, which the caller supplies.
     Container,
+    /// `aws-process`: a command that prints the keys on the AWS `credential_process` contract,
+    /// run only when the caller allows it and the build enables feature `process`.
+    Process,
 }
 
 impl AwsCredentialKind {
-    /// The `auth.kind` the document writes: `aws-keys` or `aws-container`.
+    /// The `auth.kind` the document writes: `aws-keys`, `aws-container` or `aws-process`.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Keys => "aws-keys",
             Self::Container => "aws-container",
+            Self::Process => "aws-process",
         }
     }
 }
@@ -766,6 +788,10 @@ enum AwsCredentials {
         session_token: Option<SecretSource>,
     },
     Container,
+    /// The program, then its arguments; never empty, the program never empty.
+    Process {
+        command: Vec<String>,
+    },
 }
 
 /// One declared Amazon Bedrock Runtime endpoint, as the document states it.
@@ -788,6 +814,50 @@ fn key_reference(endpoint: &Id, field: &str) -> Result<SecretRef, Error> {
             "its name is too long to name its aws-keys references",
         )
     })
+}
+
+/// Refuses an `auth` of `kind`, a source other than aws-keys, that also names an AWS key field.
+fn one_source(auth: &RawAuth, kind: &str, refuse: &dyn Fn(&str) -> Error) -> Result<(), Error> {
+    match auth
+        .key_fields()
+        .into_iter()
+        .find(|(_, value)| value.is_some())
+    {
+        Some((field, _)) => Err(refuse(&format!(
+            "an {kind} endpoint cannot also name `auth.{field}`: a Bedrock endpoint has one \
+             credential source"
+        ))),
+        None => Ok(()),
+    }
+}
+
+/// An aws-process endpoint's `auth.command`: a list of strings whose first, the program, is not
+/// empty, on an `auth` that names no key field.
+fn process_command(auth: &RawAuth, refuse: &dyn Fn(&str) -> Error) -> Result<Vec<String>, Error> {
+    one_source(auth, "aws-process", refuse)?;
+    let parts = match &auth.command {
+        None => return Err(refuse("an aws-process endpoint requires `auth.command`")),
+        Some(Value::Array(parts)) => parts,
+        Some(_) => return Err(refuse("`auth.command` is not a list of strings")),
+    };
+    if parts.is_empty() {
+        return Err(refuse(
+            "`auth.command` is empty; it names the program, then its arguments",
+        ));
+    }
+    let command = parts
+        .iter()
+        .enumerate()
+        .map(|(index, part)| {
+            part.as_str()
+                .map(str::to_owned)
+                .ok_or_else(|| refuse(&format!("`auth.command[{index}]` is not a string")))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if command[0].is_empty() {
+        return Err(refuse("`auth.command[0]`, the program, is empty"));
+    }
+    Ok(command)
 }
 
 impl BedrockEndpointDeclaration {
@@ -820,7 +890,13 @@ impl BedrockEndpointDeclaration {
                  and `auth.secret_access_key`",
             ));
         }
+        if auth.kind != "aws-process" && auth.command.is_some() {
+            return Err(refuse("only an aws-process endpoint takes `auth.command`"));
+        }
         let credentials = match auth.kind.as_str() {
+            "aws-process" => AwsCredentials::Process {
+                command: process_command(&auth, &refuse)?,
+            },
             "aws-keys" => {
                 let [access_key_id, secret_access_key, session_token] =
                     auth.key_fields().map(|(field, value)| {
@@ -847,21 +923,13 @@ impl BedrockEndpointDeclaration {
                 }
             }
             "aws-container" => {
-                if let Some((field, _)) = auth
-                    .key_fields()
-                    .into_iter()
-                    .find(|(_, value)| value.is_some())
-                {
-                    return Err(refuse(&format!(
-                        "an aws-container endpoint cannot also name `auth.{field}`: a Bedrock \
-                         endpoint has one credential source"
-                    )));
-                }
+                one_source(&auth, "aws-container", &refuse)?;
                 AwsCredentials::Container
             }
             _ => {
                 return Err(refuse(
-                    "a Bedrock endpoint's `auth.kind` must be aws-keys or aws-container",
+                    "a Bedrock endpoint's `auth.kind` must be aws-keys, aws-container or \
+                     aws-process",
                 ));
             }
         };
@@ -913,10 +981,21 @@ impl BedrockEndpointDeclaration {
         match self.credentials {
             AwsCredentials::Keys { .. } => AwsCredentialKind::Keys,
             AwsCredentials::Container => AwsCredentialKind::Container,
+            AwsCredentials::Process { .. } => AwsCredentialKind::Process,
         }
     }
 
-    /// The source kinds of the aws-keys references, in field order; empty for aws-container.
+    /// An aws-process endpoint's command: the program, then its arguments. Configuration, not
+    /// a secret; reading it runs nothing.
+    pub fn command(&self) -> Option<&[String]> {
+        match &self.credentials {
+            AwsCredentials::Process { command } => Some(command),
+            AwsCredentials::Keys { .. } | AwsCredentials::Container => None,
+        }
+    }
+
+    /// The source kinds of the aws-keys references, in field order; empty for aws-container
+    /// and aws-process.
     pub fn secret_kinds(&self) -> Vec<SecretKind> {
         match &self.credentials {
             AwsCredentials::Keys {
@@ -932,7 +1011,7 @@ impl BedrockEndpointDeclaration {
             .flatten()
             .map(SecretSource::kind)
             .collect(),
-            AwsCredentials::Container => Vec::new(),
+            AwsCredentials::Container | AwsCredentials::Process { .. } => Vec::new(),
         }
     }
 
@@ -1011,6 +1090,10 @@ impl BedrockEndpointDeclaration {
                     about("endpoint", &self.name, "its name is not a secret reference")
                 })?,
             },
+            AwsCredentials::Process { command } => AwsReferences::Process {
+                endpoint: self.name.clone(),
+                command: command.clone(),
+            },
         })
     }
 
@@ -1027,6 +1110,9 @@ impl BedrockEndpointDeclaration {
                 "session_token": session_token.as_ref().map(SecretSource::canonical),
             }),
             AwsCredentials::Container => json!({"kind": "aws-container"}),
+            AwsCredentials::Process { command } => {
+                json!({"kind": "aws-process", "command": command})
+            }
         };
         json!({
             "name": self.name,
@@ -1653,7 +1739,10 @@ impl Routes {
     /// # Errors
     /// As [`Routes::target`], and as [`crate::port`] refuses a credentialed endpoint the caller
     /// has no resolver for (`unauthorized`); an `aws-container` endpoint without a container
-    /// credentials endpoint from the caller is `unauthorized` too. Nothing is sent.
+    /// credentials endpoint from the caller is `unauthorized` too, and so is an `aws-process`
+    /// endpoint the caller does not allow or this build cannot run (without feature `process`).
+    /// Nothing is sent and no command runs; an `aws-process` endpoint runs its command at its
+    /// first turn, not here.
     pub fn port(
         &self,
         name: &str,
@@ -1769,7 +1858,9 @@ impl Routes {
     /// reference without an absolute home, a `keychain:` reference without an injected store,
     /// a path the file source refuses, and an `aws-container` endpoint whose container token
     /// file the caller did not supply or supplied as a path the file source refuses. Every
-    /// other route still builds.
+    /// other route still builds. An `aws-process` endpoint needs no resolver; the result allows
+    /// no credential process until the caller calls [`RouteResolvers::allow_credential_process`],
+    /// and building it runs no command.
     ///
     /// # Errors
     /// `invalid-request` for an endpoint name too long to name its references.
@@ -1837,6 +1928,9 @@ impl Routes {
                         )),
                     }
                 }
+                // Its command needs no resolver; whether it may run is the caller's
+                // `RouteResolvers::allow_credential_process`.
+                (AwsCredentials::Process { .. }, AwsReferences::Process { .. }) => continue,
                 _ => {
                     return Err(about(
                         "endpoint",
@@ -1851,6 +1945,7 @@ impl Routes {
             resolvers,
             unavailable,
             container_uri: sources.container_uri.clone(),
+            credential_process: false,
         })
     }
 }
@@ -2132,12 +2227,22 @@ pub struct RouteResolvers {
     /// Why each credentialed endpoint without a resolver has none.
     unavailable: BTreeMap<Id, String>,
     container_uri: Option<String>,
+    credential_process: bool,
 }
 
 impl RouteResolvers {
     /// The accounts, one per credentialed endpoint, a resolver was built for, in name order.
     pub fn accounts(&self) -> impl Iterator<Item = &Id> {
         self.resolvers.keys()
+    }
+
+    /// Lets an `aws-process` endpoint's port run the command its document names. Without this
+    /// call, and in a build without feature `process`, such a port is refused as
+    /// `unauthorized` and nothing runs: a routes document alone never starts a program.
+    #[must_use]
+    pub fn allow_credential_process(mut self) -> Self {
+        self.credential_process = true;
+        self
     }
 }
 
@@ -2147,6 +2252,7 @@ impl fmt::Debug for RouteResolvers {
             .field("accounts", &self.resolvers.keys().collect::<Vec<_>>())
             .field("unavailable", &self.unavailable.keys().collect::<Vec<_>>())
             .field("container_uri", &self.container_uri.is_some())
+            .field("credential_process", &self.credential_process)
             .finish()
     }
 }
@@ -2162,5 +2268,9 @@ impl Resolvers for RouteResolvers {
 
     fn unavailable(&self, account_id: &Id) -> Option<&str> {
         self.unavailable.get(account_id).map(String::as_str)
+    }
+
+    fn credential_process_allowed(&self) -> bool {
+        self.credential_process
     }
 }

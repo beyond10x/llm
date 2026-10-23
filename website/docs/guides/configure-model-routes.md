@@ -43,7 +43,7 @@ routes:
 | `base_url` | An HTTP(S) API prefix with no userinfo, query or fragment |
 | `protocol` | `messages`, `responses` or `chat-completions`; on a Bedrock endpoint `bedrock-converse` or `messages` |
 | `bedrock.region` | Makes the endpoint a Bedrock endpoint; see [Bedrock endpoints](#bedrock-endpoints) |
-| `auth.kind` | `anonymous`, `bearer` or `api-key`; on a Bedrock endpoint `aws-keys` or `aws-container` |
+| `auth.kind` | `anonymous`, `bearer` or `api-key`; on a Bedrock endpoint `aws-keys`, `aws-container` or `aws-process` |
 | `auth.header` | The header an `api-key` endpoint sends; required for `api-key` and refused otherwise |
 | `auth.secret` | A reference, never a value: `env:<VARIABLE>`, `file:<absolute path or ~/path>` or `keychain:<service>/<entry>`; required for `bearer` and `api-key`, refused for `anonymous` |
 
@@ -63,6 +63,9 @@ endpoints:
                    auth: {kind: aws-keys, access_key_id: env:AWS_ACCESS_KEY_ID,
                           secret_access_key: env:AWS_SECRET_ACCESS_KEY,
                           session_token: env:AWS_SESSION_TOKEN}}
+  bedrock-dev:    {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+                   auth: {kind: aws-process,
+                          command: [aws, configure, export-credentials, --profile, dev]}}
 ```
 
 | Field | Values |
@@ -70,15 +73,32 @@ endpoints:
 | `protocol` | `bedrock-converse` for Converse; `messages` for the Anthropic body on `InvokeModel` |
 | `bedrock.region` | Required; the request is signed for it |
 | `base_url` | Optional; replaces `https://bedrock-runtime.{region}.amazonaws.com` |
-| `auth.kind` | `aws-keys` or `aws-container`; exactly one credential source |
+| `auth.kind` | `aws-keys`, `aws-container` or `aws-process`; exactly one credential source |
 | `auth.access_key_id`, `auth.secret_access_key` | References, required for `aws-keys` |
 | `auth.session_token` | A reference, optional for `aws-keys` |
+| `auth.command` | A list of strings: the program (non-empty), then its arguments; required for `aws-process`, refused otherwise |
 
 An `aws-container` endpoint signs with the credentials the container endpoint serves (EKS Pod
 Identity, ECS task roles). The caller supplies that endpoint's URI and its token file with
 `SecretSources::with_container_credentials`; without them the endpoint gets no resolver, so
 `Routes::port` refuses its routes as `unauthorized` and every other route still builds. The
 endpoint's name is the provider, account and endpoint of its turns' provenance.
+
+An `aws-process` endpoint runs its `command` without a shell, as an AWS profile's
+`credential_process` does, and signs with the keys it prints: the `credential_process` JSON
+answer, `Version` 1 with a non-empty `AccessKeyId` and `SecretAccessKey`, optionally a
+`SessionToken` and an RFC 3339 `Expiration`. The keys stay in the calling process's memory. The
+command runs at the first turn, not when the document is parsed, the catalog is built or the
+routes are listed, and again only when the keys are within five minutes of expiring; a turn
+inside that window is answered with the kept keys while one further run refreshes them. Its stdin
+is empty, its stderr is the caller's, its stdout is read up to 64 KiB, and it is killed after 60
+seconds. A non-zero exit, a timeout or an unusable answer refuses the turn as `unauthorized`,
+naming the endpoint and the program and carrying none of the output; nothing is sent.
+
+Running a command is the caller's decision, not the document's. `Routes::port` builds an
+`aws-process` route only with `llm-models` feature `process` and only from resolvers the caller
+marked with `RouteResolvers::allow_credential_process`; otherwise the route is refused as
+`unauthorized`, no command runs and every other route still builds. The `llm` command allows it.
 
 ## Routes and names
 

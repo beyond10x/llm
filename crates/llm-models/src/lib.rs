@@ -9,8 +9,10 @@
 //! stays at turn time, inside the client.
 //!
 //! A routes document's `bedrock` endpoint has no binding: [`routes::Routes::port`] builds
-//! `llm-bedrock`'s `BedrockClient` for its routes, signing with the endpoint's AWS keys or with
-//! the container credentials endpoint the caller supplies.
+//! `llm-bedrock`'s `BedrockClient` for its routes, signing with the endpoint's AWS keys, with
+//! the container credentials endpoint the caller supplies, or with the keys the endpoint's
+//! `aws-process` command prints. That command runs only in a build with feature `process` and
+//! for a caller that allows it ([`routes::RouteResolvers::allow_credential_process`]).
 
 pub mod routes;
 
@@ -50,6 +52,12 @@ pub trait Resolvers {
     fn unavailable(&self, _account_id: &Id) -> Option<&str> {
         None
     }
+
+    /// Whether an `aws-process` Bedrock endpoint may run the command its routes document
+    /// names. False by default: such a port is refused `unauthorized` and nothing runs.
+    fn credential_process_allowed(&self) -> bool {
+        false
+    }
 }
 
 impl Resolvers for BTreeMap<Id, Arc<dyn SecretResolver>> {
@@ -86,6 +94,79 @@ pub(crate) enum AwsReferences {
         account: Id,
         token: SecretRef,
     },
+    /// No reference: the command prints the keys. `command` is the program, then its arguments.
+    Process {
+        endpoint: Id,
+        command: Vec<String>,
+    },
+}
+
+/// An `aws-process` endpoint's credentials: the command's, with every failure naming the
+/// endpoint before the program.
+#[cfg(feature = "process")]
+struct EndpointProcess {
+    endpoint: Id,
+    source: llm_bedrock::ProcessCredentials,
+}
+
+#[cfg(feature = "process")]
+impl CredentialSource for EndpointProcess {
+    fn credentials<'a>(
+        &'a self,
+        cancel: &'a Cancel,
+    ) -> BoxFuture<'a, Result<llm_bedrock::AwsCredentials, Error>> {
+        Box::pin(async move {
+            self.source.credentials(cancel).await.map_err(|mut error| {
+                if error.code != ErrorCode::Cancelled {
+                    error.message = format!("endpoint `{}`: {}", self.endpoint, error.message);
+                }
+                error
+            })
+        })
+    }
+}
+
+/// The credential source of an `aws-process` endpoint, when the build and the caller allow its
+/// command to run.
+fn process_credentials(
+    endpoint: &Id,
+    command: Vec<String>,
+    resolvers: &dyn Resolvers,
+) -> Result<Arc<dyn CredentialSource>, Error> {
+    if !resolvers.credential_process_allowed() {
+        return Err(Error::new(
+            ErrorCode::Unauthorized,
+            format!(
+                "endpoint `{endpoint}`: an aws-process endpoint runs a command, and the caller \
+                 does not allow credential processes"
+            ),
+        ));
+    }
+    #[cfg(feature = "process")]
+    {
+        let mut parts = command.into_iter();
+        let program = parts.next().unwrap_or_default();
+        let source =
+            llm_bedrock::ProcessCredentials::new(program, parts).map_err(|mut error| {
+                error.message = format!("endpoint `{endpoint}`: {}", error.message);
+                error
+            })?;
+        Ok(Arc::new(EndpointProcess {
+            endpoint: endpoint.clone(),
+            source,
+        }))
+    }
+    #[cfg(not(feature = "process"))]
+    {
+        drop(command);
+        Err(Error::new(
+            ErrorCode::Unauthorized,
+            format!(
+                "endpoint `{endpoint}`: an aws-process endpoint needs feature `process` of \
+                 llm-models, which this build does not enable"
+            ),
+        ))
+    }
 }
 
 fn unresolved(resolvers: &dyn Resolvers, account: &Id) -> Error {
@@ -115,7 +196,8 @@ impl Port {
 
     /// The port of one Bedrock Runtime target, signing with credentials from the caller's
     /// resolver for its account: the keys themselves (`aws-keys`), or the container endpoint's
-    /// token (`aws-container`), whose URI the caller supplies too.
+    /// token (`aws-container`), whose URI the caller supplies too; or with the keys the
+    /// endpoint's command prints (`aws-process`), when the caller allows it to run.
     pub(crate) fn bedrock(
         target: BedrockTarget,
         references: AwsReferences,
@@ -138,7 +220,7 @@ impl Port {
                     secret_access_key,
                     session_token,
                 );
-                (resolver, Arc::new(credentials))
+                (Some(resolver), Arc::new(credentials))
             }
             AwsReferences::Container { account, token } => {
                 let resolver = resolvers
@@ -154,12 +236,15 @@ impl Port {
                 })?;
                 let credentials =
                     ContainerCredentials::new(http.clone(), uri, resolver.clone(), token)?;
-                (resolver, Arc::new(credentials))
+                (Some(resolver), Arc::new(credentials))
+            }
+            AwsReferences::Process { endpoint, command } => {
+                (None, process_credentials(&endpoint, command, resolvers)?)
             }
         };
         Ok(Self {
             client: Client::Bedrock(BedrockClient::new(target, http, credentials)?),
-            resolver: Some(resolver),
+            resolver,
         })
     }
 
