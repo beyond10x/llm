@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-23
+
 ### Added
 
 - `llm-cli`: the `llm` command, `llm model list` (text or JSON) and `llm infer` over one `llm.toml` routes file
@@ -381,7 +383,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.11.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.12.0...HEAD
+[0.12.0]: https://github.com/beyond10x/llm/compare/0.11.0...0.12.0
 [0.11.0]: https://github.com/beyond10x/llm/compare/0.10.0...0.11.0
 [0.10.0]: https://github.com/beyond10x/llm/compare/0.9.0...0.10.0
 [0.9.0]: https://github.com/beyond10x/llm/compare/0.8.4...0.9.0
