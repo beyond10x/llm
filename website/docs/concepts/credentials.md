@@ -62,7 +62,7 @@ The default feature set has no adapter at all. Each source is a feature of `llm-
 
 | Feature | Resolver | Reads |
 | --- | --- | --- |
-| `file` | `file::FileResolver` | An explicit absolute path per reference, on Linux, with strict ownership and mode checks |
+| `file` | `file::FileResolver` | An explicit absolute path per reference, on Linux, with strict ownership and mode checks; `FileResolver::mounted` also follows a projected volume's links from protected directories |
 | `keychain` | `keychain::KeychainResolver` | An explicitly injected `keyring_core::CredentialStore`, one service and entry per reference |
 | `native-keychain` | `keychain::native_store()` | Linux Secret Service, macOS Keychain or Windows Credential Manager; includes `keychain` |
 | `environment` | `environment::EnvironmentResolver` | One caller-named environment variable per reference, as raw bytes, on every resolve |

@@ -55,8 +55,15 @@ other platforms with `UnsupportedPlatform` rather than accepting a mode-bit-only
 Use a keychain store or your own injected resolver there.
 :::
 
-Symlink-based projected volumes (a Kubernetes secret mount, for example) must be copied or mounted
-into an explicitly protected regular file by the deployment before this adapter will read them.
+`FileResolver::new` refuses a symlink-based projected volume (a Kubernetes secret mount, for
+example). `FileResolver::mounted` takes the same map and accepts a file the platform mounts for
+the process. It follows links, at most 40, but only from a directory owned by the effective user
+or root that is not group- or other-writable. It then walks the resolved path with the checks
+above, except that the file may be readable by group and others (`0644`) though still writable
+by its owner alone. It re-reads on every resolve and retries once when a rotation removes the
+file between the link walk and the read. The layout it is built for (`token` linking to
+`..data/token`, `..data` linking to a timestamped directory the kubelet swaps on rotation) comes
+from the AWS and Kubernetes documentation and has not been checked on a cluster.
 
 ## An explicitly chosen keychain
 

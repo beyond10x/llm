@@ -134,9 +134,12 @@ of 0.
 endpoint's name, from the existing local adapters: features `environment`, `file` and `keychain` of
 `llm-models` (all off by default) forward to the same features of `llm-credentials`.
 `SecretSources::with_home` supplies the directory `file:~/` expands against; nothing reads `HOME` on
-its own. A `keychain:` reference needs a store injected with `SecretSources::with_keychain`. A
-reference whose feature is off, or a keychain reference without a store, is refused when the
-resolvers are built. Building them reads nothing.
+its own. A `keychain:` reference needs a store injected with `SecretSources::with_keychain`.
+Building the resolvers reads nothing and refuses only an over-long endpoint name. An endpoint
+whose source cannot be built gets no resolver: a reference whose feature is off, a keychain
+reference without a store, a `file:~/` reference without a home, or a container token file that
+is not an absolute path. A port for one of its routes is then refused as `unauthorized`, naming
+the endpoint, and every other route still builds.
 
 There is no ambient fallback. An unset variable or a missing file is refused when the turn
 prepares its credential, before any request is sent, as `unauthorized` and by the endpoint's
