@@ -12,6 +12,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - **Breaking:** `llm-models`: `auth.kind = "aws-process"` with a `command`; `AwsCredentialKind::Process` is a new variant
 - `llm-models`: feature `process`; an `aws-process` route builds only after `RouteResolvers::allow_credential_process`
 - `llm-cli`: `llm infer` runs an `aws-process` endpoint's command; `llm model list` never runs it
+- `llm-cli`: on Unix a routes file with an `aws-process` endpoint must pass the `file:` owner and mode check, or is refused
 
 ## [0.13.0] - 2026-10-23
 

@@ -76,7 +76,7 @@ endpoints:
 | `auth.kind` | `aws-keys`, `aws-container` or `aws-process`; exactly one credential source |
 | `auth.access_key_id`, `auth.secret_access_key` | References, required for `aws-keys` |
 | `auth.session_token` | A reference, optional for `aws-keys` |
-| `auth.command` | The program, then its arguments, each a non-empty program and strings; required for `aws-process` and refused otherwise |
+| `auth.command` | A list of strings: the program (non-empty), then its arguments; required for `aws-process`, refused otherwise |
 
 An `aws-container` endpoint signs with the credentials the container endpoint serves (EKS Pod
 Identity, ECS task roles). The caller supplies that endpoint's URI and its token file with

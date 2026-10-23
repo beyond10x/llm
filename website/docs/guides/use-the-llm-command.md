@@ -161,6 +161,14 @@ something else, prints more than 64 KiB or runs longer than 60 seconds refuses t
 code `2`, naming the endpoint and the program and printing none of the command's output. The
 command's stderr is passed through, so its prompts and warnings reach you.
 
+Whoever can write the routes file can make `llm` run a program, so a file that declares an
+`aws-process` endpoint is trusted only as far as a `file:` source is. It must be a regular file
+owned by you or root that neither its group nor others can write, every directory on its path must
+be owned by you or root and not writable by others, and a link on that path is followed only from
+such a directory. Otherwise `llm infer` and `llm model list` both refuse the file with exit code
+`2`, naming it and what is wrong, before anything runs. A file without an `aws-process` endpoint is
+not checked. On Windows the check is not made.
+
 ## Exit codes
 
 | Code | Meaning |

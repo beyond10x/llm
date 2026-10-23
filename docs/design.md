@@ -286,12 +286,17 @@ fall back to billable API credentials. The future Connectors arbitrary-secret ad
 require changing route references. Core never depends on Connectors.
 
 The `llm.routes/1` document is the short form, in YAML or TOML with one digest for both. A Bedrock
-endpoint (`bedrock.region`, `aws-keys` or `aws-container`) has no binding: it stays outside the
-expanded catalog, and `Routes::port` builds `llm-bedrock`'s client for its routes. Route aliases
-are unique names for one route; a route's `price` applies to the model it declares, and a turn's
-cost stays unknown wherever a count or rate is. The `llm` command (`llm-cli`) reads one such file
-and is a caller like any other: it injects the environment and file sources and the container
-credentials endpoint from its own environment, and nothing else.
+endpoint (`bedrock.region`, `aws-keys`, `aws-container` or `aws-process`) has no binding: it
+stays outside the expanded catalog, and `Routes::port` builds `llm-bedrock`'s client for its
+routes. An `aws-process` endpoint names a command that prints AWS `credential_process` keys; it
+is the one credential source that starts a program, so a routes document alone never runs it:
+`llm-models` builds its resolver only with feature `process` and only after the caller calls
+`RouteResolvers::allow_credential_process`, and refuses its routes as `unauthorized` otherwise.
+Route aliases are unique names for one route; a route's `price` applies to the model it declares,
+and a turn's cost stays unknown wherever a count or rate is. The `llm` command (`llm-cli`) reads
+one such file and is a caller like any other: it injects the environment and file sources and the
+container credentials endpoint from its own environment, and allows credential processes, for a
+routes file that on Unix passes the owner and mode check a `file:` source gets; nothing else.
 
 ## Routing and accounting
 
