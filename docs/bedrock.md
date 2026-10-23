@@ -32,15 +32,22 @@ The Converse body carries `messages`, `system` (only when the turn has instructi
 `inferenceConfig` (only the sampling fields the turn sets), `toolConfig`, and the thinking
 control as `additionalModelRequestFields.thinking` for an Anthropic model id only. A reasoning
 effort, the parallel tool call control, thinking for another model and opaque state from another
-wire are refused by name before any I/O. Advisory hints are never sent; a successful turn that
-carried any ends with one `advisory-omitted` warning. Converse reports no response id and no
+wire are refused by name before any I/O. Advisory hints are never sent, `anthropic-beta`
+included; a successful turn that carried any ends with one `advisory-omitted` warning. Converse reports no response id and no
 upstream model, so both stay absent.
 
 The Anthropic body is the Messages body `llm-messages` encodes, plus
 `anthropic_version: "bedrock-2023-05-31"`, minus `model` (the path names it) and `stream` (the
-operation says it). Its stream is `chunk` frames, each `{"bytes": base64(<Messages event>)}`, read by
+operation says it). A turn's `anthropic-beta` names, which the Messages route takes as a header,
+travel as the body's `anthropic_beta` array, and no `anthropic-beta` header is sent. Its stream is
+`chunk` frames, each `{"bytes": base64(<Messages event>)}`, read by
 the Messages stream decoder. So text, tool calls, thinking, stop reasons and refusals on that wire
 are the Messages wire's ([messages.md](messages.md)).
+
+`llm_bedrock::encode_request(&request, &target)` returns the body a turn on that target sends, and
+`check_request` answers only whether it would be refused. `BedrockClient` encodes through the
+same function, so the check refuses exactly what a turn refuses, with the same error, before any
+credential is asked for. A gateway can run it before it answers its own caller.
 
 Streamed answers on both wires are AWS event-stream frames (`application/vnd.amazon.eventstream`):
 a 12-byte prelude, typed headers, the payload and two CRC32 checksums. `llm_bedrock::eventstream`
@@ -74,9 +81,14 @@ sources ship:
   `AWS_CONTAINER_CREDENTIALS_FULL_URI`) and a secret reference the resolver binds to the token
   file (`AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`), for example through the `file` adapter. The
   source sends the token as the `authorization` header of a GET and keeps the answer until five
-  minutes before its `Expiration`. A refresh in those five minutes that fails, other than by
-  cancellation, answers the kept credentials until their `Expiration` passes, and the failure
-  after it; each request in the window asks the endpoint again. One trailing line end of the token
+  minutes before its `Expiration`. Inside those five minutes a request gets the kept credentials
+  at once and starts one refresh in the background if none is running; at most one fetch is in
+  flight, on its own task, so a slow endpoint holds no turn. Only a request with no unexpired
+  credentials kept waits, and all such requests wait for the same fetch; a request that cancels
+  its wait leaves the fetch to finish. A refresh that fails keeps the unexpired credentials until
+  their `Expiration` passes, and the next request after it waits for a new fetch.
+  `ContainerCredentials::refreshing` says whether a fetch is in flight. Dropping the source
+  cancels its fetch. One trailing line end of the token
   is removed; the rest must be non-empty printable ASCII of at most 16 KiB. The answer is decoded
   straight into its four members, the secret access key and the token into zeroizing strings,
   with no intermediate JSON document; a member named twice, or an answer that is not a JSON

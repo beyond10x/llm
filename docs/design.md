@@ -494,9 +494,11 @@ its path (`messages[].content[].cache_control`), at every level:
   published tools.
 - `hints` (`llm_core::Hints`), all advisory: `prompt_cache` (cache what this turn shares with the
   next, with an optional lifetime `5m` or `1h`), `prompt_cache_key`, `verbosity` (`low`, `medium`,
-  `high`), `reasoning_summary` (`auto`, `concise`, `detailed`), and `unforwarded`: what ingress read
-  and no egress wire sends (`input-item-ids`, `client-metadata`). A cache key is non-empty and at
-  most 512 bytes, like every other identifier the turn bounds.
+  `high`), `reasoning_summary` (`auto`, `concise`, `detailed`), `anthropic_beta` (the Anthropic
+  betas a client opts into), and `unforwarded`: what ingress read and no egress wire sends
+  (`input-item-ids`, `client-metadata`). A cache key is non-empty and at most 512 bytes, like every
+  other identifier the turn bounds. `anthropic_beta` holds at most 32 distinct names, each 1 to 128
+  ASCII letters, digits, `-`, `_` or `.`.
 
 A turn whose controls are empty is written as `llm.turn/3`, byte for byte as before; any other is
 `llm.turn/4`. Both are read, and a `/3` document carrying controls is refused.
@@ -531,7 +533,11 @@ checks the binding's `reasoning_efforts` against the name the wire will receive.
 | `prompt-cache-key` | omitted | `prompt_cache_key` | `prompt_cache_key` |
 | `verbosity` | omitted | `verbosity` | `text.verbosity` |
 | `reasoning-summary` | omitted | omitted | `reasoning.summary` |
+| `anthropic-beta` | carried: one `anthropic-beta` header, after the subscription beta when there is one | omitted | omitted |
 | `input-item-ids`, `client-metadata` | omitted | omitted | omitted |
+
+Bedrock InvokeModel shares the Messages column and writes `anthropic-beta` as the body's
+`anthropic_beta` array instead of a header; Bedrock Converse omits every hint.
 
 On Responses a client given a conversation sends that conversation's identifier as
 `prompt_cache_key`; a turn whose own key differs is refused rather than one of the two silently
@@ -555,7 +561,10 @@ The per-wire pages hold the full tables: `docs/messages.md` "What the declared s
   messages (a block of another type is refused); `cache_control` (`ephemeral`, optional `ttl`) on a
   system block, a text, `tool_use` or `tool_result` block, or a tool is the `prompt-cache` hint, and
   two different lifetimes in one request are refused; `output_config.effort` takes any name,
-  `max` included; `metadata` is `client-metadata`.
+  `max` included; `metadata` is `client-metadata`. The `anthropic-beta` request header is not in
+  the body: a gateway that passes the headers to `decode_request_with_headers` gets its
+  comma-separated names as the `anthropic-beta` hint, and a bad name is refused by the header's
+  name.
 - Responses: `instructions` is the instructions, followed by the text parts of the developer
   messages that open `input`; `parallel_tool_calls`, `prompt_cache_key`, `text.verbosity` and
   `reasoning.summary` are carried; an item `id` is `input-item-ids` and `client_metadata` is
