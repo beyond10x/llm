@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-23T00:14:31Z",
+  "actor": "human:timo",
+  "artifact": "story:llm-command",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 b10x-build-slot task check on wave/2026-10-23-w16 at d9f8e510 (review round 2), ess 0.67.0: exit 0; 1392 passed 0 failed 2 ignored over every test run of the gate; conformance 942/942 x3, 0 skipped; aep plan artifact validate: valid"
+  }
+}
