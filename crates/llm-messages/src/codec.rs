@@ -1,8 +1,9 @@
 use crate::{absent, fields, optional, string};
 use llm_core::{
-    Advisory, AuthKind, CacheTtl, CallId, Capabilities, Error, Item, MAX_REQUEST_BYTES,
-    MAX_TOOL_ARGUMENT_BYTES, PromptCache, Protocol, Provenance, Sampling, Thinking, ToolCall,
-    ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded, exceeds, wire_effort,
+    Advisory, AuthKind, CacheTtl, CallId, Capabilities, Error, Item, MAX_ANTHROPIC_BETAS,
+    MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, PromptCache, Protocol, Provenance, Sampling,
+    Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded,
+    anthropic_beta_name, exceeds, wire_effort,
 };
 use llm_providers::Binding;
 use serde_json::{Value, json};
@@ -318,6 +319,60 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
     request.validate()?;
     Ok(IngressRequest { request, stream })
 }
+
+/// [`decode_request`], then the `anthropic-beta` header lines of the same request.
+///
+/// A client names the betas it opts into in the request's headers, not its body, so a gateway
+/// that reads both passes both. Each `anthropic-beta` line is a comma-separated list; the names
+/// of every line are carried in order, once each, as
+/// [`llm_core::Hints::anthropic_beta`]. Every other header is the gateway's business.
+///
+/// # Errors
+/// Whatever [`decode_request`] refuses; and a header line that is not visible ASCII, a name
+/// outside [`llm_core::anthropic_beta_name`], or more than [`llm_core::MAX_ANTHROPIC_BETAS`]
+/// distinct names, each refused by the header's name.
+pub fn decode_request_with_headers(
+    bytes: &[u8],
+    headers: &http::HeaderMap,
+    origin: &Provenance,
+) -> Result<IngressRequest, Error> {
+    let mut ingress = decode_request(bytes, origin)?;
+    let betas = header_betas(headers)?;
+    if betas.len() > MAX_ANTHROPIC_BETAS {
+        return Err(Error::invalid(
+            "`anthropic-beta` header names more betas than a turn carries",
+        ));
+    }
+    ingress.request.controls.hints.anthropic_beta = betas;
+    ingress.request.validate()?;
+    Ok(ingress)
+}
+
+/// The distinct names of every `anthropic-beta` header line, in the order they first appear.
+fn header_betas(headers: &http::HeaderMap) -> Result<Vec<String>, Error> {
+    let mut betas: Vec<String> = Vec::new();
+    for line in headers.get_all(crate::BETA_HEADER) {
+        let line = line
+            .to_str()
+            .map_err(|_| Error::invalid("`anthropic-beta` header is not visible ASCII"))?;
+        for name in line
+            .split(',')
+            .map(str::trim)
+            .filter(|name| !name.is_empty())
+        {
+            if !anthropic_beta_name(name) {
+                return Err(Error::invalid(
+                    "`anthropic-beta` header names a beta outside the supported name bound",
+                ));
+            }
+            if !betas.iter().any(|kept| kept == name) {
+                betas.push(name.to_owned());
+            }
+        }
+    }
+    Ok(betas)
+}
+
 /// The prompt-cache marks one arriving request carries, read into one hint.
 ///
 /// A mark is `{"type":"ephemeral"}` with an optional `ttl` of `5m` or `1h`. `5m` is the route's
@@ -733,9 +788,11 @@ pub(crate) fn decode_block(
     }
 }
 
-/// The advisory hints this projection sends: only the prompt cache, as the lifetime of the
-/// breakpoints it places (the advisory table of `docs/design.md`).
-const CARRIED: [Advisory; 1] = [Advisory::PromptCache];
+/// The advisory hints this projection sends: the prompt cache, as the lifetime of the
+/// breakpoints it places, and the `anthropic-beta` names, as the request header (the advisory
+/// table of `docs/design.md`). Bedrock `InvokeModel` shares this list and writes the names into its
+/// body.
+const CARRIED: [Advisory; 2] = [Advisory::PromptCache, Advisory::AnthropicBeta];
 
 /// The advisory hints `request` carries that this wire does not send, in the design's order.
 ///

@@ -144,6 +144,17 @@ fn the_first_codex_turn_ingests_under_the_written_rules() {
         omitted_advisories(&request),
         [Advisory::InputItemIds, Advisory::ClientMetadata]
     );
+    // A beta a Messages client opted into has no Responses field, so it is reported, not sent.
+    let mut forwarded = request.clone();
+    forwarded.controls.hints.anthropic_beta = vec!["context-1m-2025-08-07".to_owned()];
+    assert_eq!(
+        omitted_advisories(&forwarded),
+        [
+            Advisory::AnthropicBeta,
+            Advisory::InputItemIds,
+            Advisory::ClientMetadata
+        ]
+    );
 }
 
 #[test]

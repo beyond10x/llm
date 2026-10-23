@@ -3,8 +3,9 @@
 //! [`StaticCredentials`] resolves an access key pair, and optionally a session token, through
 //! the caller's [`SecretResolver`] on every call and caches nothing. [`ContainerCredentials`]
 //! fetches temporary credentials from the container credentials endpoint that EKS Pod Identity
-//! and ECS task roles serve, and keeps them until five minutes before they expire; a refresh in
-//! those five minutes that fails leaves the kept credentials in use until they expire.
+//! and ECS task roles serve, and keeps them until five minutes before they expire; in those five
+//! minutes one refresh runs in the background while every caller gets the kept credentials, and
+//! a refresh that fails leaves them in use until they expire.
 //!
 //! Every failure is `unauthorized`, dispatch `not-sent` and final, except cancellation and an
 //! endpoint that did not answer, answered too late or answered with a server failure: that one
@@ -16,13 +17,13 @@ use crate::time::parse_rfc3339_utc;
 use http::{HeaderMap, HeaderValue};
 use llm_core::{BoxFuture, Cancel, Dispatch, Error, ErrorCode};
 use llm_credentials::{ReferenceError, ResolvedSecret, SecretError, SecretRef, SecretResolver};
-use llm_http::HttpClient;
+use llm_http::{HttpClient, require_tokio_runtime};
 use serde::de::{self, Deserialize, Deserializer, IgnoredAny, MapAccess, Visitor};
 use std::fmt;
 use std::net::{Ipv4Addr, Ipv6Addr};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex as StdMutex, MutexGuard, PoisonError};
 use std::time::{Duration, SystemTime};
-use tokio::sync::Mutex;
+use tokio::sync::watch;
 use url::{Host, Url};
 use zeroize::Zeroizing;
 
@@ -196,21 +197,44 @@ impl CredentialSource for StaticCredentials {
 /// (`AWS_CONTAINER_CREDENTIALS_FULL_URI`), fetched with the token the resolver gives for the
 /// token reference as `authorization`, and kept until five minutes before they expire.
 ///
-/// A refresh in those five minutes that fails, other than by cancellation, answers the kept
-/// credentials while their `Expiration` has not passed, and the failure once it has. Each call
-/// in the window asks the endpoint again.
+/// At most one fetch is in flight. In those five minutes a call answers the kept credentials at
+/// once and starts the refresh if none is running; it never waits for it. Only a call that finds
+/// no credentials, or only expired ones, waits, and every such call waits for the same fetch. The
+/// fetch runs on its own task, not under any caller's cancellation: a caller that cancels stops
+/// waiting, and the fetch goes on for the next one. Dropping the source cancels it.
+///
+/// A refresh that fails leaves the kept credentials in use while their `Expiration` has not
+/// passed, and the next call in the window starts another; a caller waiting on a fetch that
+/// fails gets its failure.
 ///
 /// The URI must be `https`, or `http` to a loopback address or to an address the endpoint is
 /// served on: `169.254.170.2`, `169.254.170.23` or `[fd00:ec2::23]`. A host name is not an
 /// address, `localhost` included. One trailing line end of the token is removed; what is left
 /// must be non-empty printable ASCII of at most 16 KiB.
 pub struct ContainerCredentials {
+    shared: Arc<Shared>,
+}
+
+/// What the source and its fetch task share.
+struct Shared {
     http: HttpClient,
     uri: Url,
     resolver: Arc<dyn SecretResolver>,
     token: SecretRef,
-    cached: Mutex<Option<AwsCredentials>>,
+    /// Cancelled when the source is dropped, which ends a fetch nobody can use.
+    stop: Cancel,
+    state: StdMutex<State>,
 }
+
+/// The kept credentials and the fetch in flight. The lock is never held across an await.
+#[derive(Default)]
+struct State {
+    kept: Option<AwsCredentials>,
+    flight: Option<Flight>,
+}
+
+/// The answer of the fetch in flight, `None` until it lands.
+type Flight = watch::Receiver<Option<Result<AwsCredentials, Error>>>;
 
 impl ContainerCredentials {
     /// # Errors
@@ -223,12 +247,80 @@ impl ContainerCredentials {
         token: SecretRef,
     ) -> Result<Self, Error> {
         Ok(Self {
-            http,
-            uri: admitted_uri(uri)?,
-            resolver,
-            token,
-            cached: Mutex::new(None),
+            shared: Arc::new(Shared {
+                http,
+                uri: admitted_uri(uri)?,
+                resolver,
+                token,
+                stop: Cancel::new(),
+                state: StdMutex::new(State::default()),
+            }),
         })
+    }
+
+    /// Whether a fetch is in flight now.
+    pub fn refreshing(&self) -> bool {
+        self.shared.lock().flight.as_ref().is_some_and(live)
+    }
+
+    /// The kept credentials when a caller may use them now, else the fetch to wait for, started
+    /// if none is in flight.
+    fn kept_or_flight(&self) -> Result<Result<AwsCredentials, Flight>, Error> {
+        let now = SystemTime::now();
+        let mut state = self.shared.lock();
+        if let Some(kept) = state.kept.as_ref().filter(|kept| fresh(kept, now)) {
+            return Ok(Ok(kept.clone()));
+        }
+        let flight = if let Some(flight) = state.flight.as_ref().filter(|flight| live(flight)) {
+            flight.clone()
+        } else {
+            let flight = Shared::start(&self.shared)?;
+            state.flight = Some(flight.clone());
+            flight
+        };
+        Ok(state
+            .kept
+            .as_ref()
+            .filter(|kept| unexpired(kept, now))
+            .cloned()
+            .ok_or(flight))
+    }
+}
+
+impl Drop for ContainerCredentials {
+    fn drop(&mut self) {
+        self.shared.stop.cancel();
+    }
+}
+
+/// Whether the fetch behind `flight` can still answer: its task has not gone without landing.
+fn live(flight: &Flight) -> bool {
+    flight.has_changed().is_ok()
+}
+
+impl Shared {
+    fn lock(&self) -> MutexGuard<'_, State> {
+        self.state.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Spawns one fetch on the current Tokio runtime. When it lands, its credentials are kept (a
+    /// failure keeps the ones before), the flight is cleared, and then every waiter is answered.
+    fn start(shared: &Arc<Self>) -> Result<Flight, Error> {
+        require_tokio_runtime().map_err(|error| error.with_dispatch(Dispatch::NotSent))?;
+        let (answer, flight) = watch::channel(None);
+        let task = Arc::clone(shared);
+        tokio::spawn(async move {
+            let result = task.fetch(&task.stop).await;
+            {
+                let mut state = task.lock();
+                if let Ok(credentials) = &result {
+                    state.kept = Some(credentials.clone());
+                }
+                state.flight = None;
+            }
+            answer.send_replace(Some(result));
+        });
+        Ok(flight)
     }
 
     async fn fetch(&self, cancel: &Cancel) -> Result<AwsCredentials, Error> {
@@ -269,8 +361,8 @@ impl ContainerCredentials {
 impl fmt::Debug for ContainerCredentials {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ContainerCredentials")
-            .field("endpoint", &self.uri.origin().ascii_serialization())
-            .field("token", &self.token)
+            .field("endpoint", &self.shared.uri.origin().ascii_serialization())
+            .field("token", &self.shared.token)
             .finish_non_exhaustive()
     }
 }
@@ -284,35 +376,31 @@ impl CredentialSource for ContainerCredentials {
             if cancel.is_cancelled() {
                 return Err(Error::cancelled());
             }
-            // One fetch at a time: a caller that waited here finds the credentials just fetched.
-            let mut cached = tokio::select! {
-                biased;
-                () = cancel.cancelled() => return Err(Error::cancelled()),
-                cached = self.cached.lock() => cached,
+            let mut flight = match self.kept_or_flight()? {
+                Ok(kept) => return Ok(kept),
+                Err(flight) => flight,
             };
-            if let Some(credentials) = cached
-                .as_ref()
-                .filter(|credentials| fresh(credentials, SystemTime::now()))
-            {
-                return Ok(credentials.clone());
-            }
-            match self.fetch(cancel).await {
-                Ok(credentials) => {
-                    *cached = Some(credentials.clone());
-                    Ok(credentials)
-                }
-                Err(error) => match cached.as_ref() {
-                    Some(kept)
-                        if error.code != ErrorCode::Cancelled
-                            && unexpired(kept, SystemTime::now()) =>
-                    {
-                        Ok(kept.clone())
-                    }
-                    _ => Err(error),
+            tokio::select! {
+                biased;
+                () = cancel.cancelled() => Err(Error::cancelled()),
+                landed = flight.wait_for(Option::is_some) => match landed {
+                    Ok(answer) => answer.clone().unwrap_or_else(|| Err(abandoned())),
+                    Err(_) => Err(abandoned()),
                 },
             }
         })
     }
+}
+
+/// The fetch a caller waited on ended without an answer: its runtime shut down or the source was
+/// dropped. Nothing was sent, and another call starts a new fetch.
+fn abandoned() -> Error {
+    Error::new(
+        ErrorCode::Transport,
+        "container credentials fetch ended without an answer",
+    )
+    .with_dispatch(Dispatch::NotSent)
+    .with_retriable(true)
 }
 
 /// Whether `credentials` outlive the refresh window from `now`; long-term keys always do.

@@ -13,9 +13,11 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
+use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 
 const ACCESS_KEY_ID: &str = "ASIAFIXTUREKEYID";
+const RENEWED_KEY_ID: &str = "ASIAFIXTURERENEWED";
 const SECRET_ACCESS_KEY: &str = "fixture/secret+access-key";
 const SESSION_TOKEN: &str = "fixture-session-token";
 const AUTHORIZATION_TOKEN: &str = "fixture-authorization-token";
@@ -119,6 +121,111 @@ impl Drop for Endpoint {
     fn drop(&mut self) {
         self.task.abort();
     }
+}
+
+/// A local credentials endpoint that answers its first connection at once with `first`, and
+/// every later one with `later` only once `gate` gives it a permit. Each connection is served on
+/// its own task and its request head is logged as soon as it is read, so a stalled refresh and
+/// any second refresh are both seen.
+struct Gated {
+    uri: String,
+    requests: Arc<Mutex<Vec<String>>>,
+    gate: Arc<Semaphore>,
+    task: JoinHandle<()>,
+}
+
+impl Gated {
+    async fn new(first: &Value, later: &Value) -> Self {
+        let listener = TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("a local port");
+        let address = listener.local_addr().expect("its address");
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let gate = Arc::new(Semaphore::new(0));
+        let (seen, permits) = (Arc::clone(&requests), Arc::clone(&gate));
+        let first = response("200 OK", &first.to_string());
+        let later = response("200 OK", &later.to_string());
+        let task = tokio::spawn(async move {
+            let mut answered = 0_usize;
+            while let Ok((mut stream, _)) = listener.accept().await {
+                let (seen, gate) = (Arc::clone(&seen), Arc::clone(&permits));
+                let (response, gated) = if answered == 0 {
+                    (first.clone(), false)
+                } else {
+                    (later.clone(), true)
+                };
+                answered += 1;
+                tokio::spawn(async move {
+                    let mut head = Vec::new();
+                    let mut buffer = [0_u8; 1024];
+                    while !head.windows(4).any(|window| window == b"\r\n\r\n") {
+                        match stream.read(&mut buffer).await {
+                            Ok(0) | Err(_) => break,
+                            Ok(count) => head.extend_from_slice(&buffer[..count]),
+                        }
+                    }
+                    seen.lock()
+                        .expect("the request log")
+                        .push(String::from_utf8_lossy(&head).into_owned());
+                    if gated {
+                        gate.acquire().await.expect("the gate").forget();
+                    }
+                    let _ = stream.write_all(response.as_bytes()).await;
+                    let _ = stream.shutdown().await;
+                });
+            }
+        });
+        Self {
+            uri: format!("http://{address}/v1/credentials"),
+            requests,
+            gate,
+            task,
+        }
+    }
+
+    fn requests(&self) -> usize {
+        self.requests.lock().expect("the request log").len()
+    }
+
+    /// Lets every stalled and every later refresh answer.
+    fn open(&self) {
+        self.gate.add_permits(Semaphore::MAX_PERMITS / 2);
+    }
+
+    /// Waits, at most five seconds, until the endpoint has read `count` requests.
+    async fn read(&self, count: usize) {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            while self.requests() < count {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap_or_else(|_| panic!("{count} requests read, {} seen", self.requests()));
+    }
+}
+
+impl Drop for Gated {
+    fn drop(&mut self) {
+        self.task.abort();
+    }
+}
+
+/// Waits, at most five seconds, until `source` has no refresh in flight.
+async fn settled(source: &ContainerCredentials) {
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while source.refreshing() {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .expect("the refresh settles");
+}
+
+/// The endpoint's answer for another key, expiring at `expires`.
+fn renewed(expires: &str) -> Value {
+    let mut document = answer(expires);
+    document["AccessKeyId"] = json!(RENEWED_KEY_ID);
+    document
 }
 
 fn response(status: &str, body: &str) -> String {
@@ -289,8 +396,125 @@ async fn credentials_within_five_minutes_of_expiry_are_fetched_again() {
         let cancel = Cancel::new();
         source.credentials(&cancel).await.expect("first");
         source.credentials(&cancel).await.expect("second");
+        settled(&source).await;
         assert_eq!(endpoint.requests().len(), 2, "expiring in {seconds} s");
     }
+}
+
+/// Inside the refresh window the kept credentials are answered at once, whatever the refresh is
+/// doing: sixteen turns at the same time each get them while the one refresh stalls, and the
+/// endpoint sees that one refresh and no other. Once it answers, its credentials are kept.
+#[tokio::test]
+async fn turns_inside_the_refresh_window_get_the_kept_credentials_while_one_refresh_stalls() {
+    let endpoint = Gated::new(
+        &answer(&rfc3339(in_seconds(120))),
+        &renewed(&rfc3339(in_seconds(3600))),
+    )
+    .await;
+    let source = Arc::new(container(&endpoint.uri, AUTHORIZATION_TOKEN));
+    let first = source.credentials(&Cancel::new()).await.expect("first");
+    assert_eq!(first.access_key_id(), ACCESS_KEY_ID);
+
+    let turns: Vec<_> = (0..16)
+        .map(|_| {
+            let source = Arc::clone(&source);
+            tokio::spawn(async move {
+                tokio::time::timeout(
+                    Duration::from_millis(500),
+                    source.credentials(&Cancel::new()),
+                )
+                .await
+            })
+        })
+        .collect();
+    for turn in turns {
+        let kept = turn
+            .await
+            .expect("the turn ran")
+            .expect("answered without waiting for the refresh")
+            .expect("the kept credentials");
+        assert_eq!(kept.access_key_id(), ACCESS_KEY_ID);
+        assert_eq!(kept.expires(), first.expires());
+    }
+    endpoint.read(2).await;
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    assert_eq!(endpoint.requests(), 2, "one refresh in flight, no other");
+    assert!(source.refreshing());
+
+    endpoint.open();
+    settled(&source).await;
+    let renewed = source.credentials(&Cancel::new()).await.expect("renewed");
+    assert_eq!(renewed.access_key_id(), RENEWED_KEY_ID);
+    assert_eq!(endpoint.requests(), 2);
+}
+
+/// Once the kept credentials have expired, or before there are any, a caller waits for the
+/// fetch, and every caller waits for the same one.
+#[tokio::test]
+async fn without_unexpired_credentials_callers_wait_for_the_one_fetch() {
+    let expires = in_seconds(2);
+    let endpoint = Gated::new(
+        &answer(&rfc3339(expires)),
+        &renewed(&rfc3339(in_seconds(3600))),
+    )
+    .await;
+    let source = Arc::new(container(&endpoint.uri, AUTHORIZATION_TOKEN));
+    source.credentials(&Cancel::new()).await.expect("first");
+    let left = expires
+        .duration_since(SystemTime::now())
+        .unwrap_or_default();
+    tokio::time::sleep(left + Duration::from_millis(100)).await;
+
+    let turns: Vec<_> = (0..8)
+        .map(|_| {
+            let source = Arc::clone(&source);
+            tokio::spawn(async move { source.credentials(&Cancel::new()).await })
+        })
+        .collect();
+    endpoint.read(2).await;
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    assert!(turns.iter().all(|turn| !turn.is_finished()), "they wait");
+    assert_eq!(endpoint.requests(), 2, "one fetch for every waiting caller");
+
+    endpoint.open();
+    for turn in turns {
+        let renewed = turn.await.expect("the turn ran").expect("renewed");
+        assert_eq!(renewed.access_key_id(), RENEWED_KEY_ID);
+    }
+    assert_eq!(endpoint.requests(), 2);
+}
+
+/// A caller that cancels while it waits for a fetch is answered cancelled at once; the fetch
+/// goes on and its credentials are kept for the next caller.
+#[tokio::test]
+async fn a_caller_that_cancels_its_wait_leaves_the_fetch_to_finish() {
+    let expires = in_seconds(2);
+    let endpoint = Gated::new(
+        &answer(&rfc3339(expires)),
+        &renewed(&rfc3339(in_seconds(3600))),
+    )
+    .await;
+    let source = container(&endpoint.uri, AUTHORIZATION_TOKEN);
+    source.credentials(&Cancel::new()).await.expect("first");
+    let left = expires
+        .duration_since(SystemTime::now())
+        .unwrap_or_default();
+    tokio::time::sleep(left + Duration::from_millis(100)).await;
+
+    let cancel = Cancel::new();
+    let waiting = source.credentials(&cancel);
+    let canceller = cancel.clone();
+    let (error, ()) = tokio::join!(async { waiting.await.expect_err("cancelled") }, async {
+        endpoint.read(2).await;
+        canceller.cancel();
+    });
+    assert_eq!(error.code, ErrorCode::Cancelled);
+    assert!(source.refreshing());
+    endpoint.open();
+    settled(&source).await;
+    let renewed = source.credentials(&Cancel::new()).await.expect("renewed");
+    assert_eq!(renewed.access_key_id(), RENEWED_KEY_ID);
+    assert_eq!(endpoint.requests(), 2);
 }
 
 /// A refresh inside the five minutes that fails, by a server failure or by a refusal, answers
@@ -317,7 +541,10 @@ async fn a_failed_refresh_answers_the_kept_credentials_until_they_expire() {
         assert_eq!(kept.secret_access_key(), first.secret_access_key());
         assert_eq!(kept.session_token(), first.session_token());
         assert_eq!(kept.expires(), first.expires());
+        settled(&source).await;
         assert_eq!(endpoint.requests().len(), 2);
+        let again = source.credentials(&cancel).await.expect("still kept");
+        assert_eq!(again.access_key_id(), first.access_key_id());
     }
 }
 

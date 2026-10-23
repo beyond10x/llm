@@ -25,5 +25,5 @@ mod invoke;
 pub mod sigv4;
 mod time;
 
-pub use client::{Api, BedrockClient, BedrockTarget};
+pub use client::{Api, BedrockClient, BedrockTarget, check_request, encode_request};
 pub use credentials::{AwsCredentials, ContainerCredentials, CredentialSource, StaticCredentials};

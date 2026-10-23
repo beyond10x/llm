@@ -352,6 +352,7 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
             },
             verbosity: verbosity(object.get("text"))?,
             reasoning_summary,
+            anthropic_beta: Vec::new(),
             unforwarded,
         },
     };

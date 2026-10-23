@@ -6,6 +6,17 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-bedrock`: `check_request` and `encode_request` refuse before I/O exactly what a turn refuses; the client uses them
+- **Breaking:** `llm-core`: `Hints::anthropic_beta` and `Advisory::AnthropicBeta` carry the betas a client opts into
+- `llm-messages`: `decode_request_with_headers` reads `anthropic-beta` headers; the client sends them in one header
+- `llm-bedrock`: InvokeModel sends a turn's betas as the body's `anthropic_beta`; Converse reports them omitted
+
+### Fixed
+
+- `llm-bedrock`: turns inside the container credentials refresh window no longer wait for one slow refresh
+
 ## [0.12.0] - 2026-10-23
 
 ### Added

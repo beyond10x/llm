@@ -304,6 +304,59 @@ async fn a_bearer_turn_carries_neither_the_oauth_beta_nor_the_preamble() {
     );
 }
 
+fn with_betas(names: &[&str]) -> TurnRequest {
+    let mut request = short_request();
+    request.controls.hints.anthropic_beta = names.iter().map(|&name| name.to_owned()).collect();
+    request
+}
+
+#[tokio::test]
+async fn a_subscription_turn_sends_its_betas_after_the_oauth_beta_in_one_header() {
+    let (url, server) = serve(1).await;
+    let request = with_betas(&[
+        "context-1m-2025-08-07",
+        OAUTH_BETA,
+        "interleaved-thinking-2025-05-14",
+    ]);
+    let client = client(subscription(&url), Arc::new(Rotating::default()));
+    client
+        .turn(&request, &mut VecSink::new(16, 4096), &Cancel::new())
+        .await
+        .expect("a decoded turn");
+    let (head, body) = split(&server.await.unwrap()[0]);
+    assert_eq!(head.matches("anthropic-beta:").count(), 1, "{head}");
+    assert!(
+        head.contains(&format!(
+            "\r\nanthropic-beta: {OAUTH_BETA},context-1m-2025-08-07,interleaved-thinking-2025-05-14\r\n"
+        )),
+        "{head}"
+    );
+    assert!(body.get("anthropic_beta").is_none(), "{body}");
+}
+
+#[tokio::test]
+async fn a_bearer_turn_sends_only_its_own_betas_and_none_when_it_has_none() {
+    let (url, server) = serve(2).await;
+    let client = client(
+        rebound(&url, "bearer", "metered"),
+        Arc::new(Rotating::default()),
+    );
+    for request in [with_betas(&["context-1m-2025-08-07"]), with_betas(&[])] {
+        client
+            .turn(&request, &mut VecSink::new(16, 4096), &Cancel::new())
+            .await
+            .expect("a decoded turn");
+    }
+    let captured = server.await.unwrap();
+    let (head, _) = split(&captured[0]);
+    assert!(
+        head.contains("\r\nanthropic-beta: context-1m-2025-08-07\r\n"),
+        "{head}"
+    );
+    let (head, _) = split(&captured[1]);
+    assert!(!head.contains("anthropic-beta:"), "{head}");
+}
+
 /// Block 0 is the preamble, exactly and alone; the instruction follows and keeps the breakpoint.
 /// Every other shape Harness measured on 2026-08-30 was answered 429 with no rate-limit headers.
 #[test]

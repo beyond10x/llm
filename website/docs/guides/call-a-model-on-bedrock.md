@@ -115,7 +115,7 @@ let outcome = client.turn(&request, &mut sink, &Cancel::new()).await?;
 The capabilities above are placeholders. Declare the ones your model has.
 
 The container source sends the token as `authorization`, keeps the answer until five minutes
-before it expires, and admits only `https` or `http` to a loopback address, `169.254.170.2`,
+before it expires, then refreshes it in the background while turns keep using it, and admits only `https` or `http` to a loopback address, `169.254.170.2`,
 `169.254.170.23` or `[fd00:ec2::23]`. Pod Identity needs the EKS Pod Identity Agent on Linux EC2
 nodes. Whether `automountServiceAccountToken: false` removes the token volume is unknown. The
 Bedrock page in the repository lists the AWS sources for these facts and marks them unverified.

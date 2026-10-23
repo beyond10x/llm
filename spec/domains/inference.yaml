@@ -49,11 +49,13 @@ types:
       - {name: prompt_cache_key, type: Optional<String>}
       - {name: verbosity, type: Optional<llm.inference.Verbosity>}
       - {name: reasoning_summary, type: Optional<llm.inference.ReasoningSummary>}
+      # At most 32 distinct names, each 1 to 128 ASCII letters, digits, "-", "_" or ".".
+      - {name: anthropic_beta, type: List<String>}
       - {name: unforwarded, type: List<llm.inference.Unforwarded>}
   # The name an omitted hint is reported under, in this order.
   - name: llm.inference.Advisory
     kind: enum
-    variants: [PromptCache, PromptCacheKey, Verbosity, ReasoningSummary, InputItemIds, ClientMetadata]
+    variants: [PromptCache, PromptCacheKey, Verbosity, ReasoningSummary, AnthropicBeta, InputItemIds, ClientMetadata]
   - name: llm.inference.Controls
     kind: struct
     fields:

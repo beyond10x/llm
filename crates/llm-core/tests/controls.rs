@@ -110,6 +110,7 @@ fn a_turn_with_controls_is_llm_turn_4_and_reads_back_equal() {
             prompt_cache_key: Some("session-1".to_owned()),
             verbosity: Some(Verbosity::Low),
             reasoning_summary: Some(ReasoningSummary::Auto),
+            anthropic_beta: Vec::new(),
             unforwarded: [Unforwarded::InputItemIds, Unforwarded::ClientMetadata].into(),
         },
     };
@@ -382,6 +383,7 @@ fn omitted_hints_are_exactly_the_present_ones_a_wire_does_not_carry_in_advisory_
         prompt_cache_key: Some("session-1".to_owned()),
         verbosity: None,
         reasoning_summary: Some(ReasoningSummary::Concise),
+        anthropic_beta: vec!["context-1m-2025-08-07".to_owned()],
         unforwarded: [Unforwarded::ClientMetadata, Unforwarded::InputItemIds].into(),
     };
     assert_eq!(
@@ -390,6 +392,7 @@ fn omitted_hints_are_exactly_the_present_ones_a_wire_does_not_carry_in_advisory_
             Advisory::PromptCache,
             Advisory::PromptCacheKey,
             Advisory::ReasoningSummary,
+            Advisory::AnthropicBeta,
             Advisory::InputItemIds,
             Advisory::ClientMetadata,
         ]
@@ -399,6 +402,7 @@ fn omitted_hints_are_exactly_the_present_ones_a_wire_does_not_carry_in_advisory_
         [
             Advisory::PromptCache,
             Advisory::ReasoningSummary,
+            Advisory::AnthropicBeta,
             Advisory::InputItemIds,
             Advisory::ClientMetadata,
         ]

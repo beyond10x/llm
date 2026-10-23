@@ -4,8 +4,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "eab2b893317e1bdaa10e6b3a4bd7d6219ed4241ec161dd9e560b108cae8f83d0",
-    "contract_digest": "slice-sha256/2:be5fc1695363eb7d88d114e32f35f0b5ee6d786810174e5506af076b1987ae4a",
+    "source_digest": "02060feb1123b2fe70a5552689048d7cd0eeeed44ceeb74ed7edf3840af221ba",
+    "contract_digest": "slice-sha256/2:ed90fdbfd8f071bdfc793c3066b045b00bda9a07c688de2cd804b1827cebc44d",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -37,6 +37,12 @@
         "reasoning_summary": {
           "$ref": "#/$defs/llm.inference.ReasoningSummary"
         },
+        "anthropic_beta": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "unforwarded": {
           "type": "array",
           "items": {
@@ -45,6 +51,7 @@
         }
       },
       "required": [
+        "anthropic_beta",
         "unforwarded"
       ],
       "additionalProperties": false

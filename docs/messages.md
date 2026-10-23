@@ -60,6 +60,7 @@ whole:
 | `output_config.effort` | any non-empty name, `max` included; `format` and any other key refused by its path | the same name |
 | `tool_choice.disable_parallel_tool_use` | a boolean `v` on `auto`, `any` or `tool` is `controls.parallel_tool_calls = !v` | `disable_parallel_tool_use: !b`, writing `{"type":"auto"}` when the choice is automatic |
 | `metadata` | an object holding only `user_id` (a string) is the `client-metadata` hint; another key refused by its path; the value is never kept | not sent (one-way), and reported omitted |
+| `anthropic-beta` header | read only by `decode_request_with_headers`: every line is a comma-separated list, empty entries skipped, each name kept once in order as the `anthropic-beta` hint; a line that is not visible ASCII, a name outside 1 to 128 ASCII letters, digits, `-`, `_` or `.`, or more than 32 names refused by the header's name | one `anthropic-beta` header (see The client); Bedrock InvokeModel writes the body's `anthropic_beta` array |
 
 `omitted_advisories(&TurnRequest)` names the hints this projection does not send, in the design's
 order: it carries only `prompt-cache`, so `prompt-cache-key`, `verbosity`, `reasoning-summary`,
@@ -83,8 +84,8 @@ the tools. A turn whose `prompt-cache` hint has the lifetime `1h` marks both bre
 with the subscription client preamble ("You are Claude Code, Anthropic's official CLI for
 Claude.") as its own block carrying only `type` and `text`, and the caller's instruction follows as
 the marked block, so the breakpoint still covers the whole constant head. An empty instruction sends
-the preamble alone, unmarked. The same account adds `anthropic-beta: oauth-2025-04-20` to the
-headers and sends the token as `authorization: Bearer`. API-key and plain bearer accounts send
+the preamble alone, unmarked. The same account adds `oauth-2025-04-20` to the `anthropic-beta`
+header, ahead of the turn's own betas, and sends the token as `authorization: Bearer`. API-key and plain bearer accounts send
 neither. Read back as ingress, such a body's two `system` blocks join into one instruction that
 begins with the preamble.
 
@@ -263,7 +264,9 @@ let outcome = client.turn(&request, &mut sink, &cancel).await?;
 One attempt. The request is refused before a credential is resolved; the credential is resolved per
 request through the injected resolver, so rotation needs no restart; the presentation is the
 binding's (`x-api-key` or `Authorization`), never inferred from the protocol. Every request carries
-`anthropic-version: 2023-06-01`, a constant rather than a setting. Diagnostics are fixed: a status
+`anthropic-version: 2023-06-01`, a constant rather than a setting. A turn whose `anthropic_beta`
+hint names betas sends them as one `anthropic-beta` header, comma-separated, after the
+subscription beta when the account has one, each name once. Diagnostics are fixed: a status
 or a reported upstream failure contributes its category, never its response text.
 
 A stream `error` of type `overloaded_error` (`unavailable`) or `api_error` (`transport`) is

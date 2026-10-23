@@ -9,13 +9,15 @@
 //! are synthetic, and each test that builds one says so.
 
 use llm_bedrock::{
-    Api, AwsCredentials, BedrockClient, BedrockTarget, CredentialSource,
+    Api, AwsCredentials, BedrockClient, BedrockTarget, CredentialSource, check_request,
+    encode_request,
     eventstream::{HeaderValue, Message, encode_message},
 };
 use llm_core::{
     ADVISORY_OMITTED, BoxFuture, CallId, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id,
-    Item, MAX_ITEMS, Model, Protocol, Provenance, StopReason, StreamEvent, Thinking, ToolCall,
-    ToolChoice, ToolName, ToolSpec, TurnOutcome, TurnRequest, Usage, VecSink,
+    Item, MAX_ITEMS, MAX_REQUEST_BYTES, MAX_TOOLS, Model, Protocol, Provenance, StopReason,
+    StreamEvent, Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnOutcome, TurnRequest,
+    Usage, VecSink, encoded_len,
 };
 use llm_http::{HttpClient, Limits};
 use serde_json::{Value, json};
@@ -834,6 +836,28 @@ async fn an_omitted_hint_is_reported_after_the_turn() {
     assert!(!String::from_utf8_lossy(&sent.body).contains("fixture-cache-key"));
 }
 
+#[tokio::test]
+async fn anthropic_beta_names_converse_cannot_send_are_reported_by_name_after_the_turn() {
+    let mut request = capital_request();
+    request.controls.hints.anthropic_beta = vec!["context-1m-2025-08-07".to_owned()];
+    let (_, events, sent) = replay(
+        NOVA,
+        true,
+        &request,
+        include_bytes!("data/frames/pydantic-test_bedrock_model_stream.bin"),
+    )
+    .await;
+    assert_eq!(shape(&events), vec![("text", 29), ("warning", 1)]);
+    assert!(matches!(
+        events.last(),
+        Some(StreamEvent::Warning { code, message })
+            if code == ADVISORY_OMITTED && message.contains("anthropic-beta")
+    ));
+    let body = String::from_utf8_lossy(&sent.body);
+    assert!(!body.contains("context-1m"), "{body}");
+    assert!(!body.contains("anthropic_beta"), "{body}");
+}
+
 /// A synthetic event frame, built here and not recorded.
 fn event(kind: &str, payload: &Value) -> Vec<u8> {
     encode_message(&Message {
@@ -1113,9 +1137,8 @@ async fn refused(target: BedrockTarget, request: &TurnRequest) -> (Error, usize)
     (error, keys.0.load(Ordering::SeqCst))
 }
 
-#[tokio::test]
-async fn what_converse_cannot_carry_is_refused_before_credentials_or_io() {
-    let nowhere = Url::parse("http://127.0.0.1:9/").unwrap();
+/// Every turn the Converse encoder refuses as unsupported: its name, the model and the turn.
+fn unsupported_turns() -> Vec<(&'static str, &'static str, TurnRequest)> {
     let mut cases: Vec<(&str, &str, TurnRequest)> = Vec::new();
 
     let request = TurnRequest::new(NOVA, vec![Item::assistant("Hello")]);
@@ -1173,11 +1196,99 @@ async fn what_converse_cannot_carry_is_refused_before_credentials_or_io() {
     ]);
     cases.push(("state in another wire's shape", SONNET_4, request));
 
-    for (name, model, request) in cases {
+    let mut request = temperature_request();
+    request.tools.push(tool(
+        "workspace.read",
+        "Read a file.",
+        json!({"type": "object"}),
+    ));
+    cases.push(("a tool name outside the wire's characters", NOVA, request));
+
+    let mut request = temperature_request();
+    request.items.extend([
+        call("tooluse_a", "get_capital", json!("France")),
+        Item::ToolResult {
+            call_id: CallId::new("tooluse_a").unwrap(),
+            output: json!("Paris"),
+            failed: false,
+        },
+    ]);
+    cases.push(("a tool input that is not an object", NOVA, request));
+
+    cases
+}
+
+#[tokio::test]
+async fn what_converse_cannot_carry_is_refused_before_credentials_or_io() {
+    let nowhere = Url::parse("http://127.0.0.1:9/").unwrap();
+    for (name, model, request) in unsupported_turns() {
         let (error, asked) = refused(target(model, true, nowhere.clone()), &request).await;
         assert_eq!(error.code, ErrorCode::Unsupported, "{name}");
         assert_eq!(error.dispatch, Dispatch::NotSent, "{name}");
         assert!(!error.retriable, "{name}");
         assert_eq!(asked, 0, "{name}");
+    }
+}
+
+/// A turn inside the neutral request bound whose Converse body is outside it: Converse wraps
+/// each of `MAX_TOOLS` tools in `toolSpec` and `inputSchema.json`, and the text fills the
+/// neutral bound.
+fn request_whose_converse_body_exceeds_the_bound() -> TurnRequest {
+    let mut request = TurnRequest::new(NOVA, vec![Item::user("")]);
+    request.tools = (0..MAX_TOOLS)
+        .map(|n| tool(&format!("t{n}"), "d", json!({"type": "object"})))
+        .collect();
+    let overhead = encoded_len(&request, usize::MAX).expect("encodable");
+    request.items = vec![Item::user("a".repeat(MAX_REQUEST_BYTES - overhead))];
+    request
+        .validate()
+        .expect("the neutral request is inside its bound");
+    request
+}
+
+#[tokio::test]
+async fn the_pre_send_check_answers_exactly_what_the_turn_refuses() {
+    let nowhere = Url::parse("http://127.0.0.1:9/").unwrap();
+    let mut cases = unsupported_turns();
+
+    let mut request = capital_request();
+    request.sampling.reasoning_effort = Some("high".to_owned());
+    cases.push(("a reasoning effort", NOVA, request));
+
+    cases.push((
+        "a body outside the request bound",
+        NOVA,
+        request_whose_converse_body_exceeds_the_bound(),
+    ));
+
+    for (name, model, request) in cases {
+        let target = target(model, true, nowhere.clone());
+        let checked = check_request(&request, &target).expect_err(name);
+        assert_eq!(
+            encode_request(&request, &target),
+            Err(checked.clone()),
+            "{name}"
+        );
+        let (refused, asked) = refused(target, &request).await;
+        assert_eq!(checked, refused, "{name}");
+        assert_eq!(asked, 0, "{name}");
+        if name == "a body outside the request bound" {
+            assert_eq!(checked.code, ErrorCode::TooLarge);
+        }
+    }
+
+    for (model, request) in [(NOVA, capital_request()), (NOVA, temperature_request())] {
+        let (_, _, sent) = replay(
+            model,
+            true,
+            &request,
+            include_bytes!("data/frames/pydantic-test_bedrock_model_stream.bin"),
+        )
+        .await;
+        let target = target(model, true, nowhere.clone());
+        assert_eq!(check_request(&request, &target), Ok(()));
+        let body: Value = serde_json::from_slice(&encode_request(&request, &target).unwrap())
+            .expect("the encoded body is JSON");
+        assert_eq!(body, sent.json());
     }
 }

@@ -11,6 +11,12 @@ use std::fmt;
 /// The longest prompt-cache key a turn carries, in bytes.
 pub const MAX_PROMPT_CACHE_KEY_BYTES: usize = 512;
 
+/// The most beta names a turn carries.
+pub const MAX_ANTHROPIC_BETAS: usize = 32;
+
+/// The longest beta name a turn carries, in bytes.
+pub const MAX_ANTHROPIC_BETA_BYTES: usize = 128;
+
 /// The code of the warning a client emits for the hints its wire did not send.
 pub const ADVISORY_OMITTED: &str = "advisory-omitted";
 
@@ -112,6 +118,7 @@ pub enum Advisory {
     PromptCacheKey,
     Verbosity,
     ReasoningSummary,
+    AnthropicBeta,
     InputItemIds,
     ClientMetadata,
 }
@@ -123,6 +130,7 @@ impl Advisory {
             Self::PromptCacheKey => "prompt-cache-key",
             Self::Verbosity => "verbosity",
             Self::ReasoningSummary => "reasoning-summary",
+            Self::AnthropicBeta => "anthropic-beta",
             Self::InputItemIds => "input-item-ids",
             Self::ClientMetadata => "client-metadata",
         }
@@ -156,8 +164,24 @@ pub struct Hints {
     pub verbosity: Option<Verbosity>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reasoning_summary: Option<ReasoningSummary>,
+    /// The Anthropic beta names the client asked for (its `anthropic-beta` header values), in
+    /// the order it sent them: the Messages wire sends them as that header, Bedrock `InvokeModel`
+    /// as the body's `anthropic_beta`. At most [`MAX_ANTHROPIC_BETAS`], each one distinct, at
+    /// most [`MAX_ANTHROPIC_BETA_BYTES`] bytes of ASCII letters, digits, `-`, `_` and `.`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub anthropic_beta: Vec<String>,
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     pub unforwarded: BTreeSet<Unforwarded>,
+}
+
+/// Whether `name` is a beta name a turn may carry: non-empty, at most
+/// [`MAX_ANTHROPIC_BETA_BYTES`] bytes of ASCII letters, digits, `-`, `_` and `.`.
+pub fn anthropic_beta_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= MAX_ANTHROPIC_BETA_BYTES
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'))
 }
 
 impl Hints {
@@ -166,6 +190,7 @@ impl Hints {
             && self.prompt_cache_key.is_none()
             && self.verbosity.is_none()
             && self.reasoning_summary.is_none()
+            && self.anthropic_beta.is_empty()
             && self.unforwarded.is_empty()
     }
 
@@ -183,6 +208,9 @@ impl Hints {
         }
         if self.reasoning_summary.is_some() {
             present.push(Advisory::ReasoningSummary);
+        }
+        if !self.anthropic_beta.is_empty() {
+            present.push(Advisory::AnthropicBeta);
         }
         present.extend(self.unforwarded.iter().copied().map(Advisory::from));
         present
@@ -205,6 +233,24 @@ impl Hints {
             return Err(Error::invalid(
                 "prompt cache key must be non-empty and at most 512 bytes",
             ));
+        }
+        if self.anthropic_beta.len() > MAX_ANTHROPIC_BETAS {
+            return Err(Error::invalid(
+                "a turn carries at most 32 anthropic-beta names",
+            ));
+        }
+        if !self
+            .anthropic_beta
+            .iter()
+            .all(|name| anthropic_beta_name(name))
+        {
+            return Err(Error::invalid(
+                "an anthropic-beta name is 1 to 128 ASCII letters, digits, '-', '_' or '.'",
+            ));
+        }
+        let distinct: BTreeSet<&String> = self.anthropic_beta.iter().collect();
+        if distinct.len() != self.anthropic_beta.len() {
+            return Err(Error::invalid("an anthropic-beta name is given twice"));
         }
         Ok(())
     }
