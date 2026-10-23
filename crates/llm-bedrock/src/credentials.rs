@@ -5,13 +5,21 @@
 //! fetches temporary credentials from the container credentials endpoint that EKS Pod Identity
 //! and ECS task roles serve, and keeps them until five minutes before they expire; in those five
 //! minutes one refresh runs in the background while every caller gets the kept credentials, and
-//! a refresh that fails leaves them in use until they expire.
+//! a refresh that fails leaves them in use until they expire. With feature `process`,
+//! `ProcessCredentials` runs an operator's `credential_process` command and keeps and renews
+//! what it prints the same way.
 //!
 //! Every failure is `unauthorized`, dispatch `not-sent` and final, except cancellation and an
 //! endpoint that did not answer, answered too late or answered with a server failure: that one
 //! keeps the transport's `transport` or `deadline` class and its `Retry-After`, and is
 //! `not-sent` and retriable. No message carries a key, a token, the endpoint's answer or its
 //! URI; a message may name a secret reference, which is the operator's non-secret lookup name.
+
+#[cfg(feature = "process")]
+mod process;
+
+#[cfg(feature = "process")]
+pub use process::ProcessCredentials;
 
 use crate::time::parse_rfc3339_utc;
 use http::{HeaderMap, HeaderValue};
@@ -212,15 +220,67 @@ impl CredentialSource for StaticCredentials {
 /// address, `localhost` included. One trailing line end of the token is removed; what is left
 /// must be non-empty printable ASCII of at most 16 KiB.
 pub struct ContainerCredentials {
-    shared: Arc<Shared>,
+    refreshing: Refreshing<ContainerFetch>,
 }
 
-/// What the source and its fetch task share.
-struct Shared {
+/// One container credentials fetch: the endpoint and the token reference it is asked with.
+struct ContainerFetch {
     http: HttpClient,
     uri: Url,
     resolver: Arc<dyn SecretResolver>,
     token: SecretRef,
+}
+
+impl ContainerCredentials {
+    /// # Errors
+    /// `unauthorized` for a URI that does not parse, carries user information or a fragment, or
+    /// is neither `https` nor `http` to an admitted address. The message never quotes the URI.
+    pub fn new(
+        http: HttpClient,
+        uri: &str,
+        resolver: Arc<dyn SecretResolver>,
+        token: SecretRef,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            refreshing: Refreshing::new(ContainerFetch {
+                http,
+                uri: admitted_uri(uri)?,
+                resolver,
+                token,
+            }),
+        })
+    }
+
+    /// Whether a fetch is in flight now.
+    pub fn refreshing(&self) -> bool {
+        self.refreshing.in_flight()
+    }
+}
+
+/// One way of getting temporary credentials that [`Refreshing`] keeps and renews.
+pub(crate) trait Fetch: Send + Sync + 'static {
+    /// One fetch, ended early when `cancel` fires.
+    fn fetch<'a>(&'a self, cancel: &'a Cancel) -> BoxFuture<'a, Result<AwsCredentials, Error>>;
+
+    /// The failure of a caller whose fetch ended without an answer: its runtime shut down or
+    /// the source was dropped. Nothing was sent, and another call starts a new fetch.
+    fn abandoned(&self) -> Error;
+}
+
+/// The kept credentials of one source and the single fetch that renews them.
+///
+/// At most one fetch is in flight. Inside [`REFRESH_WINDOW`] before the kept credentials expire,
+/// a call answers them at once and starts the refresh if none is running; it never waits for
+/// it. Only a call that finds no credentials, or only expired ones, waits, and every such call
+/// waits for the same fetch. The fetch runs on its own task, not under any caller's
+/// cancellation, and a failed one keeps the credentials before it. Dropping this cancels it.
+pub(crate) struct Refreshing<F: Fetch> {
+    shared: Arc<Shared<F>>,
+}
+
+/// What the source and its fetch task share.
+struct Shared<F> {
+    fetch: F,
     /// Cancelled when the source is dropped, which ends a fetch nobody can use.
     stop: Cancel,
     state: StdMutex<State>,
@@ -236,31 +296,44 @@ struct State {
 /// The answer of the fetch in flight, `None` until it lands.
 type Flight = watch::Receiver<Option<Result<AwsCredentials, Error>>>;
 
-impl ContainerCredentials {
-    /// # Errors
-    /// `unauthorized` for a URI that does not parse, carries user information or a fragment, or
-    /// is neither `https` nor `http` to an admitted address. The message never quotes the URI.
-    pub fn new(
-        http: HttpClient,
-        uri: &str,
-        resolver: Arc<dyn SecretResolver>,
-        token: SecretRef,
-    ) -> Result<Self, Error> {
-        Ok(Self {
+impl<F: Fetch> Refreshing<F> {
+    pub(crate) fn new(fetch: F) -> Self {
+        Self {
             shared: Arc::new(Shared {
-                http,
-                uri: admitted_uri(uri)?,
-                resolver,
-                token,
+                fetch,
                 stop: Cancel::new(),
                 state: StdMutex::new(State::default()),
             }),
-        })
+        }
+    }
+
+    pub(crate) fn fetcher(&self) -> &F {
+        &self.shared.fetch
     }
 
     /// Whether a fetch is in flight now.
-    pub fn refreshing(&self) -> bool {
+    pub(crate) fn in_flight(&self) -> bool {
         self.shared.lock().flight.as_ref().is_some_and(live)
+    }
+
+    /// The credentials to sign with now, waiting for the fetch only when nothing unexpired is
+    /// kept.
+    pub(crate) async fn credentials(&self, cancel: &Cancel) -> Result<AwsCredentials, Error> {
+        if cancel.is_cancelled() {
+            return Err(Error::cancelled());
+        }
+        let mut flight = match self.kept_or_flight()? {
+            Ok(kept) => return Ok(kept),
+            Err(flight) => flight,
+        };
+        tokio::select! {
+            biased;
+            () = cancel.cancelled() => Err(Error::cancelled()),
+            landed = flight.wait_for(Option::is_some) => match landed {
+                Ok(answer) => answer.clone().unwrap_or_else(|| Err(self.shared.fetch.abandoned())),
+                Err(_) => Err(self.shared.fetch.abandoned()),
+            },
+        }
     }
 
     /// The kept credentials when a caller may use them now, else the fetch to wait for, started
@@ -287,7 +360,7 @@ impl ContainerCredentials {
     }
 }
 
-impl Drop for ContainerCredentials {
+impl<F: Fetch> Drop for Refreshing<F> {
     fn drop(&mut self) {
         self.shared.stop.cancel();
     }
@@ -298,7 +371,7 @@ fn live(flight: &Flight) -> bool {
     flight.has_changed().is_ok()
 }
 
-impl Shared {
+impl<F: Fetch> Shared<F> {
     fn lock(&self) -> MutexGuard<'_, State> {
         self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -310,7 +383,7 @@ impl Shared {
         let (answer, flight) = watch::channel(None);
         let task = Arc::clone(shared);
         tokio::spawn(async move {
-            let result = task.fetch(&task.stop).await;
+            let result = task.fetch.fetch(&task.stop).await;
             {
                 let mut state = task.lock();
                 if let Ok(credentials) = &result {
@@ -322,18 +395,33 @@ impl Shared {
         });
         Ok(flight)
     }
+}
 
-    async fn fetch(&self, cancel: &Cancel) -> Result<AwsCredentials, Error> {
-        let mut headers = HeaderMap::new();
-        headers.insert("authorization", self.token_value(cancel).await?);
-        let answer: Answer = self
-            .http
-            .get_json(self.uri.as_str(), headers, cancel)
-            .await
-            .map_err(endpoint_error)?;
-        parse_answer(answer, SystemTime::now())
+impl Fetch for ContainerFetch {
+    fn fetch<'a>(&'a self, cancel: &'a Cancel) -> BoxFuture<'a, Result<AwsCredentials, Error>> {
+        Box::pin(async move {
+            let mut headers = HeaderMap::new();
+            headers.insert("authorization", self.token_value(cancel).await?);
+            let answer: Answer = self
+                .http
+                .get_json(self.uri.as_str(), headers, cancel)
+                .await
+                .map_err(endpoint_error)?;
+            parse_answer(answer, SystemTime::now())
+        })
     }
 
+    fn abandoned(&self) -> Error {
+        Error::new(
+            ErrorCode::Transport,
+            "container credentials fetch ended without an answer",
+        )
+        .with_dispatch(Dispatch::NotSent)
+        .with_retriable(true)
+    }
+}
+
+impl ContainerFetch {
     /// The token as a sensitive header value. The resolved bytes are zeroized on return.
     async fn token_value(&self, cancel: &Cancel) -> Result<HeaderValue, Error> {
         let resolved = resolve(self.resolver.as_ref(), &self.token, cancel).await?;
@@ -360,9 +448,10 @@ impl Shared {
 
 impl fmt::Debug for ContainerCredentials {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let fetch = self.refreshing.fetcher();
         f.debug_struct("ContainerCredentials")
-            .field("endpoint", &self.shared.uri.origin().ascii_serialization())
-            .field("token", &self.shared.token)
+            .field("endpoint", &fetch.uri.origin().ascii_serialization())
+            .field("token", &fetch.token)
             .finish_non_exhaustive()
     }
 }
@@ -372,35 +461,8 @@ impl CredentialSource for ContainerCredentials {
         &'a self,
         cancel: &'a Cancel,
     ) -> BoxFuture<'a, Result<AwsCredentials, Error>> {
-        Box::pin(async move {
-            if cancel.is_cancelled() {
-                return Err(Error::cancelled());
-            }
-            let mut flight = match self.kept_or_flight()? {
-                Ok(kept) => return Ok(kept),
-                Err(flight) => flight,
-            };
-            tokio::select! {
-                biased;
-                () = cancel.cancelled() => Err(Error::cancelled()),
-                landed = flight.wait_for(Option::is_some) => match landed {
-                    Ok(answer) => answer.clone().unwrap_or_else(|| Err(abandoned())),
-                    Err(_) => Err(abandoned()),
-                },
-            }
-        })
+        Box::pin(self.refreshing.credentials(cancel))
     }
-}
-
-/// The fetch a caller waited on ended without an answer: its runtime shut down or the source was
-/// dropped. Nothing was sent, and another call starts a new fetch.
-fn abandoned() -> Error {
-    Error::new(
-        ErrorCode::Transport,
-        "container credentials fetch ended without an answer",
-    )
-    .with_dispatch(Dispatch::NotSent)
-    .with_retriable(true)
 }
 
 /// Whether `credentials` outlive the refresh window from `now`; long-term keys always do.

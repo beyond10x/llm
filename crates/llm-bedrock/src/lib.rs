@@ -15,6 +15,8 @@
 //! credentials come from a [`CredentialSource`] the caller injects: keys a
 //! [`llm_credentials::SecretResolver`] resolves ([`StaticCredentials`]), or the container
 //! credentials endpoint EKS Pod Identity and ECS task roles serve ([`ContainerCredentials`]).
+//! Feature `process`, off by default, adds `ProcessCredentials`: the keys an operator's
+//! `credential_process` command prints, such as `aws configure export-credentials`.
 
 mod client;
 mod converse;
@@ -26,4 +28,6 @@ pub mod sigv4;
 mod time;
 
 pub use client::{Api, BedrockClient, BedrockTarget, check_request, encode_request};
+#[cfg(feature = "process")]
+pub use credentials::ProcessCredentials;
 pub use credentials::{AwsCredentials, ContainerCredentials, CredentialSource, StaticCredentials};
