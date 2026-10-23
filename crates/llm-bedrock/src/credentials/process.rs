@@ -8,13 +8,15 @@ use std::fmt;
 use std::process::Stdio;
 use std::time::{Duration, SystemTime};
 use tokio::io::AsyncReadExt;
-use tokio::process::Command;
+use tokio::process::{ChildStdout, Command};
 use zeroize::Zeroizing;
 
 /// How long one run may take before it is killed.
 const TIME_LIMIT: Duration = Duration::from_mins(1);
 /// The most a command may print: 64 KiB.
 const MAX_ANSWER_BYTES: usize = 64 * 1024;
+/// How long output is still read once the command has exited.
+const EXIT_GRACE: Duration = Duration::from_millis(250);
 
 /// Credentials a command prints on its standard output, as the AWS CLI's `credential_process`
 /// setting runs one: for example `aws configure export-credentials --profile dev`.
@@ -24,7 +26,8 @@ const MAX_ANSWER_BYTES: usize = 64 * 1024;
 /// 64 KiB: one JSON object with `Version` 1, a non-empty `AccessKeyId` and `SecretAccessKey`, and
 /// optionally `SessionToken` and an RFC 3339 `Expiration` (any offset) that has not passed. Other
 /// members are ignored. A command still running at the limit, or when the source is dropped, is
-/// killed.
+/// killed. Once the command has exited its output is read for a further quarter second at most,
+/// so a process it left behind holding standard output open does not hold the turn.
 ///
 /// Credentials with an `Expiration` are kept and renewed as [`super::ContainerCredentials`]
 /// renews its own: one run at a time, inside five minutes before they expire, on its own task,
@@ -32,8 +35,11 @@ const MAX_ANSWER_BYTES: usize = 64 * 1024;
 /// credentials in use. Credentials without one are kept for the life of the source, so the
 /// command runs once.
 ///
-/// Every failure is `unauthorized`, `not-sent` and final, except cancellation. Its message names
-/// the program and never carries what the command printed, a key or the arguments.
+/// A command that cannot start, fails, overruns or prints an unusable answer is `unauthorized`,
+/// `not-sent` and final. Two failures are not: a cancelled caller gets `cancelled`, and a run
+/// that ended without an answer, its task gone before it finished, is `transport`, `not-sent`
+/// and retriable. Every message names the program and never carries what the command printed,
+/// a key or the arguments.
 pub struct ProcessCredentials {
     refreshing: Refreshing<ProcessFetch>,
 }
@@ -124,7 +130,7 @@ impl Fetch for ProcessFetch {
                     Ok(printed) => printed?,
                     Err(_) => {
                         return Err(self.refused(&format!(
-                            "did not exit within {:?} and was killed",
+                            "did not finish within {:?} and was killed",
                             self.limit
                         )));
                     }
@@ -159,26 +165,40 @@ impl ProcessFetch {
             .kill_on_drop(true)
             .spawn()
             .map_err(|error| self.refused(&format!("could not be started ({})", error.kind())))?;
-        let stdout = child
+        let mut stdout = child
             .stdout
             .take()
             .ok_or_else(|| self.refused("has no output to read"))?;
         // The whole bound is reserved up front, so no smaller buffer holding part of the answer
         // is freed without being zeroized.
         let mut printed = Zeroizing::new(Vec::with_capacity(MAX_ANSWER_BYTES + 1));
-        let limit = u64::try_from(MAX_ANSWER_BYTES + 1).unwrap_or(u64::MAX);
-        stdout
-            .take(limit)
-            .read_to_end(&mut printed)
-            .await
-            .map_err(|_| self.refused("output could not be read"))?;
+        let ended = {
+            let reading = drain(&mut stdout, &mut printed);
+            tokio::pin!(reading);
+            tokio::select! {
+                read = &mut reading => Ended::Closed(read),
+                status = child.wait() => {
+                    // What the command printed is in the pipe. A process it left behind may
+                    // hold the pipe open, so the rest is read only for a short grace.
+                    let rest = tokio::time::timeout(EXIT_GRACE, &mut reading).await;
+                    Ended::Exited(status, rest.unwrap_or(Ok(())))
+                }
+            }
+        };
+        let (status, read) = match ended {
+            Ended::Closed(read) => {
+                if printed.len() > MAX_ANSWER_BYTES {
+                    return Err(self.refused("printed more than 64 KiB"));
+                }
+                (child.wait().await, read)
+            }
+            Ended::Exited(status, read) => (status, read),
+        };
+        read.map_err(|_| self.refused("output could not be read"))?;
         if printed.len() > MAX_ANSWER_BYTES {
             return Err(self.refused("printed more than 64 KiB"));
         }
-        let status = child
-            .wait()
-            .await
-            .map_err(|_| self.refused("could not be waited for"))?;
+        let status = status.map_err(|_| self.refused("could not be waited for"))?;
         if !status.success() {
             return Err(self.refused(&status.code().map_or_else(
                 || "ended without an exit code".to_owned(),
@@ -193,6 +213,34 @@ impl ProcessFetch {
             ErrorCode::Unauthorized,
             format!("credential process `{}` {reason}", self.program),
         )
+    }
+}
+
+/// How a run's output ended: the command closed it, or the command exited first.
+enum Ended {
+    Closed(std::io::Result<()>),
+    Exited(
+        std::io::Result<std::process::ExitStatus>,
+        std::io::Result<()>,
+    ),
+}
+
+/// Reads `stdout` into `printed` until it closes or holds one byte more than the bound. Each
+/// read is cancel-safe and its bytes are appended at once, so a read stopped at the grace keeps
+/// everything read before it; `printed` never grows past the capacity reserved for it.
+async fn drain(stdout: &mut ChildStdout, printed: &mut Vec<u8>) -> std::io::Result<()> {
+    const CHUNK: usize = 8 * 1024;
+    let mut chunk = Zeroizing::new([0_u8; CHUNK]);
+    loop {
+        let room = (MAX_ANSWER_BYTES + 1).saturating_sub(printed.len());
+        if room == 0 {
+            return Ok(());
+        }
+        let read = stdout.read(&mut chunk[..room.min(CHUNK)]).await?;
+        if read == 0 {
+            return Ok(());
+        }
+        printed.extend_from_slice(&chunk[..read]);
     }
 }
 

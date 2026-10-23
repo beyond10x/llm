@@ -15,6 +15,7 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const FIXTURE_FLAG: &str = "--credential-process-fixture";
+const HOLDER_FLAG: &str = "--credential-process-holder";
 const ACCESS_KEY_ID: &str = "ASIAPROCESSFIXTURE";
 const RENEWED_KEY_ID: &str = "ASIAPROCESSRENEWED";
 const SECRET_ACCESS_KEY: &str = "process/fixture+secret-key";
@@ -54,6 +55,10 @@ const CASES: &[Case] = &[
         an_expired_answer_makes_every_caller_wait_for_the_one_run,
     ),
     (
+        "callers_after_expiry_wait_for_the_refresh_already_stalled_in_flight",
+        callers_after_expiry_wait_for_the_refresh_already_stalled_in_flight,
+    ),
+    (
         "a_failed_refresh_answers_the_kept_credentials_until_they_expire",
         a_failed_refresh_answers_the_kept_credentials_until_they_expire,
     ),
@@ -72,6 +77,10 @@ const CASES: &[Case] = &[
     (
         "a_command_that_does_not_exit_within_the_limit_is_killed_and_unauthorized",
         a_command_that_does_not_exit_within_the_limit_is_killed_and_unauthorized,
+    ),
+    (
+        "a_process_the_command_leaves_holding_its_output_does_not_hold_the_answer",
+        a_process_the_command_leaves_holding_its_output_does_not_hold_the_answer,
     ),
     (
         "dropping_the_source_kills_the_command_it_is_running",
@@ -101,6 +110,9 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
     if args.get(1).map(String::as_str) == Some(FIXTURE_FLAG) {
         return fixture(Path::new(&args[2]));
+    }
+    if args.get(1).map(String::as_str) == Some(HOLDER_FLAG) {
+        return holder(Path::new(&args[2]));
     }
     let filters: Vec<&str> = args[1..]
         .iter()
@@ -138,10 +150,12 @@ fn main() -> ExitCode {
 }
 
 /// The fixture command. In `directory` it appends one line to `runs`, then by the file `mode`:
-/// `exit` prints [`PRINTED`] and exits 3; `sleep` sleeps two seconds and then writes `survived`;
-/// `flood` prints 70 KiB; `stdin` answers only once its input is at an end. Otherwise it prints
-/// `answer-<n>`, `n` the runs before it, or `answer` when there is none; a run after the first
-/// first waits, at most ten seconds, while the file `gate` exists.
+/// `exit` prints [`PRINTED`] and exits 3; `sleep` appends a line to `ticks` every 50 ms for ten
+/// seconds and then writes `survived`; `flood` prints 70 KiB; `stdin` answers only once its input
+/// is at an end; `orphan` starts a [`holder`] that inherits its standard output, then answers.
+/// Otherwise (and after `orphan` or `stdin`) it prints `answer-<n>`, `n` the runs before it, or
+/// `answer` when there is none; a run after the first first waits, at most ten seconds, while the
+/// file `gate` exists.
 fn fixture(directory: &Path) -> ExitCode {
     use std::io::{Read, Write};
     let runs = directory.join("runs");
@@ -162,9 +176,29 @@ fn fixture(directory: &Path) -> ExitCode {
             return ExitCode::from(3);
         }
         "sleep" => {
-            std::thread::sleep(Duration::from_secs(2));
+            for _ in 0..200 {
+                let mut ticks = std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(directory.join("ticks"))
+                    .expect("the tick log");
+                ticks.write_all(b"tick\n").expect("a tick");
+                drop(ticks);
+                std::thread::sleep(Duration::from_millis(50));
+            }
             std::fs::write(directory.join("survived"), b"").expect("a trace");
             return ExitCode::SUCCESS;
+        }
+        "orphan" => {
+            #[expect(
+                clippy::zombie_processes,
+                reason = "the holder is left behind on purpose, as a helper's background process is"
+            )]
+            std::process::Command::new(std::env::current_exe().expect("this binary"))
+                .args([HOLDER_FLAG, &directory.display().to_string()])
+                .stdin(std::process::Stdio::null())
+                .spawn()
+                .expect("a holder started");
         }
         "flood" => {
             let _ = stdout.write_all(&vec![b' '; 70 * 1024]);
@@ -191,6 +225,16 @@ fn fixture(directory: &Path) -> ExitCode {
         .unwrap_or_default();
     let _ = stdout.write_all(&answer);
     let _ = stdout.flush();
+    ExitCode::SUCCESS
+}
+
+/// A process a command leaves behind holding the command's standard output open: it waits, at
+/// most twenty seconds, until `release` exists in `directory`, printing nothing.
+fn holder(directory: &Path) -> ExitCode {
+    let until = std::time::Instant::now() + Duration::from_secs(20);
+    while !directory.join("release").exists() && std::time::Instant::now() < until {
+        std::thread::sleep(Duration::from_millis(20));
+    }
     ExitCode::SUCCESS
 }
 
@@ -252,6 +296,27 @@ impl Command {
             limit,
         )
         .expect("a command")
+    }
+
+    /// Waits, at most fifteen seconds, until a `sleep` command has stopped ticking: no tick for
+    /// one second. A killed command stops at once; one left running ticks every 50 ms.
+    async fn stopped(&self) {
+        let deadline = std::time::Instant::now() + Duration::from_secs(15);
+        let ticks = || std::fs::read(self.path("ticks")).map_or(0, |text| text.len());
+        let mut seen = ticks();
+        let mut quiet_since = std::time::Instant::now();
+        while quiet_since.elapsed() < Duration::from_secs(1) {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "the command still ticks"
+            );
+            tokio::time::sleep(Duration::from_millis(50)).await;
+            let now = ticks();
+            if now != seen {
+                seen = now;
+                quiet_since = std::time::Instant::now();
+            }
+        }
     }
 
     /// Waits, at most five seconds, until the command has started `count` runs.
@@ -501,9 +566,20 @@ fn turns_inside_the_refresh_window_get_the_kept_answer_while_one_refresh_stalls(
 }
 
 fn an_expired_answer_makes_every_caller_wait_for_the_one_run() {
+    expired_callers_wait_for_one_run(false);
+}
+
+fn callers_after_expiry_wait_for_the_refresh_already_stalled_in_flight() {
+    expired_callers_wait_for_one_run(true);
+}
+
+/// Eight callers arrive after the kept answer has expired and all wait for one run, held at the
+/// gate. With `in_flight`, a caller inside the refresh window started that run before expiry;
+/// without it nobody asked in between, so no refresh is in flight and the callers start it.
+fn expired_callers_wait_for_one_run(in_flight: bool) {
     runtime().block_on(async {
         let command = Command::new();
-        let expires = in_seconds(2);
+        let expires = in_seconds(5);
         command.answer(
             Some(0),
             answer(ACCESS_KEY_ID, Some(expires)).to_string().as_bytes(),
@@ -516,9 +592,16 @@ fn an_expired_answer_makes_every_caller_wait_for_the_one_run() {
         );
         let source = Arc::new(command.source());
         source.credentials(&Cancel::new()).await.expect("first");
-        // The first answer is inside the window: its refresh is stalled at the gate until it
-        // has expired.
         command.close_gate();
+        if in_flight {
+            let kept = source.credentials(&Cancel::new()).await.expect("kept");
+            assert_eq!(kept.access_key_id(), ACCESS_KEY_ID);
+            command.started(2).await;
+            assert!(source.refreshing());
+        } else {
+            assert!(!source.refreshing());
+            assert_eq!(command.runs(), 1);
+        }
         let left = expires
             .duration_since(SystemTime::now())
             .unwrap_or_default();
@@ -678,13 +761,41 @@ fn a_command_that_does_not_exit_within_the_limit_is_killed_and_unauthorized() {
             .await
             .expect_err("too slow");
         assert!(
-            started.elapsed() < Duration::from_millis(1500),
+            started.elapsed() < Duration::from_secs(5),
             "{:?}",
             started.elapsed()
         );
         assert_refused(&error);
-        tokio::time::sleep(Duration::from_secs(3)).await;
+        assert!(
+            error.message.contains("did not finish"),
+            "{}",
+            error.message
+        );
+        command.stopped().await;
         assert!(!command.path("survived").exists(), "the command was killed");
+    });
+}
+
+fn a_process_the_command_leaves_holding_its_output_does_not_hold_the_answer() {
+    runtime().block_on(async {
+        let command = Command::new();
+        command.answer(
+            None,
+            answer(ACCESS_KEY_ID, Some(in_seconds(3600)))
+                .to_string()
+                .as_bytes(),
+        );
+        command.mode("orphan");
+        let started = std::time::Instant::now();
+        let answered = command
+            .limited(Duration::from_secs(15))
+            .credentials(&Cancel::new())
+            .await;
+        let elapsed = started.elapsed();
+        std::fs::write(command.path("release"), b"").expect("the holder released");
+        let credentials = answered.expect("the answer printed before the command exited");
+        assert_eq!(credentials.access_key_id(), ACCESS_KEY_ID);
+        assert!(elapsed < Duration::from_secs(5), "{elapsed:?}");
     });
 }
 
@@ -703,7 +814,7 @@ fn dropping_the_source_kills_the_command_it_is_running() {
         assert_eq!(error.code, ErrorCode::Cancelled);
         assert!(source.refreshing(), "the run goes on for the next caller");
         drop(source);
-        tokio::time::sleep(Duration::from_secs(3)).await;
+        command.stopped().await;
         assert!(!command.path("survived").exists(), "the command was killed");
     });
 }
