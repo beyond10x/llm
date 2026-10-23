@@ -215,6 +215,32 @@ impl BedrockTarget {
     }
 }
 
+/// The request body a [`BedrockClient`] on `target` sends for `request`, exactly as it sends it:
+/// the client encodes every turn through this function.
+///
+/// # Errors
+/// Refuses what the target's wire cannot carry, with the error the turn would end with
+/// (`not-sent`): a request the target's capabilities refuse, a Converse turn that does not open
+/// with a user message, tool history without published tools, a reasoning effort or a parallel
+/// tool call control on Converse, a name or shape outside the wire, and a body outside the
+/// encoded request bound.
+pub fn encode_request(request: &TurnRequest, target: &BedrockTarget) -> Result<Vec<u8>, Error> {
+    match target.api {
+        Api::Converse => converse::encode_request(request, target),
+        Api::AnthropicInvoke => invoke::encode_request(request, target),
+    }
+}
+
+/// Whether a [`BedrockClient`] on `target` would send `request`, asked before choosing the
+/// route: no I/O, no credential and no runtime. The answer is [`encode_request`]'s, so it cannot
+/// differ from the turn's.
+///
+/// # Errors
+/// Exactly the refusal [`encode_request`] returns.
+pub fn check_request(request: &TurnRequest, target: &BedrockTarget) -> Result<(), Error> {
+    encode_request(request, target).map(drop)
+}
+
 /// An AWS Region name as it appears in a host name and a credential scope: `us-east-1`,
 /// `us-gov-west-1`. Two or more non-empty parts of lower-case letters and digits, joined by `-`.
 fn region(name: &str) -> bool {
@@ -304,10 +330,7 @@ impl BedrockClient {
         // The turn deadline below is a Tokio timer: outside a runtime, refused before anything.
         require_tokio_runtime()?;
         // Refused before any I/O, and before a credential is resolved.
-        let body = match self.target.api {
-            Api::Converse => converse::encode_request(request, &self.target)?,
-            Api::AnthropicInvoke => invoke::encode_request(request, &self.target)?,
-        };
+        let body = encode_request(request, &self.target)?;
         let deadline = self.turn_limit.map(|total| Instant::now() + total);
         let headers = self.signed(&body, cancel, deadline).await?;
         let outcome = if self.target.stream {

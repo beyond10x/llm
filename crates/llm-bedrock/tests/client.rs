@@ -6,7 +6,8 @@
 //! recorded answers are replayed in `tests/converse.rs`.
 
 use llm_bedrock::{
-    Api, AwsCredentials, BedrockClient, BedrockTarget, CredentialSource,
+    Api, AwsCredentials, BedrockClient, BedrockTarget, CredentialSource, check_request,
+    encode_request,
     eventstream::{HeaderValue, Message, encode_message},
 };
 use llm_core::{
@@ -642,6 +643,27 @@ async fn credentials_that_never_answer_end_on_the_turn_deadline() {
     let error = result.unwrap_err();
     assert_eq!(error.code, ErrorCode::Deadline);
     assert_eq!(error.dispatch, Dispatch::NotSent);
+}
+
+#[tokio::test]
+async fn the_pre_send_check_on_invoke_model_answers_what_the_turn_refuses() {
+    let invoke = target(Api::AnthropicInvoke, true, "us-east-1", MODEL, NOWHERE);
+    let mut effort = hello();
+    effort.sampling.reasoning_effort = Some("high".to_owned());
+    let checked = check_request(&effort, &invoke).expect_err("refused");
+    assert_eq!(encode_request(&effort, &invoke), Err(checked.clone()));
+    let keys = Keys::new(None);
+    let refused = client(invoke.clone(), keys.clone())
+        .turn(&effort, &mut VecSink::new(16, 1 << 16), &Cancel::new())
+        .await
+        .unwrap_err();
+    assert_eq!(checked, refused);
+    assert_eq!(refused.dispatch, Dispatch::NotSent);
+    assert_eq!(keys.asked.load(Ordering::SeqCst), 0);
+
+    assert_eq!(check_request(&hello(), &invoke), Ok(()));
+    let body: Value = serde_json::from_slice(&encode_request(&hello(), &invoke).unwrap()).unwrap();
+    assert_eq!(body["anthropic_version"], "bedrock-2023-05-31");
 }
 
 #[test]
