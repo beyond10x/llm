@@ -2,7 +2,7 @@
 title: Use the llm command
 sidebar_position: 7
 description: The llm command reads one llm.toml routes file, lists its models and streams one turn on any of them, Anthropic, Bedrock or a local endpoint alike.
-lede: One configuration file, one command: list the models, then run a turn on any of them and see its usage and cost.
+lede: One configuration file and one command. List the models, then run a turn on any of them and see its usage and cost.
 source: crates/llm-cli (src/lib.rs, tests/command.rs), crates/llm-models/src/routes.rs
 ---
 
