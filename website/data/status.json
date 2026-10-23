@@ -202,7 +202,7 @@
     },
     {
       "area": "Credentials",
-      "detail": "Opt-in file (Linux, explicit absolute paths, strict ownership and mode checks), keychain and native-keychain features; read-only.",
+      "detail": "Opt-in file (Linux, explicit absolute paths, strict ownership and mode checks; FileResolver::mounted for a platform-mounted file such as a Kubernetes projected volume), keychain and native-keychain features; read-only.",
       "label": "Protected-file and keychain adapters",
       "status": "shipped"
     },
@@ -274,7 +274,7 @@
     },
     {
       "area": "Providers and routing",
-      "detail": "llm-cli: llm model list prints the routes an llm.toml (or YAML) routes file declares, with aliases, host and price, reading no secret; llm infer streams one turn on a route, alias or <endpoint>/<model-id> and closes with its usage and cost on stderr, unknown counters printed unknown. llm.routes/1 gains TOML, aliases, per-route prices and Bedrock endpoints (aws-keys or aws-container), whose routes Routes::port serves with BedrockClient. Fixture evidence only; a Kubernetes projected token file is refused by the file source's mode and symbolic-link rules.",
+      "detail": "llm-cli: llm model list prints the routes an llm.toml (or YAML) routes file declares, with aliases, host and price, reading no secret; llm infer streams one turn on a route, alias or <endpoint>/<model-id> and closes with its usage and cost on stderr, unknown counters printed unknown. llm.routes/1 gains TOML, aliases, per-route prices and Bedrock endpoints (aws-keys or aws-container), whose routes Routes::port serves with BedrockClient. It reads keychain: references from the platform keychain, opened only for a route that needs it; an endpoint whose source cannot be built refuses only its own routes. A closed stdout stops the turn with exit 0; a second Ctrl-C drops the turn with 130. The container token file may be a Kubernetes projected volume (FileResolver::mounted; layout from AWS and Kubernetes documentation, unverified). Fixture evidence only.",
       "label": "The llm command",
       "status": "shipped"
     },

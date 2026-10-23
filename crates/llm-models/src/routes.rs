@@ -1763,27 +1763,39 @@ impl Routes {
     /// The caller's resolvers for every credentialed endpoint, keyed by the endpoint's name.
     /// Building them reads no variable, file or keychain entry.
     ///
+    /// An endpoint whose source cannot be built gets no resolver, and [`Routes::port`] refuses
+    /// only its routes, as `unauthorized` naming the endpoint and why: a source kind whose
+    /// feature (`environment`, `file`, `keychain`) this build does not enable, a `file:~/`
+    /// reference without an absolute home, a `keychain:` reference without an injected store,
+    /// a path the file source refuses, and an `aws-container` endpoint whose container token
+    /// file the caller did not supply or supplied as a path the file source refuses. Every
+    /// other route still builds.
+    ///
     /// # Errors
-    /// `invalid-request` naming the endpoint for a source kind whose feature (`environment`,
-    /// `file`, `keychain`) this build does not enable, a `file:~/` reference without a home, a
-    /// `keychain:` reference without an injected store, and a path the file source refuses. An
-    /// `aws-container` endpoint gets no resolver when the caller supplied no container token
-    /// file, so [`Routes::port`] refuses its routes as `unauthorized` and every other route
-    /// still builds.
+    /// `invalid-request` for an endpoint name too long to name its references.
     pub fn resolvers(&self, sources: &SecretSources) -> Result<RouteResolvers, Error> {
         let mut resolvers = BTreeMap::new();
+        let mut unavailable = BTreeMap::new();
+        let mut keep = |name: &Id, built: Result<Arc<dyn SecretResolver>, Error>| match built {
+            Ok(resolver) => {
+                resolvers.insert(name.clone(), resolver);
+            }
+            Err(error) => {
+                unavailable.insert(name.clone(), error.message);
+            }
+        };
         for endpoint in self.endpoints.values() {
             let Some(secret) = &endpoint.secret else {
                 continue;
             };
             let reference = endpoint.reference()?;
-            resolvers.insert(
-                endpoint.name.clone(),
-                resolver(&endpoint.name, &reference, secret, sources)?,
+            keep(
+                &endpoint.name,
+                resolver(&endpoint.name, &reference, secret, sources),
             );
         }
         for endpoint in self.bedrock.values() {
-            let resolver = match (&endpoint.credentials, endpoint.references()?) {
+            let built = match (&endpoint.credentials, endpoint.references()?) {
                 (
                     AwsCredentials::Keys {
                         access_key_id,
@@ -1796,30 +1808,34 @@ impl Routes {
                         session_token: session_reference,
                         ..
                     },
-                ) => {
-                    let mut by_reference = BTreeMap::new();
-                    for (reference, source) in [
-                        (Some(access_reference), Some(access_key_id)),
-                        (Some(secret_reference), Some(secret_access_key)),
-                        (session_reference, session_token.as_ref()),
-                    ] {
-                        if let (Some(reference), Some(source)) = (reference, source) {
-                            let built = resolver(&endpoint.name, &reference, source, sources)?;
-                            by_reference.insert(reference, built);
-                        }
-                    }
-                    Arc::new(ByReference(by_reference)) as Arc<dyn SecretResolver>
-                }
+                ) => [
+                    (Some(access_reference), Some(access_key_id)),
+                    (Some(secret_reference), Some(secret_access_key)),
+                    (session_reference, session_token.as_ref()),
+                ]
+                .into_iter()
+                .filter_map(|pair| match pair {
+                    (Some(reference), Some(source)) => Some((reference, source)),
+                    _ => None,
+                })
+                .map(|(reference, source)| {
+                    resolver(&endpoint.name, &reference, source, sources)
+                        .map(|built| (reference, built))
+                })
+                .collect::<Result<BTreeMap<_, _>, _>>()
+                .map(|by_reference| Arc::new(ByReference(by_reference)) as Arc<dyn SecretResolver>),
                 (AwsCredentials::Container, AwsReferences::Container { token, .. }) => {
-                    let Some(token_file) = sources.container_token_file.as_ref() else {
-                        continue;
-                    };
-                    file(
-                        &endpoint.name,
-                        &token,
-                        &FilePath::Absolute(token_file.clone()),
-                        None,
-                    )?
+                    match sources.container_token_file.as_ref() {
+                        Some(token_file) => {
+                            container_token(&endpoint.name, &token, token_file.clone())
+                        }
+                        None => Err(about(
+                            "endpoint",
+                            &endpoint.name,
+                            "an `aws-container` endpoint needs the container authorization \
+                             token file, and none was supplied",
+                        )),
+                    }
                 }
                 _ => {
                     return Err(about(
@@ -1829,10 +1845,11 @@ impl Routes {
                     ));
                 }
             };
-            resolvers.insert(endpoint.name.clone(), resolver);
+            keep(&endpoint.name, built);
         }
         Ok(RouteResolvers {
             resolvers,
+            unavailable,
             container_uri: sources.container_uri.clone(),
         })
     }
@@ -1852,6 +1869,35 @@ fn resolver(
             keychain(endpoint, reference, service, entry, sources)
         }
     }
+}
+
+/// The resolver of an `aws-container` endpoint's authorization token file: the platform mounts
+/// it, so links from protected directories are followed and others may read it
+/// ([`llm_credentials::file::FileResolver::mounted`]).
+#[cfg(feature = "file")]
+fn container_token(
+    endpoint: &Id,
+    token: &SecretRef,
+    path: PathBuf,
+) -> Result<Arc<dyn SecretResolver>, Error> {
+    llm_credentials::file::FileResolver::mounted(BTreeMap::from([(token.clone(), path)]))
+        .map(|resolver| Arc::new(resolver) as Arc<dyn SecretResolver>)
+        .map_err(|_| {
+            about(
+                "endpoint",
+                endpoint,
+                "its container authorization token file is not an absolute path without `.` or `..`",
+            )
+        })
+}
+
+#[cfg(not(feature = "file"))]
+fn container_token(
+    endpoint: &Id,
+    _token: &SecretRef,
+    _path: PathBuf,
+) -> Result<Arc<dyn SecretResolver>, Error> {
+    Err(compiled_out(endpoint, "file:", "file"))
 }
 
 /// One resolver per reference: an aws-keys endpoint's key fields may each name another source.
@@ -2083,6 +2129,8 @@ impl fmt::Debug for SecretSources {
 /// the endpoint's name (its account id).
 pub struct RouteResolvers {
     resolvers: BTreeMap<Id, Arc<dyn SecretResolver>>,
+    /// Why each credentialed endpoint without a resolver has none.
+    unavailable: BTreeMap<Id, String>,
     container_uri: Option<String>,
 }
 
@@ -2097,6 +2145,7 @@ impl fmt::Debug for RouteResolvers {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("RouteResolvers")
             .field("accounts", &self.resolvers.keys().collect::<Vec<_>>())
+            .field("unavailable", &self.unavailable.keys().collect::<Vec<_>>())
             .field("container_uri", &self.container_uri.is_some())
             .finish()
     }
@@ -2109,5 +2158,9 @@ impl Resolvers for RouteResolvers {
 
     fn container_credentials_uri(&self) -> Option<&str> {
         self.container_uri.as_deref()
+    }
+
+    fn unavailable(&self, account_id: &Id) -> Option<&str> {
+        self.unavailable.get(account_id).map(String::as_str)
     }
 }

@@ -43,6 +43,13 @@ pub trait Resolvers {
     fn container_credentials_uri(&self) -> Option<&str> {
         None
     }
+
+    /// Why this account has no resolver, when the caller knows: a port for it is refused
+    /// `unauthorized` with this message instead of the generic one. It must echo no secret
+    /// reference's variable, path or entry. None by default.
+    fn unavailable(&self, _account_id: &Id) -> Option<&str> {
+        None
+    }
 }
 
 impl Resolvers for BTreeMap<Id, Arc<dyn SecretResolver>> {
@@ -81,11 +88,12 @@ pub(crate) enum AwsReferences {
     },
 }
 
-fn unresolved(account: &Id) -> Error {
-    Error::new(
-        ErrorCode::Unauthorized,
-        format!("no credential resolver is supplied for account `{account}`"),
-    )
+fn unresolved(resolvers: &dyn Resolvers, account: &Id) -> Error {
+    let message = resolvers.unavailable(account).map_or_else(
+        || format!("no credential resolver is supplied for account `{account}`"),
+        ToOwned::to_owned,
+    );
+    Error::new(ErrorCode::Unauthorized, message)
 }
 
 /// The single-attempt port one serving model declares: one client over its binding's protocol.
@@ -123,7 +131,7 @@ impl Port {
             } => {
                 let resolver = resolvers
                     .resolver(&account)
-                    .ok_or_else(|| unresolved(&account))?;
+                    .ok_or_else(|| unresolved(resolvers, &account))?;
                 let credentials = StaticCredentials::new(
                     resolver.clone(),
                     access_key_id,
@@ -135,7 +143,7 @@ impl Port {
             AwsReferences::Container { account, token } => {
                 let resolver = resolvers
                     .resolver(&account)
-                    .ok_or_else(|| unresolved(&account))?;
+                    .ok_or_else(|| unresolved(resolvers, &account))?;
                 let uri = resolvers.container_credentials_uri().ok_or_else(|| {
                     Error::new(
                         ErrorCode::Unauthorized,
@@ -181,7 +189,7 @@ impl Port {
             AuthKind::Bearer | AuthKind::ApiKey | AuthKind::SubscriptionOauth => Some(
                 resolvers
                     .resolver(&account.id)
-                    .ok_or_else(|| unresolved(&account.id))?,
+                    .ok_or_else(|| unresolved(resolvers, &account.id))?,
             ),
         };
         let attached = resolver

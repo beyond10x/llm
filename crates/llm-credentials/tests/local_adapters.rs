@@ -188,6 +188,121 @@ mod file {
         );
     }
 
+    fn mounted(path: &Path) -> FileResolver {
+        FileResolver::mounted(BTreeMap::from([(reference(), path.to_owned())])).unwrap()
+    }
+
+    /// One kubelet-style write of `content` into `dir`: a new timestamped directory, `..data`
+    /// swapped onto it by rename, the previous directory removed. The layout is taken from the
+    /// Kubernetes atomic writer as its documentation describes it, not observed on a cluster.
+    fn project(dir: &Path, stamp: &str, content: &[u8]) {
+        let timestamped = dir.join(stamp);
+        fs::create_dir(&timestamped).unwrap();
+        fs::set_permissions(&timestamped, fs::Permissions::from_mode(0o755)).unwrap();
+        let token = timestamped.join("token");
+        fs::write(&token, content).unwrap();
+        fs::set_permissions(&token, fs::Permissions::from_mode(0o644)).unwrap();
+        let previous = fs::read_link(dir.join("..data")).ok();
+        symlink(stamp, dir.join("..data_tmp")).unwrap();
+        fs::rename(dir.join("..data_tmp"), dir.join("..data")).unwrap();
+        if fs::symlink_metadata(dir.join("token")).is_err() {
+            symlink("..data/token", dir.join("token")).unwrap();
+        }
+        if let Some(previous) = previous {
+            fs::remove_dir_all(dir.join(previous)).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn a_mounted_file_is_read_through_a_projected_volume_and_follows_its_rotation() {
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().canonicalize().unwrap();
+        project(
+            &dir,
+            "..2026_10_23_08_00_00.000000001",
+            b"fixture-projected-one",
+        );
+        let path = dir.join("token");
+        assert_eq!(
+            resolver(&path).resolve(&reference()).await.unwrap_err(),
+            SecretError::UnsafeSource,
+            "the strict policy still refuses a link"
+        );
+        let adapter = mounted(&path);
+        let first = adapter.resolve(&reference()).await.unwrap();
+        assert_eq!(first.secret.expose(), b"fixture-projected-one");
+        project(
+            &dir,
+            "..2026_10_23_09_00_00.000000002",
+            b"fixture-projected-two",
+        );
+        let second = adapter.resolve(&reference()).await.unwrap();
+        assert_eq!(second.secret.expose(), b"fixture-projected-two");
+        assert_ne!(first.version, second.version);
+        let plain = dir.join("plain");
+        fs::write(&plain, b"fixture-plain").unwrap();
+        fs::set_permissions(&plain, fs::Permissions::from_mode(0o644)).unwrap();
+        assert_eq!(
+            mounted(&plain)
+                .resolve(&reference())
+                .await
+                .unwrap()
+                .secret
+                .expose(),
+            b"fixture-plain"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_mounted_file_others_can_write_or_reached_through_an_open_directory_is_refused() {
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().canonicalize().unwrap();
+        project(
+            &dir,
+            "..2026_10_23_08_00_00.000000001",
+            b"fixture-projected",
+        );
+        let path = dir.join("token");
+        let real = dir.join("..data").canonicalize().unwrap().join("token");
+        for mode in [0o646, 0o664, 0o744, 0o4644] {
+            fs::set_permissions(&real, fs::Permissions::from_mode(mode)).unwrap();
+            assert_eq!(
+                mounted(&path).resolve(&reference()).await.unwrap_err(),
+                SecretError::UnsafeSource,
+                "{mode:o}"
+            );
+        }
+        fs::set_permissions(&real, fs::Permissions::from_mode(0o644)).unwrap();
+        let open = dir.join("open");
+        fs::create_dir(&open).unwrap();
+        fs::set_permissions(&open, fs::Permissions::from_mode(0o777)).unwrap();
+        symlink(&path, open.join("token")).unwrap();
+        assert_eq!(
+            mounted(&open.join("token"))
+                .resolve(&reference())
+                .await
+                .unwrap_err(),
+            SecretError::UnsafeSource
+        );
+        symlink(dir.join("loop-b"), dir.join("loop-a")).unwrap();
+        symlink(dir.join("loop-a"), dir.join("loop-b")).unwrap();
+        assert_eq!(
+            mounted(&dir.join("loop-a"))
+                .resolve(&reference())
+                .await
+                .unwrap_err(),
+            SecretError::UnsafeSource
+        );
+        assert_eq!(
+            mounted(&dir.join("absent"))
+                .resolve(&reference())
+                .await
+                .unwrap_err(),
+            SecretError::Missing
+        );
+        assert!(FileResolver::mounted(BTreeMap::from([(reference(), "relative".into())])).is_err());
+    }
+
     #[test]
     fn rejects_path_traversal_and_redacts_paths() {
         for path in ["relative", "/", "/safe/../unsafe"] {

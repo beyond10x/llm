@@ -16,11 +16,21 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `llm-models`: Bedrock endpoints (`bedrock.region`, `aws-keys` or `aws-container`); `Routes::port` builds their client
 - `llm-models`: `SecretSources::with_container_credentials` supplies the container endpoint and its token file
 - `llm-cost`: `PriceDocument::new` builds a price book in code
+- `llm-cli`: `keychain:` references read the platform keychain, opened only when the asked route needs it
+- `llm-credentials`: `FileResolver::mounted` reads a platform-mounted file such as a Kubernetes projected volume (unverified)
+- `llm-models`: `Resolvers::unavailable` lets a refused port say why its account has no resolver
 - ESS domain `llm.routes`: 5 authored scenarios for aliases and Bedrock endpoints; the conformance floor rises from 937 to 942
 
 ### Changed
 
 - `llm-models`: an `llm.routes/1` document may name `bedrock-converse` on a Bedrock endpoint; a binding and a catalog still refuse it
+- **Breaking:** `llm-models`: `Routes::resolvers` refuses an unbuildable source per endpoint, as `unauthorized` at `port`
+- `llm-models`: an `aws-container` token file is read through `FileResolver::mounted`, so a projected token is accepted
+
+### Fixed
+
+- `llm-cli`: a reader that closes stdout stops the turn with exit 0 instead of a panic (101) or a false Ctrl-C (130)
+- `llm-cli`: a second Ctrl-C drops a turn the first did not end, with exit 130
 
 ## [0.11.0] - 2026-10-22
 

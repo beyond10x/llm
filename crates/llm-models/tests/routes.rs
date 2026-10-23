@@ -680,19 +680,57 @@ fn a_relative_file_reference_is_refused() {
     }
 }
 
+/// Building the resolvers refuses nothing: an endpoint whose source cannot be built gets no
+/// resolver, and the port of route `r` on endpoint `p` is refused `unauthorized` naming `p`.
+fn deferred(routes: &Routes, sources: &SecretSources) -> Error {
+    let resolvers = routes.resolvers(sources).unwrap();
+    assert!(resolvers.resolver(&id("p")).is_none());
+    let error = routes.port("r", http(), &resolvers).err().unwrap();
+    assert_eq!(error.code, ErrorCode::Unauthorized, "{}", error.message);
+    assert!(error.message.contains("`p`"), "{}", error.message);
+    error
+}
+
+#[cfg(all(feature = "environment", feature = "file"))]
 #[test]
-fn building_resolvers_for_a_keychain_reference_without_an_injected_store_is_refused_naming_the_endpoint()
- {
+fn an_endpoint_whose_source_cannot_be_built_refuses_only_its_own_routes() {
+    let document = DOCUMENT.replace(
+        "  lab:\n",
+        "  vault: {base_url: https://vault.example.invalid/v1, protocol: messages,\n\
+         \x20         auth: {kind: bearer, secret: \"keychain:llm-routes-service/llm-routes-entry\"}}\n  lab:\n",
+    ) + "  locked: vault/m\n";
+    let routes = Routes::parse(&document).unwrap();
+    // No home for the gateway's `file:~/` reference and no store for the vault's keychain entry.
+    let resolvers = routes.resolvers(&SecretSources::new()).unwrap();
+    let accounts: Vec<_> = resolvers.accounts().map(ToString::to_string).collect();
+    assert_eq!(accounts, ["anthropic", "openrouter"]);
+    for name in ["sonnet", "or-sonnet", "small"] {
+        routes.port(name, http(), &resolvers).unwrap();
+    }
+    for (name, endpoint) in [("qwen", "`gateway`"), ("locked", "`vault`")] {
+        let error = routes.port(name, http(), &resolvers).err().unwrap();
+        assert_eq!(error.code, ErrorCode::Unauthorized, "{name}");
+        assert!(
+            error.message.contains(endpoint),
+            "{name}: {}",
+            error.message
+        );
+        assert!(
+            !error.message.contains("llm-routes-service"),
+            "{}",
+            error.message
+        );
+    }
+}
+
+#[test]
+fn a_keychain_reference_without_an_injected_store_refuses_its_endpoints_routes_by_name() {
     let document = single(&[(
         "AUTH",
         "{kind: bearer, secret: \"keychain:llm-routes-service/llm-routes-entry\"}",
     )]);
     let routes = Routes::parse(&document).unwrap();
-    let error = routes
-        .resolvers(&SecretSources::new().with_home(unread_home()))
-        .unwrap_err();
-    assert_eq!(error.code, ErrorCode::InvalidRequest);
-    assert!(error.message.contains("`p`"), "{}", error.message);
+    let error = deferred(&routes, &SecretSources::new().with_home(unread_home()));
     assert!(!error.message.contains("llm-routes-service"));
     assert!(!error.message.contains("llm-routes-entry"));
     #[cfg(feature = "keychain")]
@@ -719,11 +757,7 @@ fn an_environment_reference_is_refused_by_name_when_its_feature_is_compiled_out(
         "{document}"
     );
     let routes = Routes::parse(&document).unwrap();
-    let error = routes
-        .resolvers(&SecretSources::new().with_home(unread_home()))
-        .unwrap_err();
-    assert_eq!(error.code, ErrorCode::InvalidRequest);
-    assert!(error.message.contains("`p`"), "{}", error.message);
+    let error = deferred(&routes, &SecretSources::new().with_home(unread_home()));
     assert!(error.message.contains("environment"), "{}", error.message);
     assert!(!error.message.contains(NEVER_SET));
 }
@@ -733,11 +767,7 @@ fn an_environment_reference_is_refused_by_name_when_its_feature_is_compiled_out(
 fn a_file_reference_is_refused_by_name_when_its_feature_is_compiled_out() {
     let document = single(&[("AUTH", "{kind: bearer, secret: \"file:~/token\"}")]);
     let routes = Routes::parse(&document).unwrap();
-    let error = routes
-        .resolvers(&SecretSources::new().with_home(unread_home()))
-        .unwrap_err();
-    assert_eq!(error.code, ErrorCode::InvalidRequest);
-    assert!(error.message.contains("`p`"), "{}", error.message);
+    let error = deferred(&routes, &SecretSources::new().with_home(unread_home()));
     assert!(error.message.contains("file"), "{}", error.message);
     assert!(!error.message.contains("token"));
 }
@@ -747,11 +777,7 @@ fn a_file_reference_is_refused_by_name_when_its_feature_is_compiled_out() {
 fn a_keychain_reference_is_refused_by_name_when_its_feature_is_compiled_out() {
     let document = single(&[("AUTH", "{kind: bearer, secret: \"keychain:service/entry\"}")]);
     let routes = Routes::parse(&document).unwrap();
-    let error = routes
-        .resolvers(&SecretSources::new().with_home(unread_home()))
-        .unwrap_err();
-    assert_eq!(error.code, ErrorCode::InvalidRequest);
-    assert!(error.message.contains("`p`"), "{}", error.message);
+    let error = deferred(&routes, &SecretSources::new().with_home(unread_home()));
     assert!(error.message.contains("keychain"), "{}", error.message);
 }
 
@@ -763,15 +789,9 @@ fn a_home_file_reference_expands_against_the_callers_home_and_without_one_is_ref
         "{kind: bearer, secret: \"file:~/llm-routes-dir/llm-routes-token\"}",
     )]);
     let routes = Routes::parse(&document).unwrap();
-    let error = routes.resolvers(&SecretSources::new()).unwrap_err();
-    assert_eq!(error.code, ErrorCode::InvalidRequest);
-    assert!(error.message.contains("`p`"), "{}", error.message);
+    let error = deferred(&routes, &SecretSources::new());
     assert!(!error.message.contains("llm-routes-dir"));
-    let error = routes
-        .resolvers(&SecretSources::new().with_home("relative-home"))
-        .unwrap_err();
-    assert_eq!(error.code, ErrorCode::InvalidRequest);
-    assert!(error.message.contains("`p`"), "{}", error.message);
+    deferred(&routes, &SecretSources::new().with_home("relative-home"));
 
     #[cfg(target_os = "linux")]
     {

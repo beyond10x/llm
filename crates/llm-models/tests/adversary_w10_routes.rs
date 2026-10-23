@@ -26,10 +26,18 @@ fn adversary_w10_a_relative_home_refusal_names_no_part_of_the_file_reference() {
     );
     let routes = Routes::parse(&document).unwrap();
     for home in ["relative-home", "/llm-routes-home/../elsewhere"] {
-        let error = routes
+        let resolvers = routes
             .resolvers(&llm_models::routes::SecretSources::new().with_home(home))
-            .unwrap_err();
-        assert_eq!(error.code, ErrorCode::InvalidRequest, "{home}");
+            .unwrap();
+        let error = routes
+            .port(
+                "r",
+                llm_http::HttpClient::new(llm_http::Limits::default()).unwrap(),
+                &resolvers,
+            )
+            .err()
+            .unwrap();
+        assert_eq!(error.code, ErrorCode::Unauthorized, "{home}");
         assert!(error.message.contains("`p`"), "{home}: {}", error.message);
         for part in ["llm-routes-dir", "llm-routes-token", home] {
             assert!(

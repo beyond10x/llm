@@ -296,6 +296,18 @@ fn container_answer() -> Vec<u8> {
     )
 }
 
+/// Held for reading around every spawn, and for writing by a test that closes its end of a
+/// child's stdout: a child forked by another test while that pipe is open would hold a copy of
+/// its read end until it execs, and the write would not fail.
+static SPAWNING: std::sync::RwLock<()> = std::sync::RwLock::new(());
+
+fn spawn(command: &mut Command) -> std::process::Child {
+    let _spawning = SPAWNING
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    command.spawn().unwrap()
+}
+
 /// Runs `llm` with only `env` set, and `stdin` as its input.
 fn llm(args: &[&str], env: &[(&str, &str)], stdin: Option<&str>) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_llm"));
@@ -306,7 +318,7 @@ fn llm(args: &[&str], env: &[(&str, &str)], stdin: Option<&str>) -> Output {
         Stdio::null()
     });
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
-    let mut child = command.spawn().unwrap();
+    let mut child = spawn(&mut command);
     if let Some(input) = stdin {
         child
             .stdin
@@ -588,15 +600,15 @@ fn stalled_after_one_delta() -> (String, std::sync::mpsc::Sender<()>) {
 fn an_interrupt_ends_the_turn_with_130_and_keeps_the_text_already_shown() {
     let (origin, release) = stalled_after_one_delta();
     let (_directory, path) = configured(&three_routes(&origin));
-    let mut child = Command::new(env!("CARGO_BIN_EXE_llm"))
-        .env_clear()
-        .envs(KEYS.iter().copied())
-        .args(["--config", &path, "infer", "--model", "haiku", "hi"])
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
+    let mut child = spawn(
+        Command::new(env!("CARGO_BIN_EXE_llm"))
+            .env_clear()
+            .envs(KEYS.iter().copied())
+            .args(["--config", &path, "infer", "--model", "haiku", "hi"])
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()),
+    );
     let mut out = child.stdout.take().unwrap();
     let mut shown = Vec::new();
     let mut byte = [0; 1];
@@ -604,9 +616,8 @@ fn an_interrupt_ends_the_turn_with_130_and_keeps_the_text_already_shown() {
         assert_eq!(out.read(&mut byte).unwrap(), 1, "stdout ended early");
         shown.push(byte[0]);
     }
-    let interrupted = Command::new("kill")
-        .args(["-INT", &child.id().to_string()])
-        .status()
+    let interrupted = spawn(Command::new("kill").args(["-INT", &child.id().to_string()]))
+        .wait()
         .unwrap();
     assert!(interrupted.success());
     out.read_to_end(&mut shown).unwrap();
@@ -622,6 +633,114 @@ fn an_interrupt_ends_the_turn_with_130_and_keeps_the_text_already_shown() {
     assert_eq!(status.code(), Some(130), "{errors}");
     assert!(String::from_utf8(shown).unwrap().starts_with("Guten "));
     assert!(!errors.contains("route=haiku"), "{errors}");
+}
+
+/// A Messages server that streams `Guten `, waits for the test's go, then streams `Tag` and
+/// ends the turn.
+fn paused_after_one_delta() -> (String, std::sync::mpsc::Sender<()>) {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let (go, wait) = std::sync::mpsc::channel::<()>();
+    thread::spawn(move || {
+        let Ok((mut socket, _)) = listener.accept() else {
+            return;
+        };
+        read_request(&mut socket);
+        let whole = messages_stream();
+        let text = String::from_utf8(whole).unwrap();
+        let split = text.find("event: content_block_delta").unwrap();
+        let second = split
+            + 1
+            + text[split + 1..]
+                .find("event: content_block_delta")
+                .unwrap();
+        let _ = socket.write_all(&text.as_bytes()[..second]);
+        let _ = socket.flush();
+        let _ = wait.recv_timeout(std::time::Duration::from_secs(30));
+        let _ = socket.write_all(&text.as_bytes()[second..]);
+        let _ = socket.flush();
+    });
+    (origin, go)
+}
+
+/// Runs `llm` with `args` and its stdout a pipe the test holds; the caller holds [`SPAWNING`]
+/// for writing until the child is finished.
+fn spawned(args: &[&str]) -> std::process::Child {
+    Command::new(env!("CARGO_BIN_EXE_llm"))
+        .env_clear()
+        .envs(KEYS.iter().copied())
+        .args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap()
+}
+
+fn alone() -> std::sync::RwLockWriteGuard<'static, ()> {
+    SPAWNING
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+fn finished(mut child: std::process::Child) -> (Option<i32>, String) {
+    let mut errors = String::new();
+    child
+        .stderr
+        .take()
+        .unwrap()
+        .read_to_string(&mut errors)
+        .unwrap();
+    (child.wait().unwrap().code(), errors)
+}
+
+#[test]
+fn a_reader_that_closes_stdout_before_the_first_delta_stops_the_turn_with_0() {
+    let fixture = Fixture::new(vec![messages_stream()]);
+    let (_directory, path) = configured(&three_routes(&fixture.origin));
+    let _alone = alone();
+    let mut child = spawned(&["--config", &path, "infer", "--model", "haiku", "hi"]);
+    drop(child.stdout.take());
+    let (code, errors) = finished(child);
+    assert_eq!(code, Some(0), "{errors}");
+    assert_eq!(
+        errors,
+        "llm: route `haiku`: stdout closed; the turn was stopped\n"
+    );
+}
+
+#[test]
+fn a_reader_that_closes_stdout_after_a_shown_delta_stops_the_turn_with_0_and_no_panic() {
+    let (origin, go) = paused_after_one_delta();
+    let (_directory, path) = configured(&three_routes(&origin));
+    let _alone = alone();
+    let mut child = spawned(&["--config", &path, "infer", "--model", "haiku", "hi"]);
+    let mut out = child.stdout.take().unwrap();
+    let mut shown = Vec::new();
+    let mut byte = [0; 1];
+    while !shown.ends_with(b"Guten ") {
+        assert_eq!(out.read(&mut byte).unwrap(), 1, "stdout ended early");
+        shown.push(byte[0]);
+    }
+    drop(out);
+    go.send(()).unwrap();
+    let (code, errors) = finished(child);
+    assert_eq!(code, Some(0), "{errors}");
+    assert_eq!(
+        errors,
+        "llm: route `haiku`: stdout closed; the turn was stopped\n"
+    );
+}
+
+#[test]
+fn a_closed_stdout_ends_model_list_with_0_and_no_panic() {
+    let (_directory, path) = configured(&three_routes("http://127.0.0.1:9"));
+    let _alone = alone();
+    let mut child = spawned(&["--config", &path, "model", "list"]);
+    drop(child.stdout.take());
+    let (code, errors) = finished(child);
+    assert_eq!(code, Some(0), "{errors}");
+    assert_eq!(errors, "");
 }
 
 #[test]
@@ -693,6 +812,87 @@ fn a_literal_secret_in_the_file_is_refused_without_echoing_it() {
     let message = refused_before_sending(&document, &["infer", "--model", "haiku", "hi"], &KEYS);
     assert!(message.contains("auth.secret"), "{message}");
     assert!(!message.contains("fixture-literal-secret"), "{message}");
+}
+
+/// `three_routes` plus an endpoint on a keychain entry and one on a `file:~/` path, each with a
+/// route.
+fn beside_unbuildable_sources(origin: &str) -> String {
+    format!(
+        r#"{}
+[endpoints.vault]
+base_url = "{origin}/v1"
+protocol = "messages"
+auth = {{ kind = "api-key", header = "x-api-key", secret = "keychain:llm-cli-fixture/key" }}
+
+[endpoints.home]
+base_url = "{origin}/v1"
+protocol = "messages"
+auth = {{ kind = "api-key", header = "x-api-key", secret = "file:~/llm-cli-fixture-key" }}
+
+[routes.locked]
+model = "vault/claude-haiku-5-5"
+
+[routes.homed]
+model = "home/claude-haiku-5-5"
+"#,
+        three_routes(origin)
+    )
+}
+
+#[test]
+fn a_route_answers_beside_endpoints_whose_sources_cannot_be_built() {
+    let fixture = Fixture::new(vec![messages_stream()]);
+    let (_directory, path) = configured(&beside_unbuildable_sources(&fixture.origin));
+    let output = llm(
+        &["--config", &path, "infer", "--model", "fast", "hi"],
+        &KEYS,
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "Guten Tag\n");
+    assert_eq!(fixture.received().len(), 1);
+}
+
+#[test]
+fn a_file_route_without_a_home_is_refused_by_its_endpoint_before_any_request() {
+    let message = refused_before_sending(
+        &beside_unbuildable_sources("{origin}"),
+        &["infer", "--model", "homed", "hi"],
+        &KEYS,
+    );
+    assert!(
+        message.starts_with("llm: route `homed`: unauthorized"),
+        "{message}"
+    );
+    assert!(message.contains("`home`"), "{message}");
+    assert!(!message.contains("llm-cli-fixture-key"), "{message}");
+}
+
+#[test]
+fn a_keychain_route_reads_the_injected_store() {
+    let fixture = Fixture::new(vec![messages_stream()]);
+    let (_directory, path) = configured(&beside_unbuildable_sources(&fixture.origin));
+    let store: Arc<keyring_core::CredentialStore> = keyring_core::mock::Store::new().unwrap();
+    store
+        .build("llm-cli-fixture", "key", None)
+        .unwrap()
+        .set_secret(b"fixture-keychain-key")
+        .unwrap();
+    let environment = llm_cli::Environment {
+        keychain: Some(store),
+        ..llm_cli::Environment::default()
+    };
+    let code = llm_cli::run(
+        ["llm", "--config", &path, "infer", "--model", "locked", "hi"].map(Into::into),
+        &environment,
+    );
+    assert_eq!(code, std::process::ExitCode::SUCCESS);
+    let received = fixture.received();
+    assert_eq!(received.len(), 1);
+    assert_eq!(
+        received[0].header("x-api-key"),
+        Some("fixture-keychain-key")
+    );
 }
 
 #[test]
@@ -838,6 +1038,44 @@ fn infer_on_opus_signs_a_converse_request_with_the_container_credentials() {
         "POST /model/eu.anthropic.claude-opus-5-5/converse-stream HTTP/1.1"
     );
     signed_for_frankfurt(&received[0]);
+}
+
+/// The token file as a Kubernetes projected volume lays it out (`token` to `..data/token`,
+/// `..data` to a timestamped directory, the file `0644`), taken from the Kubernetes
+/// documentation rather than observed on a cluster.
+#[test]
+fn infer_on_opus_reads_a_container_token_from_a_projected_volume() {
+    let bedrock = Fixture::new(vec![converse_stream()]);
+    let container = Fixture::new(vec![container_answer()]);
+    let (directory, path) = configured(&bedrock_routes(&bedrock.origin));
+    let mount = directory.path().join("eks-pod-identity-token");
+    let stamped = mount.join("..2026_10_23_08_00_00.000000001");
+    write(&stamped.join("token"), CONTAINER_TOKEN);
+    std::fs::set_permissions(
+        stamped.join("token"),
+        std::fs::Permissions::from_mode(0o644),
+    )
+    .unwrap();
+    std::os::unix::fs::symlink("..2026_10_23_08_00_00.000000001", mount.join("..data")).unwrap();
+    std::os::unix::fs::symlink("..data/token", mount.join("token")).unwrap();
+    let uri = format!("{}/v1/credentials", container.origin);
+    let output = llm(
+        &["--config", &path, "infer", "--model", "opus", "hi"],
+        &[
+            ("AWS_CONTAINER_CREDENTIALS_FULL_URI", &uri),
+            (
+                "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+                mount.join("token").to_str().unwrap(),
+            ),
+        ],
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "Opus speaking\n");
+    let asked = container.received();
+    assert_eq!(asked.len(), 1);
+    assert_eq!(asked[0].header("authorization"), Some(CONTAINER_TOKEN));
+    assert_eq!(bedrock.received().len(), 1);
 }
 
 #[test]

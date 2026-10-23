@@ -81,9 +81,11 @@ model = "bedrock-invoke/eu.anthropic.claude-sonnet-5-5"
 The model ids are example ids, not verified. `bedrock-eu` uses Bedrock's Converse wire and signs
 with the container credentials EKS Pod Identity serves. `bedrock-invoke` sends the Anthropic
 Messages body to `InvokeModel` and signs with keys from the environment. Every secret is a
-reference, never a value; a literal key is refused. The command reads `env:` and `file:`
-references. It reads no keychain: a file with a `keychain:` reference on any endpoint is refused by
-`llm infer`, whichever route is asked for.
+reference, never a value; a literal key is refused. The command reads `env:`, `file:` and
+`keychain:` references. A `keychain:` reference reads the platform keychain (the Secret Service
+on Linux, the login keychain on macOS, the Credential Manager on Windows), which `llm` opens only
+when the route you ask for needs it. An endpoint whose reference cannot be read refuses only its
+own routes; the other routes still work.
 
 ## List the models
 
@@ -120,23 +122,34 @@ route=haiku protocol=messages input_tokens=12 output_tokens=4 cost=0.000032 USD
 ```
 
 A counter the provider did not report is `unknown`, not `0`. `cost` appears only for a priced
-route, and it is `unknown` when a counter it needs is missing.
+route, and it is `unknown` when a counter it needs is missing. A cost needs every input counter,
+cache reads and cache writes included, so whether it can complete depends on the wire:
+
+| Wire | Cost of a priced route |
+| --- | --- |
+| `messages`, direct or on Bedrock `InvokeModel` | Completes when the answer reports its cache counters |
+| `bedrock-converse` | Completes: `llm` sets no cache point, so an absent cache counter is a known `0` |
+| `responses` | Always `unknown`: the wire reports no cache-write counter |
+| `chat-completions` | `unknown` unless the server reports both cache counters, which providers on this wire do not |
 
 For `bedrock-eu`, the container credentials come from the two variables EKS Pod Identity sets,
 `AWS_CONTAINER_CREDENTIALS_FULL_URI` and `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`. Without them
-that route is refused and every other route still works. The token file must be a regular file
-owned by you or root, mode `0600` or stricter, with no symbolic link in its path. A Kubernetes
-projected token is a symbolic link with mode `0644`, so `llm` refuses it as Kubernetes mounts it.
-That is a known limitation of this release.
+that route is refused and every other route still works. The token file is read again on every
+turn, so a rotated token is picked up. It may be the Kubernetes projected-volume layout (`token`
+linking to `..data/token`, `..data` linking to a timestamped directory, the file mode `0644`).
+That layout is taken from the AWS and Kubernetes documentation and has not been checked on a
+cluster. `llm` follows a link only when it sits in a directory owned by you or root that no one
+else can write. The file it reaches must be a regular file owned by you or root that only its
+owner can write.
 
 ## Exit codes
 
 | Code | Meaning |
 | --- | --- |
-| `0` | The turn completed, or the list was printed |
-| `1` | The provider failed after the request was sent; stderr names the route and the error code only |
+| `0` | The turn completed, or the list was printed; also when the reader closed stdout (`llm infer … \| head -c 1`), which stops the turn and says so on stderr |
+| `1` | The provider failed after the request was sent, or stdout could not be written for another reason; stderr names the route and the error code only |
 | `2` | Refused before anything was sent: no or bad configuration, an unknown model, a missing credential, an invalid request |
-| `130` | Interrupted with Ctrl-C; the text shown so far stays on stdout |
+| `130` | Interrupted with Ctrl-C; the text shown so far stays on stdout. A second Ctrl-C ends a turn the first did not stop |
 
 A refusal names the field, route or reference and never prints a secret value or a provider's
 error text.
