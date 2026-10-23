@@ -245,3 +245,264 @@ fn a_priced_route_costs_a_turn_whose_usage_is_known_and_leaves_any_other_unknown
             .is_none()
     );
 }
+
+const PROCESS_YAML: &str = "format: llm.routes/1
+endpoints:
+  bedrock-dev:
+    protocol: bedrock-converse
+    bedrock: {region: eu-central-1}
+    auth: {kind: aws-process, command: [aws, configure, export-credentials, --profile, dev]}
+routes:
+  opus: bedrock-dev/eu.anthropic.claude-opus-5-5
+";
+
+const PROCESS_TOML: &str = r#"format = "llm.routes/1"
+
+[endpoints.bedrock-dev]
+protocol = "bedrock-converse"
+bedrock = { region = "eu-central-1" }
+auth = { kind = "aws-process", command = ["aws", "configure", "export-credentials", "--profile", "dev"] }
+
+[routes]
+opus = "bedrock-dev/eu.anthropic.claude-opus-5-5"
+"#;
+
+const EXPORT: [&str; 5] = ["aws", "configure", "export-credentials", "--profile", "dev"];
+
+#[test]
+fn an_aws_process_endpoint_loads_from_yaml_and_toml_with_its_command() {
+    let yaml = Routes::parse(PROCESS_YAML).unwrap();
+    let toml = Routes::parse_toml(PROCESS_TOML).unwrap();
+    assert_eq!(yaml.digest(), toml.digest());
+    for routes in [&yaml, &toml] {
+        let endpoint = routes.bedrock_endpoints().next().unwrap();
+        assert_eq!(endpoint.credential_kind(), AwsCredentialKind::Process);
+        assert_eq!(endpoint.credential_kind().as_str(), "aws-process");
+        assert_eq!(endpoint.command().unwrap(), EXPORT);
+        assert!(endpoint.secret_kinds().is_empty());
+        assert_eq!(
+            routes.target("opus").unwrap().protocol,
+            Protocol::BedrockConverse
+        );
+        assert_eq!(routes.catalog().bindings().count(), 0);
+        assert_eq!(
+            routes
+                .resolvers(&SecretSources::new())
+                .unwrap()
+                .accounts()
+                .count(),
+            0
+        );
+    }
+    // The command is part of the document's identity.
+    let other = Routes::parse_toml(&PROCESS_TOML.replace("\"dev\"", "\"ops\"")).unwrap();
+    assert_ne!(other.digest(), toml.digest());
+    let container = Routes::parse_toml(&PROCESS_TOML.replace(
+        r#"{ kind = "aws-process", command = ["aws", "configure", "export-credentials", "--profile", "dev"] }"#,
+        r#"{ kind = "aws-container" }"#,
+    ))
+    .unwrap();
+    assert_ne!(container.digest(), toml.digest());
+    assert_eq!(
+        container.bedrock_endpoints().next().unwrap().command(),
+        None
+    );
+}
+
+/// Each refusal names the endpoint and the field by its path, and echoes no value.
+#[test]
+fn an_unusable_aws_process_command_or_an_extra_auth_field_is_refused_by_its_path() {
+    let auth = r#"{ kind = "aws-process", command = ["aws", "configure", "export-credentials", "--profile", "dev"] }"#;
+    let cases = [
+        (
+            r#"{ kind = "aws-process", command = [] }"#,
+            "`auth.command` is empty",
+        ),
+        (r#"{ kind = "aws-process" }"#, "requires `auth.command`"),
+        (
+            r#"{ kind = "aws-process", command = "aws-fixture-value" }"#,
+            "`auth.command` is not a list of strings",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["", "fixture-value"] }"#,
+            "`auth.command[0]`, the program, is empty",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["aws", 7] }"#,
+            "`auth.command[1]` is not a string",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["aws", "fixture-value", ["x"]] }"#,
+            "`auth.command[2]` is not a string",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["aws", { a = "fixture-value" }] }"#,
+            "`auth.command[1]` is not a string",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["aws"], access_key_id = "env:FIXTURE_VALUE" }"#,
+            "`auth.access_key_id`",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["aws"], secret_access_key = "env:FIXTURE_VALUE" }"#,
+            "`auth.secret_access_key`",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["aws"], session_token = "env:FIXTURE_VALUE" }"#,
+            "`auth.session_token`",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["aws"], secret = "env:FIXTURE_VALUE" }"#,
+            "`auth.secret`",
+        ),
+        (
+            r#"{ kind = "aws-process", command = ["aws"], header = "fixture-value" }"#,
+            "`auth.header`",
+        ),
+        (
+            r#"{ kind = "aws-container", command = ["aws"] }"#,
+            "only an aws-process endpoint takes `auth.command`",
+        ),
+        (
+            r#"{ kind = "aws-keys", access_key_id = "env:A", secret_access_key = "env:B", command = ["aws"] }"#,
+            "only an aws-process endpoint takes `auth.command`",
+        ),
+    ];
+    for (replacement, expected) in cases {
+        let error = Routes::parse_toml(&PROCESS_TOML.replace(auth, replacement)).unwrap_err();
+        assert_eq!(error.code, ErrorCode::InvalidRequest, "{replacement}");
+        assert!(
+            error.message.starts_with("endpoint `bedrock-dev`: "),
+            "{replacement}: {}",
+            error.message
+        );
+        assert!(
+            error.message.contains(expected),
+            "{replacement}: {}",
+            error.message
+        );
+        assert!(
+            !error.message.contains("fixture-value") && !error.message.contains("FIXTURE"),
+            "{}",
+            error.message
+        );
+    }
+}
+
+/// The same refusals in YAML, and an unknown `auth` key in both forms, echo no value.
+#[test]
+fn an_unusable_aws_process_command_in_yaml_or_an_unknown_auth_key_is_refused() {
+    let yaml_cases = [
+        (
+            "command: [aws, configure, export-credentials, --profile, dev]",
+            "command: []",
+            "`auth.command` is empty",
+        ),
+        (
+            "command: [aws, configure, export-credentials, --profile, dev]",
+            "command: [aws, null]",
+            "`auth.command[1]` is not a string",
+        ),
+        (
+            "command: [aws, configure, export-credentials, --profile, dev]",
+            "command: ['', dev]",
+            "`auth.command[0]`, the program, is empty",
+        ),
+        (
+            "command: [aws, configure, export-credentials, --profile, dev]",
+            "command: [aws], header: x-fixture",
+            "`auth.header`",
+        ),
+    ];
+    for (from, to, expected) in yaml_cases {
+        let error = Routes::parse(&PROCESS_YAML.replace(from, to)).unwrap_err();
+        assert_eq!(error.code, ErrorCode::InvalidRequest, "{to}");
+        assert!(error.message.contains(expected), "{to}: {}", error.message);
+    }
+    // An unknown key in `auth` is refused by the parser, by its name in TOML.
+    let error = Routes::parse_toml(
+        &PROCESS_TOML.replace("\"dev\"] }", "\"dev\"], profile = \"fixture-value\" }"),
+    )
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidRequest);
+    assert!(
+        error.message.contains("unknown field `profile`"),
+        "{}",
+        error.message
+    );
+    assert!(
+        !error.message.contains("fixture-value"),
+        "{}",
+        error.message
+    );
+    let error =
+        Routes::parse(&PROCESS_YAML.replace("dev]}", "dev], profile: fixture-value}")).unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidRequest);
+    assert!(
+        !error.message.contains("fixture-value"),
+        "{}",
+        error.message
+    );
+}
+
+#[test]
+fn only_a_bedrock_endpoint_takes_aws_process_or_a_command() {
+    let http_endpoint = "format = \"llm.routes/1\"
+
+[endpoints.open]
+base_url = \"https://open.example.invalid/v1\"
+protocol = \"messages\"
+auth = AUTH
+
+[routes]
+haiku = \"open/claude-haiku-5-5\"
+";
+    for (auth, expected) in [
+        (
+            r#"{ kind = "aws-process", command = ["aws"] }"#,
+            "takes `auth.kind` aws-keys, aws-container or aws-process",
+        ),
+        (
+            r#"{ kind = "anonymous", command = ["aws"] }"#,
+            "only an aws-process endpoint takes `auth.command`",
+        ),
+    ] {
+        let error = Routes::parse_toml(&http_endpoint.replace("AUTH", auth)).unwrap_err();
+        assert_eq!(error.code, ErrorCode::InvalidRequest, "{auth}");
+        assert!(
+            error.message.contains(expected),
+            "{auth}: {}",
+            error.message
+        );
+    }
+}
+
+/// A build without feature `process` refuses the route even when the caller allows it, and the
+/// command (a program that does not exist) is never looked for.
+#[cfg(not(feature = "process"))]
+#[test]
+fn without_feature_process_an_aws_process_route_is_refused_and_nothing_runs() {
+    let directory = tempfile::tempdir().unwrap();
+    let program = directory.path().join("no-such-program");
+    let document = PROCESS_TOML.replace(
+        r#"["aws", "configure", "export-credentials", "--profile", "dev"]"#,
+        &serde_json::json!([program.display().to_string()]).to_string(),
+    );
+    let routes = Routes::parse_toml(&document).unwrap();
+    let resolvers = routes
+        .resolvers(&SecretSources::new())
+        .unwrap()
+        .allow_credential_process();
+    let error = routes.port("opus", http(), &resolvers).err().unwrap();
+    assert_eq!(error.code, ErrorCode::Unauthorized, "{error:?}");
+    assert!(
+        error.message.starts_with("endpoint `bedrock-dev`: "),
+        "{}",
+        error.message
+    );
+    assert!(
+        error.message.contains("feature `process`"),
+        "{}",
+        error.message
+    );
+}
