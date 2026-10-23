@@ -6,7 +6,7 @@ status: open
 title: The live API and subscription runs need the operator's credentials
 relations:
 - blocks: story:anthropic-access
-revision: 3
+revision: 4
 ---
 ## What is missing
 
@@ -45,3 +45,13 @@ credential-rotation report required by the story. Keep the story active until th
 Adversary finding F4 (review-result:adversary-w48-llm-anthropic-access-pass-1): nothing in llm keeps
 a subscription-oauth binding to its operator. beyond10x/llm-gateway must not serve a subscription
 route to other callers; the quoted terms forbid it.
+
+## Decision 2026-10-23
+
+Option A of decision-blocker:subscription-access-contract
+(approval-record:subscription-access-2026-10-23): llm uses no Claude subscription credential until
+the operator names the account llm may use, with its plan: the account behind keychain secret
+`llm/anthropic-subscription`, or another. The 2026-10-21 capture used the machine's active Claude
+login, which may be a different account. The terms read on 2026-10-23 and the tested behaviour are
+in verification-report:subscription-access-evidence-2026-10-23. The live subscription turn and the
+rotation report this blocker asks for run only after the operator has named the account.
