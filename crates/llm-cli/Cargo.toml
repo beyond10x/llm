@@ -24,7 +24,7 @@ keyring-core = "1.0.0"
 llm-core.workspace = true
 llm-credentials = { workspace = true, features = ["native-keychain"] }
 llm-http.workspace = true
-llm-models = { path = "../llm-models", features = ["environment", "file", "keychain"] }
+llm-models = { path = "../llm-models", features = ["environment", "file", "keychain", "process"] }
 serde_json.workspace = true
 tokio = { workspace = true, features = ["signal"] }
 url.workspace = true
@@ -34,3 +34,7 @@ base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
 llm-bedrock = { path = "../llm-bedrock" }
 serde_json.workspace = true
 tempfile = "3.27"
+
+[[test]]
+name = "credential_process"
+harness = false

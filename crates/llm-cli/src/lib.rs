@@ -7,6 +7,10 @@
 //! `.yaml` file) reads the file, [`Routes::port`] builds the client a name reaches, and
 //! [`Routes::cost`] prices the turn. The file is found by [`locate`].
 //!
+//! `llm infer` allows credential processes: a Bedrock endpoint whose `auth.kind` is `aws-process`
+//! runs its `command` when its turn needs keys, and the keys it prints stay in this process's
+//! memory. `llm model list` builds no client and so runs no command.
+//!
 //! Exit codes: 0 for a completed turn or listing; 2 for a refusal before anything is sent (no
 //! configuration file, a document `llm-models` refuses, an unknown name, a credential that does
 //! not resolve, an invalid request); 1 for a provider or transport failure, reported by its
@@ -541,7 +545,8 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
     };
     let resolvers = routes
         .resolvers(&sources(environment, routes, &target.endpoint))
-        .map_err(|error| refused(&error))?;
+        .map_err(|error| refused(&error))?
+        .allow_credential_process();
     let prompt = prompt(infer)?;
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
