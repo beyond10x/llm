@@ -1174,6 +1174,13 @@ async fn fetch_on_loopback(input: &ContainerInput, fetches: u64) -> Result<Value
                     }
                 }
             }
+            // A refresh inside the window runs in the background: count it once it has landed.
+            let _ = tokio::time::timeout(Duration::from_secs(5), async {
+                while source.refreshing() {
+                    tokio::time::sleep(Duration::from_millis(5)).await;
+                }
+            })
+            .await;
             (last, failure)
         }
         Err(error) => (None, Some(error)),

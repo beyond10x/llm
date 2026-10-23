@@ -154,7 +154,9 @@ entities:
   # `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`) is resolved through the injected resolver on each
   # fetch and sent as the `authorization` header of a GET. The answer is
   # `{AccessKeyId, SecretAccessKey, Token, Expiration}`, kept until five minutes before
-  # `Expiration`. Every failure is `unauthorized`, dispatch `not-sent`, final, except an
+  # `Expiration`. In those five minutes a call answers the kept credentials at once while one
+  # refresh runs in the background; only a call with no unexpired credentials waits, for the one
+  # fetch in flight. `requests` counts after that refresh has landed. Every failure is `unauthorized`, dispatch `not-sent`, final, except an
   # endpoint that did not answer, timed out, cut its answer or answered 408 or 5xx, which is
   # `transport`, dispatch `not-sent`, retriable.
   - name: llm.bedrock.ContainerCredentialObservation

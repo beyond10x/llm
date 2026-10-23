@@ -1025,7 +1025,7 @@
         "scenario": "llm.bedrock/authored/container-credentials-are-fetched-once-and-kept-until-the-refresh-window"
       },
       "bedrock/scenarios/container-credentials-inside-the-refresh-window-are-fetched-again.yaml": {
-        "digest": "sha256:7b67fcd869179c6c6900e162427eb220eb5d09956d3706ad888fff84edcd01b0",
+        "digest": "sha256:a223cd84b8f66328644148d5338c79af1bf99b2028e765aedfa59b3f6cdb0007",
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/container-credentials-inside-the-refresh-window-are-fetched-again"
       },
@@ -14794,7 +14794,7 @@
       ]
     },
     "llm.bedrock/authored/container-credentials-inside-the-refresh-window-are-fetched-again": {
-      "purpose": "credentials that expire within five minutes are not kept: each call fetches again",
+      "purpose": "credentials that expire within five minutes are answered while one refresh fetches again in the background",
       "source": [
         {
           "kind": "domain",
