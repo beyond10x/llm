@@ -338,6 +338,7 @@ fn omitted_advisories_names_exactly_the_hints_this_wire_does_not_send_in_table_o
         prompt_cache_key: Some("session-7".to_owned()),
         verbosity: Some(Verbosity::Low),
         reasoning_summary: Some(ReasoningSummary::Auto),
+        anthropic_beta: vec!["context-1m-2025-08-07".to_owned()],
         unforwarded: [Unforwarded::ClientMetadata, Unforwarded::InputItemIds]
             .into_iter()
             .collect(),
@@ -347,6 +348,7 @@ fn omitted_advisories_names_exactly_the_hints_this_wire_does_not_send_in_table_o
         vec![
             Advisory::PromptCache,
             Advisory::ReasoningSummary,
+            Advisory::AnthropicBeta,
             Advisory::InputItemIds,
             Advisory::ClientMetadata,
         ]

@@ -121,6 +121,11 @@ impl MessagesClient {
         require_tokio_runtime()?;
         // Refused before any I/O, and before a credential is resolved.
         let body = encode_request(request, &self.binding)?;
+        let mut betas = Vec::new();
+        if self.binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth {
+            betas.push(OAUTH_BETA);
+        }
+        let betas = beta_header(betas, &request.controls.hints.anthropic_beta)?;
         let deadline = self.turn_limit.map(|total| Instant::now() + total);
         // Resolved per request, so a rotated credential is used without restarting the caller.
         // A store that never answers ends the turn on the deadline, not on the caller's patience.
@@ -137,11 +142,8 @@ impl MessagesClient {
             version_header(),
             HeaderValue::from_static(ANTHROPIC_VERSION),
         );
-        if self.binding.declaration().account.auth_kind == AuthKind::SubscriptionOauth {
-            headers.insert(
-                HeaderName::from_static(BETA_HEADER),
-                HeaderValue::from_static(OAUTH_BETA),
-            );
+        if let Some(betas) = betas {
+            headers.insert(HeaderName::from_static(BETA_HEADER), betas);
         }
         self.stream(headers, body, request, sink, cancel, deadline)
             .await
@@ -233,6 +235,26 @@ async fn bounded<T>(
     })
     .await
     .map_err(|refusal| refusal.with_dispatch(dispatch))?
+}
+
+/// The one `anthropic-beta` header a turn sends: the betas the route needs (the [`OAUTH_BETA`]
+/// of a subscription), then the turn's own betas, each name once, joined by commas. `None` when
+/// there is nothing to send.
+fn beta_header<'a>(
+    mut names: Vec<&'a str>,
+    requested: &'a [String],
+) -> Result<Option<HeaderValue>, Error> {
+    for name in requested {
+        if !names.contains(&name.as_str()) {
+            names.push(name);
+        }
+    }
+    if names.is_empty() {
+        return Ok(None);
+    }
+    HeaderValue::from_str(&names.join(","))
+        .map(Some)
+        .map_err(|_| Error::invalid("`anthropic-beta` names do not form a header value"))
 }
 
 fn version_header() -> HeaderName {

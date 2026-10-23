@@ -836,6 +836,28 @@ async fn an_omitted_hint_is_reported_after_the_turn() {
     assert!(!String::from_utf8_lossy(&sent.body).contains("fixture-cache-key"));
 }
 
+#[tokio::test]
+async fn anthropic_beta_names_converse_cannot_send_are_reported_by_name_after_the_turn() {
+    let mut request = capital_request();
+    request.controls.hints.anthropic_beta = vec!["context-1m-2025-08-07".to_owned()];
+    let (_, events, sent) = replay(
+        NOVA,
+        true,
+        &request,
+        include_bytes!("data/frames/pydantic-test_bedrock_model_stream.bin"),
+    )
+    .await;
+    assert_eq!(shape(&events), vec![("text", 29), ("warning", 1)]);
+    assert!(matches!(
+        events.last(),
+        Some(StreamEvent::Warning { code, message })
+            if code == ADVISORY_OMITTED && message.contains("anthropic-beta")
+    ));
+    let body = String::from_utf8_lossy(&sent.body);
+    assert!(!body.contains("context-1m"), "{body}");
+    assert!(!body.contains("anthropic_beta"), "{body}");
+}
+
 /// A synthetic event frame, built here and not recorded.
 fn event(kind: &str, payload: &Value) -> Vec<u8> {
     encode_message(&Message {

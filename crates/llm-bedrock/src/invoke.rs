@@ -2,7 +2,8 @@
 //!
 //! The body is the Messages body `llm-messages` encodes, with `anthropic_version` set to
 //! [`BEDROCK_ANTHROPIC_VERSION`] and without `model` (the path names the model) or `stream` (the
-//! operation says whether it streams). A streamed answer is a sequence of event-stream `chunk`
+//! operation says whether it streams), and with the turn's `anthropic-beta` names as the body's
+//! `anthropic_beta` array, where the direct route sends them as a header. A streamed answer is a sequence of event-stream `chunk`
 //! frames, each carrying one Messages event as `{"bytes": base64(<event JSON>)}`; the events are
 //! read by the `llm-messages` stream decoder, so this wire decodes Messages exactly as the
 //! Messages client does. A whole answer is one Messages message, read by
@@ -71,6 +72,15 @@ pub(crate) fn encode_request(
         "anthropic_version".to_owned(),
         Value::from(BEDROCK_ANTHROPIC_VERSION),
     );
+    // The direct route takes these as the `anthropic-beta` header; InvokeModel reads them from
+    // the body, as an array of names.
+    let betas = &request.controls.hints.anthropic_beta;
+    if !betas.is_empty() {
+        fields.insert(
+            "anthropic_beta".to_owned(),
+            Value::from(betas.iter().map(String::as_str).collect::<Vec<_>>()),
+        );
+    }
     if exceeds(&body, MAX_REQUEST_BYTES) {
         return Err(Error::too_large(
             "Bedrock InvokeModel encoded request exceeds bound",

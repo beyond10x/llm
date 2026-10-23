@@ -666,6 +666,43 @@ async fn the_pre_send_check_on_invoke_model_answers_what_the_turn_refuses() {
     assert_eq!(body["anthropic_version"], "bedrock-2023-05-31");
 }
 
+#[tokio::test]
+async fn invoke_model_sends_the_turns_anthropic_betas_in_the_body_and_no_header() {
+    let mut request = hello();
+    request.controls.hints.anthropic_beta = vec![
+        "context-1m-2025-08-07".to_owned(),
+        "interleaved-thinking-2025-05-14".to_owned(),
+    ];
+    let body = br#"{"message":"fixture validation text"}"#.to_vec();
+    let (origin, server) = serve(
+        refusal("400 Bad Request", "ValidationException", &body),
+        body,
+    )
+    .await;
+    let invoke = target(
+        Api::AnthropicInvoke,
+        false,
+        "us-east-1",
+        MODEL,
+        origin.as_str(),
+    );
+    client(invoke.clone(), Keys::new(None))
+        .turn(&request, &mut VecSink::new(16, 1 << 16), &Cancel::new())
+        .await
+        .unwrap_err();
+    let sent = server.await.unwrap();
+    let wire: Value = serde_json::from_slice(&sent.body).unwrap();
+    assert_eq!(
+        wire["anthropic_beta"],
+        json!(["context-1m-2025-08-07", "interleaved-thinking-2025-05-14"])
+    );
+    assert_eq!(sent.header("anthropic-beta"), None);
+    assert_eq!(llm_messages::omitted_advisories(&request), Vec::new());
+
+    let plain: Value = serde_json::from_slice(&encode_request(&hello(), &invoke).unwrap()).unwrap();
+    assert!(plain.get("anthropic_beta").is_none(), "{plain}");
+}
+
 #[test]
 fn a_turn_limit_is_positive_and_at_most_a_day() {
     let nowhere = Url::parse(NOWHERE).unwrap();
