@@ -201,6 +201,12 @@
       "status": "shipped"
     },
     {
+      "area": "Amazon Bedrock",
+      "detail": "llm.routes/1 takes auth = { kind = \"aws-process\", command = [...] } on a Bedrock endpoint, in YAML and TOML. llm_bedrock::ProcessCredentials (feature process) runs the command without a shell, stdin empty, stderr inherited, stdout read up to 64 KiB, killed after 60 seconds, and reads the AWS credential_process answer; it runs at the first turn and again once inside the five-minute refresh window, one run at a time, and the keys stay in memory. A failed run or unusable answer is unauthorized, naming the endpoint and the program, carrying none of the output, sending nothing. llm-models builds the route only with feature process and the caller's RouteResolvers::allow_credential_process; the llm command allows it and llm model list never runs it. Fixture evidence only; the AWS CLI was not run.",
+      "label": "Bedrock keys from a credential command",
+      "status": "shipped"
+    },
+    {
       "area": "Credentials",
       "detail": "A catalog names an opaque SecretRef; the embedding injects the SecretResolver, resolution happens on every request, and renewal refreshes only the rejected generation.",
       "label": "Injected secret resolution and coordinated renewal",

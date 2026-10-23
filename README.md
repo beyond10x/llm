@@ -63,7 +63,7 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 | `llm-core` | The neutral turn: `Model`, requests, events, outcomes, typed failures; no I/O |
 | `llm-http` | Bounded single-attempt HTTP and SSE transport |
 | `llm-responses`, `llm-messages`, `llm-chat` | One protocol each: projection both ways, a gateway's ingress decoder and answer encoder, and a client |
-| `llm-bedrock` | Amazon Bedrock Runtime over Converse and Anthropic `InvokeModel`: Signature Version 4, event-stream frames, static or container credentials; fixture-checked, no live call ([guide](https://beyond10x.github.io/llm/docs/guides/call-a-model-on-bedrock)) |
+| `llm-bedrock` | Amazon Bedrock Runtime over Converse and Anthropic `InvokeModel`: Signature Version 4, event-stream frames, static, container or credential-command credentials; fixture-checked, no live call ([guide](https://beyond10x.github.io/llm/docs/guides/call-a-model-on-bedrock)) |
 | `llm-credentials` | Injected secret resolution; opt-in file, keychain, environment, JSON pointer, Codex login and `secrets` adapters |
 | `llm-providers` | Provider, account and endpoint bindings, independent of protocol; provider descriptions (`llm.provider-description/1`), with Runpod's built in |
 | `llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
