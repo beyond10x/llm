@@ -2,13 +2,17 @@
 format: aep.planning-md/3
 id: story:bedrock-followups
 kind: story
-status: draft
+status: implemented
 title: 'Bedrock follow-ups: a public pre-send check, a non-blocking credential refresh, anthropic-beta to InvokeModel'
 summary: check_request and encode_request on BedrockTarget; single-flight container refresh; Hints::anthropic_beta carried by Messages and InvokeModel
 relations:
 - decomposes: epic:bedrock
 - serves: vision:portable-model-inference
-revision: 1
+revision: 4
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-23T02:19:43Z", actor: "human:timo", revision: 2, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
+- {from: "proposed", to: "active", at: "2026-10-23T02:19:43Z", actor: "human:timo", revision: 3, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
+- {from: "active", to: "implemented", at: "2026-10-23T02:19:43Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1}}, executor: "agent:llm-session"}
 ---
 ## Context
 
