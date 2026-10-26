@@ -41,7 +41,11 @@ fn fields(value: &str) -> [String; 3] {
         .strip_prefix("llm-")
         .unwrap_or_else(|| panic!("`{value}` does not start with `llm-`"));
     let parts: Vec<&str> = rest.split('-').collect();
-    assert_eq!(parts.len(), 3, "`{value}` is not llm-<process>-<clock>-<sequence>");
+    assert_eq!(
+        parts.len(),
+        3,
+        "`{value}` is not llm-<process>-<clock>-<sequence>"
+    );
     for part in &parts {
         assert!(
             !part.is_empty()
@@ -51,7 +55,11 @@ fn fields(value: &str) -> [String; 3] {
             "`{part}` of `{value}` is not lowercase hexadecimal"
         );
     }
-    [parts[0].to_owned(), parts[1].to_owned(), parts[2].to_owned()]
+    [
+        parts[0].to_owned(),
+        parts[1].to_owned(),
+        parts[2].to_owned(),
+    ]
 }
 
 /// Forms the `url` crate rewrites before the prefix is compared: each lands on the side the
@@ -100,7 +108,10 @@ fn a_minted_session_has_the_documented_shape() {
     let value = minted(&client(OPENCODE_GO));
     let [process, _, _] = fields(&value);
     assert_eq!(process, format!("{:x}", std::process::id()), "{value}");
-    assert!(value.len() <= 62, "`{value}` exceeds the 62 bytes its doc states");
+    assert!(
+        value.len() <= 62,
+        "`{value}` exceeds the 62 bytes its doc states"
+    );
     assert!(Id::new(value.as_str()).is_ok(), "{value}");
 }
 
@@ -111,7 +122,10 @@ fn a_minted_session_has_the_documented_shape() {
 fn two_clients_differ_in_their_sequence_field() {
     let [_, _, first] = fields(&minted(&client(OPENCODE_GO)));
     let [_, _, second] = fields(&minted(&client(OPENCODE_GO)));
-    assert_ne!(first, second, "the sequence did not advance between two clients");
+    assert_ne!(
+        first, second,
+        "the sequence did not advance between two clients"
+    );
 }
 
 /// The last name a caller gives wins, and a named session never falls back to the minted one.
