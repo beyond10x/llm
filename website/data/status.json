@@ -165,6 +165,12 @@
       "status": "shipped"
     },
     {
+      "area": "Protocols",
+      "detail": "A MessagesClient whose base URL is https://opencode.ai/inference/go/… (https, that host, default port) sends x-opencode-session on every request: one identifier minted per client, or the caller's (with_session); any other endpoint sends the headers it sent before, and no configuration adds a header. Fixture evidence only: no live OpenCode Go turn is recorded.",
+      "label": "Messages turns reach OpenCode Go",
+      "status": "shipped"
+    },
+    {
       "area": "Amazon Bedrock",
       "detail": "llm-bedrock signs each request with a signer written on ring, checked against the AWS test suite vendored from aws-c-auth (header signing only); keys come from StaticCredentials through an injected resolver or from ContainerCredentials at the container credentials endpoint. No AWS SDK crate and no aws-lc is a dependency. EKS Pod Identity is described from AWS documentation and unverified.",
       "label": "Bedrock requests are signed with Signature Version 4",

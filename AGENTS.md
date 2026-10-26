@@ -109,7 +109,7 @@ Never edit these by hand; change the source and regenerate.
 | `website/docs/reference/crates.md` | `cargo metadata --no-deps` (each package's `description` is public text) | `task docs-generate` |
 | `website/data/status.json`, `website/docs/status.mdx` | the `## Status at` section of `docs/implementation-status.md` | `task docs-generate` |
 | `contracts/suite.json` | `spec/` and the scenarios `contracts/ess-inputs.yaml` lists | `ess verify conform synthesize --path spec --suite-format 5 --target ir --scenarios contracts --out contracts/suite.json` |
-| `contracts/schema/` | `spec/` | `ess generate --path spec --kind schema --out contracts/schema` |
+| `contracts/schema/` | `spec/` | `ess generate --path spec --kind schema --out contracts/schema` (ess 0.69 writes only where `contracts/schema/.ess-output/` records it owns the bytes; that record is ignored, so in a fresh tree generate once into an empty directory under `target/` and copy its `.ess-output/` beside `contracts/schema/schema/`) |
 
 Authored scenarios live in `contracts/<domain>/scenarios/`; the conformance check refuses one that
 `contracts/ess-inputs.yaml` does not list. `llm-docs generate --check` also fails when a guide

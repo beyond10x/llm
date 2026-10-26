@@ -278,7 +278,9 @@ under `/inference/go/`, such as `https://opencode.ai/inference/go/anthropic/v1`.
 another host, an explicit port and another path on `opencode.ai` do not count. The value is one
 identifier the client mints when it is built (`llm-<process>-<clock>-<sequence>`, hexadecimal),
 the same on every turn and every attempt and different for each client. A caller that serves one
-conversation per client and already names it passes that name with `with_session`.
+conversation per client and already names it passes that name with `with_session`. A port
+built by `llm-models` (a routes document, a catalog, `llm infer`) offers no `with_session`, so it
+sends the minted value, and a fallback to a second OpenCode Go target sends that client's own.
 `session_header` reports the header the client sends. No configuration, routes field or turn
 field adds a request header, and a client for any other endpoint sends none of this.
 

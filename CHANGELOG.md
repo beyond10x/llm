@@ -6,6 +6,16 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-messages`: a client for an OpenCode Go base URL sends `x-opencode-session`, one minted session per client
+- `llm-messages`: `is_opencode_go`, `OPENCODE_SESSION_HEADER`, `MessagesClient::with_session` and `session_header`
+- ESS: `llm.messages.InspectSession` and four scenarios; the conformance floor is 947 (was 942)
+
+### Changed
+
+- The conformance check and CI run ess 0.69.2 (was 0.67.0)
+
 ## [0.14.0] - 2026-10-23
 
 ### Added
