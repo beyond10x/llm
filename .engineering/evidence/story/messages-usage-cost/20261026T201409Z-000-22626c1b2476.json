@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-26T20:14:09Z",
+  "actor": "human:timo",
+  "artifact": "story:messages-usage-cost",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "VERIFIED: tests/usage_extension.rs red on 0.15.0 (9 of 10 failed: Messages field is outside the declared subset: message_delta.usage.cost), green at 4d5b4382; adversary pass 1 red 2, green after the correction"
+  }
+}

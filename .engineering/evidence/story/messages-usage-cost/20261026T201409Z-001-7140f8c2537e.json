@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-26T20:14:09Z",
+  "actor": "human:timo",
+  "artifact": "story:messages-usage-cost",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 task check at 766a5cfd, exit 0: 1534 passed, 0 failed, 2 ignored over 239 test runs; conformance 950/950 three times, 0 skipped; aep plan artifact validate valid"
+  }
+}

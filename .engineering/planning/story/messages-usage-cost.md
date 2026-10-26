@@ -2,16 +2,17 @@
 format: aep.planning-md/3
 id: story:messages-usage-cost
 kind: story
-status: active
+status: implemented
 title: A streamed Messages usage cost is carried as a recorded extension, not refused
 summary: message_delta.usage.cost in any shape is admitted on a stream and reported verbatim as a usage-extension warning
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-26T19:35:22Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-26T19:35:23Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-26T20:14:10Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1,"review_outcome":3,"verification":1}}}
 ---
 ## Context
 
