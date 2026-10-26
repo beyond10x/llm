@@ -834,6 +834,9 @@ scenarios:
 - messages/scenarios/parallel-calls-are-projected-as-disable-parallel-tool-use-false.yaml
 - messages/scenarios/thinking-with-a-budget-is-projected-as-read.yaml
 - messages/scenarios/a-text-block-that-opens-with-text-shows-it-as-a-delta.yaml
+- messages/scenarios/usage-cost-on-a-message-delta-carried-as-a-warning.yaml
+- messages/scenarios/usage-cost-object-carried-verbatim-as-a-warning.yaml
+- messages/scenarios/unknown-usage-key-beside-a-cost-refused-by-path.yaml
 - models/scenarios/a-chat-completions-serving-model-builds-the-chat-port.yaml
 - models/scenarios/a-credentialed-account-without-a-resolver-is-refused-unauthorized.yaml
 - models/scenarios/a-messages-serving-model-builds-the-messages-port.yaml

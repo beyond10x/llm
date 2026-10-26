@@ -15,24 +15,52 @@ pub(crate) struct Snapshot {
     reasoning: Option<u64>,
 }
 
+/// Every name a usage object may carry, read or accepted unread.
+const USAGE_FIELDS: [&str; 10] = [
+    "input_tokens",
+    "output_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+    "cache_creation",
+    "output_tokens_details",
+    "server_tool_use",
+    "service_tier",
+    "inference_geo",
+    "speed",
+];
+
+/// The one usage extension: admitted on a streamed usage object in any JSON shape, read into
+/// nothing, and carried to the caller verbatim (`docs/messages.md`, "Usage"). Its shape is
+/// unknown, so a typed field would be a guess at the producer's type.
+const EXTENSION: &str = "cost";
+
+/// The longest compact JSON of an extension a warning copies; a longer one is refused.
+const MAX_EXTENSION_BYTES: usize = 1024;
+
 impl Snapshot {
+    /// One usage object with no sink to carry an extension on: a complete message's. `cost` is
+    /// refused here by its path, as every other name outside [`USAGE_FIELDS`] is.
     pub fn update(&self, value: &Value, at: &str) -> Result<Self, Error> {
-        fields(
-            value,
-            at,
-            &[
-                "input_tokens",
-                "output_tokens",
-                "cache_read_input_tokens",
-                "cache_creation_input_tokens",
-                "cache_creation",
-                "output_tokens_details",
-                "server_tool_use",
-                "service_tier",
-                "inference_geo",
-                "speed",
-            ],
-        )?;
+        fields(value, at, &USAGE_FIELDS)?;
+        self.read(value, at)
+    }
+
+    /// One usage object of a stream, which also admits [`EXTENSION`] in any shape. Returns the
+    /// next snapshot and, for a non-null extension, the warning text that carries it — only once
+    /// the whole object was accepted, so a refused report reports nothing.
+    pub fn update_streamed(
+        &self,
+        value: &Value,
+        at: &str,
+    ) -> Result<(Self, Option<String>), Error> {
+        let mut allowed = USAGE_FIELDS.to_vec();
+        allowed.push(EXTENSION);
+        fields(value, at, &allowed)?;
+        let extension = extension(value, at)?;
+        Ok((self.read(value, at)?, extension))
+    }
+
+    fn read(&self, value: &Value, at: &str) -> Result<Self, Error> {
         let mut next = self.clone();
         update(&mut next.input, value, "input_tokens")?;
         update(&mut next.output, value, "output_tokens")?;
@@ -130,6 +158,21 @@ impl Snapshot {
             reasoning_output_tokens: self.reasoning,
         })
     }
+}
+/// `<path>: <compact JSON>` for a reported extension; `null` is absent, as every other optional
+/// field of this projection is.
+fn extension(value: &Value, at: &str) -> Result<Option<String>, Error> {
+    let Some(found) = value.get(EXTENSION).filter(|found| !found.is_null()) else {
+        return Ok(None);
+    };
+    let at = path(at, EXTENSION);
+    let compact = found.to_string();
+    if compact.len() > MAX_EXTENSION_BYTES {
+        return Err(Error::too_large(format!(
+            "Messages usage extension exceeds its bound: {at}"
+        )));
+    }
+    Ok(Some(format!("{at}: {compact}")))
 }
 fn count(value: &Value, name: &str) -> Result<Option<u64>, Error> {
     match value.get(name) {

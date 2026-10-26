@@ -207,6 +207,34 @@ accepted names, `citations` on a text block and `caller` on a tool call, are hel
 stricter still: any value at all is outside the declared subset and is refused outright, except a
 `caller` of `{"type":"direct"}` (below).
 
+**`cost` is the one usage extension: admitted in any shape on a stream, and carried, not read**
+(since story `messages-usage-cost`). 0.15.0 refused a live streamed turn on an Anthropic-compatible
+route with `Messages field is outside the declared subset: message_delta.usage.cost`, after the
+caller had been shown the answer. The refusal named the path and not the value, and no usage type
+this projection was written against declares the field, so its shape is unknown.
+
+| Where | What happens |
+| --- | --- |
+| `message_start.message.usage` and `message_delta.usage` of a stream (`StreamDecoder`, `decode_stream`) | Admitted as any JSON value. Each non-null `cost` is reported once as `StreamEvent::Warning` with code `usage-extension` (`llm_messages::USAGE_EXTENSION`) and message `<path>: <compact JSON>`, e.g. `message_delta.usage.cost: 0.00042`. `null` is absent and reports nothing |
+| `message_start` | Held until the stream answers (the first payload other than `ping` and `message_start`), because a warning is visible output to fallback; a stream that fails before answering drops it and stays as retriable as it was |
+| `message_delta` | Shown with that delta, once the whole delta was accepted |
+| a complete, non-streamed message (`decode_message`, Bedrock's invoke path) | Refused by its path, `Messages field is outside the declared subset: usage.cost`: there is no stream to carry it on, and the neutral outcome has no place for it |
+| a value whose compact JSON exceeds 1 KiB | Refused as `too-large`, `Messages usage extension exceeds its bound: <path>`, rather than copied into a warning |
+
+It reads into nothing: no counter, no `Usage` field, no item and no stop reason changes because of
+a `cost`, and it never becomes an opaque item, so it is never replayed to a route. A usage object
+refused for any other reason, a counter that goes backwards included, shows no warning, and an
+unknown key beside a `cost` is still refused by its path. The object's keys appear in the order
+`serde_json` writes them, sorted, so an object value is carried as the same JSON value rather than
+the same bytes.
+
+It is not a typed field for two reasons. A typed field (a number, or an amount with a currency)
+would be a guess at the producer's type, which either refuses the route's real value or reads it
+wrongly: the guessed semantics the declared subset exists to refuse. And `llm_core::Usage` and
+`llm_core::TurnObservation` deny unknown fields and are built by struct literal by their consumers,
+so a field there is a breaking change. Pricing from `cost` waits for a captured frame that shows its
+shape.
+
 **A field the route leaves empty unless the request asked for a feature this projection never asks
 for is accepted empty, and in no other value** (since 0.8.1). 0.8.0 refused a live streamed turn
 with `Messages field is outside the declared subset: message_start.message.container`. Anthropic's
@@ -228,7 +256,7 @@ message. The check travels with the accept lists like the one above, and the blo
 shared with ingress, so a request's assistant `tool_use` block reads `caller` and `toolset_name` the
 same way.
 
-**Twenty-four of the hundred and six producer names this projection speaks are carried, not read.**
+**Twenty-four of the hundred and twelve producer names this projection speaks are carried, not read.**
 A name is not a behaviour — the behaviour around each is tested — but a wrong name is a field
 silently never seen, or an accepted field refused, and no fixture written from the same wrong name
 can notice. Sixty-seven were read from the extraction provenance the implementation
@@ -238,7 +266,9 @@ its scan admitted a hyphen and a leading digit. Four more — `cache_control`, `
 warning codes `unknown-stream-event` and `unknown-output-item` — were read from the same crate at
 `2fd7235b` for the Harness parity rows. Nine — `container`, `diagnostics`, `direct`,
 `expires_at`, `skills`, `speed`, `standard`, `stop_details` and `toolset_name` — were read from
-Anthropic's API reference for 0.8.1 (the table above). The remaining fourteen arrived with the carried
+Anthropic's API reference for 0.8.1 (the table above). `cost` was observed on 2026-10-26 in the live
+refusal quoted above, and `usage-extension`, the warning code that carries it, is this
+projection's own name. The remaining fourteen arrived with the carried
 draft and nothing read in this session supports them: `auto`, `cache_creation`,
 `ephemeral_1h_input_tokens`, `ephemeral_5m_input_tokens`, `caller`, `citations`, `inference_geo`,
 `output_tokens_details`, `thinking_tokens`, `rate_limit_error`, `service_tier`, `timeout_error`,
