@@ -227,11 +227,13 @@ struct Block {
 const UNKNOWN_EVENT: &str = "unknown-stream-event";
 const UNKNOWN_BLOCK: &str = "unknown-output-item";
 
-/// The warning code that carries a streamed usage `cost`, verbatim and read into nothing.
+/// The warning code that carries a streamed usage `cost`, read into nothing.
 ///
 /// Its message is `<path>: <compact JSON>`, the path `message_start.message.usage.cost` or
 /// `message_delta.usage.cost`. Unlike this crate's other warnings, the message copies producer
-/// text: the value, bounded to 1 KiB, is the point of the warning.
+/// data: the value, bounded to 1 KiB, is the point of the warning. It is the value, not the
+/// producer's bytes: a number is carried as the nearest double in its shortest form (the
+/// shortest text of a double comes back unchanged), an object with its keys sorted.
 pub const USAGE_EXTENSION: &str = "usage-extension";
 
 /// Payloads that have not answered the turn: a keep-alive, and the message header before any

@@ -215,7 +215,7 @@ this projection was written against declares the field, so its shape is unknown.
 
 | Where | What happens |
 | --- | --- |
-| `message_start.message.usage` and `message_delta.usage` of a stream (`StreamDecoder`, `decode_stream`) | Admitted as any JSON value. Each non-null `cost` is reported once as `StreamEvent::Warning` with code `usage-extension` (`llm_messages::USAGE_EXTENSION`) and message `<path>: <compact JSON>`, e.g. `message_delta.usage.cost: 0.00042`. `null` is absent and reports nothing |
+| `message_start.message.usage` and `message_delta.usage` of a stream (`StreamDecoder`, `decode_stream`) | Admitted as any JSON value. Each non-null `cost` is reported once as `StreamEvent::Warning` with code `usage-extension` (`llm_messages::USAGE_EXTENSION`) and message `<path>: <compact JSON>`, e.g. `message_delta.usage.cost: 0.00042`: the same value, a number as its nearest double in shortest form and an object with its keys sorted, not the same bytes. `null` is absent and reports nothing |
 | `message_start` | Held until the stream answers (the first payload other than `ping` and `message_start`), because a warning is visible output to fallback; a stream that fails before answering drops it and stays as retriable as it was |
 | `message_delta` | Shown with that delta, once the whole delta was accepted |
 | a complete, non-streamed message (`decode_message`, Bedrock's invoke path) | Refused by its path, `Messages field is outside the declared subset: usage.cost`: there is no stream to carry it on, and the neutral outcome has no place for it |
@@ -224,9 +224,14 @@ this projection was written against declares the field, so its shape is unknown.
 It reads into nothing: no counter, no `Usage` field, no item and no stop reason changes because of
 a `cost`, and it never becomes an opaque item, so it is never replayed to a route. A usage object
 refused for any other reason, a counter that goes backwards included, shows no warning, and an
-unknown key beside a `cost` is still refused by its path. The object's keys appear in the order
-`serde_json` writes them, sorted, so an object value is carried as the same JSON value rather than
-the same bytes.
+unknown key beside a `cost` is still refused by its path.
+
+The warning carries the value, not the producer's bytes. A number is carried as the nearest
+double in its shortest form: a cost the producer wrote as the shortest text of a double comes back
+as the same number (`llm-messages` enables `serde_json`'s `float_roundtrip`), and a decimal wider
+than a double, such as `0.000420000000000000001`, comes back as `0.00042`. An object's keys are
+written sorted. Exact decimals would need `serde_json`'s `arbitrary_precision`, which changes
+every JSON number in the workspace.
 
 It is not a typed field for two reasons. A typed field (a number, or an amount with a currency)
 would be a guess at the producer's type, which either refuses the route's real value or reads it

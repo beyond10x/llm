@@ -30,7 +30,7 @@ const USAGE_FIELDS: [&str; 10] = [
 ];
 
 /// The one usage extension: admitted on a streamed usage object in any JSON shape, read into
-/// nothing, and carried to the caller verbatim (`docs/messages.md`, "Usage"). Its shape is
+/// nothing, and carried to the caller as its value (`docs/messages.md`, "Usage"). Its shape is
 /// unknown, so a typed field would be a guess at the producer's type.
 const EXTENSION: &str = "cost";
 

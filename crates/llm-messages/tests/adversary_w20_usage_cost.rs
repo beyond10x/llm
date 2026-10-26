@@ -131,13 +131,25 @@ async fn adversary_w20_a_shortest_f64_cost_is_carried_as_the_same_number() {
 }
 
 /// A decimal cost with more significant digits than an `f64` holds, as a producer computing in
-/// a decimal type writes it. The documented promise is "the same JSON value"; an `f64` cannot
-/// hold this one, whatever features are on.
+/// a decimal type writes it, is carried as its nearest double in that double's shortest form.
+///
+/// This replaced the adversary's original assertion, that the warning carries `raw` itself
+/// ("the same JSON value"). No `f64` holds this number, and `serde_json`'s `arbitrary_precision`
+/// would change every JSON number in the workspace, so the coordinator corrected the promise
+/// instead (`docs/messages.md`, `llm_messages::USAGE_EXTENSION`): a number is carried as the
+/// nearest double in its shortest form, the value and not its bytes.
 #[tokio::test]
-async fn adversary_w20_a_decimal_cost_wider_than_a_double_is_carried_as_the_same_value() {
+async fn adversary_w20_a_decimal_cost_wider_than_a_double_is_carried_as_its_nearest_double() {
     let raw = "0.000420000000000000001";
+    let nearest: f64 = raw.parse().expect("a Rust-parsed f64");
+    assert_ne!(
+        nearest.to_string(),
+        raw,
+        "the decimal is wider than a double"
+    );
     let message = carried(raw).await;
-    assert_eq!(message, format!("message_delta.usage.cost: {raw}"));
+    assert_eq!(message, "message_delta.usage.cost: 0.00042");
+    assert_eq!(message, format!("message_delta.usage.cost: {nearest:?}"));
 }
 
 /// 1025 bytes is the first refused length; 1024 is carried (the unit's own case). The unit's

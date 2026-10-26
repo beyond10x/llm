@@ -17,7 +17,7 @@ llm-credentials.workspace = true
 llm-http.workspace = true
 llm-providers.workspace = true
 serde.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 http.workspace = true
 tokio.workspace = true
 

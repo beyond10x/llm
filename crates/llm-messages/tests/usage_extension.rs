@@ -338,8 +338,23 @@ fn a_complete_message_still_refuses_a_usage_cost_by_its_path() {
     );
 }
 
-/// The code a caller matches on is the crate's own constant, not a string it has to copy.
-#[test]
-fn the_warning_code_is_the_public_constant() {
-    assert_eq!(llm_messages::USAGE_EXTENSION, CODE);
+/// The code of the warning a decoded stream actually emits for a cost is the crate's own public
+/// constant, so a caller matches on `llm_messages::USAGE_EXTENSION` rather than a copied string.
+#[tokio::test]
+async fn the_warning_code_is_the_public_constant() {
+    let (outcome, events) = decode(&text_turn(
+        start_usage(),
+        with_cost(end_usage(), json!(0.00042)),
+    ))
+    .await;
+    outcome.expect("decoded");
+    let codes: Vec<&str> = events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::Warning { code, .. } => Some(code.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(codes, [llm_messages::USAGE_EXTENSION]);
+    assert_eq!(codes, [CODE]);
 }
