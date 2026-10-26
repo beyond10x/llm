@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:opencode-go-session
 kind: story
-status: active
+status: implemented
 title: The Messages client sends x-opencode-session to an OpenCode Go endpoint
 summary: Base-URL trigger; one minted session per client, or the caller's; no configurable header
 relations:
@@ -24,17 +24,28 @@ scope:
 - confidence: cited
   path: crates/llm-messages/src/client.rs
 - confidence: cited
+  path: crates/llm-messages/src/client/tests.rs
+- confidence: cited
   path: crates/llm-messages/src/lib.rs
 - confidence: cited
   path: crates/llm-messages/tests
 - confidence: cited
+  path: crates/llm-messages/tests/adversary_w19_opencode_session.rs
+- confidence: cited
+  path: crates/llm-messages/tests/opencode_session.rs
+- confidence: cited
+  path: crates/llm-messages/tests/wire_names.rs
+- confidence: cited
   path: docs/messages.md
 - confidence: cited
+  path: docs/verification/messages-falsification.json
+- confidence: cited
   path: spec/domains/messages.yaml
-revision: 14
+revision: 20
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-26T08:47:33Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-26T08:47:34Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-26T09:23:49Z", actor: "human:timo", revision: 15, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 

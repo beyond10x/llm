@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-26T09:23:48Z",
+  "actor": "human:timo",
+  "artifact": "story:opencode-go-session",
+  "kind": "story",
+  "revision": 14,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "VERIFIED: tests/opencode_session.rs and the client unit test red on stubs (4 of 8 and 1 of 2 failed: OpenCode Go base URL sent no x-opencode-session), green at fa07c044; new behaviour the base cannot show",
+    "reference": "impl/opencode-go-session 93226801 vs base ff3ac77b"
+  }
+}
