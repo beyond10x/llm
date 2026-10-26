@@ -407,9 +407,12 @@
       "llm.messages/authored/unknown-content-block-preserved-with-a-warning",
       "llm.messages/authored/unknown-content-delta-preserved-with-a-warning",
       "llm.messages/authored/unknown-stream-event-preserved-with-a-warning",
+      "llm.messages/authored/unknown-usage-key-beside-a-cost-refused-by-path",
       "llm.messages/authored/unreported-counter-stays-unknown",
       "llm.messages/authored/unreported-upstream-model-stays-unknown",
       "llm.messages/authored/unstarted-content-block-delta-refused",
+      "llm.messages/authored/usage-cost-object-carried-verbatim-as-a-warning",
+      "llm.messages/authored/usage-cost-on-a-message-delta-carried-as-a-warning",
       "llm.messages/authored/usage-regression-refused",
       "llm.models/authored/a-chat-completions-serving-model-builds-the-chat-port",
       "llm.models/authored/a-credentialed-account-without-a-resolver-is-refused-unauthorized",
@@ -2733,6 +2736,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/unknown-stream-event-preserved-with-a-warning"
       },
+      "messages/scenarios/unknown-usage-key-beside-a-cost-refused-by-path.yaml": {
+        "digest": "sha256:d71149c562042a2b85f9e1315e344910bcee8ce10d53193cf02bef134ce5677c",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/unknown-usage-key-beside-a-cost-refused-by-path"
+      },
       "messages/scenarios/unreported-counter-stays-unknown.yaml": {
         "digest": "sha256:842ea0286eb6dd06fcc9037e99852cf4d332ee28553bd69cb65671e08045d665",
         "disposition": "accepted",
@@ -2747,6 +2755,16 @@
         "digest": "sha256:6112674cb0248d4ddf2189f0a4d9f2709a46eac265178f9ee6a2e28dcda68cde",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/unstarted-content-block-delta-refused"
+      },
+      "messages/scenarios/usage-cost-object-carried-verbatim-as-a-warning.yaml": {
+        "digest": "sha256:dc26e64b7f1cf267c3c308de7820c61f8ab9940626c04be91db03f1b2b7f52b0",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/usage-cost-object-carried-verbatim-as-a-warning"
+      },
+      "messages/scenarios/usage-cost-on-a-message-delta-carried-as-a-warning.yaml": {
+        "digest": "sha256:f982228ab1e0e10d87d136ef27c67f054d9762ff7c03945bbfc889aca55cf85e",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/usage-cost-on-a-message-delta-carried-as-a-warning"
       },
       "messages/scenarios/usage-regression-refused.yaml": {
         "digest": "sha256:92d5a21213ceee4e4d03b4d08ee643c28e8bee6697cfccd40c7e233296b23e50",
@@ -5465,7 +5483,7 @@
       }
     },
     "counts": {
-      "authored": 910,
+      "authored": 913,
       "generated": 37,
       "outside": 0,
       "refused": 0
@@ -56097,6 +56115,143 @@
         }
       ]
     },
+    "llm.messages/authored/unknown-usage-key-beside-a-cost-refused-by-path": {
+      "purpose": "admitting cost admits no other usage name; an unknown key beside it is refused by its path and no warning is shown",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"text\":\"Hello\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cost\":0.00042,\"input_tokens\":11,\"output_tokens\":8,\"price\":0.00042}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "Messages field is outside the declared subset: message_delta.usage.price"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": false
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": "Hello"
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/unreported-counter-stays-unknown": {
       "purpose": "a counter the route never reported is absent, and the inclusive input needs every component",
       "source": [
@@ -56488,6 +56643,280 @@
               "usage_json": {
                 "kind": "literal",
                 "value": "{\"input_tokens\":11,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/usage-cost-object-carried-verbatim-as-a-warning": {
+      "purpose": "a cost of unknown shape on a streamed message delta's usage is carried as its compact JSON in a usage-extension warning, never typed",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"text\":\"Hello\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cost\":{\"currency\":\"USD\",\"total\":0.00042},\"input_tokens\":11,\"output_tokens\":8}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "assistant-text:Hello"
+                ]
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": "Hello"
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": [
+                  "usage-extension:message_delta.usage.cost: {\"currency\":\"USD\",\"total\":0.00042}"
+                ]
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":8,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/usage-cost-on-a-message-delta-carried-as-a-warning": {
+      "purpose": "a cost on a streamed message delta's usage is admitted, read into nothing and carried verbatim as a usage-extension warning",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"text\":\"Hello\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cost\":0.00042,\"input_tokens\":11,\"output_tokens\":8}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "assistant-text:Hello"
+                ]
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": "Hello"
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": [
+                  "usage-extension:message_delta.usage.cost: 0.00042"
+                ]
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":8,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
               },
               "wire_request": {
                 "kind": "literal",

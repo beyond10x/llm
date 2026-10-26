@@ -56,6 +56,12 @@ const CONFIRMED: &[&str] = &[
     // in `x-opencode-session` for each conversation"; the same name is in the HTTP 400
     // `MissingSessionID` body the story quotes. Sent only to an OpenCode Go base URL.
     "x-opencode-session",
+    // Observed 2026-10-26 for story:messages-usage-cost in a live refusal on OpenCode Go's
+    // Messages endpoint (the takt trial, llm 0.15.0): `Messages field is outside the declared
+    // subset: message_delta.usage.cost`. The refusal names the path, not the value's shape. The
+    // warning code that carries the value is this projection's own name, not the producer's.
+    "cost",
+    "usage-extension",
     "unknown-output-item",
     "unknown-stream-event",
     "any",

@@ -63,7 +63,9 @@ struct Header {
 }
 
 impl Header {
-    fn read(&mut self, message: &Value, at: &str) -> Result<(), Error> {
+    /// Reads one message's own fields. A `streamed` message's usage admits the usage extension,
+    /// whose warning text is returned for the stream to emit; a complete message refuses it.
+    fn read(&mut self, message: &Value, at: &str, streamed: bool) -> Result<Option<String>, Error> {
         if let Some(model) = text(message, "model")? {
             // The route's own name for what served the turn; a configured alias never fills it.
             self.upstream_model =
@@ -73,10 +75,19 @@ impl Header {
             self.response_id =
                 Some(Id::new(id).map_err(|_| Error::protocol("invalid Messages response id"))?);
         }
+        let mut extension = None;
         if let Some(usage) = message.get("usage").filter(|value| !value.is_null()) {
-            self.usage = self.usage.update(usage, &path(at, "usage"))?;
+            let at = path(at, "usage");
+            if streamed {
+                let (next, reported) = self.usage.update_streamed(usage, &at)?;
+                self.usage = next;
+                extension = reported;
+            } else {
+                self.usage = self.usage.update(usage, &at)?;
+            }
         }
-        self.reason(text(message, "stop_reason")?)
+        self.reason(text(message, "stop_reason")?)?;
+        Ok(extension)
     }
 
     fn reason(&mut self, reported: Option<&str>) -> Result<(), Error> {
@@ -190,7 +201,7 @@ fn read_message(
 ) -> Result<TurnOutcome, Error> {
     // A complete response is its own root: its fields are named from there.
     assistant_message(message, "")?;
-    header.read(message, "")?;
+    header.read(message, "", false)?;
     let content = message
         .get("content")
         .and_then(Value::as_array)
@@ -215,6 +226,15 @@ struct Block {
 
 const UNKNOWN_EVENT: &str = "unknown-stream-event";
 const UNKNOWN_BLOCK: &str = "unknown-output-item";
+
+/// The warning code that carries a streamed usage `cost`, read into nothing.
+///
+/// Its message is `<path>: <compact JSON>`, the path `message_start.message.usage.cost` or
+/// `message_delta.usage.cost`. Unlike this crate's other warnings, the message copies producer
+/// data: the value, bounded to 1 KiB, is the point of the warning. It is the value, not the
+/// producer's bytes: a number is carried as the nearest double in its shortest form (the
+/// shortest text of a double comes back unchanged), an object with its keys sorted.
+pub const USAGE_EXTENSION: &str = "usage-extension";
 
 /// Payloads that have not answered the turn: a keep-alive, and the message header before any
 /// content. Every other payload, including a block that opens without showing anything, ends
@@ -242,6 +262,10 @@ pub struct StreamDecoder {
     /// Events outside the declared subset, kept whole, each with the block index that would
     /// have started next when it arrived: it sits after every block that had already started.
     preserved: Vec<(u64, Item)>,
+    /// The usage extension `message_start` reported, held until the stream answers. A warning
+    /// is output to fallback, so showing it earlier would make a stream that fails before
+    /// answering final; held, it is dropped with that attempt.
+    held: Option<String>,
     started: bool,
     /// Whether any payload outside [`LIFECYCLE_EVENTS`] was read, shown to the caller or not.
     answered: bool,
@@ -259,6 +283,7 @@ impl StreamDecoder {
             next_index: 0,
             announced: Vec::new(),
             preserved: Vec::new(),
+            held: None,
             started: false,
             answered: false,
             complete: false,
@@ -313,6 +338,16 @@ impl StreamDecoder {
                 "Messages event name contradicts its payload type",
             ));
         }
+        // The first payload that answers shows what `message_start` reported first. An `error`
+        // answers nothing: the stream fails, and what was held is dropped with the attempt.
+        if !LIFECYCLE_EVENTS.contains(&kind)
+            && kind != "error"
+            && let Some(held) = self.held.take()
+            && let Err(error) = emit(sink, extension(held), cancel, self.deadline).await
+        {
+            self.answered = true;
+            return Err(error);
+        }
         let applied = match kind {
             // A keep-alive. Its irrelevance to this subset is the route's own documentation.
             "ping" => fields(data, "ping", &["type"]),
@@ -320,7 +355,7 @@ impl StreamDecoder {
             "content_block_start" => self.start_block(data, sink, cancel).await,
             "content_block_delta" => self.apply_delta(data, sink, cancel).await,
             "content_block_stop" => self.stop_block(data),
-            "message_delta" => self.apply_message_delta(data),
+            "message_delta" => self.apply_message_delta(data, sink, cancel).await,
             "message_stop" => self.stop_message(data),
             "error" => Err(stream_error(data.get("error"), self.answered)),
             // A route that adds an event type is not a broken stream: the event is kept whole
@@ -404,7 +439,7 @@ impl StreamDecoder {
         {
             return Err(Error::protocol("Messages start carries content"));
         }
-        self.header.read(message, START)?;
+        self.held = self.header.read(message, START, true)?;
         self.started = true;
         Ok(())
     }
@@ -610,7 +645,12 @@ impl StreamDecoder {
         Ok(())
     }
 
-    fn apply_message_delta(&mut self, data: &Value) -> Result<(), Error> {
+    async fn apply_message_delta(
+        &mut self,
+        data: &Value,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<(), Error> {
         self.started()?;
         fields(data, "message_delta", &["type", "delta", "usage"])?;
         let delta = data
@@ -622,10 +662,21 @@ impl StreamDecoder {
             &["stop_reason", "stop_sequence", "container", "stop_details"],
         )?;
         // Cumulative, not incremental: the reported counters replace the previous ones.
+        let mut reported = None;
         if let Some(usage) = data.get("usage").filter(|value| !value.is_null()) {
-            self.header.usage = self.header.usage.update(usage, "message_delta.usage")?;
+            let (next, extension) = self
+                .header
+                .usage
+                .update_streamed(usage, "message_delta.usage")?;
+            self.header.usage = next;
+            reported = extension;
         }
-        self.header.reason(text(delta, "stop_reason")?)
+        self.header.reason(text(delta, "stop_reason")?)?;
+        // Shown with the delta that reported it, once the whole delta was accepted.
+        match reported {
+            Some(reported) => emit(sink, extension(reported), cancel, self.deadline).await,
+            None => Ok(()),
+        }
     }
 
     fn stop_message(&mut self, data: &Value) -> Result<(), Error> {
@@ -720,6 +771,15 @@ fn warning(code: &str, message: &str) -> StreamEvent {
     StreamEvent::Warning {
         code: code.to_owned(),
         message: message.to_owned(),
+    }
+}
+
+/// The warning that carries one usage extension: [`USAGE_EXTENSION`] and the text
+/// `Snapshot::update_streamed` wrote for it, the producer's value included.
+fn extension(message: String) -> StreamEvent {
+    StreamEvent::Warning {
+        code: USAGE_EXTENSION.to_owned(),
+        message,
     }
 }
 
