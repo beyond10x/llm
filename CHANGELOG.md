@@ -6,6 +6,15 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-messages`: a streamed `usage.cost` in any shape is carried as a `usage-extension` warning (`USAGE_EXTENSION`)
+- ESS: three `llm.messages` scenarios for the usage cost; the conformance floor is 950 (was 947)
+
+### Fixed
+
+- `llm-messages`: a stream reporting `message_delta.usage.cost` is no longer refused after its answer was shown
+
 ## [0.15.0] - 2026-10-26
 
 ### Added
