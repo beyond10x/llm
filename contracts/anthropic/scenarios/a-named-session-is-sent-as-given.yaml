@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: a-named-session-is-sent-as-given
+summary: an OpenCode Go client given the caller's session sends exactly that value as x-opencode-session, the same on every request
+timeline:
+- at: '2026-10-26T12:00:00Z'
+  command: llm.messages.InspectSession
+  input:
+    base_urls:
+      - https://opencode.ai/inference/go/anthropic/v1
+    session: conversation-42
+  outcome: observed
+assert:
+- view: llm.messages.LastSessionInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastSessionInspection
+  contains:
+    accepted: true
+    error_code: null
+    opencode_go:
+      - true
+    session_headers:
+      - "x-opencode-session: conversation-42"
+    stable:
+      - true

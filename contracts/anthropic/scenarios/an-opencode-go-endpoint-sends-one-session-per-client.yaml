@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: an-opencode-go-endpoint-sends-one-session-per-client
+summary: a client for the OpenCode Go Messages base URL mints one x-opencode-session that every request of it carries, and two clients mint two
+timeline:
+- at: '2026-10-26T12:00:00Z'
+  command: llm.messages.InspectSession
+  input:
+    base_urls:
+      - https://opencode.ai/inference/go/anthropic/v1
+  outcome: observed
+assert:
+- view: llm.messages.LastSessionInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastSessionInspection
+  contains:
+    accepted: true
+    error_code: null
+    opencode_go:
+      - true
+    session_headers:
+      - "x-opencode-session: <minted>"
+    stable:
+      - true
+    distinct:
+      - true

@@ -51,6 +51,11 @@ const CONFIRMED: &[&str] = &[
     "standard",
     "stop_details",
     "toolset_name",
+    // Read 2026-10-26 for story:opencode-go-session on OpenCode Go's page
+    // (`https://opencode.ai/docs/go/`, section "Where can I use it?"): "Send a stable session ID
+    // in `x-opencode-session` for each conversation"; the same name is in the HTTP 400
+    // `MissingSessionID` body the story quotes. Sent only to an OpenCode Go base URL.
+    "x-opencode-session",
     "unknown-output-item",
     "unknown-stream-event",
     "any",

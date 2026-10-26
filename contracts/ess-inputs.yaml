@@ -858,6 +858,10 @@ scenarios:
 - anthropic/scenarios/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused.yaml
 - anthropic/scenarios/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target.yaml
 - anthropic/scenarios/a-falling-back-route-between-subscription-billed-targets-is-accepted.yaml
+- anthropic/scenarios/an-opencode-go-endpoint-sends-one-session-per-client.yaml
+- anthropic/scenarios/a-named-session-is-sent-as-given.yaml
+- anthropic/scenarios/another-endpoint-sends-no-opencode-session.yaml
+- anthropic/scenarios/look-alike-endpoints-are-not-opencode-go.yaml
 - providers/scenarios/a-binding-claiming-input-during-output-is-refused.yaml
 - providers/scenarios/a-binding-whose-output-does-not-stream-is-refused.yaml
 - routes/scenarios/a-route-claiming-input-during-output-is-refused-naming-the-route.yaml

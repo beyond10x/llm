@@ -4,16 +4,19 @@ use http::{
     header::{ACCEPT, CONTENT_TYPE},
 };
 use llm_core::{
-    AuthKind, BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Model, Protocol,
+    AuthKind, BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Model, Protocol,
     Provenance, StreamSink, TurnOutcome, TurnRequest, advisory_warning,
 };
 use llm_credentials::SecretResolver;
 use llm_http::{Framing, HttpClient, require_tokio_runtime, within_tokio_runtime};
-use llm_providers::Binding;
+use llm_providers::{BaseUrl, Binding};
 use std::{
     future::Future,
-    sync::Arc,
-    time::{Duration, Instant},
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 /// The wire name an `advisory-omitted` warning carries.
@@ -31,6 +34,63 @@ pub const BETA_HEADER: &str = "anthropic-beta";
 /// The beta this route requires before it accepts a subscription token as a bearer. Sent only
 /// for a `subscription-oauth` account; without it the route refuses the token as unauthenticated.
 pub const OAUTH_BETA: &str = "oauth-2025-04-20";
+/// The header `OpenCode` Go routes a conversation by. Its page (<https://opencode.ai/docs/go/>):
+///
+/// > Send a stable session ID in `x-opencode-session` for each conversation so we can optimize
+/// > routing and prompt caching
+///
+/// Its Messages endpoint refuses a request without it, HTTP 400 `MissingSessionID`. A constant of
+/// this wire, not a header a caller can configure.
+pub const OPENCODE_SESSION_HEADER: &str = "x-opencode-session";
+
+/// Every `OpenCode` Go base URL starts with this, as [`BaseUrl`] writes one.
+const OPENCODE_GO_PREFIX: &str = "https://opencode.ai/inference/go/";
+
+/// Whether `base_url` is `OpenCode` Go: scheme `https`, host `opencode.ai`, the default port and a
+/// path under `/inference/go/`.
+///
+/// [`BaseUrl`] holds the `url` crate's serialisation: scheme and host lowercased, the scheme's
+/// default port dropped, dot segments resolved, no userinfo, and a path ending in `/`. On that
+/// form the prefix is exact: `http`, `opencode.ai.example`, `www.opencode.ai`, an explicit port
+/// such as `:8443` and a path such as `/zen/` or `/inference/gox/` all differ from it.
+pub fn is_opencode_go(base_url: &BaseUrl) -> bool {
+    base_url.as_str().starts_with(OPENCODE_GO_PREFIX)
+}
+
+/// How many sessions this process has minted, so two clients built in the same nanosecond still
+/// differ.
+static MINTED: AtomicU64 = AtomicU64::new(0);
+
+/// A new session identifier, `llm-<process id>-<wall clock nanoseconds>-<sequence>` in lowercase
+/// hexadecimal: distinct between clients of one process by the sequence, and between processes
+/// by the process id and the clock. Printable ASCII and at most 62 bytes, so a valid [`Id`].
+fn mint_session() -> Session {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |since| since.as_nanos());
+    let sequence = MINTED.fetch_add(1, Ordering::Relaxed);
+    Session::Minted(format!(
+        "llm-{:x}-{nanos:x}-{sequence:x}",
+        std::process::id()
+    ))
+}
+
+/// The `OpenCode` Go session a client sends: printable ASCII either way.
+enum Session {
+    /// Minted by [`mint_session`].
+    Minted(String),
+    /// Named by the caller with [`MessagesClient::with_session`].
+    Named(Id),
+}
+
+impl Session {
+    fn as_str(&self) -> &str {
+        match self {
+            Self::Minted(session) => session,
+            Self::Named(session) => session.as_str(),
+        }
+    }
+}
 
 /// This wire's [`llm_http::QuotaRule`]: a 429 whose error document says `rate_limit_error` as its
 /// `error.type` and `enforced_spend_limit_reached` as its `error.details.error_code`, whatever
@@ -63,11 +123,19 @@ fn spend_cap(_: &HeaderMap, document: &serde_json::Value) -> bool {
 /// resumes: a final `refused`, dispatch `rejected`, with or without a `retry-after`. Every other
 /// 429 stays a retriable `rate-limited`. The transport reads that body for this client's rule
 /// ([`HttpClient::with_quota_rule`]), and no text of it reaches a diagnostic.
+///
+/// A client whose binding's base URL is `OpenCode` Go ([`is_opencode_go`]) mints one session
+/// identifier when it is built and sends it as [`OPENCODE_SESSION_HEADER`] on every request;
+/// [`MessagesClient::with_session`] replaces it with the caller's own. A client for any other
+/// endpoint sends no such header.
 pub struct MessagesClient {
     binding: Binding,
     http: HttpClient,
     resolver: Arc<dyn SecretResolver>,
     turn_limit: Option<Duration>,
+    /// The `OpenCode` Go session, present exactly when the endpoint is `OpenCode` Go: minted, or
+    /// an [`Id`] the caller named, so printable ASCII either way.
+    session: Option<Session>,
 }
 
 impl MessagesClient {
@@ -83,9 +151,15 @@ impl MessagesClient {
                 "a Messages client requires a Messages binding",
             ));
         }
+        let session = if is_opencode_go(&binding.declaration().endpoint.base_url) {
+            Some(mint_session())
+        } else {
+            None
+        };
         Ok(Self {
             binding,
             resolver,
+            session,
             // One absolute instant for the whole turn, taken from the transport's own total
             // limit so the two cannot drift apart. `with_turn_limit` overrides it.
             turn_limit: Some(http.limits().total),
@@ -111,6 +185,26 @@ impl MessagesClient {
         Ok(self)
     }
 
+    /// Names the conversation this client serves: an `OpenCode` Go client sends `session` as its
+    /// [`OPENCODE_SESSION_HEADER`] from now on, in place of the one it minted. A client for any
+    /// other endpoint sends no session, named or not, so this changes nothing there.
+    #[must_use]
+    pub fn with_session(mut self, session: Id) -> Self {
+        if self.session.is_some() {
+            self.session = Some(Session::Named(session));
+        }
+        self
+    }
+
+    /// The session header every request of this client carries, as `(name, value)`, or `None`
+    /// when its endpoint is not `OpenCode` Go ([`is_opencode_go`]). The value is the same on every
+    /// request, every turn and every attempt.
+    pub fn session_header(&self) -> Option<(&'static str, &str)> {
+        self.session
+            .as_ref()
+            .map(|session| (OPENCODE_SESSION_HEADER, session.as_str()))
+    }
+
     async fn run(
         &self,
         request: &TurnRequest,
@@ -129,13 +223,27 @@ impl MessagesClient {
         let deadline = self.turn_limit.map(|total| Instant::now() + total);
         // Resolved per request, so a rotated credential is used without restarting the caller.
         // A store that never answers ends the turn on the deadline, not on the caller's patience.
-        let (mut headers, _) = bounded(
+        let (headers, _) = bounded(
             deadline,
             self.binding.prepare_auth(&*self.resolver, cancel),
             Dispatch::NotSent,
         )
         .await?
         .into_parts();
+        let headers = self.wire_headers(headers, betas)?;
+        self.stream(headers, body, request, sink, cancel, deadline)
+            .await
+    }
+
+    /// Every header a request carries, added to the authentication headers `headers`: the content
+    /// headers, the API version, the `anthropic-beta` header when one is due, and the
+    /// [`MessagesClient::session_header`], read from the accessor so what it reports is what is
+    /// sent.
+    fn wire_headers(
+        &self,
+        mut headers: HeaderMap,
+        betas: Option<HeaderValue>,
+    ) -> Result<HeaderMap, Error> {
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         headers.insert(ACCEPT, HeaderValue::from_static("text/event-stream"));
         headers.insert(
@@ -145,8 +253,14 @@ impl MessagesClient {
         if let Some(betas) = betas {
             headers.insert(HeaderName::from_static(BETA_HEADER), betas);
         }
-        self.stream(headers, body, request, sink, cancel, deadline)
-            .await
+        if let Some((name, value)) = self.session_header() {
+            // The session is printable ASCII (`Session`), so this refusal is a guard rather than
+            // a reachable path, as on Responses.
+            let value = HeaderValue::from_str(value)
+                .map_err(|_| Error::invalid("the OpenCode session is not a header value"))?;
+            headers.insert(HeaderName::from_static(name), value);
+        }
+        Ok(headers)
     }
 
     async fn stream(
@@ -277,3 +391,6 @@ impl Model for MessagesClient {
         Box::pin(self.run(request, sink, cancel))
     }
 }
+
+#[cfg(test)]
+mod tests;

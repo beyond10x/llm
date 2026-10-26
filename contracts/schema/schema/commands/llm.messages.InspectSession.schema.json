@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "InspectSession input",
+  "x-ess-name": "llm.messages.InspectSession",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "base_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "session": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "base_urls"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "f541493f2d957a7b45d54ab335097b154d70ccc9ccf19521200a86f02d3fb8ca",
+    "contract_digest": "slice-sha256/2:64e3736bb6d11abaa91a7eaeb58690e6f46e252a06b34de3783e2577ee83b64d",
+    "regenerate": "ess generate"
+  }
+}

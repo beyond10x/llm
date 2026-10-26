@@ -142,7 +142,49 @@ entities:
       # Whether the decoded outcome equals the encoded one, field for field.
       - {name: round_trip, type: Optional<Boolean>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # The OpenCode Go session a production Messages client sends, read through its public API for
+  # clients built on a fixture binding with each given base URL. Nothing is sent.
+  #
+  # A base URL is OpenCode Go exactly when it is scheme `https`, host `opencode.ai`, the default
+  # port and a path under `/inference/go/`, as the `url` crate normalises one. Such a client mints
+  # one printable-ASCII session when it is built and sends it as `x-opencode-session` on every
+  # request (<https://opencode.ai/docs/go/>: "Send a stable session ID in `x-opencode-session` for
+  # each conversation"); a session the caller names replaces it. A client for any other endpoint
+  # sends no such header, named or not. No configuration, routes field or turn field adds one.
+  - name: llm.messages.SessionInspection
+    identity: {name: observation_id, type: String}
+    fields: &session_facts
+      # Whether every client was built. No base URL or more than eight, and a base URL or session
+      # the fixture binding cannot take, are refused, with the code and message.
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: error_message, type: Optional<String>}
+      # Per base URL, in input order: whether it is OpenCode Go.
+      - {name: opencode_go, type: List<Boolean>}
+      # Per base URL: the session header line a client given the input's session, if any, sends.
+      # A minted value reads `x-opencode-session: <minted>`, a named one is written verbatim, and
+      # a client that sends no session header reads `none`.
+      - {name: session_headers, type: List<String>}
+      # Per base URL: whether two reads of that client's session header agree.
+      - {name: stable, type: List<Boolean>}
+      # Per base URL: whether two clients given no session send two different values; false
+      # when neither sends one.
+      - {name: distinct, type: List<Boolean>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
+  - name: llm.messages.InspectSession
+    input:
+      # One to eight base URLs, each served through its own fixture binding.
+      - {name: base_urls, type: List<String>}
+      # The session every inspected client is given with `with_session`, when present.
+      - {name: session, type: Optional<String>}
+    outcomes:
+      - name: observed
+        emits: [llm.messages.SessionInspected]
+        payload:
+          llm.messages.SessionInspected:
+            accepted: {generated: true}
+        summary: Observe the OpenCode Go session header Messages clients report for each base URL.
   - name: llm.messages.Present
     input:
       - {name: request_json, type: String}
@@ -233,6 +275,9 @@ events:
   - name: llm.messages.Encoded
     fields:
       - {name: accepted, type: Boolean}
+  - name: llm.messages.SessionInspected
+    fields:
+      - {name: accepted, type: Boolean}
 views:
   - name: llm.messages.LastInspection
     source: llm.messages.CodecInspection
@@ -246,3 +291,7 @@ views:
     source: llm.messages.IngressEncoding
     consistency: read_your_writes
     fields: *ingress_encoding_facts
+  - name: llm.messages.LastSessionInspection
+    source: llm.messages.SessionInspection
+    consistency: read_your_writes
+    fields: *session_facts
