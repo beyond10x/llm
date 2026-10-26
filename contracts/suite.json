@@ -311,6 +311,7 @@
       "llm.messages/authored/a-conversation-that-opens-with-the-model-is-refused-before-projection",
       "llm.messages/authored/a-failed-answer-ends-with-an-error-event-read-as-its-code",
       "llm.messages/authored/a-message-start-carrying-content-is-refused",
+      "llm.messages/authored/a-named-session-is-sent-as-given",
       "llm.messages/authored/a-one-hour-cache-lifetime-marks-every-breakpoint",
       "llm.messages/authored/a-restarted-content-block-index-is-refused",
       "llm.messages/authored/a-rotated-subscription-token-is-presented-on-the-next-turn",
@@ -339,7 +340,9 @@
       "llm.messages/authored/an-answer-whose-reason-reads-as-another-is-refused",
       "llm.messages/authored/an-answer-with-no-reported-model-names-none",
       "llm.messages/authored/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble",
+      "llm.messages/authored/an-opencode-go-endpoint-sends-one-session-per-client",
       "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name",
+      "llm.messages/authored/another-endpoint-sends-no-opencode-session",
       "llm.messages/authored/cache-breakpoints-mark-the-system-prompt-and-the-conversation-tail",
       "llm.messages/authored/charged-server-tool-use-refused",
       "llm.messages/authored/claude-codes-first-turn-decodes-under-the-written-rules",
@@ -382,6 +385,7 @@
       "llm.messages/authored/ingress-refuses-two-cache-lifetimes",
       "llm.messages/authored/ingress-refuses-unsigned-thinking",
       "llm.messages/authored/interleaved-blocks-assemble-in-index-order",
+      "llm.messages/authored/look-alike-endpoints-are-not-opencode-go",
       "llm.messages/authored/no-parallel-calls-is-projected-as-disable-parallel-tool-use",
       "llm.messages/authored/one-hour-cache-creation-refused",
       "llm.messages/authored/parallel-calls-are-projected-as-disable-parallel-tool-use-false",
@@ -929,6 +933,11 @@
         "disposition": "accepted",
         "scenario": "llm.routing/authored/a-falling-back-route-from-a-subscription-target-to-a-metered-one-is-refused"
       },
+      "anthropic/scenarios/a-named-session-is-sent-as-given.yaml": {
+        "digest": "sha256:1c424fca4b00075bcb0ad6dfa9ecdb09f0ea6c0798c5398538a711affcef8c52",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-named-session-is-sent-as-given"
+      },
       "anthropic/scenarios/a-rotated-subscription-token-is-presented-on-the-next-turn.yaml": {
         "digest": "sha256:c189b30cebe8143ca6569d12ac19fee1734aa4ce8325a91edabf3fc4a2bcd5c6",
         "disposition": "accepted",
@@ -988,6 +997,21 @@
         "digest": "sha256:337a84b419cbec47392f494e052a33b0a5d160c269e6550141c816f231a08cdf",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble"
+      },
+      "anthropic/scenarios/an-opencode-go-endpoint-sends-one-session-per-client.yaml": {
+        "digest": "sha256:63991286ac7f6746f7f724c2f8ed6268b30d085f8073eb2f3760b13f240fc1d4",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/an-opencode-go-endpoint-sends-one-session-per-client"
+      },
+      "anthropic/scenarios/another-endpoint-sends-no-opencode-session.yaml": {
+        "digest": "sha256:800ee879e97d37776d0f1d8c4d08fa4efdb16f9be1f918892387768310d1d514",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/another-endpoint-sends-no-opencode-session"
+      },
+      "anthropic/scenarios/look-alike-endpoints-are-not-opencode-go.yaml": {
+        "digest": "sha256:b450856be7c154313b9afcfdf8d29dd8adc32585515626263e15859efe9e5e63",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/look-alike-endpoints-are-not-opencode-go"
       },
       "bedrock/scenarios/container-a-401-is-unauthorized-and-final.yaml": {
         "digest": "sha256:5633846bd3236d3512f73943463a9242a87bbb1c3f0e1f270efc0245a01a8174",
@@ -5441,8 +5465,8 @@
       }
     },
     "counts": {
-      "authored": 906,
-      "generated": 36,
+      "authored": 910,
+      "generated": 37,
       "outside": 0,
       "refused": 0
     },
@@ -5461,6 +5485,7 @@
       "llm.messages.DecodeMessage/outcome/observed",
       "llm.messages.DecodeStream/outcome/observed",
       "llm.messages.EncodeIngress/outcome/observed",
+      "llm.messages.InspectSession/outcome/observed",
       "llm.messages.Present/outcome/observed",
       "llm.messages.Project/outcome/observed",
       "llm.models.Build/outcome/observed",
@@ -5498,9 +5523,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "46aa5aef9442372c324fefa0978877aedaa7e85797e0a615d699ff4550a81b37",
+    "contract_digest": "5cc8101af1527b04f280ec429d6d90782759787be80d5c3f3101769e226bcea6",
     "scenario_initial_state": "empty",
-    "spec_digest": "02060feb1123b2fe70a5552689048d7cd0eeeed44ceeb74ed7edf3840af221ba",
+    "spec_digest": "f541493f2d957a7b45d54ab335097b154d70ccc9ccf19521200a86f02d3fb8ca",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -5563,6 +5588,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -5699,6 +5728,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -12990,6 +13023,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -13122,6 +13159,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -13248,6 +13289,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -13391,6 +13436,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -13517,6 +13566,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -13672,6 +13725,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -13794,6 +13851,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -13926,6 +13987,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -18757,6 +18822,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -18886,6 +18955,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -25406,6 +25479,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -25538,6 +25615,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -25660,6 +25741,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -25803,6 +25888,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -25925,6 +26014,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -26076,6 +26169,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -26198,6 +26295,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -26334,6 +26435,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -37060,6 +37165,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -37193,6 +37302,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -42196,6 +42309,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -42332,6 +42449,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -42454,6 +42575,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -42593,6 +42718,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -42715,6 +42844,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -42858,6 +42991,275 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.messages.InspectSession/outcome/observed": {
+      "purpose": "`llm.messages.InspectSession` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.messages.InspectSession"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Answered"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Decoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Fetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Encoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.InspectSession",
+          "input": {
+            "base_urls": {
+              "kind": "literal",
+              "value": []
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
+          "shape": {
+            "accepted": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Answered",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Decoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Encoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -42980,6 +43382,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -43127,6 +43533,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -43249,6 +43659,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -43385,6 +43799,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -44254,6 +44672,107 @@
           },
           "step": "expect_view",
           "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/a-named-session-is-sent-as-given": {
+      "purpose": "an OpenCode Go client given the caller's session sends exactly that value as x-opencode-session, the same on every request",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.InspectSession"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastSessionInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.InspectSession",
+          "input": {
+            "base_urls": {
+              "kind": "literal",
+              "value": [
+                "https://opencode.ai/inference/go/anthropic/v1"
+              ]
+            },
+            "session": {
+              "kind": "literal",
+              "value": "conversation-42"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "opencode_go": {
+                "kind": "literal",
+                "value": [
+                  true
+                ]
+              },
+              "session_headers": {
+                "kind": "literal",
+                "value": [
+                  "x-opencode-session: conversation-42"
+                ]
+              },
+              "stable": {
+                "kind": "literal",
+                "value": [
+                  true
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastSessionInspection"
         }
       ]
     },
@@ -47464,6 +47983,109 @@
         }
       ]
     },
+    "llm.messages/authored/an-opencode-go-endpoint-sends-one-session-per-client": {
+      "purpose": "a client for the OpenCode Go Messages base URL mints one x-opencode-session that every request of it carries, and two clients mint two",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.InspectSession"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastSessionInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.InspectSession",
+          "input": {
+            "base_urls": {
+              "kind": "literal",
+              "value": [
+                "https://opencode.ai/inference/go/anthropic/v1"
+              ]
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "distinct": {
+                "kind": "literal",
+                "value": [
+                  true
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "opencode_go": {
+                "kind": "literal",
+                "value": [
+                  true
+                ]
+              },
+              "session_headers": {
+                "kind": "literal",
+                "value": [
+                  "x-opencode-session: <minted>"
+                ]
+              },
+              "stable": {
+                "kind": "literal",
+                "value": [
+                  true
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastSessionInspection"
+        }
+      ]
+    },
     "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name": {
       "purpose": "a refusal is carried as an incomplete turn under the route's own name",
       "source": [
@@ -47596,6 +48218,113 @@
           },
           "step": "expect_view",
           "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/another-endpoint-sends-no-opencode-session": {
+      "purpose": "a client for Anthropic's own base URL sends no x-opencode-session, even when the caller names a session",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.InspectSession"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastSessionInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.InspectSession",
+          "input": {
+            "base_urls": {
+              "kind": "literal",
+              "value": [
+                "https://api.anthropic.com/v1/"
+              ]
+            },
+            "session": {
+              "kind": "literal",
+              "value": "conversation-42"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "distinct": {
+                "kind": "literal",
+                "value": [
+                  false
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "opencode_go": {
+                "kind": "literal",
+                "value": [
+                  false
+                ]
+              },
+              "session_headers": {
+                "kind": "literal",
+                "value": [
+                  "none"
+                ]
+              },
+              "stable": {
+                "kind": "literal",
+                "value": [
+                  true
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastSessionInspection"
         }
       ]
     },
@@ -52652,6 +53381,115 @@
         }
       ]
     },
+    "llm.messages/authored/look-alike-endpoints-are-not-opencode-go": {
+      "purpose": "plain http, a host that only starts with opencode.ai, an explicit port and another path on opencode.ai are not OpenCode Go and send no x-opencode-session",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.InspectSession"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastSessionInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.InspectSession",
+          "input": {
+            "base_urls": {
+              "kind": "literal",
+              "value": [
+                "http://opencode.ai/inference/go/anthropic/v1",
+                "https://opencode.ai.example/inference/go/anthropic/v1",
+                "https://opencode.ai:8443/inference/go/anthropic/v1",
+                "https://opencode.ai/zen/v1"
+              ]
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.InspectSession",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastSessionInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "distinct": {
+                "kind": "literal",
+                "value": [
+                  false,
+                  false,
+                  false,
+                  false
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "opencode_go": {
+                "kind": "literal",
+                "value": [
+                  false,
+                  false,
+                  false,
+                  false
+                ]
+              },
+              "session_headers": {
+                "kind": "literal",
+                "value": [
+                  "none",
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastSessionInspection"
+        }
+      ]
+    },
     "llm.messages/authored/no-parallel-calls-is-projected-as-disable-parallel-tool-use": {
       "purpose": "parallel_tool_calls false projects as disable_parallel_tool_use true on an automatic choice written out",
       "source": [
@@ -55855,6 +56693,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -55999,6 +56841,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.CatalogBuilt",
           "step": "expect_no_event"
         },
@@ -56117,6 +56963,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -56261,6 +57111,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -57194,6 +58048,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -57324,6 +58182,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -57450,6 +58312,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -57590,6 +58456,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -65934,6 +66804,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -66078,6 +66952,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -66196,6 +67074,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -66343,6 +67225,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -66461,6 +67347,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -66608,6 +67498,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -66726,6 +67620,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -66870,6 +67768,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -82015,6 +82917,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -82159,6 +83065,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -82277,6 +83187,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -82417,6 +83331,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -85644,6 +86562,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -85784,6 +86706,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -85902,6 +86828,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -86046,6 +86976,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -95099,6 +96033,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -95243,6 +96181,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -95369,6 +96311,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -95528,6 +96474,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -95646,6 +96596,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -95801,6 +96755,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -95923,6 +96881,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -96074,6 +97036,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -96196,6 +97162,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -96355,6 +97325,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -96489,6 +97463,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -96653,6 +97631,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {
@@ -107380,6 +108362,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
           "name": "llm.models.Built"
         },
         {
@@ -107516,6 +108502,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.models.Built",
           "step": "expect_no_event"
         },
@@ -107634,6 +108624,10 @@
         {
           "kind": "event",
           "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
         },
         {
           "kind": "event",
@@ -107770,6 +108764,10 @@
         },
         {
           "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
           "step": "expect_no_event"
         },
         {

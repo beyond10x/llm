@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SessionInspected payload",
+  "x-ess-name": "llm.messages.SessionInspected",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "accepted": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "accepted"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "f541493f2d957a7b45d54ab335097b154d70ccc9ccf19521200a86f02d3fb8ca",
+    "contract_digest": "slice-sha256/2:a4c2ecc1fd3706a483df1ddab43cac6621de8f92c377457db6b46bededd11f49",
+    "regenerate": "ess generate"
+  }
+}

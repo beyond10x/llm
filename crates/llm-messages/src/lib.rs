@@ -20,7 +20,10 @@ mod decode;
 mod ingress;
 mod usage;
 
-pub use client::{ANTHROPIC_VERSION, BETA_HEADER, MessagesClient, OAUTH_BETA, VERSION_HEADER};
+pub use client::{
+    ANTHROPIC_VERSION, BETA_HEADER, MessagesClient, OAUTH_BETA, OPENCODE_SESSION_HEADER,
+    VERSION_HEADER, is_opencode_go,
+};
 pub use codec::{
     IngressRequest, SUBSCRIPTION_CLIENT_PREAMBLE, decode_request, decode_request_with_headers,
     encode_body, encode_request, omitted_advisories,

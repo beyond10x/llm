@@ -1,0 +1,38 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: look-alike-endpoints-are-not-opencode-go
+summary: plain http, a host that only starts with opencode.ai, an explicit port and another path on opencode.ai are not OpenCode Go and send no x-opencode-session
+timeline:
+- at: '2026-10-26T12:00:00Z'
+  command: llm.messages.InspectSession
+  input:
+    base_urls:
+      - http://opencode.ai/inference/go/anthropic/v1
+      - https://opencode.ai.example/inference/go/anthropic/v1
+      - https://opencode.ai:8443/inference/go/anthropic/v1
+      - https://opencode.ai/zen/v1
+  outcome: observed
+assert:
+- view: llm.messages.LastSessionInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastSessionInspection
+  contains:
+    accepted: true
+    error_code: null
+    opencode_go:
+      - false
+      - false
+      - false
+      - false
+    session_headers:
+      - none
+      - none
+      - none
+      - none
+    distinct:
+      - false
+      - false
+      - false
+      - false

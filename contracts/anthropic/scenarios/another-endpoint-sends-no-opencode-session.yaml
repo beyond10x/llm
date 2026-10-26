@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: another-endpoint-sends-no-opencode-session
+summary: a client for Anthropic's own base URL sends no x-opencode-session, even when the caller names a session
+timeline:
+- at: '2026-10-26T12:00:00Z'
+  command: llm.messages.InspectSession
+  input:
+    base_urls:
+      - https://api.anthropic.com/v1/
+    session: conversation-42
+  outcome: observed
+assert:
+- view: llm.messages.LastSessionInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastSessionInspection
+  contains:
+    accepted: true
+    error_code: null
+    opencode_go:
+      - false
+    session_headers:
+      - none
+    stable:
+      - true
+    distinct:
+      - false

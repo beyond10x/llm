@@ -269,6 +269,19 @@ hint names betas sends them as one `anthropic-beta` header, comma-separated, aft
 subscription beta when the account has one, each name once. Diagnostics are fixed: a status
 or a reported upstream failure contributes its category, never its response text.
 
+A client for OpenCode Go also sends `x-opencode-session` on every request. OpenCode Go refuses a
+Messages request without it, and its page says "Send a stable session ID in `x-opencode-session`
+for each conversation so we can optimize routing and prompt caching"
+(<https://opencode.ai/docs/go/>). The trigger is the binding's base URL alone
+(`llm_messages::is_opencode_go`): scheme `https`, host `opencode.ai`, the default port and a path
+under `/inference/go/`, such as `https://opencode.ai/inference/go/anthropic/v1`. Plain `http`,
+another host, an explicit port and another path on `opencode.ai` do not count. The value is one
+identifier the client mints when it is built (`llm-<process>-<clock>-<sequence>`, hexadecimal),
+the same on every turn and every attempt and different for each client. A caller that serves one
+conversation per client and already names it passes that name with `with_session`.
+`session_header` reports the header the client sends. No configuration, routes field or turn
+field adds a request header, and a client for any other endpoint sends none of this.
+
 A stream `error` of type `overloaded_error` (`unavailable`) or `api_error` (`transport`) is
 retriable when no payload but `message_start` and `ping` came before it. After any other payload
 it is final, a block that opened without showing anything included. Every other type is final,

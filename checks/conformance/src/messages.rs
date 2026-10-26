@@ -23,6 +23,7 @@ pub const VIEWS: &[&str] = &[
     "llm.messages.LastInspection",
     "llm.messages.LastPresentation",
     "llm.messages.LastIngressEncoding",
+    "llm.messages.LastSessionInspection",
 ];
 
 const MAX_SINK_EVENTS: usize = 4096;
@@ -56,6 +57,14 @@ pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetEr
             facts,
             view: "llm.messages.LastPresentation",
             event: "llm.messages.Presented",
+            field: "accepted",
+        }));
+    }
+    if command == "llm.messages.InspectSession" {
+        return Some(inspect_session(input).map(|facts| Observed {
+            facts,
+            view: "llm.messages.LastSessionInspection",
+            event: "llm.messages.SessionInspected",
             field: "accepted",
         }));
     }
@@ -804,4 +813,98 @@ async fn run_turns(
         client.turn(&request, &mut sink, &Cancel::new()).await?;
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------------------------
+// llm.messages.InspectSession: the OpenCode Go session production Messages clients report, read
+// through `MessagesClient::session_header`, the accessor the client's own request headers are
+// built from. Clients are built on the fixture binding with each base URL; nothing is sent.
+// ---------------------------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SessionInput {
+    base_urls: Vec<String>,
+    #[serde(default)]
+    session: Option<String>,
+}
+
+const MAX_BASE_URLS: usize = 8;
+/// How a minted session is written: its value differs on every run, so only its presence is a fact.
+const MINTED: &str = "<minted>";
+
+fn inspect_session(input: &Value) -> Result<Value, TargetError> {
+    let input: SessionInput = serde_json::from_value(input.clone())
+        .map_err(|error| TargetError::unavailable("messages session", error.to_string()))?;
+    let mut facts = json!({"accepted":false,"error_code":null,"error_message":null,
+        "opencode_go":[],"session_headers":[],"stable":[],"distinct":[]});
+    match sessions(&input, &mut facts) {
+        Ok(()) => facts["accepted"] = json!(true),
+        Err(error) => {
+            facts["error_code"] = json!(error.code);
+            facts["error_message"] = json!(error.message);
+        }
+    }
+    Ok(facts)
+}
+
+fn sessions(input: &SessionInput, facts: &mut Value) -> Result<(), Error> {
+    if input.base_urls.is_empty() || input.base_urls.len() > MAX_BASE_URLS {
+        return Err(Error::invalid("inspect one to eight base URLs"));
+    }
+    let named = input
+        .session
+        .as_deref()
+        .map(Id::new)
+        .transpose()
+        .map_err(|_| Error::invalid("the session is not an identifier"))?;
+    let (mut opencode_go, mut headers, mut stable, mut distinct) =
+        (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+    for base_url in &input.base_urls {
+        let catalog = Catalog::parse(
+            &FIXTURE_CATALOG.replace("\"https://messages.example.invalid/v1\"", &quoted(base_url)),
+        )?;
+        let binding = catalog
+            .binding(&serving()?)
+            .ok_or_else(|| Error::invalid("fixture binding is missing"))?;
+        opencode_go.push(llm_messages::is_opencode_go(
+            &binding.declaration().endpoint.base_url,
+        ));
+        let client = match &named {
+            Some(session) => session_client(binding)?.with_session(session.clone()),
+            None => session_client(binding)?,
+        };
+        let first = client.session_header();
+        stable.push(first == client.session_header());
+        headers.push(first.map_or_else(
+            || "none".to_owned(),
+            |(name, value)| match named {
+                Some(_) => format!("{name}: {value}"),
+                None => format!("{name}: {MINTED}"),
+            },
+        ));
+        let (one, other) = (session_client(binding)?, session_client(binding)?);
+        distinct.push(match (one.session_header(), other.session_header()) {
+            (Some(one), Some(other)) => one != other,
+            _ => false,
+        });
+    }
+    facts["opencode_go"] = json!(opencode_go);
+    facts["session_headers"] = json!(headers);
+    facts["stable"] = json!(stable);
+    facts["distinct"] = json!(distinct);
+    Ok(())
+}
+
+fn session_client(binding: &llm_providers::Binding) -> Result<llm_messages::MessagesClient, Error> {
+    let total = std::time::Duration::from_secs(10);
+    llm_messages::MessagesClient::new(
+        binding.clone(),
+        llm_http::HttpClient::new(llm_http::Limits {
+            response_headers: total,
+            idle: total,
+            total,
+        })?,
+        std::sync::Arc::new(Rotating::default()),
+    )
 }

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SessionInspection",
+  "x-ess-name": "llm.messages.SessionInspection",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "opencode_go": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      }
+    },
+    "session_headers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stable": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      }
+    },
+    "distinct": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.messages.SessionInspection.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "accepted",
+    "opencode_go",
+    "session_headers",
+    "stable",
+    "distinct",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "f541493f2d957a7b45d54ab335097b154d70ccc9ccf19521200a86f02d3fb8ca",
+    "contract_digest": "slice-sha256/2:915496c737669de65e8cab02de437734a42ce6aa76df3f9134378533abfb815f",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.messages.SessionInspection.State": {
+      "title": "State",
+      "x-ess-name": "llm.messages.SessionInspection.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}
