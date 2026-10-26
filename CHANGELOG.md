@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-26
+
 ### Added
 
 - `llm-messages`: a streamed `usage.cost` in any shape is carried as a `usage-extension` warning (`USAGE_EXTENSION`)
@@ -427,7 +429,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.15.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.16.0...HEAD
+[0.16.0]: https://github.com/beyond10x/llm/compare/0.15.0...0.16.0
 [0.15.0]: https://github.com/beyond10x/llm/compare/0.14.0...0.15.0
 [0.14.0]: https://github.com/beyond10x/llm/compare/0.13.0...0.14.0
 [0.13.0]: https://github.com/beyond10x/llm/compare/0.12.0...0.13.0
