@@ -8,7 +8,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ### Changed
 
-- ESS 0.72.0 (was 0.69.2) in CI and `llm-conformance`; the suite and schema projections are unchanged
+- ESS 0.74.0 (was 0.69.2) in CI and `llm-conformance`; the suite and schema projections are unchanged
 
 ## [0.16.0] - 2026-10-26
 

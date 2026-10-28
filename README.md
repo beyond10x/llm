@@ -80,7 +80,7 @@ The [crate reference](https://beyond10x.github.io/llm/docs/reference/crates) is 
 
 The gate and the toolchain it runs on are in [AGENTS.md](AGENTS.md#gate). Besides Rust it needs
 [Task](https://taskfile.dev),
-[ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.72.0 and
+[ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.74.0 and
 [AEP](https://beyond10x.github.io/ecosystem/aep/) ([GitHub](https://github.com/beyond10x/aep))
 0.68.0; [Run the checks](https://beyond10x.github.io/llm/docs/guides/run-the-checks) says what it
 proves and what it does not. The site builds with
