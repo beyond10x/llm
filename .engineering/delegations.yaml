@@ -1,0 +1,5 @@
+delegations:
+  - owner: human:operator
+    role: agent:takt-delivery
+    capability: repository.merge.judge_surface
+    given_at: "2026-10-28T13:15:51Z"
