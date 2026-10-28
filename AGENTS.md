@@ -89,7 +89,7 @@ RUSTUP_TOOLCHAIN=1.98.0 task check
 | Suite and schema projections match `contracts/`, then the suite runs three times against `contracts/baseline.json` | `task conformance` (`cargo run --locked -p llm-conformance -- check`, from the repository root) |
 | The planning store validates | `aep plan artifact validate` |
 
-CI installs `ess` 0.69.2 and `aep` 0.68.0 (pinned by revision in `gate.yml`). A second CI job
+CI installs `ess` 0.72.0 and `aep` 0.68.0 (pinned by revision in `gate.yml`). A second CI job
 tests and lints `llm-credentials` and `llm-cost` with all features on macOS and Windows;
 a native keychain change cannot be checked on Linux alone. `.github/workflows/shared-gates.yml`
 runs the organisation's common Gates checks on pull requests, `main` and tags.
@@ -109,7 +109,7 @@ Never edit these by hand; change the source and regenerate.
 | `website/docs/reference/crates.md` | `cargo metadata --no-deps` (each package's `description` is public text) | `task docs-generate` |
 | `website/data/status.json`, `website/docs/status.mdx` | the `## Status at` section of `docs/implementation-status.md` | `task docs-generate` |
 | `contracts/suite.json` | `spec/` and the scenarios `contracts/ess-inputs.yaml` lists | `ess verify conform synthesize --path spec --suite-format 5 --target ir --scenarios contracts --out contracts/suite.json` |
-| `contracts/schema/` | `spec/` | `ess generate --path spec --kind schema --out contracts/schema` (ess 0.69 writes only where `contracts/schema/.ess-output/` records it owns the bytes; that record is ignored, so in a fresh tree generate once into an empty directory under `target/` and copy its `.ess-output/` beside `contracts/schema/schema/`) |
+| `contracts/schema/` | `spec/` | `ess generate --path spec --kind schema --out contracts/schema` (ess 0.72 writes only where `contracts/schema/.ess-output/` records it owns the bytes; that record is ignored, so in a fresh tree generate once into an empty directory under `target/` and copy its `.ess-output/` beside `contracts/schema/schema/`) |
 
 Authored scenarios live in `contracts/<domain>/scenarios/`; the conformance check refuses one that
 `contracts/ess-inputs.yaml` does not list. `llm-docs generate --check` also fails when a guide
