@@ -2,12 +2,14 @@
 format: aep.planning-md/3
 id: story:routes-refusal-names-a-later-route-field-line
 kind: story
-status: draft
+status: proposed
 title: A routes refusal names the line of an unknown field in any route
 relations:
 - decomposes: epic:routing
 - serves: vision:portable-model-inference
-revision: 1
+revision: 2
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-28T13:16:04Z", actor: "human:timo", revision: 2}
 ---
 ## Context
 
