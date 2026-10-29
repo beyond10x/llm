@@ -9,6 +9,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 ### Added
 
 - **Breaking:** new field `Error::refusal` names a Responses or Chat `context_length_exceeded` 400 as a typed cause
+- ESS: two `llm.responses` scenarios for the context-length cause in a stream and in the relay; the conformance floor is 956 (was 954)
 
 ### Changed
 
