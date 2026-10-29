@@ -209,8 +209,8 @@ live run returned:
 
 | Observation | Value |
 |---|---|
-| events | 35; the one `response.metadata` is outside the pinned subset |
-| items | reasoning (`Opaque`), the answer text, `response.metadata` (`Opaque`, with one `unknown-stream-event` warning) |
+| events | 35, one of them `response.metadata` |
+| items | reasoning (`Opaque`) and the answer text. Until 0.16.0 the `response.metadata` event was a third, `Opaque` item with an `unknown-stream-event` warning; since `story:codex-stream-metadata-is-not-replayed` it is in the pinned subset and is no item, because a next request replayed it and the endpoint refused it |
 | stop reason | `EndTurn` |
 | usage | input 34, output 80, cached 0, reasoning 50 |
 | content type | none sent, as in the 2026-10-04 probe |

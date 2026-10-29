@@ -282,7 +282,7 @@ dropped event is a hole in the conversation the next turn cannot see.
 | `response.output_item.done` | one decoded item |
 | `response.completed`, `response.incomplete` | terminal truth, decided by the **event name** as well as the object's own `status` |
 | `response.failed`, `error` | a typed refusal |
-| `response.metadata` | ignored: it describes the response and is not output, so no outcome carries it and no next request replays it (an endpoint refuses an input of that type) |
+| `response.metadata` | ignored: it describes the response and is not output, so no outcome carries it (a next request replaying it was refused by the endpoint). An `Opaque` item holding one that a caller saved under 0.16.0 or earlier is still sent as it is, like every opaque item |
 | the remaining progress and `.done` markers | ignored; the terminal object is authoritative |
 
 **Two servers speaking this protocol spell reasoning differently, and both are pinned.** `OpenAI`

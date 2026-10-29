@@ -200,7 +200,8 @@ fn replay(listener: TcpListener) -> tokio::task::JoinHandle<String> {
 }
 
 /// The recorded stream decodes to the turn the live run returned: a reasoning item kept opaque,
-/// the answer, the preserved `response.metadata` event, `EndTurn`, and the terminal usage.
+/// the answer, `EndTurn`, and the terminal usage. The `response.metadata` event in it is
+/// interpreted, not kept as an item (story:codex-stream-metadata-is-not-replayed).
 #[tokio::test]
 async fn the_recorded_codex_text_turn_replays_to_its_live_outcome() {
     let (listener, url) = listener().await;
@@ -223,7 +224,12 @@ async fn the_recorded_codex_text_turn_replays_to_its_live_outcome() {
     );
 
     assert_eq!(outcome.stop_reason, StopReason::EndTurn);
-    assert_eq!(outcome.items.len(), 3, "{:?}", outcome.items);
+    assert_eq!(
+        outcome.items.len(),
+        2,
+        "story:codex-stream-metadata-is-not-replayed: response.metadata is no item {:?}",
+        outcome.items
+    );
     assert_eq!(opaque_type(&outcome.items[0]), Some("reasoning"));
     assert_eq!(
         outcome.items[1],
@@ -231,9 +237,16 @@ async fn the_recorded_codex_text_turn_replays_to_its_live_outcome() {
             text: ANSWER.to_owned()
         }
     );
-    // The backend's `response.metadata` event is outside the pinned subset, so it is preserved
-    // as an item rather than dropped.
-    assert_eq!(opaque_type(&outcome.items[2]), Some("response.metadata"));
+    // The backend's `response.metadata` event is in the pinned subset and is not conversation
+    // state: kept as an item, the next request replayed it and the endpoint refused it.
+    assert!(
+        outcome
+            .items
+            .iter()
+            .all(|item| opaque_type(item) != Some("response.metadata")),
+        "story:codex-stream-metadata-is-not-replayed: {:?}",
+        outcome.items
+    );
 
     let observation = &outcome.observation;
     assert!(observation.final_usage);
@@ -255,7 +268,10 @@ async fn the_recorded_codex_text_turn_replays_to_its_live_outcome() {
             other => panic!("unexpected event {other:?}"),
         })
         .collect();
-    assert_eq!(warnings, ["unknown-stream-event"]);
+    assert!(
+        warnings.is_empty(),
+        "story:codex-stream-metadata-is-not-replayed: no unknown-stream-event for response.metadata, got {warnings:?}"
+    );
 }
 
 fn opaque_type(item: &Item) -> Option<&str> {
