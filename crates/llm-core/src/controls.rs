@@ -267,11 +267,19 @@ pub struct Controls {
     pub parallel_tool_calls: Option<bool>,
     #[serde(default, skip_serializing_if = "Hints::is_empty")]
     pub hints: Hints,
+    /// Return a well-formed call to a tool this turn did not publish instead of refusing the
+    /// turn, so the caller can answer it as a refusal the model learns from. Checked only by
+    /// `TurnOutcome::validate_for`; no wire sends it. Every other outcome check still refuses.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub return_unpublished_calls: bool,
 }
 
 impl Controls {
     pub fn is_empty(&self) -> bool {
-        self.thinking.is_none() && self.parallel_tool_calls.is_none() && self.hints.is_empty()
+        self.thinking.is_none()
+            && self.parallel_tool_calls.is_none()
+            && self.hints.is_empty()
+            && !self.return_unpublished_calls
     }
 
     pub(crate) fn validate(&self, tools: &[ToolSpec]) -> Result<(), Error> {

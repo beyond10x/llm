@@ -290,10 +290,12 @@
       "llm.inference/authored/missing-binding-refused",
       "llm.inference/authored/missing-final-usage-refused",
       "llm.inference/authored/model-output-calling-an-unpublished-tool-is-refused",
+      "llm.inference/authored/model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it",
       "llm.inference/authored/model-output-carrying-another-accounts-opaque-state-is-refused",
       "llm.inference/authored/model-output-carrying-caller-content-is-refused",
       "llm.inference/authored/model-output-carrying-its-own-opaque-state-is-accepted",
       "llm.inference/authored/model-output-carrying-unattributed-opaque-state-is-refused",
+      "llm.inference/authored/model-output-repeating-a-call-id-is-refused-even-for-a-caller-taking-unpublished-calls",
       "llm.inference/authored/outcome-version-1-refused",
       "llm.inference/authored/outcome-version-2-refused",
       "llm.inference/authored/outcome-version-3-refused",
@@ -2202,6 +2204,11 @@
         "disposition": "accepted",
         "scenario": "llm.inference/authored/model-output-calling-an-unpublished-tool-is-refused"
       },
+      "inference/scenarios/model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it.yaml": {
+        "digest": "sha256:2fdcd005d82988790710d284af5319d643eeb0b6fdb52e2981e283561593f6e8",
+        "disposition": "accepted",
+        "scenario": "llm.inference/authored/model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it"
+      },
       "inference/scenarios/model-output-carrying-another-accounts-opaque-state-is-refused.yaml": {
         "digest": "sha256:224dff38c8542ec82f8bbf0894deeeced815d5b8f561073fe84e948da279924c",
         "disposition": "accepted",
@@ -2221,6 +2228,11 @@
         "digest": "sha256:c9762c36a403237fc43b82f366bae46d7aa2b38fe65df9cb15b8564291c810b4",
         "disposition": "accepted",
         "scenario": "llm.inference/authored/model-output-carrying-unattributed-opaque-state-is-refused"
+      },
+      "inference/scenarios/model-output-repeating-a-call-id-is-refused-even-for-a-caller-taking-unpublished-calls.yaml": {
+        "digest": "sha256:55dd30ffd853dcd6e3118a323af2dcd7243821bcf835a52e411c4f8cc915ecfc",
+        "disposition": "accepted",
+        "scenario": "llm.inference/authored/model-output-repeating-a-call-id-is-refused-even-for-a-caller-taking-unpublished-calls"
       },
       "inference/scenarios/outcome-version-1-refused.yaml": {
         "digest": "sha256:8c4568a95d37d242d0bc1fd3bcd30b23ef06ad3c3238f9c9b2add36e368c17fa",
@@ -5489,7 +5501,7 @@
       }
     },
     "counts": {
-      "authored": 914,
+      "authored": 916,
       "generated": 37,
       "outside": 0,
       "refused": 0
@@ -5547,9 +5559,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "5cc8101af1527b04f280ec429d6d90782759787be80d5c3f3101769e226bcea6",
+    "contract_digest": "db44ad5cb1c2f7d5bc0a35c88bc104b1fb2fe8c67c70bcd3d6705bdbf20de8e7",
     "scenario_initial_state": "empty",
-    "spec_digest": "f541493f2d957a7b45d54ab335097b154d70ccc9ccf19521200a86f02d3fb8ca",
+    "spec_digest": "169d3a0b44a4418e8bdcaacdeb183c223cba66a182cb4a342566f72b5932e9a1",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -40523,6 +40535,135 @@
         }
       ]
     },
+    "llm.inference/authored/model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it": {
+      "purpose": "a caller that set controls.return_unpublished_calls gets the call to a tool it did not publish (story:unpublished-tool-call-reaches-an-opted-in-caller)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.inference"
+        },
+        {
+          "kind": "command",
+          "name": "llm.inference.InspectResult"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.inference.InspectResult",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.inference.LastResult"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.inference.InspectResult",
+          "input": {
+            "failure": {
+              "kind": "literal",
+              "value": false
+            },
+            "result_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"lookup\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"wire-model-revision\",\"response_id\":\"response-1\",\"final_usage\":true,\"usage\":{\"input_tokens\":100,\"output_tokens\":5}}}}"
+            },
+            "return_unpublished_calls": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.inference.InspectResult",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "cache_creation_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "failed": {
+                "kind": "literal",
+                "value": false
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": "100"
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": "5"
+              },
+              "reasoning_output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "response-1"
+              },
+              "roundtrip_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "wire-model-revision"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.inference.LastResult"
+        }
+      ]
+    },
     "llm.inference/authored/model-output-carrying-another-accounts-opaque-state-is-refused": {
       "purpose": "opaque state bound to the same model under another account is foreign and refused (turn.rs TurnOutcome::validate_for)",
       "source": [
@@ -40932,6 +41073,135 @@
             "result_json": {
               "kind": "literal",
               "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"hello\"},{\"kind\":\"unattributed-opaque\",\"protocol\":\"messages\",\"payload\":{\"state\":\"x\"}}],\"observation\":{\"binding\":{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"wire-model-revision\",\"response_id\":\"response-1\",\"final_usage\":true,\"usage\":{\"input_tokens\":100,\"output_tokens\":5}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.inference.InspectResult",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "cache_creation_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "failed": {
+                "kind": "literal",
+                "value": false
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": null
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning_output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "roundtrip_preserved": {
+                "kind": "literal",
+                "value": false
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.inference.LastResult"
+        }
+      ]
+    },
+    "llm.inference/authored/model-output-repeating-a-call-id-is-refused-even-for-a-caller-taking-unpublished-calls": {
+      "purpose": "return_unpublished_calls admits an unpublished name only; a repeated call id is still refused (story:unpublished-tool-call-reaches-an-opted-in-caller)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.inference"
+        },
+        {
+          "kind": "command",
+          "name": "llm.inference.InspectResult"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.inference.InspectResult",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.inference.LastResult"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.inference.InspectResult",
+          "input": {
+            "failure": {
+              "kind": "literal",
+              "value": false
+            },
+            "result_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"tool-calls\"},\"items\":[{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"lookup\",\"arguments\":{}},{\"kind\":\"tool-call\",\"call_id\":\"call-1\",\"name\":\"find\",\"arguments\":{}}],\"observation\":{\"binding\":{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"wire-model-revision\",\"response_id\":\"response-1\",\"final_usage\":true,\"usage\":{\"input_tokens\":100,\"output_tokens\":5}}}}"
+            },
+            "return_unpublished_calls": {
+              "kind": "literal",
+              "value": true
             }
           },
           "step": "execute_command"

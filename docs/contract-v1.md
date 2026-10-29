@@ -54,7 +54,9 @@ not proved by request byte limits.
 A turn's `controls` hold what is not sampling: a thinking mode (`adaptive`, `enabled` with a
 positive budget, `disabled`), whether parallel tool calls are allowed (only beside published
 tools), and advisory hints (a prompt-cache request, a cache key of at most 512 bytes, verbosity, a
-reasoning-summary request, and the names of fields ingress read and no wire sends). The reasoning
+reasoning-summary request, and the names of fields ingress read and no wire sends), and whether a
+call to a tool the turn did not publish is returned to the caller instead of refusing the turn
+(`return_unpublished_calls`, off by default; no wire sends it). The reasoning
 effort a wire receives is `llm_core::wire_effort`'s, and capabilities are checked against it:
 `max` reaches Chat Completions and Responses as `xhigh`, disabled thinking as `none`, and a
 thinking budget is refused there. A hint a wire cannot carry is omitted and reported: by the

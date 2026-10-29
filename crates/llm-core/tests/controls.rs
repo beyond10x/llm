@@ -103,6 +103,7 @@ fn a_turn_with_controls_is_llm_turn_4_and_reads_back_equal() {
             budget_tokens: 2048,
         }),
         parallel_tool_calls: Some(false),
+        return_unpublished_calls: true,
         hints: Hints {
             prompt_cache: Some(PromptCache {
                 ttl: Some(CacheTtl::OneHour),
@@ -128,6 +129,7 @@ fn a_turn_with_controls_is_llm_turn_4_and_reads_back_equal() {
                 "reasoning_summary": "auto",
                 "unforwarded": ["input-item-ids", "client-metadata"],
             },
+            "return_unpublished_calls": true,
         })
     );
     let read: TurnDocument = serde_json::from_value(written).unwrap();

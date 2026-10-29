@@ -10,6 +10,9 @@
     },
     "failure": {
       "type": "boolean"
+    },
+    "return_unpublished_calls": {
+      "type": "boolean"
     }
   },
   "required": [
@@ -20,8 +23,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "f541493f2d957a7b45d54ab335097b154d70ccc9ccf19521200a86f02d3fb8ca",
-    "contract_digest": "slice-sha256/2:615288ea5b44e8219832ad7afef734868378f8f2350d0ba24105a9f39c2a7839",
+    "source_digest": "169d3a0b44a4418e8bdcaacdeb183c223cba66a182cb4a342566f72b5932e9a1",
+    "contract_digest": "slice-sha256/2:c9f00f387483707315ee0a7b92a6040274d8a97f24ca6dc118aefbd92ab8db24",
     "regenerate": "ess generate"
   }
 }

@@ -63,6 +63,9 @@ types:
       # Needs published tools.
       - {name: parallel_tool_calls, type: Optional<Boolean>}
       - {name: hints, type: llm.inference.Hints}
+      # Return a call to a tool the turn did not publish instead of refusing the turn. Read only
+      # by outcome validation; no wire sends it. Absent or false refuses, as before.
+      - {name: return_unpublished_calls, type: Optional<Boolean>}
 entities:
   - name: llm.inference.ResultInspection
     identity: {name: observation_id, type: String}
@@ -86,6 +89,8 @@ commands:
     input:
       - {name: result_json, type: String}
       - {name: failure, type: Boolean}
+      # Sets the fixture request's controls.return_unpublished_calls; absent is false.
+      - {name: return_unpublished_calls, type: Optional<Boolean>}
     outcomes:
       - name: observed
         emits: [llm.inference.Inspected]

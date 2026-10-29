@@ -1,0 +1,32 @@
+type: ess-scenario/1
+domain: llm.inference
+scenario: model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it
+summary: a caller that set controls.return_unpublished_calls gets the call to a tool it did not publish (story:unpublished-tool-call-reaches-an-opted-in-caller)
+timeline:
+- at: '2026-10-29T12:00:00Z'
+  command: llm.inference.InspectResult
+  input:
+    result_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"tool-calls"},"items":[{"kind":"tool-call","call_id":"call-1","name":"lookup","arguments":{}}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"wire-model-revision","response_id":"response-1","final_usage":true,"usage":{"input_tokens":100,"output_tokens":5}}}}'
+    failure: false
+    return_unpublished_calls: true
+  outcome: observed
+assert:
+- view: llm.inference.LastResult
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.inference.LastResult
+  contains:
+    accepted: true
+    failed: false
+    error_code: null
+    dispatch: null
+    upstream_model: wire-model-revision
+    response_id: response-1
+    final_usage: true
+    input_tokens: '100'
+    output_tokens: '5'
+    cached_input_tokens: null
+    cache_creation_input_tokens: null
+    reasoning_output_tokens: null
+    roundtrip_preserved: true

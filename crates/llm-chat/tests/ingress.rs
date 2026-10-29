@@ -1020,6 +1020,7 @@ fn parallel_tool_calls_prompt_cache_key_and_verbosity_are_carried() {
         request.controls,
         Controls {
             thinking: None,
+            return_unpublished_calls: false,
             parallel_tool_calls: Some(false),
             hints: Hints {
                 prompt_cache_key: Some("session-7".to_owned()),
