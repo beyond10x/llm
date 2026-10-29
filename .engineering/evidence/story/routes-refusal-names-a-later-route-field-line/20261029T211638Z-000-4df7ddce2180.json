@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-29T21:16:38Z",
+  "actor": "human:timo",
+  "artifact": "story:routes-refusal-names-a-later-route-field-line",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo test -p llm-models --test routes --test routes_toml_bedrock (Rust 1.98.0)",
+    "reference": "baseline: RawRoute put back to the untagged enum before 095c8a3e, 4 of the new cases red (3 YAML, 1 TOML); treatment: 5da14580, 22 and 11 passed"
+  }
+}

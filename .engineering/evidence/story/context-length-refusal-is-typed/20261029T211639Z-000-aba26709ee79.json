@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-29T21:16:39Z",
+  "actor": "human:timo",
+  "artifact": "story:context-length-refusal-is-typed",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo test -p llm-http --test retry_classes; -p llm-responses --test retry_class; -p llm-chat --test retry_class (Rust 1.98.0)",
+    "reference": "baseline: the cases on 579d662f fail to compile, then 5 behaviour failures on the type surface alone; treatment: a0a6ea6a, 18, 16 and 4 passed"
+  }
+}
