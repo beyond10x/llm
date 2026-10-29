@@ -44,6 +44,7 @@ pub const ACCEPTED_STREAM_EVENTS: &[&str] = &[
     "response.function_call_arguments.done",
     "response.in_progress",
     "response.incomplete",
+    "response.metadata",
     "response.output_item.added",
     "response.output_item.done",
     "response.output_text.delta",
@@ -401,7 +402,9 @@ impl<'a> Decoder<'a> {
             Some("error") => return Err(self.provider_failure(None, event)),
             // Progress markers the decoder does not act on; the terminal object is authoritative.
             // The reasoning `.done` and `part` markers of both families are here rather than
-            // warned about because each repeats text a delta already carried.
+            // warned about because each repeats text a delta already carried. `response.metadata`
+            // (the Codex backend, Harness wave D200) describes the response and is not output:
+            // kept as an opaque item it was replayed as an input entry the endpoint refuses.
             Some(name) if ACCEPTED_STREAM_EVENTS.contains(&name) => {}
             _ => {
                 // Preserved, not dropped, and reported. A dropped event is a hole in the

@@ -501,6 +501,7 @@
       "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters",
       "llm.responses/authored/a-foreign-text-body-reads-into-a-neutral-turn",
       "llm.responses/authored/a-gateway-round-trip-preserves-the-payload-once-the-caller-binds-it",
+      "llm.responses/authored/a-metadata-event-is-not-conversation-state",
       "llm.responses/authored/a-named-tool-choice-names-the-published-tool",
       "llm.responses/authored/a-payload-after-the-terminal-object-is-not-read",
       "llm.responses/authored/a-rate-limited-failure-keeps-its-class-when-its-counters-disagree",
@@ -3441,6 +3442,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/a-gateway-round-trip-preserves-the-payload-once-the-caller-binds-it"
       },
+      "responses/scenarios/a-metadata-event-is-not-conversation-state.yaml": {
+        "digest": "sha256:2d0b8ad77f8cb1d5c1467e952257160456fb9f65c3d96e56a4ce771f427d1f4b",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/a-metadata-event-is-not-conversation-state"
+      },
       "responses/scenarios/a-named-tool-choice-names-the-published-tool.yaml": {
         "digest": "sha256:8a68420811a1c9cf72644a77cee5750fbcffe057f9540bc63d6dfc40a5496a93",
         "disposition": "accepted",
@@ -5483,7 +5489,7 @@
       }
     },
     "counts": {
-      "authored": 913,
+      "authored": 914,
       "generated": 37,
       "outside": 0,
       "refused": 0
@@ -68873,6 +68879,99 @@
           },
           "step": "expect_view",
           "view": "llm.responses.LastIngestion"
+        }
+      ]
+    },
+    "llm.responses/authored/a-metadata-event-is-not-conversation-state": {
+      "purpose": "a response.metadata event is interpreted, not preserved as an item a next request would replay (story:codex-stream-metadata-is-not-replayed)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.metadata\",\"metadata\":{\"fixture\":\"synthetic\"}},{\"type\":\"response.completed\",\"response\":{\"status\":\"completed\"}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "items_json": {
+                "kind": "literal",
+                "value": "[]"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              },
+              "stream_events": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
         }
       ]
     },
