@@ -47,7 +47,7 @@ onto 0.7.0 is decided (Atlas ADR 0097) and is Harness's own work; `docs/harness-
 current to 0.7.0 for it (`harness-cutover-on-llm-0-7`). Serving, hosting and their qualification
 are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 
-## Status at 0.16.0 (2026-10-26)
+## Status at 0.17.0 (2026-10-29)
 
 ### Neutral turn
 
