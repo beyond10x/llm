@@ -2,21 +2,34 @@
 format: aep.planning-md/3
 id: story:context-length-refusal-is-typed
 kind: story
-status: active
+status: implemented
 title: A context-length refusal is told apart from other 400s
 summary: A 400 whose structured error names the context window maps to a typed refusal, copying no body text
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
 scope:
+- confidence: cited
+  path: crates/llm-chat/src/client.rs
 - confidence: inferred
   path: crates/llm-core/src/error.rs
 - confidence: cited
   path: crates/llm-http/src/transport.rs
-revision: 5
+- confidence: cited
+  path: crates/llm-responses/src/client.rs
+- confidence: cited
+  path: crates/llm-responses/src/ingress.rs
+- confidence: cited
+  path: crates/llm-responses/src/stream.rs
+- confidence: cited
+  path: spec/domains/responses.yaml
+- confidence: cited
+  path: spec/domains/transport.yaml
+revision: 13
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-28T19:15:33Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-29T20:40:35Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-29T22:00:26Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 
@@ -51,3 +64,14 @@ mapped to a closed set of named causes.
 ## Out of scope
 
 - Harness compacting and retrying on such a refusal (Harness's store).
+
+## Scope
+
+Learned in wave 2026-10-29-w23 from the implementor's confirmation table (merged `a0a6ea6a`, `de37c629`).
+
+- `crates/llm-http/src/transport.rs`: the refusal rule beside the quota rule. cited, confirmed
+- `crates/llm-core/src/error.rs`: `Error::refusal`, `RefusalCause`. inferred at scoping, confirmed
+- `crates/llm-core/src/lib.rs`, `crates/llm-http/src/lib.rs`: re-exports. found
+- `crates/llm-responses/src/client.rs`, `src/stream.rs`, `src/ingress.rs`; `crates/llm-chat/src/client.rs`: the rule wired per wire, the in-stream cause and the relay. found
+- `spec/domains/transport.yaml`, `spec/domains/responses.yaml`, two `contracts/responses/scenarios/`. found (adversary F2)
+- Tests in llm-core, llm-http, llm-responses, llm-messages, llm-chat, llm-routing; `docs/{design,responses,chat,messages}.md`. found

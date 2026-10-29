@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:routes-refusal-names-a-later-route-field-line
 kind: story
-status: active
+status: implemented
 title: A routes refusal names the line of an unknown field in any route
 relations:
 - decomposes: epic:routing
@@ -12,10 +12,13 @@ scope:
   path: crates/llm-models/src/routes.rs
 - confidence: inferred
   path: crates/llm-models/tests/routes.rs
-revision: 5
+- confidence: cited
+  path: crates/llm-models/tests/routes_toml_bedrock.rs
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-28T13:16:04Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-29T20:40:36Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-29T22:00:26Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Context
 

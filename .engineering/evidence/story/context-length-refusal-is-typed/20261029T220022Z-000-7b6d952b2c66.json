@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-29T22:00:22Z",
+  "actor": "human:timo",
+  "artifact": "story:context-length-refusal-is-typed",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check steps one by one on Rust 1.98.0 at 013d171d",
+    "reference": "cargo test 1616 passed, 0 failed, 2 ignored over 250 runs; clippy 1.98.0 clean; conformance 956/956 three times, 0 skipped; aep validate valid. Clippy on the local default 1.99.1 failed on its new assert_is_empty lint in four untouched test lines, fixed in the next commit"
+  }
+}
