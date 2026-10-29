@@ -68,7 +68,7 @@ are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 | --- | --- |
 | `http-streaming` | **Bounded HTTP and server-sent events.** One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails. |
 | `parity-http-timeouts-cancel` | **Connect and idle bounds, and cancellation.** A 15-second connect timeout (`HttpClient::with_connect_timeout`), a 180-second idle bound by default, and cancellation that wins over a pending read. |
-| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 953 scenarios against the real crates three times and skips none. |
+| `ess-specifications` | **Every library crate is specified in ESS.** The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 954 scenarios against the real crates three times and skips none. |
 
 ### Protocols
 
