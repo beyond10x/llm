@@ -2,15 +2,21 @@
 format: aep.planning-md/3
 id: story:context-length-refusal-is-typed
 kind: story
-status: proposed
+status: active
 title: A context-length refusal is told apart from other 400s
 summary: A 400 whose structured error names the context window maps to a typed refusal, copying no body text
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 2
+scope:
+- confidence: inferred
+  path: crates/llm-core/src/error.rs
+- confidence: cited
+  path: crates/llm-http/src/transport.rs
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-28T19:15:33Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-10-29T20:40:35Z", actor: "human:timo", revision: 3}
 ---
 ## Context
 
