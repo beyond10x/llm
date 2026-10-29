@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-29
+
 ### Added
 
 - **Breaking:** new field `Error::refusal` names a Responses or Chat `context_length_exceeded` 400 as a typed cause
@@ -463,7 +465,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.17.1...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.18.0...HEAD
+[0.18.0]: https://github.com/beyond10x/llm/compare/0.17.1...0.18.0
 [0.17.1]: https://github.com/beyond10x/llm/compare/0.17.0...0.17.1
 [0.17.0]: https://github.com/beyond10x/llm/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/beyond10x/llm/compare/0.15.0...0.16.0
