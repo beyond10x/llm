@@ -1,0 +1,109 @@
+[
+  {
+    "kind": "user-text",
+    "text": "Name the two wire protocols a portable LLM client most often speaks, in one sentence."
+  },
+  {
+    "kind": "opaque",
+    "provenance": {
+      "protocol": "responses",
+      "provider": "codex",
+      "account": "local",
+      "endpoint": "local-endpoint",
+      "model": "astra",
+      "binding_revision": "rev-1"
+    },
+    "payload": {
+      "content": [],
+      "encrypted_content": "gAAAAA-scrubbed-reasoning",
+      "id": "rs_00000000000000000000000000000000000000000000000001",
+      "summary": [],
+      "type": "reasoning"
+    }
+  },
+  {
+    "kind": "assistant-text",
+    "text": "A portable LLM client most often speaks the OpenAI-compatible Chat Completions API and the Anthropic Messages API."
+  },
+  {
+    "kind": "opaque",
+    "provenance": {
+      "protocol": "responses",
+      "provider": "codex",
+      "account": "local",
+      "endpoint": "local-endpoint",
+      "model": "astra",
+      "binding_revision": "rev-1"
+    },
+    "payload": {
+      "metadata": {
+        "openai_chatgpt_moderation_metadata": {
+          "generation": {},
+          "prompt": {
+            "omnimod": {
+              "outputs": [
+                {
+                  "is_blocked": false,
+                  "results": [
+                    {
+                      "category_flags": {
+                        "A1": false,
+                        "A2": false,
+                        "A3": false,
+                        "C1": false,
+                        "C11": false,
+                        "C2": false,
+                        "CBRN-B1+": false,
+                        "E1": false,
+                        "E2": false,
+                        "E3": false,
+                        "H1": false,
+                        "H2": false,
+                        "H3": false,
+                        "IMG-C1": false,
+                        "IMG-C11": false,
+                        "IMG-C2": false,
+                        "IMG-S1": false,
+                        "IMG-SH": false,
+                        "IMG-V1": false,
+                        "IMG-V2+": false,
+                        "IMG-V4+": false,
+                        "JB1": false,
+                        "K1": false,
+                        "K2": false,
+                        "K3": false,
+                        "K4": false,
+                        "P1": false,
+                        "P2": false,
+                        "P3": false,
+                        "P4": false,
+                        "PD1": false,
+                        "PD4": false,
+                        "REFUSED": false,
+                        "S1": false,
+                        "S3+": false,
+                        "S4": false,
+                        "SH": false,
+                        "TXT-C3": false,
+                        "TXT-C4": false,
+                        "V1": false,
+                        "V2+": false,
+                        "V4+": false
+                      }
+                    }
+                  ]
+                }
+              ],
+              "protection_type": "omnimod"
+            }
+          },
+          "tool_call": {},
+          "tool_response": {}
+        }
+      },
+      "response_id": "resp_00000000000000000000000000000000000000000000000001",
+      "sequence_number": 30,
+      "type": "response.metadata"
+    }
+  }
+]
