@@ -142,6 +142,13 @@ The HTTP transport marks these as retriable:
 Any error status whose answer carries `x-should-retry: false` is not retriable, whatever the table
 says; the header never makes another status retriable.
 
+A refusal may also name its cause in `Error::refusal`, read only from an exact code in the far
+side's structured error and never from its prose. Today the one cause is
+`context-length-exceeded`: a Responses or Chat Completions `400`, or a Responses stream failure,
+whose `error.code` is `context_length_exceeded`. Its message names the cause in fixed text; naming it
+changes neither the code, the dispatch nor the retry class, and such a refusal is never retried. Messages states an
+over-long prompt only in prose, so its refusal carries no cause.
+
 A server's `Retry-After` is kept as a hint (`retry_after_ms`); routing honours it, capped, only for
 a failure that is already retriable. A client never retries by itself: one call is one attempt, and
 [routing](routing.md#same-target-retry) decides whether another follows. Because a retried attempt

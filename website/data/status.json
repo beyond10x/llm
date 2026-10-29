@@ -46,6 +46,12 @@
     },
     {
       "area": "Neutral turn",
+      "detail": "Error::refusal carries RefusalCause::ContextLengthExceeded when a Responses or Chat Completions 400, or a Responses stream failure, carries error.code context_length_exceeded, and the message names the cause in fixed text; naming it changes no code, dispatch or retry class, and no body text is copied. Messages states an over-long prompt only in prose and is not classified. Fixture evidence only.",
+      "label": "A context-length refusal is told apart from other refusals",
+      "status": "shipped"
+    },
+    {
+      "area": "Neutral turn",
       "detail": "With controls.return_unpublished_calls set, such a call reaches the caller as an ordinary call it can answer as a refusal instead of refusing the turn; the default still refuses, and every other outcome check still applies. Fixture evidence; the live verbs runs that found it are Harness's to repeat.",
       "label": "A caller can take a call to a tool it did not publish",
       "status": "shipped"

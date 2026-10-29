@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- **Breaking:** new field `Error::refusal` names a Responses or Chat `context_length_exceeded` 400 as a typed cause
+
 ### Changed
 
 - ESS 0.77.0 (was 0.75.0) in CI and `llm-conformance`; the suite and schema projections are unchanged
