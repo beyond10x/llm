@@ -8,7 +8,7 @@ summary: controls.return_unpublished_calls returns a well-formed unpublished cal
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T11:27:34Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-29T11:27:35Z", actor: "human:timo", revision: 3}
@@ -48,5 +48,8 @@ A turn carrying it is written as `llm.turn/4`, as every turn with controls is.
 - `crates/llm-messages/tests/streaming.rs::a_tool_call_the_request_never_published_reaches_a_caller_that_asked_for_it`
   (the decoder path the live run took).
 - Scenarios `contracts/inference/scenarios/model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it.yaml`
-  and `...-a-duplicate-call-is-still-refused.yaml`; `model-output-calling-an-unpublished-tool-is-refused`
-  unchanged.
+  and `model-output-repeating-a-call-id-is-refused-even-for-a-caller-taking-unpublished-calls.yaml`;
+  `model-output-calling-an-unpublished-tool-is-refused` unchanged.
+- Bedrock Converse returns an unpublished call only when its name fits the tool-name class a next
+  Converse turn can carry; otherwise the turn is refused with a protocol error, as without the
+  control (`crates/llm-bedrock/tests/adversary_w21_unpublished.rs::an_unpublished_call_converse_returned_can_be_answered_on_converse`).

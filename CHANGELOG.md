@@ -8,7 +8,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ### Added
 
-- **Breaking:** `llm-core`: `Controls::return_unpublished_calls` returns a call to an unpublished tool instead of refusing the turn
+- **Breaking:** `llm-core`: `Controls::return_unpublished_calls` returns a call to an unpublished tool instead of refusing the turn; Bedrock Converse still refuses a name outside `[A-Za-z0-9_-]`
 - ESS: `llm.inference.Controls` field, an optional `InspectResult` input and three scenarios; the conformance floor is 953 (was 950)
 
 ### Changed

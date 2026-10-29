@@ -399,6 +399,19 @@ impl Header {
             observation: self.observation(target, true),
         };
         outcome.validate_for(request, target)?;
+        // A call returned to a caller that set `controls.return_unpublished_calls` must be one it
+        // can answer here: a name outside `wire_name`'s bound would make the next turn unsendable.
+        // Every published name passed that bound before the request was sent, so this reaches
+        // only an unpublished call (story:unpublished-tool-call-reaches-an-opted-in-caller).
+        if request.controls.return_unpublished_calls
+            && outcome
+                .tool_calls()
+                .any(|call| wire_name(call.name.as_str()).is_err())
+        {
+            return Err(Error::protocol(
+                "Bedrock Converse model named a tool outside the bound a next turn carries",
+            ));
+        }
         Ok(outcome)
     }
 }

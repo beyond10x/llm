@@ -506,9 +506,10 @@ its path (`messages[].content[].cache_control`), at every level:
   ASCII letters, digits, `-`, `_` or `.`.
 - `return_unpublished_calls`: a model call to a tool the turn did not publish is returned to the
   caller as an ordinary call, for the caller to answer as a refusal, instead of refusing the whole
-  turn. Absent (the default) refuses, as before. Only `TurnOutcome::validate_for` reads it; no
+  turn. Absent (the default) refuses, as before. Only outcome validation reads it; no
   wire sends it and no ingress decoder sets it. Every other outcome check still refuses: a repeated
-  call id, a call other than a named tool choice, oversized arguments.
+  call id, a call other than a named tool choice, oversized arguments. Bedrock Converse also
+  refuses an unpublished name outside `[A-Za-z0-9_-]`, which its next turn could not carry back.
 
 A turn whose controls are empty is written as `llm.turn/3`, byte for byte as before; any other is
 `llm.turn/4`. Both are read, and a `/3` document carrying controls is refused.
