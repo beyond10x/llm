@@ -429,7 +429,9 @@ side's retry decision, so a downstream llm client applies its own rules. A Respo
 `rate_limit_exceeded`. A Messages `fail` writes `unavailable` as `overloaded_error`, and
 `transport`, `protocol` and `cancelled` as `api_error`. When the gateway streamed nothing before
 the failure, a downstream llm client reads each of these back as retriable, whatever the gateway
-decided.
+decided. A Responses `fail` also writes a refusal naming `context-length-exceeded` as
+`context_length_exceeded`, which reads back as the same final refusal with its cause; Messages
+has no such code, so its `fail` relays a plain refusal.
 
 Other clients decide for themselves, and they differ:
 

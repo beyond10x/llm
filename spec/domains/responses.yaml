@@ -45,6 +45,15 @@ domain: llm.responses
 # codes) and actual refusals remain non-retriable. The client still makes one attempt; routing
 # or the caller owns any bounded retry policy.
 #
+# Named refusal cause (story:context-length-refusal-is-typed). The exact code
+# `context_length_exceeded`, on a top-level `error` or inside `response.failed`, is the same
+# final `refused` with accepted dispatch, and names its cause: the error carries
+# `context-length-exceeded` and the fixed diagnostic `the provider refused this request: the
+# request does not fit the model's context window`. The client gives the transport the same
+# mapping as its refusal rule, so a 400 carrying that `error.code` names the cause too. The
+# ingress encoder writes a refusal naming that cause under `context_length_exceeded`, so the
+# decoder reads it back with its cause; every other refusal is still written as `refused`.
+#
 # Kept text (row R36). The caller was shown text through `response.output_text.delta`, one
 # output item per `item_id`; for deltas that name no item, per `output_index`; for deltas that
 # name neither, per message: they belong to the message whose `response.output_item.done` comes

@@ -45,6 +45,18 @@ domain: llm.transport
 # time or is not JSON, stays `rate-limited` and retriable. Nothing read reaches a diagnostic or a
 # response tap. The exchanges observed here carry no rule, so their 429s stay `rate-limited`.
 #
+# Named refusal cause (story:context-length-refusal-is-typed). A client may also give the
+# transport a refusal rule (`HttpClient::with_refusal_rule`), which maps the client's closed set
+# of exact error codes to a closed set of causes (`RefusalCause`; today `context-length-exceeded`)
+# and never reads prose. For a 400 only, the transport reads the body within the quota rule's
+# bounds and shows the rule the headers and the body as JSON. A 400 the rule names a cause for
+# stays `refused` with dispatch `rejected` and not retriable; the error carries the cause
+# (`Error.refusal`) and the fixed diagnostic `HTTP endpoint returned status 400: ` followed by
+# the cause's fixed text. Every other 400, and one whose body is declared or found larger, has
+# not ended in time or is not JSON, is exactly what the status table gives it. Nothing read
+# reaches a diagnostic or a response tap. The exchanges observed here carry no rule, so their
+# 400s name no cause.
+#
 # Do-not-retry signal (story:relayed-failures-keep-their-retry-decision). An error status whose
 # answer carries exactly one `x-should-retry` field with the value `false` (name in any case,
 # value exact, surrounding whitespace aside) is not retriable, whatever its status; its code,

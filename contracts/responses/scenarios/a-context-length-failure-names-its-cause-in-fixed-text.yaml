@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: a-context-length-failure-names-its-cause-in-fixed-text
+summary: a failed response whose code names the context window is a final refusal whose fixed diagnostic names that cause
+timeline:
+- at: '2026-10-29T12:00:00Z'
+  command: llm.responses.DecodeStream
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    stream_json: '[{"type":"response.created","response":{"id":"resp_1","status":"in_progress"}},{"type":"response.failed","response":{"id":"resp_1","status":"failed","error":{"code":"context_length_exceeded","message":"SECRET-UPSTREAM-TEXT"}}}]'
+  outcome: observed
+assert:
+- view: llm.responses.LastStream
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastStream
+  contains:
+    accepted: false
+    error_code: refused
+    error_message: 'the provider refused this request: the request does not fit the model''s context window'
+    dispatch: accepted

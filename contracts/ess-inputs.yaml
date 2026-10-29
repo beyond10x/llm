@@ -262,6 +262,7 @@ scenarios:
 - pricing/scenarios/wrong-serving-model.yaml
 - pricing/scenarios/zero-denominator-refused.yaml
 - responses/scenarios/a-binding-of-another-protocol-is-refused.yaml
+- responses/scenarios/a-context-length-failure-names-its-cause-in-fixed-text.yaml
 - responses/scenarios/a-failed-response-retains-its-terminal-usage.yaml
 - responses/scenarios/a-failed-tool-result-keeps-its-failure.yaml
 - responses/scenarios/a-finished-call-renaming-its-announcement-is-refused-with-its-counters.yaml
@@ -311,6 +312,7 @@ scenarios:
 - responses/scenarios/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers.yaml
 - responses/scenarios/encoding-arguments-that-are-not-an-object-are-refused.yaml
 - responses/scenarios/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class.yaml
+- responses/scenarios/encoding-fail-relays-a-context-length-refusal-under-its-code.yaml
 - responses/scenarios/encoding-text-after-a-call-is-a-new-message.yaml
 - responses/scenarios/encoding-the-output-cap-reads-back-as-max-output-tokens.yaml
 - responses/scenarios/encoding-unattributed-state-is-refused-by-name.yaml

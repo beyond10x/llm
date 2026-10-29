@@ -32,7 +32,9 @@ pub enum ErrorCode {
 /// recognises: a closed set, each member read from an exact machine-readable code a protocol
 /// client names, never from prose. A refusal whose cause is not recognised carries none.
 ///
-/// New causes may be added in a minor release; match with a wildcard arm.
+/// The set may grow, so code matching it needs a wildcard arm. A serialised [`Error`] naming a
+/// cause its reader does not know is refused by that reader, as an [`Error`] carrying any field
+/// it does not know is: a newer cause does not decode in an older release.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[non_exhaustive]

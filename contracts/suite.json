@@ -498,6 +498,7 @@
       "llm.providers/authored/too-many-references-is-unavailable",
       "llm.providers/authored/two-roles-naming-one-operation-are-refused",
       "llm.responses/authored/a-binding-of-another-protocol-is-refused",
+      "llm.responses/authored/a-context-length-failure-names-its-cause-in-fixed-text",
       "llm.responses/authored/a-failed-response-retains-its-terminal-usage",
       "llm.responses/authored/a-failed-tool-result-keeps-its-failure",
       "llm.responses/authored/a-finished-call-renaming-its-announcement-is-refused-with-its-counters",
@@ -560,6 +561,7 @@
       "llm.responses/authored/encoding-an-unreported-model-is-left-out-and-the-id-is-the-callers",
       "llm.responses/authored/encoding-arguments-that-are-not-an-object-are-refused",
       "llm.responses/authored/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class",
+      "llm.responses/authored/encoding-fail-relays-a-context-length-refusal-under-its-code",
       "llm.responses/authored/encoding-text-after-a-call-is-a-new-message",
       "llm.responses/authored/encoding-the-output-cap-reads-back-as-max-output-tokens",
       "llm.responses/authored/encoding-unattributed-state-is-refused-by-name",
@@ -3430,6 +3432,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/a-binding-of-another-protocol-is-refused"
       },
+      "responses/scenarios/a-context-length-failure-names-its-cause-in-fixed-text.yaml": {
+        "digest": "sha256:3a29591e208c425efa1c618a859d10d1093e705c7ae657a9166fdb0e4f782890",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/a-context-length-failure-names-its-cause-in-fixed-text"
+      },
       "responses/scenarios/a-failed-response-retains-its-terminal-usage.yaml": {
         "digest": "sha256:9de485cd24ea4bf4da9ceaed1b47db67ce764a2e7aa79f74a117cb1113710e78",
         "disposition": "accepted",
@@ -3739,6 +3746,11 @@
         "digest": "sha256:e585c64e6d185cf17722cfd535b62ed2bb0e26bc8d4fcc7d53af2e3cde2cb473",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-fail-ends-the-stream-with-a-failure-of-the-same-class"
+      },
+      "responses/scenarios/encoding-fail-relays-a-context-length-refusal-under-its-code.yaml": {
+        "digest": "sha256:56d4ac8dca4cbfed1ff2fb47a7c6822399faccbd69348b020b01c455bb81f951",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/encoding-fail-relays-a-context-length-refusal-under-its-code"
       },
       "responses/scenarios/encoding-text-after-a-call-is-a-new-message.yaml": {
         "digest": "sha256:e5f0abe3710782f3f2e2ed53476beb9e3f60446b1819a2e2d0e0df1aba71c0e1",
@@ -5507,7 +5519,7 @@
       }
     },
     "counts": {
-      "authored": 917,
+      "authored": 919,
       "generated": 37,
       "outside": 0,
       "refused": 0
@@ -68636,6 +68648,99 @@
         }
       ]
     },
+    "llm.responses/authored/a-context-length-failure-names-its-cause-in-fixed-text": {
+      "purpose": "a failed response whose code names the context window is a final refusal whose fixed diagnostic names that cause",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastStream"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.DecodeStream",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "stream_json": {
+              "kind": "literal",
+              "value": "[{\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\",\"status\":\"in_progress\"}},{\"type\":\"response.failed\",\"response\":{\"id\":\"resp_1\",\"status\":\"failed\",\"error\":{\"code\":\"context_length_exceeded\",\"message\":\"SECRET-UPSTREAM-TEXT\"}}}]"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastStream"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the provider refused this request: the request does not fit the model's context window"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastStream"
+        }
+      ]
+    },
     "llm.responses/authored/a-failed-response-retains-its-terminal-usage": {
       "purpose": "a failed response retains its terminal usage",
       "source": [
@@ -75067,6 +75172,107 @@
                   "response.output_text.delta",
                   "response.failed"
                 ]
+              },
+              "status": {
+                "kind": "literal",
+                "value": "failed"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        }
+      ]
+    },
+    "llm.responses/authored/encoding-fail-relays-a-context-length-refusal-under-its-code": {
+      "purpose": "a refusal naming the context window is relayed under the code the decoder reads that cause back from",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.EncodeIngress",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "failure_json": {
+              "kind": "literal",
+              "value": "{\"code\":\"refused\",\"message\":\"upstream prose that must not be relayed\",\"dispatch\":\"rejected\",\"refusal\":\"context-length-exceeded\"}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": true
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "decoded_error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "failure_code": {
+                "kind": "literal",
+                "value": "context_length_exceeded"
               },
               "status": {
                 "kind": "literal",
