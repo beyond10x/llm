@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- ESS: `llm.responses` scenario `egress-leaves-out-a-saved-metadata-item`; the conformance floor is 954 (was 953)
+
 ### Fixed
 
 - `llm-responses`: a Codex `response.metadata` item saved under 0.16.0 is left out of a resumed request (HTTP 400)

@@ -186,7 +186,9 @@ No private policy, credentials, customer names or `/home/<name>/` paths belong i
   `llm-core` on transport.
 - Report an absent usage counter as zero (the one exception, a Bedrock Converse cache counter, is
   in the invariants table), or drop opaque state or an unsupported field to make a translation
-  succeed: carry it or refuse it.
+  succeed: carry it or refuse it. The one exception: a Responses `Opaque` item holding a
+  `response.metadata` stream event, which 0.16.0 and earlier saved and the endpoint refuses, is left
+  out of the request (`crates/llm-responses/tests/saved_codex_metadata.rs`).
 - Put a paid provider call or external provisioning into the default gate.
 - Hand-edit a generated file, or lower `contracts/baseline.json` without a recorded reason in the
   CHANGELOG.

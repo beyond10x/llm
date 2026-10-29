@@ -540,6 +540,7 @@
       "llm.responses/authored/egress-instructions-alone-round-trip-as-a-developer-message",
       "llm.responses/authored/egress-item-ids-and-client-metadata-are-not-re-emitted",
       "llm.responses/authored/egress-joined-instructions-go-out-as-one-developer-message",
+      "llm.responses/authored/egress-leaves-out-a-saved-metadata-item",
       "llm.responses/authored/egress-refuses-a-cache-key-other-than-the-conversation",
       "llm.responses/authored/egress-refuses-a-thinking-budget",
       "llm.responses/authored/egress-refuses-disabled-thinking-beside-an-effort",
@@ -3639,6 +3640,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/egress-joined-instructions-go-out-as-one-developer-message"
       },
+      "responses/scenarios/egress-leaves-out-a-saved-metadata-item.yaml": {
+        "digest": "sha256:c12dcf93d45aec30d05a7bd9f7d20a3f021d29854c65031d42dfdd3087c25b84",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/egress-leaves-out-a-saved-metadata-item"
+      },
       "responses/scenarios/egress-refuses-a-cache-key-other-than-the-conversation.yaml": {
         "digest": "sha256:7eeef3a4e2245c9dc09ba1cf364ded42ab0cbf38a986cb2fb50a51cd37390dea",
         "disposition": "accepted",
@@ -5501,7 +5507,7 @@
       }
     },
     "counts": {
-      "authored": 916,
+      "authored": 917,
       "generated": 37,
       "outside": 0,
       "refused": 0
@@ -72873,6 +72879,99 @@
               "request_preserved": {
                 "kind": "literal",
                 "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
+    "llm.responses/authored/egress-leaves-out-a-saved-metadata-item": {
+      "purpose": "a response.metadata item saved under 0.16.0 is left out of the request and every other item is sent",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"payload\":{\"type\":\"reasoning\",\"id\":\"rs_1\",\"summary\":[]}},{\"kind\":\"assistant-text\",\"text\":\"Hello\"},{\"kind\":\"opaque\",\"provenance\":{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"},\"payload\":{\"type\":\"response.metadata\",\"sequence_number\":30,\"metadata\":{}}},{\"kind\":\"user-text\",\"text\":\"Again\"}],\"tools\":[]}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "input_json": {
+                "kind": "literal",
+                "value": "[{\"content\":[{\"text\":\"Hi\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"},{\"id\":\"rs_1\",\"summary\":[],\"type\":\"reasoning\"},{\"content\":[{\"text\":\"Hello\",\"type\":\"output_text\"}],\"role\":\"assistant\",\"type\":\"message\"},{\"content\":[{\"text\":\"Again\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}]"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": false
               }
             }
           },
