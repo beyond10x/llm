@@ -66,7 +66,10 @@ fn without_a_beta_header_the_request_is_the_one_the_body_alone_decodes() {
     let with = decoded(&[]);
     let alone = decode_request(&body(), &target()).unwrap().request;
     assert_eq!(with, alone);
-    assert!(with.controls.hints.anthropic_beta.is_empty());
+    assert_eq!(
+        with.controls.hints.anthropic_beta,
+        [] as [std::string::String; 0]
+    );
 }
 
 #[test]

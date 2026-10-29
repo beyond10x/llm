@@ -399,7 +399,10 @@ fn without_the_callers_permission_the_route_is_refused_and_nothing_runs() {
         );
     });
     assert_eq!(runs(directory.path()), 0);
-    assert!(bedrock.heads().is_empty());
+    assert_eq!(
+        bedrock.heads(),
+        [] as [std::vec::Vec<(std::string::String, std::string::String)>; 0]
+    );
 }
 
 fn building_the_catalog_and_the_resolvers_runs_nothing() {
@@ -420,7 +423,10 @@ fn building_the_catalog_and_the_resolvers_runs_nothing() {
             directory.path().display().to_string()
         ]
     );
-    assert!(endpoint.secret_kinds().is_empty());
+    assert_eq!(
+        endpoint.secret_kinds(),
+        [] as [llm_models::routes::SecretKind; 0]
+    );
     let catalog: Vec<_> = routes
         .catalog()
         .bindings()

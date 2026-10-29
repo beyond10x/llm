@@ -310,7 +310,10 @@ fn an_aws_process_endpoint_loads_from_yaml_and_toml_with_its_command() {
         assert_eq!(endpoint.credential_kind(), AwsCredentialKind::Process);
         assert_eq!(endpoint.credential_kind().as_str(), "aws-process");
         assert_eq!(endpoint.command().unwrap(), EXPORT);
-        assert!(endpoint.secret_kinds().is_empty());
+        assert_eq!(
+            endpoint.secret_kinds(),
+            [] as [llm_models::routes::SecretKind; 0]
+        );
         assert_eq!(
             routes.target("opus").unwrap().protocol,
             Protocol::BedrockConverse
