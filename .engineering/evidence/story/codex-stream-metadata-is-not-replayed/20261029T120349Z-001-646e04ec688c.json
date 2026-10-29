@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-29T12:03:49Z",
+  "actor": "human:timo",
+  "artifact": "story:codex-stream-metadata-is-not-replayed",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "VERIFIED: codex_stream.rs a_metadata_event_is_not_conversation_state_and_is_not_replayed red on 5ea5580f (second request replayed the metadata item), green at 1e4ceec4; adversary pass 1 eight cases, live-capture replay corrected"
+  }
+}

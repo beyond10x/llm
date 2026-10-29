@@ -2,16 +2,17 @@
 format: aep.planning-md/3
 id: story:unpublished-tool-call-reaches-an-opted-in-caller
 kind: story
-status: active
+status: implemented
 title: A call to an unpublished tool reaches a caller that asked for it
 summary: controls.return_unpublished_calls returns a well-formed unpublished call instead of refusing the turn; the default still refuses (D202)
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T11:27:34Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-29T11:27:35Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-29T12:03:50Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 

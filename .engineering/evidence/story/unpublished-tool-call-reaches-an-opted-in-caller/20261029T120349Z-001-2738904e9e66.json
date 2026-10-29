@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-29T12:03:49Z",
+  "actor": "human:timo",
+  "artifact": "story:unpublished-tool-call-reaches-an-opted-in-caller",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "VERIFIED: unpublished_calls.rs and llm-messages streaming case red on 5ea5580f (turn refused: duplicate call or unpublished tool), green at 320bea5a; adversary pass 1 twenty-four cases, Converse name bound fixed at 18372aba"
+  }
+}

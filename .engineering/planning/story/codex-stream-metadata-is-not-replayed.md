@@ -2,16 +2,17 @@
 format: aep.planning-md/3
 id: story:codex-stream-metadata-is-not-replayed
 kind: story
-status: active
+status: implemented
 title: A Codex stream's response.metadata event is not replayed as an input item
 summary: response.metadata joins the pinned stream subset as a non-conversation event, so no next request carries it (D202)
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T11:27:33Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-29T11:27:33Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-29T12:03:50Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1,"review_outcome":3,"verification":1}}}
 ---
 ## Context
 

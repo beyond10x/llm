@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-29T12:04:01Z",
+  "actor": "human:timo",
+  "artifact": "story:unpublished-tool-call-reaches-an-opted-in-caller",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "CORRECTION to the record before: on 5ea5580f the new cases did not compile (E0609: no field return_unpublished_calls on Controls); the live-record turn without the control is refused there and still is, per the default-path cases"
+  }
+}
