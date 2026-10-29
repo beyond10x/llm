@@ -103,6 +103,35 @@ fn a_toml_file_is_refused_at_the_line_of_an_unknown_key_without_echoing_its_valu
     assert_eq!(error.code, ErrorCode::InvalidRequest);
 }
 
+/// The YAML cases in `routes.rs` hold the same for a route after the first and for a block.
+#[test]
+fn a_toml_file_is_refused_at_the_line_of_an_unknown_key_of_a_later_route() {
+    let document = TOML.replace("aliases = [\"claude-opus\"]", "region = \"fixture-value\"");
+    let line = 1 + document
+        .lines()
+        .position(|line| line.starts_with("region = "))
+        .unwrap();
+    let first = 1 + document
+        .lines()
+        .position(|line| line == "[routes.haiku]")
+        .unwrap();
+    assert!(line > first + 4, "{document}");
+    let error = Routes::parse_toml(&document).unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidRequest);
+    assert!(
+        error.message.starts_with(&format!(
+            "invalid llm.routes/1 TOML document at line {line} column 1: unknown field `region`"
+        )),
+        "the key is on line {line}: {}",
+        error.message
+    );
+    assert!(
+        !error.message.contains("fixture-value") && !error.message.contains("NEVER_SET"),
+        "{}",
+        error.message
+    );
+}
+
 #[test]
 fn an_alias_reaches_its_route_and_a_bedrock_route_its_wire() {
     let routes = Routes::parse_toml(TOML).unwrap();
