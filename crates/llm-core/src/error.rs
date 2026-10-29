@@ -28,6 +28,28 @@ pub enum ErrorCode {
     Unavailable,
 }
 
+/// Why the far side refused a request, when its structured error said so in a form this crate
+/// recognises: a closed set, each member read from an exact machine-readable code a protocol
+/// client names, never from prose. A refusal whose cause is not recognised carries none.
+///
+/// New causes may be added in a minor release; match with a wildcard arm.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
+pub enum RefusalCause {
+    /// The request does not fit the model's context window.
+    ContextLengthExceeded,
+}
+
+impl RefusalCause {
+    /// Fixed text naming the cause, for a diagnostic.
+    pub const fn describe(self) -> &'static str {
+        match self {
+            Self::ContextLengthExceeded => "the request does not fit the model's context window",
+        }
+    }
+}
+
 /// Safe diagnostics, dispatch evidence and a retry class.
 ///
 /// Dispatch says what the far side may have done; `retriable` says whether another identical
@@ -46,6 +68,10 @@ pub struct Error {
     /// Set by the producer that observed the failure; absent on the wire when false.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub retriable: bool,
+    /// The named cause of a refusal, when the far side's structured error stated one this crate
+    /// recognises; absent on the wire otherwise. It changes neither the code nor the retry class.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub refusal: Option<RefusalCause>,
     /// Last valid bound evidence, including partial usage from an interrupted stream.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub observation: Option<Box<TurnObservation>>,
@@ -60,6 +86,7 @@ impl Error {
             dispatch: Dispatch::NotSent,
             retry_after_ms: None,
             retriable: false,
+            refusal: None,
             observation: None,
         }
     }
@@ -74,6 +101,13 @@ impl Error {
     #[must_use]
     pub const fn with_retriable(mut self, retriable: bool) -> Self {
         self.retriable = retriable;
+        self
+    }
+
+    /// Names the cause of a refusal; the code, dispatch and retry class stay as they are.
+    #[must_use]
+    pub const fn with_refusal(mut self, cause: RefusalCause) -> Self {
+        self.refusal = Some(cause);
         self
     }
 

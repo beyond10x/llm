@@ -9,7 +9,7 @@
 
 use llm_core::{
     AuthKind, BillingKind, BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item,
-    Model, Protocol, TurnRequest, VecSink,
+    Model, Protocol, RefusalCause, TurnRequest, VecSink,
 };
 use llm_credentials::{
     ResolvedSecret, Secret, SecretError, SecretRef, SecretResolver, SecretVersion,
@@ -488,6 +488,119 @@ async fn any_other_429_stays_a_retriable_rate_limit() {
         assert!(
             !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
             "{body}: {error:?}"
+        );
+    }
+}
+
+/// A 400 answer before any stream, with `body` sent as is and a declared length.
+async fn answered_400(body: String) -> (Error, VecSink) {
+    let head = format!(
+        "HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    );
+    failed_turn(head.into_bytes(), body).await
+}
+
+/// The fixed text a context-length refusal answered as a 400 carries.
+const CONTEXT_400: &str =
+    "HTTP endpoint returned status 400: the request does not fit the model's context window";
+
+/// story:context-length-refusal-is-typed. A 400 whose error document names
+/// `context_length_exceeded` as its `error.code` is the refusal a 400 always is, final with
+/// dispatch `rejected`, and it names its cause: typed, and in fixed text. The prose never
+/// reaches a diagnostic.
+#[tokio::test]
+async fn a_context_length_refusal_answered_as_a_400_is_told_apart_in_fixed_text() {
+    let (error, sink) = answered_400(
+        serde_json::json!({"error": {
+            "message": "SECRET-UPSTREAM-TEXT", "type": "invalid_request_error",
+            "param": "input", "code": "context_length_exceeded"
+        }})
+        .to_string(),
+    )
+    .await;
+    assert_eq!(
+        (error.code, error.dispatch, error.refusal),
+        (
+            ErrorCode::Refused,
+            Dispatch::Rejected,
+            Some(RefusalCause::ContextLengthExceeded)
+        ),
+        "{error:?}"
+    );
+    assert!(!error.retriable && !error.may_retry(), "{error:?}");
+    assert_eq!(error.message, CONTEXT_400);
+    assert_eq!(sink.events(), []);
+    assert!(
+        !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+        "{error:?}"
+    );
+}
+
+/// Every other 400 is the refusal it was before, with no cause and no body text: another code,
+/// the code in another spelling or outside `error`, the cause in prose only, a body that is not
+/// JSON, and none at all.
+#[tokio::test]
+async fn any_other_400_is_refused_as_before_without_a_cause_or_body_text() {
+    for body in [
+        serde_json::json!({"error": {"code": "invalid_value", "type": "invalid_request_error", "message": "SECRET-UPSTREAM-TEXT"}}).to_string(),
+        serde_json::json!({"error": {"code": "CONTEXT_LENGTH_EXCEEDED", "message": "SECRET-UPSTREAM-TEXT"}}).to_string(),
+        serde_json::json!({"error": {"type": "context_length_exceeded", "message": "SECRET-UPSTREAM-TEXT"}}).to_string(),
+        serde_json::json!({"code": "context_length_exceeded", "message": "SECRET-UPSTREAM-TEXT"}).to_string(),
+        serde_json::json!({"error": {"code": null, "message": "SECRET-UPSTREAM-TEXT: context_length_exceeded, maximum context length"}}).to_string(),
+        "SECRET-UPSTREAM-TEXT context_length_exceeded".to_owned(),
+        String::new(),
+    ] {
+        let (error, sink) = answered_400(body.clone()).await;
+        assert_eq!(
+            (error.code, error.dispatch, error.refusal),
+            (ErrorCode::Refused, Dispatch::Rejected, None),
+            "{body}"
+        );
+        assert!(!error.retriable && !error.may_retry(), "{body}: {error:?}");
+        assert_eq!(error.message, "HTTP endpoint returned status 400", "{body}");
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "{body}: {error:?}"
+        );
+    }
+}
+
+/// The same code inside the stream, on a `response.failed` (as the official Codex CLI reads it,
+/// `openai/codex` 3d2ee51c `codex-rs/codex-api/src/sse/responses.rs:413`-`420`, `:703`-`705`) or
+/// a top-level `error` event, is the final refusal every other code is, and names its cause.
+#[tokio::test]
+async fn a_context_length_failure_inside_the_stream_names_its_cause() {
+    for nested in [false, true] {
+        let (error, sink) = cut_turn(format!(
+            "{CREATED}{}",
+            failure_event("context_length_exceeded", nested)
+        ))
+        .await;
+        assert_eq!(
+            (error.code, error.dispatch, error.refusal),
+            (
+                ErrorCode::Refused,
+                Dispatch::Accepted,
+                Some(RefusalCause::ContextLengthExceeded)
+            ),
+            "nested {nested}: {error:?}"
+        );
+        assert!(!error.may_retry(), "{error:?}");
+        assert_eq!(
+            error.message,
+            "the provider refused this request: the request does not fit the model's context window"
+        );
+        assert_eq!(sink.events(), []);
+        assert!(!format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"));
+    }
+    for code in ["policy_violation", "CONTEXT_LENGTH_EXCEEDED"] {
+        let (error, _) = cut_turn(format!("{CREATED}{}", failure_event(code, true))).await;
+        assert_eq!(error.refusal, None, "`{code}`");
+        assert_eq!(
+            error.message, "the provider refused this request",
+            "`{code}`"
         );
     }
 }

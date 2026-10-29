@@ -332,7 +332,9 @@ with or without a `retry-after` (`story:quota-429-is-final`). Every other 429 st
 `RateLimited`: a `rate_limit_error` without that code, with or without a `retry-after`, the 429 a
 subscription token meets without the preamble, and a body that cannot be read within the
 transport's bound. The provider lines this rests on are in
-[design.md](design.md#provider-failures-retried-before-output).
+[design.md](design.md#provider-failures-retried-before-output). A prompt over the context window
+is stated on this wire only in an `invalid_request_error`'s prose, which is never matched, so that
+400 is a plain `Refused` with no `refusal` cause (`story:context-length-refusal-is-typed`).
 
 A turn carrying hints this wire omits ends, once it has succeeded, with one `StreamEvent::Warning`
 of code `advisory-omitted` naming them (`llm_core::advisory_warning`, wire name `Messages`). Never

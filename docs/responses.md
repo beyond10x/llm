@@ -429,6 +429,12 @@ whose body cannot be read in that bound, stays a retriable `RateLimited`
 (`story:quota-429-is-final`). The provider lines this rests on are in
 [design.md](design.md#provider-failures-retried-before-output). The client itself still makes one
 attempt.
+A refusal whose `error.code` is `context_length_exceeded`, exactly, inside the stream or as a 400
+before it, stays that final `Refused` and names its cause: `refusal` is
+`RefusalCause::ContextLengthExceeded`, and the message ends in the fixed text "the request does
+not fit the model's context window". The transport reads a 400's body for the client's
+`RefusalRule` within the same bounds; every other 400 is the plain `Refused` it was
+(`story:context-length-refusal-is-typed`).
 **The provider's message is never relayed.** Diagnostics are fixed strings this
 crate wrote; an upstream string relayed into a diagnostic is how a prompt or a credential
 eventually reaches a log. `incomplete_details.reason` is treated the same way: it is kept when it

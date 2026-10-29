@@ -8,7 +8,7 @@
 use std::collections::BTreeMap;
 
 use llm_core::{
-    CallId, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES,
+    CallId, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, RefusalCause,
     SHOWN_TEXT_KEPT, SHOWN_TEXT_UNPAIRED, StopReason, StreamEvent, ToolCall, ToolName,
     TurnObservation, TurnOutcome, Usage, exceeds,
 };
@@ -737,14 +737,15 @@ impl<'a> Decoder<'a> {
 
     /// A typed refusal from the provider's own failure, carrying no text the provider wrote.
     ///
-    /// Only the machine-readable code is read, and only to choose between three classes. The
-    /// message is this crate's own: an upstream string relayed into a diagnostic is how a prompt
-    /// or a credential eventually reaches a log.
+    /// Only the machine-readable code is read, to choose between three classes and to name a
+    /// refusal's cause ([`refusal_cause`]). The message is this crate's own: an upstream string
+    /// relayed into a diagnostic is how a prompt or a credential eventually reaches a log.
     ///
     /// The three codes the far side reports as its own temporary state are retriable before
     /// any output and final after it (`docs/design.md`, provider failures retried before
     /// output). Every other code is final, an exhausted quota (`insufficient_quota`) included:
-    /// another identical attempt meets it again.
+    /// another identical attempt meets it again. A context-length refusal is final too, and
+    /// names its cause.
     fn provider_failure(&self, response: Option<&Value>, event: &Value) -> Error {
         let source = response.unwrap_or(event);
         let code = source
@@ -773,9 +774,13 @@ impl<'a> Decoder<'a> {
                 false,
             ),
         };
-        let error = Error::new(class, message)
+        let mut error = Error::new(class, message)
             .with_dispatch(Dispatch::Accepted)
             .with_retriable(transient && !self.answered);
+        if let Some(cause) = refusal_cause(code) {
+            error.message = format!("{message}: {}", cause.describe());
+            error = error.with_refusal(cause);
+        }
         // **Classified first, evidence attached second.** The provider said what kind of failure
         // this was, and that answer is kept; counters that disagree with themselves narrow what
         // the refusal can carry rather than overwriting it. Reporting a rate limit as a
@@ -1018,4 +1023,16 @@ fn identifier(value: Option<&Value>) -> Option<Id> {
 
 fn string(value: Option<&Value>) -> Option<&str> {
     value.and_then(Value::as_str)
+}
+
+/// The cause a refusal's exact `error.code` names on this wire, before the stream as a 400 and
+/// inside it: `context_length_exceeded` is a request over the model's context window, as the
+/// official Codex CLI reads it (`openai/codex` 3d2ee51c,
+/// `codex-rs/codex-api/src/sse/responses.rs:703`-`705`). Every other code, and that one in
+/// another spelling, names none. The provider's prose is never read.
+pub(crate) fn refusal_cause(code: Option<&str>) -> Option<RefusalCause> {
+    match code {
+        Some("context_length_exceeded") => Some(RefusalCause::ContextLengthExceeded),
+        _ => None,
+    }
 }

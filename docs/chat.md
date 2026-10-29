@@ -292,7 +292,10 @@ cancellation. Retries, alternates and fallback belong to routing. An error statu
 `x-should-retry: false` reads not retriable whatever its status, so routing does not send the
 turn there again; the header never makes a final status retriable
 ([design.md](design.md#provider-failures-retried-before-output)). Every 429 stays a retriable
-rate limit on this wire: no quota rule reads its body.
+rate limit on this wire: no quota rule reads its body. A 400 whose `error.code` is
+`context_length_exceeded`, exactly, is the final `Refused` every 400 is and names its cause:
+`refusal` is `RefusalCause::ContextLengthExceeded`, with fixed text naming it. Every other 400
+names none (`story:context-length-refusal-is-typed`).
 
 A connection cut inside the stream, inside an event or inside a chunk, keeps the transport's retry
 class until the stream has carried output, shown to the caller or not: non-empty `content` or

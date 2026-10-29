@@ -10,7 +10,7 @@ use std::{
 
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, MAX_REQUEST_BYTES, Model,
-    Provenance, StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
+    Provenance, RefusalCause, StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
     advisory_warning,
 };
 use llm_credentials::SecretResolver;
@@ -66,6 +66,18 @@ fn exhausted_quota(_: &HeaderMap, document: &Value) -> bool {
     names("code", &QUOTA_CODES) || names("type", &QUOTA_TYPES)
 }
 
+/// This wire's [`llm_http::RefusalRule`]: a 400 whose error document names
+/// `context_length_exceeded`, exactly, as its `error.code` is a request over the model's context
+/// window ([`crate::stream::refusal_cause`]). Every other 400 names no cause.
+fn named_cause(_: &HeaderMap, document: &Value) -> Option<RefusalCause> {
+    crate::stream::refusal_cause(
+        document
+            .get("error")
+            .and_then(|error| error.get("code"))
+            .and_then(Value::as_str),
+    )
+}
+
 /// The stream events after which this wire sends nothing the decoder reads.
 ///
 /// Reading stops at the first of them rather than at end of body, so a server that keeps the
@@ -99,6 +111,11 @@ const FINAL_EVENTS: &[&str] = &[
 /// is a final `refused`, dispatch `rejected`, as the same document inside a stream is; every other
 /// 429 stays a retriable `rate-limited`. The transport reads that body for this client's rule
 /// ([`HttpClient::with_quota_rule`]), and no text of it reaches a diagnostic.
+///
+/// A 400 whose bounded error body names `context_length_exceeded` as its `error.code` stays the
+/// final `refused` every 400 is and carries [`RefusalCause::ContextLengthExceeded`] with fixed
+/// text naming it, as the same code inside a stream does; every other 400 names no cause. The
+/// transport reads that body for this client's rule ([`HttpClient::with_refusal_rule`]).
 ///
 /// Each payload is decoded as it arrives and the [`StreamEvent`]s it produced reach the sink
 /// before the next payload is read, in wire order, as the Messages client does.
@@ -143,7 +160,9 @@ impl ResponsesClient {
         Ok(Self {
             binding,
             projection,
-            http: http.with_quota_rule(exhausted_quota),
+            http: http
+                .with_quota_rule(exhausted_quota)
+                .with_refusal_rule(named_cause),
             resolver,
             conversation: None,
             requests: AtomicU64::new(0),

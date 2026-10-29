@@ -321,6 +321,42 @@ async fn any_other_429_stays_a_retriable_rate_limit() {
     }
 }
 
+/// story:context-length-refusal-is-typed. The Messages wire states an over-long prompt only in
+/// prose: an `invalid_request_error` whose message says the prompt is too long, with no code of
+/// its own. Prose is never matched, so such a 400 is the refusal every 400 is, with no cause and
+/// no body text, and so is a body carrying another wire's code.
+#[tokio::test]
+async fn a_prompt_too_long_400_stays_a_plain_refusal_because_only_prose_names_it() {
+    for body in [
+        anthropic_error(&serde_json::json!({
+            "type": "invalid_request_error",
+            "message": "prompt is too long: 215000 tokens > 200000 maximum SECRET-UPSTREAM-TEXT"
+        })),
+        anthropic_error(&serde_json::json!({
+            "type": "invalid_request_error", "code": "context_length_exceeded",
+            "message": PROSE
+        })),
+    ] {
+        let head = format!(
+            "HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            body.len()
+        );
+        let (error, sink) = failed_turn(head.into_bytes(), body.clone()).await;
+        assert_eq!(
+            (error.code, error.dispatch, error.refusal),
+            (ErrorCode::Refused, Dispatch::Rejected, None),
+            "{body}"
+        );
+        assert!(!error.retriable && !error.may_retry(), "{body}: {error:?}");
+        assert_eq!(error.message, "HTTP endpoint returned status 400", "{body}");
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains(PROSE),
+            "{body}: {error:?}"
+        );
+    }
+}
+
 /// Answers the first request with llm-gateway's refusal of a failure before output (HTTP 502,
 /// code `upstream-failed`) carrying the head `fields`, and returns the turn's refusal, what the
 /// caller was shown and how many requests arrived.
