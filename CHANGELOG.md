@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-10-29
+
 ### Added
 
 - ESS: `llm.responses` scenario `egress-leaves-out-a-saved-metadata-item`; the conformance floor is 954 (was 953)
@@ -452,7 +454,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.17.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.17.1...HEAD
+[0.17.1]: https://github.com/beyond10x/llm/compare/0.17.0...0.17.1
 [0.17.0]: https://github.com/beyond10x/llm/compare/0.16.0...0.17.0
 [0.16.0]: https://github.com/beyond10x/llm/compare/0.15.0...0.16.0
 [0.15.0]: https://github.com/beyond10x/llm/compare/0.14.0...0.15.0
