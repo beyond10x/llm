@@ -2,16 +2,17 @@
 format: aep.planning-md/3
 id: story:saved-codex-metadata-item-on-resume
 kind: story
-status: active
+status: implemented
 title: A response.metadata item saved before 0.17.0 still reaches the endpoint on resume
 summary: Opaque items saved under 0.16.0 carry the stream event; egress leaves it out (adversary finding D202, decided D208)
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 5
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T13:15:22Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-29T13:15:22Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-29T13:30:07Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 
@@ -48,5 +49,7 @@ refused before anything is left out.
   second user message, projects to a request whose `input` carries no `response.metadata` entry and
   carries the reasoning item, the answer and both user messages unchanged and in order.
 - The pinned adversary case asserts that no `response.metadata` entry is sent.
+- Scenario `contracts/responses/scenarios/egress-leaves-out-a-saved-metadata-item.yaml` holds the
+  projection: accepted, the metadata entry absent, every other entry in order.
 - A saved metadata item of another binding is still refused; every other opaque item, including
   one whose `type` is another stream event, is still sent verbatim.
