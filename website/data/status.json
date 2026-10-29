@@ -166,7 +166,7 @@
     },
     {
       "area": "Protocols",
-      "detail": "The event is in the pinned subset and becomes no item, so the next request carries no entry the endpoint refuses; checked against the recorded live Codex turn and a two-turn loopback fixture. An item saved under 0.16.0 is still sent (saved-codex-metadata-item-on-resume, draft).",
+      "detail": "The event is in the pinned subset and becomes no item, so the next request carries no entry the endpoint refuses; checked against the recorded live Codex turn and a two-turn loopback fixture. Since 0.17.1 an item saved under 0.16.0 is left out of the next request too (saved-codex-metadata-item-on-resume), checked against a conversation 0.16.0 saved from the recorded turn.",
       "label": "A Codex response.metadata event is not replayed",
       "status": "shipped"
     },

@@ -118,6 +118,9 @@ fn closed(object: &Map<String, Value>, at: &str, keys: &[&str]) -> Result<(), Er
 /// `reasoning.summary` are written when the turn sets them; the other hints are omitted and
 /// listed by [`omitted_advisories`].
 ///
+/// Every item is sent, in order, except an opaque item of this binding holding a
+/// `response.metadata` stream event, which llm 0.16.0 and earlier kept and the endpoint refuses.
+///
 /// # Errors
 /// Refuses a binding of another protocol, a request the neutral contract already refuses, a
 /// request addressed to a different model, a tool name this wire cannot publish, a thinking
@@ -140,7 +143,11 @@ pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value
         input.push(message("developer", "input_text", &request.instructions));
     }
     for item in &request.items {
-        input.push(item_to_input(binding, item)?);
+        let entry = item_to_input(binding, item)?;
+        if is_saved_metadata_event(item) {
+            continue;
+        }
+        input.push(entry);
     }
 
     let mut body = Map::new();
@@ -598,6 +605,17 @@ fn wire_to_tool_choice(value: Option<&Value>) -> Result<ToolChoice, Error> {
             "`tool_choice` is outside the pinned subset",
         )),
     }
+}
+
+/// A Codex `response.metadata` stream event that llm 0.16.0 and earlier kept as an opaque item.
+///
+/// It describes a response and is no conversation state; the endpoint refuses it as an input
+/// entry with HTTP 400. Since 0.17.0 no outcome carries it, but a conversation saved before then
+/// still does, so a resumed turn leaves it out (story:saved-codex-metadata-item-on-resume). It is
+/// checked against the binding first, like every opaque item, and nothing else is left out.
+fn is_saved_metadata_event(item: &Item) -> bool {
+    matches!(item, Item::Opaque { payload, .. }
+        if payload.get("type").and_then(Value::as_str) == Some("response.metadata"))
 }
 
 fn item_to_input(binding: &Binding, item: &Item) -> Result<Value, Error> {

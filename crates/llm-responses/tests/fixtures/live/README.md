@@ -13,6 +13,7 @@ protocols a portable LLM client most often speaks, in one sentence.`
 |---|---|
 | `codex-text-turn-head.txt` | status line and response headers, LF-separated |
 | `codex-text-turn.sse` | the response body after chunked decoding, 35 events |
+| `codex-text-turn-saved-0.16.0.json` | the conversation a caller saved under llm 0.16.0: the user message, then the items 0.16.0's `decode_stream` made of `codex-text-turn.sse` (reasoning, answer, and the `response.metadata` event as an `Opaque` item), serialized with `serde_json`; binding coordinates `codex/local/local-endpoint/astra/rev-1` |
 
 ## Scrubbed
 

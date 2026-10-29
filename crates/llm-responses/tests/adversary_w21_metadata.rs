@@ -286,9 +286,8 @@ fn an_overload_after_only_a_metadata_event_is_final_as_before_the_change() {
 /// decoded before this change (llm 0.16.0 and earlier, e.g. a Harness session saved to disk and
 /// continued with `--resume`) carries the event as an opaque item of this binding. The next
 /// request built from it still sends `response.metadata` as an input entry, the one the endpoint
-/// refused with HTTP 400 "Invalid value: 'response.metadata'". Pinned to that behaviour until
-/// story:saved-codex-metadata-item-on-resume decides between refusing it here and Harness dropping
-/// it on resume.
+/// refused with HTTP 400 "Invalid value: 'response.metadata'". story:saved-codex-metadata-item-on-resume
+/// (D208) decided it: the egress leaves the item out and sends the rest of the conversation.
 #[test]
 fn a_metadata_item_kept_from_an_earlier_turn_is_not_replayed_as_an_input_entry() {
     let kept = Item::Opaque {
@@ -314,8 +313,13 @@ fn a_metadata_item_kept_from_an_earlier_turn_is_not_replayed_as_an_input_entry()
         .filter_map(|entry| entry["type"].as_str())
         .collect();
     assert!(
-        types.contains(&"response.metadata"),
-        "story:saved-codex-metadata-item-on-resume: a saved metadata item is still sent as it is: {types:?}"
+        !types.contains(&"response.metadata"),
+        "story:saved-codex-metadata-item-on-resume: a saved metadata item is not sent: {types:?}"
+    );
+    assert_eq!(
+        types,
+        ["message", "message", "message"],
+        "story:saved-codex-metadata-item-on-resume: every other item is sent"
     );
 }
 
