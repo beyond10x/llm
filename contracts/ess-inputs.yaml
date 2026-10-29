@@ -268,6 +268,7 @@ scenarios:
 - responses/scenarios/a-foreign-text-body-reads-into-a-neutral-turn.yaml
 - responses/scenarios/a-gateway-round-trip-preserves-the-payload-once-the-caller-binds-it.yaml
 - responses/scenarios/a-metadata-event-is-not-conversation-state.yaml
+- responses/scenarios/egress-leaves-out-a-saved-metadata-item.yaml
 - responses/scenarios/a-named-tool-choice-names-the-published-tool.yaml
 - responses/scenarios/a-rate-limited-failure-keeps-its-class-when-its-counters-disagree.yaml
 - responses/scenarios/a-rate-limited-response-is-its-own-class.yaml

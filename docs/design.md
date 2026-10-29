@@ -16,7 +16,9 @@ Core describes a model turn, tools as model-facing schemas/results, streaming, c
 capabilities, usage and typed errors. It does not grant a tool permission to execute. Protocol
 adapters implement Responses, Messages and Chat Completions with one documented text/tool/streaming
 subset. Unsupported fields and provider-specific opaque continuation state must be preserved or
-refused, never dropped to make translation appear successful.
+refused, never dropped to make translation appear successful. The one exception is a Responses
+`response.metadata` stream event that llm 0.16.0 and earlier saved as opaque state: it describes a
+response, is no conversation state, and the endpoint refuses it, so egress leaves it out.
 
 ### Streaming declarations
 
