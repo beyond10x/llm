@@ -60,7 +60,10 @@ fn the_saved_conversation_holds_the_metadata_event_as_an_opaque_item_of_the_bind
     assert_eq!(items.len(), 4, "{items:?}");
     let metadata: Vec<&Item> = items.iter().filter(|item| is_metadata(item)).collect();
     assert_eq!(metadata.len(), 1, "{items:?}");
-    let Item::Opaque { provenance: kept, .. } = metadata[0] else {
+    let Item::Opaque {
+        provenance: kept, ..
+    } = metadata[0]
+    else {
         unreachable!("is_metadata matched an opaque item");
     };
     assert_eq!(kept, &provenance());
@@ -79,7 +82,12 @@ fn a_conversation_saved_under_0_16_0_resumes_without_the_metadata_entry() {
         .collect();
     assert!(!types.contains(&"response.metadata"), "{types:?}");
 
-    let without = resumed(saved().into_iter().filter(|item| !is_metadata(item)).collect());
+    let without = resumed(
+        saved()
+            .into_iter()
+            .filter(|item| !is_metadata(item))
+            .collect(),
+    );
     let expected = project_request(&binding(), &without).expect("projects");
     assert_eq!(body, expected);
     assert_eq!(input(&body).len(), 4, "{:?}", input(&body));
@@ -103,7 +111,10 @@ fn a_saved_metadata_item_is_left_out_at_every_position_and_every_copy() {
         .find(|item| is_metadata(item))
         .cloned()
         .expect("the fixture holds one");
-    let others: Vec<Item> = items.into_iter().filter(|item| !is_metadata(item)).collect();
+    let others: Vec<Item> = items
+        .into_iter()
+        .filter(|item| !is_metadata(item))
+        .collect();
     let expected = project_request(&binding(), &resumed(others.clone())).expect("projects");
     for at in 0..=others.len() {
         for copies in [1, 2] {

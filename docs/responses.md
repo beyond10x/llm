@@ -147,7 +147,7 @@ nothing was omitted. A sink that refuses that warning fails the turn with its ow
 | `AssistantText` | `message` / `assistant` / `output_text`, exactly one part; an empty `annotations` array is accepted on ingress |
 | `ToolCall` | `function_call` with `arguments` as a JSON **string** |
 | `ToolResult` | `function_call_output` with the envelope below |
-| `Opaque` | outgoing: the payload, verbatim, after all six coordinates match |
+| `Opaque` | outgoing: the payload, verbatim, after all six coordinates match; one whose `type` is `response.metadata`, saved under 0.16.0 or earlier, is left out |
 | `UnattributedOpaque` | ingress: an entry of a type in `CARRIED_ENTRY_TYPES` (today `reasoning`), carried JSON-equal; refused outgoing until a caller binds it |
 
 **Tool results are always enveloped**, as `{"ok": <bool>, "output": <value>}` serialized into the
@@ -282,7 +282,7 @@ dropped event is a hole in the conversation the next turn cannot see.
 | `response.output_item.done` | one decoded item |
 | `response.completed`, `response.incomplete` | terminal truth, decided by the **event name** as well as the object's own `status` |
 | `response.failed`, `error` | a typed refusal |
-| `response.metadata` | ignored: it describes the response and is not output, so no outcome carries it (a next request replaying it was refused by the endpoint). An `Opaque` item holding one that a caller saved under 0.16.0 or earlier is still sent as it is, like every opaque item |
+| `response.metadata` | ignored: it describes the response and is not output, so no outcome carries it (a next request replaying it was refused by the endpoint). Since 0.17.1 an `Opaque` item of the binding holding one, saved under 0.16.0 or earlier, is left out of the next request; every other opaque item is sent as it is |
 | the remaining progress and `.done` markers | ignored; the terminal object is authoritative |
 
 **Two servers speaking this protocol spell reasoning differently, and both are pinned.** `OpenAI`
