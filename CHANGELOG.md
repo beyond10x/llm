@@ -6,9 +6,18 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-core`: `Controls.return_unpublished_calls` returns a call to a tool the turn did not publish instead of refusing the turn
+- ESS: `llm.inference.Controls` field, an optional `InspectResult` input and three scenarios; the conformance floor is 953 (was 950)
+
 ### Changed
 
 - ESS 0.75.0 (was 0.69.2) in CI and `llm-conformance`; the suite and schema projections are unchanged
+
+### Fixed
+
+- `llm-responses`: a Codex `response.metadata` stream event is no longer kept as an item that the next request replays (HTTP 400)
 
 ## [0.16.0] - 2026-10-26
 

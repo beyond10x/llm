@@ -45,6 +45,12 @@
       "status": "shipped"
     },
     {
+      "area": "Neutral turn",
+      "detail": "With controls.return_unpublished_calls set, such a call reaches the caller as an ordinary call it can answer as a refusal instead of refusing the turn; the default still refuses, and every other outcome check still applies. Fixture evidence; the live verbs runs that found it are Harness's to repeat.",
+      "label": "A caller can take a call to a tool it did not publish",
+      "status": "shipped"
+    },
+    {
       "area": "Transport",
       "detail": "One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails.",
       "label": "Bounded HTTP and server-sent events",
@@ -58,7 +64,7 @@
     },
     {
       "area": "Transport",
-      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 950 scenarios against the real crates three times and skips none.",
+      "detail": "The transport and providers joined the other domains in 0.1.3; the conformance runner answers at least 953 scenarios against the real crates three times and skips none.",
       "label": "Every library crate is specified in ESS",
       "status": "shipped"
     },
@@ -160,6 +166,12 @@
     },
     {
       "area": "Protocols",
+      "detail": "The event is in the pinned subset and becomes no item, so the next request carries no entry the endpoint refuses; checked against the recorded live Codex turn and a two-turn loopback fixture. An item saved under 0.16.0 is still sent (saved-codex-metadata-item-on-resume, draft).",
+      "label": "A Codex response.metadata event is not replayed",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
       "detail": "A Responses server_error or rate_limit_exceeded and a Messages overloaded_error or api_error stream error may be retried before any output and are final after it, the rule Responses server_is_overloaded already followed; an exhausted quota stays final inside a stream and, since story:quota-429-is-final, as an HTTP 429 before it (Responses by error.code, or by error.type for insufficient_quota and the Codex backend's usage_limit_reached and usage_not_included; Messages a rate_limit_error whose error.details.error_code is enforced_spend_limit_reached). A failure an llm gateway relays inside a stream with nothing streamed first still reads back retriable; a failure before output, the gateway's HTTP 502, reads final when it carries x-should-retry: false, which llm-gateway has to send.",
       "label": "The provider failures Harness retried are retriable before output",
       "status": "shipped"
@@ -202,7 +214,7 @@
     },
     {
       "area": "Amazon Bedrock",
-      "detail": "The llm.bedrock domain and 43 authored scenarios cover signing, frame decoding, container credentials and whole turns against loopback servers; the conformance runner answers at least 950 scenarios and skips none.",
+      "detail": "The llm.bedrock domain and 43 authored scenarios cover signing, frame decoding, container credentials and whole turns against loopback servers; the conformance runner answers at least 953 scenarios and skips none.",
       "label": "Bedrock behaviour is specified in ESS",
       "status": "shipped"
     },
