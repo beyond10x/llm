@@ -10,7 +10,8 @@ mod common;
 use common::binding_at;
 use llm_chat::ChatClient;
 use llm_core::{
-    Cancel, Capabilities, Dispatch, Error, ErrorCode, Item, Model, Protocol, TurnRequest, VecSink,
+    Cancel, Capabilities, Dispatch, Error, ErrorCode, Item, Model, Protocol, RefusalCause,
+    TurnRequest, VecSink,
 };
 use llm_credentials::{ResolvedSecret, SecretError, SecretRef, SecretResolver};
 use llm_http::{HttpClient, Limits};
@@ -218,5 +219,68 @@ async fn a_cut_after_silent_or_visible_output_is_final() {
                 assert!(error.observation.is_some(), "{case}");
             }
         }
+    }
+}
+
+/// A JSON 400 head; the body ends when the connection closes.
+const BAD_REQUEST_HEAD: &[u8] =
+    b"HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n";
+
+/// story:context-length-refusal-is-typed. Chat Completions shares the `OpenAI` error document: a
+/// 400 whose `error.code` is `context_length_exceeded` is the refusal a 400 always is, final with
+/// dispatch `rejected`, and names its cause, typed and in fixed text, without the prose.
+#[tokio::test]
+async fn a_context_length_refusal_answered_as_a_400_is_told_apart_in_fixed_text() {
+    let body = serde_json::json!({"error": {
+        "message": "SECRET-UPSTREAM-TEXT", "type": "invalid_request_error",
+        "param": "messages", "code": "context_length_exceeded"
+    }})
+    .to_string();
+    let (error, sink) = failed_turn(BAD_REQUEST_HEAD, body).await;
+    assert_eq!(
+        (error.code, error.dispatch, error.refusal),
+        (
+            ErrorCode::Refused,
+            Dispatch::Rejected,
+            Some(RefusalCause::ContextLengthExceeded)
+        ),
+        "{error:?}"
+    );
+    assert!(!error.retriable && !error.may_retry(), "{error:?}");
+    assert_eq!(
+        error.message,
+        "HTTP endpoint returned status 400: the request does not fit the model's context window"
+    );
+    assert_eq!(sink.events(), []);
+    assert!(!format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"));
+}
+
+/// Every other 400 is the refusal it was before, with no cause and no body text.
+#[tokio::test]
+async fn any_other_400_is_refused_as_before_without_a_cause_or_body_text() {
+    for body in [
+        serde_json::json!({"error": {"code": "invalid_value", "message": "SECRET-UPSTREAM-TEXT"}})
+            .to_string(),
+        serde_json::json!({"error": {"code": null, "message": "SECRET-UPSTREAM-TEXT: maximum context length is 8192 tokens"}})
+            .to_string(),
+        serde_json::json!({"object": "error", "message": "SECRET-UPSTREAM-TEXT", "type": "BadRequestError", "code": 400})
+            .to_string(),
+        serde_json::json!({"code": "context_length_exceeded"}).to_string(),
+        "SECRET-UPSTREAM-TEXT".to_owned(),
+        String::new(),
+    ] {
+        let (error, sink) = failed_turn(BAD_REQUEST_HEAD, body.clone()).await;
+        assert_eq!(
+            (error.code, error.dispatch, error.refusal),
+            (ErrorCode::Refused, Dispatch::Rejected, None),
+            "{body}"
+        );
+        assert!(!error.retriable && !error.may_retry(), "{body}");
+        assert_eq!(error.message, "HTTP endpoint returned status 400", "{body}");
+        assert_eq!(sink.events(), [], "{body}");
+        assert!(
+            !format!("{error:?} {error}").contains("SECRET-UPSTREAM-TEXT"),
+            "{body}"
+        );
     }
 }

@@ -3,7 +3,7 @@
 //! (`harness-http/src/sse.rs:142`-`148`). The transport still sends exactly once: whether another
 //! attempt is made is routing's decision, before any output is visible.
 
-use llm_core::{Cancel, Dispatch, Error, ErrorCode};
+use llm_core::{Cancel, Dispatch, Error, ErrorCode, RefusalCause};
 use llm_http::{
     Framing, HeaderMap, HeaderValue, HttpClient, Limits, MAX_REFUSAL_BYTES, REFUSAL_WAIT,
     ResponseTap, SseEvent, status_error,
@@ -558,6 +558,150 @@ async fn the_quota_rule_is_consulted_for_a_429_only() {
         );
         assert_eq!(server.await.unwrap(), 1, "{status}");
     }
+}
+
+// ---------------------------------------------------------------------------------------------
+// A 400 whose error document names a cause (story:context-length-refusal-is-typed). As for a
+// quota, the transport knows no provider's document: a protocol client hands it a rule mapping
+// its own closed set of codes to a closed set of causes, and the transport reads a 400's body for
+// it within the same bounds. The class stays the one a 400 has; only the cause and the fixed text
+// naming it are added.
+// ---------------------------------------------------------------------------------------------
+
+/// A fixture provider's context-window document.
+const CONTEXT_BODY: &str = r#"{"error":{"code":"too_long","message":"SECRET-UPSTREAM-TEXT"}}"#;
+
+/// The rule a protocol client would state for that provider.
+fn fixture_refusal(_: &HeaderMap, document: &Value) -> Option<RefusalCause> {
+    (document.pointer("/error/code").and_then(Value::as_str) == Some("too_long"))
+        .then_some(RefusalCause::ContextLengthExceeded)
+}
+
+/// A rule that names a cause for every document it is shown.
+#[expect(clippy::unnecessary_wraps, reason = "a refusal rule's signature")]
+fn every_refusal(_: &HeaderMap, _: &Value) -> Option<RefusalCause> {
+    Some(RefusalCause::ContextLengthExceeded)
+}
+
+fn refusal_client() -> HttpClient {
+    HttpClient::new(Limits::default())
+        .unwrap()
+        .with_refusal_rule(fixture_refusal)
+}
+
+/// A 400 whose body the client's rule names is still a final refusal with dispatch `rejected`,
+/// now carrying the cause and fixed text naming it. Nothing is sent again, no prose reaches a
+/// diagnostic, and the tap is shown the head alone.
+#[tokio::test]
+async fn a_400_the_refusal_rule_names_keeps_its_class_and_states_the_cause_in_fixed_text() {
+    let head = refusal_head(
+        "400 Bad Request",
+        &format!("Content-Length: {}\r\n", CONTEXT_BODY.len()),
+    );
+    let (url, server) = serve_refusal(head, CONTEXT_BODY.into(), Duration::from_millis(100)).await;
+    let tap = Arc::new(Tap::default());
+    let client = refusal_client().with_response_tap(tap.clone());
+    let (error, _) = refused(&client, &url).await;
+    assert_eq!(
+        (error.code, error.dispatch, error.retriable, error.refusal),
+        (
+            ErrorCode::Refused,
+            Dispatch::Rejected,
+            false,
+            Some(RefusalCause::ContextLengthExceeded)
+        ),
+        "{error:?}"
+    );
+    assert_eq!(
+        error.message,
+        "HTTP endpoint returned status 400: the request does not fit the model's context window"
+    );
+    assert!(!error.may_retry(), "{error:?}");
+    assert!(!format!("{error:?} {error}").contains(PROSE), "{error:?}");
+    assert_eq!(server.await.unwrap(), 1, "the transport resent the request");
+    assert_eq!(*tap.heads.lock().unwrap(), ["HTTP/1.1 400 Bad Request"]);
+    assert!(
+        tap.chunks.lock().unwrap().is_empty(),
+        "the tap was shown a refused body"
+    );
+}
+
+/// Every other 400 is exactly the error the status table gives it: a client without a rule, a
+/// document the rule does not name, a body that is not JSON, an empty body, and the named
+/// document past the byte bound.
+#[tokio::test]
+async fn every_other_400_is_exactly_what_the_status_table_says() {
+    let expected = status_error(400, &HeaderMap::new(), SystemTime::now());
+    let unruled = HttpClient::new(Limits::default()).unwrap();
+    let mut past_bound = CONTEXT_BODY.as_bytes().to_vec();
+    past_bound.resize(MAX_REFUSAL_BYTES + 1, b' ');
+    for (case, client, body, declared) in [
+        ("no rule", &unruled, CONTEXT_BODY.as_bytes().to_vec(), true),
+        (
+            "another code",
+            &refusal_client(),
+            br#"{"error":{"code":"invalid_value","message":"SECRET-UPSTREAM-TEXT"}}"#.to_vec(),
+            true,
+        ),
+        (
+            "not JSON",
+            &refusal_client(),
+            b"SECRET-UPSTREAM-TEXT, not a document".to_vec(),
+            true,
+        ),
+        ("empty", &refusal_client(), Vec::new(), true),
+        ("past the bound", &refusal_client(), past_bound, false),
+    ] {
+        let fields = if declared {
+            format!("Content-Length: {}\r\n", body.len())
+        } else {
+            "Connection: close\r\n".to_owned()
+        };
+        let hold = if declared {
+            Duration::from_millis(100)
+        } else {
+            Duration::ZERO
+        };
+        let (url, server) =
+            serve_refusal(refusal_head("400 Bad Request", &fields), body, hold).await;
+        let (error, _) = refused(client, &url).await;
+        assert_eq!(error, expected, "{case}");
+        assert!(!format!("{error:?} {error}").contains(PROSE), "{case}");
+        assert_eq!(server.await.unwrap(), 1, "{case}");
+    }
+}
+
+/// Only a 400's body is read for the refusal rule: with a rule that names every document, every
+/// other status is exactly what the status table says, and a 400 is not.
+#[tokio::test]
+async fn the_refusal_rule_is_consulted_for_a_400_only() {
+    let client = HttpClient::new(Limits::default())
+        .unwrap()
+        .with_refusal_rule(every_refusal);
+    for status in [
+        "404 Not Found",
+        "409 Conflict",
+        "413 Payload Too Large",
+        "422 Unprocessable Entity",
+        "429 Too Many Requests",
+        "503 Service Unavailable",
+    ] {
+        let number: u16 = status[..3].parse().unwrap();
+        let head = refusal_head(status, "Content-Length: 2\r\n");
+        let (url, server) = serve_refusal(head, b"{}".to_vec(), Duration::from_millis(100)).await;
+        let (error, _) = refused(&client, &url).await;
+        assert_eq!(
+            error,
+            status_error(number, &HeaderMap::new(), SystemTime::now()),
+            "{status}"
+        );
+        assert_eq!(server.await.unwrap(), 1, "{status}");
+    }
+    let head = refusal_head("400 Bad Request", "Content-Length: 2\r\n");
+    let (url, server) = serve_refusal(head, b"{}".to_vec(), Duration::from_millis(100)).await;
+    let (error, _) = refused(&client, &url).await;
+    assert_eq!(error.refusal, Some(RefusalCause::ContextLengthExceeded));
+    assert_eq!(server.await.unwrap(), 1);
 }
 
 // ---------------------------------------------------------------------------------------------

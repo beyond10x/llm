@@ -19,7 +19,7 @@ pub use controls::{
     MAX_ANTHROPIC_BETAS, MAX_PROMPT_CACHE_KEY_BYTES, PromptCache, ReasoningSummary, Thinking,
     Unforwarded, Verbosity, advisory_warning, anthropic_beta_name, field_path, wire_effort,
 };
-pub use error::{Dispatch, Error, ErrorCode};
+pub use error::{Dispatch, Error, ErrorCode, RefusalCause};
 pub use id::{CallId, Id, InvalidId, ToolName};
 pub use item::{Item, ToolCall};
 pub use port::{

@@ -406,6 +406,22 @@ without the preamble (measured by Harness with no rate-limit headers,
 `crates/llm-messages/tests/subscription.rs:308`), which keeps its retriable class. A spend-cap
 body is final with or without a `retry-after`, whose hint is kept.
 
+**A refusal names its cause when a structured code states one** (`story:context-length-refusal-is-typed`,
+decided 2026-10-29). `Error::refusal` holds a `RefusalCause` from a closed set, read from an exact
+code a protocol client names and never from prose; today the set is `context-length-exceeded`. The
+cause changes no code, dispatch or retry class: such a 400 is the final `refused`, dispatch
+`rejected`, that every 400 is, and routing halts on it as on any refusal. Its message is fixed text,
+`HTTP endpoint returned status 400: the request does not fit the model's context window`. The
+transport reads a 400's body for the client's `RefusalRule` (`HttpClient::with_refusal_rule`)
+within the quota rule's bounds, `MAX_REFUSAL_BYTES` and `REFUSAL_WAIT`; a body it cannot read in
+them, or one the rule names nothing for, leaves the 400 as `status_error` gives it.
+
+| Protocol | Named cause when | Source |
+| --- | --- | --- |
+| Responses | `error.code` is `context_length_exceeded`, exactly, as a 400 or inside the stream | The official Codex CLI reads that code on a failed response as a context-window error ([`codex-api/src/sse/responses.rs:413`-`420`, `:703`-`705`][codex-context]) |
+| Chat Completions | a 400's `error.code` is `context_length_exceeded`, exactly | The `OpenAI` error document the Responses rule reads; not re-read against provider documentation for this change |
+| Messages | never | The wire states an over-long prompt only in an `invalid_request_error`'s message, prose this crate does not match |
+
 **A relayed failure reads back by the receiving decoder's rules.** The ingress encoders write a
 failure under the wire code that reads back as its class. No wire field carries the relaying
 side's retry decision, so a downstream llm client applies its own rules. A Responses `fail` writes
@@ -466,6 +482,7 @@ back by the receiving decoder's rules, as above.
 [codex-quota-429]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/api_bridge.rs#L185-L238
 [codex-terminal]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/protocol/src/error.rs#L410-L437
 [codex-quota-test]: https://github.com/openai/codex/blob/8196bcdc189ad2c189d631b321fa54b8e09b9bb0/codex-rs/codex-api/src/api_bridge_tests.rs#L503
+[codex-context]: https://github.com/openai/codex/blob/3d2ee51ca2d5db578f328aa75e20aa22c0197c9a/codex-rs/codex-api/src/sse/responses.rs#L413-L420
 [openai-python-retry]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_base_client.py#L899-L941
 [openai-python-stream]: https://github.com/openai/openai-python/blob/8968560fb926240aea5fed8ee24e189eade57118/src/openai/_streaming.py#L78-L90
 [anthropic-python-retry]: https://github.com/anthropics/anthropic-sdk-python/blob/bcd55fe1d3f0f1240765f8cef04295b67337f55a/src/anthropic/_base_client.py#L929-L962

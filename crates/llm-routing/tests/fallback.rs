@@ -1,8 +1,8 @@
 //! Scripted failures through fake `llm_core::Model`s and a bounded sink: no projection, no network.
 
 use llm_core::{
-    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, StopReason, StreamEvent,
-    StreamSink, TurnObservation, TurnOutcome, TurnRequest, Usage, VecSink,
+    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, RefusalCause, StopReason,
+    StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest, Usage, VecSink,
 };
 use llm_routing::{
     AttemptResult, Catalog, CatalogDocument, FallbackPolicy, FallbackRun, Halt, Models, Ports,
@@ -66,6 +66,8 @@ enum Script {
     /// protocol decoder set (marked before any output, unmarked after output the caller was not
     /// shown).
     FailAccepted(ErrorCode, bool),
+    /// A 400 refusal naming its cause, as the transport reports one a protocol client recognises.
+    FailNamed(RefusalCause),
 }
 
 struct Scripted {
@@ -135,6 +137,10 @@ impl Model for Scripted {
                 Script::FailAccepted(code, retriable) => Err(Error::new(*code, "scripted failure")
                     .with_dispatch(Dispatch::Accepted)
                     .with_retriable(*retriable)
+                    .with_observation(observation)),
+                Script::FailNamed(cause) => Err(Error::new(ErrorCode::Refused, "scripted failure")
+                    .with_dispatch(Dispatch::Rejected)
+                    .with_refusal(*cause)
                     .with_observation(observation)),
             }
         })
@@ -461,6 +467,39 @@ fn ineligible_failure_classes_never_fall_back() {
         assert_eq!(run.halt, Halt::IneligibleFailure, "{code:?} {dispatch:?}");
         assert_eq!(models.calls("remote-large"), 0, "{code:?} {dispatch:?}");
     }
+}
+
+/// story:context-length-refusal-is-typed. A refusal naming its cause is a `refused` failure like
+/// any other: not retried on its target, never a fallback trigger, and the caller gets the cause.
+#[test]
+fn a_refusal_naming_its_cause_halts_as_every_refusal_does_and_keeps_the_cause() {
+    let catalog = catalog(true);
+    let models = fleet(
+        &catalog,
+        Script::FailNamed(RefusalCause::ContextLengthExceeded),
+        0,
+    );
+    let mut sink = VecSink::new(16, 4096);
+    let run = run(
+        &catalog,
+        &request(),
+        FallbackPolicy::default(),
+        &models,
+        &mut admit_all(),
+        &mut sink,
+    );
+    assert_eq!(run.halt, Halt::IneligibleFailure);
+    assert_eq!(attempted(&run), ["coding-primary"]);
+    assert_eq!(models.calls("local-small"), 1);
+    assert_eq!(models.calls("remote-large"), 0);
+    let error = run.result.unwrap_err();
+    assert_eq!(
+        (error.code, error.refusal),
+        (
+            ErrorCode::Refused,
+            Some(RefusalCause::ContextLengthExceeded)
+        )
+    );
 }
 
 #[test]

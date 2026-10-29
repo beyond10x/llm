@@ -3,7 +3,7 @@
 //! `harness-http/src/sse.rs:142`-`148`). It is stated on the error itself, so a caller decides
 //! without a routing table; dispatch evidence is a separate fact and is never rewritten for it.
 
-use llm_core::{Dispatch, Error, ErrorCode};
+use llm_core::{Dispatch, Error, ErrorCode, RefusalCause};
 use serde_json::json;
 
 const EVERY_CODE: [ErrorCode; 11] = [
@@ -85,4 +85,36 @@ fn the_wire_form_states_a_retriable_class_and_omits_a_final_one() {
     // A peer that never heard of the class still decodes as final.
     let older = json!({"code": "transport", "message": "fixture", "dispatch": "unknown"});
     assert!(!serde_json::from_value::<Error>(older).unwrap().retriable);
+}
+
+/// story:context-length-refusal-is-typed. A refusal may name its cause, from a closed set. The
+/// wire form states it in kebab case and omits it when absent; an error serialised before the
+/// field existed decodes without one, and a cause outside the set is refused. Naming a cause
+/// changes no retry class.
+#[test]
+fn a_named_refusal_cause_round_trips_and_an_older_error_decodes_without_one() {
+    let named = Error::new(ErrorCode::Refused, "fixture")
+        .with_dispatch(Dispatch::Rejected)
+        .with_refusal(RefusalCause::ContextLengthExceeded);
+    assert_eq!(named.refusal, Some(RefusalCause::ContextLengthExceeded));
+    assert!(!named.retriable && !named.may_retry(), "{named:?}");
+    let encoded = serde_json::to_value(&named).unwrap();
+    assert_eq!(encoded["refusal"], json!("context-length-exceeded"));
+    assert_eq!(serde_json::from_value::<Error>(encoded).unwrap(), named);
+
+    let plain = Error::new(ErrorCode::Refused, "fixture").with_dispatch(Dispatch::Rejected);
+    assert_eq!(plain.refusal, None);
+    let encoded = serde_json::to_value(&plain).unwrap();
+    assert!(
+        encoded.get("refusal").is_none(),
+        "an error without a cause carries no cause field: {encoded}"
+    );
+    let older = json!({"code": "refused", "message": "fixture", "dispatch": "rejected"});
+    assert_eq!(serde_json::from_value::<Error>(older).unwrap(), plain);
+
+    let foreign = json!({
+        "code": "refused", "message": "fixture", "dispatch": "rejected",
+        "refusal": "context_length_exceeded"
+    });
+    assert!(serde_json::from_value::<Error>(foreign).is_err());
 }

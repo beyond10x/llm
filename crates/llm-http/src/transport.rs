@@ -1,7 +1,7 @@
 use crate::{
     Framing, MAX_STREAM_BYTES, SseDecoder, SseEvent, require_tokio_runtime, within_tokio_runtime,
 };
-use llm_core::{Cancel, Dispatch, Error, ErrorCode, MAX_REQUEST_BYTES};
+use llm_core::{Cancel, Dispatch, Error, ErrorCode, MAX_REQUEST_BYTES, RefusalCause};
 use reqwest::{
     Client, Method, Response, Url,
     header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue, RETRY_AFTER},
@@ -58,7 +58,7 @@ impl Default for Limits {
 /// is a credential. Only [`HttpClient::post_sse`], [`HttpClient::post_sse_until`] and
 /// [`HttpClient::post_stream_until`] show a tap anything, and an answer they refuse by its status
 /// or media type shows it the head alone: that body is never shown to it, also when a
-/// [`QuotaRule`] reads a 429's.
+/// [`QuotaRule`] reads a 429's or a [`RefusalRule`] a 400's.
 pub trait ResponseTap: Send + Sync {
     /// The response line (`HTTP/1.1 200 OK`) and the response headers, before any body, whatever
     /// the status.
@@ -77,17 +77,28 @@ pub trait ResponseTap: Send + Sync {
 /// [`REFUSAL_WAIT`]. It answers yes or no; nothing it reads reaches a diagnostic.
 pub type QuotaRule = fn(&HeaderMap, &Value) -> bool;
 
-/// The most of a 429's body the transport reads for a [`QuotaRule`]: 16 KiB, inclusive. A body
-/// declared or found larger is not read further, and the 429 keeps its rate-limit class.
+/// Which named cause, if any, a 400's error document states: a protocol client's closed set of
+/// exact codes mapped to [`RefusalCause`]s ([`HttpClient::with_refusal_rule`]).
+///
+/// It is shown the response headers and the body parsed as JSON, and only for a 400 whose body
+/// arrived whole within [`MAX_REFUSAL_BYTES`] and [`REFUSAL_WAIT`]. It answers with a cause or
+/// none; nothing it reads reaches a diagnostic. A named cause changes neither the 400's code,
+/// dispatch nor retry class: it adds the cause and fixed text naming it.
+pub type RefusalRule = fn(&HeaderMap, &Value) -> Option<RefusalCause>;
+
+/// The most of a refused answer's body the transport reads for a [`QuotaRule`] (a 429) or a
+/// [`RefusalRule`] (a 400): 16 KiB, inclusive. A body declared or found larger is not read
+/// further, and the status keeps the error its status table gives it.
 pub const MAX_REFUSAL_BYTES: usize = 16 * 1024;
 
-/// How long the transport waits for a 429's body after its head, for a [`QuotaRule`], within the
-/// exchange's own deadline and the caller's cancellation. A body that has not ended by then is
-/// not waited for, and the 429 keeps its rate-limit class.
+/// How long the transport waits for a refused answer's body after its head, for a [`QuotaRule`]
+/// or a [`RefusalRule`], within the exchange's own deadline and the caller's cancellation. A body
+/// that has not ended by then is not waited for, and the status keeps the error its status table
+/// gives it.
 pub const REFUSAL_WAIT: Duration = Duration::from_secs(1);
 
-/// Cloning shares a connection pool, a response tap and a quota rule, never retry policy or
-/// credentials.
+/// Cloning shares a connection pool, a response tap, a quota rule and a refusal rule, never retry
+/// policy or credentials.
 #[derive(Clone)]
 pub struct HttpClient {
     client: Client,
@@ -95,6 +106,7 @@ pub struct HttpClient {
     connect: Duration,
     tap: Option<Arc<dyn ResponseTap>>,
     quota: Option<QuotaRule>,
+    refusal: Option<RefusalRule>,
 }
 impl HttpClient {
     /// A client with the default connect bound, [`CONNECT_TIMEOUT`].
@@ -137,6 +149,7 @@ impl HttpClient {
             connect,
             tap: None,
             quota: None,
+            refusal: None,
         })
     }
 
@@ -159,6 +172,16 @@ impl HttpClient {
         self
     }
 
+    /// Read a streamed request's 400 by `rule`: a 400 whose bounded body the rule names a cause
+    /// for stays `refused`, dispatch `rejected` and final, and carries that cause and fixed text
+    /// naming it ([`RefusalCause::describe`]). Every other 400, and every 400 without a rule, is
+    /// what [`status_error`] says. A JSON exchange never reads a refused body.
+    #[must_use]
+    pub fn with_refusal_rule(mut self, rule: RefusalRule) -> Self {
+        self.refusal = Some(rule);
+        self
+    }
+
     /// The limits this client enforces, so a caller can bound the rest of its turn on the same
     /// instant rather than restating the value and letting the two drift apart.
     pub const fn limits(&self) -> &Limits {
@@ -178,8 +201,8 @@ impl HttpClient {
     /// Refuses invalid URLs/body bounds, cancellation, timeout, transport failure and non-SSE replies.
     /// Polled on a thread in no Tokio runtime it is refused: on its first poll before anything
     /// else ([`require_tokio_runtime`]), dispatch `not-sent`; on a later poll at that poll
-    /// ([`within_tokio_runtime`]), dispatch `unknown` while the answer is awaited and the 429's
-    /// own `rejected` while a [`QuotaRule`] waits for its body.
+    /// ([`within_tokio_runtime`]), dispatch `unknown` while the answer is awaited and the refused
+    /// status's own `rejected` while a [`QuotaRule`] or a [`RefusalRule`] waits for its body.
     pub async fn post_sse(
         &self,
         url: &str,
@@ -241,9 +264,9 @@ impl HttpClient {
     /// Everything [`HttpClient::post_sse_until`] states holds here as well: the request and URL
     /// bounds, the deadline (the shorter of `until` and this client's `total`, covering the
     /// response headers and every read of the returned [`ByteStream`]), the status table, the
-    /// [`QuotaRule`] for a 429 and what a [`ResponseTap`] is shown. Only the media type rule
-    /// differs: a success must name `media_type` (parameters ignored, any case); one naming
-    /// another type, or none, is refused as `protocol`, dispatch `accepted`.
+    /// [`QuotaRule`] for a 429, the [`RefusalRule`] for a 400 and what a [`ResponseTap`] is shown.
+    /// Only the media type rule differs: a success must name `media_type` (parameters ignored, any
+    /// case); one naming another type, or none, is refused as `protocol`, dispatch `accepted`.
     ///
     /// # Errors
     /// As [`HttpClient::post_sse_until`], outside a Tokio runtime included.
@@ -275,8 +298,9 @@ impl HttpClient {
     }
 
     /// The exchange both streamed POSTs share: send once, show the tap the head, refuse a failing
-    /// status (reading a 429's body for the [`QuotaRule`]) and a success of another media type.
-    /// Returns the live response and the instant that ends the exchange.
+    /// status (reading a 429's body for the [`QuotaRule`] and a 400's for the [`RefusalRule`]) and a
+    /// success of another media type. Returns the live response and the instant that ends the
+    /// exchange.
     async fn post_streamed(
         &self,
         url: &str,
@@ -330,14 +354,26 @@ impl HttpClient {
         if !response.status().is_success() {
             let status = response.status().as_u16();
             let error = status_error(status, response.headers(), SystemTime::now());
-            let Some(rule) = self.quota.filter(|_| status == 429) else {
+            let quota = self.quota.filter(|_| status == 429);
+            let refusal = self.refusal.filter(|_| status == 400);
+            if quota.is_none() && refusal.is_none() {
+                return Err(error);
+            }
+            let Some(document) = refusal_document(&mut response, cancel, deadline)
+                .await
+                .map_err(|failure| failure.with_dispatch(error.dispatch))?
+            else {
                 return Err(error);
             };
-            let quota = refusal_document(&mut response, cancel, deadline)
-                .await
-                .map_err(|refusal| refusal.with_dispatch(error.dispatch))?
-                .is_some_and(|document| rule(response.headers(), &document));
-            return Err(if quota { quota_refusal(&error) } else { error });
+            if quota.is_some_and(|rule| rule(response.headers(), &document)) {
+                return Err(quota_refusal(&error));
+            }
+            return Err(
+                match refusal.and_then(|rule| rule(response.headers(), &document)) {
+                    Some(cause) => named_refusal(error, status, cause),
+                    None => error,
+                },
+            );
         }
         let named = match response.headers().get(CONTENT_TYPE) {
             Some(value) => value
@@ -573,6 +609,17 @@ fn quota_refusal(rate_limited: &Error) -> Error {
     .with_dispatch(Dispatch::Rejected)
     .with_retriable(false);
     error.retry_after_ms = rate_limited.retry_after_ms;
+    error
+}
+
+/// A 400 its client's [`RefusalRule`] names a cause for: the error the status table gives it,
+/// code, dispatch, retry class and hint unchanged, with the cause and fixed text naming it.
+fn named_refusal(error: Error, status: u16, cause: RefusalCause) -> Error {
+    let mut error = error.with_refusal(cause);
+    error.message = format!(
+        "HTTP endpoint returned status {status}: {}",
+        cause.describe()
+    );
     error
 }
 

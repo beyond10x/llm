@@ -8,19 +8,40 @@ use http::{
     header::{ACCEPT, CONTENT_TYPE},
 };
 use llm_core::{
-    BoxFuture, Cancel, Capabilities, Dispatch, Error, Model, Provenance, StreamSink, TurnOutcome,
-    TurnRequest, advisory_warning,
+    BoxFuture, Cancel, Capabilities, Dispatch, Error, Model, Provenance, RefusalCause, StreamSink,
+    TurnOutcome, TurnRequest, advisory_warning,
 };
 use llm_credentials::SecretResolver;
-use llm_http::{Framing, HttpClient, require_tokio_runtime, within_tokio_runtime};
+use llm_http::{Framing, HeaderMap, HttpClient, require_tokio_runtime, within_tokio_runtime};
 use llm_providers::Binding;
+use serde_json::Value;
 use std::sync::Arc;
 
 /// The name the advisory warning gives this wire.
 const WIRE: &str = "Chat Completions";
 
+/// This wire's [`llm_http::RefusalRule`]. Chat Completions shares the `OpenAI` error document: a
+/// 400 whose `error.code` is `context_length_exceeded`, exactly, is a request over the model's
+/// context window. Every other 400, a code in another spelling or outside `error` included, names
+/// no cause, and the provider's prose is never read.
+fn named_cause(_: &HeaderMap, document: &Value) -> Option<RefusalCause> {
+    match document
+        .get("error")
+        .and_then(|error| error.get("code"))
+        .and_then(Value::as_str)
+    {
+        Some("context_length_exceeded") => Some(RefusalCause::ContextLengthExceeded),
+        _ => None,
+    }
+}
+
 /// One immutable binding served over Chat Completions. Retries, alternates and fallback
 /// belong to routing; this client sends exactly once.
+///
+/// A 400 whose bounded error body names `context_length_exceeded` as its `error.code` stays the
+/// final `refused` every 400 is and carries [`RefusalCause::ContextLengthExceeded`] with fixed
+/// text naming it; every other 400 names no cause. The transport reads that body for this
+/// client's rule ([`HttpClient::with_refusal_rule`]), and no text of it reaches a diagnostic.
 pub struct ChatClient {
     binding: Binding,
     http: HttpClient,
@@ -31,7 +52,7 @@ impl ChatClient {
     pub fn new(binding: Binding, http: HttpClient, resolver: Arc<dyn SecretResolver>) -> Self {
         Self {
             binding,
-            http,
+            http: http.with_refusal_rule(named_cause),
             resolver,
         }
     }
