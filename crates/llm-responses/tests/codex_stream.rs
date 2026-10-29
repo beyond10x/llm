@@ -456,3 +456,103 @@ async fn an_empty_terminal_output_with_no_streamed_items_is_still_refused() {
     );
     assert!(sink.events().is_empty(), "{:?}", sink.events());
 }
+
+/// The Codex event sequence with the `response.metadata` event a live Codex run streamed after
+/// its finished call (Harness wave D200, 2026-10-29). Only the event type is from the record;
+/// the payload beside it is synthetic.
+fn codex_events_with_metadata() -> Vec<Value> {
+    let mut events = codex_events();
+    let terminal = events.pop().expect("the terminal event");
+    events.push(json!({"type": "response.metadata", "metadata": {"fixture": "synthetic"}}));
+    events.push(terminal);
+    number(events)
+}
+
+/// A plain answer to the second turn: one message in the terminal object.
+fn answer_events() -> Vec<Value> {
+    let mut terminal = completed();
+    terminal["response"]["output"] = json!([{
+        "id": "msg_fixture_0001",
+        "type": "message",
+        "role": "assistant",
+        "status": "completed",
+        "content": [{"type": "output_text", "text": "software-change@1", "annotations": []}],
+    }]);
+    number(vec![
+        json!({"type": "response.created", "response": in_progress()}),
+        terminal,
+    ])
+}
+
+/// story:codex-stream-metadata-is-not-replayed. On a live Codex login every tool-using run ended
+/// on turn 2 with HTTP 400 "Invalid value: 'response.metadata'": the event had become an opaque
+/// item, and the caller replayed it as an input entry. It is metadata about the response, not
+/// conversation state: the turn carries the call alone, nothing warns, and the next request,
+/// built from that turn and the call's result, carries no such entry.
+#[tokio::test]
+async fn a_metadata_event_is_not_conversation_state_and_is_not_replayed() {
+    let (socket, url) = listener().await;
+    let server = fixture(socket, CODEX_HEAD, codex_events_with_metadata());
+    let mut sink = VecSink::new(32, 4096);
+    let first = request();
+    let outcome = client(&url)
+        .turn(&first, &mut sink, &Cancel::new())
+        .await
+        .expect("a Codex stream with a metadata event completes its turn");
+    server.await.expect("the fixture server");
+    assert_eq!(outcome.stop_reason, StopReason::ToolCalls);
+    assert!(
+        outcome
+            .items
+            .iter()
+            .all(|item| item.as_tool_call().is_some()),
+        "{:?}",
+        outcome.items
+    );
+    assert_eq!(outcome.items.len(), 1, "{:?}", outcome.items);
+    assert!(
+        !sink
+            .events()
+            .iter()
+            .any(|event| matches!(event, StreamEvent::Warning { .. })),
+        "{:?}",
+        sink.events()
+    );
+
+    let mut items = first.items.clone();
+    items.extend(outcome.items.iter().cloned());
+    items.push(Item::ToolResult {
+        call_id: CallId::new(CALL_ID).expect("call id"),
+        output: json!({"accepted": true}),
+        failed: false,
+    });
+    let mut second = TurnRequest::new("small", items);
+    second.tools.clone_from(&first.tools);
+
+    let (socket, url) = listener().await;
+    let server = fixture(socket, CODEX_HEAD, answer_events());
+    let mut sink = VecSink::new(32, 4096);
+    client(&url)
+        .turn(&second, &mut sink, &Cancel::new())
+        .await
+        .expect("the second turn is answered");
+    let captured = server.await.expect("the fixture server");
+    let body: Value = serde_json::from_str(
+        captured
+            .split_once("\r\n\r\n")
+            .expect("a head and a body")
+            .1,
+    )
+    .expect("a JSON body");
+    let types: Vec<&str> = body["input"]
+        .as_array()
+        .expect("an input list")
+        .iter()
+        .map(|entry| entry["type"].as_str().unwrap_or("message"))
+        .collect();
+    assert_eq!(
+        types,
+        vec!["message", "function_call", "function_call_output"],
+        "{body}"
+    );
+}
