@@ -284,14 +284,18 @@ fn the_retired_providers_field_is_refused_as_an_unknown_field() {
 /// unknown field, at every level, and nothing else. Each document loads without its field, so
 /// the field alone is what is refused, at the line that holds it.
 ///
-/// That line tells the field from the mapping holding it only for the top-level and endpoint
-/// fields: the auth and route fields sit on their mapping's first line. The route check covers a
-/// route on the first line of the `routes:` mapping only. A later route, or one written as a
-/// block, is refused at the line where that mapping starts, its first route's line, until
-/// story:routes-refusal-names-a-later-route-field-line is done.
+/// That line tells the field from the mapping holding it for the top-level and endpoint fields,
+/// and for the route field, whose route follows another so that it does not sit on the first
+/// line of the `routes:` mapping. The auth field sits on its mapping's first line. A block route
+/// is held by `an_unknown_field_of_a_block_route_is_refused_at_its_own_line`.
 #[test]
 fn no_refusal_is_classified_by_the_text_of_the_field_it_names() {
     let route = |field: &str| format!("{{model: p/m, {field}capabilities: {{{LIMITS}}}}}");
+    let with_a_route_before = |document: String| {
+        let routes = "\nroutes:\n  r: ";
+        assert_eq!(document.matches(routes).count(), 1, "{document}");
+        document.replace(routes, "\nroutes:\n  first: p/m\n  r: ")
+    };
     for marker in [
         "llm.routes expansion bound",
         "llm.routes duplicate mapping key",
@@ -312,14 +316,14 @@ fn no_refusal_is_classified_by_the_text_of_the_field_it_names() {
             ),
             ("ROUTE", route(&format!("{field}, ")), route("")),
         ] {
-            let loads = single(&[(placeholder, &without)]);
+            let loads = with_a_route_before(single(&[(placeholder, &without)]));
             if let Err(error) = Routes::parse(&loads) {
                 panic!(
                     "{placeholder} without the field: {}\n{loads}",
                     error.message
                 );
             }
-            let document = single(&[(placeholder, &with)]);
+            let document = with_a_route_before(single(&[(placeholder, &with)]));
             let Err(error) = Routes::parse(&document) else {
                 panic!("{placeholder} {marker}: the field was accepted\n{document}");
             };
@@ -328,10 +332,17 @@ fn no_refusal_is_classified_by_the_text_of_the_field_it_names() {
                 ErrorCode::InvalidRequest,
                 "{placeholder} {marker}: {document}"
             );
-            let line = 1 + SINGLE
-                .lines()
-                .position(|line| line.contains(placeholder))
-                .unwrap();
+            let lines = || document.lines().enumerate();
+            let holding = |text: &str| {
+                let found: Vec<usize> = lines()
+                    .filter(|(_, line)| line.contains(text))
+                    .map(|(index, _)| 1 + index)
+                    .collect();
+                assert_eq!(found.len(), 1, "`{text}` on one line\n{document}");
+                found[0]
+            };
+            let line = holding(&field);
+            assert_ne!(line, holding("  first: p/m"), "{placeholder}\n{document}");
             assert!(
                 error.message.starts_with(&format!(
                     "invalid llm.routes/1 YAML document at line {line} column "
@@ -341,6 +352,70 @@ fn no_refusal_is_classified_by_the_text_of_the_field_it_names() {
             );
         }
     }
+}
+
+/// [`SINGLE`] with `routes` as the whole of its `routes:` mapping.
+fn with_routes(routes: &str) -> String {
+    let document = single(&[]);
+    let route = "\nroutes:\n  r: p/m\n";
+    assert!(document.ends_with(route), "{document}");
+    document.replace(route, &format!("\nroutes:\n{routes}"))
+}
+
+/// The document loads without `region: eu`, and with it is refused at the line that holds it,
+/// by line and column alone: the refusal quotes neither the field, its value, the endpoint's
+/// secret reference nor any other text of the document.
+fn refused_at_the_line_of_region(without: &str, with: &str) {
+    let loads = with_routes(without);
+    if let Err(error) = Routes::parse(&loads) {
+        panic!("without the field: {}\n{loads}", error.message);
+    }
+    let document = with_routes(with);
+    let error = refused(&document);
+    assert_eq!(error.code, ErrorCode::InvalidRequest, "{document}");
+    let holding: Vec<usize> = document
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| line.contains("region: eu"))
+        .map(|(index, _)| 1 + index)
+        .collect();
+    assert_eq!(holding.len(), 1, "{document}");
+    let routes = 1 + document.lines().position(|line| line == "routes:").unwrap();
+    assert!(holding[0] > routes + 1, "{document}");
+    let prefix = format!(
+        "invalid llm.routes/1 YAML document at line {} column ",
+        holding[0]
+    );
+    let column = error.message.strip_prefix(&prefix).unwrap_or_else(|| {
+        panic!(
+            "the field is on line {}: {}\n{document}",
+            holding[0], error.message
+        )
+    });
+    assert!(
+        !column.is_empty() && column.bytes().all(|byte| byte.is_ascii_digit()),
+        "{}",
+        error.message
+    );
+    assert!(document.contains(NEVER_SET), "{document}");
+}
+
+/// The route of the `ROUTE` case above, declared after another route.
+#[test]
+fn an_unknown_field_of_a_later_route_is_refused_at_its_own_line() {
+    refused_at_the_line_of_region(
+        &format!("  a: p/m\n  r: {{model: p/m, capabilities: {{{LIMITS}}}}}\n"),
+        &format!("  a: p/m\n  r: {{model: p/m, region: eu, capabilities: {{{LIMITS}}}}}\n"),
+    );
+}
+
+/// The block spelling [`DOCUMENT`] uses for a route with capabilities.
+#[test]
+fn an_unknown_field_of_a_block_route_is_refused_at_its_own_line() {
+    refused_at_the_line_of_region(
+        &format!("  r:\n    model: p/m\n    capabilities: {{{LIMITS}}}\n"),
+        &format!("  r:\n    model: p/m\n    region: eu\n    capabilities: {{{LIMITS}}}\n"),
+    );
 }
 
 #[test]
