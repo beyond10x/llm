@@ -953,6 +953,39 @@ async fn a_tool_call_the_request_never_published_is_refused() {
     assert_eq!(outcome.expect_err("refused").code, ErrorCode::Protocol);
 }
 
+/// story:unpublished-tool-call-reaches-an-opted-in-caller. The live verbs runs (Harness wave
+/// D200) took this path: the model called `find`, an entry name the turn did not publish. A caller
+/// that set `controls.return_unpublished_calls` gets the call to refuse; the turn is not lost.
+#[tokio::test]
+async fn a_tool_call_the_request_never_published_reaches_a_caller_that_asked_for_it() {
+    let mut events = text_turn(
+        json!({"input_tokens":11,"output_tokens":1}),
+        json!({"output_tokens":8}),
+    );
+    events[1] = json!({"type":"content_block_start","index":0,
+        "content_block":{"type":"tool_use","id":"toolu_1","name":"find","input":{}}});
+    events[2] = json!({"type":"content_block_delta","index":0,
+        "delta":{"type":"input_json_delta","partial_json":"{\"pattern\":\"*.md\"}"}});
+    events[4] = message_delta(json!("tool_use"), json!({"output_tokens":8}));
+    let mut opted_in = request();
+    opted_in.controls.return_unpublished_calls = true;
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let outcome = decode_stream(
+        &sse(&events),
+        &opted_in,
+        binding().provenance(),
+        &mut sink,
+        &Cancel::new(),
+    )
+    .await
+    .expect("the unpublished call reaches the caller");
+    assert_eq!(outcome.stop_reason, StopReason::ToolCalls);
+    let calls: Vec<_> = outcome.tool_calls().collect();
+    assert_eq!(calls.len(), 1, "{:?}", outcome.items);
+    assert_eq!(calls[0].name.as_str(), "find");
+    assert_eq!(calls[0].arguments, json!({"pattern": "*.md"}));
+}
+
 #[test]
 fn one_complete_message_decodes_through_the_same_codec() {
     let message = json!({

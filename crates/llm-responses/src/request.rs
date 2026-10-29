@@ -338,6 +338,8 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
     }
     let controls = Controls {
         thinking: None,
+        // A local outcome policy, not a field any client request carries.
+        return_unpublished_calls: false,
         parallel_tool_calls: match object.get("parallel_tool_calls") {
             None => None,
             Some(Value::Bool(parallel)) => Some(*parallel),

@@ -348,14 +348,14 @@ enum Pinned {
 ///
 /// | source | message | here |
 /// | --- | --- | --- |
-/// | `crates/llm-core/src/turn.rs:383` | `model output contains a duplicate call or unpublished tool` | [`ModelError::WrongTool`] |
-/// | `crates/llm-core/src/turn.rs:390` | `model called a tool other than the required named tool` | [`ModelError::WrongTool`] |
-/// | `crates/llm-core/src/turn.rs:415` | `model terminal reason contradicts its tool obligations` | [`ModelError::NoToolCall`] |
+/// | `crates/llm-core/src/turn.rs:388` | `model output contains a duplicate call or unpublished tool` | [`ModelError::WrongTool`] |
+/// | `crates/llm-core/src/turn.rs:395` | `model called a tool other than the required named tool` | [`ModelError::WrongTool`] |
+/// | `crates/llm-core/src/turn.rs:420` | `model terminal reason contradicts its tool obligations` | [`ModelError::NoToolCall`] |
 /// | `crates/llm-responses/src/stream.rs:328` | `the stream ended before the response reached a terminal state` | [`ModelError::Transport`] |
 ///
 /// The first three are `TurnOutcome::validate_for`. `call_tool` publishes only the forced tool,
-/// so line 383 means a call to a tool it never offered (or the forced tool called twice under
-/// one call id), and line 415 under a forced tool means the model ended its turn without a call.
+/// so line 388 means a call to a tool it never offered (or the forced tool called twice under
+/// one call id), and line 420 under a forced tool means the model ended its turn without a call.
 /// The last is the Responses decoder finding no terminal object: the connection stopped before
 /// the answer completed. The unit tests below produce each message from llm itself, so an llm
 /// upgrade that changes one fails them.
@@ -441,21 +441,21 @@ mod tests {
 
     #[test]
     fn each_forced_tool_refusal_llm_raises_is_classified() {
-        // turn.rs:383, a tool the request never published.
+        // turn.rs:388, a tool the request never published.
         let error = refusal(
             &request("forced", &["forced"]),
             vec![call("other")],
             StopReason::ToolCalls,
         );
         assert!(pinned_refusal(&error) == Some(Pinned::WrongTool), "{error}");
-        // turn.rs:390, a published tool that is not the forced one.
+        // turn.rs:395, a published tool that is not the forced one.
         let error = refusal(
             &request("forced", &["forced", "other"]),
             vec![call("other")],
             StopReason::ToolCalls,
         );
         assert!(pinned_refusal(&error) == Some(Pinned::WrongTool), "{error}");
-        // turn.rs:415, the turn ended without a call.
+        // turn.rs:420, the turn ended without a call.
         let error = refusal(
             &request("forced", &["forced"]),
             vec![Item::assistant("no call")],
@@ -465,7 +465,7 @@ mod tests {
             pinned_refusal(&error) == Some(Pinned::NoToolCall),
             "{error}"
         );
-        // turn.rs:415, a tool-call stop with no call in it.
+        // turn.rs:420, a tool-call stop with no call in it.
         let error = refusal(
             &request("forced", &["forced"]),
             vec![Item::assistant("no call")],

@@ -490,10 +490,12 @@ scenarios:
 - chat/scenarios/round-trip-verbosity-is-projected-under-its-own-name.yaml
 - inference/scenarios/a-tool-calls-stop-without-a-call-is-refused.yaml
 - inference/scenarios/model-output-calling-an-unpublished-tool-is-refused.yaml
+- inference/scenarios/model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it.yaml
 - inference/scenarios/model-output-carrying-another-accounts-opaque-state-is-refused.yaml
 - inference/scenarios/model-output-carrying-caller-content-is-refused.yaml
 - inference/scenarios/model-output-carrying-its-own-opaque-state-is-accepted.yaml
 - inference/scenarios/model-output-carrying-unattributed-opaque-state-is-refused.yaml
+- inference/scenarios/model-output-repeating-a-call-id-is-refused-even-for-a-caller-taking-unpublished-calls.yaml
 - messages/scenarios/ingress-refuses-a-conversation-that-opens-with-the-assistant.yaml
 - messages/scenarios/ingress-refuses-a-role-outside-the-subset.yaml
 - messages/scenarios/ingress-refuses-a-system-block-that-is-not-text.yaml

@@ -504,6 +504,11 @@ its path (`messages[].content[].cache_control`), at every level:
   (`input-item-ids`, `client-metadata`). A cache key is non-empty and at most 512 bytes, like every
   other identifier the turn bounds. `anthropic_beta` holds at most 32 distinct names, each 1 to 128
   ASCII letters, digits, `-`, `_` or `.`.
+- `return_unpublished_calls`: a model call to a tool the turn did not publish is returned to the
+  caller as an ordinary call, for the caller to answer as a refusal, instead of refusing the whole
+  turn. Absent (the default) refuses, as before. Only `TurnOutcome::validate_for` reads it; no
+  wire sends it and no ingress decoder sets it. Every other outcome check still refuses: a repeated
+  call id, a call other than a named tool choice, oversized arguments.
 
 A turn whose controls are empty is written as `llm.turn/3`, byte for byte as before; any other is
 `llm.turn/4`. Both are read, and a `/3` document carrying controls is refused.

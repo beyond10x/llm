@@ -10,6 +10,8 @@ use serde_json::{Value, json};
 pub struct Input {
     result_json: String,
     failure: bool,
+    #[serde(default)]
+    return_unpublished_calls: Option<bool>,
 }
 
 pub fn observe(input: &Input) -> Value {
@@ -51,7 +53,8 @@ fn inspect(input: &Input, facts: &mut Value) -> Result<(), Error> {
     } else {
         let document: OutcomeDocument = serde_json::from_str(&input.result_json)
             .map_err(|_| Error::invalid("invalid outcome document"))?;
-        let request = TurnRequest::new("internal-model", vec![Item::user("hello")]);
+        let mut request = TurnRequest::new("internal-model", vec![Item::user("hello")]);
+        request.controls.return_unpublished_calls = input.return_unpublished_calls == Some(true);
         document.outcome.validate_for(&request, &target)?;
         facts["roundtrip_preserved"] = json!(roundtrip(&document));
         Some(document.outcome.observation)

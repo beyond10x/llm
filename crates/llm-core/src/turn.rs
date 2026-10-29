@@ -358,7 +358,8 @@ impl TurnOutcome {
     }
 
     /// # Errors
-    /// Refuses invalid model output, foreign opaque state, unknown tools and contradictory usage.
+    /// Refuses invalid model output, foreign opaque state, unknown tools (unless the request's
+    /// `controls.return_unpublished_calls` asks for them) and contradictory usage.
     pub fn validate_for(&self, request: &TurnRequest, target: &Provenance) -> Result<(), Error> {
         self.observation.validate_for(target)?;
         if !self.observation.final_usage {
@@ -378,9 +379,11 @@ impl TurnOutcome {
                     ));
                 }
                 Item::ToolCall(call) => {
-                    if !calls.insert(&call.call_id)
-                        || !request.tools.iter().any(|tool| tool.name == call.name)
-                    {
+                    // An unpublished name reaches a caller that asked for it as an ordinary call
+                    // it can refuse; every check below still applies to that call.
+                    let admitted = request.controls.return_unpublished_calls
+                        || request.tools.iter().any(|tool| tool.name == call.name);
+                    if !calls.insert(&call.call_id) || !admitted {
                         return Err(Error::protocol(
                             "model output contains a duplicate call or unpublished tool",
                         ));

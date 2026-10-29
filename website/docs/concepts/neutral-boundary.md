@@ -85,7 +85,9 @@ same reference does not invalidate a continuation.
 
 Absent sampling fields remain absent. Unsupported settings refuse before any network I/O.
 Identifiers and individual fields are bounded, and so is the whole serialized request. The request
-model must match the selected target, and tool choices must name published tools.
+model must match the selected target, and tool choices must name published tools. A model call to
+a tool the turn did not publish refuses the turn, unless the caller set
+`controls.return_unpublished_calls`; then it is returned as a call for the caller to refuse.
 
 Core validates structure and declared capabilities. It is not a tokenizer, and it cannot check
 whether an operator's capability declaration is true. Context-window admission is the routing and
