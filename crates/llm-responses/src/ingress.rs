@@ -38,6 +38,7 @@
 //! | `unavailable`, retriable | `server_is_overloaded` | `unavailable` | yes |
 //! | `unavailable`, not retriable | `server_error` | `unavailable` | yes |
 //! | `rate-limited` | `rate_limit_exceeded` | `rate-limited` | yes |
+//! | `refused`, naming `context-length-exceeded` | `context_length_exceeded` | `refused`, with that cause | no |
 //! | `refused` | `refused` | `refused` | no |
 //! | `invalid-request` | `invalid_request` | `refused` | no |
 //! | `transport` | `transport` | `refused` | no |
@@ -58,8 +59,8 @@
 //!   would tell the two shapes apart (story:ingress-block-boundaries).
 
 use llm_core::{
-    CallId, Error, ErrorCode, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Protocol, StopReason,
-    StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome, Usage, exceeds,
+    CallId, Error, ErrorCode, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Protocol, RefusalCause,
+    StopReason, StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome, Usage, exceeds,
 };
 use serde_json::{Map, Value, json};
 use std::iter::Filter;
@@ -685,9 +686,14 @@ fn encode_usage(usage: &Usage) -> Value {
     Value::Object(out)
 }
 
-/// The wire code and the fixed diagnostic for a failure.
+/// The wire code and the fixed diagnostic for a failure. A refusal naming its cause is written
+/// under the code the decoder reads that cause back from ([`crate::stream::refusal_cause`]).
 fn failure(error: &Error) -> (&'static str, &'static str) {
     match error.code {
+        ErrorCode::Refused if error.refusal == Some(RefusalCause::ContextLengthExceeded) => (
+            "context_length_exceeded",
+            RefusalCause::ContextLengthExceeded.describe(),
+        ),
         ErrorCode::Unavailable if error.retriable => (
             "server_is_overloaded",
             "the upstream is temporarily overloaded",

@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: encoding-fail-relays-a-context-length-refusal-under-its-code
+summary: a refusal naming the context window is relayed under the code the decoder reads that cause back from
+timeline:
+- at: '2026-10-29T12:00:00Z'
+  command: llm.responses.EncodeIngress
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    failure_json: '{"code":"refused","message":"upstream prose that must not be relayed","dispatch":"rejected","refusal":"context-length-exceeded"}'
+    streamed: true
+  outcome: observed
+assert:
+- view: llm.responses.LastIngressEncoding
+  counts: {at_least: 1, at_most: 1}
+- view: llm.responses.LastIngressEncoding
+  contains:
+    accepted: true
+    status: failed
+    failure_code: context_length_exceeded
+    decoded_accepted: false
+    decoded_error_code: refused
