@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-30T18:24:18Z",
+  "actor": "human:timo",
+  "artifact": "story:chat-counts-every-output-delta",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p llm-chat --test every_output_delta",
+    "reference": "baseline fb7a68e0 with only the llm-core kinds stubbed: FAILED 1 passed 6 failed; treatment 34c1fa3e: ok 10 passed (new behaviour the baseline cannot show): VERIFIED"
+  }
+}

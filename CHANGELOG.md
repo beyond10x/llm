@@ -16,10 +16,15 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `llm infer` prints refusal text to stdout, as it prints the model's text
 - `llm-chat`: a non-string `refusal`, `reasoning` or `reasoning_content` in a response is refused by its path
 
+### Changed
+
+- **Breaking:** `llm-routing`: `AttemptResult::Failed` carries `refusal`, the cause of a refused attempt
+
 ### Fixed
 
 - `llm-chat`: a cut after a `refusal` or `reasoning` delta is final; differing `reasoning` and `reasoning_content` are refused
 - `llm-chat`: `ChatClient` returns the turn at `[DONE]` instead of failing it on a body dropped afterwards
+- `llm-http`: the transport deadline test no longer fails under load (test only)
 
 ## [0.19.0] - 2026-10-30
 

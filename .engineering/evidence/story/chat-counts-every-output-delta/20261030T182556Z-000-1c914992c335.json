@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-30T18:25:56Z",
+  "actor": "human:timo",
+  "artifact": "story:chat-counts-every-output-delta",
+  "kind": "story",
+  "revision": 17,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "package-scoped gate on Rust 1.98.0 at c41ed004 (tree = 34c1fa3e): cargo test -p llm-chat (every_output_delta 10, adversary_w24_refusal 2), llm-core, llm-routing, llm-cli 39, llm-models 62, llm-responses/llm-messages ingress+projection, llm-bedrock converse; conformance 958/958 x3; clippy 1.98.0 and default on 9 crates; fmt; llm-docs --check; all exit 0"
+  }
+}

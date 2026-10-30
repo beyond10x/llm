@@ -2,24 +2,41 @@
 format: aep.planning-md/3
 id: story:chat-counts-every-output-delta
 kind: story
-status: active
+status: implemented
 title: A Chat Completions stream counts every text delta as output and returns its turn at [DONE]
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
 scope:
 - confidence: cited
+  path: crates/llm-bedrock/src/converse.rs
+- confidence: cited
   path: crates/llm-chat/src/client.rs
 - confidence: cited
   path: crates/llm-chat/src/incoming.rs
+- confidence: cited
+  path: crates/llm-chat/src/ingress.rs
+- confidence: cited
+  path: crates/llm-chat/src/outgoing.rs
+- confidence: cited
+  path: crates/llm-cli/src/lib.rs
+- confidence: cited
+  path: crates/llm-core/src/item.rs
 - confidence: inferred
   path: crates/llm-core/src/port.rs
 - confidence: cited
+  path: crates/llm-messages/src/ingress.rs
+- confidence: cited
+  path: crates/llm-responses/src/ingress.rs
+- confidence: cited
+  path: crates/llm-routing/src/selection.rs
+- confidence: cited
   path: docs/chat.md
-revision: 8
+revision: 18
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T21:34:43Z", actor: "human:timo", revision: 7}
 - {from: "proposed", to: "active", at: "2026-10-30T17:35:56Z", actor: "human:timo", revision: 8}
+- {from: "active", to: "implemented", at: "2026-10-30T18:25:56Z", actor: "human:timo", revision: 18, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 
@@ -89,15 +106,19 @@ as its own kind, and returns a complete turn once `[DONE]` arrives.
 
 ## Scope
 
-Scoped 2026-10-29 at `bb3bda33`; confidence medium (the neutral kind for `refusal` touches
-`llm-core`).
+Scoped 2026-10-29 at `bb3bda33`; confidence medium. Rewritten 2026-10-30 from the implementor's
+confirmation table in wave 2026-10-30-w24 (unit commits `63f0d3b4`, `34c1fa3e`).
 
-- `crates/llm-chat/src/incoming.rs`: `chunk` (`:133`) and `delta` (from `:165`), the output rule (`:89-111`).
-  cited
-- `crates/llm-chat/src/client.rs`: the stream loop (`:86-111`). cited
-- `crates/llm-core/src/port.rs`: a `StreamEvent` kind for refusal text (`:34-57`), and wherever the
-  returned turn holds it (`crates/llm-core/src/item.rs`). inferred
-- New tests: `crates/llm-chat/tests/` (a new file for the cut and `[DONE]` cases), and a fixture
-  under `crates/llm-chat/fixtures/` with a non-empty `refusal` and a `reasoning` delta. cited
-- `docs/chat.md`: the wire table (`:68-76` at `bb3bda33`) and the cut rule (`:297-303`). cited
-- Collides with any unit editing `crates/llm-chat/src/incoming.rs` or `crates/llm-core/src/port.rs`.
+- `crates/llm-chat/src/incoming.rs`: `chunk`, `delta`, the output rule. cited, confirmed
+- `crates/llm-chat/src/client.rs`: the stream loop. cited, confirmed
+- `crates/llm-core/src/port.rs` and `crates/llm-core/src/item.rs`: `StreamEvent::RefusalDelta`,
+  `Item::AssistantRefusal`. inferred, confirmed
+- New tests `crates/llm-chat/tests/every_output_delta.rs`, fixture
+  `crates/llm-chat/fixtures/openai-refusal-and-reasoning.sse`. cited, confirmed
+- `docs/chat.md`. cited, confirmed (also the `[DONE]` paragraph and the outgoing table)
+- Missing from the first scope, touched: `crates/llm-chat/src/outgoing.rs`,
+  `crates/llm-chat/src/ingress.rs`; the Responses, Messages and Bedrock projections and ingress
+  encoders (refusing the new kinds); four conformance mappers; `crates/llm-routing/src/selection.rs`
+  (`Rejection::RefusalText`, from the adversary pass); `crates/llm-cli/src/lib.rs` (`llm infer`
+  prints refusal text); `AGENTS.md`, `docs/design.md`, `CHANGELOG.md`,
+  `docs/implementation-status.md` and the generated status pages.
