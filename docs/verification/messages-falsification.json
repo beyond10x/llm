@@ -1828,6 +1828,7 @@
   "Messages cache mark type is outside the declared subset",
   "Messages cache marks carry more than one lifetime",
   "Messages cannot report this terminal reason",
+  "Messages carries no assistant refusal text",
   "Messages citations are outside the declared subset",
   "Messages content block index is missing or invalid",
   "Messages content block is out of order",
