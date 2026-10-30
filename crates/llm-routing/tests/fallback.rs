@@ -511,6 +511,33 @@ fn a_refusal_naming_its_cause_halts_as_every_refusal_does_and_keeps_the_cause() 
 }
 
 #[test]
+fn a_refusal_without_a_cause_records_none_on_the_attempt() {
+    let catalog = catalog(true);
+    let models = fleet(
+        &catalog,
+        Script::Fail(ErrorCode::Refused, Dispatch::Rejected),
+        0,
+    );
+    let mut sink = VecSink::new(16, 4096);
+    let run = run(
+        &catalog,
+        &request(),
+        FallbackPolicy::default(),
+        &models,
+        &mut admit_all(),
+        &mut sink,
+    );
+
+    assert_eq!(run.halt, Halt::IneligibleFailure);
+    assert_eq!(attempted(&run), ["coding-primary"]);
+    match &run.attempts[0].result {
+        AttemptResult::Failed { refusal, .. } => assert_eq!(*refusal, None),
+        AttemptResult::Succeeded { .. } => panic!("primary was scripted to be refused"),
+    }
+    assert_eq!(run.result.unwrap_err().refusal, None);
+}
+
+#[test]
 fn every_eligible_class_falls_back() {
     for (code, dispatch) in [
         (ErrorCode::Transport, Dispatch::NotSent),
