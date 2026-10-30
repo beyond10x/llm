@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:http-transport-load-sensitivity
 kind: story
-status: active
+status: implemented
 title: The HTTP transport deadline test passes under load
 relations:
 - serves: vision:portable-model-inference
@@ -10,10 +10,11 @@ relations:
 scope:
 - confidence: cited
   path: crates/llm-http/tests/transport.rs
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T21:34:43Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-30T12:14:44Z", actor: "human:unknown", revision: 6, executor: "agent:takt"}
+- {from: "active", to: "implemented", at: "2026-10-30T12:31:09Z", actor: "agent:takt", revision: 7, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Acceptance
 
