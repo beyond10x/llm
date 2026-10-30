@@ -9,11 +9,26 @@ use tokio::{
 };
 
 async fn request(socket: &mut TcpStream) -> Vec<u8> {
+    read_request(socket, false).await
+}
+
+/// The headers-deadline case can close the connection before the request is fully written.
+async fn request_allowing_early_eof(socket: &mut TcpStream) -> Vec<u8> {
+    read_request(socket, true).await
+}
+
+async fn read_request(socket: &mut TcpStream, allow_early_eof: bool) -> Vec<u8> {
     let mut bytes = Vec::new();
     let mut buffer = [0; 1024];
     loop {
         let length = socket.read(&mut buffer).await.unwrap();
-        assert!(length > 0);
+        if length == 0 {
+            assert!(
+                allow_early_eof,
+                "connection closed before the request was complete"
+            );
+            return bytes;
+        }
         bytes.extend_from_slice(&buffer[..length]);
         assert!(bytes.len() < 64 * 1024);
         if let Some(end) = bytes.windows(4).position(|w| w == b"\r\n\r\n") {
@@ -176,7 +191,7 @@ async fn headers_deadline_records_ambiguous_dispatch_and_cancels_pending_request
     let (listener, url) = listener().await;
     let worker = tokio::spawn(async move {
         let (mut socket, _) = listener.accept().await.unwrap();
-        request(&mut socket).await;
+        request_allowing_early_eof(&mut socket).await;
         let mut byte = [0];
         assert_eq!(
             tokio::time::timeout(Duration::from_secs(2), socket.read(&mut byte))

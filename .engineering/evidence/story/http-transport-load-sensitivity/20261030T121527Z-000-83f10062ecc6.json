@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-30T12:15:27Z",
+  "actor": "agent:takt",
+  "artifact": "story:http-transport-load-sensitivity",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "takt",
+    "reference": ".takt/cases/story-http-transport-load-sensitivity-20261030T121442Z/evidence/0003-test-result-4.json#sha256=1a386378135d06708b8f0c0e8686dcb8a93992a0906ac443fb620407d85ef1d1&result=pass&revision=2c5b857cec6ee6ada6c849c1cb3a0561cf79a336&producer=takt.tests-run"
+  }
+}
