@@ -95,7 +95,19 @@ pub fn project_request(
 #[derive(Default)]
 struct OpenAssistant {
     content: Option<String>,
+    refusal: Option<String>,
     calls: Vec<Value>,
+}
+
+/// Appends `text` to `slot`, a newline between items as one message joins them.
+pub(crate) fn join(slot: &mut Option<String>, text: &str) {
+    match slot {
+        Some(existing) => {
+            existing.push('\n');
+            existing.push_str(text);
+        }
+        slot => *slot = Some(text.to_owned()),
+    }
 }
 
 impl OpenAssistant {
@@ -107,6 +119,9 @@ impl OpenAssistant {
         message.insert("role".to_owned(), json!("assistant"));
         if let Some(content) = assistant.content {
             message.insert("content".to_owned(), json!(content));
+        }
+        if let Some(refusal) = assistant.refusal {
+            message.insert("refusal".to_owned(), json!(refusal));
         }
         if !assistant.calls.is_empty() {
             message.insert("tool_calls".to_owned(), Value::Array(assistant.calls));
@@ -128,14 +143,17 @@ fn messages(request: &TurnRequest) -> Result<Vec<Value>, Error> {
                 out.push(json!({"role": "user", "content": text}));
             }
             Item::AssistantText { text } => {
-                let assistant = open.get_or_insert_with(OpenAssistant::default);
-                match &mut assistant.content {
-                    Some(existing) => {
-                        existing.push('\n');
-                        existing.push_str(text);
-                    }
-                    slot => *slot = Some(text.clone()),
-                }
+                join(
+                    &mut open.get_or_insert_with(OpenAssistant::default).content,
+                    text,
+                );
+            }
+            // The assistant message's own `refusal` field, never its content.
+            Item::AssistantRefusal { text } => {
+                join(
+                    &mut open.get_or_insert_with(OpenAssistant::default).refusal,
+                    text,
+                );
             }
             Item::ToolCall(call) => {
                 let assistant = open.get_or_insert_with(OpenAssistant::default);

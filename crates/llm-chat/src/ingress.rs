@@ -546,13 +546,20 @@ pub fn encode_ingress_completion(
     id: &str,
     created: u64,
 ) -> Result<Value, Error> {
-    let (content, calls) = split_items(&outcome.items)?;
+    let Split {
+        content,
+        refusal,
+        calls,
+    } = split_items(&outcome.items)?;
     let mut message = Map::new();
     message.insert("role".to_owned(), json!("assistant"));
     message.insert(
         "content".to_owned(),
         content.map_or(Value::Null, Value::String),
     );
+    if let Some(refusal) = refusal {
+        message.insert("refusal".to_owned(), Value::String(refusal));
+    }
     if !calls.is_empty() {
         message.insert("tool_calls".to_owned(), Value::Array(calls));
     }
@@ -620,6 +627,7 @@ impl IngressStream {
         let delta = match event {
             StreamEvent::TextDelta { text } => json!({"content": text}),
             StreamEvent::ReasoningDelta { text } => json!({"reasoning_content": text}),
+            StreamEvent::RefusalDelta { text } => json!({"refusal": text}),
             StreamEvent::ToolCallStarted { call_id, name } => {
                 if self.position(call_id).is_some() || self.unannounced.contains(call_id) {
                     return None;
@@ -750,20 +758,23 @@ impl IngressStream {
     }
 }
 
-/// The assistant text and the proposed calls an outcome carries, refusing anything this wire
-/// cannot express rather than dropping it.
-fn split_items(items: &[Item]) -> Result<(Option<String>, Vec<Value>), Error> {
+/// What one assistant message on this wire carries.
+struct Split {
+    content: Option<String>,
+    refusal: Option<String>,
+    calls: Vec<Value>,
+}
+
+/// The assistant text, the refusal text and the proposed calls an outcome carries, refusing
+/// anything this wire cannot express rather than dropping it.
+fn split_items(items: &[Item]) -> Result<Split, Error> {
     let mut content: Option<String> = None;
+    let mut refusal: Option<String> = None;
     let mut calls = Vec::new();
     for item in items {
         match item {
-            Item::AssistantText { text } => match &mut content {
-                Some(existing) => {
-                    existing.push('\n');
-                    existing.push_str(text);
-                }
-                slot => *slot = Some(text.clone()),
-            },
+            Item::AssistantText { text } => crate::outgoing::join(&mut content, text),
+            Item::AssistantRefusal { text } => crate::outgoing::join(&mut refusal, text),
             Item::ToolCall(call) => calls.push(json!({
                 "id": call.call_id.as_str(),
                 "type": "function",
@@ -784,7 +795,11 @@ fn split_items(items: &[Item]) -> Result<(Option<String>, Vec<Value>), Error> {
             }
         }
     }
-    Ok((content, calls))
+    Ok(Split {
+        content,
+        refusal,
+        calls,
+    })
 }
 
 /// The arguments a Chat client assembles from the relayed text, read by the one rule the

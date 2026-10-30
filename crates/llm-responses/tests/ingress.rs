@@ -992,3 +992,46 @@ fn an_empty_message_does_not_carry_shown_text() {
     .expect_err("the shown text is not carried");
     assert_eq!(refusal.code, ErrorCode::Protocol);
 }
+
+/// story:chat-counts-every-output-delta. This encoder writes no refusal content part and its
+/// decoder reads none, so an answer carrying refusal text is refused by name, streamed or not,
+/// and so is a conversation carrying it on the way out; never sent without it.
+#[test]
+fn refusal_text_is_refused_by_name_and_never_dropped() {
+    let refusal = Item::AssistantRefusal {
+        text: "I can't help with that.".to_owned(),
+    };
+    let answer = outcome(
+        StopReason::EndTurn,
+        vec![Item::assistant("Hi"), refusal.clone()],
+    );
+    let streamed = encode(
+        &[StreamEvent::RefusalDelta {
+            text: "I can't help with that.".to_owned(),
+        }],
+        &answer,
+    )
+    .expect_err("streamed");
+    let whole = encode_ingress_response(&answer, "resp_gateway_1", CREATED_AT).expect_err("whole");
+    for error in [streamed, whole] {
+        assert_eq!(
+            (error.code, error.message.as_str()),
+            (
+                ErrorCode::Unsupported,
+                "the Responses ingress encoder carries no assistant refusal text"
+            )
+        );
+    }
+    let request = llm_core::TurnRequest::new(
+        "small",
+        vec![Item::user("Hello"), refusal, Item::user("Again")],
+    );
+    let egress = llm_responses::project_request(&binding(), &request).expect_err("egress");
+    assert_eq!(
+        (egress.code, egress.message.as_str()),
+        (
+            ErrorCode::Unsupported,
+            "the Responses projection carries no assistant refusal text"
+        )
+    );
+}

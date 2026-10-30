@@ -471,6 +471,7 @@ fn item_kind(item: &Item) -> &'static str {
     match item {
         Item::UserText { .. } => "user-text",
         Item::AssistantText { .. } => "assistant-text",
+        Item::AssistantRefusal { .. } => "assistant-refusal",
         Item::ToolCall(_) => "tool-call",
         Item::ToolResult { .. } => "tool-result",
         Item::Opaque { .. } => "opaque",
@@ -489,6 +490,7 @@ fn stream_event(event: &StreamEvent) -> String {
             format!("tool-arguments-delta:{call_id}:{delta}")
         }
         StreamEvent::Warning { code, .. } => format!("warning:{code}"),
+        StreamEvent::RefusalDelta { text } => format!("refusal-delta:{text}"),
     }
 }
 

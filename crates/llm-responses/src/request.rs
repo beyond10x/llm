@@ -622,6 +622,12 @@ fn item_to_input(binding: &Binding, item: &Item) -> Result<Value, Error> {
     Ok(match item {
         Item::UserText { text } => message("user", "input_text", text),
         Item::AssistantText { text } => message("assistant", "output_text", text),
+        // Carried or refused, never dropped: this projection sends no refusal content part.
+        Item::AssistantRefusal { .. } => {
+            return Err(Error::unsupported(
+                "the Responses projection carries no assistant refusal text",
+            ));
+        }
         Item::ToolCall(call) => json!({
             "type": "function_call",
             "call_id": call.call_id.as_str(),

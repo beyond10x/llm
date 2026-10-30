@@ -21,6 +21,11 @@ pub enum Item {
     AssistantText {
         text: String,
     },
+    /// The model's refusal text, which a wire keeps apart from its answer (Chat Completions
+    /// `refusal`). Never part of an [`Item::AssistantText`]; a wire with no place for it refuses it.
+    AssistantRefusal {
+        text: String,
+    },
     ToolCall(ToolCall),
     ToolResult {
         call_id: CallId,
