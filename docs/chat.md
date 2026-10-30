@@ -22,7 +22,7 @@ any network I/O.
 | the binding's upstream model name | `model` — never the caller's route alias |
 | `instructions` | a leading `system` message, omitted when empty |
 | `Item::UserText` | a `user` message |
-| `Item::AssistantText` and `Item::ToolCall` | one `assistant` message carrying `content` and `tool_calls` |
+| `Item::AssistantText`, `Item::AssistantRefusal` and `Item::ToolCall` | one `assistant` message carrying `content`, `refusal` and `tool_calls` |
 | `Item::ToolResult` | a `tool` message keyed by `tool_call_id` |
 | `Item::Opaque` | refused: this wire carries no continuation state |
 | `Item::UnattributedOpaque` | refused by name (`Item::UNATTRIBUTED_REFUSAL`), in both directions: never sendable unbound, and not here even bound |
@@ -42,7 +42,9 @@ reports no usage at all, and an absent report would be indistinguishable from a 
 consumed nothing.
 
 One assistant turn is one message. A run of consecutive assistant items therefore collapses:
-their text joins with a newline and their proposed calls become one `tool_calls` array.
+their text joins with a newline, their refusal text likewise, and their proposed calls become one
+`tool_calls` array. Gateway ingress does not read an assistant message's `refusal`: it is refused
+by its path, `messages[].refusal`, like every key outside the subset.
 
 A tool message carries text only, so a failed result travels inside it as
 `{"error": <output>, "ok": false}`. This is the envelope `beyond10x/harness` `9e401e40` uses on
@@ -69,6 +71,8 @@ time. Every field it does read is refused when it contradicts the wire:
 | --- | --- |
 | `delta.content` | `StreamEvent::TextDelta`, accumulated into one `AssistantText` |
 | `delta.reasoning_content` (`vLLM` reasoning parsers) | `StreamEvent::ReasoningDelta`, never joined to the assistant text |
+| `delta.reasoning` (the name other servers give the same text) | `StreamEvent::ReasoningDelta`, as `reasoning_content`; the same text under both names in one delta is carried once |
+| `delta.refusal`, and `message.refusal` of a non-streamed body | `StreamEvent::RefusalDelta`, accumulated into one `AssistantRefusal`, never joined to the assistant text |
 | `delta.tool_calls[]`, correlated by `index` | `StreamEvent::ToolCallStarted` once, then `StreamEvent::ToolArgumentsDelta`, and one `ToolCall` |
 | `finish_reason` `stop` / `length` / `tool_calls` / `content_filter` | `EndTurn` / `MaxOutputTokens` / `ToolCalls` / `Incomplete{content-filter}` |
 | `id`, `model` | `response_id`, `upstream_model` — absent stays absent |
@@ -79,8 +83,17 @@ Refused, each with a fixed diagnostic that carries no byte of the upstream respo
 choice, any other finish reason, a stream that ends before its `[DONE]` sentinel, a stream that
 carries no finish reason, a tool call whose identifier or name never arrived, arguments that
 are not valid JSON, a fragment renaming a call already announced, counters that contradict each
-other, `timings` that contradict the `usage` report, and a `timings` field in a shape the
-server does not write ([below](#counters)).
+other, `timings` that contradict the `usage` report, a `timings` field in a shape the
+server does not write ([below](#counters)), and a delta whose `reasoning` and `reasoning_content`
+are both non-empty and differ (`chat completion delta carries reasoning and reasoning_content
+with different text: choices[].delta.reasoning`): the wire gives no way to tell which is the
+reasoning.
+
+**Refusal text is its own kind.** A model that declines writes it under `refusal`, apart from its
+answer. It reaches the caller as `StreamEvent::RefusalDelta` and the turn as one
+`Item::AssistantRefusal`, never in the assistant text. Every other wire in this workspace has no
+place for it and refuses an item carrying it by name rather than sending the conversation
+without it.
 
 llama.cpp's `llama-server` adds more to a chunk than the fields above. Its `reasoning_content`
 is read as `vLLM`'s is, and its `timings` for the counters in it; the other `timings` fields
@@ -271,7 +284,9 @@ the response identity and creation time; this library owns no clock and mints no
 An unreported upstream model leaves `model` out of the answer, and an unreported counter leaves
 its field out of `usage` — a total is derived only from two known parts. A reported
 cache-write counter, which this wire has no field for, travels under
-`prompt_tokens_details.cache_creation_input_tokens` rather than being deleted.
+`prompt_tokens_details.cache_creation_input_tokens` rather than being deleted. Refusal text
+travels under the message's `refusal`, and `IngressStream::chunk` writes a `RefusalDelta` as
+`delta.refusal`.
 
 `IngressStream::chunk` re-emits a `ToolCallStarted` as the chunk that opens the call — its
 identifier, `type` and the announced name, under the next wire index — and each following
@@ -298,12 +313,19 @@ rate limit on this wire: no quota rule reads its body. A 400 whose `error.code` 
 names none (`story:context-length-refusal-is-typed`).
 
 A connection cut inside the stream, inside an event or inside a chunk, keeps the transport's retry
-class until the stream has carried output, shown to the caller or not: non-empty `content` or
-`reasoning_content`, any `tool_calls` fragment, or a finish reason. After that the cut is final,
-because another attempt would answer, and bill, again; a call whose name has not arrived and a
-finish reason show nothing but count. The chunk that opens the stream, `role` with an empty or
-null `content`, is not output. This is the rule Responses and Messages apply
-(`story:messages-cut-after-silent-output-is-final`).
+class until the stream has carried output, shown to the caller or not: non-empty `content`,
+`reasoning_content`, `reasoning` or `refusal`, any `tool_calls` fragment, or a finish reason.
+After that the cut is final, because another attempt would answer, and bill, again; a call whose
+name has not arrived and a finish reason show nothing but count. The chunk that opens the stream,
+`role` with an empty or null `content`, is not output, and neither is an empty `tool_calls`
+array, a null or empty text field, or a usage-only chunk. This is the rule Responses and Messages
+apply (`story:messages-cut-after-silent-output-is-final`,
+`story:chat-counts-every-output-delta`). Usage counters are the server's report and are not
+changed by it.
+
+The turn is whole once `[DONE]` arrives: the client returns it then and reads no further, so a
+connection dropped before the body's terminating chunk does not fail a complete turn, as Messages
+returns after `message_stop`.
 
 A turn carrying hints this wire does not send ends, once it has succeeded, with one `Warning`
 event of code `advisory-omitted` naming them (`Chat Completions carries no prompt-cache; the

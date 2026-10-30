@@ -45,6 +45,13 @@ pub(crate) fn block(item: &Item) -> Result<Value, Error> {
         Item::UserText { text } | Item::AssistantText { text } => {
             json!({"type":"text","text":text})
         }
+        // Carried or refused, never dropped: Messages has no block for refusal text, and sending
+        // it as text would make it the assistant's answer.
+        Item::AssistantRefusal { .. } => {
+            return Err(Error::unsupported(
+                "Messages carries no assistant refusal text",
+            ));
+        }
         Item::ToolCall(call) => {
             name(call.name.as_str())?;
             if !call.arguments.is_object() {

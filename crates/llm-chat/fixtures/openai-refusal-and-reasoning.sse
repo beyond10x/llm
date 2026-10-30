@@ -1,0 +1,16 @@
+data: {"id":"chatcmpl-Rf7k2LwQx9","object":"chat.completion.chunk","created":1772000400,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"role":"assistant","content":"","refusal":null},"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"chatcmpl-Rf7k2LwQx9","object":"chat.completion.chunk","created":1772000400,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"reasoning":"The request asks for"},"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"chatcmpl-Rf7k2LwQx9","object":"chat.completion.chunk","created":1772000400,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"reasoning":" something I decline."},"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"chatcmpl-Rf7k2LwQx9","object":"chat.completion.chunk","created":1772000400,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"refusal":"I can't"},"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"chatcmpl-Rf7k2LwQx9","object":"chat.completion.chunk","created":1772000400,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{"refusal":" help with that."},"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"chatcmpl-Rf7k2LwQx9","object":"chat.completion.chunk","created":1772000400,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}]}
+
+data: {"id":"chatcmpl-Rf7k2LwQx9","object":"chat.completion.chunk","created":1772000400,"model":"gpt-4o-mini-2024-07-18","system_fingerprint":"fp_0ba0d124f1","choices":[],"usage":{"prompt_tokens":24,"completion_tokens":7,"total_tokens":31}}
+
+data: [DONE]
+

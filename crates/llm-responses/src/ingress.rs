@@ -252,7 +252,8 @@ impl IngressStream {
                 open.arguments.push_str(delta);
                 payloads.push(arguments_delta(open.output_index, &open.item_id, delta));
             }
-            StreamEvent::Warning { .. } => return Vec::new(),
+            // Refusal text has no payload here; `close` refuses the outcome carrying it.
+            StreamEvent::Warning { .. } | StreamEvent::RefusalDelta { .. } => return Vec::new(),
         }
         self.number(payloads)
     }
@@ -370,7 +371,8 @@ impl IngressStream {
                 // `check_outcome` refused every other item.
                 Item::UserText { .. }
                 | Item::ToolResult { .. }
-                | Item::UnattributedOpaque { .. } => {}
+                | Item::UnattributedOpaque { .. }
+                | Item::AssistantRefusal { .. } => {}
             }
         }
         // Reasoning the caller was shown with no state to carry it ends its part; the item itself
@@ -380,12 +382,16 @@ impl IngressStream {
         }
         let body = response_object(&self.id, self.created_at, outcome, &terminal, output);
         payloads.push(json!({"type": terminal.event, "response": body}));
+        Ok(self.end(payloads, next_index))
+    }
 
+    /// Ends the stream on `payloads`, preceded by the opening payloads when nothing was streamed.
+    fn end(&mut self, payloads: Vec<Value>, next_index: u64) -> Vec<Value> {
         let mut opening = self.open();
         opening.extend(payloads);
         self.next_index = next_index;
         self.finished = true;
-        Ok(self.number(opening))
+        self.number(opening)
     }
 
     /// The payloads that end the answer as failed: one `response.failed`, preceded by the opening
@@ -564,6 +570,12 @@ fn check_outcome(outcome: &TurnOutcome) -> Result<Terminal, Error> {
             Item::UnattributedOpaque { .. } => {
                 return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
             }
+            // This encoder writes no refusal content part, and its decoder reads none.
+            Item::AssistantRefusal { .. } => {
+                return Err(Error::unsupported(
+                    "the Responses ingress encoder carries no assistant refusal text",
+                ));
+            }
             Item::UserText { .. } | Item::ToolResult { .. } => {
                 return Err(Error::protocol(
                     "model outcome contains caller-owned content",
@@ -734,9 +746,10 @@ fn wire_item(item: &Item, item_id: &str) -> Value {
         ),
         Item::Opaque { payload, .. } => payload.clone(),
         Item::AssistantText { text } => message_item(item_id, text),
-        Item::UserText { .. } | Item::ToolResult { .. } | Item::UnattributedOpaque { .. } => {
-            Value::Null
-        }
+        Item::UserText { .. }
+        | Item::ToolResult { .. }
+        | Item::UnattributedOpaque { .. }
+        | Item::AssistantRefusal { .. } => Value::Null,
     }
 }
 

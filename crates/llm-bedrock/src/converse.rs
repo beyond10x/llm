@@ -184,6 +184,12 @@ fn messages(items: &[Item]) -> Result<Vec<Value>, Error> {
 fn content_block(item: &Item) -> Result<Value, Error> {
     Ok(match item {
         Item::UserText { text } | Item::AssistantText { text } => json!({"text": text}),
+        // Carried or refused, never dropped: Converse has no block for refusal text.
+        Item::AssistantRefusal { .. } => {
+            return Err(Error::unsupported(
+                "Bedrock Converse carries no assistant refusal text",
+            ));
+        }
         Item::ToolCall(call) => {
             wire_name(call.call_id.as_str())?;
             wire_name(call.name.as_str())?;

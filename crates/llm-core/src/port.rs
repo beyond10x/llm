@@ -50,6 +50,12 @@ pub enum StreamEvent {
     ReasoningDelta {
         text: String,
     },
+    /// Text in which the model declines to answer, on a wire that keeps it apart from the
+    /// assistant text (Chat Completions `delta.refusal`). It never joins a [`StreamEvent::TextDelta`]
+    /// and reaches the turn as [`crate::Item::AssistantRefusal`].
+    RefusalDelta {
+        text: String,
+    },
     Warning {
         code: String,
         message: String,

@@ -319,6 +319,7 @@ fn report_events(events: &[StreamEvent], facts: &mut Value) {
                 tool_stream.push(format!("arguments:{call_id}:{delta}"));
             }
             StreamEvent::Warning { code, message } => deltas.push(format!("{code}:{message}")),
+            StreamEvent::RefusalDelta { text } => deltas.push(format!("refusal:{text}")),
         }
     }
     facts["stream_text"] = json!(stream_text);
@@ -408,6 +409,7 @@ fn decode_ingress(input: &IngressInput, facts: &mut Value) -> Result<(), Error> 
             .map(|item| match item {
                 Item::UserText { text } => format!("user:{text}"),
                 Item::AssistantText { text } => format!("assistant:{text}"),
+                Item::AssistantRefusal { text } => format!("assistant-refusal:{text}"),
                 Item::ToolCall(call) => format!(
                     "tool-call:{}:{}:{}",
                     call.call_id, call.name, call.arguments

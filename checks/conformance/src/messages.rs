@@ -304,6 +304,7 @@ fn report_sink(sink: &VecSink, facts: &mut Value) {
                 tool_stream.push(format!("arguments:{call_id}:{delta}"));
             }
             StreamEvent::Warning { code, message } => arguments.push(format!("{code}:{message}")),
+            StreamEvent::RefusalDelta { text: delta } => arguments.push(format!("refusal:{delta}")),
         }
     }
     facts["text"] = json!(text);
@@ -354,6 +355,7 @@ fn label(item: &Item) -> String {
     match item {
         Item::UserText { text } => format!("user-text:{text}"),
         Item::AssistantText { text } => format!("assistant-text:{text}"),
+        Item::AssistantRefusal { text } => format!("assistant-refusal:{text}"),
         Item::ToolCall(call) => format!(
             "tool-call:{}:{}:{}",
             call.name, call.call_id, call.arguments
@@ -531,6 +533,7 @@ fn shown(event: &StreamEvent) -> String {
             format!("arguments:{call_id}:{delta}")
         }
         StreamEvent::Warning { code, message } => format!("warning:{code}:{message}"),
+        StreamEvent::RefusalDelta { text } => format!("refusal:{text}"),
     }
 }
 

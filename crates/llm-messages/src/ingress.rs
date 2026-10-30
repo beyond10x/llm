@@ -169,8 +169,9 @@ impl IngressStream {
 
     /// The events for one neutral delta; empty when this wire carries nothing for it.
     ///
-    /// An empty delta and a warning carry nothing. A call announced twice is announced once. A
-    /// fragment for a call never announced is held and its call sent complete by `close`.
+    /// An empty delta, a warning and refusal text carry nothing (`close` refuses an outcome
+    /// carrying refusal text). A call announced twice is announced once. A fragment for a call
+    /// never announced is held and its call sent complete by `close`.
     pub fn chunk(&mut self, event: &StreamEvent) -> Vec<Value> {
         if self.ended {
             return Vec::new();
@@ -566,6 +567,11 @@ fn content(outcome: &TurnOutcome) -> Result<Vec<Value>, Error> {
     for item in &outcome.items {
         let value = match item {
             Item::AssistantText { text } => json!({"type":"text","text":text}),
+            Item::AssistantRefusal { .. } => {
+                return Err(Error::unsupported(
+                    "Messages carries no assistant refusal text",
+                ));
+            }
             Item::ToolCall(call) => {
                 if calls.contains(&&call.call_id) {
                     return Err(Error::protocol(CONTRADICTION));

@@ -266,6 +266,7 @@ fn shape(events: &[StreamEvent]) -> Vec<(&'static str, usize)> {
             StreamEvent::ToolArgumentsDelta { .. } => "tool-arguments",
             StreamEvent::ReasoningDelta { .. } => "reasoning",
             StreamEvent::Warning { .. } => "warning",
+            StreamEvent::RefusalDelta { .. } => "refusal",
         };
         match runs.last_mut() {
             Some((last, count)) if *last == tag => *count += 1,
@@ -1214,6 +1215,17 @@ fn unsupported_turns() -> Vec<(&'static str, &'static str, TurnRequest)> {
         },
     ]);
     cases.push(("a tool input that is not an object", NOVA, request));
+
+    // story:chat-counts-every-output-delta: Converse has no block for refusal text, and sending
+    // it as text would make it the assistant's answer.
+    let mut request = capital_request();
+    request.items.extend([
+        Item::AssistantRefusal {
+            text: "I can't help with that.".to_owned(),
+        },
+        Item::user("Again"),
+    ]);
+    cases.push(("assistant refusal text", NOVA, request));
 
     cases
 }

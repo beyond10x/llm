@@ -78,6 +78,8 @@ impl Reported {
 pub struct StreamProjection {
     target: Provenance,
     text: String,
+    /// `delta.refusal` text, kept apart from `text`: it reaches the turn as its own item.
+    refusal: String,
     calls: BTreeMap<u64, PendingCall>,
     /// Every call identifier already announced, whichever index opened it. A second index
     /// opened under one of them is not announced again and its fragments are not relayed:
@@ -86,9 +88,10 @@ pub struct StreamProjection {
     stop_reason: Option<StopReason>,
     reported: Reported,
     terminated: bool,
-    /// Whether the stream carried output, shown to the caller or not: non-empty `content` or
-    /// `reasoning_content`, any `tool_calls` fragment, or a finish reason. The chunk that opens
-    /// a stream, `role` with an empty or null `content`, is not output.
+    /// Whether the stream carried output, shown to the caller or not: non-empty `content`,
+    /// `reasoning_content`, `reasoning` or `refusal`, any `tool_calls` fragment, or a finish
+    /// reason. The chunk that opens a stream, `role` with an empty or null `content`, is not
+    /// output, and neither is an empty `tool_calls` array or a usage-only chunk.
     answered: bool,
 }
 
@@ -97,6 +100,7 @@ impl StreamProjection {
         Self {
             target,
             text: String::new(),
+            refusal: String::new(),
             calls: BTreeMap::new(),
             announced: BTreeSet::new(),
             stop_reason: None,
@@ -109,6 +113,12 @@ impl StreamProjection {
     /// Whether any chunk carried output, including output with no stream event.
     pub(crate) const fn has_answered(&self) -> bool {
         self.answered
+    }
+
+    /// Whether the `[DONE]` sentinel has arrived: the stream is whole, and nothing after it is
+    /// part of this turn.
+    pub(crate) const fn is_terminated(&self) -> bool {
+        self.terminated
     }
 
     /// Accept one framed server-sent event and return the neutral deltas it completed.
@@ -163,6 +173,21 @@ impl StreamProjection {
     }
 
     fn delta(&mut self, delta: &Value) -> Result<Vec<StreamEvent>, Error> {
+        // vLLM's reasoning parsers put separated reasoning in `reasoning_content`; other servers
+        // name the same text `reasoning`. Read before anything is kept, so a delta refused here
+        // leaves the projection as it was.
+        let reasoning = match (
+            nonempty(delta.get("reasoning")),
+            nonempty(delta.get("reasoning_content")),
+        ) {
+            (Some(named), Some(content)) if named != content => {
+                return Err(Error::protocol(
+                    "chat completion delta carries reasoning and reasoning_content with different \
+                     text: choices[].delta.reasoning",
+                ));
+            }
+            (named, content) => named.or(content),
+        };
         let mut events = Vec::new();
         if let Some(text) = delta.get("content").and_then(Value::as_str)
             && !text.is_empty()
@@ -173,13 +198,18 @@ impl StreamProjection {
                 text: text.to_owned(),
             });
         }
-        // vLLM's reasoning parsers put separated reasoning here. It reaches the caller as a
-        // reasoning delta and never joins the assistant text.
-        if let Some(text) = delta.get("reasoning_content").and_then(Value::as_str)
-            && !text.is_empty()
-        {
+        // Reasoning reaches the caller as a reasoning delta and never joins the assistant text.
+        if let Some(text) = reasoning {
             self.answered = true;
             events.push(StreamEvent::ReasoningDelta {
+                text: text.to_owned(),
+            });
+        }
+        // Refusal text is its own kind, in the stream and in the turn, never assistant text.
+        if let Some(text) = nonempty(delta.get("refusal")) {
+            self.answered = true;
+            self.refusal.push_str(text);
+            events.push(StreamEvent::RefusalDelta {
                 text: text.to_owned(),
             });
         }
@@ -291,6 +321,11 @@ impl StreamProjection {
         if !self.text.is_empty() {
             items.push(Item::assistant(self.text.clone()));
         }
+        if !self.refusal.is_empty() {
+            items.push(Item::AssistantRefusal {
+                text: self.refusal.clone(),
+            });
+        }
         for pending in self.calls.values() {
             if pending.renamed {
                 return Err(Error::protocol(
@@ -379,6 +414,11 @@ fn completion(body: &Value, target: &Provenance) -> Result<TurnOutcome, Error> {
     let mut items = Vec::new();
     if let Some(text) = nonempty(message.get("content")) {
         items.push(Item::assistant(text));
+    }
+    if let Some(text) = nonempty(message.get("refusal")) {
+        items.push(Item::AssistantRefusal {
+            text: text.to_owned(),
+        });
     }
     if let Some(calls) = message.get("tool_calls").and_then(Value::as_array) {
         for call in calls {

@@ -196,6 +196,12 @@
     },
     {
       "area": "Protocols",
+      "detail": "delta.refusal reaches the caller as StreamEvent::RefusalDelta and the turn as Item::AssistantRefusal, never assistant text, and delta.reasoning as ReasoningDelta; a cut after either is final, differing reasoning and reasoning_content are refused, and a body dropped after [DONE] returns the turn. Fixture evidence only.",
+      "label": "A Chat stream counts every text delta and returns its turn at [DONE]",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
       "detail": "Those before the first message of another role join the instructions in order; a later one stays at its place as user text in the fixed mark <system-message>\\n…\\n</system-message>, or right after the tool results when it follows a tool call; every backend receives the same items, and Messages and Bedrock merge it with an adjacent user turn. A block other than text is refused by its path. Built from the request shape a headless Claude Code client sends; no captured session.",
       "label": "A system message inside Messages messages is read",
       "status": "shipped"

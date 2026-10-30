@@ -647,3 +647,37 @@ fn an_identifier_the_decoder_cannot_read_is_refused_before_anything_is_sent() {
     let answer = outcome(StopReason::EndTurn, text_items());
     assert!(encode_ingress_message(&answer, "two words").is_err());
 }
+
+/// story:chat-counts-every-output-delta. Messages has no block for refusal text, and sending it
+/// as text would make it the assistant's answer: an answer or a conversation carrying it is
+/// refused by name on both directions, never sent without it.
+#[test]
+fn refusal_text_is_refused_by_name_and_never_dropped() {
+    let refusal = Item::AssistantRefusal {
+        text: "I can't help with that.".to_owned(),
+    };
+    let mut answer = outcome(StopReason::EndTurn, text_items());
+    answer.items.push(refusal.clone());
+    let streamed = [
+        text_events(),
+        vec![StreamEvent::RefusalDelta {
+            text: "I can't help with that.".to_owned(),
+        }],
+    ]
+    .concat();
+    let mut request = TurnRequest::new("internal-model", vec![Item::user("Hello")]);
+    request.items.extend([refusal, Item::user("Again")]);
+    for error in [
+        encode(&streamed, &answer, Some(MODEL)).expect_err("streamed"),
+        encode_ingress_message(&answer, ID).expect_err("whole"),
+        llm_messages::encode_request(&request, &binding()).expect_err("egress"),
+    ] {
+        assert_eq!(
+            (error.code, error.message.as_str()),
+            (
+                ErrorCode::Unsupported,
+                "Messages carries no assistant refusal text"
+            )
+        );
+    }
+}
