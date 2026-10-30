@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:chat-counts-every-output-delta
 kind: story
-status: proposed
+status: active
 title: A Chat Completions stream counts every text delta as output and returns its turn at [DONE]
 relations:
 - decomposes: epic:inference
@@ -16,9 +16,10 @@ scope:
   path: crates/llm-core/src/port.rs
 - confidence: cited
   path: docs/chat.md
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T21:34:43Z", actor: "human:timo", revision: 7}
+- {from: "proposed", to: "active", at: "2026-10-30T17:35:56Z", actor: "human:timo", revision: 8}
 ---
 ## Context
 
