@@ -115,7 +115,9 @@ llm infer --model fast "Name one prime number."
 declares no route for. `--system` sets a system prompt and `--max-output-tokens` caps the answer.
 Without a prompt argument, `llm` reads the prompt from stdin.
 
-The text goes to stdout as it streams. One line on stderr closes the turn:
+The text goes to stdout as it streams. When the model declines, its refusal text is its answer and
+goes to stdout the same way (Chat Completions sends it apart from the text). One line on stderr
+closes the turn:
 
 ```text
 route=haiku protocol=messages input_tokens=12 output_tokens=4 cost=0.000032 USD

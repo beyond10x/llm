@@ -121,6 +121,9 @@ impl OpenAssistant {
             message.insert("content".to_owned(), json!(content));
         }
         if let Some(refusal) = assistant.refusal {
+            // A refused message without text is `"content": null` beside `refusal`, the shape
+            // the wire returns for one and the shape its clients send back.
+            message.entry("content").or_insert(Value::Null);
             message.insert("refusal".to_owned(), json!(refusal));
         }
         if !assistant.calls.is_empty() {

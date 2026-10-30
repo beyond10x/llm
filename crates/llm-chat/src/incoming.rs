@@ -176,9 +176,14 @@ impl StreamProjection {
         // vLLM's reasoning parsers put separated reasoning in `reasoning_content`; other servers
         // name the same text `reasoning`. Read before anything is kept, so a delta refused here
         // leaves the projection as it was.
+        let refusal = text_field(delta, "refusal", "choices[].delta.refusal")?;
         let reasoning = match (
-            nonempty(delta.get("reasoning")),
-            nonempty(delta.get("reasoning_content")),
+            text_field(delta, "reasoning", "choices[].delta.reasoning")?,
+            text_field(
+                delta,
+                "reasoning_content",
+                "choices[].delta.reasoning_content",
+            )?,
         ) {
             (Some(named), Some(content)) if named != content => {
                 return Err(Error::protocol(
@@ -206,7 +211,7 @@ impl StreamProjection {
             });
         }
         // Refusal text is its own kind, in the stream and in the turn, never assistant text.
-        if let Some(text) = nonempty(delta.get("refusal")) {
+        if let Some(text) = refusal {
             self.answered = true;
             self.refusal.push_str(text);
             events.push(StreamEvent::RefusalDelta {
@@ -415,7 +420,7 @@ fn completion(body: &Value, target: &Provenance) -> Result<TurnOutcome, Error> {
     if let Some(text) = nonempty(message.get("content")) {
         items.push(Item::assistant(text));
     }
-    if let Some(text) = nonempty(message.get("refusal")) {
+    if let Some(text) = text_field(message, "refusal", "choices[].message.refusal")? {
         items.push(Item::AssistantRefusal {
             text: text.to_owned(),
         });
@@ -470,6 +475,23 @@ fn only_the_first_choice(choice: &Value) -> Result<(), Error> {
 }
 
 /// A nonempty string field, or `None` for absent, null, empty and non-string values.
+/// A text field this decoder reads: absent, `null` and empty are no text; a string is the text;
+/// any other value contradicts the wire and is refused naming the field by `path`, never its
+/// value.
+fn text_field<'a>(
+    object: &'a Value,
+    key: &str,
+    path: &'static str,
+) -> Result<Option<&'a str>, Error> {
+    match object.get(key) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(text)) => Ok(Some(text.as_str()).filter(|text| !text.is_empty())),
+        Some(_) => Err(Error::protocol(format!(
+            "chat completion field is not a string: {path}"
+        ))),
+    }
+}
+
 fn nonempty(value: Option<&Value>) -> Option<&str> {
     value
         .and_then(Value::as_str)

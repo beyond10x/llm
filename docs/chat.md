@@ -43,8 +43,9 @@ consumed nothing.
 
 One assistant turn is one message. A run of consecutive assistant items therefore collapses:
 their text joins with a newline, their refusal text likewise, and their proposed calls become one
-`tool_calls` array. Gateway ingress does not read an assistant message's `refusal`: it is refused
-by its path, `messages[].refusal`, like every key outside the subset.
+`tool_calls` array. A message carrying refusal text but no assistant text sends `"content": null`
+beside `refusal`, the shape the wire returns for a refused message. Gateway ingress reads an
+assistant message's `refusal` back as `Item::AssistantRefusal` ([below](#gateway-ingress)).
 
 A tool message carries text only, so a failed result travels inside it as
 `{"error": <output>, "ok": false}`. This is the envelope `beyond10x/harness` `9e401e40` uses on
@@ -91,9 +92,16 @@ reasoning.
 
 **Refusal text is its own kind.** A model that declines writes it under `refusal`, apart from its
 answer. It reaches the caller as `StreamEvent::RefusalDelta` and the turn as one
-`Item::AssistantRefusal`, never in the assistant text. Every other wire in this workspace has no
-place for it and refuses an item carrying it by name rather than sending the conversation
-without it.
+`Item::AssistantRefusal`, never in the assistant text. Responses has a refusal content part that
+this repository does not carry yet (`story:responses-carries-refusal-text`); Messages and Converse
+have no place for it. Each of them refuses an item carrying it by name rather than sending the
+conversation without it, and routing selection rejects every target other than Chat Completions
+for such a conversation (`refusal-text`).
+
+A `refusal`, `reasoning` or `reasoning_content` that is present and not `null` must be a string,
+in a delta and as `message.refusal` of a non-streamed body; any other value is refused naming the
+field by its path (`choices[].delta.refusal`, `choices[].delta.reasoning`,
+`choices[].delta.reasoning_content`, `choices[].message.refusal`). `null` is absent.
 
 llama.cpp's `llama-server` adds more to a chunk than the fields above. Its `reasoning_content`
 is read as `vLLM`'s is, and its `timings` for the counters in it; the other `timings` fields
@@ -218,7 +226,7 @@ ignored, at any depth:
 | --- | --- |
 | the request | `SUPPORTED_REQUEST_FIELDS` |
 | `messages[]`, role `system`, `developer` or `user` | `role`, `content` |
-| `messages[]`, role `assistant` | `role`, `content`, `tool_calls` |
+| `messages[]`, role `assistant` | `role`, `content`, `refusal` (a string, read as `Item::AssistantRefusal`), `tool_calls` |
 | `messages[]`, role `tool` | `role`, `content`, `tool_call_id` |
 | `messages[].content[]` | `type` (`text`), `text` |
 | `messages[].tool_calls[]` | `id`, `type` (`function`), `function` |

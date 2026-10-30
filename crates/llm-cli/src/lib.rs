@@ -781,7 +781,9 @@ struct Stdout {
 impl StreamSink for Stdout {
     fn emit(&mut self, event: StreamEvent) -> BoxFuture<'_, Result<(), Error>> {
         Box::pin(async move {
-            if let StreamEvent::TextDelta { text } = event {
+            // Refusal text is the model's answer to the person running the command, so it is
+            // printed as text is.
+            if let StreamEvent::TextDelta { text } | StreamEvent::RefusalDelta { text } = event {
                 if text.is_empty() {
                     return Ok(());
                 }

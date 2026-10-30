@@ -78,6 +78,25 @@ fn opt_in_selects_the_first_compatible_alternative_without_dropping_settings() {
 }
 
 #[test]
+fn refusal_text_rejects_every_target_whose_wire_cannot_send_it() {
+    let mut doc = document();
+    doc.routes[0].fallback_enabled = true;
+    let catalog = doc.validate().unwrap();
+    let mut turn = request();
+    turn.items
+        .push(Item::AssistantRefusal { text: "No.".into() });
+    turn.items.push(Item::user("Why not?"));
+    let explanation = catalog.explain(&turn, Some(512)).unwrap();
+    assert_eq!(explanation.selected_target_id, Some(id("coding-primary")));
+    assert_eq!(explanation.targets[0].rejections, []);
+    assert_eq!(explanation.targets[1].rejections, [Rejection::RefusalText]);
+    assert_eq!(Rejection::RefusalText.label(), "refusal-text");
+    turn.sampling.temperature = Some(0.5);
+    let error = catalog.resolve(&turn, Some(512)).unwrap_err();
+    assert!(error.message.contains("refusal-text"), "{}", error.message);
+}
+
+#[test]
 fn capability_refusals_name_every_requested_dimension() {
     let mut turn = request();
     turn.tools.push(ToolSpec {

@@ -196,7 +196,7 @@
     },
     {
       "area": "Protocols",
-      "detail": "delta.refusal reaches the caller as StreamEvent::RefusalDelta and the turn as Item::AssistantRefusal, never assistant text, and delta.reasoning as ReasoningDelta; a cut after either is final, differing reasoning and reasoning_content are refused, and a body dropped after [DONE] returns the turn. Fixture evidence only.",
+      "detail": "delta.refusal reaches the caller as StreamEvent::RefusalDelta and the turn as Item::AssistantRefusal, never assistant text, and delta.reasoning as ReasoningDelta; a cut after either is final, differing reasoning and reasoning_content are refused, and a body dropped after [DONE] returns the turn. Gateway ingress reads an assistant refusal back, routing rejects non-Chat targets for a conversation holding one (refusal-text), and llm infer prints it. Fixture evidence only.",
       "label": "A Chat stream counts every text delta and returns its turn at [DONE]",
       "status": "shipped"
     },
