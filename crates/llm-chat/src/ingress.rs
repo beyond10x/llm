@@ -34,7 +34,7 @@ pub const SUPPORTED_REQUEST_FIELDS: &[&str] = &[
 
 /// A `system`, `developer` or `user` message.
 const TEXT_MESSAGE_KEYS: &[&str] = &["role", "content"];
-const ASSISTANT_MESSAGE_KEYS: &[&str] = &["role", "content", "tool_calls"];
+const ASSISTANT_MESSAGE_KEYS: &[&str] = &["role", "content", "refusal", "tool_calls"];
 const TOOL_MESSAGE_KEYS: &[&str] = &["role", "content", "tool_call_id"];
 const CONTENT_PART_KEYS: &[&str] = &["type", "text"];
 const TOOL_CALL_KEYS: &[&str] = &["id", "type", "function"];
@@ -215,6 +215,13 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
                 let text = content_text(message.get("content"))?;
                 if !text.is_empty() {
                     request.items.push(Item::assistant(text));
+                }
+                // The refusal text the outgoing projection and the encoders write here, read
+                // back as the refusal it was, never as assistant text.
+                if let Some(refusal) = self::text(message.get("refusal"), "messages[].refusal")?
+                    .filter(|refusal| !refusal.is_empty())
+                {
+                    request.items.push(Item::AssistantRefusal { text: refusal });
                 }
                 match message.get("tool_calls") {
                     None | Some(Value::Null) => {}

@@ -1,5 +1,7 @@
 use crate::{Catalog, RouteTarget};
-use llm_core::{AuthKind, BillingKind, Capabilities, Error, Id, Item, Provenance, TurnRequest};
+use llm_core::{
+    AuthKind, BillingKind, Capabilities, Error, Id, Item, Protocol, Provenance, TurnRequest,
+};
 use llm_providers::Binding;
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +17,7 @@ pub enum Rejection {
     InputTokensUnknown,
     ContextWindow,
     OpaqueState,
+    RefusalText,
     FallbackDisabled,
 }
 impl Rejection {
@@ -29,6 +32,7 @@ impl Rejection {
             Self::InputTokensUnknown => "input-tokens-unknown",
             Self::ContextWindow => "context-window",
             Self::OpaqueState => "opaque-state",
+            Self::RefusalText => "refusal-text",
             Self::FallbackDisabled => "fallback-disabled",
         }
     }
@@ -226,6 +230,16 @@ fn capability_rejections(
         _ => false,
     }) {
         reasons.push(Rejection::OpaqueState);
+    }
+    // Only Chat Completions carries an assistant's refusal text; every other wire refuses a
+    // conversation holding it before dispatch, so selection tells that target apart here.
+    if binding.provenance().protocol != Protocol::ChatCompletions
+        && request
+            .items
+            .iter()
+            .any(|item| matches!(item, Item::AssistantRefusal { .. }))
+    {
+        reasons.push(Rejection::RefusalText);
     }
     reasons
 }

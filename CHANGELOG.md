@@ -11,6 +11,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - **Breaking:** `StreamEvent::RefusalDelta` (`refusal-delta`) and `Item::AssistantRefusal` (`assistant-refusal`) carry refusal text
 - `llm-chat`: `delta.refusal` and `message.refusal` are read as refusal text, never assistant text; `delta.reasoning` as reasoning
 - `llm-chat`: refusal text is sent back under the assistant message's `refusal`; Responses, Messages and Converse refuse it by name
+- **Breaking:** `Rejection::RefusalText` (`refusal-text`): selection rejects a non-Chat target for a conversation holding refusal text
+- `llm-chat`: gateway ingress reads an assistant message's `refusal` string as `Item::AssistantRefusal`
+- `llm infer` prints refusal text to stdout, as it prints the model's text
+- `llm-chat`: a non-string `refusal`, `reasoning` or `reasoning_content` in a response is refused by its path
 
 ### Fixed
 

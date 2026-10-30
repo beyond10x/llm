@@ -431,11 +431,16 @@ fn refusal_text_in_the_history_is_sent_under_the_refusal_key_and_read_back_from_
         body["messages"][1],
         json!({"role": "assistant", "content": "Partly.", "refusal": "Not the rest."})
     );
-    // Gateway ingress does not read it: refused by its path, as every key outside the subset.
-    let error = llm_chat::decode_ingress_request(&body).expect_err("outside the subset");
+    // Gateway ingress reads back what was sent: the refusal is the refusal it was.
+    let decoded = llm_chat::decode_ingress_request(&body).unwrap_or_else(|error| {
+        panic!(
+            "story:chat-counts-every-output-delta: gateway ingress reads an assistant refusal: {}",
+            error.message
+        )
+    });
     assert_eq!(
-        error.message,
-        "chat request field is outside the published subset: messages[].refusal"
+        decoded.request.items, request.items,
+        "story:chat-counts-every-output-delta: the refusal reads back as Item::AssistantRefusal"
     );
 
     let completion = json!({
@@ -449,5 +454,93 @@ fn refusal_text_in_the_history_is_sent_under_the_refusal_key_and_read_back_from_
         vec![Item::AssistantRefusal {
             text: "Not the rest.".to_owned()
         }]
+    );
+}
+
+/// A refused message without text goes out as `"content": null` beside `refusal`, the shape the
+/// wire returns for it, and gateway ingress reads it back; a `refusal` there that is not a string
+/// is refused by its path.
+#[test]
+fn a_refusal_only_message_reads_back_and_a_refusal_that_is_not_a_string_is_refused_by_its_path() {
+    let request = TurnRequest::new(
+        "small",
+        vec![
+            Item::user("Help?"),
+            Item::AssistantRefusal {
+                text: "No.".to_owned(),
+            },
+            Item::user("Why not?"),
+        ],
+    );
+    let body = llm_chat::project_request(&request, &binding(), false).expect("projected");
+    assert_eq!(
+        body["messages"][1],
+        json!({"role": "assistant", "content": null, "refusal": "No."})
+    );
+    let decoded = llm_chat::decode_ingress_request(&body).expect("read back");
+    assert_eq!(decoded.request.items, request.items);
+
+    for refusal in [json!(7), json!({"text": "No."}), json!(["No."])] {
+        let mut body = body.clone();
+        body["messages"][1]["refusal"] = refusal.clone();
+        let error = llm_chat::decode_ingress_request(&body).expect_err("not a string");
+        assert_eq!(
+            (error.code, error.message.as_str()),
+            (
+                ErrorCode::InvalidRequest,
+                "chat request field `messages[].refusal` is not a string"
+            ),
+            "{refusal}"
+        );
+    }
+    let mut body = body;
+    body["messages"][1]["refusal"] = Value::Null;
+    let decoded = llm_chat::decode_ingress_request(&body).expect("null is absent");
+    assert_eq!(
+        decoded.request.items,
+        vec![Item::user("Help?"), Item::user("Why not?")]
+    );
+}
+
+/// A `refusal`, `reasoning` or `reasoning_content` that is present, not `null` and not a string
+/// is refused naming the field by its path, and never its value.
+#[test]
+fn a_text_field_that_is_not_a_string_is_refused_by_its_path() {
+    let binding = binding();
+    for (delta, path) in [
+        (r#"{"refusal":7}"#, "choices[].delta.refusal"),
+        (
+            r#"{"reasoning":{"t":"SECRET-X"}}"#,
+            "choices[].delta.reasoning",
+        ),
+        (
+            r#"{"reasoning_content":["SECRET-X"]}"#,
+            "choices[].delta.reasoning_content",
+        ),
+    ] {
+        let body = format!("{}data: [DONE]\n\n", chunk(delta, "null"));
+        let (events, outcome) = project_response_bytes(body.as_bytes(), binding.provenance());
+        let error = outcome.expect_err(delta);
+        assert_eq!(events, vec![], "{delta}");
+        assert_eq!(
+            (error.code, error.message.clone()),
+            (
+                ErrorCode::Protocol,
+                format!("chat completion field is not a string: {path}")
+            ),
+            "{delta}"
+        );
+        assert!(!format!("{error:?}").contains("SECRET-"), "{delta}");
+    }
+    let completion = json!({
+        "id": "chatcmpl-x", "object": "chat.completion", "model": "Qwen/Qwen3-8B",
+        "choices": [{"index": 0, "finish_reason": "stop",
+            "message": {"role": "assistant", "content": null, "refusal": 7}}],
+    });
+    let error =
+        llm_chat::decode_completion(&completion, binding.provenance()).expect_err("refused");
+    assert_eq!(
+        error.message,
+        "chat completion field is not a string: choices[].message.refusal"
     );
 }

@@ -359,8 +359,9 @@ A connection cut mid-stream follows the same count (`story:messages-cut-after-si
 The transport marks a cut retriable: a body that ends inside an event, or fails in transit. Each
 client keeps that mark until its decoder has answered and drops it after, in its stream loop:
 `ResponsesClient`, `MessagesClient` and `ChatClient`. On Chat Completions output is non-empty
-`content` or `reasoning_content`, any `tool_calls` fragment, or a finish reason; the chunk that
-opens the stream, `role` with an empty or null `content`, answers nothing.
+`content`, `reasoning_content`, `reasoning` or `refusal`, any `tool_calls` fragment, or a finish
+reason; the chunk that opens the stream, `role` with an empty or null `content`, answers nothing
+(`story:chat-counts-every-output-delta`).
 
 These stay final:
 
@@ -603,7 +604,8 @@ The per-wire pages hold the full tables: `docs/messages.md` "What the declared s
   `client-metadata`; a `function_call_output` string that is not the pinned envelope is a
   successful result carrying that string. A tool of a type other than `function` is refused by its
   type.
-- Chat Completions: `parallel_tool_calls`, `prompt_cache_key` and `verbosity` are carried; every
+- Chat Completions: `parallel_tool_calls`, `prompt_cache_key` and `verbosity` are carried, and an
+  assistant message's `refusal` text is an `Item::AssistantRefusal`; every
   object below the top is closed, and a `strict` function schema is refused. A `tool` message whose
   content is exactly the failure object `{"error":<output>,"ok":false}` is a failed result
   ("Failed and rejected tool results" above); any other content is a successful string.
