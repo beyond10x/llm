@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-10-30
+
 ### Added
 
 - `llm-messages`: ingress reads a `system` message inside `messages` (was refused as a role outside the subset)
@@ -477,7 +479,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.18.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.19.0...HEAD
+[0.19.0]: https://github.com/beyond10x/llm/compare/0.18.0...0.19.0
 [0.18.0]: https://github.com/beyond10x/llm/compare/0.17.1...0.18.0
 [0.17.1]: https://github.com/beyond10x/llm/compare/0.17.0...0.17.1
 [0.17.0]: https://github.com/beyond10x/llm/compare/0.16.0...0.17.0
