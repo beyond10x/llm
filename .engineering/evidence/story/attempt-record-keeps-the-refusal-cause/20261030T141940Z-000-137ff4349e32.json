@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-30T14:19:40Z",
+  "actor": "agent:takt",
+  "artifact": "story:attempt-record-keeps-the-refusal-cause",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "takt",
+    "reference": ".takt/cases/story-attempt-record-keeps-the-refusal-cause-20261030T141741Z/evidence/0007-test-result-10.json#sha256=7316574cab7126a4f8392298681bed726315a77df3871d84185f3369aa2f4bc5&result=pass&revision=07985f90353391ea88c9a005037dd40c9aa43057&producer=takt.tests-run"
+  }
+}
