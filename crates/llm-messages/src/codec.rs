@@ -13,6 +13,14 @@ use serde_json::{Value, json};
 pub const SUBSCRIPTION_CLIENT_PREAMBLE: &str =
     "You are Claude Code, Anthropic's official CLI for Claude.";
 
+/// What a `system` entry inside `messages`, after the conversation's first other entry, opens
+/// with as the user text it is read as: the mark is this, the entry's text, then
+/// [`SYSTEM_MESSAGE_CLOSE`]. The neutral turn has no item for an instruction between two turns,
+/// so every backend receives this one fixed form (`docs/messages.md`).
+pub const SYSTEM_MESSAGE_OPEN: &str = "<system-message>\n";
+/// What such a user text closes with; see [`SYSTEM_MESSAGE_OPEN`].
+pub const SYSTEM_MESSAGE_CLOSE: &str = "\n</system-message>";
+
 #[derive(Debug)]
 pub struct IngressRequest {
     pub request: TurnRequest,
@@ -532,14 +540,68 @@ fn client_metadata(value: &Value) -> Result<bool, Error> {
     }
 }
 
+/// The text of a `system` entry inside `messages`: a string, or text blocks joined by a line feed
+/// as the blocks of `system` are. Any other block type is refused by the path of its `type`, and
+/// any other key by its own path. A block's `cache_control` was read and removed before this.
+fn system_message(message: &Value) -> Result<String, Error> {
+    const AT: &str = "messages[].content[]";
+    let content = message
+        .get("content")
+        .ok_or_else(|| Error::invalid("Messages content is missing"))?;
+    if let Some(text) = content.as_str() {
+        return Ok(text.to_owned());
+    }
+    let blocks = content
+        .as_array()
+        .ok_or_else(|| Error::invalid("Messages content must be text or blocks"))?;
+    let mut texts = Vec::with_capacity(blocks.len());
+    for block in blocks {
+        if block.get("type").and_then(Value::as_str) != Some("text") {
+            return Err(Error::unsupported(format!(
+                "Messages field is outside the declared subset: {}",
+                crate::path(AT, "type")
+            )));
+        }
+        fields(block, AT, &["type", "text"])?;
+        texts.push(string(block, "text")?);
+    }
+    Ok(texts.join("\n"))
+}
+
 fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
     let messages = value
         .get("messages")
         .and_then(Value::as_array)
         .ok_or_else(|| Error::invalid("Messages messages must be an array"))?;
+    let mut opened = false;
+    let mut deferred: Vec<Item> = Vec::new();
     for message in messages {
         fields(message, "messages[]", &["role", "content"])?;
         let role = string(message, "role")?;
+        if role == "system" {
+            let text = system_message(message)?;
+            if text.is_empty() {
+                continue;
+            }
+            if opened {
+                let marked =
+                    Item::user(format!("{SYSTEM_MESSAGE_OPEN}{text}{SYSTEM_MESSAGE_CLOSE}"));
+                // After a tool call the next user message must open with the results that
+                // answer it, so the marked text waits until those results are placed.
+                if deferred.is_empty() && !matches!(request.items.last(), Some(Item::ToolCall(_))) {
+                    request.items.push(marked);
+                } else {
+                    deferred.push(marked);
+                }
+            } else {
+                if !request.instructions.is_empty() {
+                    request.instructions.push('\n');
+                }
+                request.instructions.push_str(&text);
+            }
+            continue;
+        }
+        opened = true;
         if !matches!(role, "user" | "assistant") {
             return Err(Error::unsupported(
                 "Messages role is outside the declared subset",
@@ -548,6 +610,7 @@ fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error
         let content = message
             .get("content")
             .ok_or_else(|| Error::invalid("Messages content is missing"))?;
+        let start = request.items.len();
         if let Some(text) = content.as_str() {
             request.items.push(if role == "user" {
                 Item::user(text)
@@ -567,7 +630,16 @@ fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error
                 )?);
             }
         }
+        if !deferred.is_empty() {
+            let results = request.items[start..]
+                .iter()
+                .take_while(|item| matches!(item, Item::ToolResult { .. }))
+                .count();
+            let at = start + results;
+            request.items.splice(at..at, deferred.drain(..));
+        }
     }
+    request.items.append(&mut deferred);
     if request.items.first().is_none_or(|item| !user(item)) {
         return Err(Error::invalid("Messages requires initial user content"));
     }

@@ -369,6 +369,7 @@
       "llm.messages/authored/ingress-reads-effort-max",
       "llm.messages/authored/ingress-reads-metadata-as-client-metadata-and-reports-it-omitted",
       "llm.messages/authored/ingress-reads-parallel-tool-use-left-enabled",
+      "llm.messages/authored/ingress-reads-system-messages-as-instructions-and-marked-user-text",
       "llm.messages/authored/ingress-reads-thinking-with-a-budget",
       "llm.messages/authored/ingress-refuses-a-cache-mark-on-thinking",
       "llm.messages/authored/ingress-refuses-a-cache-mark-scope",
@@ -377,6 +378,7 @@
       "llm.messages/authored/ingress-refuses-a-role-outside-the-subset",
       "llm.messages/authored/ingress-refuses-a-structured-output-format",
       "llm.messages/authored/ingress-refuses-a-system-block-that-is-not-text",
+      "llm.messages/authored/ingress-refuses-a-system-message-block-that-is-not-text",
       "llm.messages/authored/ingress-refuses-a-system-shape-outside-the-subset",
       "llm.messages/authored/ingress-refuses-a-temperature-above-one",
       "llm.messages/authored/ingress-refuses-citations-on-a-system-block",
@@ -2557,6 +2559,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-parallel-tool-use-left-enabled"
       },
+      "messages/scenarios/ingress-reads-system-messages-as-instructions-and-marked-user-text.yaml": {
+        "digest": "sha256:194825400d0567e35289d91986e4ade52c72da8d5a9916303931ecd548711336",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/ingress-reads-system-messages-as-instructions-and-marked-user-text"
+      },
       "messages/scenarios/ingress-reads-thinking-with-a-budget.yaml": {
         "digest": "sha256:99a81c10036454d420bc5e26934d502ec0be1f5b6140d7edb417df08e035cf3f",
         "disposition": "accepted",
@@ -2583,7 +2590,7 @@
         "scenario": "llm.messages/authored/ingress-refuses-a-request-field-outside-the-subset"
       },
       "messages/scenarios/ingress-refuses-a-role-outside-the-subset.yaml": {
-        "digest": "sha256:e4a5dde36c66c6eeec5a3a2d0572aacd023ea11312fc64615850f308c5dfad41",
+        "digest": "sha256:b4ee3e2e12268e6446b7e1407060e90818af29505de4f189c44c989df4b90f2d",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-refuses-a-role-outside-the-subset"
       },
@@ -2596,6 +2603,11 @@
         "digest": "sha256:c8e0f3c77d70b932e2d03d9bd607f36890f65caacd28ace7be178df93330a2e6",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-refuses-a-system-block-that-is-not-text"
+      },
+      "messages/scenarios/ingress-refuses-a-system-message-block-that-is-not-text.yaml": {
+        "digest": "sha256:847a0ced499a5750577fb0bd490961d598d362ce8ebede3f81523f0be3c1fac6",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/ingress-refuses-a-system-message-block-that-is-not-text"
       },
       "messages/scenarios/ingress-refuses-a-system-shape-outside-the-subset.yaml": {
         "digest": "sha256:3f38424e3a680c26a0e7718f07ba7bed08bcd81e323136f8128ea3c7704bce4c",
@@ -5519,7 +5531,7 @@
       }
     },
     "counts": {
-      "authored": 919,
+      "authored": 921,
       "generated": 37,
       "outside": 0,
       "refused": 0
@@ -51506,6 +51518,116 @@
         }
       ]
     },
+    "llm.messages/authored/ingress-reads-system-messages-as-instructions-and-marked-user-text": {
+      "purpose": "a system message before the conversation joins the instructions; a later one stays in place as user text in the fixed mark (codec.rs decode_messages, story messages-ingress-system-messages)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": true
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"max_tokens\":512,\"model\":\"caller-alias\",\"system\":\"Stay terse\",\"messages\":[{\"role\":\"system\",\"content\":\"Answer in English\"},{\"role\":\"user\",\"content\":\"Summarise the log\"},{\"role\":\"assistant\",\"content\":\"Looking\"},{\"role\":\"system\",\"content\":\"Be brief\"},{\"role\":\"user\",\"content\":\"Go on\"}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user-text:Summarise the log",
+                  "assistant-text:Looking",
+                  "user-text:<system-message>\nBe brief\n</system-message>",
+                  "user-text:Go on"
+                ]
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"Stay terse\\nAnswer in English\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"},{\"kind\":\"assistant-text\",\"text\":\"Looking\"},{\"kind\":\"user-text\",\"text\":\"<system-message>\\nBe brief\\n</system-message>\"},{\"kind\":\"user-text\",\"text\":\"Go on\"}],\"tools\":[],\"max_output_tokens\":512}}"
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
+              },
+              "stream": {
+                "kind": "literal",
+                "value": false
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/ingress-reads-thinking-with-a-budget": {
       "purpose": "enabled thinking with a token budget, read from the body the projection sends, keeps its budget",
       "source": [
@@ -52102,7 +52224,7 @@
       ]
     },
     "llm.messages/authored/ingress-refuses-a-role-outside-the-subset": {
-      "purpose": "ingress refuses a message role other than user or assistant (codec.rs decode_messages)",
+      "purpose": "ingress refuses a message role other than user, assistant or system (codec.rs decode_messages)",
       "source": [
         {
           "kind": "domain",
@@ -52134,7 +52256,7 @@
             },
             "request_json": {
               "kind": "literal",
-              "value": "{\"max_tokens\":512,\"model\":\"caller-alias\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"},{\"role\":\"system\",\"content\":\"be brief\"}]}"
+              "value": "{\"max_tokens\":512,\"model\":\"caller-alias\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"},{\"role\":\"tool\",\"content\":\"ok\"}]}"
             }
           },
           "step": "execute_command"
@@ -52466,6 +52588,115 @@
                 "value": null
               },
               "usage_json": {
+                "kind": "literal",
+                "value": null
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/ingress-refuses-a-system-message-block-that-is-not-text": {
+      "purpose": "a block of another type inside a system message is refused by the path of its type (codec.rs system_message, story messages-ingress-system-messages)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": true
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"max_tokens\":512,\"model\":\"caller-alias\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"},{\"role\":\"system\",\"content\":[{\"type\":\"image\",\"source\":{\"type\":\"base64\",\"media_type\":\"image/png\",\"data\":\"AA==\"}}]}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "Messages field is outside the declared subset: messages[].content[].type"
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
+              },
+              "stream": {
                 "kind": "literal",
                 "value": null
               },

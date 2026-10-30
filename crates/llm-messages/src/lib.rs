@@ -25,8 +25,8 @@ pub use client::{
     VERSION_HEADER, is_opencode_go,
 };
 pub use codec::{
-    IngressRequest, SUBSCRIPTION_CLIENT_PREAMBLE, decode_request, decode_request_with_headers,
-    encode_body, encode_request, omitted_advisories,
+    IngressRequest, SUBSCRIPTION_CLIENT_PREAMBLE, SYSTEM_MESSAGE_CLOSE, SYSTEM_MESSAGE_OPEN,
+    decode_request, decode_request_with_headers, encode_body, encode_request, omitted_advisories,
 };
 pub use decode::{StreamDecoder, USAGE_EXTENSION, decode_message, decode_stream};
 pub use ingress::{IngressStream, encode_ingress_message};

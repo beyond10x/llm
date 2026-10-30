@@ -46,7 +46,12 @@ entities:
       #   `parallel_tool_calls` `!v`.
       # - `metadata` holding only `user_id` (a string) is the `client-metadata` hint; its value
       #   is never kept and never re-emitted.
-      # - A `system` message inside `messages` is refused as a role outside the subset.
+      # - A `system` message inside `messages` before the first message of another role is
+      #   appended to the instructions, in order, joined by a line feed; a later one stays at
+      #   its place as one user text `<system-message>\n<text>\n</system-message>`, or after
+      #   the tool results of the next user message when it follows a tool call. Its content
+      #   is a string or text blocks joined by a line feed; a block of another type is refused
+      #   by the path `messages[].content[].type`. Any other role is refused.
       - {name: neutral_request, type: Optional<String>}
       # The advisory hints this wire does not send, by name, in the order of `docs/design.md`'s
       # advisory table. Messages carries only `prompt-cache`; `prompt-cache-key`, `verbosity`,

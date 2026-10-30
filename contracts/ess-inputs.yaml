@@ -502,6 +502,7 @@ scenarios:
 - messages/scenarios/ingress-refuses-a-conversation-that-opens-with-the-assistant.yaml
 - messages/scenarios/ingress-refuses-a-role-outside-the-subset.yaml
 - messages/scenarios/ingress-refuses-a-system-block-that-is-not-text.yaml
+- messages/scenarios/ingress-refuses-a-system-message-block-that-is-not-text.yaml
 - messages/scenarios/ingress-refuses-a-system-shape-outside-the-subset.yaml
 - messages/scenarios/ingress-refuses-a-temperature-above-one.yaml
 - responses/scenarios/ingress-refuses-a-standing-instruction-after-the-head.yaml
@@ -828,6 +829,7 @@ scenarios:
 - messages/scenarios/ingress-reads-metadata-as-client-metadata-and-reports-it-omitted.yaml
 - messages/scenarios/ingress-reads-parallel-tool-use-left-enabled.yaml
 - messages/scenarios/ingress-reads-thinking-with-a-budget.yaml
+- messages/scenarios/ingress-reads-system-messages-as-instructions-and-marked-user-text.yaml
 - messages/scenarios/ingress-refuses-a-cache-mark-on-thinking.yaml
 - messages/scenarios/ingress-refuses-a-cache-mark-scope.yaml
 - messages/scenarios/ingress-refuses-a-structured-output-format.yaml

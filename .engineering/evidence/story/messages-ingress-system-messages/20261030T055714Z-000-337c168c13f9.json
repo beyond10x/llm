@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-30T05:57:14Z",
+  "actor": "human:timo",
+  "artifact": "story:messages-ingress-system-messages",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test -p llm-messages (all targets) and -p llm-bedrock --test system_messages --test adversary_d262_system_messages on Rust 1.98.0: 0 failed; llm-conformance check 958/958 three times; clippy -D warnings on 1.98.0 and default",
+    "reference": "crates/llm-messages/tests/system_messages.rs"
+  }
+}

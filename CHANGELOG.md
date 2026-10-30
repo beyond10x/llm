@@ -6,6 +6,18 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-messages`: ingress reads a `system` message inside `messages` (was refused as a role outside the subset)
+- Leading `system` messages join the instructions in order; a later one is user text in the mark below, at its place
+- A `system` message after a tool call is placed after the tool results that answer it, which must open that user message
+- The mark is `<system-message>\n<text>\n</system-message>`, exported as `SYSTEM_MESSAGE_OPEN` and `SYSTEM_MESSAGE_CLOSE`
+- ESS: two `llm.messages` ingress scenarios for system messages; the conformance floor is 958 (was 956)
+
+### Changed
+
+- ESS: scenario `ingress-refuses-a-role-outside-the-subset` uses role `tool`, since role `system` is read
+
 ## [0.18.0] - 2026-10-29
 
 ### Added

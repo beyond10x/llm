@@ -45,11 +45,18 @@ fn ingress_refuses_a_role_outside_user_and_assistant() {
         "messages",
         json!([
             {"role":"user","content":"Summarise the log"},
-            {"role":"system","content":"Stay terse"},
+            {"role":"tool","content":"Stay terse"},
         ]),
     )]);
-    let error = ingress(&body).expect_err("a role outside the declared subset");
-    assert_eq!(error.code, ErrorCode::Unsupported);
+    let error = ingress(&body).expect_err(
+        "a role outside the declared subset; story:messages-ingress-system-messages reads role \
+         system, so the case uses role tool",
+    );
+    assert_eq!(
+        error.code,
+        ErrorCode::Unsupported,
+        "story:messages-ingress-system-messages"
+    );
 }
 
 /// A system prompt of several text blocks is read whole since wave 2026-10-16-w08 (`docs/design.md`

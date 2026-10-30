@@ -1,12 +1,12 @@
 type: ess-scenario/1
 domain: llm.messages
 scenario: ingress-refuses-a-role-outside-the-subset
-summary: ingress refuses a message role other than user or assistant (codec.rs decode_messages)
+summary: ingress refuses a message role other than user, assistant or system (codec.rs decode_messages)
 timeline:
 - at: '2026-09-27T12:00:00Z'
   command: llm.messages.Project
   input:
-    request_json: '{"max_tokens":512,"model":"caller-alias","messages":[{"role":"user","content":"hi"},{"role":"system","content":"be brief"}]}'
+    request_json: '{"max_tokens":512,"model":"caller-alias","messages":[{"role":"user","content":"hi"},{"role":"tool","content":"ok"}]}'
     ingress: true
   outcome: observed
 assert:

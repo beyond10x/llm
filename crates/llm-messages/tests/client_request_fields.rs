@@ -376,17 +376,19 @@ fn a_cache_mark_of_another_shape_is_refused_with_a_fixed_diagnostic() {
     }
 }
 
+/// A `system` message inside `messages` is read since story:messages-ingress-system-messages
+/// (`tests/system_messages.rs`); every other role outside user and assistant is still refused.
 #[test]
-fn a_system_message_inside_messages_is_a_role_outside_the_subset() {
+fn a_role_outside_user_assistant_and_system_is_outside_the_subset() {
     let request = body(&[(
         "messages",
-        json!([{"role":"user","content":"hi"},{"role":"system","content":"be brief"}]),
+        json!([{"role":"user","content":"hi"},{"role":"tool","content":"ok"}]),
     )]);
     let error = refusal(&request);
     assert_eq!(error.code, ErrorCode::Unsupported);
     assert_eq!(
-        error.message,
-        "Messages role is outside the declared subset"
+        error.message, "Messages role is outside the declared subset",
+        "story:messages-ingress-system-messages: role system is read, role tool is not"
     );
 }
 

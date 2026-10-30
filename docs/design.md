@@ -611,8 +611,13 @@ The per-wire pages hold the full tables: `docs/messages.md` "What the declared s
 Still refused, by name, and outside this design: structured output (`output_config.format`,
 `text.format`, `response_format`), server-side context editing (`context_management`), hosted and
 custom tools, `thinking.display`, and an instruction in the middle of the conversation (a
-`system` message in Messages `messages`, a developer message after the first item of Responses
-`input`): the neutral turn has no item that places an instruction between two turns.
+developer message after the first item of Responses `input`, a Chat system message after the
+first message): the neutral turn has no item that places an instruction between two turns.
+
+One exception, decision D262 (story:messages-ingress-system-messages): a `system` message in
+Messages `messages` is read. Those before the first message of another role join the instructions;
+a later one stays at its place as user text in the fixed mark `<system-message>` … `</system-message>`,
+or after the tool results that answer a tool call it follows (`docs/messages.md`). The mapping is made at ingress, so every backend receives the same items.
 
 ## Gateway and hosting
 

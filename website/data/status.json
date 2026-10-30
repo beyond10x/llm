@@ -195,6 +195,12 @@
       "status": "shipped"
     },
     {
+      "area": "Protocols",
+      "detail": "Those before the first message of another role join the instructions in order; a later one stays at its place as user text in the fixed mark <system-message>\\n…\\n</system-message>, or right after the tool results when it follows a tool call; every backend receives the same items, and Messages and Bedrock merge it with an adjacent user turn. A block other than text is refused by its path. Built from the request shape a headless Claude Code client sends; no captured session.",
+      "label": "A system message inside Messages messages is read",
+      "status": "shipped"
+    },
+    {
       "area": "Amazon Bedrock",
       "detail": "llm-bedrock signs each request with a signer written on ring, checked against the AWS test suite vendored from aws-c-auth (header signing only); keys come from StaticCredentials through an injected resolver or from ContainerCredentials at the container credentials endpoint. No AWS SDK crate and no aws-lc is a dependency. EKS Pod Identity is described from AWS documentation and unverified.",
       "label": "Bedrock requests are signed with Signature Version 4",

@@ -66,8 +66,25 @@ whole:
 order: it carries only `prompt-cache`, so `prompt-cache-key`, `verbosity`, `reasoning-summary`,
 `input-item-ids` and `client-metadata` are reported whenever present. `context_management`,
 `safeguards`, `thinking.display`, `output_config.format` and every other key stay refused by their
-path, and a `system` message inside `messages` stays a role outside the subset: the neutral turn
-has no item that places an instruction between two turns.
+path.
+
+**A `system` message inside `messages`** (a headless Claude Code client sends one) is read in two
+ways. Every `system` message before the first message of another role is appended to the
+instructions, in order, joined by a line feed as the blocks of `system` are. A later one stays at
+its place as one user text in a fixed mark, `<system-message>`, a line feed, the text, a line feed,
+`</system-message>` (`SYSTEM_MESSAGE_OPEN` and `SYSTEM_MESSAGE_CLOSE`). One placed after an
+assistant tool call waits until the tool results that open the next user message, because a user
+message answering a call must open with its results. The Messages and Bedrock projections merge
+the marked text with an adjacent user turn into one user message; Chat sends it as its own user
+message. Its content is a string or `text` blocks
+joined by a line feed, a `cache_control` on such a block being the `prompt-cache` hint; a block of
+another type is refused by the path `messages[].content[].type`, another key by its own path. A
+message with empty text adds nothing. Both readings are one-way: the projection sends the
+instructions as `system` and the marked text as a user block. The neutral turn has no item that
+places an instruction between two turns, so the mark is what every backend receives, Bedrock
+Converse and `InvokeModel`, Responses and Chat included; a native mid-conversation form (a Chat
+`system` or Responses `developer` message) would need a new `llm_core::Item` variant and is not
+used.
 
 **The projection places two prompt-cache breakpoints.** The caller replays the whole transcript on
 every turn, so without them each turn pays the full input rate for everything it resends. A
@@ -91,7 +108,7 @@ begins with the preamble.
 
 Everything else is refused, not dropped: unknown request fields, image, document, search-result and
 server-tool content, citations, a cache mark outside the shape above, a `none` tool choice, a
-`system` block that is not text, and a role outside user/assistant. A translation that silently
+`system` block that is not text, and a role outside user/assistant/system. A translation that silently
 loses a field is a translation that appeared to succeed. A body this projection sends is valid
 ingress input: its breakpoints read back as the `prompt-cache` hint they were placed for.
 

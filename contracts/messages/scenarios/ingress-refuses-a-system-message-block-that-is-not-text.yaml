@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-refuses-a-system-message-block-that-is-not-text
+summary: a block of another type inside a system message is refused by the path of its type (codec.rs system_message, story messages-ingress-system-messages)
+timeline:
+- at: '2026-10-30T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"model":"caller-alias","messages":[{"role":"user","content":"hi"},{"role":"system","content":[{"type":"image","source":{"type":"base64","media_type":"image/png","data":"AA=="}}]}]}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: "unsupported"
+    error_message: "Messages field is outside the declared subset: messages[].content[].type"
+    dispatch: "not-sent"
+    wire_request: null
+    neutral_request: null
+    stream: null
+    items: []
+    omitted_advisories: []

@@ -1,0 +1,30 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-reads-system-messages-as-instructions-and-marked-user-text
+summary: a system message before the conversation joins the instructions; a later one stays in place as user text in the fixed mark (codec.rs decode_messages, story messages-ingress-system-messages)
+timeline:
+- at: '2026-10-30T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"model":"caller-alias","system":"Stay terse","messages":[{"role":"system","content":"Answer in English"},{"role":"user","content":"Summarise the log"},{"role":"assistant","content":"Looking"},{"role":"system","content":"Be brief"},{"role":"user","content":"Go on"}]}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: null
+    neutral_request: '{"format":"llm.turn/3","request":{"model":"caller-alias","instructions":"Stay terse\nAnswer in English","items":[{"kind":"user-text","text":"Summarise the log"},{"kind":"assistant-text","text":"Looking"},{"kind":"user-text","text":"<system-message>\nBe brief\n</system-message>"},{"kind":"user-text","text":"Go on"}],"tools":[],"max_output_tokens":512}}'
+    stream: false
+    items:
+      - "user-text:Summarise the log"
+      - "assistant-text:Looking"
+      - "user-text:<system-message>\nBe brief\n</system-message>"
+      - "user-text:Go on"
+    omitted_advisories: []
