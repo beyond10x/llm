@@ -2,11 +2,14 @@
 format: aep.planning-md/3
 id: story:attempt-record-keeps-the-refusal-cause
 kind: story
-status: draft
+status: proposed
 title: A failed attempt's record keeps the refusal cause
 relations:
 - decomposes: epic:routing
-revision: 1
+- serves: vision:portable-model-inference
+revision: 2
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-30T13:37:15Z", actor: "human:timo", revision: 2}
 ---
 ## Context
 
