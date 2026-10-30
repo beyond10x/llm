@@ -9,7 +9,7 @@
 use crate::{Catalog, MAX_ROUTE_TARGETS, RouteExplanation, Selection};
 use llm_core::{
     AuthKind, BillingKind, BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Model, Provenance,
-    StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
+    RefusalCause, StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
 };
 use std::{
     future::{Future, poll_fn},
@@ -149,6 +149,7 @@ pub enum AttemptResult {
     Failed {
         code: ErrorCode,
         dispatch: Dispatch,
+        refusal: Option<RefusalCause>,
         observation: Option<TurnObservation>,
     },
 }
@@ -545,6 +546,7 @@ fn failed(error: &Error) -> AttemptResult {
     AttemptResult::Failed {
         code: error.code,
         dispatch: error.dispatch,
+        refusal: error.refusal,
         observation: error.observation.as_deref().cloned(),
     }
 }
