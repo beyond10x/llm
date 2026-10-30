@@ -268,10 +268,12 @@ fn eligible_failure_before_output_attempts_only_the_declared_compatible_order() 
         AttemptResult::Failed {
             code,
             dispatch,
+            refusal,
             observation,
         } => {
             assert_eq!(*code, ErrorCode::RateLimited);
             assert_eq!(*dispatch, Dispatch::Rejected);
+            assert_eq!(*refusal, None);
             let observation = observation.as_ref().unwrap();
             assert_eq!(observation.usage, None);
             assert!(!observation.final_usage);
@@ -492,6 +494,12 @@ fn a_refusal_naming_its_cause_halts_as_every_refusal_does_and_keeps_the_cause() 
     assert_eq!(attempted(&run), ["coding-primary"]);
     assert_eq!(models.calls("local-small"), 1);
     assert_eq!(models.calls("remote-large"), 0);
+    match &run.attempts[0].result {
+        AttemptResult::Failed { refusal, .. } => {
+            assert_eq!(*refusal, Some(RefusalCause::ContextLengthExceeded));
+        }
+        AttemptResult::Succeeded { .. } => panic!("primary was scripted to be refused"),
+    }
     let error = run.result.unwrap_err();
     assert_eq!(
         (error.code, error.refusal),
