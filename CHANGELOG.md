@@ -12,7 +12,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - Responses `text.format`, Chat `response_format` and Messages `output_config.format` of type `json_schema` are read on ingress
 - `llm-bedrock`: `WebIdentityCredentials` fetches keys with STS `AssumeRoleWithWebIdentity`, the token read on each fetch
 - `llm-http`: `HttpClient::post_form` sends one form and returns `FormAnswer` (status, headers, bounded body)
-- ESS: 14 `llm.bedrock` web identity scenarios against a loopback STS fixture
+- ESS: 14 `llm.bedrock` web identity scenarios against a loopback STS fixture; the conformance floor is 987 (was 972)
 
 ### Changed
 
