@@ -868,6 +868,209 @@ fn check_request_bounds(headers: &HeaderMap, body: &[u8]) -> Result<(), Error> {
     Ok(())
 }
 
+/// What [`HttpClient::post_form`] read: the answer's status, its headers and its body.
+///
+/// The body is zeroized when the answer is dropped. The `Debug` form shows the status and the
+/// body's length, never the body or a header.
+pub struct FormAnswer {
+    status: u16,
+    headers: HeaderMap,
+    body: Option<zeroize::Zeroizing<Vec<u8>>>,
+}
+
+impl FormAnswer {
+    /// The status code.
+    pub fn status(&self) -> u16 {
+        self.status
+    }
+
+    /// The response headers, for [`status_error`] and [`retry_after`].
+    pub fn headers(&self) -> &HeaderMap {
+        &self.headers
+    }
+
+    /// The body: a success's always; a failing status's only when it arrived whole within
+    /// [`MAX_REFUSAL_BYTES`] and [`REFUSAL_WAIT`].
+    pub fn body(&self) -> Option<&[u8]> {
+        self.body.as_deref().map(Vec::as_slice)
+    }
+}
+
+impl std::fmt::Debug for FormAnswer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FormAnswer")
+            .field("status", &self.status)
+            .field("body_bytes", &self.body.as_ref().map(|body| body.len()))
+            .finish_non_exhaustive()
+    }
+}
+
+const FORM: &str = "application/x-www-form-urlencoded; charset=utf-8";
+
+// One form exchange, for a credential exchange whose failing answers name their class in the
+// body.
+impl HttpClient {
+    /// One form exchange: `form` (the caller's `application/x-www-form-urlencoded` body) out, the
+    /// answer back whatever its status, for a credential exchange whose failing answers name
+    /// their class in the body, as the AWS Security Token Service query API's do.
+    ///
+    /// Sends exactly once with this client's redirect, proxy and deadline rules: a redirect is an
+    /// answer like any other and is never followed, and no ambient proxy is used. Nothing reaches
+    /// a [`ResponseTap`]. A success's body is read up to [`MAX_EXCHANGE_BYTES`] inclusive. A
+    /// failing status's body is read up to [`MAX_REFUSAL_BYTES`] within [`REFUSAL_WAIT`], and
+    /// one that is larger, fails or has not ended by then is left out while its status and
+    /// headers are still answered. The form is zeroized when the client drops it, and the body
+    /// when the answer is dropped; copies inside the HTTP and TLS stack are not.
+    ///
+    /// # Errors
+    /// Invalid URLs and bounds, cancellation, deadlines and transport failures before an answer,
+    /// and a success's body that is larger than the bound, cut or late, each as
+    /// [`HttpClient::post_json`] reports it and final (`retriable` false): whether a credential
+    /// exchange may be repeated is its caller's decision. Polled on a thread in no Tokio runtime
+    /// it is refused as [`HttpClient::post_json`] is.
+    pub async fn post_form(
+        &self,
+        url: &str,
+        headers: HeaderMap,
+        form: Vec<u8>,
+        cancel: &Cancel,
+    ) -> Result<FormAnswer, Error> {
+        let form = zeroize::Zeroizing::new(form);
+        self.form_once(url, headers, form, cancel)
+            .await
+            .map_err(|error| error.with_retriable(false))
+    }
+
+    async fn form_once(
+        &self,
+        url: &str,
+        mut headers: HeaderMap,
+        form: zeroize::Zeroizing<Vec<u8>>,
+        cancel: &Cancel,
+    ) -> Result<FormAnswer, Error> {
+        require_tokio_runtime()?;
+        if cancel.is_cancelled() {
+            return Err(Error::cancelled());
+        }
+        let url = checked_url(url)?;
+        check_request_bounds(&headers, &form)?;
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static(FORM));
+        for value in headers.values_mut() {
+            value.set_sensitive(true);
+        }
+        let started = Instant::now();
+        let deadline = started + self.limits.total;
+        let request = self
+            .client
+            .post(url)
+            .headers(headers)
+            .body(reqwest::Body::from(bytes::Bytes::from_owner(form)))
+            .build()
+            .map_err(|_| Error::invalid("HTTP request could not be constructed"))?;
+        let headers_by = deadline.min(started + self.limits.response_headers);
+        // As in `post_streamed`: each poll of the wait for the answer asks for the runtime.
+        let mut response = tokio::select! {
+            biased;
+            () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Unknown)),
+            reply = within_tokio_runtime(async move { tokio::time::timeout_at(headers_by, self.client.execute(request)).await }) => {
+                reply.map_err(|refusal| refusal.with_dispatch(Dispatch::Unknown))?
+                    .map_err(|_| Error::new(ErrorCode::Deadline, "HTTP response-header deadline exceeded").with_dispatch(Dispatch::Unknown))?
+                    .map_err(|_| Error::new(ErrorCode::Transport, "HTTP request failed").with_dispatch(Dispatch::Unknown))?
+            }
+        };
+        let status = response.status().as_u16();
+        let headers = std::mem::take(response.headers_mut());
+        let body = if response.status().is_success() {
+            Some(self.read_whole(&mut response, cancel, deadline).await?)
+        } else {
+            refusal_bytes(&mut response, cancel, deadline)
+                .await
+                .map_err(|failure| failure.with_dispatch(Dispatch::Accepted))?
+        };
+        Ok(FormAnswer {
+            status,
+            headers,
+            body,
+        })
+    }
+
+    /// A success's body read whole, up to [`MAX_EXCHANGE_BYTES`] inclusive, into one buffer
+    /// reserved at the bound, so it is never reallocated and every byte is zeroized.
+    async fn read_whole(
+        &self,
+        response: &mut Response,
+        cancel: &Cancel,
+        deadline: Instant,
+    ) -> Result<zeroize::Zeroizing<Vec<u8>>, Error> {
+        let too_large = || {
+            Error::too_large(format!(
+                "HTTP answer passed the {MAX_EXCHANGE_BYTES} byte bound"
+            ))
+            .with_dispatch(Dispatch::Accepted)
+        };
+        if response
+            .content_length()
+            .is_some_and(|length| length > MAX_EXCHANGE_BYTES as u64)
+        {
+            return Err(too_large());
+        }
+        let mut answer = zeroize::Zeroizing::new(Vec::with_capacity(MAX_EXCHANGE_BYTES));
+        loop {
+            let until = deadline.min(Instant::now() + self.limits.idle);
+            let chunk = tokio::select! {
+                biased;
+                () = cancel.cancelled() => return Err(Error::cancelled().with_dispatch(Dispatch::Accepted)),
+                chunk = within_tokio_runtime(async { tokio::time::timeout_at(until, response.chunk()).await }) => {
+                    chunk.map_err(|refusal| refusal.with_dispatch(Dispatch::Accepted))?
+                        .map_err(|_| Error::new(ErrorCode::Deadline, "HTTP idle or total deadline exceeded").with_dispatch(Dispatch::Accepted))?
+                        .map_err(|_| Error::new(ErrorCode::Transport, "HTTP response body failed").with_dispatch(Dispatch::Accepted))?
+                }
+            };
+            let Some(chunk) = chunk else { break };
+            if answer.len() + chunk.len() > MAX_EXCHANGE_BYTES {
+                return Err(too_large());
+            }
+            answer.extend_from_slice(&chunk);
+        }
+        Ok(answer)
+    }
+}
+
+/// A failing answer's body, read up to [`MAX_REFUSAL_BYTES`] and for at most [`REFUSAL_WAIT`],
+/// within `deadline` and the caller's cancellation, into one buffer reserved at the bound. `None`
+/// when it is declared or found larger, has not ended in time or fails; cancellation is an error.
+async fn refusal_bytes(
+    response: &mut Response,
+    cancel: &Cancel,
+    deadline: Instant,
+) -> Result<Option<zeroize::Zeroizing<Vec<u8>>>, Error> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > MAX_REFUSAL_BYTES as u64)
+    {
+        return Ok(None);
+    }
+    let read = async {
+        let mut body = zeroize::Zeroizing::new(Vec::with_capacity(MAX_REFUSAL_BYTES));
+        while let Some(chunk) = response.chunk().await.ok()? {
+            if body.len() + chunk.len() > MAX_REFUSAL_BYTES {
+                return None;
+            }
+            body.extend_from_slice(&chunk);
+        }
+        Some(body)
+    };
+    let until = deadline.min(Instant::now() + REFUSAL_WAIT);
+    within_tokio_runtime(async move {
+        tokio::select! {
+            biased;
+            () = cancel.cancelled() => Err(Error::cancelled()),
+            body = tokio::time::timeout_at(until, read) => Ok(body.ok().flatten()),
+        }
+    })
+    .await?
+}
+
 #[cfg(test)]
 mod tests {
     use super::{ACCEPT, Framing, HeaderMap, HttpClient, Limits};

@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: web-identity-the-container-agent-address-is-not-an-sts-endpoint
+summary: "plain http to the Pod Identity agent address, admitted for container credentials, is refused as an STS endpoint"
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.bedrock.FetchWebIdentityCredentials
+  input:
+    endpoint: "http://169.254.170.23/"
+    answer: "Valid"
+    token: true
+    fetches: 1
+  outcome: observed
+assert:
+- view: llm.bedrock.LastWebIdentityCredentials
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastWebIdentityCredentials
+  contains:
+    accepted: false
+    error_code: "unauthorized"
+    dispatch: "not-sent"
+    retriable: false
+    requests: 0
+    diagnostics_safe: true

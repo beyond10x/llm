@@ -6,6 +6,12 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-bedrock`: `WebIdentityCredentials` fetches keys with STS `AssumeRoleWithWebIdentity`, the token read on each fetch
+- `llm-http`: `HttpClient::post_form` sends one form and returns `FormAnswer` (status, headers, bounded body)
+- ESS: 14 `llm.bedrock` web identity scenarios against a loopback STS fixture
+
 ## [0.20.0] - 2026-10-30
 
 ### Added

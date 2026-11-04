@@ -28,6 +28,7 @@ pub use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 pub use runtime::{require_tokio_runtime, within_tokio_runtime};
 pub use sse::{Framing, MAX_EVENT_BYTES, MAX_STREAM_BYTES, SseDecoder, SseEvent};
 pub use transport::{
-    ByteStream, CONNECT_TIMEOUT, HttpClient, Limits, MAX_EXCHANGE_BYTES, MAX_REFUSAL_BYTES,
-    QuotaRule, REFUSAL_WAIT, RefusalRule, ResponseTap, SseStream, retry_after, status_error,
+    ByteStream, CONNECT_TIMEOUT, FormAnswer, HttpClient, Limits, MAX_EXCHANGE_BYTES,
+    MAX_REFUSAL_BYTES, QuotaRule, REFUSAL_WAIT, RefusalRule, ResponseTap, SseStream, retry_after,
+    status_error,
 };
