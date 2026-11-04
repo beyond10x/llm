@@ -11,6 +11,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `Controls::output_format` (`OutputFormat`): a JSON Schema answer format, sent on every wire or refused before I/O
 - Responses `text.format`, Chat `response_format` and Messages `output_config.format` of type `json_schema` are read on ingress
 
+### Changed
+
+- ESS 0.85.0 (was 0.77.0) in CI and `llm-conformance`; the suite gains ESS 0.85.0's `expect_no_error` steps, the schema is unchanged
+
 ## [0.20.0] - 2026-10-30
 
 ### Added

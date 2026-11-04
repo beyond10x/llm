@@ -5920,6 +5920,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -6013,6 +6016,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -6104,6 +6110,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -6215,6 +6224,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -6318,6 +6330,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -6425,6 +6440,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -6530,6 +6548,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -6633,6 +6654,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -6778,6 +6802,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -6919,6 +6946,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -7064,6 +7094,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -7207,6 +7240,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -7310,6 +7346,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -7417,6 +7456,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -7520,6 +7562,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -7627,6 +7672,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -7730,6 +7778,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -7932,6 +7983,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -8099,6 +8153,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -8202,6 +8259,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -8309,6 +8369,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -8414,6 +8477,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -8517,6 +8583,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -8686,6 +8755,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -8851,6 +8923,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -9020,6 +9095,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -9187,6 +9265,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -9290,6 +9371,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -9459,6 +9543,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -9562,6 +9649,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -9669,6 +9759,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -9772,6 +9865,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -9941,6 +10037,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -10106,6 +10205,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -10275,6 +10377,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -10378,6 +10483,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -10553,6 +10661,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -10718,6 +10829,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -10887,6 +11001,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -11052,6 +11169,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -11236,6 +11356,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -11418,6 +11541,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -11583,6 +11709,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -11752,6 +11881,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -11893,6 +12025,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -12062,6 +12197,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -12227,6 +12365,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -12396,6 +12537,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -12539,6 +12683,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -12642,6 +12789,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -12811,6 +12961,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.accounting.LastQuote"
         },
@@ -12976,6 +13129,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -14179,6 +14335,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastContainerCredentials"
         },
@@ -14294,6 +14453,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -14413,6 +14575,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastContainerCredentials"
         },
@@ -14524,6 +14689,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -14639,6 +14807,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastContainerCredentials"
         },
@@ -14750,6 +14921,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -14865,6 +15039,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastContainerCredentials"
         },
@@ -14978,6 +15155,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastContainerCredentials"
         },
@@ -15087,6 +15267,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastContainerCredentials"
         },
@@ -15174,6 +15357,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -15267,6 +15453,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -15364,6 +15553,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -15465,6 +15657,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastFrames"
         },
@@ -15552,6 +15747,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -15643,6 +15841,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastFrames"
         },
@@ -15730,6 +15931,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -15821,6 +16025,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastFrames"
         },
@@ -15908,6 +16115,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -16022,6 +16232,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastFrames"
         },
@@ -16109,6 +16322,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -16200,6 +16416,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastFrames"
         },
@@ -16287,6 +16506,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -16401,6 +16623,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastSigning"
         },
@@ -16488,6 +16713,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -16579,6 +16807,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastSigning"
         },
@@ -16666,6 +16897,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -16757,6 +16991,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastSigning"
         },
@@ -16844,6 +17081,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -16935,6 +17175,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastSigning"
         },
@@ -17022,6 +17265,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -17143,6 +17389,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -17270,6 +17519,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastTurn"
         },
@@ -17389,6 +17641,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -17570,6 +17825,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastTurn"
         },
@@ -17681,6 +17939,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -17798,6 +18059,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -17927,6 +18191,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -18062,6 +18329,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastTurn"
         },
@@ -18177,6 +18447,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -18338,6 +18611,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastTurn"
         },
@@ -18479,6 +18755,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -18644,6 +18923,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.bedrock.LastTurn"
         },
@@ -18759,6 +19041,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -26619,6 +26904,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -26706,6 +26994,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -26817,6 +27108,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -26908,6 +27202,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -27003,6 +27300,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -27090,6 +27390,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -27215,6 +27518,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -27314,6 +27620,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -27417,6 +27726,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -27516,6 +27828,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -27619,6 +27934,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -27720,6 +28038,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -27817,6 +28138,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -27904,6 +28228,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -28003,6 +28330,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -28093,6 +28423,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -28188,6 +28521,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -28275,6 +28611,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -28366,6 +28705,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -28453,6 +28795,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -28552,6 +28897,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -28643,6 +28991,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -28738,6 +29089,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -28829,6 +29183,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -28964,6 +29321,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -29091,6 +29451,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -29222,6 +29585,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -29339,6 +29705,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -29430,6 +29799,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -29545,6 +29917,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -29684,6 +30059,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -29771,6 +30149,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -29898,6 +30279,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -29989,6 +30373,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -30116,6 +30503,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastResponseProjection"
         },
@@ -30239,6 +30629,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -30331,6 +30724,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -30453,6 +30849,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -30540,6 +30939,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -30631,6 +31033,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -30714,6 +31119,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -30809,6 +31217,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -30900,6 +31311,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -31007,6 +31421,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -31090,6 +31507,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -31179,6 +31599,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -31276,6 +31699,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -31379,6 +31805,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -31476,6 +31905,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -31563,6 +31995,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -31654,6 +32089,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -31743,6 +32181,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -31826,6 +32267,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -31917,6 +32361,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -32004,6 +32451,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -32095,6 +32545,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -32194,6 +32647,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -32277,6 +32733,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -32374,6 +32833,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -32480,6 +32942,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -32572,6 +33037,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -32661,6 +33129,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -32748,6 +33219,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -32843,6 +33317,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -32930,6 +33407,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -33021,6 +33501,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -33108,6 +33591,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -33199,6 +33685,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -33286,6 +33775,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -33377,6 +33869,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -33464,6 +33959,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -33555,6 +34053,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -33642,6 +34143,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -33741,6 +34245,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -33828,6 +34335,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -33923,6 +34433,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -34008,6 +34521,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -34091,6 +34607,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -34198,6 +34717,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -34289,6 +34811,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -34384,6 +34909,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressResponse"
         },
@@ -34463,6 +34991,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -34548,6 +35079,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -34637,6 +35171,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -34736,6 +35273,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastIngressRequest"
         },
@@ -34831,6 +35371,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -34942,6 +35485,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -35057,6 +35603,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -35160,6 +35709,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -35281,6 +35833,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -35380,6 +35935,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -35483,6 +36041,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -35582,6 +36143,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -35689,6 +36253,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -35786,6 +36353,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -35881,6 +36451,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -35986,6 +36559,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -36089,6 +36665,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -36201,6 +36780,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -36346,6 +36928,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -36441,6 +37026,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -36554,6 +37142,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -36641,6 +37232,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -36748,6 +37342,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -36849,6 +37446,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.chat.LastRequestProjection"
         },
@@ -36932,6 +37532,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -37021,6 +37624,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -37126,6 +37732,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -37486,6 +38095,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -37609,6 +38221,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -37736,6 +38351,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -37859,6 +38477,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -37986,6 +38607,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -38109,6 +38733,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -38236,6 +38863,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -38359,6 +38989,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -38486,6 +39119,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -38609,6 +39245,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -38736,6 +39375,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -38859,6 +39501,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -38986,6 +39631,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -39109,6 +39757,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -39236,6 +39887,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -39359,6 +40013,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -39486,6 +40143,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -39609,6 +40269,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -39736,6 +40399,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -39859,6 +40525,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -39986,6 +40655,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -40109,6 +40781,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -40236,6 +40911,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -40361,6 +41039,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -40484,6 +41165,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -40615,6 +41299,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -40738,6 +41425,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -40865,6 +41555,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -40990,6 +41683,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -41113,6 +41809,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -41244,6 +41943,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -41367,6 +42069,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -41494,6 +42199,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -41617,6 +42325,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -41744,6 +42455,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -41867,6 +42581,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -41994,6 +42711,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -42117,6 +42837,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -42244,6 +42967,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -42369,6 +43095,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.inference.LastResult"
         },
@@ -42492,6 +43221,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -44249,6 +44981,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastPresentation"
         },
@@ -44351,6 +45086,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -44460,6 +45198,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -44586,6 +45327,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -44673,6 +45417,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -44828,6 +45575,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastIngressEncoding"
         },
@@ -44940,6 +45690,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -45047,6 +45800,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastSessionInspection"
         },
@@ -45144,6 +45900,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -45247,6 +46006,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -45362,6 +46124,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastPresentation"
         },
@@ -45459,6 +46224,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -45594,6 +46362,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -45709,6 +46480,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -45885,6 +46659,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastIngressEncoding"
         },
@@ -46005,6 +46782,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastIngressEncoding"
         },
@@ -46110,6 +46890,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastIngressEncoding"
         },
@@ -46209,6 +46992,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -46312,6 +47098,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -46427,6 +47216,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastPresentation"
         },
@@ -46540,6 +47332,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -46679,6 +47474,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -46784,6 +47582,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -46887,6 +47688,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -46966,6 +47770,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -47051,6 +47858,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -47190,6 +48000,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -47325,6 +48138,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -47456,6 +48272,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -47591,6 +48410,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -47696,6 +48518,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -47805,6 +48630,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -47920,6 +48748,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastIngressEncoding"
         },
@@ -48028,6 +48859,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastIngressEncoding"
         },
@@ -48131,6 +48965,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -48249,6 +49086,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastPresentation"
         },
@@ -48349,6 +49189,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -48454,6 +49297,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -48593,6 +49439,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastSessionInspection"
         },
@@ -48696,6 +49545,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -48835,6 +49687,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -48968,6 +49823,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -49079,6 +49937,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -49182,6 +50043,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -49319,6 +50183,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -49450,6 +50317,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -49589,6 +50459,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -49724,6 +50597,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -49825,6 +50701,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -49960,6 +50839,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -50061,6 +50943,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -50196,6 +51081,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -50329,6 +51217,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -50432,6 +51323,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -50539,6 +51433,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -50678,6 +51575,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -50785,6 +51685,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -50890,6 +51793,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -51027,6 +51933,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -51132,6 +52041,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -51241,6 +52153,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -51346,6 +52261,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -51457,6 +52375,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -51562,6 +52483,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -51674,6 +52598,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -51779,6 +52706,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -51890,6 +52820,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -51997,6 +52930,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -52130,6 +53066,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -52269,6 +53208,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -52406,6 +53348,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -52513,6 +53458,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -52648,6 +53596,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -52755,6 +53706,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -52890,6 +53844,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -53023,6 +53980,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -53130,6 +54090,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -53265,6 +54228,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -53372,6 +54338,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -53483,6 +54452,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -53592,6 +54564,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -53699,6 +54674,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -53832,6 +54810,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -53971,6 +54952,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastSessionInspection"
         },
@@ -54079,6 +55063,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -54180,6 +55167,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -54315,6 +55305,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -54416,6 +55409,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -54553,6 +55549,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -54693,6 +55692,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -54792,6 +55794,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -54934,6 +55939,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -55065,6 +56073,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -55200,6 +56211,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -55331,6 +56345,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -55468,6 +56485,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -55555,6 +56575,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -55694,6 +56717,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -55830,6 +56856,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -55931,6 +56960,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -56070,6 +57102,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -56175,6 +57210,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -56270,6 +57308,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -56410,6 +57451,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -56546,6 +57590,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -56686,6 +57733,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -56823,6 +57873,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -56956,6 +58009,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -57093,6 +58149,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -57224,6 +58283,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -57363,6 +58425,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.messages.LastInspection"
         },
@@ -57498,6 +58563,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -58186,6 +59254,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.models.LastConstruction"
         },
@@ -58283,6 +59354,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -58388,6 +59462,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.models.LastConstruction"
         },
@@ -58487,6 +59564,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.models.LastConstruction"
         },
@@ -58582,6 +59662,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -58682,6 +59765,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -58793,6 +59879,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.models.LastCatalogConstruction"
         },
@@ -58893,6 +59982,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -59544,6 +60636,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -59681,6 +60776,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -59794,6 +60892,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -59899,6 +61000,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -60002,6 +61106,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -60111,6 +61218,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -60226,6 +61336,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -60313,6 +61426,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -60426,6 +61542,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -60565,6 +61684,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -60690,6 +61812,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -60799,6 +61924,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -60902,6 +62030,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -61009,6 +62140,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -61102,6 +62236,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastDescription"
         },
@@ -61193,6 +62330,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -61292,6 +62432,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastDescription"
         },
@@ -61383,6 +62526,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -61480,6 +62626,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -61613,6 +62762,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -61742,6 +62894,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -61841,6 +62996,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -61972,6 +63130,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -62059,6 +63220,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -62166,6 +63330,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -62271,6 +63438,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -62374,6 +63544,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -62493,6 +63666,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -62608,6 +63784,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -62759,6 +63938,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -62876,6 +64058,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -62977,6 +64162,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastDescription"
         },
@@ -63072,6 +64260,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -63171,6 +64362,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastDescription"
         },
@@ -63268,6 +64462,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastDescription"
         },
@@ -63363,6 +64560,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -63476,6 +64676,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -63593,6 +64796,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -63704,6 +64910,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -63847,6 +65056,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -63958,6 +65170,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -64093,6 +65308,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -64188,6 +65406,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -64303,6 +65524,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -64408,6 +65632,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -64523,6 +65750,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -64614,6 +65844,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -64723,6 +65956,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -64836,6 +66072,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -64953,6 +66192,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -65066,6 +66308,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -65183,6 +66428,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -65296,6 +66544,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -65413,6 +66664,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -65528,6 +66782,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -65641,6 +66898,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastDescription"
         },
@@ -65732,6 +66992,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -65827,6 +67090,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastDescription"
         },
@@ -65918,6 +67184,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -66027,6 +67296,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -66142,6 +67414,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastDescription"
         },
@@ -66253,6 +67528,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -66384,6 +67662,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -66513,6 +67794,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -66640,6 +67924,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -66775,6 +68062,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -66902,6 +68192,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -67033,6 +68326,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -67162,6 +68458,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -67265,6 +68564,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -67378,6 +68680,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -67538,6 +68843,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.providers.LastPreparation"
         },
@@ -67649,6 +68957,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -68840,6 +70151,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -68927,6 +70241,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -69020,6 +70337,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -69135,6 +70455,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -69222,6 +70545,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -69330,6 +70656,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -69447,6 +70776,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -69544,6 +70876,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -69635,6 +70970,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -69732,6 +71070,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -69825,6 +71166,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -69940,6 +71284,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -70035,6 +71382,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -70138,6 +71488,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -70229,6 +71582,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -70340,6 +71696,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -70431,6 +71790,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -70526,6 +71888,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -70617,6 +71982,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -70726,6 +72094,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -70845,6 +72216,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -70991,6 +72365,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -71088,6 +72465,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -71179,6 +72559,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -71286,6 +72669,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -71389,6 +72775,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -71496,6 +72885,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -71599,6 +72991,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -71706,6 +73101,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -71809,6 +73207,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -71927,6 +73328,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -72022,6 +73426,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -72109,6 +73516,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -72204,6 +73614,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -72293,6 +73706,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -72380,6 +73796,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -72477,6 +73896,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -72584,6 +74006,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -72689,6 +74114,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -72784,6 +74212,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -72883,6 +74314,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -72976,6 +74410,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -73067,6 +74504,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -73180,6 +74620,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -73271,6 +74714,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -73370,6 +74816,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -73461,6 +74910,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -73556,6 +75008,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -73647,6 +75102,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -73750,6 +75208,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -73843,6 +75304,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -73934,6 +75398,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -74051,6 +75518,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -74156,6 +75626,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -74251,6 +75724,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -74378,6 +75854,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -74477,6 +75956,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -74651,6 +76133,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -74790,6 +76275,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -74911,6 +76399,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -75020,6 +76511,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -75119,6 +76613,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -75238,6 +76735,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -75341,6 +76841,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -75469,6 +76972,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -75572,6 +77078,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -75704,6 +77213,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -75813,6 +77325,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngressEncoding"
         },
@@ -75904,6 +77419,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -76010,6 +77528,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -76112,6 +77633,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -76221,6 +77745,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -76326,6 +77853,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -76421,6 +77951,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -76522,6 +78055,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -76648,6 +78184,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -76750,6 +78289,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -76870,6 +78412,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -76965,6 +78510,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -77064,6 +78612,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -77161,6 +78712,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -77256,6 +78810,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -77359,6 +78916,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -77458,6 +79018,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -77561,6 +79124,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -77656,6 +79222,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -77759,6 +79328,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -77858,6 +79430,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -77961,6 +79536,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -78056,6 +79634,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -78155,6 +79736,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -78252,6 +79836,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -78347,6 +79934,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -78450,6 +80040,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -78545,6 +80138,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -78648,6 +80244,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -78745,6 +80344,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -78840,6 +80442,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -78943,6 +80548,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -79038,6 +80646,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -79141,6 +80752,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -79236,6 +80850,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -79339,6 +80956,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -79440,6 +81060,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -79535,6 +81158,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -79638,6 +81264,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -79733,6 +81362,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -79836,6 +81468,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -79933,6 +81568,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -80028,6 +81666,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -80131,6 +81772,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -80228,6 +81872,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -80323,6 +81970,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -80426,6 +82076,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -80525,6 +82178,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -80628,6 +82284,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -80727,6 +82386,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -80830,6 +82492,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -80929,6 +82594,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -81032,6 +82700,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastIngestion"
         },
@@ -81131,6 +82802,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -81241,6 +82915,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -81334,6 +83011,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -81432,6 +83112,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -81528,6 +83211,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -81622,6 +83308,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -81723,6 +83412,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -81819,6 +83511,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -81913,6 +83608,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -82012,6 +83710,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -82105,6 +83806,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -82204,6 +83908,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -82298,6 +84005,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -82416,6 +84126,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -82507,6 +84220,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -82618,6 +84334,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -82707,6 +84426,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -82816,6 +84538,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -82911,6 +84636,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -83044,6 +84772,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -83133,6 +84864,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -83220,6 +84954,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -83321,6 +85058,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -83412,6 +85152,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -83511,6 +85254,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -83636,6 +85382,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -83734,6 +85483,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastStream"
         },
@@ -83829,6 +85581,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.responses.LastProjection"
         },
@@ -83916,6 +85671,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -84011,6 +85769,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -84123,6 +85884,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -84781,6 +86545,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -84871,6 +86638,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -84988,6 +86758,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -85081,6 +86854,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -85180,6 +86956,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -85287,6 +87066,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastAuthentication"
         },
@@ -85376,6 +87158,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -85471,6 +87256,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastAuthentication"
         },
@@ -85560,6 +87348,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -85661,6 +87452,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -85754,6 +87548,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -85859,6 +87656,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -85960,6 +87760,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -86059,6 +87862,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -86146,6 +87952,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -86253,6 +88062,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -86357,6 +88169,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -86454,6 +88269,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastAuthentication"
         },
@@ -86543,6 +88361,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -86648,6 +88469,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -86749,6 +88573,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -86854,6 +88681,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -86947,6 +88777,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -87052,6 +88885,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -87153,6 +88989,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -87258,6 +89097,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -87359,6 +89201,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -87464,6 +89309,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastLoad"
         },
@@ -87565,6 +89413,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -87672,6 +89523,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routes.LastAuthentication"
         },
@@ -87763,6 +89617,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -88436,6 +90293,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -88545,6 +90405,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -88646,6 +90509,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -88737,6 +90603,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -88856,6 +90725,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -88961,6 +90833,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -89054,6 +90929,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -89145,6 +91023,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -89244,6 +91125,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -89341,6 +91225,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -89428,6 +91315,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -89519,6 +91409,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -89606,6 +91499,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -89715,6 +91611,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -89806,6 +91705,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -89905,6 +91807,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -90000,6 +91905,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -90099,6 +92007,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -90186,6 +92097,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -90281,6 +92195,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -90364,6 +92281,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -90463,6 +92383,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -90552,6 +92475,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -90635,6 +92561,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -90734,6 +92663,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -90827,6 +92759,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -90924,6 +92859,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -91047,6 +92985,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -91142,6 +93083,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -91242,6 +93186,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -91334,6 +93281,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -91421,6 +93371,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -91544,6 +93497,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -91673,6 +93629,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -91763,6 +93722,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -91865,6 +93827,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -91962,6 +93927,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -92071,6 +94039,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -92162,6 +94133,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -92289,6 +94263,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -92392,6 +94369,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -92501,6 +94481,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -92614,6 +94597,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -92725,6 +94711,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -92824,6 +94813,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -92921,6 +94913,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -93030,6 +95025,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -93145,6 +95143,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -93228,6 +95229,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -93343,6 +95347,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -93432,6 +95439,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -93519,6 +95529,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -93634,6 +95647,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -93721,6 +95737,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -93812,6 +95831,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -93899,6 +95921,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -93991,6 +96016,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -94106,6 +96134,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -94217,6 +96248,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -94332,6 +96366,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -94425,6 +96462,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -94516,6 +96556,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -94627,6 +96670,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -94732,6 +96778,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -94869,6 +96918,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -94980,6 +97032,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -95079,6 +97134,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -95182,6 +97240,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -95281,6 +97342,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -95391,6 +97455,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -95491,6 +97558,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -95599,6 +97669,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -95714,6 +97787,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -95837,6 +97913,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -95955,6 +98034,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -96062,6 +98144,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -96164,6 +98249,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -96291,6 +98379,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -96415,6 +98506,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastFallback"
         },
@@ -96510,6 +98604,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -96625,6 +98722,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -96718,6 +98818,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -96805,6 +98908,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -96900,6 +99006,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -96993,6 +99102,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -97082,6 +99194,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.routing.LastEvaluation"
         },
@@ -97169,6 +99284,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -97266,6 +99384,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -99127,6 +101248,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -99268,6 +101392,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -99399,6 +101526,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -99542,6 +101672,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -99669,6 +101802,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -99828,6 +101964,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -99973,6 +102112,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -100104,6 +102246,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -100243,6 +102388,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -100378,6 +102526,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -100517,6 +102668,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -100644,6 +102798,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -100795,6 +102952,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -100936,6 +103096,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -101073,6 +103236,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -101204,6 +103370,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -101341,6 +103510,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -101496,6 +103668,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -101629,6 +103804,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -101758,6 +103936,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -101885,6 +104066,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -102036,6 +104220,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -102177,6 +104364,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -102308,6 +104498,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -102445,6 +104638,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -102588,6 +104784,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -102725,6 +104924,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -102856,6 +105058,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -102995,6 +105200,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -103118,6 +105326,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -103247,6 +105458,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -103386,6 +105600,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -103523,6 +105740,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -103650,6 +105870,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -103789,6 +106012,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastRenewal"
         },
@@ -103880,6 +106106,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -103991,6 +106220,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -104086,6 +106318,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -104207,6 +106442,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -104338,6 +106576,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -104467,6 +106708,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -104594,6 +106838,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -104729,6 +106976,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -104862,6 +107112,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -104991,6 +107244,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -105118,6 +107374,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -105253,6 +107512,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -105384,6 +107646,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -105519,6 +107784,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -105646,6 +107914,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -105777,6 +108048,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -105906,6 +108180,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -106021,6 +108298,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -106150,6 +108430,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -106285,6 +108568,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -106412,6 +108698,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -106543,6 +108832,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -106670,6 +108962,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -106801,6 +109096,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -106916,6 +109214,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -107035,6 +109336,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -107150,6 +109454,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -107269,6 +109576,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -107384,6 +109694,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -107503,6 +109816,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -107618,6 +109934,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -107737,6 +110056,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -107854,6 +110176,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -107967,6 +110292,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -108072,6 +110400,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -108173,6 +110504,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -108268,6 +110602,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -108375,6 +110712,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -108478,6 +110818,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -108593,6 +110936,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -108704,6 +111050,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -108831,6 +111180,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -108954,6 +111306,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -109081,6 +111436,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -109204,6 +111562,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -109331,6 +111692,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -109456,6 +111820,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.secrets.LastProbe"
         },
@@ -109579,6 +111946,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -110208,6 +112578,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -110287,6 +112660,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -110374,6 +112750,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -110457,6 +112836,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -110550,6 +112932,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -110633,6 +113018,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -110726,6 +113114,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -110811,6 +113202,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -110894,6 +113288,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -110992,6 +113389,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -111071,6 +113471,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -111154,6 +113557,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -111233,6 +113639,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -111318,6 +113727,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -111406,6 +113818,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -111497,6 +113912,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -111582,6 +114000,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -111665,6 +114086,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -111756,6 +114180,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -111837,6 +114264,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -111912,6 +114342,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -111993,6 +114426,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -112090,6 +114526,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -112169,6 +114608,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -112256,6 +114698,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -112341,6 +114786,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -112424,6 +114872,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -112503,6 +114954,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -112604,6 +115058,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -112693,6 +115150,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -112772,6 +115232,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -112855,6 +115318,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -112930,6 +115396,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -113013,6 +115482,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -113094,6 +115566,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -113213,6 +115688,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -113296,6 +115774,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -113387,6 +115868,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -113486,6 +115970,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -113569,6 +116056,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -113668,6 +116158,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastJsonExchange"
         },
@@ -113761,6 +116254,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastJsonExchange"
         },
@@ -113844,6 +116340,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -113935,6 +116434,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastJsonExchange"
         },
@@ -114022,6 +116524,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -114113,6 +116618,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastJsonExchange"
         },
@@ -114198,6 +116706,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastJsonExchange"
         },
@@ -114273,6 +116784,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -114356,6 +116870,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastJsonExchange"
         },
@@ -114435,6 +116952,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -114526,6 +117046,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -114609,6 +117132,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -114696,6 +117222,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -114781,6 +117310,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -114864,6 +117396,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -114961,6 +117496,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -115044,6 +117582,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -115135,6 +117676,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -115224,6 +117768,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -115307,6 +117854,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -115394,6 +117944,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -115477,6 +118030,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -115572,6 +118128,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -115655,6 +118214,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -115742,6 +118304,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -115825,6 +118390,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -115918,6 +118486,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -115999,6 +118570,9 @@
           "step": "expect_outcome"
         },
         {
+          "step": "expect_no_error"
+        },
+        {
           "step": "query_view",
           "view": "llm.transport.LastExchange"
         },
@@ -116078,6 +118652,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
@@ -116162,6 +118739,9 @@
             "outcome": "observed"
           },
           "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
         },
         {
           "step": "query_view",
