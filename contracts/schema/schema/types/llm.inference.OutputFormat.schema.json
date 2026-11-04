@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.OutputFormat",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "3e620c3e5a506b4ef075b17f1509196edb2a74d6db2d58d487abb5586f0c1133",
+    "contract_digest": "slice-sha256/2:302250ff6facf64d638d2e723230a74048b7843f14083ce46089e35542b21f39",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.OutputFormat": {
+      "title": "OutputFormat",
+      "x-ess-name": "llm.inference.OutputFormat",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "strict": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
