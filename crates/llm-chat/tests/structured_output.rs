@@ -39,7 +39,7 @@ fn turn(format: OutputFormat) -> TurnRequest {
     request
 }
 
-fn with_format(format: Value) -> Value {
+fn with_format(format: &Value) -> Value {
     json!({
         "model": "small",
         "messages": [{"role": "user", "content": "Where is the tower?"}],
@@ -186,7 +186,7 @@ fn ingress_reads_response_format_and_the_turn_projects_back_to_the_same_format()
                "json_schema": {"name": "place", "schema": schema(), "strict": false}}),
         json!({"type": "json_schema", "json_schema": {"name": "place", "schema": schema()}}),
     ] {
-        let request = decode_ingress_request(&with_format(format.clone()))
+        let request = decode_ingress_request(&with_format(&format))
             .expect("inside the subset")
             .request;
         let expected = OutputFormat::json_schema(schema()).with_name("place");
@@ -208,7 +208,7 @@ fn ingress_reads_response_format_and_the_turn_projects_back_to_the_same_format()
 #[test]
 fn ingress_reads_the_text_type_and_null_as_no_format() {
     for format in [json!({"type": "text"}), Value::Null] {
-        let request = decode_ingress_request(&with_format(format.clone()))
+        let request = decode_ingress_request(&with_format(&format))
             .expect("the default format")
             .request;
         assert_eq!(request.controls.output_format, None, "{format}");
@@ -218,7 +218,7 @@ fn ingress_reads_the_text_type_and_null_as_no_format() {
 /// JSON mode asks for any JSON at all, which no JSON Schema the neutral turn holds says.
 #[test]
 fn ingress_refuses_json_mode_by_its_type() {
-    let error = refused(&with_format(json!({"type": "json_object"})));
+    let error = refused(&with_format(&json!({"type": "json_object"})));
     assert_eq!(error.code, ErrorCode::Unsupported);
     assert_eq!(
         error.message,
@@ -229,7 +229,7 @@ fn ingress_refuses_json_mode_by_its_type() {
         if !kind.is_null() {
             format["type"] = kind.clone();
         }
-        let error = refused(&with_format(format));
+        let error = refused(&with_format(&format));
         assert_eq!(error.code, ErrorCode::Unsupported, "{kind}");
         assert_eq!(
             error.message, "chat response_format type is outside the published subset",
@@ -256,7 +256,7 @@ fn a_key_inside_response_format_outside_the_subset_is_refused_by_its_path() {
             "response_format.json_schema",
         ),
     ] {
-        let error = refused(&with_format(format));
+        let error = refused(&with_format(&format));
         assert_eq!(error.code, ErrorCode::Unsupported, "{path}");
         assert_eq!(
             error.message,
@@ -294,12 +294,12 @@ fn a_member_of_the_wrong_type_is_refused_as_invalid() {
             "chat response_format strict is not a boolean",
         ),
     ] {
-        let error = refused(&with_format(format.clone()));
+        let error = refused(&with_format(&format));
         assert_eq!(error.code, ErrorCode::InvalidRequest, "{format}");
         assert_eq!(error.message, message, "{format}");
     }
     // A name the neutral turn cannot hold is the turn's own refusal.
-    let error = refused(&with_format(json!({"type": "json_schema",
+    let error = refused(&with_format(&json!({"type": "json_schema",
         "json_schema": {"name": "a place", "schema": schema()}})));
     assert_eq!(error.code, ErrorCode::InvalidRequest);
     assert_eq!(

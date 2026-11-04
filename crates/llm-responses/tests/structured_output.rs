@@ -32,7 +32,7 @@ fn turn(format: OutputFormat) -> TurnRequest {
 }
 
 /// One authored wire body, `text` set to `text`.
-fn wire_body(text: Value) -> Value {
+fn wire_body(text: &Value) -> Value {
     json!({
         "model": "example/Small-Model",
         "input": [{"type": "message", "role": "user",
@@ -130,7 +130,7 @@ fn ingress_reads_text_format_and_the_turn_projects_back_to_the_same_body() {
         json!({"type": "json_schema", "name": "place", "schema": schema(), "strict": false}),
         json!({"type": "json_schema", "name": "place", "schema": schema()}),
     ] {
-        let body = wire_body(json!({"format": format, "verbosity": "high"}));
+        let body = wire_body(&json!({"format": format, "verbosity": "high"}));
         let request = ingest_request(&binding(), &body).expect("inside the subset");
         let expected = OutputFormat::json_schema(schema()).with_name("place");
         let expected = match format.get("strict").and_then(Value::as_bool) {
@@ -150,18 +150,18 @@ fn ingress_reads_text_format_and_the_turn_projects_back_to_the_same_body() {
 /// `{"type": "text"}` is this wire's documented default, which a turn without a format asks for.
 #[test]
 fn ingress_reads_the_text_type_as_no_format() {
-    let request = ingest_request(&binding(), &wire_body(json!({"format": {"type": "text"}})))
+    let request = ingest_request(&binding(), &wire_body(&json!({"format": {"type": "text"}})))
         .expect("the default format");
     assert_eq!(request.controls.output_format, None);
     let request =
-        ingest_request(&binding(), &wire_body(json!({"format": null}))).expect("an explicit null");
+        ingest_request(&binding(), &wire_body(&json!({"format": null}))).expect("an explicit null");
     assert_eq!(request.controls.output_format, None);
 }
 
 /// JSON mode asks for any JSON at all, which no JSON Schema the neutral turn holds says.
 #[test]
 fn ingress_refuses_json_mode_by_its_type() {
-    let error = refused(&wire_body(json!({"format": {"type": "json_object"}})));
+    let error = refused(&wire_body(&json!({"format": {"type": "json_object"}})));
     assert_eq!(error.code, ErrorCode::Unsupported);
     assert_eq!(
         error.message,
@@ -172,7 +172,7 @@ fn ingress_refuses_json_mode_by_its_type() {
         if !kind.is_null() {
             format["type"] = kind.clone();
         }
-        let error = refused(&wire_body(json!({"format": format})));
+        let error = refused(&wire_body(&json!({"format": format})));
         assert_eq!(error.code, ErrorCode::Unsupported, "{kind}");
         assert_eq!(
             error.message, "`text.format.type` is outside the pinned subset",
@@ -194,7 +194,7 @@ fn a_key_inside_text_format_outside_the_subset_is_refused_by_its_path() {
         ),
         (json!({"type": "text", "name": "place"}), "text.format.name"),
     ] {
-        let error = refused(&wire_body(json!({"format": format})));
+        let error = refused(&wire_body(&json!({"format": format})));
         assert_eq!(error.code, ErrorCode::Unsupported, "{path}");
         assert_eq!(
             error.message,
@@ -228,12 +228,12 @@ fn a_member_of_the_wrong_type_is_refused_as_invalid() {
             "`text.format.strict` is not a boolean",
         ),
     ] {
-        let error = refused(&wire_body(json!({"format": format})));
+        let error = refused(&wire_body(&json!({"format": format})));
         assert_eq!(error.code, ErrorCode::InvalidRequest, "{format}");
         assert_eq!(error.message, message, "{format}");
     }
     // A name the neutral turn cannot hold is the turn's own refusal.
-    let error = refused(&wire_body(json!({"format":
+    let error = refused(&wire_body(&json!({"format":
         {"type": "json_schema", "name": "place.v1", "schema": schema()}})));
     assert_eq!(error.code, ErrorCode::InvalidRequest);
     assert_eq!(
