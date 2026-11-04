@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:structured-output
 kind: story
-status: draft
+status: active
 title: A turn asks for JSON-schema structured output on every wire
 tags:
 - from-adopter-report
@@ -42,7 +42,10 @@ scope:
   path: spec/domains/messages.yaml
 - confidence: inferred
   path: spec/domains/responses.yaml
-revision: 17
+revision: 20
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-04T07:35:27Z", actor: "human:timo", revision: 18}
+- {from: "proposed", to: "active", at: "2026-11-04T07:35:27Z", actor: "human:timo", revision: 19}
 ---
 ## Context
 
@@ -78,19 +81,19 @@ refuses it before I/O; none drops it.
 
 ## Acceptance
 
-- The neutral turn carries an optional output format: a name, a JSON Schema and a strict flag.
-  Empty is the 0.20.0 turn exactly, byte for byte in `TurnDocument`.
+- `Controls` carries an optional output format (`Option`, absent by default): a name, a JSON Schema
+  and a strict flag. Absent is the 0.20.0 turn exactly, byte for byte in `TurnDocument`. Additive
+  only (approval-record:wave-2026-11-04-w25-proposal): no field on `TurnRequest` or `Capabilities`,
+  no new variant on a public enum.
 - Responses sends it as `text.format`, Chat as `response_format`, Messages and Anthropic InvokeModel
   as `output_config.format`, Bedrock Converse as `outputConfig.textFormat`; each is a recorded fixture
   body.
 - The Responses, Chat and Messages ingress decoders read the same fields into the neutral format
   instead of refusing them, and the ingress encoders round-trip them; an unknown key inside them is
   still refused by its path.
-- A field a wire cannot carry (Messages has no `name`, no `strict`) is reported as an advisory
-  omission or refused by name, as `docs/design.md` "Client request fields" decides; never dropped
-  silently.
-- A catalog capability says whether a model takes structured output; selection rejects a target
-  without it by a named `Rejection`, and no fallback moves a structured-output turn to such a target.
+- A member a wire has no place for (Messages and Converse have no `strict`) is refused by name before
+  I/O, or, where `docs/design.md` "Client request fields" classes it as a label the wire has no
+  place for, written there as not sent; never dropped silently, and no new `Advisory` variant.
 - The assistant text is returned as text; llm does not validate it against the schema and says so in
   `docs/design.md`.
 - ESS: the `llm.inference` domain and the four protocol domains declare the field; authored

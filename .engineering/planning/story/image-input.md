@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:image-input
 kind: story
-status: draft
+status: active
 title: A user turn carries an image on every wire
 tags:
 - from-adopter-report
@@ -46,7 +46,10 @@ scope:
   path: spec/domains/messages.yaml
 - confidence: inferred
   path: spec/domains/responses.yaml
-revision: 19
+revision: 22
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 20}
+- {from: "proposed", to: "active", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 21}
 ---
 ## Context
 
@@ -94,3 +97,10 @@ A caller sends an image in a user turn, and every wire carries it or refuses it 
 ## Verification
 
 Targeted tests per touched crate, fixture bodies per wire, conformance scenarios. No live call.
+
+## Held
+
+Wave 2026-11-04-w25 runs additive only (approval-record:wave-2026-11-04-w25-proposal). `Item`
+(`crates/llm-core/src/item.rs:17`) is not `#[non_exhaustive]`, and a new variant breaks every
+consumer that matches it exhaustively. The story does not run until the operator decides how the
+break ships.
