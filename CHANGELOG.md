@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- ESS 0.85.0 (was 0.77.0) in CI and `llm-conformance`; the suite gains ESS 0.85.0's `expect_no_error` steps, the schema is unchanged
+
 ## [0.20.0] - 2026-10-30
 
 ### Added

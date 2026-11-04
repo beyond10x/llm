@@ -34,7 +34,7 @@ jobs:
           cargo install --locked --git https://github.com/beyond10x/aep.git --rev 6d7a44d3607d2d9a6ffdf0a165993c546c43d0db aep-cli --bin aep
       - name: Install ess
         env:
-          ESS_VERSION: "0.77.0"
+          ESS_VERSION: "0.85.0"
           ESS_SHA256: dd31b828bf6c6d9976f339b0a25dabcf0fa7fbb33c2856c49a1e3b71a5c00089
         run: |
           set -euo pipefail
