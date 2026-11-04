@@ -1,4 +1,4 @@
-//! AWS credentials and the two sources a Bedrock client takes them from.
+//! AWS credentials and the sources a Bedrock client takes them from.
 //!
 //! [`StaticCredentials`] resolves an access key pair, and optionally a session token, through
 //! the caller's [`SecretResolver`] on every call and caches nothing. [`ContainerCredentials`]
@@ -7,19 +7,24 @@
 //! minutes one refresh runs in the background while every caller gets the kept credentials, and
 //! a refresh that fails leaves them in use until they expire. With feature `process`,
 //! `ProcessCredentials` runs an operator's `credential_process` command and keeps and renews
-//! what it prints the same way.
+//! what it prints the same way. [`WebIdentityCredentials`] exchanges a web identity token for
+//! role credentials with STS `AssumeRoleWithWebIdentity`, as IAM roles for service accounts do,
+//! and keeps and renews them as [`ContainerCredentials`] does.
 //!
 //! Every failure is `unauthorized`, dispatch `not-sent` and final, except cancellation and an
-//! endpoint that did not answer, answered too late or answered with a server failure: that one
-//! keeps the transport's `transport` or `deadline` class and its `Retry-After`, and is
-//! `not-sent` and retriable. No message carries a key, a token, the endpoint's answer or its
-//! URI; a message may name a secret reference, which is the operator's non-secret lookup name.
+//! endpoint that did not answer, answered too late or answered with a server failure, or STS's
+//! `IDPCommunicationError`: that one keeps the transport's `transport` or `deadline` class and
+//! its `Retry-After`, and is `not-sent` and retriable. No message carries a key, a token, the
+//! endpoint's answer or its URI; a message may name a secret reference, which is the operator's
+//! non-secret lookup name.
 
 #[cfg(feature = "process")]
 mod process;
+mod web_identity;
 
 #[cfg(feature = "process")]
 pub use process::ProcessCredentials;
+pub use web_identity::WebIdentityCredentials;
 
 use crate::time::parse_rfc3339_utc;
 use http::{HeaderMap, HeaderValue};

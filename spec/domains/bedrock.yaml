@@ -4,7 +4,8 @@ domain: llm.bedrock
 # vendored test data under `crates/llm-bedrock/tests/data/` (the AWS Signature Version 4 suite,
 # the smithy-rs event-stream frames and recorded Bedrock Runtime answers, each with its licence)
 # or a fixture written into the scenario. Answers come from a scripted server on 127.0.0.1; no
-# scenario reaches AWS, an instance metadata address or a container credentials agent.
+# scenario reaches AWS (its Security Token Service included), an instance metadata address or a
+# container credentials agent.
 types:
   # Which Bedrock Runtime wire the client speaks: Converse (`/converse-stream`, `/converse`), or
   # the Anthropic Messages body on `InvokeModel` (`/invoke-with-response-stream`, `/invoke`).
@@ -17,6 +18,24 @@ types:
   - name: llm.bedrock.ContainerAnswer
     kind: enum
     variants: [Valid, ExpiresSoon, Unauthorized, MissingSecret, Unreachable]
+  # What the fixture AWS Security Token Service endpoint does with an `AssumeRoleWithWebIdentity`
+  # request: answer credentials valid for an hour, answer ones that expire within the five-minute
+  # refresh window, refuse the token with `ExpiredToken` or `InvalidIdentityToken` (400), report
+  # `IDPCommunicationError` (400), answer 503, answer `Credentials` without `SecretAccessKey` or
+  # naming `AccessKeyId` twice, redirect (307) to a second local listener, or not listen at all.
+  - name: llm.bedrock.WebIdentityAnswer
+    kind: enum
+    variants:
+      - Valid
+      - ExpiresSoon
+      - ExpiredToken
+      - InvalidIdentityToken
+      - IdpCommunicationError
+      - ServiceUnavailable
+      - MissingSecret
+      - MemberTwice
+      - Redirect
+      - Unreachable
 entities:
   # One request signed with `llm_bedrock::sigv4::sign` from an AWS Signature Version 4 suite
   # case (aws-c-auth `tests/aws-signing-test-suite/v4`). The adapter reads only the case's
@@ -187,6 +206,53 @@ entities:
       # value.
       - {name: diagnostics_safe, type: Boolean}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  # `llm_bedrock::WebIdentityCredentials`, the credential source behind IAM roles for service
+  # accounts (IRSA), against a scripted AWS Security Token Service endpoint on 127.0.0.1.
+  #
+  # The caller gives the role ARN (`AWS_ROLE_ARN`), a session name, the regional STS endpoint
+  # and a secret reference the injected resolver binds to the web identity token file
+  # (`AWS_WEB_IDENTITY_TOKEN_FILE`). The endpoint must be `https`, or `http` to a loopback
+  # address; any other, a host name over `http` and the container endpoint addresses included,
+  # or one with user information, a query or a fragment, is refused when the source is built,
+  # before a connection. The token is resolved on every fetch, one trailing line end removed, and
+  # must be non-empty visible ASCII of at most 20000 bytes. Each fetch is one unsigned POST of the
+  # form `Action=AssumeRoleWithWebIdentity`, `Version=2011-06-15`, `RoleArn`, `RoleSessionName`
+  # and `WebIdentityToken`, with no `authorization` and no `x-amz-*` header: the token travels in
+  # the body only. The XML answer's `Credentials` members `AccessKeyId`, `SecretAccessKey`,
+  # `SessionToken` and `Expiration` are read into zeroizing strings; a member missing, empty or
+  # named twice is refused. They are kept and refreshed exactly as container credentials are.
+  #
+  # `ExpiredToken`, `InvalidIdentityToken`, every other 4xx, a redirect and an unusable answer are
+  # `unauthorized`, final. No answer, a cut answer, 408, 5xx and `IDPCommunicationError` are
+  # `transport`, retriable. Every failure is dispatch `not-sent`, and no message or debug form
+  # quotes the token, the answer or a key.
+  - name: llm.bedrock.WebIdentityCredentialObservation
+    identity: {name: observation_id, type: String}
+    fields: &web_identity_facts
+      # Whether every fetch answered credentials; for a literal endpoint, whether the
+      # constructor admitted it.
+      - {name: accepted, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: dispatch, type: Optional<String>}
+      - {name: retriable, type: Optional<Boolean>}
+      # Requests the scripted endpoint received.
+      - {name: requests, type: Integer}
+      # Whether every request was a POST of exactly the five form parameters, the fixture token
+      # as `WebIdentityToken`, with no `authorization` or `x-amz-*` header and no token in its
+      # target; absent without a request.
+      - {name: form_presented, type: Optional<Boolean>}
+      # Connections the redirect target received.
+      - {name: redirect_target_requests, type: Integer}
+      # The last credentials' access key id, and whether they carry the fixture session token.
+      - {name: access_key_id, type: Optional<String>}
+      - {name: session_token, type: Optional<Boolean>}
+      # Whether the credentials' and the source's debug forms show neither the token, the secret
+      # key nor the session token.
+      - {name: debug_redacted, type: Optional<Boolean>}
+      # Whether the refusal's message and debug form are free of the token, the STS message and
+      # every answer value.
+      - {name: diagnostics_safe, type: Boolean}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
   - name: llm.bedrock.SignSuiteCase
     input:
@@ -259,6 +325,23 @@ commands:
           llm.bedrock.Fetched:
             accepted: {generated: true}
         summary: Observe what the container credential source asks and answers.
+  - name: llm.bedrock.FetchWebIdentityCredentials
+    input:
+      # A literal STS endpoint, only given to the constructor and never fetched; absent means the
+      # scripted endpoint's own loopback URI.
+      - {name: endpoint, type: Optional<String>}
+      - {name: answer, type: llm.bedrock.WebIdentityAnswer}
+      # Whether the token reference resolves.
+      - {name: token, type: Boolean}
+      # Credential requests made one after another through one source, at most four.
+      - {name: fetches, type: Integer}
+    outcomes:
+      - name: observed
+        emits: [llm.bedrock.WebIdentityFetched]
+        payload:
+          llm.bedrock.WebIdentityFetched:
+            accepted: {generated: true}
+        summary: Observe what the web identity credential source asks STS and answers.
 events:
   - name: llm.bedrock.Signed
     fields:
@@ -270,6 +353,9 @@ events:
     fields:
       - {name: accepted, type: Boolean}
   - name: llm.bedrock.Fetched
+    fields:
+      - {name: accepted, type: Boolean}
+  - name: llm.bedrock.WebIdentityFetched
     fields:
       - {name: accepted, type: Boolean}
 views:
@@ -289,3 +375,7 @@ views:
     source: llm.bedrock.ContainerCredentialObservation
     consistency: read_your_writes
     fields: *container_facts
+  - name: llm.bedrock.LastWebIdentityCredentials
+    source: llm.bedrock.WebIdentityCredentialObservation
+    consistency: read_your_writes
+    fields: *web_identity_facts

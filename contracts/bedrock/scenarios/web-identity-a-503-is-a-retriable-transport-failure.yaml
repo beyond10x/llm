@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: web-identity-a-503-is-a-retriable-transport-failure
+summary: "an STS endpoint answering 503 is transport, not-sent and retriable"
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.bedrock.FetchWebIdentityCredentials
+  input:
+    answer: "ServiceUnavailable"
+    token: true
+    fetches: 1
+  outcome: observed
+assert:
+- view: llm.bedrock.LastWebIdentityCredentials
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastWebIdentityCredentials
+  contains:
+    accepted: false
+    error_code: "transport"
+    dispatch: "not-sent"
+    retriable: true
+    requests: 1
+    form_presented: true
+    access_key_id: null
+    diagnostics_safe: true

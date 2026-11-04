@@ -77,7 +77,7 @@ case. Query-string signing and SigV4a are not implemented.
 ## Credentials
 
 A `CredentialSource` answers `AwsCredentials` (access key id, secret access key, optional session
-token) for each request, under the turn deadline. A failure there is dispatch `not-sent`. Three
+token) for each request, under the turn deadline. A failure there is dispatch `not-sent`. Four
 sources ship:
 
 - **`StaticCredentials`** resolves the three values through an injected `SecretResolver` on every
@@ -113,6 +113,41 @@ sources ship:
   Every container failure is dispatch `not-sent`, and no message quotes the URI, the token or the
   answer.
 
+- **`WebIdentityCredentials`** asks the AWS Security Token Service for a role's temporary
+  credentials with `AssumeRoleWithWebIdentity`, as IAM roles for service accounts (IRSA) do. The
+  caller passes the regional STS endpoint (`https://sts.<region>.amazonaws.com`), the role ARN
+  (the value of `AWS_ROLE_ARN`), a session name and a secret reference the resolver binds to the
+  token file (`AWS_WEB_IDENTITY_TOKEN_FILE`). Each fetch reads the token again, so a token the
+  platform rewrote is used as it is now, and sends one POST without a signature: the form
+  `Action=AssumeRoleWithWebIdentity&Version=2011-06-15&RoleArn=…&RoleSessionName=…&WebIdentityToken=…`,
+  each value percent-encoded, with no `authorization` and no `x-amz-*` header, so the token is in
+  the body and never in a URL. One trailing line end of the token is removed; the rest must be
+  non-empty visible ASCII of at most 20000 bytes. The role ARN must be 20 to 2048 visible ASCII
+  characters starting `arn:`, and the session name 2 to 64 letters, digits or `+=,.@_-`; either is
+  refused when the source is built. The XML answer is read without a parser dependency, straight
+  into the four `Credentials` members `AccessKeyId`, `SecretAccessKey`, `SessionToken` and
+  `Expiration`, the secrets into zeroizing strings: a member missing, empty or named twice, a
+  second `Credentials`, a comment, a document type declaration or an entity other than the five
+  predefined ones and character references is refused, so no entity is ever expanded. The answer
+  is kept and refreshed by the single-flight code `ContainerCredentials` uses;
+  `WebIdentityCredentials::refreshing` says whether a fetch is in flight. The `Debug` form shows
+  the endpoint's origin, the role ARN, the session name and the token reference.
+
+  The endpoint must be `https`, or `http` to a loopback address for a fixture; a host name over
+  `http`, `localhost` and the container endpoint addresses included, and an endpoint with user
+  information, a query or a fragment, are refused before a connection. The exchange uses the
+  transport's `HttpClient::post_form`, which follows no redirect, ignores ambient proxy settings
+  and shows a response tap nothing.
+
+  | Web identity failure | Class |
+  | --- | --- |
+  | Refused endpoint, role ARN or session name, token that does not resolve or is malformed, STS `ExpiredToken`, `InvalidIdentityToken` or any other 4xx but 408, a redirect, an answer missing a member or naming one twice, an answer already expired | `unauthorized`, final |
+  | Endpoint that does not answer, cuts its answer, or answers 408 or 5xx; STS `IDPCommunicationError` | `transport`, retriable, a 5xx's `Retry-After` kept |
+  | Endpoint that answers after the transport's deadline | `deadline`, retriable |
+
+  Every web identity failure is dispatch `not-sent`. A message may name an error code the STS
+  reference documents; it never quotes the endpoint, the token, STS's message or the answer.
+
 - **`ProcessCredentials`**, behind feature `process`, runs a program with its arguments the way an
   AWS profile's `credential_process` does: no shell, stdin empty, stderr inherited, stdout read up
   to 64 KiB into a zeroizing buffer, and the child killed after 60 seconds or when the source or
@@ -127,8 +162,8 @@ sources ship:
   `ProcessCredentials::refreshing` says whether a run is in flight. The `Debug` form shows the
   program, the argument count and the time limit.
 
-Not supported: shared credential and config files, profiles, instance metadata (IMDS), web
-identity (IRSA) and SSO. A caller that has one of them names the command that resolves the keys
+Not supported: shared credential and config files, profiles, instance metadata (IMDS) and SSO.
+A caller that has one of them names the command that resolves the keys
 (`aws configure export-credentials --profile dev`), or resolves them itself and hands them to
 `StaticCredentials` through a resolver.
 
@@ -165,6 +200,33 @@ Other facts from the same documentation:
 
 Not known: whether `automountServiceAccountToken: false` on the pod or its service account removes
 the Pod Identity token volume is unknown. None of the pages above mentions it.
+
+## IAM roles for service accounts (unverified)
+
+This section restates AWS documentation. It was not run on a cluster, and no request has reached
+STS.
+
+When a pod's service account is annotated with an IAM role, the pod gets `AWS_ROLE_ARN` and
+`AWS_WEB_IDENTITY_TOKEN_FILE`, the latter naming
+`/var/run/secrets/eks.amazonaws.com/serviceaccount/token`, a projected service account token the
+kubelet refreshes
+([Configure Pods to use a Kubernetes service account](https://docs.aws.amazon.com/eks/latest/userguide/pod-configuration.html)).
+A caller passes `AWS_ROLE_ARN` as the role, binds a secret reference to the token file (for
+example with the `file` adapter's `FileResolver::mounted`, as for Pod Identity) and names its
+region's STS endpoint.
+
+`AssumeRoleWithWebIdentity` "does not require the use of AWS security credentials": it is called
+with `RoleArn`, `RoleSessionName` and `WebIdentityToken` and answers XML `Credentials` with
+`AccessKeyId`, `SecretAccessKey`, `SessionToken` and `Expiration`
+([AssumeRoleWithWebIdentity](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html)).
+The same reference states the limits `WebIdentityCredentials` checks before sending: a role ARN of
+20 to 2048 characters, a session name of 2 to 64 characters from `[\w+=,.@-]`, a token of at most
+20000 characters. It lists `IDPCommunicationError` as the identity provider not answering STS,
+which `WebIdentityCredentials` reports as retriable; every other error it lists is final here.
+
+A routes document cannot name this source yet: `auth.kind = "aws-web-identity"` needs a variant of
+the exhaustive public enum `AwsCredentialKind`, which only a breaking release can add. Until then a
+caller builds `WebIdentityCredentials` and hands it to `BedrockClient` itself.
 
 ## Usage
 

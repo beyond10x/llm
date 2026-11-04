@@ -936,3 +936,17 @@ scenarios:
 - bedrock/scenarios/turn-a-converse-turn-sends-its-output-format-as-text-format.yaml
 - bedrock/scenarios/turn-converse-refuses-an-output-format-that-is-not-strict.yaml
 - bedrock/scenarios/turn-an-anthropic-invoke-turn-sends-the-messages-output-format.yaml
+- bedrock/scenarios/web-identity-a-503-is-a-retriable-transport-failure.yaml
+- bedrock/scenarios/web-identity-an-answer-naming-a-member-twice-is-unauthorized.yaml
+- bedrock/scenarios/web-identity-an-answer-without-a-secret-key-is-unauthorized.yaml
+- bedrock/scenarios/web-identity-an-endpoint-that-does-not-listen-is-a-retriable-transport-failure.yaml
+- bedrock/scenarios/web-identity-an-expired-token-is-unauthorized-and-final.yaml
+- bedrock/scenarios/web-identity-an-https-regional-endpoint-is-admitted.yaml
+- bedrock/scenarios/web-identity-an-idp-communication-error-is-a-retriable-transport-failure.yaml
+- bedrock/scenarios/web-identity-an-invalid-identity-token-is-unauthorized-and-final.yaml
+- bedrock/scenarios/web-identity-a-plain-http-endpoint-by-name-is-refused.yaml
+- bedrock/scenarios/web-identity-a-redirect-is-unauthorized-and-its-target-hears-nothing.yaml
+- bedrock/scenarios/web-identity-a-token-that-does-not-resolve-is-unauthorized-before-a-request.yaml
+- bedrock/scenarios/web-identity-credentials-are-fetched-once-and-kept-until-the-refresh-window.yaml
+- bedrock/scenarios/web-identity-credentials-inside-the-refresh-window-are-fetched-again.yaml
+- bedrock/scenarios/web-identity-the-container-agent-address-is-not-an-sts-endpoint.yaml

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WebIdentityFetched payload",
+  "x-ess-name": "llm.bedrock.WebIdentityFetched",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "accepted": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "accepted"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "75071b75bc6991dd43c3b8492604a78dae67e197b16999c8296350961e78a721",
+    "contract_digest": "slice-sha256/2:c164c9bb533f081473a6ef1ce33d8b7f68b2d523571f0bf85a9128ef82735fbf",
+    "regenerate": "ess generate"
+  }
+}
