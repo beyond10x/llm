@@ -2,12 +2,12 @@
 //! neutral outcome encoded back onto the same wire.
 //!
 //! A request is read strictly. Every field outside the published subset is refused, because a
-//! gateway that quietly ignores `response_format` or `n` answers a question it was not asked.
+//! gateway that quietly ignores `logprobs` or `n` answers a question it was not asked.
 //! That holds at every level: each object of the request is closed, and a key it does not
 //! publish is refused naming its path (`messages[].content[].cache_control`).
 use llm_core::{
-    CallId, Error, Item, MAX_TOOL_RESULT_BYTES, Sampling, StopReason, StreamEvent, ToolChoice,
-    ToolName, ToolSpec, TurnOutcome, TurnRequest, Usage, Verbosity, field_path,
+    CallId, Error, Item, MAX_TOOL_RESULT_BYTES, OutputFormat, Sampling, StopReason, StreamEvent,
+    ToolChoice, ToolName, ToolSpec, TurnOutcome, TurnRequest, Usage, Verbosity, field_path,
 };
 use serde_json::{Map, Value, json};
 
@@ -27,6 +27,7 @@ pub const SUPPORTED_REQUEST_FIELDS: &[&str] = &[
     "parallel_tool_calls",
     "prompt_cache_key",
     "verbosity",
+    "response_format",
 ];
 
 // The keys each closed level below the top publishes (`docs/design.md` "Client request
@@ -44,6 +45,9 @@ const TOOL_FUNCTION_KEYS: &[&str] = &["name", "description", "parameters", "stri
 const TOOL_CHOICE_KEYS: &[&str] = &["type", "function"];
 const TOOL_CHOICE_FUNCTION_KEYS: &[&str] = &["name"];
 const STREAM_OPTION_KEYS: &[&str] = &["include_usage"];
+const TEXT_FORMAT_KEYS: &[&str] = &["type"];
+const SCHEMA_FORMAT_KEYS: &[&str] = &["type", "json_schema"];
+const JSON_SCHEMA_KEYS: &[&str] = &["name", "schema", "strict"];
 
 /// Request fields this subset deliberately does not implement, named so a client learns which
 /// one was refused. A field in neither list is refused too, by the path `llm_core::field_path`
@@ -52,7 +56,6 @@ pub const NAMED_UNSUPPORTED_REQUEST_FIELDS: &[&str] = &[
     "n",
     "logprobs",
     "top_logprobs",
-    "response_format",
     "seed",
     "stop",
     "frequency_penalty",
@@ -116,6 +119,7 @@ pub fn decode_ingress_request(body: &Value) -> Result<IngressRequest, Error> {
     request.controls.hints.prompt_cache_key =
         text(object.get("prompt_cache_key"), "prompt_cache_key")?;
     request.controls.hints.verbosity = decode_verbosity(object.get("verbosity"))?;
+    request.controls.output_format = decode_response_format(object.get("response_format"))?;
 
     let stream = flag(object.get("stream"), "stream")?;
     let include_usage = match object.get("stream_options") {
@@ -512,6 +516,66 @@ fn decode_verbosity(value: Option<&Value>) -> Result<Option<Verbosity>, Error> {
             ));
         }
     })
+}
+
+/// `response_format` as the turn's output format. `{"type": "text"}` is this wire's default, the
+/// format a turn without one asks for. `json_object`, JSON mode, asks for any JSON at all, which
+/// no JSON Schema the neutral turn holds says, so it is refused naming that type; any other type
+/// is the client's and is refused without being quoted.
+fn decode_response_format(value: Option<&Value>) -> Result<Option<OutputFormat>, Error> {
+    let format = match value {
+        None | Some(Value::Null) => return Ok(None),
+        Some(format @ Value::Object(_)) => format,
+        Some(_) => {
+            return Err(Error::invalid(
+                "chat request response_format is not an object",
+            ));
+        }
+    };
+    match format.get("type").and_then(Value::as_str) {
+        Some("text") => {
+            closed(format, "response_format", TEXT_FORMAT_KEYS)?;
+            Ok(None)
+        }
+        Some("json_schema") => {
+            closed(format, "response_format", SCHEMA_FORMAT_KEYS)?;
+            let schema_format = format.get("json_schema").filter(|found| found.is_object());
+            let Some(schema_format) = schema_format else {
+                return Err(Error::invalid(
+                    "chat response_format json_schema is not an object",
+                ));
+            };
+            closed(
+                schema_format,
+                "response_format.json_schema",
+                JSON_SCHEMA_KEYS,
+            )?;
+            let name = schema_format
+                .get("name")
+                .and_then(Value::as_str)
+                .ok_or_else(|| Error::invalid("chat response_format names no format name"))?;
+            let schema = schema_format
+                .get("schema")
+                .filter(|schema| schema.is_object())
+                .ok_or_else(|| Error::invalid("chat response_format schema is not an object"))?;
+            let format = OutputFormat::json_schema(schema.clone()).with_name(name);
+            Ok(Some(match schema_format.get("strict") {
+                None | Some(Value::Null) => format,
+                Some(Value::Bool(strict)) => format.with_strict(*strict),
+                Some(_) => {
+                    return Err(Error::invalid(
+                        "chat response_format strict is not a boolean",
+                    ));
+                }
+            }))
+        }
+        Some("json_object") => Err(Error::unsupported(
+            "chat response_format of type `json_object` is outside the published subset: the neutral output format is a JSON Schema",
+        )),
+        _ => Err(Error::unsupported(
+            "chat response_format type is outside the published subset",
+        )),
+    }
 }
 
 fn number(value: Option<&Value>, field: &'static str) -> Result<Option<f64>, Error> {

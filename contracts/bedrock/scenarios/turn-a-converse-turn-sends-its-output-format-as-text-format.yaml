@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-converse-turn-sends-its-output-format-as-text-format
+summary: "a named JSON Schema output format is outputConfig.textFormat, the schema as a JSON string and the name kept"
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    request_json: '{"format":"llm.turn/4","request":{"model":"us.anthropic.claude-3-7-sonnet-20250219-v1:0","instructions":"","items":[{"kind":"user-text","text":"Hello"}],"tools":[],"controls":{"output_format":{"name":"place","schema":{"type":"object","properties":{"city":{"type":"string"}}},"strict":true}}}}'
+    recording: "ddtrace-bedrock_converse_stream_prompt_caching-1.bin"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    request_body: '{"messages":[{"content":[{"text":"Hello"}],"role":"user"}],"outputConfig":{"textFormat":{"structure":{"jsonSchema":{"name":"place","schema":"{\"properties\":{\"city\":{\"type\":\"string\"}},\"type\":\"object\"}"}},"type":"json_schema"}}}'
+    signature_verifies: true
+    stop_reason: "end-turn"

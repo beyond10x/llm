@@ -151,11 +151,16 @@ domain: llm.responses
 #   `text.verbosity` (`low`, `medium`, `high`) and `reasoning.summary` (`auto`, `concise`,
 #   `detailed`; `null` is absent) are hints egress writes back; `client_metadata` (an object) is
 #   the unforwarded hint `client-metadata`, its value never kept.
+# - Structured output. `text.format` `{type: json_schema, name, schema, strict}` is the turn's
+#   `controls.output_format`: `name` a string, `schema` an object, `strict` a boolean or absent
+#   (`null` is absent); any other key inside it is refused by its path. `{type: text}` and `null`,
+#   this wire's default, are no format. `json_object` is refused naming that type, any other type
+#   without naming it.
 # - Closed at every level. The top level, each `input[]` item of a modelled type, each content
 #   part, an object `tool_choice`, each `tools[]` entry, `reasoning` and `text` name their keys,
 #   and any other key is refused `unsupported` with `request body carries a field outside the
 #   pinned subset: <path>`, the path from `llm_core::field_path` (`input[].content[].foo`,
-#   `text.format`, `reasoning.generate_summary`). A content part carries `type` and `text`, and an
+#   `text.format.description`, `reasoning.generate_summary`). A content part carries `type` and `text`, and an
 #   `output_text` part may carry `annotations` only as an empty array. A tool whose type is
 #   `web_search`, `custom`, `namespace`, `tool_search`, `local_shell`, `file_search`,
 #   `computer_use_preview`, `mcp`, `image_generation` or `code_interpreter` is refused naming that
@@ -165,7 +170,9 @@ domain: llm.responses
 #   `none`) and the summary; a thinking budget, and disabled thinking beside an effort, are
 #   refused `unsupported`. The hints this wire does not send (`prompt-cache`, `input-item-ids`,
 #   `client-metadata`) are `omitted_advisories`, in the design's order, and the client warns
-#   `advisory-omitted` naming them once, after a successful turn.
+#   `advisory-omitted` naming them once, after a successful turn. An output format is
+#   `text.format` beside `text.verbosity`, its `strict` written only when the turn sets it; one
+#   without a name is refused `unsupported`, since the wire requires a name and llm invents none.
 entities:
   - name: llm.responses.RequestProjection
     identity: {name: projection_id, type: String}

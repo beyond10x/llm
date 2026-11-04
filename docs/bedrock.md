@@ -30,16 +30,22 @@ must declare no `capabilities.reasoning_efforts`: Converse carries no reasoning 
 
 The Converse body carries `messages`, `system` (only when the turn has instructions),
 `inferenceConfig` (only the sampling fields the turn sets), `toolConfig`, and the thinking
-control as `additionalModelRequestFields.thinking` for an Anthropic model id only. A reasoning
-effort, the parallel tool call control, thinking for another model and opaque state from another
-wire are refused by name before any I/O. Advisory hints are never sent, `anthropic-beta`
+control as `additionalModelRequestFields.thinking` for an Anthropic model id only. A JSON Schema
+output format is `outputConfig.textFormat` `{"type": "json_schema", "structure": {"jsonSchema":
+{"schema", "name"}}}`: the schema as a JSON string, as the API reference's
+`JsonSchemaDefinition` takes it, and the name only when the format has one. Bedrock always holds
+the answer to the schema, so a format whose `strict` is `false` is refused, and `true` sends
+nothing more; llm does not validate the answer ([design](design.md#structured-output)). A
+reasoning effort, the parallel tool call control, thinking for another model and opaque state
+from another wire are refused by name before any I/O. Advisory hints are never sent, `anthropic-beta`
 included; a successful turn that carried any ends with one `advisory-omitted` warning. Converse reports no response id and no
 upstream model, so both stay absent.
 
 The Anthropic body is the Messages body `llm-messages` encodes, plus
 `anthropic_version: "bedrock-2023-05-31"`, minus `model` (the path names it) and `stream` (the
 operation says it). A turn's `anthropic-beta` names, which the Messages route takes as a header,
-travel as the body's `anthropic_beta` array, and no `anthropic-beta` header is sent. Its stream is
+travel as the body's `anthropic_beta` array, and no `anthropic-beta` header is sent. An output
+format is the Messages body's `output_config.format`, under the Messages rules. Its stream is
 `chunk` frames, each `{"bytes": base64(<Messages event>)}`, read by
 the Messages stream decoder. So text, tool calls, thinking, stop reasons and refusals on that wire
 are the Messages wire's ([messages.md](messages.md)).

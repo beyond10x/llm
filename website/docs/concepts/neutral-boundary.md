@@ -87,7 +87,9 @@ Absent sampling fields remain absent. Unsupported settings refuse before any net
 Identifiers and individual fields are bounded, and so is the whole serialized request. The request
 model must match the selected target, and tool choices must name published tools. A model call to
 a tool the turn did not publish refuses the turn, unless the caller set
-`controls.return_unpublished_calls`; then it is returned as a call for the caller to refuse.
+`controls.return_unpublished_calls`; then it is returned as a call for the caller to refuse. A
+`controls.output_format`, a JSON Schema the answer is held to, is sent by every wire or refused
+before any I/O; llm does not check the answer against it.
 
 Core validates structure and declared capabilities. It is not a tokenizer, and it cannot check
 whether an operator's capability declaration is true. Context-window admission is the routing and

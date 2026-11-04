@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: egress-writes-the-output-format-as-text-format
+summary: a named strict JSON Schema output format is text.format, beside the verbosity hint
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/4","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"}],"tools":[],"controls":{"output_format":{"name":"place","schema":{"type":"object","properties":{"city":{"type":"string"}},"required":["city"]},"strict":true},"hints":{"verbosity":"low"}}}}'
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: true
+    error_code: null
+    encoded_body: '{"include":["reasoning.encrypted_content"],"input":[{"content":[{"text":"Hi","type":"input_text"}],"role":"user","type":"message"}],"model":"example/Small-Model","store":false,"stream":true,"text":{"format":{"name":"place","schema":{"properties":{"city":{"type":"string"}},"required":["city"],"type":"object"},"strict":true,"type":"json_schema"},"verbosity":"low"},"tools":[]}'
+    omitted_advisories: []
+    request_preserved: true

@@ -95,7 +95,7 @@ scenarios:
 - chat/scenarios/ingress-a-non-text-content-part-is-refused.yaml
 - chat/scenarios/ingress-a-refused-encoding-carries-no-content.yaml
 - chat/scenarios/ingress-a-refused-request-decodes-to-no-turn.yaml
-- chat/scenarios/ingress-a-response-format-request-is-refused-by-name.yaml
+- chat/scenarios/ingress-json-mode-is-refused-by-its-type.yaml
 - chat/scenarios/ingress-a-stream-without-include-usage-reports-no-counters.yaml
 - chat/scenarios/ingress-a-streamed-call-is-named-where-it-was-announced.yaml
 - chat/scenarios/ingress-a-temperature-outside-its-range-is-refused.yaml
@@ -797,7 +797,7 @@ scenarios:
 - responses/scenarios/ingress-refuses-a-top-level-key-by-its-path.yaml
 - responses/scenarios/ingress-refuses-a-web-search-tool-by-its-type.yaml
 - responses/scenarios/ingress-refuses-non-empty-annotations-by-their-path.yaml
-- responses/scenarios/ingress-refuses-structured-output-by-its-path.yaml
+- responses/scenarios/ingress-refuses-json-mode-by-its-type.yaml
 - responses/scenarios/ingress-round-trips-cache-key.yaml
 - responses/scenarios/ingress-round-trips-parallel-false.yaml
 - responses/scenarios/ingress-round-trips-parallel-true.yaml
@@ -832,7 +832,7 @@ scenarios:
 - messages/scenarios/ingress-reads-system-messages-as-instructions-and-marked-user-text.yaml
 - messages/scenarios/ingress-refuses-a-cache-mark-on-thinking.yaml
 - messages/scenarios/ingress-refuses-a-cache-mark-scope.yaml
-- messages/scenarios/ingress-refuses-a-structured-output-format.yaml
+- messages/scenarios/ingress-refuses-a-format-name-by-its-path.yaml
 - messages/scenarios/ingress-refuses-citations-on-a-system-block.yaml
 - messages/scenarios/ingress-refuses-context-management.yaml
 - messages/scenarios/ingress-refuses-safeguards.yaml
@@ -922,6 +922,20 @@ scenarios:
 - bedrock/scenarios/turn-a-whole-invoke-answer-is-the-messages-answer.yaml
 - bedrock/scenarios/turn-a-429-throttling-answer-stays-a-retriable-rate-limit.yaml
 - bedrock/scenarios/turn-a-429-service-quota-answer-is-final.yaml
+- responses/scenarios/egress-writes-the-output-format-as-text-format.yaml
+- responses/scenarios/egress-refuses-an-output-format-without-a-name.yaml
+- responses/scenarios/ingress-round-trips-a-json-schema-output-format.yaml
+- responses/scenarios/ingress-refuses-a-key-inside-text-format-by-its-path.yaml
+- chat/scenarios/round-trip-an-output-format-is-projected-as-response-format.yaml
+- chat/scenarios/round-trip-an-output-format-decodes-back-to-the-same-turn.yaml
+- chat/scenarios/egress-an-output-format-without-a-name-is-refused.yaml
+- chat/scenarios/ingress-a-key-inside-response-format-is-refused-by-its-path.yaml
+- messages/scenarios/egress-writes-the-output-format-beside-the-effort.yaml
+- messages/scenarios/egress-refuses-an-output-format-that-is-not-strict.yaml
+- messages/scenarios/ingress-reads-the-output-format-beside-the-effort.yaml
+- bedrock/scenarios/turn-a-converse-turn-sends-its-output-format-as-text-format.yaml
+- bedrock/scenarios/turn-converse-refuses-an-output-format-that-is-not-strict.yaml
+- bedrock/scenarios/turn-an-anthropic-invoke-turn-sends-the-messages-output-format.yaml
 - bedrock/scenarios/web-identity-a-503-is-a-retriable-transport-failure.yaml
 - bedrock/scenarios/web-identity-an-answer-naming-a-member-twice-is-unauthorized.yaml
 - bedrock/scenarios/web-identity-an-answer-without-a-secret-key-is-unauthorized.yaml

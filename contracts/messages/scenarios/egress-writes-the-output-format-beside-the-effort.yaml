@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: egress-writes-the-output-format-beside-the-effort
+summary: a JSON Schema output format is output_config.format beside the effort; strict true sends nothing more and the name is not sent
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"format":"llm.turn/4","request":{"model":"internal-model","instructions":"answer in JSON","items":[{"kind":"user-text","text":"Where is the tower?"}],"tools":[],"sampling":{"reasoning_effort":"high"},"controls":{"output_format":{"name":"place","schema":{"additionalProperties":false,"properties":{"city":{"type":"string"}},"required":["city"],"type":"object"},"strict":true}}}}'
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: '{"max_tokens":2048,"messages":[{"content":[{"cache_control":{"type":"ephemeral"},"text":"Where is the tower?","type":"text"}],"role":"user"}],"model":"example/Model-Revision","output_config":{"effort":"high","format":{"schema":{"additionalProperties":false,"properties":{"city":{"type":"string"}},"required":["city"],"type":"object"},"type":"json_schema"}},"stream":true,"system":[{"cache_control":{"type":"ephemeral"},"text":"answer in JSON","type":"text"}]}'
+    neutral_request: null
+    items:
+      - "user-text:Where is the tower?"
+    omitted_advisories: []

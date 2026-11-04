@@ -1,0 +1,1 @@
+{"messages":[{"content":[{"text":"Where is the tower?"}],"role":"user"}],"outputConfig":{"textFormat":{"structure":{"jsonSchema":{"name":"place","schema":"{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"}"}},"type":"json_schema"}},"system":[{"text":"answer in JSON"}]}

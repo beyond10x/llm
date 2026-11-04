@@ -283,9 +283,9 @@ fn every_refusal_names_its_field_by_path() {
         (
             body(&[(
                 "output_config",
-                json!({"effort":"high","format":{"type":"json_schema","schema":{}}}),
+                json!({"effort":"high","format":{"type":"json_schema","schema":{},"strict":true}}),
             )]),
-            "output_config.format",
+            "output_config.format.strict",
         ),
         (
             body(&[(

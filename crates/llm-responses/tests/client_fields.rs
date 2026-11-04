@@ -550,8 +550,8 @@ fn a_key_outside_the_subset_is_refused_by_its_path_at_every_level() {
             "reasoning.generate_summary",
         ),
         (
-            wire_body(&[("text", json!({"format": {"type": "text"}}))]),
-            "text.format",
+            wire_body(&[("text", json!({"format": {"type": "text", "name": "place"}}))]),
+            "text.format.name",
         ),
         (
             wire_body(&[("text", json!({"verbosity": "low", "foo": 1}))]),

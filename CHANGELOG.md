@@ -8,9 +8,15 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ### Added
 
+- `Controls::output_format` (`OutputFormat`): a JSON Schema answer format, sent on every wire or refused before I/O
+- Responses `text.format`, Chat `response_format` and Messages `output_config.format` of type `json_schema` are read on ingress
 - `llm-bedrock`: `WebIdentityCredentials` fetches keys with STS `AssumeRoleWithWebIdentity`, the token read on each fetch
 - `llm-http`: `HttpClient::post_form` sends one form and returns `FormAnswer` (status, headers, bounded body)
 - ESS: 14 `llm.bedrock` web identity scenarios against a loopback STS fixture
+
+### Changed
+
+- ESS 0.85.0 (was 0.77.0) in CI and `llm-conformance`; the suite gains ESS 0.85.0's `expect_no_error` steps, the schema is unchanged
 
 ## [0.20.0] - 2026-10-30
 

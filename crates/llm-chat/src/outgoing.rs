@@ -1,5 +1,7 @@
 //! The outgoing Chat Completions request built from a validated neutral turn.
-use llm_core::{Advisory, Error, Item, Protocol, ToolChoice, ToolSpec, TurnRequest, wire_effort};
+use llm_core::{
+    Advisory, Error, Item, OutputFormat, Protocol, ToolChoice, ToolSpec, TurnRequest, wire_effort,
+};
 use llm_providers::Binding;
 use serde_json::{Map, Value, json};
 
@@ -20,8 +22,8 @@ pub fn omitted_advisories(request: &TurnRequest) -> Vec<Advisory> {
 /// # Errors
 /// Refuses a binding that serves another protocol, a request the binding's declared
 /// capabilities do not support, opaque continuation state this wire cannot carry, a thinking
-/// budget and disabled thinking beside an effort ([`wire_effort`]), and every failure
-/// [`TurnRequest::validate_for`] reports.
+/// budget and disabled thinking beside an effort ([`wire_effort`]), an output format without a
+/// name, and every failure [`TurnRequest::validate_for`] reports.
 pub fn project_request(
     request: &TurnRequest,
     binding: &Binding,
@@ -81,6 +83,9 @@ pub fn project_request(
     if let Some(verbosity) = hints.verbosity {
         body.insert("verbosity".to_owned(), json!(verbosity));
     }
+    if let Some(format) = &request.controls.output_format {
+        body.insert("response_format".to_owned(), response_format(format)?);
+    }
     body.insert("stream".to_owned(), json!(streaming));
     if streaming {
         // Without this the server reports no usage at all, and an absent report would be
@@ -88,6 +93,22 @@ pub fn project_request(
         body.insert("stream_options".to_owned(), json!({"include_usage": true}));
     }
     Ok(Value::Object(body))
+}
+
+/// The output format as `response_format`. The wire requires a name and llm invents none, so a
+/// format without one is refused; `strict` is written only when the turn sets it, leaving the
+/// provider's default otherwise (`docs/design.md`, "Structured output").
+fn response_format(format: &OutputFormat) -> Result<Value, Error> {
+    let name = format.name.as_deref().ok_or_else(|| {
+        Error::unsupported("Chat Completions needs a name for a JSON Schema output format")
+    })?;
+    let mut json_schema = Map::new();
+    json_schema.insert("name".to_owned(), json!(name));
+    json_schema.insert("schema".to_owned(), format.schema.clone());
+    if let Some(strict) = format.strict {
+        json_schema.insert("strict".to_owned(), json!(strict));
+    }
+    Ok(json!({"type": "json_schema", "json_schema": json_schema}))
 }
 
 /// One assistant turn on this wire is one message carrying its text and its proposed calls,
