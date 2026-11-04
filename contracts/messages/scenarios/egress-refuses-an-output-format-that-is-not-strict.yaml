@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: egress-refuses-an-output-format-that-is-not-strict
+summary: the route always holds the answer to an output format's schema and cannot be asked not to, so a format with strict false is refused before any I/O
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"format":"llm.turn/4","request":{"model":"internal-model","instructions":"","items":[{"kind":"user-text","text":"Where is the tower?"}],"tools":[],"controls":{"output_format":{"schema":{"type":"object"},"strict":false}}}}'
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: unsupported
+    error_message: "Messages always holds the answer to an output format's schema: a format that is not strict cannot be sent"
+    dispatch: not-sent
+    wire_request: null

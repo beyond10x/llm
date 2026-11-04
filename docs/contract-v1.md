@@ -56,7 +56,9 @@ positive budget, `disabled`), whether parallel tool calls are allowed (only besi
 tools), and advisory hints (a prompt-cache request, a cache key of at most 512 bytes, verbosity, a
 reasoning-summary request, and the names of fields ingress read and no wire sends), and whether a
 call to a tool the turn did not publish is returned to the caller instead of refusing the turn
-(`return_unpublished_calls`, off by default; no wire sends it). The reasoning
+(`return_unpublished_calls`, off by default; no wire sends it), and a JSON Schema the answer is
+held to (`output_format`, with an optional name and strict flag; every wire sends it or refuses
+the turn before I/O, and llm does not validate the answer against it). The reasoning
 effort a wire receives is `llm_core::wire_effort`'s, and capabilities are checked against it:
 `max` reaches Chat Completions and Responses as `xhigh`, disabled thinking as `none`, and a
 thinking budget is refused there. A hint a wire cannot carry is omitted and reported: by the

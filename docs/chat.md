@@ -33,6 +33,7 @@ any network I/O.
 | `reasoning_effort` and `controls.thinking` | `reasoning_effort`, as `llm_core::wire_effort` gives it: `max` is sent as `xhigh`, disabled thinking as `none`, adaptive thinking sends nothing more; a thinking budget, and disabled thinking beside an effort, are refused |
 | `controls.parallel_tool_calls` | `parallel_tool_calls` |
 | `hints.prompt_cache_key`, `hints.verbosity` | `prompt_cache_key`, `verbosity` (`low`, `medium`, `high`) |
+| `controls.output_format` | `response_format` `{"type":"json_schema","json_schema":{"name","schema","strict"}}`, `strict` only when the turn sets it; a format without a name is refused (`Chat Completions needs a name for a JSON Schema output format`): the wire requires one and llm invents none. llm does not validate the answer against the schema ([design](design.md#structured-output)) |
 | `hints.prompt_cache`, `hints.reasoning_summary`, `hints.unforwarded` | not sent: this wire has no field for them. `omitted_advisories(&request)` names them, and `ChatClient` reports them in one warning after a successful turn |
 
 Each control and hint is sent only when the turn sets it.
@@ -236,6 +237,8 @@ ignored, at any depth:
 | `tool_choice`, as an object | `type` (`function`), `function` |
 | `tool_choice.function` | `name` |
 | `stream_options` | `include_usage` |
+| `response_format` | `type`, and `json_schema` when the type is `json_schema` |
+| `response_format.json_schema` | `name`, `schema`, `strict` |
 
 A key the subset reads with a value of the wrong type is refused rather than read as absent
 (`invalid-request`, or `unsupported` for a `tool_choice` or a `type` outside the subset); an
@@ -248,6 +251,13 @@ type.
 `parallel_tool_calls` (a boolean) is carried in the turn's controls, `prompt_cache_key` (a
 string) and `verbosity` (`low`, `medium` or `high`) in its hints; `project_request` sends each
 back under the same name, so the body it builds decodes to the same turn.
+
+`response_format` of type `json_schema` is the turn's `controls.output_format`: `name` a string,
+`schema` an object, `strict` a boolean, absent or `null`, each of another type `invalid-request`.
+`{"type": "text"}` and `null` are this wire's default and read as no format. `json_object` (JSON
+mode) asks for any JSON at all, which no schema the neutral turn holds says, and is refused naming
+that type; any other or missing type is refused without being named. `project_request` writes the
+format back as it was read.
 
 Also refused: a role outside `system`/`developer`/`user`/`assistant`/`tool`, a content part
 that is not text, a text part whose `text` is absent or `null` (an empty string is still text),

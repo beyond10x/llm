@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: egress-refuses-an-output-format-without-a-name
+summary: text.format needs a name, and llm invents none, so an unnamed output format is refused before any I/O
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.responses.Project
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    turn_json: '{"format":"llm.turn/4","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"Hi"}],"tools":[],"controls":{"output_format":{"schema":{"type":"object"}}}}}'
+  outcome: observed
+assert:
+- view: llm.responses.LastProjection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastProjection
+  contains:
+    accepted: false
+    error_code: unsupported
+    error_message: Responses needs a name for a JSON Schema output format
+    encoded_body: null

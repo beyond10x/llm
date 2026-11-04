@@ -56,6 +56,19 @@ types:
   - name: llm.inference.Advisory
     kind: enum
     variants: [PromptCache, PromptCacheKey, Verbosity, ReasoningSummary, AnthropicBeta, InputItemIds, ClientMetadata]
+  # A JSON Schema the answer's text is held to (docs/design.md "Structured output"). Carried by
+  # every wire or refused before I/O, never dropped. llm does not validate the answer against it.
+  - name: llm.inference.OutputFormat
+    kind: struct
+    fields:
+      # 1 to 64 ASCII letters, digits, "_" or "-". A wire that requires a name refuses a format
+      # without one; llm invents none.
+      - {name: name, type: Optional<String>}
+      # The caller's JSON Schema, a JSON object, encoded as JSON; within the tool argument bound.
+      - {name: schema, type: String}
+      # Absent leaves the wire's own default. A wire that always holds the answer to the schema
+      # refuses false.
+      - {name: strict, type: Optional<Boolean>}
   - name: llm.inference.Controls
     kind: struct
     fields:
@@ -66,6 +79,7 @@ types:
       # Return a call to a tool the turn did not publish instead of refusing the turn. Read only
       # by outcome validation; no wire sends it. Absent or false refuses, as before.
       - {name: return_unpublished_calls, type: Optional<Boolean>}
+      - {name: output_format, type: Optional<llm.inference.OutputFormat>}
 entities:
   - name: llm.inference.ResultInspection
     identity: {name: observation_id, type: String}

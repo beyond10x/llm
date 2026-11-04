@@ -21,3 +21,12 @@ derivation from <https://code.claude.com/docs/en/llm-gateway-protocol> (read 202
 
 The user text names a file path as the client's own prompt; it is fixture text, not a path any
 test reads.
+
+## `structured-output-request.json`
+
+The exact bytes `encode_request` returns, which are the bytes `MessagesClient` sends, for a turn
+with instructions, one user text and a named strict JSON Schema output format (story
+`structured-output`). It is **written by this repository, not captured**: the shape of
+`output_config.format` (`{"type": "json_schema", "schema": {...}}`) follows the published Messages
+API reference and structured-output guide (read 2026-11-04). The name and the strict flag are not
+in it: the route has no place for the one and always holds the answer to the schema.

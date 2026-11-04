@@ -532,6 +532,8 @@ its path (`messages[].content[].cache_control`), at every level:
   wire sends it and no ingress decoder sets it. Every other outcome check still refuses: a repeated
   call id, a call other than a named tool choice, oversized arguments. Bedrock Converse also
   refuses an unpublished name outside `[A-Za-z0-9_-]`, which its next turn could not carry back.
+- `output_format` (`llm_core::OutputFormat`): a JSON Schema the answer's text is held to, with an
+  optional `name` and an optional `strict` flag ("Structured output" below).
 
 A turn whose controls are empty is written as `llm.turn/3`, byte for byte as before; any other is
 `llm.turn/4`. Both are read, and a `/3` document carrying controls is refused.
@@ -557,6 +559,41 @@ checks the binding's `reasoning_efforts` against the name the wire will receive.
 | Neutral | Messages | Chat Completions | Responses |
 | --- | --- | --- | --- |
 | `parallel_tool_calls` `b` | `tool_choice.disable_parallel_tool_use` `!b` (with `{"type":"auto"}` when the choice is automatic) | `parallel_tool_calls` `b` | `parallel_tool_calls` `b` |
+
+### Structured output
+
+Accepted for wave 2026-11-04-w25 (story:structured-output). `controls.output_format` is carried:
+every egress wire sends it or refuses the turn before any I/O, and none drops it. The schema is
+the caller's: llm checks that it is a JSON object within the tool argument bound and sends it as
+it is. **llm does not validate the answer against the schema**; the answer is the model's text,
+and checking it is the caller's. A name is 1 to 64 ASCII letters, digits, `_` or `-`.
+
+| Neutral | Messages and Bedrock InvokeModel | Chat Completions | Responses | Bedrock Converse |
+| --- | --- | --- | --- | --- |
+| the format | `output_config.format` `{"type":"json_schema","schema":…}`, beside the effort | `response_format` `{"type":"json_schema","json_schema":{"name","schema","strict"}}` | `text.format` `{"type":"json_schema","name","schema","strict"}`, beside `verbosity` | `outputConfig.textFormat` `{"type":"json_schema","structure":{"jsonSchema":{"schema":"<JSON text>","name"}}}` |
+| `name` | not sent: a label this wire has no place for | required: a format without one is refused | required: refused likewise | sent when present |
+| `strict` absent | nothing | nothing: the provider's default | nothing: the provider's default | nothing |
+| `strict` `true` | nothing more: the route always holds the answer to the schema | `strict: true` | `strict: true` | nothing more, likewise |
+| `strict` `false` | refused: the route cannot be asked not to | `strict: false` | `strict: false` | refused, likewise |
+
+Each choice follows this design's rules: absent stays absent, so a `strict` nobody set is not
+written; a field is carried or refused, never dropped, so a wire that requires a name refuses a
+format without one, and llm invents none; a flag the wire cannot honour is refused, and one it
+always honours sends nothing. A name on Messages is the one exception that is not sent: it labels
+the format and asks for nothing the route would do differently, so nothing is lost.
+
+Ingress reads the same field back on every wire that has it, and the egress encoder of each wire
+writes it back as it was read:
+
+- Responses `text.format` and Chat `response_format` of type `json_schema` are the format; any
+  other key inside it is refused by its path (`text.format.description`,
+  `response_format.json_schema.description`). `{"type":"text"}` and `null` are the wire's own
+  default and read as no format. `json_object` (JSON mode) asks for any JSON at all, which no
+  schema the neutral turn holds says, and is refused naming that type; any other type is refused
+  without quoting it.
+- Messages `output_config.format` of type `json_schema` is the format, with no name and no strict
+  flag; `name`, `strict` or any other key inside it is refused by its path, and another type is
+  refused.
 
 ### Advisory hints
 
@@ -594,27 +631,30 @@ The per-wire pages hold the full tables: `docs/messages.md` "What the declared s
   messages (a block of another type is refused); `cache_control` (`ephemeral`, optional `ttl`) on a
   system block, a text, `tool_use` or `tool_result` block, or a tool is the `prompt-cache` hint, and
   two different lifetimes in one request are refused; `output_config.effort` takes any name,
-  `max` included; `metadata` is `client-metadata`. The `anthropic-beta` request header is not in
+  `max` included; `output_config.format` is the output format; `metadata` is `client-metadata`. The `anthropic-beta` request header is not in
   the body: a gateway that passes the headers to `decode_request_with_headers` gets its
   comma-separated names as the `anthropic-beta` hint, and a bad name is refused by the header's
   name.
 - Responses: `instructions` is the instructions, followed by the text parts of the developer
-  messages that open `input`; `parallel_tool_calls`, `prompt_cache_key`, `text.verbosity` and
-  `reasoning.summary` are carried; an item `id` is `input-item-ids` and `client_metadata` is
-  `client-metadata`; a `function_call_output` string that is not the pinned envelope is a
-  successful result carrying that string. A tool of a type other than `function` is refused by its
-  type.
-- Chat Completions: `parallel_tool_calls`, `prompt_cache_key` and `verbosity` are carried, and an
-  assistant message's `refusal` text is an `Item::AssistantRefusal`; every
+  messages that open `input`; `parallel_tool_calls`, `prompt_cache_key`, `text.verbosity`,
+  `text.format` and `reasoning.summary` are carried; an item `id` is `input-item-ids` and
+  `client_metadata` is `client-metadata`; a `function_call_output` string that is not the pinned
+  envelope is a successful result carrying that string. A tool of a type other than `function` is
+  refused by its type.
+- Chat Completions: `parallel_tool_calls`, `prompt_cache_key`, `verbosity` and `response_format`
+  are carried, and an assistant message's `refusal` text is an `Item::AssistantRefusal`; every
   object below the top is closed, and a `strict` function schema is refused. A `tool` message whose
   content is exactly the failure object `{"error":<output>,"ok":false}` is a failed result
   ("Failed and rejected tool results" above); any other content is a successful string.
 
-Still refused, by name, and outside this design: structured output (`output_config.format`,
-`text.format`, `response_format`), server-side context editing (`context_management`), hosted and
-custom tools, `thinking.display`, and an instruction in the middle of the conversation (a
-developer message after the first item of Responses `input`, a Chat system message after the
-first message): the neutral turn has no item that places an instruction between two turns.
+Structured output is carried ("Structured output" above): a JSON Schema `output_config.format`,
+`text.format` or `response_format` is read, and JSON mode (`json_object`) is refused by its type.
+
+Still refused, by name, and outside this design: server-side context editing
+(`context_management`), hosted and custom tools, `thinking.display`, and an instruction in the
+middle of the conversation (a developer message after the first item of Responses `input`, a Chat
+system message after the first message): the neutral turn has no item that places an instruction
+between two turns.
 
 One exception, decision D262 (story:messages-ingress-system-messages): a `system` message in
 Messages `messages` is read. Those before the first message of another role join the instructions;

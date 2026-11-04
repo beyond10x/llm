@@ -1,10 +1,14 @@
-//! What a turn asks beyond its sampling: thinking, parallel tool calls and advisory hints.
+//! What a turn asks beyond its sampling: thinking, parallel tool calls, advisory hints and an
+//! output format.
 //!
 //! The rules are `docs/design.md` "Client request fields". [`wire_effort`] is the one place the
 //! reasoning table is written; every protocol crate and [`crate::TurnRequest::validate_for`] read
 //! it from here.
-use crate::{Error, Protocol, StreamEvent, ToolSpec, TurnRequest};
+use crate::{
+    Error, MAX_TOOL_ARGUMENT_BYTES, Protocol, StreamEvent, ToolSpec, TurnRequest, exceeds,
+};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::BTreeSet;
 use std::fmt;
 
@@ -256,6 +260,82 @@ impl Hints {
     }
 }
 
+/// The longest output format name a turn carries, in bytes: the bound Responses and Chat
+/// Completions set.
+pub const MAX_OUTPUT_FORMAT_NAME_BYTES: usize = 64;
+
+/// A JSON Schema the model's answer is asked to conform to: structured output
+/// (`docs/design.md` "Structured output").
+///
+/// The answer still arrives as assistant text; llm does not validate it against the schema.
+/// Each wire carries the format or refuses it before any I/O: Responses as `text.format`, Chat
+/// Completions as `response_format`, Messages and Bedrock `InvokeModel` as
+/// `output_config.format`, Bedrock Converse as `outputConfig.textFormat`. Build one with
+/// [`OutputFormat::json_schema`]; the struct may gain members, so it is not built by literal.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+#[non_exhaustive]
+pub struct OutputFormat {
+    /// The format's name: 1 to [`MAX_OUTPUT_FORMAT_NAME_BYTES`] bytes of ASCII letters, digits,
+    /// `_` and `-`. Responses and Chat Completions require one and llm invents none; Messages
+    /// has no place for it and does not send it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// The JSON Schema, a JSON object.
+    pub schema: Value,
+    /// Whether the answer must hold to the schema exactly. Absent leaves it to the wire's own
+    /// default; Messages and Bedrock always hold to it, so they refuse `false`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub strict: Option<bool>,
+}
+
+impl OutputFormat {
+    /// A format asking for an answer that conforms to `schema`, with no name and no strict flag.
+    pub const fn json_schema(schema: Value) -> Self {
+        Self {
+            name: None,
+            schema,
+            strict: None,
+        }
+    }
+
+    /// This format, named `name`.
+    #[must_use]
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+
+    /// This format, with the strict flag stated.
+    #[must_use]
+    pub const fn with_strict(mut self, strict: bool) -> Self {
+        self.strict = Some(strict);
+        self
+    }
+
+    fn validate(&self) -> Result<(), Error> {
+        if self.name.as_ref().is_some_and(|name| {
+            !(1..=MAX_OUTPUT_FORMAT_NAME_BYTES).contains(&name.len())
+                || !name
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+        }) {
+            return Err(Error::invalid(
+                "an output format name is 1 to 64 ASCII letters, digits, '_' or '-'",
+            ));
+        }
+        if !self.schema.is_object() {
+            return Err(Error::invalid(
+                "an output format schema must be a JSON Schema object",
+            ));
+        }
+        if exceeds(&self.schema, MAX_TOOL_ARGUMENT_BYTES) {
+            return Err(Error::too_large("output format schema exceeds its bound"));
+        }
+        Ok(())
+    }
+}
+
 /// What a turn asks beyond sampling. Empty controls are the 0.6.0 turn exactly.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -272,6 +352,9 @@ pub struct Controls {
     /// `TurnOutcome::validate_for`; no wire sends it. Every other outcome check still refuses.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub return_unpublished_calls: bool,
+    /// The JSON Schema the answer is asked to conform to; absent asks for plain text.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_format: Option<OutputFormat>,
 }
 
 impl Controls {
@@ -280,6 +363,7 @@ impl Controls {
             && self.parallel_tool_calls.is_none()
             && self.hints.is_empty()
             && !self.return_unpublished_calls
+            && self.output_format.is_none()
     }
 
     pub(crate) fn validate(&self, tools: &[ToolSpec]) -> Result<(), Error> {
@@ -288,6 +372,9 @@ impl Controls {
         }
         if self.parallel_tool_calls.is_some() && tools.is_empty() {
             return Err(Error::invalid("parallel tool calls need published tools"));
+        }
+        if let Some(format) = &self.output_format {
+            format.validate()?;
         }
         self.hints.validate()
     }

@@ -29,6 +29,14 @@ const CONFIRMED: &[&str] = &[
     // beta a subscription token requires, `crates/harness-messages/src/lib.rs:86` and `:93`.
     "anthropic-beta",
     "oauth-2025-04-20",
+    // Read 2026-11-04 for story:structured-output in Anthropic's API reference
+    // (`https://platform.claude.com/docs/en/api/messages/create`): `output_config` is
+    // `OutputConfig { effort, format }`, and `format` is `JSONOutputFormat { type: "json_schema",
+    // schema }` or null; the structured-outputs guide
+    // (`https://platform.claude.com/docs/en/build-with-claude/structured-outputs`) sends the same.
+    "format",
+    "json_schema",
+    "schema",
     // Read 2026-10-20 for story:quota-429-is-final on Anthropic's rate-limits page, section
     // "Reaching your spend cap" (platform.claude.com/docs/en/api/rate-limits): the spend-cap 429
     // body carries `"details": { "error_code": "enforced_spend_limit_reached" }` inside `error`,

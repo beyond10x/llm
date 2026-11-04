@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-converse-refuses-an-output-format-that-is-not-strict
+summary: "Bedrock always holds the answer to an output format's schema, so a format with strict false is refused before any request"
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    request_json: '{"format":"llm.turn/4","request":{"model":"us.anthropic.claude-3-7-sonnet-20250219-v1:0","instructions":"","items":[{"kind":"user-text","text":"Hello"}],"tools":[],"controls":{"output_format":{"name":"place","schema":{"type":"object"},"strict":false}}}}'
+    recording: "ddtrace-bedrock_converse_stream_prompt_caching-1.bin"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: false
+    error_code: "unsupported"
+    dispatch: "not-sent"
+    requests: 0
+    request_body: null

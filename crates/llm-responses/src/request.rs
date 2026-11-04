@@ -3,8 +3,9 @@
 use std::collections::BTreeSet;
 
 use llm_core::{
-    Advisory, CallId, Controls, Error, Hints, Item, Protocol, ReasoningSummary, Sampling, ToolCall,
-    ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded, Verbosity, field_path, wire_effort,
+    Advisory, CallId, Controls, Error, Hints, Item, OutputFormat, Protocol, ReasoningSummary,
+    Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded, Verbosity,
+    field_path, wire_effort,
 };
 use serde_json::{Map, Value, json};
 
@@ -76,6 +77,9 @@ pub const REFUSED_TOOL_TYPES: &[&str] = &[
     "image_generation",
     "code_interpreter",
 ];
+
+/// The `text.format` type of a JSON Schema output format, the one this subset carries.
+const JSON_SCHEMA: &str = "json_schema";
 
 /// The advisory hints this projection sends: `docs/design.md`, "Advisory hints".
 const CARRIED: &[Advisory] = &[
@@ -190,13 +194,33 @@ pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value
     if let Some(key) = &hints.prompt_cache_key {
         body.insert("prompt_cache_key".to_owned(), json!(key));
     }
+    let mut text = Map::new();
+    if let Some(format) = &request.controls.output_format {
+        text.insert("format".to_owned(), format_to_wire(format)?);
+    }
     if let Some(verbosity) = hints.verbosity {
-        body.insert(
-            "text".to_owned(),
-            json!({"verbosity": verbosity_name(verbosity)}),
-        );
+        text.insert("verbosity".to_owned(), json!(verbosity_name(verbosity)));
+    }
+    if !text.is_empty() {
+        body.insert("text".to_owned(), Value::Object(text));
     }
     Ok(Value::Object(body))
+}
+
+/// `text.format` for a JSON Schema format. The wire requires a name and this crate invents
+/// none; a strict flag nobody set stays absent, the provider's default to decide.
+fn format_to_wire(format: &OutputFormat) -> Result<Value, Error> {
+    let name = format.name.as_ref().ok_or_else(|| {
+        Error::unsupported("Responses needs a name for a JSON Schema output format")
+    })?;
+    let mut wire = Map::new();
+    wire.insert("type".to_owned(), json!(JSON_SCHEMA));
+    wire.insert("name".to_owned(), json!(name));
+    wire.insert("schema".to_owned(), format.schema.clone());
+    if let Some(strict) = format.strict {
+        wire.insert("strict".to_owned(), json!(strict));
+    }
+    Ok(Value::Object(wire))
 }
 
 const fn summary_name(summary: ReasoningSummary) -> &'static str {
@@ -343,6 +367,7 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
         }
         Some(_) => return Err(Error::invalid("`client_metadata` is not an object")),
     }
+    let (verbosity, output_format) = text(object.get("text"))?;
     let controls = Controls {
         thinking: None,
         // A local outcome policy, not a field any client request carries.
@@ -359,11 +384,12 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
                 Some(Value::String(key)) => Some(key.clone()),
                 Some(_) => return Err(Error::invalid("`prompt_cache_key` is not a string")),
             },
-            verbosity: verbosity(object.get("text"))?,
+            verbosity,
             reasoning_summary,
             anthropic_beta: Vec::new(),
             unforwarded,
         },
+        output_format,
     };
 
     let request = TurnRequest {
@@ -471,25 +497,66 @@ fn reasoning(value: Option<&Value>) -> Result<(Option<String>, Option<ReasoningS
     Ok((effort, summary))
 }
 
-/// `text`: only `verbosity`. Structured output (`text.format`) is outside this design.
-fn verbosity(value: Option<&Value>) -> Result<Option<Verbosity>, Error> {
+/// `text`: `verbosity`, the hint, and `format`, the turn's output format.
+fn text(value: Option<&Value>) -> Result<(Option<Verbosity>, Option<OutputFormat>), Error> {
     let text = match value {
-        None | Some(Value::Null) => return Ok(None),
+        None | Some(Value::Null) => return Ok((None, None)),
         Some(Value::Object(text)) => text,
         Some(_) => return Err(Error::invalid("`text` is not an object")),
     };
-    closed(text, "text", &["verbosity"])?;
-    match text.get("verbosity") {
-        None | Some(Value::Null) => Ok(None),
+    closed(text, "text", &["format", "verbosity"])?;
+    let verbosity = match text.get("verbosity") {
+        None | Some(Value::Null) => None,
         Some(Value::String(verbosity)) => match verbosity.as_str() {
-            "low" => Ok(Some(Verbosity::Low)),
-            "medium" => Ok(Some(Verbosity::Medium)),
-            "high" => Ok(Some(Verbosity::High)),
-            _ => Err(Error::unsupported(
-                "`text.verbosity` is outside the pinned subset",
-            )),
+            "low" => Some(Verbosity::Low),
+            "medium" => Some(Verbosity::Medium),
+            "high" => Some(Verbosity::High),
+            _ => {
+                return Err(Error::unsupported(
+                    "`text.verbosity` is outside the pinned subset",
+                ));
+            }
         },
-        Some(_) => Err(Error::invalid("`text.verbosity` is not a string")),
+        Some(_) => return Err(Error::invalid("`text.verbosity` is not a string")),
+    };
+    Ok((verbosity, format(text.get("format"))?))
+}
+
+/// `text.format`. `json_schema` is the turn's output format. `text`, this wire's documented
+/// default, is the format a turn without one asks for. `json_object`, JSON mode, asks for any JSON
+/// at all, which no JSON Schema the neutral turn holds says, and is refused naming that type.
+fn format(value: Option<&Value>) -> Result<Option<OutputFormat>, Error> {
+    let format = match value {
+        None | Some(Value::Null) => return Ok(None),
+        Some(Value::Object(format)) => format,
+        Some(_) => return Err(Error::invalid("`text.format` is not an object")),
+    };
+    match string(format.get("type")) {
+        Some("text") => {
+            closed(format, "text.format", &["type"])?;
+            Ok(None)
+        }
+        Some(JSON_SCHEMA) => {
+            closed(format, "text.format", &["type", "name", "schema", "strict"])?;
+            let name = string(format.get("name"))
+                .ok_or_else(|| Error::invalid("`text.format.name` is not a string"))?;
+            let schema = format
+                .get("schema")
+                .filter(|schema| schema.is_object())
+                .ok_or_else(|| Error::invalid("`text.format.schema` is not an object"))?;
+            let read = OutputFormat::json_schema(schema.clone()).with_name(name);
+            Ok(Some(match format.get("strict") {
+                None | Some(Value::Null) => read,
+                Some(Value::Bool(strict)) => read.with_strict(*strict),
+                Some(_) => return Err(Error::invalid("`text.format.strict` is not a boolean")),
+            }))
+        }
+        Some("json_object") => Err(Error::unsupported(
+            "`text.format` of type `json_object` is outside the pinned subset: the neutral output format is a JSON Schema",
+        )),
+        _ => Err(Error::unsupported(
+            "`text.format.type` is outside the pinned subset",
+        )),
     }
 }
 

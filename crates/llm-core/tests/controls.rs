@@ -104,6 +104,7 @@ fn a_turn_with_controls_is_llm_turn_4_and_reads_back_equal() {
         }),
         parallel_tool_calls: Some(false),
         return_unpublished_calls: true,
+        output_format: None,
         hints: Hints {
             prompt_cache: Some(PromptCache {
                 ttl: Some(CacheTtl::OneHour),

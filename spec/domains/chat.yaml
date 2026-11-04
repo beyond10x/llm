@@ -32,7 +32,10 @@ entities:
       # gives for Chat Completions: effort `max` is sent as `xhigh`, disabled thinking as
       # `none`, adaptive thinking sends nothing more, and a thinking budget or disabled
       # thinking beside an effort is refused. `parallel_tool_calls`, `prompt_cache_key` and
-      # `verbosity` are sent under those names when the turn sets them, and only then.
+      # `verbosity` are sent under those names when the turn sets them, and only then. An output
+      # format is `response_format` `{type: json_schema, json_schema: {name, schema, strict}}`,
+      # `strict` only when the turn sets it; one without a name is refused, since the wire
+      # requires a name and llm invents none.
       - {name: wire_request, type: Optional<String>}
       # The advisory hints the turn carries that this wire does not send (`prompt-cache`,
       # `reasoning-summary` and the unforwarded names), in the order of the design's advisory
@@ -108,7 +111,9 @@ entities:
       # its hints. Every object of the request is closed: a key outside a level's published
       # keys is refused naming its path (`messages[].name`, `tools[].function.foo`), a tool
       # call or object tool choice whose `type` is not `function` is refused, and so is a
-      # `strict` function schema.
+      # `strict` function schema. A `response_format` of type `json_schema` is the turn's
+      # `controls.output_format`; `{type: text}` and `null`, the wire's default, are no format;
+      # `json_object` is refused naming that type, any other type without naming it.
       - {name: turn_json, type: Optional<String>}
       # What `omitted_advisories` returns for the decoded turn.
       - {name: omitted_advisories, type: List<String>}
