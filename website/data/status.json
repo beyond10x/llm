@@ -57,6 +57,12 @@
       "status": "shipped"
     },
     {
+      "area": "Neutral turn",
+      "detail": "controls.output_format (a schema, an optional name and strict flag) is sent as Responses text.format, Chat response_format, Messages and Bedrock InvokeModel output_config.format and Bedrock Converse outputConfig.textFormat, or refused before I/O where a wire cannot hold it; Responses, Chat and Messages ingress read it back. llm does not check the answer against the schema. Request bytes pinned against the published request shapes; no provider was called.",
+      "label": "A turn can hold its answer to a JSON Schema",
+      "status": "shipped"
+    },
+    {
       "area": "Transport",
       "detail": "One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails.",
       "label": "Bounded HTTP and server-sent events",

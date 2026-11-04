@@ -2,20 +2,21 @@
 //!
 //! Converse is Bedrock's own request shape, the same for every model that supports it: the
 //! conversation as `messages` of `user` and `assistant` content blocks, the instructions as
-//! `system`, sampling as `inferenceConfig`, tools as `toolConfig`. A streamed answer is a
-//! sequence of event-stream frames, each one event named by its `:event-type` header; a whole
-//! answer is one JSON document.
+//! `system`, sampling as `inferenceConfig`, tools as `toolConfig`, an output format as
+//! `outputConfig`. A streamed answer is a sequence of event-stream frames, each one event named
+//! by its `:event-type` header; a whole answer is one JSON document.
 //!
 //! What a turn asks for and this wire cannot carry is refused by name before any I/O: a
 //! reasoning effort, the parallel tool call control, a thinking control for a model that is not
-//! Anthropic's, opaque state this wire did not produce. Advisory hints are never sent; a turn
+//! Anthropic's, an output format that is not strict, opaque state this wire did not produce. Advisory hints are never sent; a turn
 //! that carried any says so in one `advisory-omitted` warning after it succeeded.
 
 use crate::{client::BedrockTarget, errors, eventstream::Message};
 use llm_core::{
     Advisory, CallId, Cancel, Dispatch, Error, ErrorCode, Item, MAX_ITEMS, MAX_REQUEST_BYTES,
-    MAX_TOOL_ARGUMENT_BYTES, Protocol, Provenance, StopReason, StreamEvent, StreamSink, Thinking,
-    ToolCall, ToolChoice, ToolName, TurnObservation, TurnOutcome, TurnRequest, Usage, exceeds,
+    MAX_TOOL_ARGUMENT_BYTES, OutputFormat, Protocol, Provenance, StopReason, StreamEvent,
+    StreamSink, Thinking, ToolCall, ToolChoice, ToolName, TurnObservation, TurnOutcome,
+    TurnRequest, Usage, exceeds,
 };
 use llm_http::within_tokio_runtime;
 use serde_json::{Map, Value, json};
@@ -131,6 +132,10 @@ fn encode_body(request: &TurnRequest, target: &BedrockTarget) -> Result<Value, E
         }
         Some(thinking) => Some(thinking_field(thinking)),
     };
+    let output_config = match &request.controls.output_format {
+        None => None,
+        Some(format) => Some(output_config(format)?),
+    };
     let mut body = Map::new();
     body.insert(
         "messages".to_owned(),
@@ -152,7 +157,32 @@ fn encode_body(request: &TurnRequest, target: &BedrockTarget) -> Result<Value, E
             json!({"thinking": thinking}),
         );
     }
+    if let Some(config) = output_config {
+        body.insert("outputConfig".to_owned(), config);
+    }
     Ok(Value::Object(body))
+}
+
+/// The output format as `outputConfig`: `textFormat` of type `json_schema`, its `jsonSchema`
+/// holding the schema as a JSON string, as the API reference's `JsonSchemaDefinition` takes
+/// it, and the name when the format has one. Bedrock always holds the answer to the schema, so
+/// a format that asks it not to is refused and a strict one needs nothing more.
+fn output_config(format: &OutputFormat) -> Result<Value, Error> {
+    if format.strict == Some(false) {
+        return Err(Error::unsupported(
+            "Bedrock Converse always holds the answer to an output format's schema: a format that is not strict cannot be sent",
+        ));
+    }
+    let schema = serde_json::to_string(&format.schema)
+        .map_err(|_| Error::invalid("Bedrock Converse output format encoding failed"))?;
+    let mut definition = Map::new();
+    definition.insert("schema".to_owned(), Value::String(schema));
+    if let Some(name) = &format.name {
+        definition.insert("name".to_owned(), json!(name));
+    }
+    Ok(json!({
+        "textFormat": {"type": "json_schema", "structure": {"jsonSchema": definition}}
+    }))
 }
 
 /// Whether an item is the caller's: Converse sends tool results in a `user` message.

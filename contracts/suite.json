@@ -86,6 +86,7 @@
       "llm.bedrock/authored/turn-a-429-service-quota-answer-is-final",
       "llm.bedrock/authored/turn-a-429-throttling-answer-stays-a-retriable-rate-limit",
       "llm.bedrock/authored/turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call",
+      "llm.bedrock/authored/turn-a-converse-turn-sends-its-output-format-as-text-format",
       "llm.bedrock/authored/turn-a-cut-after-content-is-final",
       "llm.bedrock/authored/turn-a-cut-before-any-content-may-be-retried",
       "llm.bedrock/authored/turn-a-throttling-exception-after-content-is-final",
@@ -94,7 +95,9 @@
       "llm.bedrock/authored/turn-a-whole-converse-answer-is-shown-as-the-stream-would-show-it",
       "llm.bedrock/authored/turn-a-whole-invoke-answer-is-the-messages-answer",
       "llm.bedrock/authored/turn-an-anthropic-invoke-stream-sends-the-messages-body-with-the-bedrock-version",
+      "llm.bedrock/authored/turn-an-anthropic-invoke-turn-sends-the-messages-output-format",
       "llm.bedrock/authored/turn-converse-cache-counters-make-the-input-total-known",
+      "llm.bedrock/authored/turn-converse-refuses-an-output-format-that-is-not-strict",
       "llm.bedrock/authored/turn-converse-thinking-is-sent-as-an-additional-field-and-streamed-as-reasoning",
       "llm.budget/authored/a-policy-admitting-no-concurrent-work-is-refused",
       "llm.budget/authored/a-reconciled-charge-cannot-be-reconciled-again",
@@ -157,6 +160,7 @@
       "llm.budget/authored/wide-aggregate-charge-is-exact",
       "llm.budget/authored/write-failure-freezes-owner-until-reopen",
       "llm.budget/authored/zero-cap-allows-only-declared-zero",
+      "llm.chat/authored/egress-an-output-format-without-a-name-is-refused",
       "llm.chat/authored/incoming-a-completion-without-a-finish-reason-is-refused",
       "llm.chat/authored/incoming-a-counter-a-present-report-omits-stays-absent",
       "llm.chat/authored/incoming-a-framed-counter-that-is-not-a-count-is-refused-as-served",
@@ -194,13 +198,13 @@
       "llm.chat/authored/incoming-vllm-tool-stream-preserves-its-call-and-counters",
       "llm.chat/authored/ingress-a-call-completed-at-close-and-an-unannounced-call-take-consecutive-indices",
       "llm.chat/authored/ingress-a-client-request-decodes-onto-the-neutral-subset",
+      "llm.chat/authored/ingress-a-key-inside-response-format-is-refused-by-its-path",
       "llm.chat/authored/ingress-a-key-that-is-not-a-field-name-is-refused-without-copying-it",
       "llm.chat/authored/ingress-a-named-tool-choice-needs-published-tools",
       "llm.chat/authored/ingress-a-named-unsupported-field-is-refused-by-its-own-name",
       "llm.chat/authored/ingress-a-non-text-content-part-is-refused",
       "llm.chat/authored/ingress-a-refused-encoding-carries-no-content",
       "llm.chat/authored/ingress-a-refused-request-decodes-to-no-turn",
-      "llm.chat/authored/ingress-a-response-format-request-is-refused-by-name",
       "llm.chat/authored/ingress-a-stream-flag-that-is-not-a-boolean-is-refused",
       "llm.chat/authored/ingress-a-stream-option-beside-include-usage-is-refused",
       "llm.chat/authored/ingress-a-stream-without-include-usage-reports-no-counters",
@@ -239,6 +243,7 @@
       "llm.chat/authored/ingress-encoding-refuses-unattributed-state-by-name",
       "llm.chat/authored/ingress-encoding-reports-exactly-the-counters-it-was-given",
       "llm.chat/authored/ingress-instructions-must-precede-the-conversation",
+      "llm.chat/authored/ingress-json-mode-is-refused-by-its-type",
       "llm.chat/authored/ingress-message-content-that-is-not-text-is-refused",
       "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string",
       "llm.chat/authored/ingress-stream-options-that-are-not-an-object-are-refused",
@@ -261,6 +266,8 @@
       "llm.chat/authored/outgoing-unattributed-opaque-state-is-refused-by-name",
       "llm.chat/authored/round-trip-a-prompt-cache-key-decodes-back-to-the-same-turn",
       "llm.chat/authored/round-trip-a-prompt-cache-key-is-projected-under-its-own-name",
+      "llm.chat/authored/round-trip-an-output-format-decodes-back-to-the-same-turn",
+      "llm.chat/authored/round-trip-an-output-format-is-projected-as-response-format",
       "llm.chat/authored/round-trip-parallel-tool-calls-are-projected-under-their-own-name",
       "llm.chat/authored/round-trip-parallel-tool-calls-decode-back-to-the-same-turn",
       "llm.chat/authored/round-trip-verbosity-decodes-back-to-the-same-turn",
@@ -356,6 +363,8 @@
       "llm.messages/authored/disabled-thinking-is-projected-as-read",
       "llm.messages/authored/duplicate-message-start-refused",
       "llm.messages/authored/effort-max-is-projected-as-its-own-name",
+      "llm.messages/authored/egress-refuses-an-output-format-that-is-not-strict",
+      "llm.messages/authored/egress-writes-the-output-format-beside-the-effort",
       "llm.messages/authored/event-name-contradicting-its-payload-refused",
       "llm.messages/authored/foreign-opaque-state-refused",
       "llm.messages/authored/ingress-carries-thinking-it-cannot-attribute",
@@ -370,13 +379,14 @@
       "llm.messages/authored/ingress-reads-metadata-as-client-metadata-and-reports-it-omitted",
       "llm.messages/authored/ingress-reads-parallel-tool-use-left-enabled",
       "llm.messages/authored/ingress-reads-system-messages-as-instructions-and-marked-user-text",
+      "llm.messages/authored/ingress-reads-the-output-format-beside-the-effort",
       "llm.messages/authored/ingress-reads-thinking-with-a-budget",
       "llm.messages/authored/ingress-refuses-a-cache-mark-on-thinking",
       "llm.messages/authored/ingress-refuses-a-cache-mark-scope",
       "llm.messages/authored/ingress-refuses-a-conversation-that-opens-with-the-assistant",
+      "llm.messages/authored/ingress-refuses-a-format-name-by-its-path",
       "llm.messages/authored/ingress-refuses-a-request-field-outside-the-subset",
       "llm.messages/authored/ingress-refuses-a-role-outside-the-subset",
-      "llm.messages/authored/ingress-refuses-a-structured-output-format",
       "llm.messages/authored/ingress-refuses-a-system-block-that-is-not-text",
       "llm.messages/authored/ingress-refuses-a-system-message-block-that-is-not-text",
       "llm.messages/authored/ingress-refuses-a-system-shape-outside-the-subset",
@@ -546,12 +556,14 @@
       "llm.responses/authored/egress-leaves-out-a-saved-metadata-item",
       "llm.responses/authored/egress-refuses-a-cache-key-other-than-the-conversation",
       "llm.responses/authored/egress-refuses-a-thinking-budget",
+      "llm.responses/authored/egress-refuses-an-output-format-without-a-name",
       "llm.responses/authored/egress-refuses-disabled-thinking-beside-an-effort",
       "llm.responses/authored/egress-reports-the-hints-it-does-not-send",
       "llm.responses/authored/egress-sends-disabled-thinking-as-effort-none",
       "llm.responses/authored/egress-sends-the-effort-max-as-xhigh",
       "llm.responses/authored/egress-the-first-codex-turn-with-verbosity-drops-only-its-unforwarded-hints",
       "llm.responses/authored/egress-writes-the-carried-controls-and-hints",
+      "llm.responses/authored/egress-writes-the-output-format-as-text-format",
       "llm.responses/authored/encoding-a-caller-owned-item-is-refused",
       "llm.responses/authored/encoding-a-non-streamed-response-reads-back-unchanged",
       "llm.responses/authored/encoding-a-stop-reason-the-wire-cannot-express-is-refused",
@@ -586,6 +598,7 @@
       "llm.responses/authored/ingress-refuses-a-field-outside-the-subset",
       "llm.responses/authored/ingress-refuses-a-function-call-output-key-by-its-path",
       "llm.responses/authored/ingress-refuses-a-function-call-status-by-its-path",
+      "llm.responses/authored/ingress-refuses-a-key-inside-text-format-by-its-path",
       "llm.responses/authored/ingress-refuses-a-message-key-by-its-path",
       "llm.responses/authored/ingress-refuses-a-message-of-two-content-parts",
       "llm.responses/authored/ingress-refuses-a-message-role-outside-the-subset",
@@ -608,11 +621,12 @@
       "llm.responses/authored/ingress-refuses-an-unknown-tool-type-without-naming-it",
       "llm.responses/authored/ingress-refuses-content-this-version-does-not-carry",
       "llm.responses/authored/ingress-refuses-function-call-arguments-that-are-not-an-object",
+      "llm.responses/authored/ingress-refuses-json-mode-by-its-type",
       "llm.responses/authored/ingress-refuses-non-empty-annotations-by-their-path",
       "llm.responses/authored/ingress-refuses-provider-side-storage",
       "llm.responses/authored/ingress-refuses-reasoning-that-is-not-an-object",
       "llm.responses/authored/ingress-refuses-reasoning-with-a-field-beside-effort",
-      "llm.responses/authored/ingress-refuses-structured-output-by-its-path",
+      "llm.responses/authored/ingress-round-trips-a-json-schema-output-format",
       "llm.responses/authored/ingress-round-trips-cache-key",
       "llm.responses/authored/ingress-round-trips-parallel-false",
       "llm.responses/authored/ingress-round-trips-parallel-true",
@@ -1189,6 +1203,11 @@
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call"
       },
+      "bedrock/scenarios/turn-a-converse-turn-sends-its-output-format-as-text-format.yaml": {
+        "digest": "sha256:674aa4c24cfff5ac086a513968bf24cf6f6ee09946342cb002d50fb5a741dd7b",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-turn-sends-its-output-format-as-text-format"
+      },
       "bedrock/scenarios/turn-a-cut-after-content-is-final.yaml": {
         "digest": "sha256:98245d559c4d5f36a4016eeb66033515d2d1757cc0b7e2249c232bf620ceb241",
         "disposition": "accepted",
@@ -1229,10 +1248,20 @@
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-an-anthropic-invoke-stream-sends-the-messages-body-with-the-bedrock-version"
       },
+      "bedrock/scenarios/turn-an-anthropic-invoke-turn-sends-the-messages-output-format.yaml": {
+        "digest": "sha256:eab26a98b10ebbd2a24ad6800f43dfd31026ecc93b4d637db8a1e4ed216a82a2",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-an-anthropic-invoke-turn-sends-the-messages-output-format"
+      },
       "bedrock/scenarios/turn-converse-cache-counters-make-the-input-total-known.yaml": {
         "digest": "sha256:795fa30616a28f0f4ec4e2b1ad5e2a0025630b42adf8873cbda7a323b947176e",
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-converse-cache-counters-make-the-input-total-known"
+      },
+      "bedrock/scenarios/turn-converse-refuses-an-output-format-that-is-not-strict.yaml": {
+        "digest": "sha256:f9ffff7d9ba97dab6b4541179ccc535afbdc91600a5ab5e5db72c46e92843080",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-converse-refuses-an-output-format-that-is-not-strict"
       },
       "bedrock/scenarios/turn-converse-thinking-is-sent-as-an-additional-field-and-streamed-as-reasoning.yaml": {
         "digest": "sha256:fe98ee9f34a0af2c4eb65e6c968ad41fa51513edc758c9566c01b83870bf5f5b",
@@ -1544,6 +1573,11 @@
         "disposition": "accepted",
         "scenario": "llm.budget/authored/zero-cap-allows-only-declared-zero"
       },
+      "chat/scenarios/egress-an-output-format-without-a-name-is-refused.yaml": {
+        "digest": "sha256:970c19cb686cefde6311a067a82dfdbd08d5bef93f1d5b9f02d52bf8deca2d5c",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/egress-an-output-format-without-a-name-is-refused"
+      },
       "chat/scenarios/incoming-a-completion-without-a-finish-reason-is-refused.yaml": {
         "digest": "sha256:8e2ef52a3ec5b1d62a5b776616e18b7fcde66ee1814e8153ea2cc00b63a67efe",
         "disposition": "accepted",
@@ -1729,6 +1763,11 @@
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-client-request-decodes-onto-the-neutral-subset"
       },
+      "chat/scenarios/ingress-a-key-inside-response-format-is-refused-by-its-path.yaml": {
+        "digest": "sha256:62a8e9e3d73f424857f11cde3fdec254d45791a58867c91aad02fb86053304c7",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-a-key-inside-response-format-is-refused-by-its-path"
+      },
       "chat/scenarios/ingress-a-key-that-is-not-a-field-name-is-refused-without-copying-it.yaml": {
         "digest": "sha256:2c5f1f1b953b14709a0ac712d789e0b693864564476982a29d4b9111050f7885",
         "disposition": "accepted",
@@ -1758,11 +1797,6 @@
         "digest": "sha256:9c7b5999c2f05c732c1ea79f0a27a1e33fc2bd38b04bcaada710d3a56e7efe7a",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-refused-request-decodes-to-no-turn"
-      },
-      "chat/scenarios/ingress-a-response-format-request-is-refused-by-name.yaml": {
-        "digest": "sha256:f4cf8af5c7aee881fe642bc84ce58d95d219ebcc8df82aa7092459c5cc5168b9",
-        "disposition": "accepted",
-        "scenario": "llm.chat/authored/ingress-a-response-format-request-is-refused-by-name"
       },
       "chat/scenarios/ingress-a-stream-flag-that-is-not-a-boolean-is-refused.yaml": {
         "digest": "sha256:4510ddeb385ff4d940fa5de1aeba7aaa4c6e7cc22534ab4a35b3f1136397164c",
@@ -1954,6 +1988,11 @@
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-instructions-must-precede-the-conversation"
       },
+      "chat/scenarios/ingress-json-mode-is-refused-by-its-type.yaml": {
+        "digest": "sha256:7e54a23e384f78d036633718be7897ef2033923ca80198b9b40b0aa43fa0f866",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-json-mode-is-refused-by-its-type"
+      },
       "chat/scenarios/ingress-message-content-that-is-not-text-is-refused.yaml": {
         "digest": "sha256:37f0071ab3ee2aee3512c6360f31898322ba84a38563592301fce901c351e0ac",
         "disposition": "accepted",
@@ -2063,6 +2102,16 @@
         "digest": "sha256:ac84cc6a4796ae061ae28a970ed2ed865a11a5ddf9dd193813160be5e5b5a0f3",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/round-trip-a-prompt-cache-key-is-projected-under-its-own-name"
+      },
+      "chat/scenarios/round-trip-an-output-format-decodes-back-to-the-same-turn.yaml": {
+        "digest": "sha256:08fe71df868025655ecc8787f1c5af08a06338e4e48f782f18b25f9dcc92b7f2",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/round-trip-an-output-format-decodes-back-to-the-same-turn"
+      },
+      "chat/scenarios/round-trip-an-output-format-is-projected-as-response-format.yaml": {
+        "digest": "sha256:db1bec5d949dab6923baf7609f72221eba6e6dcb23c16f9eb65967826f073236",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/round-trip-an-output-format-is-projected-as-response-format"
       },
       "chat/scenarios/round-trip-parallel-tool-calls-are-projected-under-their-own-name.yaml": {
         "digest": "sha256:a9c9c440c9f418ad73385aa1e12d1cefb4a96e66ecff2426e7b2812a35b046b5",
@@ -2494,6 +2543,16 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/effort-max-is-projected-as-its-own-name"
       },
+      "messages/scenarios/egress-refuses-an-output-format-that-is-not-strict.yaml": {
+        "digest": "sha256:8b698c1d639ca76597eaf7285fd5fad4624e3162a006bfae0d6d155c25a50e9c",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/egress-refuses-an-output-format-that-is-not-strict"
+      },
+      "messages/scenarios/egress-writes-the-output-format-beside-the-effort.yaml": {
+        "digest": "sha256:2fa4023f02d9c06f5c56837c9279bcc5adf5e3d7f6a086d98c0807db8dda87c5",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/egress-writes-the-output-format-beside-the-effort"
+      },
       "messages/scenarios/event-name-contradicting-its-payload-refused.yaml": {
         "digest": "sha256:a2cbc1e3a791eeb7dfee6541b05ec6b32fa23965e15a34ec11088b9b6696ebdd",
         "disposition": "accepted",
@@ -2564,6 +2623,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-system-messages-as-instructions-and-marked-user-text"
       },
+      "messages/scenarios/ingress-reads-the-output-format-beside-the-effort.yaml": {
+        "digest": "sha256:dea58d9553cffe0b5ada24ac3990e200698f2fda3b2440153cab0fe9cf440a46",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/ingress-reads-the-output-format-beside-the-effort"
+      },
       "messages/scenarios/ingress-reads-thinking-with-a-budget.yaml": {
         "digest": "sha256:99a81c10036454d420bc5e26934d502ec0be1f5b6140d7edb417df08e035cf3f",
         "disposition": "accepted",
@@ -2584,6 +2648,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-refuses-a-conversation-that-opens-with-the-assistant"
       },
+      "messages/scenarios/ingress-refuses-a-format-name-by-its-path.yaml": {
+        "digest": "sha256:221748511d755c705e8272994159db5f6b145aa07ff6e71fcbfe88c06e620386",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/ingress-refuses-a-format-name-by-its-path"
+      },
       "messages/scenarios/ingress-refuses-a-request-field-outside-the-subset.yaml": {
         "digest": "sha256:0a6e4b7afaf5dee0abf43106e3f9dc5730bdbd3fda4552ea73e9995fedbd749a",
         "disposition": "accepted",
@@ -2593,11 +2662,6 @@
         "digest": "sha256:b4ee3e2e12268e6446b7e1407060e90818af29505de4f189c44c989df4b90f2d",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-refuses-a-role-outside-the-subset"
-      },
-      "messages/scenarios/ingress-refuses-a-structured-output-format.yaml": {
-        "digest": "sha256:29c6f7f6d9afd069e4b3abfa44649d7a0db1bea819f6e5a5ac34004822672012",
-        "disposition": "accepted",
-        "scenario": "llm.messages/authored/ingress-refuses-a-structured-output-format"
       },
       "messages/scenarios/ingress-refuses-a-system-block-that-is-not-text.yaml": {
         "digest": "sha256:c8e0f3c77d70b932e2d03d9bd607f36890f65caacd28ace7be178df93330a2e6",
@@ -3674,6 +3738,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/egress-refuses-a-thinking-budget"
       },
+      "responses/scenarios/egress-refuses-an-output-format-without-a-name.yaml": {
+        "digest": "sha256:90eeb32c5e5e646e2d638da55b70f59584f789df53b6c7f806c06887ef6291de",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/egress-refuses-an-output-format-without-a-name"
+      },
       "responses/scenarios/egress-refuses-disabled-thinking-beside-an-effort.yaml": {
         "digest": "sha256:63a0c6d1854bca91a22d31849ffff09696f44ef5b7162fdd1c2fa5eef32ae199",
         "disposition": "accepted",
@@ -3703,6 +3772,11 @@
         "digest": "sha256:009dea09308ce26827751afb37c4e211b30ef65dfe0bb6b247b69fe206b4ed1f",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/egress-writes-the-carried-controls-and-hints"
+      },
+      "responses/scenarios/egress-writes-the-output-format-as-text-format.yaml": {
+        "digest": "sha256:87c07dfc628e018e2841a8e4d99f355017f1fb761c1995539e6fec94b29be1db",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/egress-writes-the-output-format-as-text-format"
       },
       "responses/scenarios/encoding-a-caller-owned-item-is-refused.yaml": {
         "digest": "sha256:150574aebbe061723f579b64463deda4c5db31577ab23ec1601d3544cb9a80e8",
@@ -3874,6 +3948,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/ingress-refuses-a-function-call-status-by-its-path"
       },
+      "responses/scenarios/ingress-refuses-a-key-inside-text-format-by-its-path.yaml": {
+        "digest": "sha256:6c6bac582d4e19a9d9b651d48eef6ad6825c11c2116a36fd7a7851422c9179d0",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/ingress-refuses-a-key-inside-text-format-by-its-path"
+      },
       "responses/scenarios/ingress-refuses-a-message-key-by-its-path.yaml": {
         "digest": "sha256:9ac9a42a1cdbd6d2588b9f15980180b2a4a249f7058867b183f71f220eb7186a",
         "disposition": "accepted",
@@ -3984,6 +4063,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/ingress-refuses-function-call-arguments-that-are-not-an-object"
       },
+      "responses/scenarios/ingress-refuses-json-mode-by-its-type.yaml": {
+        "digest": "sha256:5949e580c2d36dade196f17d593b025b6ffb19102b84671d2655970971303541",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/ingress-refuses-json-mode-by-its-type"
+      },
       "responses/scenarios/ingress-refuses-non-empty-annotations-by-their-path.yaml": {
         "digest": "sha256:ae4e0d1a2e48e0e0c7685dd7058cd458a31ba20d8a0bbbd78879a54547bf3311",
         "disposition": "accepted",
@@ -4004,10 +4088,10 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/ingress-refuses-reasoning-with-a-field-beside-effort"
       },
-      "responses/scenarios/ingress-refuses-structured-output-by-its-path.yaml": {
-        "digest": "sha256:b16b3865678641a292178155fd251b69de197cc98eb6d9447b73efde428189b9",
+      "responses/scenarios/ingress-round-trips-a-json-schema-output-format.yaml": {
+        "digest": "sha256:5890cf9426a524e76c8fec26b38004d275a0d0639b422a1e5141af7877cfccf4",
         "disposition": "accepted",
-        "scenario": "llm.responses/authored/ingress-refuses-structured-output-by-its-path"
+        "scenario": "llm.responses/authored/ingress-round-trips-a-json-schema-output-format"
       },
       "responses/scenarios/ingress-round-trips-cache-key.yaml": {
         "digest": "sha256:df696d59aabde9179a7d2ff11b6d4fc5bc79b5c6f4e72d77820e90385f866835",
@@ -5531,7 +5615,7 @@
       }
     },
     "counts": {
-      "authored": 921,
+      "authored": 935,
       "generated": 37,
       "outside": 0,
       "refused": 0
@@ -5589,9 +5673,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "db44ad5cb1c2f7d5bc0a35c88bc104b1fb2fe8c67c70bcd3d6705bdbf20de8e7",
+    "contract_digest": "e2168572823c87a2c66c516376f3feab50b099a7c257e6582f9ee87c781fe6b5",
     "scenario_initial_state": "empty",
-    "spec_digest": "169d3a0b44a4418e8bdcaacdeb183c223cba66a182cb4a342566f72b5932e9a1",
+    "spec_digest": "3e620c3e5a506b4ef075b17f1509196edb2a74d6db2d58d487abb5586f0c1133",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -17751,6 +17835,130 @@
         }
       ]
     },
+    "llm.bedrock/authored/turn-a-converse-turn-sends-its-output-format-as-text-format": {
+      "purpose": "a named JSON Schema output format is outputConfig.textFormat, the schema as a JSON string and the name kept",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "ddtrace-bedrock_converse_stream_prompt_caching-1.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"us.anthropic.claude-3-7-sonnet-20250219-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[],\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}}},\"strict\":true}}}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "request_body": {
+                "kind": "literal",
+                "value": "{\"messages\":[{\"content\":[{\"text\":\"Hello\"}],\"role\":\"user\"}],\"outputConfig\":{\"textFormat\":{\"structure\":{\"jsonSchema\":{\"name\":\"place\",\"schema\":\"{\\\"properties\\\":{\\\"city\\\":{\\\"type\\\":\\\"string\\\"}},\\\"type\\\":\\\"object\\\"}\"}},\"type\":\"json_schema\"}}}"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "signature_verifies": {
+                "kind": "literal",
+                "value": true
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
     "llm.bedrock/authored/turn-a-cut-after-content-is-final": {
       "purpose": "a body that ends inside a frame after text was shown is final",
       "source": [
@@ -18853,6 +19061,134 @@
         }
       ]
     },
+    "llm.bedrock/authored/turn-an-anthropic-invoke-turn-sends-the-messages-output-format": {
+      "purpose": "InvokeModel sends the Messages body, so a JSON Schema output format is output_config.format, without the name",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "AnthropicInvoke"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.anthropic.claude-3-sonnet-20240229-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "ddtrace-anthropic_message_invoke.json"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"us.anthropic.claude-3-sonnet-20240229-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"summarize the plot to the lord of the rings in a dozen words\"}],\"tools\":[],\"max_output_tokens\":50,\"controls\":{\"output_format\":{\"name\":\"summary\",\"schema\":{\"type\":\"object\"}}}}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "request_body": {
+                "kind": "literal",
+                "value": "{\"anthropic_version\":\"bedrock-2023-05-31\",\"max_tokens\":50,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"summarize the plot to the lord of the rings in a dozen words\",\"type\":\"text\"}],\"role\":\"user\"}],\"output_config\":{\"format\":{\"schema\":{\"type\":\"object\"},\"type\":\"json_schema\"}}}"
+              },
+              "request_line": {
+                "kind": "literal",
+                "value": "POST /model/us.anthropic.claude-3-sonnet-20240229-v1%3A0/invoke"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "signature_verifies": {
+                "kind": "literal",
+                "value": true
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
     "llm.bedrock/authored/turn-converse-cache-counters-make-the-input-total-known": {
       "purpose": "an answer reporting input, cache read and cache write counts gives their sum as the input total",
       "source": [
@@ -18965,6 +19301,126 @@
               "usage_json": {
                 "kind": "literal",
                 "value": "{\"input_tokens\":1040,\"output_tokens\":250,\"cached_input_tokens\":1028,\"cache_creation_input_tokens\":0}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-converse-refuses-an-output-format-that-is-not-strict": {
+      "purpose": "Bedrock always holds the answer to an output format's schema, so a format with strict false is refused before any request",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "ddtrace-bedrock_converse_stream_prompt_caching-1.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"us.anthropic.claude-3-7-sonnet-20250219-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[],\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"},\"strict\":false}}}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "request_body": {
+                "kind": "literal",
+                "value": null
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
               }
             }
           },
@@ -26858,6 +27314,110 @@
         }
       ]
     },
+    "llm.chat/authored/egress-an-output-format-without-a-name-is-refused": {
+      "purpose": "response_format needs a name, and llm invents none, so an unnamed output format is refused before any I/O",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectRequest"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectRequest",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastRequestProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectRequest",
+          "input": {
+            "capabilities_json": {
+              "kind": "literal",
+              "value": "{\"tools\":true,\"tool_choice\":true,\"temperature\":true,\"top_p\":true,\"reasoning_efforts\":[\"low\",\"high\"],\"context_window\":32768,\"max_output_tokens\":4096}"
+            },
+            "protocol": {
+              "kind": "literal",
+              "value": "chat-completions"
+            },
+            "streaming": {
+              "kind": "literal",
+              "value": false
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hi\"}],\"tools\":[],\"controls\":{\"output_format\":{\"schema\":{\"type\":\"object\"}}}}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "small"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectRequest",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "Chat Completions needs a name for a JSON Schema output format"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastRequestProjection"
+        }
+      ]
+    },
     "llm.chat/authored/incoming-a-completion-without-a-finish-reason-is-refused": {
       "purpose": "incoming a completion without a finish reason is refused",
       "source": [
@@ -30807,6 +31367,94 @@
         }
       ]
     },
+    "llm.chat/authored/ingress-a-key-inside-response-format-is-refused-by-its-path": {
+      "purpose": "a JSON Schema response_format is read, and a key inside it outside the subset is refused by its path",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"response_format\":{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"},\"description\":\"a place\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "chat request field is outside the published subset: response_format.json_schema.description"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
     "llm.chat/authored/ingress-a-key-that-is-not-a-field-name-is-refused-without-copying-it": {
       "purpose": "ingress refuses a nested key that is not of a field name's shape and writes it as ? (ingress.rs, llm_core::field_path)",
       "source": [
@@ -31371,94 +32019,6 @@
               "turn_valid": {
                 "kind": "literal",
                 "value": null
-              }
-            }
-          },
-          "step": "expect_view",
-          "view": "llm.chat.LastIngressRequest"
-        }
-      ]
-    },
-    "llm.chat/authored/ingress-a-response-format-request-is-refused-by-name": {
-      "purpose": "ingress a response format request is refused by name",
-      "source": [
-        {
-          "kind": "domain",
-          "name": "llm.chat"
-        },
-        {
-          "kind": "command",
-          "name": "llm.chat.DecodeIngress"
-        },
-        {
-          "kind": "outcome",
-          "name": {
-            "command": "llm.chat.DecodeIngress",
-            "outcome": "observed"
-          }
-        },
-        {
-          "kind": "view",
-          "name": "llm.chat.LastIngressRequest"
-        }
-      ],
-      "steps": [
-        {
-          "command": "llm.chat.DecodeIngress",
-          "input": {
-            "request_json": {
-              "kind": "literal",
-              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"response_format\":{\"type\":\"json_object\"}}"
-            }
-          },
-          "step": "execute_command"
-        },
-        {
-          "outcome": {
-            "command": "llm.chat.DecodeIngress",
-            "outcome": "observed"
-          },
-          "step": "expect_outcome"
-        },
-        {
-          "step": "expect_no_error"
-        },
-        {
-          "step": "query_view",
-          "view": "llm.chat.LastIngressRequest"
-        },
-        {
-          "expectation": {
-            "at_least": 1,
-            "at_most": 1,
-            "expect": "counts"
-          },
-          "step": "expect_view",
-          "view": "llm.chat.LastIngressRequest"
-        },
-        {
-          "step": "query_view",
-          "view": "llm.chat.LastIngressRequest"
-        },
-        {
-          "expectation": {
-            "expect": "contains",
-            "fields": {
-              "accepted": {
-                "kind": "literal",
-                "value": false
-              },
-              "dispatch": {
-                "kind": "literal",
-                "value": "not-sent"
-              },
-              "error_code": {
-                "kind": "literal",
-                "value": "unsupported"
-              },
-              "error_message": {
-                "kind": "literal",
-                "value": "chat request field `response_format` is outside the published subset"
               }
             }
           },
@@ -35039,6 +35599,94 @@
         }
       ]
     },
+    "llm.chat/authored/ingress-json-mode-is-refused-by-its-type": {
+      "purpose": "a response_format of type json_object asks for any JSON at all, which no JSON Schema the neutral turn holds says, and is refused by its type",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"response_format\":{\"type\":\"json_object\"}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "chat response_format of type `json_object` is outside the published subset: the neutral output format is a JSON Schema"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
     "llm.chat/authored/ingress-message-content-that-is-not-text-is-refused": {
       "purpose": "ingress refuses message content that is neither a string nor text parts (ingress.rs)",
       "source": [
@@ -37380,6 +38028,202 @@
               "wire_request": {
                 "kind": "literal",
                 "value": "{\"messages\":[{\"content\":\"hi\",\"role\":\"user\"}],\"model\":\"small\",\"prompt_cache_key\":\"session-7\",\"stream\":false}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastRequestProjection"
+        }
+      ]
+    },
+    "llm.chat/authored/round-trip-an-output-format-decodes-back-to-the-same-turn": {
+      "purpose": "the body round-trip-an-output-format-is-projected-as-response-format pins decodes back to the turn it was projected from (ingress.rs)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"messages\":[{\"content\":\"hi\",\"role\":\"user\"}],\"model\":\"small\",\"response_format\":{\"json_schema\":{\"name\":\"place\",\"schema\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":true},\"type\":\"json_schema\"},\"stream\":false}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
+              },
+              "turn_json": {
+                "kind": "literal",
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hi\"}],\"tools\":[],\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":true}}}}"
+              },
+              "turn_valid": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
+    "llm.chat/authored/round-trip-an-output-format-is-projected-as-response-format": {
+      "purpose": "a turn carrying a named strict JSON Schema output format projects it as response_format; its decode-back half is round-trip-an-output-format-decodes-back-to-the-same-turn (outgoing.rs)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectRequest"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectRequest",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastRequestProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectRequest",
+          "input": {
+            "capabilities_json": {
+              "kind": "literal",
+              "value": "{\"tools\":true,\"tool_choice\":true,\"temperature\":true,\"top_p\":true,\"reasoning_efforts\":[\"low\",\"high\"],\"context_window\":32768,\"max_output_tokens\":4096}"
+            },
+            "protocol": {
+              "kind": "literal",
+              "value": "chat-completions"
+            },
+            "streaming": {
+              "kind": "literal",
+              "value": false
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hi\"}],\"tools\":[],\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":true}}}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "small"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectRequest",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": "{\"messages\":[{\"content\":\"hi\",\"role\":\"user\"}],\"model\":\"small\",\"response_format\":{\"json_schema\":{\"name\":\"place\",\"schema\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":true},\"type\":\"json_schema\"},\"stream\":false}"
               }
             }
           },
@@ -50899,6 +51743,208 @@
         }
       ]
     },
+    "llm.messages/authored/egress-refuses-an-output-format-that-is-not-strict": {
+      "purpose": "the route always holds the answer to an output format's schema and cannot be asked not to, so a format with strict false is refused before any I/O",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": false
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where is the tower?\"}],\"tools\":[],\"controls\":{\"output_format\":{\"schema\":{\"type\":\"object\"},\"strict\":false}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "Messages always holds the answer to an output format's schema: a format that is not strict cannot be sent"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/egress-writes-the-output-format-beside-the-effort": {
+      "purpose": "a JSON Schema output format is output_config.format beside the effort; strict true sends nothing more and the name is not sent",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": false
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"answer in JSON\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where is the tower?\"}],\"tools\":[],\"sampling\":{\"reasoning_effort\":\"high\"},\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":true}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user-text:Where is the tower?"
+                ]
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": "{\"max_tokens\":2048,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Where is the tower?\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"output_config\":{\"effort\":\"high\",\"format\":{\"schema\":{\"additionalProperties\":false,\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"json_schema\"}},\"stream\":true,\"system\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"answer in JSON\",\"type\":\"text\"}]}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/event-name-contradicting-its-payload-refused": {
       "purpose": "a framed event name that contradicts its payload type is refused",
       "source": [
@@ -52552,6 +53598,116 @@
         }
       ]
     },
+    "llm.messages/authored/ingress-reads-the-output-format-beside-the-effort": {
+      "purpose": "output_config.format of type json_schema is the turn's output format, with no name and no strict flag, and the effort beside it is still read",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": true
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"max_tokens\":512,\"messages\":[{\"content\":\"Where is the tower?\",\"role\":\"user\"}],\"model\":\"caller-alias\",\"output_config\":{\"effort\":\"high\",\"format\":{\"schema\":{\"type\":\"object\"},\"type\":\"json_schema\"}},\"stream\":true}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user-text:Where is the tower?"
+                ]
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where is the tower?\"}],\"tools\":[],\"max_output_tokens\":512,\"sampling\":{\"reasoning_effort\":\"high\"},\"controls\":{\"output_format\":{\"schema\":{\"type\":\"object\"}}}}}"
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
+              },
+              "stream": {
+                "kind": "literal",
+                "value": true
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/ingress-reads-thinking-with-a-budget": {
       "purpose": "enabled thinking with a token budget, read from the body the projection sends, keeps its budget",
       "source": [
@@ -53022,6 +54178,118 @@
         }
       ]
     },
+    "llm.messages/authored/ingress-refuses-a-format-name-by-its-path": {
+      "purpose": "output_config.format is read, and a key inside it outside the subset, here a name this wire does not publish, is refused by its path beside an accepted effort",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": true
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"max_tokens\":512,\"messages\":[{\"content\":\"hi\",\"role\":\"user\"}],\"model\":\"caller-alias\",\"output_config\":{\"effort\":\"high\",\"format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"},\"type\":\"json_schema\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "Messages field is outside the declared subset: output_config.format.name"
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/ingress-refuses-a-request-field-outside-the-subset": {
       "purpose": "a request field this projection does not carry is refused, never dropped",
       "source": [
@@ -53288,118 +54556,6 @@
                 "value": null
               },
               "usage_json": {
-                "kind": "literal",
-                "value": null
-              },
-              "wire_request": {
-                "kind": "literal",
-                "value": null
-              }
-            }
-          },
-          "step": "expect_view",
-          "view": "llm.messages.LastInspection"
-        }
-      ]
-    },
-    "llm.messages/authored/ingress-refuses-a-structured-output-format": {
-      "purpose": "output_config.format asks for structured output, which the neutral turn does not carry, and is refused by its path beside an accepted effort",
-      "source": [
-        {
-          "kind": "domain",
-          "name": "llm.messages"
-        },
-        {
-          "kind": "command",
-          "name": "llm.messages.Project"
-        },
-        {
-          "kind": "outcome",
-          "name": {
-            "command": "llm.messages.Project",
-            "outcome": "observed"
-          }
-        },
-        {
-          "kind": "view",
-          "name": "llm.messages.LastInspection"
-        }
-      ],
-      "steps": [
-        {
-          "command": "llm.messages.Project",
-          "input": {
-            "ingress": {
-              "kind": "literal",
-              "value": true
-            },
-            "request_json": {
-              "kind": "literal",
-              "value": "{\"max_tokens\":512,\"messages\":[{\"content\":\"hi\",\"role\":\"user\"}],\"model\":\"caller-alias\",\"output_config\":{\"effort\":\"high\",\"format\":{\"schema\":{\"type\":\"object\"},\"type\":\"json_schema\"}}}"
-            }
-          },
-          "step": "execute_command"
-        },
-        {
-          "outcome": {
-            "command": "llm.messages.Project",
-            "outcome": "observed"
-          },
-          "step": "expect_outcome"
-        },
-        {
-          "step": "expect_no_error"
-        },
-        {
-          "step": "query_view",
-          "view": "llm.messages.LastInspection"
-        },
-        {
-          "expectation": {
-            "at_least": 1,
-            "at_most": 1,
-            "expect": "counts"
-          },
-          "step": "expect_view",
-          "view": "llm.messages.LastInspection"
-        },
-        {
-          "step": "query_view",
-          "view": "llm.messages.LastInspection"
-        },
-        {
-          "expectation": {
-            "expect": "contains",
-            "fields": {
-              "accepted": {
-                "kind": "literal",
-                "value": false
-              },
-              "dispatch": {
-                "kind": "literal",
-                "value": "not-sent"
-              },
-              "error_code": {
-                "kind": "literal",
-                "value": "unsupported"
-              },
-              "error_message": {
-                "kind": "literal",
-                "value": "Messages field is outside the declared subset: output_config.format"
-              },
-              "items": {
-                "kind": "literal",
-                "value": []
-              },
-              "neutral_request": {
-                "kind": "literal",
-                "value": null
-              },
-              "omitted_advisories": {
-                "kind": "literal",
-                "value": []
-              },
-              "stream": {
                 "kind": "literal",
                 "value": null
               },
@@ -74958,6 +76114,102 @@
         }
       ]
     },
+    "llm.responses/authored/egress-refuses-an-output-format-without-a-name": {
+      "purpose": "text.format needs a name, and llm invents none, so an unnamed output format is refused before any I/O",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"tools\":[],\"controls\":{\"output_format\":{\"schema\":{\"type\":\"object\"}}}}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "encoded_body": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "Responses needs a name for a JSON Schema output format"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
     "llm.responses/authored/egress-refuses-disabled-thinking-beside-an-effort": {
       "purpose": "disabled thinking beside an effort is a contradiction this wire cannot hold",
       "source": [
@@ -75560,6 +76812,106 @@
               "prompt_cache_key": {
                 "kind": "literal",
                 "value": "conv-1"
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
+    "llm.responses/authored/egress-writes-the-output-format-as-text-format": {
+      "purpose": "a named strict JSON Schema output format is text.format, beside the verbosity hint",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"tools\":[],\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]},\"strict\":true},\"hints\":{\"verbosity\":\"low\"}}}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "encoded_body": {
+                "kind": "literal",
+                "value": "{\"include\":[\"reasoning.encrypted_content\"],\"input\":[{\"content\":[{\"text\":\"Hi\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"model\":\"example/Small-Model\",\"store\":false,\"stream\":true,\"text\":{\"format\":{\"name\":\"place\",\"schema\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":true,\"type\":\"json_schema\"},\"verbosity\":\"low\"},\"tools\":[]}"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
               },
               "request_preserved": {
                 "kind": "literal",
@@ -79382,6 +80734,110 @@
         }
       ]
     },
+    "llm.responses/authored/ingress-refuses-a-key-inside-text-format-by-its-path": {
+      "purpose": "a JSON Schema text.format is read, and a key inside it outside the subset is refused by its path",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Ingest"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Ingest",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngestion"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Ingest",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "body_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"example/Small-Model\",\"input\":[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hi\"}]}],\"tools\":[],\"stream\":true,\"store\":false,\"include\":[\"reasoning.encrypted_content\"],\"text\":{\"format\":{\"type\":\"json_schema\",\"name\":\"place\",\"schema\":{\"type\":\"object\"},\"description\":\"a place\"}}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Ingest",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "body_preserved": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "request body carries a field outside the pinned subset: text.format.description"
+              },
+              "reprojected": {
+                "kind": "literal",
+                "value": false
+              },
+              "turn_json": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngestion"
+        }
+      ]
+    },
     "llm.responses/authored/ingress-refuses-a-message-key-by-its-path": {
       "purpose": "a message key outside the subset is refused by its path",
       "source": [
@@ -81618,6 +83074,110 @@
         }
       ]
     },
+    "llm.responses/authored/ingress-refuses-json-mode-by-its-type": {
+      "purpose": "a text.format of type json_object asks for any JSON at all, which no JSON Schema the neutral turn holds says, and is refused by its type",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Ingest"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Ingest",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngestion"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Ingest",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "body_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"example/Small-Model\",\"input\":[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hi\"}]}],\"tools\":[{\"type\":\"function\",\"name\":\"file_read\",\"description\":\"d\",\"parameters\":{\"type\":\"object\"},\"strict\":false}],\"stream\":true,\"store\":false,\"include\":[\"reasoning.encrypted_content\"],\"text\":{\"verbosity\":\"low\",\"format\":{\"type\":\"json_object\"}}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Ingest",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "body_preserved": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "`text.format` of type `json_object` is outside the pinned subset: the neutral output format is a JSON Schema"
+              },
+              "reprojected": {
+                "kind": "literal",
+                "value": false
+              },
+              "turn_json": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngestion"
+        }
+      ]
+    },
     "llm.responses/authored/ingress-refuses-non-empty-annotations-by-their-path": {
       "purpose": "annotations on an output_text part are accepted only as an empty array",
       "source": [
@@ -82026,8 +83586,8 @@
         }
       ]
     },
-    "llm.responses/authored/ingress-refuses-structured-output-by-its-path": {
-      "purpose": "text.format, structured output, is refused by its path",
+    "llm.responses/authored/ingress-round-trips-a-json-schema-output-format": {
+      "purpose": "a JSON Schema text.format beside verbosity is the turn's output format, and the turn projects back to the same body",
       "source": [
         {
           "kind": "domain",
@@ -82059,7 +83619,7 @@
             },
             "body_json": {
               "kind": "literal",
-              "value": "{\"model\":\"example/Small-Model\",\"input\":[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hi\"}]}],\"tools\":[{\"type\":\"function\",\"name\":\"file_read\",\"description\":\"d\",\"parameters\":{\"type\":\"object\"},\"strict\":false}],\"stream\":true,\"store\":false,\"include\":[\"reasoning.encrypted_content\"],\"text\":{\"verbosity\":\"low\",\"format\":{\"type\":\"json_object\"}}}"
+              "value": "{\"include\":[\"reasoning.encrypted_content\"],\"input\":[{\"content\":[{\"text\":\"Hi\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"model\":\"example/Small-Model\",\"store\":false,\"stream\":true,\"text\":{\"format\":{\"name\":\"place\",\"schema\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":false,\"type\":\"json_schema\"},\"verbosity\":\"high\"},\"tools\":[]}"
             },
             "upstream_model": {
               "kind": "literal",
@@ -82101,27 +83661,27 @@
             "fields": {
               "accepted": {
                 "kind": "literal",
-                "value": false
+                "value": true
               },
               "body_preserved": {
                 "kind": "literal",
-                "value": false
+                "value": true
               },
               "error_code": {
                 "kind": "literal",
-                "value": "unsupported"
+                "value": null
               },
-              "error_message": {
+              "omitted_advisories": {
                 "kind": "literal",
-                "value": "request body carries a field outside the pinned subset: text.format"
+                "value": []
               },
               "reprojected": {
                 "kind": "literal",
-                "value": false
+                "value": true
               },
               "turn_json": {
                 "kind": "literal",
-                "value": null
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"controls\":{\"hints\":{\"verbosity\":\"high\"},\"output_format\":{\"name\":\"place\",\"schema\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"strict\":false}},\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"model\":\"small\",\"tools\":[]}}"
               }
             }
           },

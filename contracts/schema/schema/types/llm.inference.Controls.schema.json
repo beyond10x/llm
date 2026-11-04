@@ -4,8 +4,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "169d3a0b44a4418e8bdcaacdeb183c223cba66a182cb4a342566f72b5932e9a1",
-    "contract_digest": "slice-sha256/2:3bcb02950a6b9f6e5b911bdde0ea0c38e87430c778286ec2ccb39ffb09af400c",
+    "source_digest": "3e620c3e5a506b4ef075b17f1509196edb2a74d6db2d58d487abb5586f0c1133",
+    "contract_digest": "slice-sha256/2:d9a9a30126cdac890801b3edcd0130f76298bdeac0bb1b4d894371be6136b1f7",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -36,6 +36,9 @@
         },
         "return_unpublished_calls": {
           "type": "boolean"
+        },
+        "output_format": {
+          "$ref": "#/$defs/llm.inference.OutputFormat"
         }
       },
       "required": [
@@ -77,6 +80,27 @@
       "required": [
         "anthropic_beta",
         "unforwarded"
+      ],
+      "additionalProperties": false
+    },
+    "llm.inference.OutputFormat": {
+      "title": "OutputFormat",
+      "x-ess-name": "llm.inference.OutputFormat",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "strict": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema"
       ],
       "additionalProperties": false
     },

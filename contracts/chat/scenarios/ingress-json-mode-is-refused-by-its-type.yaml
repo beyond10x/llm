@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.chat
-scenario: ingress-a-response-format-request-is-refused-by-name
-summary: ingress a response format request is refused by name
+scenario: ingress-json-mode-is-refused-by-its-type
+summary: a response_format of type json_object asks for any JSON at all, which no JSON Schema the neutral turn holds says, and is refused by its type
 timeline:
 - at: '2026-09-20T12:00:00Z'
   command: llm.chat.DecodeIngress
@@ -16,4 +16,4 @@ assert:
     accepted: false
     dispatch: not-sent
     error_code: unsupported
-    error_message: chat request field `response_format` is outside the published subset
+    error_message: 'chat response_format of type `json_object` is outside the published subset: the neutral output format is a JSON Schema'

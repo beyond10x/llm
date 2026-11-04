@@ -57,7 +57,8 @@ whole:
 | `thinking` | `{"type":"adaptive"}`, `{"type":"enabled","budget_tokens":n}` (n positive) or `{"type":"disabled"}` is `controls.thinking`; `budget_tokens` beside `adaptive` or `disabled`, and any other key (`display` included), refused by its path | re-emitted as read |
 | `system` | a string, or text blocks joined by a line feed; an empty array is no instructions; a block of another type is refused (`Messages system block is not text`) | one block (one-way: the joined text comes back as one block) |
 | `cache_control` | `{"type":"ephemeral"}` with an optional `ttl` of `5m` or `1h`, on a `system` block, a `text`, `tool_use` or `tool_result` block, or a tool, is the `prompt-cache` hint; `5m` is the default and reads as no lifetime; another key refused by its path, another type or lifetime refused; marks of two lifetimes in one request refused (`Messages cache marks carry more than one lifetime`); on a `thinking` or `redacted_thinking` block refused by its path | the breakpoints below, each with `ttl: 1h` when the hint says `1h`; the caller's mark positions are not reproduced |
-| `output_config.effort` | any non-empty name, `max` included; `format` and any other key refused by its path | the same name |
+| `output_config.effort` | any non-empty name, `max` included; required unless a `format` is present; any other key refused by its path | the same name |
+| `output_config.format` | `{"type":"json_schema","schema":{…}}` (the schema an object) is `controls.output_format`, with no name and no strict flag; `null` is absent; `name`, `strict` and any other key refused by its path; another type refused | `{"type":"json_schema","schema":…}` beside the effort. The route always holds the answer to the schema: `strict` `true` sends nothing more and `false` is refused before I/O; the name, a label this wire has no place for, is not sent. llm does not validate the answer ([design](design.md#structured-output)) |
 | `tool_choice.disable_parallel_tool_use` | a boolean `v` on `auto`, `any` or `tool` is `controls.parallel_tool_calls = !v` | `disable_parallel_tool_use: !b`, writing `{"type":"auto"}` when the choice is automatic |
 | `metadata` | an object holding only `user_id` (a string) is the `client-metadata` hint; another key refused by its path; the value is never kept | not sent (one-way), and reported omitted |
 | `anthropic-beta` header | read only by `decode_request_with_headers`: every line is a comma-separated list, empty entries skipped, each name kept once in order as the `anthropic-beta` hint; a line that is not visible ASCII, a name outside 1 to 128 ASCII letters, digits, `-`, `_` or `.`, or more than 32 names refused by the header's name | one `anthropic-beta` header (see The client); Bedrock InvokeModel writes the body's `anthropic_beta` array |
@@ -65,7 +66,7 @@ whole:
 `omitted_advisories(&TurnRequest)` names the hints this projection does not send, in the design's
 order: it carries only `prompt-cache`, so `prompt-cache-key`, `verbosity`, `reasoning-summary`,
 `input-item-ids` and `client-metadata` are reported whenever present. `context_management`,
-`safeguards`, `thinking.display`, `output_config.format` and every other key stay refused by their
+`safeguards`, `thinking.display`, `output_config.format.name` and every other key stay refused by their
 path.
 
 **A `system` message inside `messages`** (a headless Claude Code client sends one) is read in two

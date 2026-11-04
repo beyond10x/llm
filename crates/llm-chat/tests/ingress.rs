@@ -1021,6 +1021,7 @@ fn parallel_tool_calls_prompt_cache_key_and_verbosity_are_carried() {
         Controls {
             thinking: None,
             return_unpublished_calls: false,
+            output_format: None,
             parallel_tool_calls: Some(false),
             hints: Hints {
                 prompt_cache_key: Some("session-7".to_owned()),

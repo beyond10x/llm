@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-reads-the-output-format-beside-the-effort
+summary: output_config.format of type json_schema is the turn's output format, with no name and no strict flag, and the effort beside it is still read
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"messages":[{"content":"Where is the tower?","role":"user"}],"model":"caller-alias","output_config":{"effort":"high","format":{"schema":{"type":"object"},"type":"json_schema"}},"stream":true}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: null
+    neutral_request: '{"format":"llm.turn/4","request":{"model":"caller-alias","instructions":"","items":[{"kind":"user-text","text":"Where is the tower?"}],"tools":[],"max_output_tokens":512,"sampling":{"reasoning_effort":"high"},"controls":{"output_format":{"schema":{"type":"object"}}}}}'
+    stream: true
+    items:
+      - "user-text:Where is the tower?"
+    omitted_advisories: []

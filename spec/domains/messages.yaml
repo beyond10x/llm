@@ -24,10 +24,13 @@ entities:
       # or `{type: disabled}` as the turn holds it; `parallel_tool_calls` `b` is
       # `tool_choice.disable_parallel_tool_use` `!b`, with `{type: auto}` written when the choice
       # is automatic; the effort is `output_config.effort` as the turn names it, `max` included.
+      # An output format is `output_config.format` `{type: json_schema, schema}` beside the
+      # effort. The route always holds the answer to the schema, so `strict` true sends nothing
+      # more and `strict` false is refused; the format's name is not sent.
       - {name: wire_request, type: Optional<String>}
       # Ingress, read from a Messages request body. Every key this list does not name is refused
       # by its path (`Messages field is outside the declared subset: <path>`), at every level:
-      # `thinking.display`, `context_management`, `safeguards`, `output_config.format`,
+      # `thinking.display`, `context_management`, `safeguards`, `output_config.format.name`,
       # `system[].citations`, `messages[].content[].cache_control.scope` among them.
       #
       # - `thinking` `{type: adaptive}`, `{type: enabled, budget_tokens: n}` (n positive) or
@@ -42,6 +45,9 @@ entities:
       #   a mark of another type is refused; a mark on a `thinking` or `redacted_thinking` block
       #   is refused by its path.
       # - `output_config.effort` takes any non-empty name, `max` included.
+      # - `output_config.format` `{type: json_schema, schema}` (the schema an object) is the
+      #   turn's output format, with no name and no strict flag; `null` is absent. Another type
+      #   is refused; a config without a format still needs an effort.
       # - `tool_choice.disable_parallel_tool_use` `v` (boolean, on `auto`, `any` or `tool`) is
       #   `parallel_tool_calls` `!v`.
       # - `metadata` holding only `user_id` (a string) is the `client-metadata` hint; its value

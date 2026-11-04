@@ -87,7 +87,7 @@ writes, `instructions` and `client_metadata`. `ACCEPTED_BODY_FIELDS` is the list
 ingress reads is closed: a key no rule names, at any level, is refused with
 `ErrorCode::Unsupported` and `request body carries a field outside the pinned subset: <path>`,
 the path written by `llm_core::field_path` (`input[].content[].foo`, `tools[].container`,
-`tool_choice.foo`, `reasoning.generate_summary`, `text.format`), rather than translated with the
+`tool_choice.foo`, `reasoning.generate_summary`, `text.format.description`), rather than translated with the
 excess dropped.
 
 | field | value |
@@ -102,7 +102,7 @@ excess dropped.
 | `reasoning` | `effort` (from `llm_core::wire_effort`: `max` is sent as `xhigh`, disabled thinking as `none`) and `summary` (`auto`, `concise`, `detailed`), each only when set |
 | `parallel_tool_calls` | the turn's control, only when set |
 | `prompt_cache_key` | the turn's hint, or the conversation's identifier ([Conversation identity](#conversation-identity)) |
-| `text` | `{"verbosity": "low" \| "medium" \| "high"}`, only when the hint is set |
+| `text` | `verbosity` (`low`, `medium`, `high`), only when the hint is set, and `format`, the [structured output](#structured-output) format, only when the turn has one; absent when neither is |
 | `instructions` | ingress only: the head of the instructions, below |
 | `client_metadata` | ingress only: any object, the unforwarded hint `client-metadata`; its value is not kept |
 
@@ -129,6 +129,20 @@ A tool of another type than `function` is refused. When its type is one of `web_
 `custom`, `namespace`, `tool_search`, `local_shell`, `file_search`, `computer_use_preview`, `mcp`,
 `image_generation` or `code_interpreter` (`REFUSED_TOOL_TYPES`) the diagnostic names it, copied
 from that list; any other type is refused without being named.
+
+### Structured output
+
+The turn's `controls.output_format` is `text.format` `{"type": "json_schema", "name", "schema",
+"strict"}`, beside `text.verbosity` when that hint is set too. `strict` is written only when the
+turn sets it. The wire requires a name, and llm invents none: a format without one is refused
+`Unsupported` (`Responses needs a name for a JSON Schema output format`) before any I/O. llm does
+not validate the answer against the schema ([design](design.md#structured-output)).
+
+Ingress reads the same object back: `name` a string, `schema` an object, `strict` a boolean, absent
+or `null`; any other key inside it is refused by its path (`text.format.description`). `{"type":
+"text"}` and `null` are this wire's default and read as no format. `json_object` (JSON mode) asks
+for any JSON at all, which no schema the neutral turn holds says, and is refused naming that type;
+any other type is refused without being named.
 
 ### Advisory hints
 
@@ -229,7 +243,8 @@ is read back as that shape rather than as opaque.
 | a developer message after the first item of another kind, on ingress | `Unsupported` |
 | a thinking budget, or disabled thinking beside an effort, outgoing (`llm_core::wire_effort`) | `Unsupported` |
 | a turn's `prompt_cache_key` that differs from the client's conversation, outgoing | `Unsupported` |
-| a field of the wrong type (`instructions`, `parallel_tool_calls`, `prompt_cache_key`, `client_metadata`, `text`, an item `id`, a non-string tool result), on ingress | `InvalidRequest` |
+| a field of the wrong type (`instructions`, `parallel_tool_calls`, `prompt_cache_key`, `client_metadata`, `text`, `text.format` and its `name`, `schema` and `strict`, an item `id`, a non-string tool result), on ingress | `InvalidRequest` |
+| an output format without a name, outgoing; `text.format` of type `json_object` or another type than `json_schema` and `text`, on ingress | `Unsupported` |
 | a request model that is not the binding's | `InvalidRequest` |
 | everything `TurnRequest::validate` already refuses | its own |
 

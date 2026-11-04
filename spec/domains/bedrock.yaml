@@ -86,6 +86,11 @@ entities:
   # with Signature Version 4 for service `bedrock` and the target's region, the session token
   # sent and signed as `x-amz-security-token`.
   #
+  # A Converse turn's output format is `outputConfig.textFormat` `{type: json_schema, structure:
+  # {jsonSchema: {schema, name}}}`: the schema as a JSON string, the name only when the format
+  # has one. Bedrock always holds the answer to the schema, so a format whose `strict` is false
+  # is refused before any request.
+  #
   # The Anthropic body is the Messages body `llm-messages` encodes (llm.messages.Project), with
   # `anthropic_version: bedrock-2023-05-31` and without `model` (the path names it) or `stream`
   # (the operation says it). Its streamed answer is `chunk` frames, each

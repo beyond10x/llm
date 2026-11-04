@@ -1,12 +1,12 @@
 use crate::{absent, fields, optional, string};
 use llm_core::{
     Advisory, AuthKind, CacheTtl, CallId, Capabilities, Error, Item, MAX_ANTHROPIC_BETAS,
-    MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, PromptCache, Protocol, Provenance, Sampling,
-    Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded,
+    MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, OutputFormat, PromptCache, Protocol, Provenance,
+    Sampling, Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded,
     anthropic_beta_name, exceeds, wire_effort,
 };
 use llm_providers::Binding;
-use serde_json::{Value, json};
+use serde_json::{Map, Value, json};
 
 /// The block a subscription token's `system` opens with (Harness
 /// `harness-messages/src/project.rs:47`). Sent only for a `subscription-oauth` account.
@@ -232,8 +232,15 @@ fn project(
     if let Some(n) = request.sampling.top_p {
         body["top_p"] = json!(n);
     }
+    let mut output_config = Map::new();
     if let Some(effort) = wire_effort(Protocol::Messages, request)? {
-        body["output_config"] = json!({"effort":effort});
+        output_config.insert("effort".to_owned(), json!(effort));
+    }
+    if let Some(format) = &request.controls.output_format {
+        output_config.insert("format".to_owned(), output_format_to_wire(format)?);
+    }
+    if !output_config.is_empty() {
+        body["output_config"] = Value::Object(output_config);
     }
     match request.controls.thinking {
         None => {}
@@ -694,11 +701,54 @@ fn decode_sampling(value: &Value, request: &mut TurnRequest) -> Result<(), Error
     if request.sampling.temperature.is_some_and(|n| n > 1.0) {
         return Err(Error::unsupported("Messages temperature exceeds one"));
     }
+    // `output_config` holds the effort and the output format; a config without a format must
+    // name an effort, as before the format was carried.
     if let Some(config) = optional(value, "output_config") {
-        fields(config, "output_config", &["effort"])?;
-        request.sampling.reasoning_effort = Some(string(config, "effort")?.to_owned());
+        fields(config, "output_config", &["effort", "format"])?;
+        request.controls.output_format = output_format(optional(config, "format"))?;
+        if request.controls.output_format.is_none() || optional(config, "effort").is_some() {
+            request.sampling.reasoning_effort = Some(string(config, "effort")?.to_owned());
+        }
     }
     Ok(())
+}
+
+/// The neutral output format as `output_config.format`. The route always holds the answer to
+/// the schema, so a strict flag `true` needs nothing more and `false` is refused; the name is a
+/// label this wire has no place for, and is not sent (`docs/design.md`, section Structured output).
+fn output_format_to_wire(format: &OutputFormat) -> Result<Value, Error> {
+    if format.strict == Some(false) {
+        return Err(Error::unsupported(
+            "Messages always holds the answer to an output format's schema: a format that is not strict cannot be sent",
+        ));
+    }
+    Ok(json!({"type": "json_schema", "schema": format.schema}))
+}
+
+/// `output_config.format` as the neutral output format: `json_schema` with its `schema` object
+/// and nothing else. The schema itself is the caller's and is not inspected.
+fn output_format(format: Option<&Value>) -> Result<Option<OutputFormat>, Error> {
+    let Some(format) = format else {
+        return Ok(None);
+    };
+    if !format.is_object() {
+        return Err(Error::invalid("Messages output format must name its type"));
+    }
+    fields(format, "output_config.format", &["type", "schema"])?;
+    match format.get("type").and_then(Value::as_str) {
+        None => return Err(Error::invalid("Messages output format must name its type")),
+        Some("json_schema") => {}
+        Some(_) => {
+            return Err(Error::unsupported(
+                "Messages output format type is outside the declared subset",
+            ));
+        }
+    }
+    let schema = format
+        .get("schema")
+        .filter(|schema| schema.is_object())
+        .ok_or_else(|| Error::invalid("Messages output format schema must be an object"))?;
+    Ok(Some(OutputFormat::json_schema(schema.clone())))
 }
 
 fn decode_tool_choice(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
