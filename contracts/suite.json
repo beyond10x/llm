@@ -730,6 +730,7 @@
       "llm.routing/authored/a-caller-attempt-bound-above-sixty-four-is-refused",
       "llm.routing/authored/a-caller-attempt-bound-of-zero-is-refused",
       "llm.routing/authored/a-catalog-claiming-input-during-output-is-refused",
+      "llm.routing/authored/a-catalog-declaring-neither-feature-keeps-its-digest-and-takes-a-turn-needing-both",
       "llm.routing/authored/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision",
       "llm.routing/authored/a-falling-back-route-between-subscription-billed-targets-is-accepted",
       "llm.routing/authored/a-falling-back-route-from-a-metered-target-to-a-subscription-one-is-refused",
@@ -739,11 +740,15 @@
       "llm.routing/authored/a-route-alias-declared-twice-is-refused",
       "llm.routing/authored/a-route-of-sixty-five-targets-is-refused",
       "llm.routing/authored/a-route-of-the-maximum-sixty-four-targets-is-accepted",
+      "llm.routing/authored/a-route-with-no-target-taking-the-turns-features-is-refused-naming-each",
       "llm.routing/authored/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target",
       "llm.routing/authored/a-subscription-reference-shared-with-another-account-is-refused",
+      "llm.routing/authored/a-target-declaring-both-features-takes-a-turn-needing-both",
       "llm.routing/authored/a-tool-published-twice-is-refused",
       "llm.routing/authored/a-tool-schema-that-is-not-a-schema-is-refused",
       "llm.routing/authored/a-top-p-of-zero-is-refused",
+      "llm.routing/authored/a-turn-asking-for-structured-output-passes-over-a-target-declaring-none",
+      "llm.routing/authored/a-turn-carrying-an-image-passes-over-a-target-declaring-no-image-input",
       "llm.routing/authored/a-turn-publishing-513-tools-is-refused",
       "llm.routing/authored/a-turn-publishing-the-maximum-512-tools-is-admitted",
       "llm.routing/authored/an-empty-identifier-is-refused",
@@ -764,6 +769,9 @@
       "llm.routing/authored/fallback-disabled",
       "llm.routing/authored/fallback-disabled-by-caller",
       "llm.routing/authored/fallback-disabled-route-attempts-only-primary",
+      "llm.routing/authored/fallback-moves-a-turn-needing-both-features-to-an-alternative-leaving-them-undeclared",
+      "llm.routing/authored/fallback-never-moves-a-structured-output-turn-to-a-target-declaring-none",
+      "llm.routing/authored/fallback-never-moves-an-image-turn-to-a-target-declaring-no-image-input",
       "llm.routing/authored/fallback-passed-deadline-starts-no-attempt",
       "llm.routing/authored/fallback-preserves-first-compatible-order",
       "llm.routing/authored/fallback-refused-after-ambiguous-dispatch",
@@ -4640,6 +4648,11 @@
         "disposition": "accepted",
         "scenario": "llm.routing/authored/a-catalog-claiming-input-during-output-is-refused"
       },
+      "routing/scenarios/a-catalog-declaring-neither-feature-keeps-its-digest-and-takes-a-turn-needing-both.yaml": {
+        "digest": "sha256:6293b6aabe8cf8abdcca36846cdf887c5689f87e4a5d2339f59604dbc093d50b",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-catalog-declaring-neither-feature-keeps-its-digest-and-takes-a-turn-needing-both"
+      },
       "routing/scenarios/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision.yaml": {
         "digest": "sha256:1b3d59afa0325047d1381fd213d7c956d2fba02c83a02d3fef86df07375e32ba",
         "disposition": "accepted",
@@ -4670,6 +4683,16 @@
         "disposition": "accepted",
         "scenario": "llm.routing/authored/a-route-of-the-maximum-sixty-four-targets-is-accepted"
       },
+      "routing/scenarios/a-route-with-no-target-taking-the-turns-features-is-refused-naming-each.yaml": {
+        "digest": "sha256:a7998b0a7af2535d0d65287114a28bc9cdf3f8f81eba8053be881eb7f2ff09a7",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-route-with-no-target-taking-the-turns-features-is-refused-naming-each"
+      },
+      "routing/scenarios/a-target-declaring-both-features-takes-a-turn-needing-both.yaml": {
+        "digest": "sha256:96436b1fd52014caf7278dfa8842c7aab3197b8d860f9da201909d11408501f4",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-target-declaring-both-features-takes-a-turn-needing-both"
+      },
       "routing/scenarios/a-tool-published-twice-is-refused.yaml": {
         "digest": "sha256:a8df1b6f928ab03551001b0c221c77e960a0d929a8e8d2b260e41b722c923443",
         "disposition": "accepted",
@@ -4684,6 +4707,16 @@
         "digest": "sha256:135d184c11245bae140255516cfb6b7e2402d7570742aa41a87acdc700318a0e",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/a-top-p-of-zero-is-refused"
+      },
+      "routing/scenarios/a-turn-asking-for-structured-output-passes-over-a-target-declaring-none.yaml": {
+        "digest": "sha256:f892f15fe992217438c3032450ef64518c9865147cbe575d66b833b7c831aa70",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-turn-asking-for-structured-output-passes-over-a-target-declaring-none"
+      },
+      "routing/scenarios/a-turn-carrying-an-image-passes-over-a-target-declaring-no-image-input.yaml": {
+        "digest": "sha256:8925d4cb02b1555e97543c5b63a9813e5e009fc372951aa66debab500756aa9e",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/a-turn-carrying-an-image-passes-over-a-target-declaring-no-image-input"
       },
       "routing/scenarios/a-turn-publishing-513-tools-is-refused.yaml": {
         "digest": "sha256:e4f4a8c5f5d4ff56acaa3ba47a03a2eda79329a6582bd7ed2296ad771c857da9",
@@ -4784,6 +4817,21 @@
         "digest": "sha256:df2da972d80f5aae04a206880b508fe6d44d623f67be3de071128113e0a54f2b",
         "disposition": "accepted",
         "scenario": "llm.routing/authored/fallback-disabled"
+      },
+      "routing/scenarios/fallback-moves-a-turn-needing-both-features-to-an-alternative-leaving-them-undeclared.yaml": {
+        "digest": "sha256:da5e00a33754a6ecfb335564309a545fab28f6378d77b18930b8fdadcc20cc0e",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-moves-a-turn-needing-both-features-to-an-alternative-leaving-them-undeclared"
+      },
+      "routing/scenarios/fallback-never-moves-a-structured-output-turn-to-a-target-declaring-none.yaml": {
+        "digest": "sha256:53e48a1e89b368e75d78114b67efb588945727f481c6aebbf5b908255424a1f9",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-never-moves-a-structured-output-turn-to-a-target-declaring-none"
+      },
+      "routing/scenarios/fallback-never-moves-an-image-turn-to-a-target-declaring-no-image-input.yaml": {
+        "digest": "sha256:7e35b0edf06672c323f442ed5da97520beeff0527547b06dba892eb94c125837",
+        "disposition": "accepted",
+        "scenario": "llm.routing/authored/fallback-never-moves-an-image-turn-to-a-target-declaring-no-image-input"
       },
       "routing/scenarios/fallback-passed-deadline-starts-no-attempt.yaml": {
         "digest": "sha256:bdf76672ed92fc4e9dc9e37a0a7a43ecd2a4c8fa52b95feab48260a4c42e89b3",
@@ -5807,7 +5855,7 @@
       }
     },
     "counts": {
-      "authored": 967,
+      "authored": 975,
       "generated": 38,
       "outside": 0,
       "refused": 0
@@ -5866,9 +5914,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "81006577a20f12d052d1d7d7939d925560c9f0de0480320a2bf3c6df61263e2e",
+    "contract_digest": "47dd6488be400601cefe26b1833d74228b1007903132f4ec495f677200502d64",
     "scenario_initial_state": "empty",
-    "spec_digest": "530fac002589b0a7460f2a348378e01c712b11f6c2bd2bc84982720f932a2c55",
+    "spec_digest": "847810151d0649bc6c4ef43b089ded32accfd573023f47f0dd3bdf0c33170f7e",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -96295,6 +96343,120 @@
         }
       ]
     },
+    "llm.routing/authored/a-catalog-declaring-neither-feature-keeps-its-digest-and-takes-a-turn-needing-both": {
+      "purpose": "the example catalog, written before structured_output and image_input, keeps its pinned digest, and its primary takes a turn needing both features it leaves undeclared",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where is this?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}}],\"tools\":[],\"max_output_tokens\":128,\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"}}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "config_digest": {
+                "kind": "literal",
+                "value": "1365b05fe63542f8211e21a9a2566c71f2a6d44ec9bdc564ba46c592a861825f"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
     "llm.routing/authored/a-catalog-writing-the-streaming-defaults-out-keeps-its-pinned-digest-and-revision": {
       "purpose": "a catalog that writes output_streaming true and input_during_output false keeps the digest and binding revision it had before either field existed, so opaque state stored against it is still preserved",
       "source": [
@@ -97191,6 +97353,110 @@
         }
       ]
     },
+    "llm.routing/authored/a-route-with-no-target-taking-the-turns-features-is-refused-naming-each": {
+      "purpose": "a route without fallback whose primary declares structured_output and image_input false refuses a turn needing both, naming structured-output and image-input",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\nstructured_output = false\nimage_input = false\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where is this?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}}],\"tools\":[],\"max_output_tokens\":128,\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"}}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "route has no compatible target: fallback-disabled, image-input, structured-output"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:structured-output",
+                  "coding-primary:image-input",
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
     "llm.routing/authored/a-route-without-fallback-may-hold-a-subscription-and-a-metered-target": {
       "purpose": "without fallback only the first target is ever selected, so a subscription OAuth target ahead of a metered one is accepted and the metered one stays ineligible",
       "source": [
@@ -97389,6 +97655,116 @@
               "selected_target": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-target-declaring-both-features-takes-a-turn-needing-both": {
+      "purpose": "a primary declaring structured_output and image_input true takes a turn asking for an output format and carrying a user image, with no rejection of its own",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\nstructured_output = true\nimage_input = true\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where is this?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}}],\"tools\":[],\"max_output_tokens\":128,\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"}}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "small"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "chat-completions"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-secondary:fallback-disabled"
+                ]
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-primary"
               }
             }
           },
@@ -97689,6 +98065,234 @@
               "selected_target": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-turn-asking-for-structured-output-passes-over-a-target-declaring-none": {
+      "purpose": "a turn asking for an output format rejects the target declaring structured_output false as structured-output and selects the next declared target, which leaves it undeclared",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\nstructured_output = false\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where?\"}],\"tools\":[],\"max_output_tokens\":128,\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"}}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "large"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "responses"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:structured-output"
+                ]
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-secondary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "https://models.example.invalid/v1/responses"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        }
+      ]
+    },
+    "llm.routing/authored/a-turn-carrying-an-image-passes-over-a-target-declaring-no-image-input": {
+      "purpose": "a turn carrying a user image rejects the target declaring image_input false as image-input and selects the next declared target, which leaves it undeclared",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Evaluate"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastEvaluation"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Evaluate",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\nimage_input = false\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"What is this?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Evaluate",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastEvaluation"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "catalog_valid": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "model": {
+                "kind": "literal",
+                "value": "large"
+              },
+              "protocol": {
+                "kind": "literal",
+                "value": "responses"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:image-input"
+                ]
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "selected_target": {
+                "kind": "literal",
+                "value": "coding-secondary"
+              },
+              "url": {
+                "kind": "literal",
+                "value": "https://models.example.invalid/v1/responses"
               }
             }
           },
@@ -99713,6 +100317,372 @@
                   "coding-middle:fallback-disabled",
                   "coding-secondary:fallback-disabled"
                 ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-moves-a-turn-needing-both-features-to-an-alternative-leaving-them-undeclared": {
+      "purpose": "after an eligible failure, a turn needing structured output and image input falls back to an alternative that declares neither, since undeclared is not a rejection",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\"}},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where is this?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}}],\"tools\":[],\"max_output_tokens\":128,\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"}}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:rate-limited:rejected",
+                  "coding-secondary:succeeded"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary",
+                  "coding-secondary"
+                ]
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "from remote-models;"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "succeeded"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-never-moves-a-structured-output-turn-to-a-target-declaring-none": {
+      "purpose": "after an eligible failure before output, a turn asking for an output format is not moved to the alternative declaring structured_output false; the run is exhausted with the primary's failure",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\nstructured_output = false\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\"}},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Where?\"}],\"tools\":[],\"max_output_tokens\":128,\"controls\":{\"output_format\":{\"name\":\"place\",\"schema\":{\"type\":\"object\"}}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:rate-limited:rejected"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "rate-limited"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "exhausted"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-secondary:structured-output"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        }
+      ]
+    },
+    "llm.routing/authored/fallback-never-moves-an-image-turn-to-a-target-declaring-no-image-input": {
+      "purpose": "after an eligible failure before output, a turn carrying a user image is not moved to the alternative declaring image_input false; the run is exhausted with the primary's failure",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.routing"
+        },
+        {
+          "kind": "type",
+          "name": "llm.routing.RetryPolicy"
+        },
+        {
+          "kind": "command",
+          "name": "llm.routing.Fallback"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.routing.LastFallback"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.routing.Fallback",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "format = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\nimage_input = false\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "input_tokens": {
+              "kind": "literal",
+              "value": 100.0
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"models\":{\"local-small\":{\"emits\":0,\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\"}},\"remote-large\":{\"emits\":1,\"input_tokens\":7}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"What is this?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.routing.Fallback",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.routing.LastFallback"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "attempt_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary:rate-limited:rejected"
+                ]
+              },
+              "attempted": {
+                "kind": "literal",
+                "value": [
+                  "coding-primary"
+                ]
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "rate-limited"
+              },
+              "halt": {
+                "kind": "literal",
+                "value": "exhausted"
+              },
+              "rejections": {
+                "kind": "literal",
+                "value": [
+                  "coding-secondary:image-input"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
               }
             }
           },

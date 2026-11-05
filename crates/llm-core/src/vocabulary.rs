@@ -106,10 +106,34 @@ pub struct Capabilities {
     /// means false, and false is not written.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub input_during_output: bool,
+    /// Whether the model takes a JSON Schema answer format (`controls.output_format`). `None`
+    /// is not declared: selection does not reject the target, and its wire carries the format or
+    /// refuses it before any I/O. `Some(false)` is rejected by selection and refused by
+    /// [`crate::TurnRequest::validate_for`]. Absent from a document means `None`, and `None` is
+    /// not written, so a document from before the field keeps its bytes.
+    #[serde(
+        default,
+        deserialize_with = "declared",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub structured_output: Option<bool>,
+    /// Whether the model takes an image in a user turn (`Item::UserImage`), declared as
+    /// `structured_output` is.
+    #[serde(
+        default,
+        deserialize_with = "declared",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub image_input: Option<bool>,
 }
 
 const fn streams() -> bool {
     true
+}
+
+/// A declaration present in a document is a boolean; only its absence leaves it undeclared.
+fn declared<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option<bool>, D::Error> {
+    bool::deserialize(deserializer).map(Some)
 }
 
 #[expect(
@@ -122,7 +146,8 @@ const fn is_true(value: &bool) -> bool {
 
 impl Capabilities {
     /// A text-only declaration: output streams and no input reaches a running turn, as every
-    /// client in this workspace does; every optional setting is refused until explicitly enabled.
+    /// client in this workspace does; every optional setting is refused until explicitly enabled,
+    /// and structured output and image input are not declared.
     pub const fn text(context_window: u64, max_output_tokens: u64) -> Self {
         Self {
             tools: false,
@@ -134,6 +159,8 @@ impl Capabilities {
             max_output_tokens,
             output_streaming: true,
             input_during_output: false,
+            structured_output: None,
+            image_input: None,
         }
     }
 
@@ -181,6 +208,22 @@ impl Capabilities {
     #[must_use]
     pub const fn with_input_during_output(mut self, input_during_output: bool) -> Self {
         self.input_during_output = input_during_output;
+        self
+    }
+
+    /// Declares whether the model takes structured output; set the field to `None` to leave it
+    /// undeclared again.
+    #[must_use]
+    pub const fn with_structured_output(mut self, structured_output: bool) -> Self {
+        self.structured_output = Some(structured_output);
+        self
+    }
+
+    /// Declares whether the model takes image input; set the field to `None` to leave it
+    /// undeclared again.
+    #[must_use]
+    pub const fn with_image_input(mut self, image_input: bool) -> Self {
+        self.image_input = Some(image_input);
         self
     }
 

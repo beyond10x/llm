@@ -1,4 +1,7 @@
-use llm_core::{ErrorCode, Id, Item, ToolChoice, ToolName, ToolSpec, TurnRequest};
+use llm_core::{
+    Capabilities, ErrorCode, Id, ImageMediaType, ImageSource, Item, OutputFormat, ToolChoice,
+    ToolName, ToolSpec, TurnRequest,
+};
 use llm_providers::BaseUrl;
 use llm_routing::{Catalog, CatalogDocument, MAX_CONFIG_BYTES, Rejection};
 use serde_json::json;
@@ -127,6 +130,125 @@ fn capability_refusals_name_every_requested_dimension() {
     for reason in &explanation.targets[0].rejections {
         assert!(error.message.contains(reason.label()));
     }
+}
+
+fn asking_for_structured_output() -> TurnRequest {
+    let mut turn = request();
+    turn.controls.output_format =
+        Some(OutputFormat::json_schema(json!({"type": "object"})).with_name("place"));
+    turn
+}
+
+fn carrying_an_image() -> TurnRequest {
+    let mut turn = request();
+    turn.items.push(Item::user_image(ImageSource::bytes(
+        ImageMediaType::Png,
+        b"\x89PNG".to_vec(),
+    )));
+    turn
+}
+
+/// The example catalog with fallback on, its primary (`local-small`) declaring as `declare` says.
+fn primary_declaring(declare: impl FnOnce(Capabilities) -> Capabilities) -> Catalog {
+    let mut doc = document();
+    doc.routes[0].fallback_enabled = true;
+    let primary = &mut doc.serving_models[0];
+    assert_eq!(primary.id, id("local-small"));
+    primary.capabilities = declare(primary.capabilities.clone());
+    doc.validate().unwrap()
+}
+
+#[test]
+fn a_target_declaring_no_structured_output_is_rejected_by_name_and_the_next_one_is_selected() {
+    let catalog = primary_declaring(|caps| caps.with_structured_output(false));
+    let turn = asking_for_structured_output();
+    let explanation = catalog.explain(&turn, Some(512)).unwrap();
+    assert_eq!(
+        explanation.targets[0].rejections,
+        [Rejection::StructuredOutput]
+    );
+    assert_eq!(explanation.targets[1].rejections, []);
+    assert_eq!(explanation.selected_target_id, Some(id("coding-secondary")));
+    let selected = catalog.resolve(&turn, Some(512)).unwrap();
+    assert_eq!(selected.target.id, id("coding-secondary"));
+    assert_eq!(selected.request.controls, turn.controls);
+    // The declaration concerns only a turn asking for a format: a plain turn stays on the primary.
+    assert_eq!(
+        catalog.resolve(&request(), Some(512)).unwrap().target.id,
+        id("coding-primary")
+    );
+}
+
+#[test]
+fn a_target_declaring_no_image_input_is_rejected_by_name_and_the_next_one_is_selected() {
+    let catalog = primary_declaring(|caps| caps.with_image_input(false));
+    let turn = carrying_an_image();
+    let explanation = catalog.explain(&turn, Some(512)).unwrap();
+    assert_eq!(explanation.targets[0].rejections, [Rejection::ImageInput]);
+    assert_eq!(explanation.targets[1].rejections, []);
+    let selected = catalog.resolve(&turn, Some(512)).unwrap();
+    assert_eq!(selected.target.id, id("coding-secondary"));
+    assert_eq!(selected.request.items, turn.items);
+    assert_eq!(
+        catalog.resolve(&request(), Some(512)).unwrap().target.id,
+        id("coding-primary")
+    );
+}
+
+#[test]
+fn a_target_that_declares_a_feature_or_leaves_it_undeclared_is_not_rejected_for_it() {
+    let mut turn = carrying_an_image();
+    turn.controls = asking_for_structured_output().controls;
+    for catalog in [
+        document().validate().unwrap(),
+        primary_declaring(|caps| caps.with_structured_output(true).with_image_input(true)),
+    ] {
+        let explanation = catalog.explain(&turn, Some(512)).unwrap();
+        assert_eq!(explanation.targets[0].rejections, []);
+        assert_eq!(explanation.selected_target_id, Some(id("coding-primary")));
+        assert_eq!(
+            catalog.resolve(&turn, Some(512)).unwrap().target.id,
+            id("coding-primary")
+        );
+    }
+}
+
+#[test]
+fn the_explanation_and_the_refusal_name_each_feature_rejection() {
+    assert_eq!(Rejection::StructuredOutput.label(), "structured-output");
+    assert_eq!(Rejection::ImageInput.label(), "image-input");
+    let mut doc = document();
+    let primary = &mut doc.serving_models[0];
+    primary.capabilities = primary
+        .capabilities
+        .clone()
+        .with_structured_output(false)
+        .with_image_input(false);
+    let catalog = doc.validate().unwrap();
+    let mut turn = carrying_an_image();
+    turn.controls = asking_for_structured_output().controls;
+    let explanation = catalog.explain(&turn, Some(512)).unwrap();
+    assert_eq!(explanation.selected_target_id, None);
+    assert_eq!(
+        explanation.targets[0].rejections,
+        [Rejection::StructuredOutput, Rejection::ImageInput]
+    );
+    let written = serde_json::to_value(&explanation).unwrap();
+    assert_eq!(
+        written["targets"][0]["rejections"],
+        json!(["structured-output", "image-input"])
+    );
+    assert_eq!(
+        written["targets"][0]["capabilities"]["structured_output"],
+        false
+    );
+    assert_eq!(written["targets"][0]["capabilities"]["image_input"], false);
+    let error = catalog.resolve(&turn, Some(512)).unwrap_err();
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(
+        error.message,
+        "route has no compatible target: fallback-disabled, image-input, structured-output"
+    );
 }
 
 #[test]

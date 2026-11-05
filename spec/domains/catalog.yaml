@@ -23,6 +23,12 @@ types:
     # revision and configuration digest. A binding, catalog or routes document claiming input
     # during output, or output that does not stream, is refused as `invalid-request`: no
     # protocol in this workspace carries input during output, and every one streams its output.
+    # structured_output: the model takes a JSON Schema answer format (llm.inference.OutputFormat).
+    # image_input: the model takes a user image (llm.inference.UserImage). Absent means not
+    # declared, and absent is not written, so a document from before them keeps its bytes.
+    # Selection rejects a target declaring either false for a turn needing it (StructuredOutput,
+    # ImageInput) and never falls back to it; a target leaving it undeclared is not rejected, and
+    # its wire carries the turn or refuses it before I/O.
     fields:
       - { name: tools, type: Boolean }
       - { name: tool_choice, type: Boolean }
@@ -33,9 +39,11 @@ types:
       - { name: max_output_tokens, type: Integer }
       - { name: output_streaming, type: 'Optional<Boolean>' }
       - { name: input_during_output, type: 'Optional<Boolean>' }
+      - { name: structured_output, type: 'Optional<Boolean>' }
+      - { name: image_input, type: 'Optional<Boolean>' }
   - name: llm.catalog.RouteRejection
     kind: enum
-    variants: [Tools, ToolChoice, Temperature, TopP, ReasoningEffort, OutputLimit, InputTokensUnknown, ContextWindow, OpaqueState, FallbackDisabled]
+    variants: [Tools, ToolChoice, Temperature, TopP, ReasoningEffort, OutputLimit, StructuredOutput, ImageInput, InputTokensUnknown, ContextWindow, OpaqueState, RefusalText, FallbackDisabled]
   - name: llm.catalog.Provenance
     kind: struct
     fields:

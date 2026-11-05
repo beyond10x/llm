@@ -968,3 +968,11 @@ scenarios:
 - bedrock/scenarios/turn-a-converse-turn-sends-a-user-image-as-inline-bytes.yaml
 - bedrock/scenarios/turn-converse-refuses-a-user-image-by-url-before-any-request.yaml
 - inference/scenarios/model-output-carrying-a-user-image-is-refused.yaml
+- routing/scenarios/a-turn-asking-for-structured-output-passes-over-a-target-declaring-none.yaml
+- routing/scenarios/a-turn-carrying-an-image-passes-over-a-target-declaring-no-image-input.yaml
+- routing/scenarios/fallback-never-moves-a-structured-output-turn-to-a-target-declaring-none.yaml
+- routing/scenarios/fallback-never-moves-an-image-turn-to-a-target-declaring-no-image-input.yaml
+- routing/scenarios/fallback-moves-a-turn-needing-both-features-to-an-alternative-leaving-them-undeclared.yaml
+- routing/scenarios/a-catalog-declaring-neither-feature-keeps-its-digest-and-takes-a-turn-needing-both.yaml
+- routing/scenarios/a-target-declaring-both-features-takes-a-turn-needing-both.yaml
+- routing/scenarios/a-route-with-no-target-taking-the-turns-features-is-refused-naming-each.yaml

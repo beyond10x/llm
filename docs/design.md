@@ -64,8 +64,33 @@ fetches. A document writes the item as
 - **Output and usage.** A model's output carrying a user image is caller-owned content and is
   refused. llm counts no image tokens itself: an image is in whatever input count the far side
   reports, and an absent counter stays unknown.
-- **Selection.** The catalog capability and the selection rejection for image input are
-  `story:output-and-image-capabilities`.
+- **Selection.** A model may declare `image_input`; one declaring `false` is rejected for a turn
+  holding an image as `image-input` ([Structured output and image input
+  declarations](#structured-output-and-image-input-declarations)).
+
+### Structured output and image input declarations
+
+Accepted for wave 2026-11-05-w26 (llm 0.22.0, story:output-and-image-capabilities).
+`Capabilities` carries two optional declarations, `structured_output` and `image_input`
+(`Option<bool>`, set with `with_structured_output` and `with_image_input`). A turn needs
+structured output when `controls.output_format` is set, and image input when it holds an
+`Item::UserImage`.
+
+| Declaration | Selection (`Catalog::explain`, `resolve`, `run_turn`) | `TurnRequest::validate_for` |
+| --- | --- | --- |
+| `false` | the target is rejected for a turn that needs the feature, as `structured-output` or `image-input`; fallback never moves the turn to it | refused before I/O: `binding does not take structured output`, `binding does not take image input` |
+| absent | not rejected | not refused: the wire carries the turn or refuses it before I/O, as in 0.21.0 |
+| `true` | not rejected | not refused |
+
+Absent is "not declared", not "no": no document before the fields declared anything, and reading
+their absence as `false` would reject every existing target for every such turn. So an undeclared
+target keeps the 0.21.0 behaviour exactly: its wire sends the format or the image, or refuses the
+turn by name before any I/O (Converse refuses an image by URL; Responses and Chat refuse a format
+without a name). In an `llm.binding/1`, `llm.catalog/1` or `llm.routes/1` document both are
+optional booleans (`null` is refused); absent is not written, so a document from before them
+keeps its bytes, its binding revisions and its configuration digest. The built-in declarations
+(`Capabilities::text`, a string route's `default_capabilities`, a Bedrock route's) leave both
+undeclared: no provider's support is recorded in this repository.
 
 ### Streaming declarations
 
@@ -615,7 +640,10 @@ Accepted for wave 2026-11-04-w25 (story:structured-output). `controls.output_for
 every egress wire sends it or refuses the turn before any I/O, and none drops it. The schema is
 the caller's: llm checks that it is a JSON object within the tool argument bound and sends it as
 it is. **llm does not validate the answer against the schema**; the answer is the model's text,
-and checking it is the caller's. A name is 1 to 64 ASCII letters, digits, `_` or `-`.
+and checking it is the caller's. A name is 1 to 64 ASCII letters, digits, `_` or `-`. A model
+may declare `structured_output`; one declaring `false` is rejected for a turn with a format as
+`structured-output` ([Structured output and image input
+declarations](#structured-output-and-image-input-declarations)).
 
 | Neutral | Messages and Bedrock InvokeModel | Chat Completions | Responses | Bedrock Converse |
 | --- | --- | --- | --- | --- |

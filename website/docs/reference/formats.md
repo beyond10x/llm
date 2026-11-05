@@ -86,7 +86,8 @@ Two digests appear in output and both are SHA-256 over validated canonical data:
 
 The capabilities `output_streaming` (default `true`) and `input_during_output` (default `false`)
 are left out of the canonical data at their defaults, so a document written before those fields
-keeps both digests.
+keeps both digests. So are `structured_output` and `image_input` when a document leaves them
+undeclared; either one, when declared, is a boolean.
 
 A local `SecretVersion` is a third digest, but it is redacted, non-serializable and must never be
 logged or used as a public fingerprint.

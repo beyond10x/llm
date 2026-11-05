@@ -1,8 +1,9 @@
 //! Scripted failures through fake `llm_core::Model`s and a bounded sink: no projection, no network.
 
 use llm_core::{
-    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, RefusalCause, StopReason,
-    StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest, Usage, VecSink,
+    BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, ImageMediaType, ImageSource,
+    Item, Model, OutputFormat, RefusalCause, StopReason, StreamEvent, StreamSink, TurnObservation,
+    TurnOutcome, TurnRequest, Usage, VecSink,
 };
 use llm_routing::{
     AttemptResult, Catalog, CatalogDocument, FallbackPolicy, FallbackRun, Halt, Models, Ports,
@@ -666,6 +667,86 @@ fn the_route_and_the_caller_can_each_disable_fallback() {
         .validate()
         .is_err()
     );
+}
+
+/// The example catalog's two targets with fallback on, the alternative (`remote-large`)
+/// declaring as `declare` says.
+fn alternative_declaring(declare: impl FnOnce(Capabilities) -> Capabilities) -> Catalog {
+    let mut doc = CatalogDocument::parse(EXAMPLE).unwrap();
+    doc.routes[0].fallback_enabled = true;
+    let alternative = &mut doc.serving_models[1];
+    assert_eq!(alternative.id, id("remote-large"));
+    alternative.capabilities = declare(alternative.capabilities.clone());
+    doc.validate().unwrap()
+}
+
+#[test]
+fn fallback_never_moves_a_turn_to_a_target_declaring_no_feature_the_turn_needs() {
+    let mut structured = request();
+    structured.controls.output_format =
+        Some(OutputFormat::json_schema(serde_json::json!({"type": "object"})).with_name("place"));
+    let mut image = request();
+    image.items.push(Item::user_image(ImageSource::bytes(
+        ImageMediaType::Png,
+        b"\x89PNG".to_vec(),
+    )));
+    let eligible = Script::Fail(ErrorCode::RateLimited, Dispatch::Rejected);
+    for (turn, declared, rejection) in [
+        (
+            &structured,
+            alternative_declaring(|caps| caps.with_structured_output(false)),
+            Rejection::StructuredOutput,
+        ),
+        (
+            &image,
+            alternative_declaring(|caps| caps.with_image_input(false)),
+            Rejection::ImageInput,
+        ),
+    ] {
+        let models = Fleet::new(
+            &declared,
+            &[
+                ("local-small", 0, eligible.clone(), None),
+                ("remote-large", 1, Script::Succeed, Some(7)),
+            ],
+        );
+        let mut sink = VecSink::new(16, 4096);
+        let refused = run(
+            &declared,
+            turn,
+            FallbackPolicy::default(),
+            &models,
+            &mut admit_all(),
+            &mut sink,
+        );
+        assert_eq!(refused.halt, Halt::Exhausted, "{rejection:?}");
+        assert_eq!(attempted(&refused), ["coding-primary"]);
+        assert_eq!(models.calls("remote-large"), 0);
+        assert_eq!(refused.explanation.targets[1].rejections, [rejection]);
+        assert_eq!(refused.result.unwrap_err().code, ErrorCode::RateLimited);
+        assert_eq!(sink.text(), "");
+
+        // Left undeclared, the same alternative takes the same turn after the same failure.
+        let undeclared = alternative_declaring(|caps| caps);
+        let models = Fleet::new(
+            &undeclared,
+            &[
+                ("local-small", 0, eligible.clone(), None),
+                ("remote-large", 1, Script::Succeed, Some(7)),
+            ],
+        );
+        let taken = run(
+            &undeclared,
+            turn,
+            FallbackPolicy::default(),
+            &models,
+            &mut admit_all(),
+            &mut sink,
+        );
+        assert_eq!(taken.halt, Halt::Succeeded);
+        assert_eq!(attempted(&taken), ["coding-primary", "coding-secondary"]);
+        assert_eq!(taken.explanation.targets[1].rejections, []);
+    }
 }
 
 #[test]

@@ -51,6 +51,33 @@ so a turn never moves from a subscription to metered or self-hosted billing.
 Admission requires a caller-supplied **input-token upper bound** that must be valid for every
 candidate. An unknown input count refuses admission rather than guessing.
 
+## Structured output and image input
+
+A serving model may declare whether it takes structured output and image input:
+
+```toml
+[serving_models.capabilities]
+tools = true
+tool_choice = true
+temperature = true
+top_p = true
+reasoning_efforts = ["medium", "high"]
+context_window = 32768
+max_output_tokens = 8192
+structured_output = true
+image_input = false
+```
+
+A turn with `controls.output_format` needs structured output; a turn holding a user image needs
+image input. A target declaring the feature `false` is rejected for that turn as
+`structured-output` or `image-input`, so neither selection nor fallback moves the turn to it, and a
+route left without a compatible target is refused naming the rejection
+(`route has no compatible target: image-input`).
+
+Leaving a declaration out means **not declared**, not "no": selection does not reject the target,
+and its wire carries the turn or refuses it before any I/O, as before the declarations existed.
+Every catalog written before them keeps its configuration digest and binding revisions.
+
 ## Explanation is safe by construction
 
 The explanation exposes route id, alias, configuration digest, the selected target, and for each

@@ -1,9 +1,15 @@
 //! What a model declares about its output and its input: whether its text streams and whether
 //! input reaches a turn that is still producing output. Every client in this workspace streams
 //! and accepts no input during output, and a document written before the declarations existed
-//! reads, and writes, exactly as it did.
+//! reads, and writes, exactly as it did. A model may also declare whether it takes structured
+//! output and image input; a document that declares neither leaves both undeclared and keeps
+//! its bytes.
 
-use llm_core::{Capabilities, ErrorCode, Protocol};
+use llm_core::{
+    Capabilities, ErrorCode, Id, ImageMediaType, ImageSource, Item, OutputFormat, Protocol,
+    Provenance, TurnRequest,
+};
+use serde_json::json;
 
 const PROTOCOLS: [Protocol; 3] = [
     Protocol::Responses,
@@ -140,4 +146,138 @@ fn a_model_built_in_code_keeps_its_own_claim() {
         .with_output_streaming(false)
         .with_input_during_output(true);
     claim.validate().unwrap();
+}
+
+#[test]
+fn a_declaration_written_before_structured_output_and_image_input_declares_neither_and_keeps_its_bytes()
+ {
+    for before in [BEFORE, EVERY_SETTING] {
+        let read: Capabilities = serde_json::from_str(before).unwrap();
+        assert_eq!(read.structured_output, None);
+        assert_eq!(read.image_input, None);
+        assert_eq!(serde_json::to_string(&read).unwrap(), before);
+    }
+    let text = Capabilities::text(32768, 8192);
+    assert_eq!(text.structured_output, None);
+    assert_eq!(text.image_input, None);
+}
+
+#[test]
+fn each_feature_declaration_is_written_only_when_declared_and_reads_back() {
+    for (structured_output, image_input) in [(true, false), (false, true)] {
+        let declared = Capabilities::text(32768, 8192)
+            .with_structured_output(structured_output)
+            .with_image_input(image_input);
+        assert_eq!(declared.structured_output, Some(structured_output));
+        assert_eq!(declared.image_input, Some(image_input));
+        let written = serde_json::to_string(&declared).unwrap();
+        assert_eq!(
+            written,
+            BEFORE.replace(
+                "\"max_output_tokens\":8192}",
+                &format!(
+                    "\"max_output_tokens\":8192,\"structured_output\":{structured_output},\"image_input\":{image_input}}}"
+                ),
+            )
+        );
+        let back: Capabilities = serde_json::from_str(&written).unwrap();
+        assert_eq!(back, declared);
+    }
+}
+
+#[test]
+fn a_feature_declaration_that_is_not_a_boolean_is_refused() {
+    for (field, value) in [
+        ("structured_output", "null"),
+        ("structured_output", "\"yes\""),
+        ("image_input", "null"),
+        ("image_input", "0"),
+    ] {
+        let invalid = BEFORE.replace(
+            "\"max_output_tokens\":8192}",
+            &format!("\"max_output_tokens\":8192,\"{field}\":{value}}}"),
+        );
+        assert!(
+            serde_json::from_str::<Capabilities>(&invalid).is_err(),
+            "{field}: {value} was read"
+        );
+    }
+}
+
+fn target() -> Provenance {
+    Provenance {
+        protocol: Protocol::Responses,
+        provider: Id::new("local").unwrap(),
+        account: Id::new("none").unwrap(),
+        endpoint: Id::new("in-process").unwrap(),
+        model: Id::new("example").unwrap(),
+        binding_revision: Id::new("declared-v1").unwrap(),
+    }
+}
+
+fn asking_for_structured_output() -> TurnRequest {
+    let mut request = TurnRequest::new("example", vec![Item::user("Where?")]);
+    request.controls.output_format =
+        Some(OutputFormat::json_schema(json!({"type": "object"})).with_name("place"));
+    request
+}
+
+fn carrying_an_image() -> TurnRequest {
+    TurnRequest::new(
+        "example",
+        vec![
+            Item::user("What is this?"),
+            Item::user_image(ImageSource::bytes(ImageMediaType::Png, b"\x89PNG".to_vec())),
+        ],
+    )
+}
+
+#[test]
+fn a_binding_declaring_no_structured_output_refuses_a_turn_asking_for_it_before_io() {
+    let declared = Capabilities::text(32768, 8192).with_structured_output(false);
+    let error = asking_for_structured_output()
+        .validate_for(&target(), &declared)
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.message, "binding does not take structured output");
+    // The same binding takes a turn that asks for no format, and an image is not its concern.
+    TurnRequest::new("example", vec![Item::user("Where?")])
+        .validate_for(&target(), &declared)
+        .unwrap();
+    carrying_an_image()
+        .validate_for(&target(), &declared)
+        .unwrap();
+}
+
+#[test]
+fn a_binding_declaring_no_image_input_refuses_a_turn_carrying_one_before_io() {
+    let declared = Capabilities::text(32768, 8192).with_image_input(false);
+    let error = carrying_an_image()
+        .validate_for(&target(), &declared)
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.message, "binding does not take image input");
+    TurnRequest::new("example", vec![Item::user("What is this?")])
+        .validate_for(&target(), &declared)
+        .unwrap();
+    asking_for_structured_output()
+        .validate_for(&target(), &declared)
+        .unwrap();
+}
+
+#[test]
+fn a_binding_that_declares_a_feature_or_leaves_it_undeclared_takes_the_turn() {
+    for declared in [
+        Capabilities::text(32768, 8192),
+        Capabilities::text(32768, 8192)
+            .with_structured_output(true)
+            .with_image_input(true),
+    ] {
+        asking_for_structured_output()
+            .validate_for(&target(), &declared)
+            .unwrap();
+        carrying_an_image()
+            .validate_for(&target(), &declared)
+            .unwrap();
+    }
 }
