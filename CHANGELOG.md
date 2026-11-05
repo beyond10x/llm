@@ -13,7 +13,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ### Changed
 
-- **Breaking:** `Item` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm that refuses the item
+- **Breaking:** `Item` is `#[non_exhaustive]`: harness adds a wildcard arm when it leaves 0.17.0; control-plane stays on 0.4.0
 - **Breaking:** `Capabilities` is `#[non_exhaustive]`: a struct literal becomes `Capabilities::text` and `with_*`
 - **Breaking:** `llm-routing`: `Rejection` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm
 - **Breaking:** `llm-models`: `AwsCredentialKind` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm
