@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-05T05:25:09Z",
+  "actor": "human:timo",
+  "artifact": "story:core-types-non-exhaustive",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate at fdf05bb9b on Rust 1.98.0: workspace tests 1866 passed 0 failed (S1 1004, S2 862); fmt and Clippy -D warnings; docs drift; conformance 1013/1013 x3; adversary_w26_non_exhaustive 4, capabilities, item_kind green"
+  }
+}

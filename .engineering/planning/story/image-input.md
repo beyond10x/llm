@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:image-input
 kind: story
-status: active
+status: implemented
 title: A user turn carries an image on every wire
 tags:
 - from-adopter-report
@@ -47,10 +47,11 @@ scope:
   path: spec/domains/messages.yaml
 - confidence: inferred
   path: spec/domains/responses.yaml
-revision: 23
+revision: 24
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 20}
 - {from: "proposed", to: "active", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 21}
+- {from: "active", to: "implemented", at: "2026-11-05T05:25:14Z", actor: "human:timo", revision: 24, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Context
 

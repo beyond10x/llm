@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-05T05:25:10Z",
+  "actor": "human:timo",
+  "artifact": "story:output-and-image-capabilities",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate at fdf05bb9b on Rust 1.98.0: workspace tests 1866 passed 0 failed (S1 1004, S2 862); fmt and Clippy -D warnings; docs drift; conformance 1013/1013 x3; capabilities 15, catalog 19, fallback 20, feature_declarations 3, adversary_w26 feature cases 12 green"
+  }
+}

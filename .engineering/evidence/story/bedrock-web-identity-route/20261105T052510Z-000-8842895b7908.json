@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-05T05:25:10Z",
+  "actor": "human:timo",
+  "artifact": "story:bedrock-web-identity-route",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate at fdf05bb9b on Rust 1.98.0: workspace tests 1866 passed 0 failed (S1 1004, S2 862); fmt and Clippy -D warnings; docs drift; conformance 1013/1013 x3; web_identity_routes 8, adversary_w26_web_identity_routes 7, routes_toml_bedrock 12 green"
+  }
+}

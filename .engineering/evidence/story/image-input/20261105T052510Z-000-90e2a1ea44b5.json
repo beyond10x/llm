@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-05T05:25:10Z",
+  "actor": "human:timo",
+  "artifact": "story:image-input",
+  "kind": "story",
+  "revision": 23,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate at fdf05bb9b on Rust 1.98.0: workspace tests 1866 passed 0 failed (S1 1004, S2 862); fmt and Clippy -D warnings; docs drift; conformance 1013/1013 x3; image_input core 8, responses 7, chat 7, messages 8, bedrock 5; adversary_w26_image_input 4+6+2 green"
+  }
+}

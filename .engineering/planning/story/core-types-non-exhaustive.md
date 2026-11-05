@@ -2,17 +2,18 @@
 format: aep.planning-md/3
 id: story:core-types-non-exhaustive
 kind: story
-status: active
+status: implemented
 title: Item, Capabilities, Rejection and AwsCredentialKind can grow without breaking a consumer
 tags:
 - from-adopter-report
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-05T01:52:20Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-05T01:52:20Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-05T05:25:14Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Context
 

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:output-and-image-capabilities
 kind: story
-status: active
+status: implemented
 title: Catalog capabilities and selection for structured output and image input
 tags:
 - from-adopter-report
@@ -10,10 +10,11 @@ relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
 - depends_on: story:image-input
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-05T01:52:02Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-05T01:52:02Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-05T05:25:15Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Context
 
