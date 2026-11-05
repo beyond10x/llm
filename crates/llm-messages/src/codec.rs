@@ -75,6 +75,12 @@ pub(crate) fn block(item: &Item) -> Result<Value, Error> {
         Item::UnattributedOpaque { .. } => {
             return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
         }
+        _ => {
+            return Err(Error::unsupported(format!(
+                "Messages carries no {} item",
+                item.kind()
+            )));
+        }
     })
 }
 /// Content blocks this projection builds itself, and may therefore annotate.

@@ -94,7 +94,7 @@ pub fn encode_ingress_response(
         .iter()
         .enumerate()
         .map(|(index, item)| wire_item(item, &item_id(item, id, index as u64)))
-        .collect();
+        .collect::<Result<_, _>>()?;
     Ok(response_object(id, created_at, outcome, &terminal, output))
 }
 
@@ -373,6 +373,7 @@ impl IngressStream {
                 | Item::ToolResult { .. }
                 | Item::UnattributedOpaque { .. }
                 | Item::AssistantRefusal { .. } => {}
+                _ => return Err(unsupported_item(item)),
             }
         }
         // Reasoning the caller was shown with no state to carry it ends its part; the item itself
@@ -581,6 +582,7 @@ fn check_outcome(outcome: &TurnOutcome) -> Result<Terminal, Error> {
                     "model outcome contains caller-owned content",
                 ));
             }
+            _ => return Err(unsupported_item(item)),
         }
     }
     if !observation.final_usage {
@@ -735,8 +737,8 @@ fn item_id(item: &Item, id: &str, index: u64) -> String {
 }
 
 /// One item of the response's `output`. Only items `check_outcome` accepted reach here.
-fn wire_item(item: &Item, item_id: &str) -> Value {
-    match item {
+fn wire_item(item: &Item, item_id: &str) -> Result<Value, Error> {
+    Ok(match item {
         Item::ToolCall(call) => call_item(
             item_id,
             &call.call_id,
@@ -750,7 +752,16 @@ fn wire_item(item: &Item, item_id: &str) -> Value {
         | Item::ToolResult { .. }
         | Item::UnattributedOpaque { .. }
         | Item::AssistantRefusal { .. } => Value::Null,
-    }
+        _ => return Err(unsupported_item(item)),
+    })
+}
+
+/// The refusal of an item kind this encoder does not know, by its name alone.
+fn unsupported_item(item: &Item) -> Error {
+    Error::unsupported(format!(
+        "the Responses ingress encoder carries no {} item",
+        item.kind()
+    ))
 }
 
 fn message_item(item_id: &str, text: &str) -> Value {

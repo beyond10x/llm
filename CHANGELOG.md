@@ -6,6 +6,18 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `Capabilities::with_tools`, `with_tool_choice`, `with_temperature`, `with_top_p` and `with_reasoning_efforts`
+- `Item::kind`: the item's serialized `kind` as fixed text, so a wildcard arm can refuse an item by name
+
+### Changed
+
+- **Breaking:** `Item` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm that refuses the item
+- **Breaking:** `Capabilities` is `#[non_exhaustive]`: a struct literal becomes `Capabilities::text` and `with_*`
+- **Breaking:** `llm-routing`: `Rejection` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm
+- **Breaking:** `llm-models`: `AwsCredentialKind` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm
+
 ## [0.21.0] - 2026-11-05
 
 ### Added

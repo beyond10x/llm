@@ -587,6 +587,12 @@ fn content(outcome: &TurnOutcome) -> Result<Vec<Value>, Error> {
             Item::UserText { .. } | Item::ToolResult { .. } => {
                 return Err(Error::protocol(CALLER_OWNED));
             }
+            _ => {
+                return Err(Error::unsupported(format!(
+                    "Messages carries no {} item",
+                    item.kind()
+                )));
+            }
         };
         if decode_block(&value, false, Some(binding), CONTENT)? != *item {
             return Err(Error::unsupported(UNREADABLE));

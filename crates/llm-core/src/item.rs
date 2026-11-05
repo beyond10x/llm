@@ -12,8 +12,53 @@ pub struct ToolCall {
 }
 
 /// Stateless conversation content. Opaque payloads remain bound to their original serving model.
+///
+/// The set of item kinds may grow, so code matching it outside this crate needs a wildcard arm,
+/// and that arm refuses the item it does not know, by [`Item::kind`], rather than dropping or
+/// sending it:
+///
+/// ```
+/// use llm_core::{Error, Item};
+///
+/// fn author(item: &Item) -> Result<&'static str, Error> {
+///     Ok(match item {
+///         Item::UserText { .. } => "user",
+///         Item::ToolResult { .. } => "caller",
+///         Item::AssistantText { .. }
+///         | Item::AssistantRefusal { .. }
+///         | Item::ToolCall(_)
+///         | Item::Opaque { .. }
+///         | Item::UnattributedOpaque { .. } => "model",
+///         _ => {
+///             let refusal = format!("this caller carries no {} item", item.kind());
+///             return Err(Error::unsupported(refusal));
+///         }
+///     })
+/// }
+/// assert_eq!(author(&Item::user("hello")).unwrap(), "user");
+/// ```
+///
+/// Without the wildcard arm the same match does not compile:
+///
+/// ```compile_fail,E0004
+/// use llm_core::{Error, Item};
+///
+/// fn author(item: &Item) -> Result<&'static str, Error> {
+///     Ok(match item {
+///         Item::UserText { .. } => "user",
+///         Item::ToolResult { .. } => "caller",
+///         Item::AssistantText { .. }
+///         | Item::AssistantRefusal { .. }
+///         | Item::ToolCall(_)
+///         | Item::Opaque { .. }
+///         | Item::UnattributedOpaque { .. } => "model",
+///     })
+/// }
+/// assert_eq!(author(&Item::user("hello")).unwrap(), "user");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+#[non_exhaustive]
 pub enum Item {
     UserText {
         text: String,
@@ -56,6 +101,24 @@ impl Item {
     /// no payload byte ever reaches a diagnostic.
     pub const UNATTRIBUTED_REFUSAL: &str =
         "unattributed opaque state is not sendable until a caller binds it to a target";
+
+    /// The item's kind, as the `kind` of its serialized form names it: `user-text`,
+    /// `assistant-text`, `assistant-refusal`, `tool-call`, `tool-result`, `opaque` or
+    /// `unattributed-opaque`.
+    ///
+    /// Fixed text, so a wildcard arm can refuse an item it does not know by name with no byte of
+    /// its content.
+    pub const fn kind(&self) -> &'static str {
+        match self {
+            Self::UserText { .. } => "user-text",
+            Self::AssistantText { .. } => "assistant-text",
+            Self::AssistantRefusal { .. } => "assistant-refusal",
+            Self::ToolCall(_) => "tool-call",
+            Self::ToolResult { .. } => "tool-result",
+            Self::Opaque { .. } => "opaque",
+            Self::UnattributedOpaque { .. } => "unattributed-opaque",
+        }
+    }
 
     pub fn user(text: impl Into<String>) -> Self {
         Self::UserText { text: text.into() }

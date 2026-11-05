@@ -63,6 +63,12 @@
       "status": "shipped"
     },
     {
+      "area": "Neutral turn",
+      "detail": "Item, Capabilities, Rejection and AwsCredentialKind are #[non_exhaustive]: a match outside the defining crate ends in a wildcard arm, which on every path here that carries an item refuses an unknown kind by its Item::kind name, and Capabilities is built with Capabilities::text and its with_* setters, its documents keeping their bytes.",
+      "label": "Item kinds, capabilities, rejections and AWS credential kinds can grow without breaking a caller",
+      "status": "shipped"
+    },
+    {
       "area": "Transport",
       "detail": "One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails.",
       "label": "Bounded HTTP and server-sent events",
@@ -256,7 +262,7 @@
     },
     {
       "area": "Amazon Bedrock",
-      "detail": "llm_bedrock::WebIdentityCredentials reads the token through a secret reference on every fetch and sends the STS AssumeRoleWithWebIdentity call unsigned, as one form post (llm_http::HttpClient::post_form) to an https endpoint or http on loopback, with no ambient proxy and no redirect followed; it reads the XML Credentials with a strict, bounded reader of its own and keeps them with the same single-flight refresh as ContainerCredentials. ExpiredToken, InvalidIdentityToken, any other 4xx but 408 and an unusable answer are unauthorized and final; no answer, a cut, a 5xx, a 408 and IDPCommunicationError are retriable; nothing was sent for any of them, and no message carries the token, the answer or a key. A routes document cannot name it: aws-web-identity would need a variant of the exhaustive AwsCredentialKind. 14 authored web-identity-* scenarios. Fixture evidence only; no request reached STS.",
+      "detail": "llm_bedrock::WebIdentityCredentials reads the token through a secret reference on every fetch and sends the STS AssumeRoleWithWebIdentity call unsigned, as one form post (llm_http::HttpClient::post_form) to an https endpoint or http on loopback, with no ambient proxy and no redirect followed; it reads the XML Credentials with a strict, bounded reader of its own and keeps them with the same single-flight refresh as ContainerCredentials. ExpiredToken, InvalidIdentityToken, any other 4xx but 408 and an unusable answer are unauthorized and final; no answer, a cut, a 5xx, a 408 and IDPCommunicationError are retriable; nothing was sent for any of them, and no message carries the token, the answer or a key. A routes document cannot name it yet: aws-web-identity needs a variant of AwsCredentialKind it does not have. 14 authored web-identity-* scenarios. Fixture evidence only; no request reached STS.",
       "label": "Bedrock keys from a web identity token",
       "status": "shipped"
     },

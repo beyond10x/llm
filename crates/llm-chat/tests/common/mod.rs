@@ -11,17 +11,12 @@ pub fn id(value: &str) -> Id {
 }
 
 pub fn capable() -> Capabilities {
-    Capabilities {
-        tools: true,
-        tool_choice: true,
-        temperature: true,
-        top_p: true,
-        reasoning_efforts: vec!["low".to_owned(), "high".to_owned()],
-        context_window: 32_768,
-        max_output_tokens: 4_096,
-        output_streaming: true,
-        input_during_output: false,
-    }
+    Capabilities::text(32_768, 4_096)
+        .with_tools(true)
+        .with_tool_choice(true)
+        .with_temperature(true)
+        .with_top_p(true)
+        .with_reasoning_efforts(["low", "high"])
 }
 
 /// An explicitly anonymous, self-hosted binding: the shape a local vLLM deployment declares.

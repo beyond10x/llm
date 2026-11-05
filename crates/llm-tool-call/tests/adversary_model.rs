@@ -230,17 +230,9 @@ impl Recorded {
     fn new(arguments: Value) -> Self {
         Self {
             provenance: recorded_provenance(),
-            capabilities: Capabilities {
-                tools: true,
-                tool_choice: true,
-                temperature: false,
-                top_p: false,
-                reasoning_efforts: Vec::new(),
-                context_window: 32_768,
-                max_output_tokens: 2_048,
-                output_streaming: true,
-                input_during_output: false,
-            },
+            capabilities: Capabilities::text(32_768, 2_048)
+                .with_tools(true)
+                .with_tool_choice(true),
             arguments,
         }
     }

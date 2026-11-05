@@ -95,17 +95,11 @@ let target = BedrockTarget::new(
         model: Id::new("haiku")?,
         binding_revision: Id::new("2026-10-22")?,
     },
-    Capabilities {
-        tools: true,
-        tool_choice: true,
-        temperature: true,
-        top_p: true,
-        reasoning_efforts: Vec::new(),
-        context_window: 200_000,
-        max_output_tokens: 4096,
-        output_streaming: true,
-        input_during_output: false,
-    },
+    Capabilities::text(200_000, 4096)
+        .with_tools(true)
+        .with_tool_choice(true)
+        .with_temperature(true)
+        .with_top_p(true),
     "eu-central-1",
     "eu.anthropic.claude-haiku-5-5",
     Api::Converse,

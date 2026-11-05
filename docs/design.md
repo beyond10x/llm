@@ -20,6 +20,16 @@ refused, never dropped to make translation appear successful. The one exception 
 `response.metadata` stream event that llm 0.16.0 and earlier saved as opaque state: it describes a
 response, is no conversation state, and the endpoint refuses it, so egress leaves it out.
 
+### Types that grow
+
+`Item`, `Capabilities`, `Rejection` (`llm-routing`) and `AwsCredentialKind` (`llm-models`) are
+`#[non_exhaustive]`, so a new item kind, declaration, rejection or AWS credential source is an
+addition, not a break. Inside its own crate a match still names every variant. A match outside it
+ends in a wildcard arm. On every path in this workspace that carries an item, that arm refuses an
+item kind it does not know by its `Item::kind` name: such an item is never dropped and never
+sent. `Capabilities` is built with `Capabilities::text` and its `with_*` setters, and its
+documents keep their bytes.
+
 ### Streaming declarations
 
 A caller, such as a graph deciding how to schedule a model node, reads two declarations from
@@ -109,9 +119,9 @@ Why it is not offered:
   story:responses-websocket-steering. Anthropic documents nothing like it for Messages, and
   OpenAI nothing like it for Chat Completions.
 - **So the declaration says no.** `Capabilities::input_during_output` is `false` on every binding
-  (`Capabilities::text`, `crates/llm-core/src/vocabulary.rs:86-98`), and since 0.8.0
+  (`Capabilities::text`, `crates/llm-core/src/vocabulary.rs:124-138`), and since 0.8.0
   `Capabilities::validate_protocol` refuses `true` for all three protocols
-  (`crates/llm-core/src/vocabulary.rs:120-136`) in every binding, catalog and routes document
+  (`crates/llm-core/src/vocabulary.rs:187-215`) in every binding, catalog and routes document
   ([Streaming declarations](#streaming-declarations)). A caller that schedules from the
   declaration reads `false` and uses the pattern below.
 

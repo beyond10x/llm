@@ -5,8 +5,58 @@ use llm_core::{
 use llm_providers::Binding;
 use serde::{Deserialize, Serialize};
 
+/// Why selection passed over a target. The set may grow, so code matching it outside this crate
+/// needs a wildcard arm, and that arm refuses the rejection it does not know:
+///
+/// ```
+/// use llm_core::Error;
+/// use llm_routing::Rejection;
+///
+/// fn names_a_setting(rejection: Rejection) -> Result<bool, Error> {
+///     match rejection {
+///         Rejection::Tools
+///         | Rejection::ToolChoice
+///         | Rejection::Temperature
+///         | Rejection::TopP
+///         | Rejection::ReasoningEffort
+///         | Rejection::OutputLimit => Ok(true),
+///         Rejection::InputTokensUnknown
+///         | Rejection::ContextWindow
+///         | Rejection::OpaqueState
+///         | Rejection::RefusalText
+///         | Rejection::FallbackDisabled => Ok(false),
+///         _ => Err(Error::unsupported("this caller does not know the rejection")),
+///     }
+/// }
+/// assert!(names_a_setting(Rejection::TopP).unwrap());
+/// ```
+///
+/// Without the wildcard arm the same match does not compile:
+///
+/// ```compile_fail,E0004
+/// use llm_core::Error;
+/// use llm_routing::Rejection;
+///
+/// fn names_a_setting(rejection: Rejection) -> Result<bool, Error> {
+///     match rejection {
+///         Rejection::Tools
+///         | Rejection::ToolChoice
+///         | Rejection::Temperature
+///         | Rejection::TopP
+///         | Rejection::ReasoningEffort
+///         | Rejection::OutputLimit => Ok(true),
+///         Rejection::InputTokensUnknown
+///         | Rejection::ContextWindow
+///         | Rejection::OpaqueState
+///         | Rejection::RefusalText
+///         | Rejection::FallbackDisabled => Ok(false),
+///     }
+/// }
+/// assert!(names_a_setting(Rejection::TopP).unwrap());
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[non_exhaustive]
 pub enum Rejection {
     Tools,
     ToolChoice,

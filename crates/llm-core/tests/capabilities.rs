@@ -104,6 +104,36 @@ fn the_declarations_every_client_makes_are_accepted_on_every_protocol() {
     }
 }
 
+/// Every setting a document can declare, written as `llm.catalog/1` writes it at 0.21.0.
+const EVERY_SETTING: &str = r#"{"tools":true,"tool_choice":true,"temperature":true,"top_p":true,"reasoning_efforts":["low","high"],"context_window":200000,"max_output_tokens":64000}"#;
+
+#[test]
+fn a_caller_outside_the_crate_builds_every_declaration_and_its_bytes_do_not_move() {
+    let built = Capabilities::text(200_000, 64_000)
+        .with_tools(true)
+        .with_tool_choice(true)
+        .with_temperature(true)
+        .with_top_p(true)
+        .with_reasoning_efforts(["low", "high"]);
+    assert!(built.tools && built.tool_choice && built.temperature && built.top_p);
+    assert_eq!(built.reasoning_efforts, ["low", "high"]);
+    assert_eq!(serde_json::to_string(&built).unwrap(), EVERY_SETTING);
+    let read: Capabilities = serde_json::from_str(EVERY_SETTING).unwrap();
+    assert_eq!(read, built);
+
+    let withdrawn = built
+        .with_tools(false)
+        .with_tool_choice(false)
+        .with_temperature(false)
+        .with_top_p(false)
+        .with_reasoning_efforts(Vec::<String>::new());
+    assert_eq!(withdrawn, Capabilities::text(200_000, 64_000));
+    assert_eq!(
+        serde_json::to_string(&withdrawn).unwrap(),
+        BEFORE.replace("32768", "200000").replace("8192", "64000")
+    );
+}
+
 #[test]
 fn a_model_built_in_code_keeps_its_own_claim() {
     let claim = Capabilities::text(32768, 8192)

@@ -227,8 +227,8 @@ The same reference states the limits `WebIdentityCredentials` checks before send
 which `WebIdentityCredentials` reports as retriable; every other error it lists is final here.
 
 A routes document cannot name this source yet: `auth.kind = "aws-web-identity"` needs a variant of
-the exhaustive public enum `AwsCredentialKind`, which only a breaking release can add. Until then a
-caller builds `WebIdentityCredentials` and hands it to `BedrockClient` itself.
+`AwsCredentialKind` it does not have. Until then a caller builds `WebIdentityCredentials` and
+hands it to `BedrockClient` itself.
 
 ## Usage
 

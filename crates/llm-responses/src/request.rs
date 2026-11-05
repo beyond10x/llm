@@ -729,6 +729,12 @@ fn item_to_input(binding: &Binding, item: &Item) -> Result<Value, Error> {
         Item::UnattributedOpaque { .. } => {
             return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
         }
+        _ => {
+            return Err(Error::unsupported(format!(
+                "the Responses projection carries no {} item",
+                item.kind()
+            )));
+        }
     })
 }
 

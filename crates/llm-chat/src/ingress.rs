@@ -864,6 +864,12 @@ fn split_items(items: &[Item]) -> Result<Split, Error> {
                     "model outcome contains caller-owned content",
                 ));
             }
+            _ => {
+                return Err(Error::unsupported(format!(
+                    "chat completions carries no {} item",
+                    item.kind()
+                )));
+            }
         }
     }
     Ok(Split {

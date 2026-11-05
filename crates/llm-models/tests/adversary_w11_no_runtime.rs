@@ -357,17 +357,12 @@ fn a_routing_run_over_three_targets_outside_a_tokio_runtime_attempts_one_and_sto
 // ---------------------------------------------------------------------------------------------
 
 fn capabilities() -> Capabilities {
-    Capabilities {
-        tools: true,
-        tool_choice: true,
-        temperature: true,
-        top_p: true,
-        reasoning_efforts: vec!["medium".to_owned()],
-        context_window: 32_768,
-        max_output_tokens: 2_048,
-        output_streaming: true,
-        input_during_output: false,
-    }
+    Capabilities::text(32_768, 2_048)
+        .with_tools(true)
+        .with_tool_choice(true)
+        .with_temperature(true)
+        .with_top_p(true)
+        .with_reasoning_efforts(["medium"])
 }
 
 /// A bearer binding at `base_url` speaking `protocol`.
