@@ -11,6 +11,7 @@ members = [
     "crates/llm-routing",
     "crates/llm-models",
     "crates/llm-cost",
+    "crates/llm-calls",
     "crates/llm-cli",
     "crates/llm-tool-call",
     "crates/llm-blocking",
