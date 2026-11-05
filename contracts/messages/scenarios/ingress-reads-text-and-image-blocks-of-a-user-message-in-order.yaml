@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-reads-text-and-image-blocks-of-a-user-message-in-order
+summary: a user message of text and image blocks reads block by block into user text and user image items in order, and a mark on an image block is read into the prompt-cache hint (story:image-input)
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"messages":[{"content":[{"text":"Compare","type":"text"},{"source":{"data":"iVBORw0KGgo=","media_type":"image/jpeg","type":"base64"},"type":"image"},{"text":"with","type":"text"},{"cache_control":{"type":"ephemeral"},"source":{"type":"url","url":"https://images.example/a.png"},"type":"image"}],"role":"user"}],"model":"caller-alias","stream":true}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: null
+    stream: true
+    items:
+      - "user-text:Compare"
+      - "user-image:bytes:image/jpeg:iVBORw0KGgo="
+      - "user-text:with"
+      - "user-image:url:https://images.example/a.png"
+    omitted_advisories: []

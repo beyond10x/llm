@@ -69,6 +69,12 @@
       "status": "shipped"
     },
     {
+      "area": "Neutral turn",
+      "detail": "Item::UserImage holds inline PNG, JPEG, GIF or WebP bytes (at most 5 MiB) or an https URL, and no byte or URL reaches a diagnostic or a Debug form. Responses, Chat Completions, Messages and Bedrock InvokeModel send it in the user message beside its text, in item order, Converse sends inline bytes and refuses a URL before I/O, and the three ingress decoders read the image parts of a user message back in order. Request bytes pinned against the published request shapes; no provider was called.",
+      "label": "A user turn carries an image on every wire",
+      "status": "shipped"
+    },
+    {
       "area": "Transport",
       "detail": "One attempt per call, explicit deadlines, no redirects, no ambient proxy, bounded bodies, and partial output kept when a stream fails.",
       "label": "Bounded HTTP and server-sent events",

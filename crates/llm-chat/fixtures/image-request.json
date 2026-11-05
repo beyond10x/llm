@@ -1,0 +1,1 @@
+{"messages":[{"content":"describe images","role":"system"},{"content":[{"text":"What is in these pictures?","type":"text"},{"image_url":{"url":"data:image/png;base64,iVBORw0KGgo="},"type":"image_url"},{"image_url":{"url":"https://images.example/a.png"},"type":"image_url"}],"role":"user"}],"model":"Qwen/Qwen3-8B","stream":true,"stream_options":{"include_usage":true}}

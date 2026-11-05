@@ -37,9 +37,13 @@ output format is `outputConfig.textFormat` `{"type": "json_schema", "structure":
 Bedrock always holds the answer to the schema through constrained decoding
 ([user guide](https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html)), so a
 format whose `strict` is `false` is refused by name, and `true` sends nothing more; llm does not
-validate the answer ([design](design.md#structured-output)). A
-reasoning effort, the parallel tool call control, thinking for another model and opaque state
-from another wire are refused by name before any I/O. Advisory hints are never sent, `anthropic-beta`
+validate the answer ([design](design.md#structured-output)). A user image (story:image-input) is
+an `image` block in the user message beside the user text, in item order: `{"image": {"format":
+"png", "source": {"bytes": "<base64>"}}}`, the format `png`, `jpeg`, `gif` or `webp` of its media
+type. Converse's image source holds bytes or an S3 location and no URL, so an image by URL is
+refused by name before any I/O (`Bedrock Converse carries an image only as inline bytes, not by
+URL`). A reasoning effort, the parallel tool call control, thinking for another model and opaque
+state from another wire are refused by name before any I/O. Advisory hints are never sent, `anthropic-beta`
 included; a successful turn that carried any ends with one `advisory-omitted` warning. Converse reports no response id and no
 upstream model, so both stay absent.
 
@@ -47,7 +51,9 @@ The Anthropic body is the Messages body `llm-messages` encodes, plus
 `anthropic_version: "bedrock-2023-05-31"`, minus `model` (the path names it) and `stream` (the
 operation says it). A turn's `anthropic-beta` names, which the Messages route takes as a header,
 travel as the body's `anthropic_beta` array, and no `anthropic-beta` header is sent. An output
-format is the Messages body's `output_config.format`, under the Messages rules. Its stream is
+format is the Messages body's `output_config.format`, under the Messages rules, and a user image
+the Messages `image` block, a `base64` or `url` source; whether Bedrock fetches an image by URL on
+this operation has not been observed (no turn has been sent to Bedrock). Its stream is
 `chunk` frames, each `{"bytes": base64(<Messages event>)}`, read by
 the Messages stream decoder. So text, tool calls, thinking, stop reasons and refusals on that wire
 are the Messages wire's ([messages.md](messages.md)).
@@ -237,8 +243,9 @@ web identity role yet.
 
 ## Usage
 
-Unknown counters stay unknown; none becomes zero. The one exception is a Converse cache counter,
-which is a known 0 when the answer leaves it out.
+Unknown counters stay unknown; none becomes zero. llm counts no image tokens itself: an image is
+in whatever input the answer reports. The one exception is a Converse cache counter, which is a
+known 0 when the answer leaves it out.
 
 - **Converse** reports `inputTokens` (uncached input), `outputTokens`, `totalTokens` and, when
   caching is used, `cacheReadInputTokens` and `cacheWriteInputTokens`. The neutral `input_tokens`

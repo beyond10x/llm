@@ -214,6 +214,9 @@ commands:
         summary: Observe the headers and body the Messages client sends under one account presentation.
   - name: llm.messages.Project
     input:
+      # A llm.inference.UserImage item is an `image` block in the user message beside the user
+      # text, in item order: source `base64` with its media type, or `url`. Ingress reads such a
+      # block of a user message into the item; one in any other message is refused by its path.
       - {name: request_json, type: String}
       - {name: ingress, type: Boolean}
     outcomes:

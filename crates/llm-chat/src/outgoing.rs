@@ -17,7 +17,9 @@ pub fn omitted_advisories(request: &TurnRequest) -> Vec<Advisory> {
 /// Project a neutral turn onto one Chat Completions request body.
 ///
 /// The body names the binding's upstream model, never the caller's route alias, and carries
-/// only the settings the caller actually asked for.
+/// only the settings the caller actually asked for. A user image is an `image_url` part, inline
+/// bytes as a base64 `data:` URL; a run of user texts and images holding one is a single user
+/// message of parts, in item order.
 ///
 /// # Errors
 /// Refuses a binding that serves another protocol, a request the binding's declared
@@ -160,11 +162,32 @@ fn messages(request: &TurnRequest) -> Result<Vec<Value>, Error> {
         out.push(json!({"role": "system", "content": request.instructions}));
     }
     let mut open: Option<OpenAssistant> = None;
-    for item in &request.items {
+    let mut rest = request.items.as_slice();
+    while let Some(item) = rest.first() {
+        // A run of user content holding an image is one user message of parts in item order. A
+        // run without one is sent as before, one message of text per item.
+        let run = rest.iter().take_while(|item| is_user_content(item)).count();
+        if rest[..run]
+            .iter()
+            .any(|item| matches!(item, Item::UserImage { .. }))
+        {
+            OpenAssistant::close(&mut open, &mut out);
+            out.push(json!({"role": "user", "content": user_parts(&rest[..run])?}));
+            rest = &rest[run..];
+            continue;
+        }
+        rest = &rest[1..];
         match item {
             Item::UserText { text } => {
                 OpenAssistant::close(&mut open, &mut out);
                 out.push(json!({"role": "user", "content": text}));
+            }
+            Item::UserImage { .. } => {
+                OpenAssistant::close(&mut open, &mut out);
+                out.push(json!({
+                    "role": "user",
+                    "content": user_parts(std::slice::from_ref(item))?,
+                }));
             }
             Item::AssistantText { text } => {
                 join(
@@ -223,6 +246,31 @@ fn messages(request: &TurnRequest) -> Result<Vec<Value>, Error> {
     }
     OpenAssistant::close(&mut open, &mut out);
     Ok(out)
+}
+
+const fn is_user_content(item: &Item) -> bool {
+    matches!(item, Item::UserText { .. } | Item::UserImage { .. })
+}
+
+/// A run of user texts and images as content parts: `text`, and `image_url` with the image as
+/// one URL, inline bytes as a base64 `data:` URL. `detail` is optional here and not written.
+fn user_parts(run: &[Item]) -> Result<Value, Error> {
+    let mut parts = Vec::with_capacity(run.len());
+    for item in run {
+        parts.push(match item {
+            Item::UserText { text } => json!({"type": "text", "text": text}),
+            Item::UserImage { source } => {
+                json!({"type": "image_url", "image_url": {"url": source.to_wire_url()}})
+            }
+            _ => {
+                return Err(Error::unsupported(format!(
+                    "chat completions carries no {} item in a user message",
+                    item.kind()
+                )));
+            }
+        });
+    }
+    Ok(Value::Array(parts))
 }
 
 fn tool(spec: &ToolSpec) -> Value {

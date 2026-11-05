@@ -105,7 +105,8 @@ impl TurnRequest {
     }
 
     /// # Errors
-    /// Rejects malformed fields, duplicate tool/call identifiers, and oversized input before I/O.
+    /// Rejects malformed fields, duplicate tool/call identifiers, an image outside
+    /// [`crate::ImageSource::validate`], and oversized input before I/O.
     pub fn validate(&self) -> Result<(), Error> {
         crate::Id::new(&self.model).map_err(|_| Error::invalid("invalid model identifier"))?;
         self.sampling.validate()?;
@@ -146,6 +147,7 @@ impl TurnRequest {
                         return Err(Error::too_large("tool result exceeds its bound"));
                     }
                 }
+                Item::UserImage { source } => source.validate()?,
                 Item::UserText { .. }
                 | Item::AssistantText { .. }
                 | Item::AssistantRefusal { .. }
@@ -237,6 +239,7 @@ impl TurnRequest {
                     return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
                 }
                 Item::UserText { .. }
+                | Item::UserImage { .. }
                 | Item::AssistantText { .. }
                 | Item::AssistantRefusal { .. }
                 | Item::ToolCall(_)
@@ -382,7 +385,7 @@ impl TurnOutcome {
         let mut calls = BTreeSet::new();
         for item in &self.items {
             match item {
-                Item::UserText { .. } | Item::ToolResult { .. } => {
+                Item::UserText { .. } | Item::UserImage { .. } | Item::ToolResult { .. } => {
                     return Err(Error::protocol(
                         "model output contains caller-owned content",
                     ));

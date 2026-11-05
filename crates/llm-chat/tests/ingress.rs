@@ -110,12 +110,13 @@ fn an_unrecognized_field_is_refused_without_echoing_the_clients_bytes() {
     );
 }
 
+/// An audio part; an image part is carried since story:image-input (`tests/image_input.rs`).
 #[test]
 fn a_non_text_content_part_is_refused() {
     let body = json!({
         "model": "code",
         "messages": [{"role": "user", "content": [
-            {"type": "image_url", "image_url": {"url": "https://example.invalid/a.png"}}
+            {"type": "input_audio", "input_audio": {"data": "AA==", "format": "wav"}}
         ]}]
     });
     assert_eq!(

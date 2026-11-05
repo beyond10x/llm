@@ -1,4 +1,4 @@
-use crate::{CallId, Error, Protocol, Provenance, ToolName};
+use crate::{CallId, Error, ImageSource, Protocol, Provenance, ToolName};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -22,7 +22,7 @@ pub struct ToolCall {
 ///
 /// fn author(item: &Item) -> Result<&'static str, Error> {
 ///     Ok(match item {
-///         Item::UserText { .. } => "user",
+///         Item::UserText { .. } | Item::UserImage { .. } => "user",
 ///         Item::ToolResult { .. } => "caller",
 ///         Item::AssistantText { .. }
 ///         | Item::AssistantRefusal { .. }
@@ -45,7 +45,7 @@ pub struct ToolCall {
 ///
 /// fn author(item: &Item) -> Result<&'static str, Error> {
 ///     Ok(match item {
-///         Item::UserText { .. } => "user",
+///         Item::UserText { .. } | Item::UserImage { .. } => "user",
 ///         Item::ToolResult { .. } => "caller",
 ///         Item::AssistantText { .. }
 ///         | Item::AssistantRefusal { .. }
@@ -62,6 +62,12 @@ pub struct ToolCall {
 pub enum Item {
     UserText {
         text: String,
+    },
+    /// An image the caller sends in its turn: inline bytes or an `https` URL. Every wire sends it
+    /// in the user message of the user content beside it, in item order, or refuses it before
+    /// I/O. Its `Debug` form shows no byte and no URL.
+    UserImage {
+        source: ImageSource,
     },
     AssistantText {
         text: String,
@@ -103,14 +109,15 @@ impl Item {
         "unattributed opaque state is not sendable until a caller binds it to a target";
 
     /// The item's kind, as the `kind` of its serialized form names it: `user-text`,
-    /// `assistant-text`, `assistant-refusal`, `tool-call`, `tool-result`, `opaque` or
-    /// `unattributed-opaque`.
+    /// `user-image`, `assistant-text`, `assistant-refusal`, `tool-call`, `tool-result`, `opaque`
+    /// or `unattributed-opaque`.
     ///
     /// Fixed text, so a wildcard arm can refuse an item it does not know by name with no byte of
     /// its content.
     pub const fn kind(&self) -> &'static str {
         match self {
             Self::UserText { .. } => "user-text",
+            Self::UserImage { .. } => "user-image",
             Self::AssistantText { .. } => "assistant-text",
             Self::AssistantRefusal { .. } => "assistant-refusal",
             Self::ToolCall(_) => "tool-call",
@@ -122,6 +129,9 @@ impl Item {
 
     pub fn user(text: impl Into<String>) -> Self {
         Self::UserText { text: text.into() }
+    }
+    pub const fn user_image(source: ImageSource) -> Self {
+        Self::UserImage { source }
     }
     pub fn assistant(text: impl Into<String>) -> Self {
         Self::AssistantText { text: text.into() }
@@ -156,6 +166,7 @@ impl Item {
                 })
             }
             other @ (Self::UserText { .. }
+            | Self::UserImage { .. }
             | Self::AssistantText { .. }
             | Self::AssistantRefusal { .. }
             | Self::ToolCall(_)

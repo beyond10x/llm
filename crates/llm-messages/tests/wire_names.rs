@@ -158,6 +158,14 @@ const CARRIED: &[&str] = &[
     "metadata",
     "ttl",
     "user_id",
+    // Named by story:image-input, which cites the Messages `image` content block with a `base64`
+    // source (`media_type`, `data`) or a `url` source; the recorded body is
+    // `tests/fixtures/image-request.json`. Not read against the producer for that story.
+    "base64",
+    "image",
+    "media_type",
+    "source",
+    "url",
     "auto",
     "cache_creation",
     "caller",

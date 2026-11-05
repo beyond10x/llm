@@ -16,6 +16,7 @@ name = "llm_core"
 
 [dependencies]
 serde.workspace = true
+base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
 serde_json.workspace = true
 thiserror.workspace = true
 tokio-util.workspace = true

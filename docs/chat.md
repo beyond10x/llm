@@ -22,6 +22,7 @@ any network I/O.
 | the binding's upstream model name | `model` — never the caller's route alias |
 | `instructions` | a leading `system` message, omitted when empty |
 | `Item::UserText` | a `user` message |
+| `Item::UserImage` | an `image_url` part, `{"type":"image_url","image_url":{"url":…}}`, the image as a base64 `data:` URL of its media type or its `https` URL; no `detail` |
 | `Item::AssistantText`, `Item::AssistantRefusal` and `Item::ToolCall` | one `assistant` message carrying `content`, `refusal` and `tool_calls` |
 | `Item::ToolResult` | a `tool` message keyed by `tool_call_id` |
 | `Item::Opaque` | refused: this wire carries no continuation state |
@@ -41,6 +42,12 @@ Each control and hint is sent only when the turn sets it.
 A streamed request always sends `stream_options: {"include_usage": true}`. Without it this wire
 reports no usage at all, and an absent report would be indistinguishable from a model that
 consumed nothing.
+
+A user image shares the message of the user text beside it (story:image-input). A run of
+consecutive user texts and images that holds an image is one `user` message whose `content` is an
+array of `text` and `image_url` parts in item order; a run without an image is sent as before, one
+message of string content per text. `detail` is optional on this wire and is not written. llm
+counts no image tokens itself: an image is in whatever `prompt_tokens` the endpoint reports.
 
 One assistant turn is one message. A run of consecutive assistant items therefore collapses:
 their text joins with a newline, their refusal text likewise, and their proposed calls become one
@@ -229,7 +236,8 @@ ignored, at any depth:
 | `messages[]`, role `system`, `developer` or `user` | `role`, `content` |
 | `messages[]`, role `assistant` | `role`, `content`, `refusal` (a string, read as `Item::AssistantRefusal`), `tool_calls` |
 | `messages[]`, role `tool` | `role`, `content`, `tool_call_id` |
-| `messages[].content[]` | `type` (`text`), `text` |
+| `messages[].content[]` | `type` (`text`), `text`; in a `user` message also `type` (`image_url`), `image_url` |
+| `messages[].content[].image_url` | `url`, `detail` (absent, `null` or `auto`) |
 | `messages[].tool_calls[]` | `id`, `type` (`function`), `function` |
 | `messages[].tool_calls[].function` | `name`, `arguments` |
 | `tools[]` | `type` (`function`), `function` |
@@ -248,6 +256,15 @@ present. A text part's `text` is not optional: absent or `null`, the part is ref
 strict mode. A tool call or object tool choice whose `type` is not `function` is refused by its
 type.
 
+A `user` message whose content holds an `image_url` part is read a part per item: each `text`
+part a user text and each image a user image, in order, the message `project_request` writes back
+for them. A message without an image joins its text parts into one text, as before. The image's
+`url` is a base64 `data:` URL of `image/png`, `image/jpeg`, `image/gif` or `image/webp` (at most
+5 MiB of bytes) or an `https` URL of visible ASCII naming a host, each refused in fixed text that
+quotes neither; `detail` other than `auto` is refused. An image part in a `system`, `developer`,
+`assistant` or `tool` message is refused by its path (`chat image part is carried only in a user
+message: messages[].content[]`); a `tool` message's call is still read first.
+
 `parallel_tool_calls` (a boolean) is carried in the turn's controls, `prompt_cache_key` (a
 string) and `verbosity` (`low`, `medium` or `high`) in its hints; `project_request` sends each
 back under the same name, so the body it builds decodes to the same turn.
@@ -260,10 +277,10 @@ that type; any other or missing type is refused without being named. `project_re
 format back as it was read.
 
 Also refused: a role outside `system`/`developer`/`user`/`assistant`/`tool`, a content part
-that is not text, a text part whose `text` is absent or `null` (an empty string is still text),
-`tool_choice: "none"` (the neutral subset cannot express it and must not
-quietly treat it as `auto`), contradictory `max_tokens` and `max_completion_tokens`, a tool
-declaration without a `parameters` schema, and system instructions that do not precede the
+that is neither text nor, in a user message, an image, a text part whose `text` is absent or `null`
+(an empty string is still text), `tool_choice: "none"` (the neutral subset cannot express it
+and must not quietly treat it as `auto`), contradictory `max_tokens` and `max_completion_tokens`,
+a tool declaration without a `parameters` schema, and system instructions that do not precede the
 conversation.
 
 A decoded request is then put through `TurnRequest::validate`, so the gateway refuses at the

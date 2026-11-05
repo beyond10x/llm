@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.inference
+scenario: model-output-carrying-a-user-image-is-refused
+summary: model output carrying a user image, which is caller-owned content, is refused (story:image-input, turn.rs TurnOutcome::validate_for)
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.inference.InspectResult
+  input:
+    result_json: '{"format":"llm.outcome/4","outcome":{"stop_reason":{"kind":"end-turn"},"items":[{"kind":"assistant-text","text":"A logo."},{"kind":"user-image","source":{"kind":"url","url":"https://images.example/a.png"}}],"observation":{"binding":{"protocol":"messages","provider":"lab","account":"account","endpoint":"endpoint","model":"internal-model","binding_revision":"binding-r1"},"upstream_model":"wire-model-revision","response_id":"response-1","final_usage":true,"usage":{"input_tokens":100,"output_tokens":5}}}}'
+    failure: false
+  outcome: observed
+assert:
+- view: llm.inference.LastResult
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.inference.LastResult
+  contains:
+    accepted: false
+    failed: false
+    error_code: protocol
+    dispatch: null
+    upstream_model: null
+    response_id: null
+    final_usage: null
+    roundtrip_preserved: false

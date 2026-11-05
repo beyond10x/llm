@@ -1,0 +1,24 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: ingress-refuses-an-image-block-outside-a-user-message-by-its-path
+summary: an image block in an assistant message is refused by its path before anything is sent, without quoting the URL (story:image-input)
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"max_tokens":512,"messages":[{"content":"hi","role":"user"},{"content":[{"source":{"type":"url","url":"https://images.example/private.png?signature=fixture-signature"},"type":"image"}],"role":"assistant"}],"model":"caller-alias"}'
+    ingress: true
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: false
+    error_code: unsupported
+    error_message: 'Messages image block is carried only in a user message: messages[].content[]'
+    dispatch: not-sent
+    neutral_request: null
+    items: []

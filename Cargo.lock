@@ -1265,6 +1265,7 @@ dependencies = [
 name = "llm-core"
 version = "0.21.0"
 dependencies = [
+ "base64",
  "serde",
  "serde_json",
  "thiserror",

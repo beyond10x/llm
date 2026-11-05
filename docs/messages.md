@@ -17,8 +17,8 @@ Messages. Authentication presentation and billing come from the binding, never f
 
 ## What the declared subset carries
 
-Ordered user and assistant text, published tool names with object arguments, tool results with
-their failure flag, signed thinking and redacted thinking. Thinking crosses as an opaque item bound
+Ordered user and assistant text, user images, published tool names with object arguments, tool
+results with their failure flag, signed thinking and redacted thinking. Thinking crosses as an opaque item bound
 to all six binding coordinates: protocol, provider, account, endpoint, model and binding revision.
 Opaque state from any other binding is refused rather than replayed.
 
@@ -42,6 +42,17 @@ the reason as the caller's text: this wire has no rejected state, and ingress re
 beside `type`, `tool_use_id`, `content` and `is_error`
 ([design](design.md#failed-and-rejected-tool-results)).
 
+**A user image is an `image` block** (story:image-input) in the user message beside the user
+text, in item order: inline bytes as `{"type":"image","source":{"type":"base64","media_type":
+"image/png","data":"<base64>"}}`, an image by URL as `{"type":"image","source":{"type":"url",
+"url":"https://…"}}`. Ingress reads an `image` block of a user message back into a user image,
+the source keys closed (`type`, then `media_type` and `data`, or `url`), the media type one of
+`image/png`, `image/jpeg`, `image/gif` and `image/webp`, the data canonical standard base64 of at
+most 5 MiB and the URL `https`, each refused in fixed text that quotes neither. A `file` source
+is refused, and an `image` block in an assistant message is refused by its path
+(`Messages image block is carried only in a user message: messages[].content[]`). llm counts no
+image tokens itself: an image is in whatever input the route reports.
+
 The route requires `max_tokens`. The neutral `max_output_tokens` stays optional, and an absent one
 resolves to the binding's declared maximum — the only value in the system that is an operator's
 statement rather than a guess. Temperature above `1.0` is refused: this route's range is not the
@@ -56,7 +67,7 @@ whole:
 | --- | --- | --- |
 | `thinking` | `{"type":"adaptive"}`, `{"type":"enabled","budget_tokens":n}` (n positive) or `{"type":"disabled"}` is `controls.thinking`; `budget_tokens` beside `adaptive` or `disabled`, and any other key (`display` included), refused by its path | re-emitted as read |
 | `system` | a string, or text blocks joined by a line feed; an empty array is no instructions; a block of another type is refused (`Messages system block is not text`) | one block (one-way: the joined text comes back as one block) |
-| `cache_control` | `{"type":"ephemeral"}` with an optional `ttl` of `5m` or `1h`, on a `system` block, a `text`, `tool_use` or `tool_result` block, or a tool, is the `prompt-cache` hint; `5m` is the default and reads as no lifetime; another key refused by its path, another type or lifetime refused; marks of two lifetimes in one request refused (`Messages cache marks carry more than one lifetime`); on a `thinking` or `redacted_thinking` block refused by its path | the breakpoints below, each with `ttl: 1h` when the hint says `1h`; the caller's mark positions are not reproduced |
+| `cache_control` | `{"type":"ephemeral"}` with an optional `ttl` of `5m` or `1h`, on a `system` block, a `text`, `image`, `tool_use` or `tool_result` block, or a tool, is the `prompt-cache` hint; `5m` is the default and reads as no lifetime; another key refused by its path, another type or lifetime refused; marks of two lifetimes in one request refused (`Messages cache marks carry more than one lifetime`); on a `thinking` or `redacted_thinking` block refused by its path | the breakpoints below, each with `ttl: 1h` when the hint says `1h`; the caller's mark positions are not reproduced |
 | `output_config.effort` | any non-empty name, `max` included; required unless a `format` is present; any other key refused by its path | the same name |
 | `output_config.format` | `{"type":"json_schema","schema":{…}}` (the schema an object) is `controls.output_format`, with no name and no strict flag; `null` is absent; `name`, `strict` and any other key refused by its path; another type refused | `{"type":"json_schema","schema":…}` beside the effort. The route always holds the answer to the schema: `strict` `true` sends nothing more and `false` is refused before I/O; the name, a label this wire has no place for, is not sent. llm does not validate the answer ([design](design.md#structured-output)) |
 | `tool_choice.disable_parallel_tool_use` | a boolean `v` on `auto`, `any` or `tool` is `controls.parallel_tool_calls = !v` | `disable_parallel_tool_use: !b`, writing `{"type":"auto"}` when the choice is automatic |
@@ -91,11 +102,11 @@ used.
 every turn, so without them each turn pays the full input rate for everything it resends. A
 non-empty instruction travels as one `system` text block marked `cache_control: {type: ephemeral}`,
 which caches the constant head (tools, then system). A second, rolling marker goes on the last
-`text` or `tool_result` block of the last message, so each turn writes the prefix the next one
-reads back. Nothing else is marked: a replayed `thinking` or `redacted_thinking` block is sent byte
-for byte, because its signature covers it as produced, and a tail with nothing markable carries no
-rolling marker. An empty instruction sends no `system` at all; the rolling marker already covers
-the tools. A turn whose `prompt-cache` hint has the lifetime `1h` marks both breakpoints
+`text`, `image` or `tool_result` block of the last message, so each turn writes the prefix the
+next one reads back. Nothing else is marked: a replayed `thinking` or `redacted_thinking` block is
+sent byte for byte, because its signature covers it as produced, and a tail with nothing
+markable carries no rolling marker. An empty instruction sends no `system` at all; the rolling
+marker already covers the tools. A turn whose `prompt-cache` hint has the lifetime `1h` marks both breakpoints
 `{type: ephemeral, ttl: 1h}`; any other turn marks them as above.
 
 **A subscription token changes `system`.** Under a `subscription-oauth` account, `system` opens
@@ -107,8 +118,8 @@ header, ahead of the turn's own betas, and sends the token as `authorization: Be
 neither. Read back as ingress, such a body's two `system` blocks join into one instruction that
 begins with the preamble.
 
-Everything else is refused, not dropped: unknown request fields, image, document, search-result and
-server-tool content, citations, a cache mark outside the shape above, a `none` tool choice, a
+Everything else is refused, not dropped: unknown request fields, an image outside a user message,
+document, search-result and server-tool content, citations, a cache mark outside the shape above, a `none` tool choice, a
 `system` block that is not text, and a role outside user/assistant/system. A translation that silently
 loses a field is a translation that appeared to succeed. A body this projection sends is valid
 ingress input: its breakpoints read back as the `prompt-cache` hint they were placed for.

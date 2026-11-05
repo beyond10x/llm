@@ -8,7 +8,7 @@ timeline:
   input:
     binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
     upstream_model: example/Small-Model
-    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_image","image_url":"https://example.invalid/a.png"}]}],"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
+    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_file","file_id":"file-1"}]}],"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
   outcome: observed
 assert:
 - view: llm.responses.LastIngestion

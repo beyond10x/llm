@@ -470,6 +470,7 @@ fn stop_reason(reason: &StopReason) -> &'static str {
 fn item_kind(item: &Item) -> &'static str {
     match item {
         Item::UserText { .. } => "user-text",
+        Item::UserImage { .. } => "user-image",
         Item::AssistantText { .. } => "assistant-text",
         Item::AssistantRefusal { .. } => "assistant-refusal",
         Item::ToolCall(_) => "tool-call",

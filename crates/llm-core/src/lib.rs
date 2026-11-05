@@ -8,6 +8,7 @@ mod bound;
 mod controls;
 mod error;
 mod id;
+mod image;
 mod item;
 mod port;
 mod turn;
@@ -22,6 +23,7 @@ pub use controls::{
 };
 pub use error::{Dispatch, Error, ErrorCode, RefusalCause};
 pub use id::{CallId, Id, InvalidId, ToolName};
+pub use image::{ImageMediaType, ImageSource};
 pub use item::{Item, ToolCall};
 pub use port::{
     BoxFuture, Model, SHOWN_TEXT_KEPT, SHOWN_TEXT_UNPAIRED, StreamEvent, StreamSink, VecSink,

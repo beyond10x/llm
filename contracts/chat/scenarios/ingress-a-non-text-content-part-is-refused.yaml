@@ -6,7 +6,7 @@ timeline:
 - at: '2026-09-20T12:00:00Z'
   command: llm.chat.DecodeIngress
   input:
-    request_json: '{"model":"code","messages":[{"role":"user","content":[{"type":"image_url","image_url":{"url":"https://example.invalid/a.png"}}]}]}'
+    request_json: '{"model":"code","messages":[{"role":"user","content":[{"type":"input_audio","input_audio":{"data":"AA==","format":"wav"}}]}]}'
   outcome: observed
 assert:
 - view: llm.chat.LastIngressRequest

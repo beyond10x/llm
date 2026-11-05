@@ -12,8 +12,11 @@ source: crates/llm-core (turn.rs, error.rs, item.rs), docs/contract-v1.md
 outcome, a failure. It performs no I/O and depends on no consumer.
 
 The persisted envelopes are `llm.turn/3` (`llm.turn/4` for a turn carrying thinking, parallel-tool-call or advisory controls) and `llm.outcome/4`; publishing them as a released contract
-with a compatibility policy is planned. The contract supports stateless text and tool turns.
-Image and audio input, vendor-side tools, provider thread management and unrecognized request
+with a compatibility policy is planned. The contract supports stateless text and tool turns, and
+images in a user turn: `Item::UserImage` holds inline PNG, JPEG, GIF or WebP bytes (at most 5 MiB)
+or an `https` URL, every wire sends it in the user message beside its text or refuses it before
+I/O, and no image byte or URL reaches an error message or a `Debug` form. Audio input, images
+anywhere but a user turn, vendor-side tools, provider thread management and unrecognized request
 settings are outside this version and adapters must refuse them. Every field a client request
 carries is carried, translated by a written table, reported as an omitted advisory hint, or refused
 by its path; the rules are the design's "Client request fields".

@@ -14,11 +14,12 @@ confinement. Retire llmgw only after a reversible gateway cutover.
 
 Core describes a model turn, tools as model-facing schemas/results, streaming, cancellation,
 capabilities, usage and typed errors. It does not grant a tool permission to execute. Protocol
-adapters implement Responses, Messages and Chat Completions with one documented text/tool/streaming
-subset. Unsupported fields and provider-specific opaque continuation state must be preserved or
-refused, never dropped to make translation appear successful. The one exception is a Responses
-`response.metadata` stream event that llm 0.16.0 and earlier saved as opaque state: it describes a
-response, is no conversation state, and the endpoint refuses it, so egress leaves it out.
+adapters implement Responses, Messages and Chat Completions with one documented
+text/image/tool/streaming subset. Unsupported fields and provider-specific opaque continuation
+state must be preserved or refused, never dropped to make translation appear successful. The one
+exception is a Responses `response.metadata` stream event that llm 0.16.0 and earlier saved as
+opaque state: it describes a response, is no conversation state, and the endpoint refuses it, so
+egress leaves it out.
 
 ### Types that grow
 
@@ -29,6 +30,42 @@ ends in a wildcard arm. On every path in this workspace that carries an item, th
 item kind it does not know by its `Item::kind` name: such an item is never dropped and never
 sent. `Capabilities` is built with `Capabilities::text` and its `with_*` setters, and its
 documents keep their bytes.
+
+### Images in a user turn
+
+Accepted for wave 2026-11-05-w26 (llm 0.22.0, story:image-input). `Item::UserImage` holds an
+`ImageSource`: inline bytes of a media type (`image/png`, `image/jpeg`, `image/gif`,
+`image/webp`), or an `https` URL the far side fetches. A URL carries no media type: Responses,
+Chat Completions and Messages carry a URL alone, and the far side reads the type of what it
+fetches. A document writes the item as
+`{"kind":"user-image","source":{"kind":"bytes","media_type":"image/png","data":"<base64>"}}` or
+`{"kind":"user-image","source":{"kind":"url","url":"https://…"}}`; a turn without one keeps its
+`llm.turn/3` or `llm.turn/4` bytes, and an older reader refuses the unknown kind.
+
+- **Bounds, before I/O.** Inline bytes are 1 to `MAX_IMAGE_BYTES` (5 MiB) before encoding; a URL
+  is `https://`, a host and visible ASCII, at most `MAX_IMAGE_URL_BYTES` (8 KiB). The whole
+  encoded turn stays within `MAX_REQUEST_BYTES`.
+- **Redaction.** A URL may carry a signed query and the bytes are the caller's content, so neither
+  reaches a diagnostic or a `Debug` form: `Debug` shows the media type and the length, every
+  refusal is fixed text, and a document reader refuses a malformed image without quoting it.
+- **Placement.** Each wire sends the image in the user message of the user content beside it, in
+  item order. Messages and Converse already put consecutive user items in one message. Responses
+  and Chat Completions send one message per user text, so a run of user texts and images holding
+  an image is one message of parts there; a run without one is sent as before.
+- **Wires.** Responses `input_image` (`image_url` a base64 `data:` URL or the URL, `detail`
+  `auto`); Chat Completions `image_url` (`image_url.url` the same, no `detail`); Messages `image`
+  with a `base64` or `url` source; Converse `image` `{format, source: {bytes}}`. Converse has no
+  URL source and refuses an image by URL by name. `InvokeModel` sends the Messages block.
+- **Ingress.** Each decoder reads the image parts of a user message into image items, in order,
+  so a message of text and image parts is no longer refused; Responses and Chat Completions then
+  read every part of that message as its own item, which is the message egress writes back.
+  `detail` other than `auto`, a provider file and an image in any other message are refused by
+  their path.
+- **Output and usage.** A model's output carrying a user image is caller-owned content and is
+  refused. llm counts no image tokens itself: an image is in whatever input count the far side
+  reports, and an absent counter stays unknown.
+- **Selection.** The catalog capability and the selection rejection for image input are
+  `story:output-and-image-capabilities`.
 
 ### Streaming declarations
 

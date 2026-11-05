@@ -8,15 +8,16 @@
 //!
 //! What a turn asks for and this wire cannot carry is refused by name before any I/O: a
 //! reasoning effort, the parallel tool call control, a thinking control for a model that is not
-//! Anthropic's, an output format that is not strict, opaque state this wire did not produce. Advisory hints are never sent; a turn
-//! that carried any says so in one `advisory-omitted` warning after it succeeded.
+//! Anthropic's, an output format that is not strict, opaque state this wire did not produce, an
+//! image by URL. Advisory hints are never sent; a turn that carried any says so in one
+//! `advisory-omitted` warning after it succeeded.
 
 use crate::{client::BedrockTarget, errors, eventstream::Message};
 use llm_core::{
-    Advisory, CallId, Cancel, Dispatch, Error, ErrorCode, Item, MAX_ITEMS, MAX_REQUEST_BYTES,
-    MAX_TOOL_ARGUMENT_BYTES, OutputFormat, Protocol, Provenance, StopReason, StreamEvent,
-    StreamSink, Thinking, ToolCall, ToolChoice, ToolName, TurnObservation, TurnOutcome,
-    TurnRequest, Usage, exceeds,
+    Advisory, CallId, Cancel, Dispatch, Error, ErrorCode, ImageMediaType, ImageSource, Item,
+    MAX_ITEMS, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, OutputFormat, Protocol, Provenance,
+    StopReason, StreamEvent, StreamSink, Thinking, ToolCall, ToolChoice, ToolName, TurnObservation,
+    TurnOutcome, TurnRequest, Usage, exceeds,
 };
 use llm_http::within_tokio_runtime;
 use serde_json::{Map, Value, json};
@@ -185,9 +186,13 @@ fn output_config(format: &OutputFormat) -> Result<Value, Error> {
     }))
 }
 
-/// Whether an item is the caller's: Converse sends tool results in a `user` message.
+/// Whether an item is the caller's: Converse sends user images and tool results in a `user`
+/// message.
 const fn from_caller(item: &Item) -> bool {
-    matches!(item, Item::UserText { .. } | Item::ToolResult { .. })
+    matches!(
+        item,
+        Item::UserText { .. } | Item::UserImage { .. } | Item::ToolResult { .. }
+    )
 }
 
 /// The conversation as Converse messages, consecutive items of one role in one message.
@@ -214,6 +219,7 @@ fn messages(items: &[Item]) -> Result<Vec<Value>, Error> {
 fn content_block(item: &Item) -> Result<Value, Error> {
     Ok(match item {
         Item::UserText { text } | Item::AssistantText { text } => json!({"text": text}),
+        Item::UserImage { source } => image_block(source)?,
         // Carried or refused, never dropped: Converse has no block for refusal text.
         Item::AssistantRefusal { .. } => {
             return Err(Error::unsupported(
@@ -263,6 +269,34 @@ fn content_block(item: &Item) -> Result<Value, Error> {
             )));
         }
     })
+}
+
+/// A user image as Converse's `image` block: its format by Converse's own name and the bytes as
+/// base64. Converse's image source holds bytes or an S3 location and no URL, so an image by URL
+/// is refused by name, without quoting it.
+fn image_block(source: &ImageSource) -> Result<Value, Error> {
+    match source {
+        ImageSource::Bytes { media_type, .. } => {
+            let format = match media_type {
+                ImageMediaType::Png => "png",
+                ImageMediaType::Jpeg => "jpeg",
+                ImageMediaType::Gif => "gif",
+                ImageMediaType::Webp => "webp",
+                _ => {
+                    return Err(Error::unsupported(
+                        "Bedrock Converse carries no image of this media type",
+                    ));
+                }
+            };
+            Ok(json!({"image": {"format": format, "source": {"bytes": source.base64()}}}))
+        }
+        ImageSource::Url { .. } => Err(Error::unsupported(
+            "Bedrock Converse carries an image only as inline bytes, not by URL",
+        )),
+        _ => Err(Error::unsupported(
+            "Bedrock Converse carries no image source of this kind",
+        )),
+    }
 }
 
 /// Refuses opaque state other than a reasoning block in the two shapes this wire produces:
