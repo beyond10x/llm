@@ -1,0 +1,207 @@
+domain: llm.decisions
+
+# Draft (2026-11-05), not yet part of spec/system.yaml. Typed decisions over a model: a
+# closed-label classification and a rubric verdict. The spec unit of the wave that implements
+# them moves this file to spec/domains/decisions.yaml and adds `llm.decisions` to the system.
+#
+# A classification asks one closed label set. The answer is one label of that set with a
+# confidence per label in basis points (0 to 10000), or an abstention with a cause. Nothing else:
+# a label outside the set is an abstention `OffLabel`, never a decision.
+#
+# A chain is an ordered fallback over classifiers for one label set. The first classifier that
+# decides ends the chain; every earlier one left an abstention. A chain may end in a lexical
+# classifier the caller supplies, which makes no model call. Every model call a classifier
+# makes yields one llm.calls.CallRecord, which carries latency and cost.
+#
+# A verdict is one rubric call: the rubric, its version and the pinned model are named in the
+# result, and the answer is strict JSON held to the rubric's verdict schema.
+types:
+  - name: llm.decisions.Path
+    kind: enum
+    # JsonSchema: a turn with controls.output_format (llm.inference.OutputFormat), strict.
+    # ForcedTool: a turn forcing one named tool (llm-tool-call call_tool).
+    # DecisionEndpoint: a provider's closed-label decision endpoint (POST /v1/decisions).
+    # Lexical: a caller-supplied classifier; no model call.
+    variants: [JsonSchema, ForcedTool, DecisionEndpoint, Lexical]
+  - name: llm.decisions.AbstentionCause
+    kind: enum
+    # Timeout: the classifier's deadline passed. ProviderError: the call failed with a typed
+    # llm error (its code is kept in `error_code`). OffLabel: the answer named no label of the
+    # set, or did not decode as the path's schema.
+    variants: [Timeout, ProviderError, OffLabel]
+  - name: llm.decisions.LabelConfidence
+    kind: struct
+    fields:
+      - {name: label, type: String}
+      # 0 to 10000. Unknown stays absent, never 0.
+      - {name: confidence_bps, type: Optional<Integer>}
+  - name: llm.decisions.QuestionKind
+    kind: enum
+    # The provider decision endpoint's question kinds; a classifier asks Choice.
+    variants: [Predicate, Choice, Score]
+  - name: llm.decisions.AnswerKind
+    kind: enum
+    variants: [Predicate, Choice, Score, Refusal]
+entities:
+  - name: llm.decisions.LabelSet
+    identity: {name: id, type: String}
+    fields:
+      - {name: version, type: String}
+      # Distinct, non-empty, in the caller's order; at least two.
+      - {name: labels, type: List<String>}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.decisions.Chain
+    identity: {name: id, type: String}
+    fields:
+      - {name: label_set_id, type: String}
+      - {name: deadline_ms, type: Integer}
+    relations:
+      - {name: label_set, kind: references, target: llm.decisions.LabelSet, cardinality: one, via: label_set_id}
+      - {name: classifiers, kind: owns, target: llm.decisions.Classifier, cardinality: many, via: chain_id}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.decisions.Classifier
+    identity: {name: id, type: String}
+    fields:
+      - {name: chain_id, type: String}
+      - {name: position, type: Integer}
+      - {name: path, type: llm.decisions.Path}
+      # The catalog route a model path calls; absent exactly for Lexical.
+      - {name: route_id, type: Optional<String>}
+      # A decision below this confidence is an abstention OffLabel; absent admits every one.
+      - {name: min_confidence_bps, type: Optional<Integer>}
+    relations:
+      - {name: route, kind: references, target: llm.catalog.Route, cardinality: one, via: route_id}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.decisions.Decision
+    identity: {name: id, type: String}
+    fields:
+      - {name: chain_id, type: String}
+      - {name: classifier_id, type: String}
+      - {name: label_set_version, type: String}
+      - {name: label, type: String}
+      - {name: confidences, type: List<llm.decisions.LabelConfidence>}
+      - {name: latency_ms, type: Integer}
+      # Absent exactly when the deciding classifier is Lexical.
+      - {name: call_record_id, type: Optional<String>}
+    relations:
+      - {name: classifier, kind: references, target: llm.decisions.Classifier, cardinality: one, via: classifier_id}
+      - {name: call, kind: references, target: llm.calls.CallRecord, cardinality: one, via: call_record_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.decisions.Abstention
+    identity: {name: id, type: String}
+    fields:
+      - {name: chain_id, type: String}
+      - {name: classifier_id, type: String}
+      - {name: cause, type: llm.decisions.AbstentionCause}
+      # The llm error code for ProviderError; absent otherwise.
+      - {name: error_code, type: Optional<String>}
+      # True when no later classifier in the chain decided: the chain's answer.
+      - {name: final, type: Boolean}
+      - {name: latency_ms, type: Integer}
+      - {name: call_record_id, type: Optional<String>}
+    relations:
+      - {name: classifier, kind: references, target: llm.decisions.Classifier, cardinality: one, via: classifier_id}
+      - {name: call, kind: references, target: llm.calls.CallRecord, cardinality: one, via: call_record_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.decisions.Rubric
+    identity: {name: id, type: String}
+    fields:
+      - {name: version, type: String}
+      # sha256 of the rubric text and its verdict schema, as the result pins it.
+      - {name: digest, type: String}
+      - {name: route_id, type: String}
+    relations:
+      - {name: route, kind: references, target: llm.catalog.Route, cardinality: one, via: route_id}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.decisions.Verdict
+    identity: {name: id, type: String}
+    fields:
+      - {name: rubric_id, type: String}
+      - {name: rubric_version, type: String}
+      - {name: rubric_digest, type: String}
+      # The route target and upstream model that answered; a verdict names exactly one.
+      - {name: route_target_id, type: String}
+      - {name: upstream_model, type: String}
+      # Canonical JSON (sorted keys) of the answer, valid against the rubric's verdict schema.
+      - {name: verdict_json, type: Optional<String>}
+      # Set when the answer did not decode as the schema; then verdict_json is absent.
+      - {name: error_code, type: Optional<String>}
+      - {name: call_record_id, type: String}
+    relations:
+      - {name: rubric, kind: references, target: llm.decisions.Rubric, cardinality: one, via: rubric_id}
+      - {name: target, kind: references, target: llm.catalog.RouteTarget, cardinality: one, via: route_target_id}
+      - {name: call, kind: references, target: llm.calls.CallRecord, cardinality: one, via: call_record_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.decisions.ClassificationObservation
+    identity: {name: observation_id, type: String}
+    fields: &classification_facts
+      - {name: valid_program, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # Classifier ids in the order the chain tried them.
+      - {name: tried, type: List<String>}
+      # Per tried classifier: id:decided or id:abstained:<cause>.
+      - {name: results, type: List<String>}
+      - {name: label, type: Optional<String>}
+      - {name: confidences, type: List<llm.decisions.LabelConfidence>}
+      - {name: final_cause, type: Optional<llm.decisions.AbstentionCause>}
+      - {name: call_record_ids, type: List<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.decisions.VerdictObservation
+    identity: {name: observation_id, type: String}
+    fields: &verdict_facts
+      - {name: valid_program, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      - {name: rubric_version, type: Optional<String>}
+      - {name: rubric_digest, type: Optional<String>}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: verdict_json, type: Optional<String>}
+      # The request body sent, as bytes digest, so two runs can be compared.
+      - {name: request_digest, type: Optional<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.decisions.Classify
+    # Run the real chain over in-process scripted models and an optional scripted lexical
+    # classifier; no network. program_json scripts each route's answer, failure or delay.
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: label_set_json, type: String}
+      - {name: chain_json, type: String}
+      - {name: input_text, type: String}
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.decisions.Classified]
+        payload:
+          llm.decisions.Classified:
+            valid_program: {generated: true}
+        summary: Return the chain's decision or abstention and every attempt; not model quality.
+  - name: llm.decisions.Judge
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: rubric_json, type: String}
+      - {name: subject_text, type: String}
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.decisions.Judged]
+        payload:
+          llm.decisions.Judged:
+            valid_program: {generated: true}
+        summary: Return the verdict the library produced from a scripted answer, with its pins.
+events:
+  # Test-adapter notifications only; no production event transport.
+  - name: llm.decisions.Classified
+    fields:
+      - {name: valid_program, type: Boolean}
+  - name: llm.decisions.Judged
+    fields:
+      - {name: valid_program, type: Boolean}
+views:
+  - name: llm.decisions.LastClassification
+    source: llm.decisions.ClassificationObservation
+    consistency: read_your_writes
+    fields: *classification_facts
+  - name: llm.decisions.LastVerdict
+    source: llm.decisions.VerdictObservation
+    consistency: read_your_writes
+    fields: *verdict_facts

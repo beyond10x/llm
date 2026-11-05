@@ -1,0 +1,155 @@
+domain: llm.calls
+
+# Draft (2026-11-05), not yet part of spec/system.yaml. The wave that implements it moves this
+# file to spec/domains/calls.yaml and adds `llm.calls` to the system.
+#
+# Router-level records and the two router-level call roles beside the primary call.
+#
+# A CallRecord is written for every model call a routed caller makes (turn, classification,
+# verdict, embed batch): route, target, model, role, timings, usage and priced cost. It holds no
+# prompt, answer, tool argument or embedding text, by construction: the record type has no text
+# field. Unknown usage stays unknown, never zero; a cost with an unknown line keeps its known
+# subtotal and says it is incomplete (llm.accounting.QuotedTotal). The records go to a sink the
+# caller injects; llm keeps no ledger of them. A deployed ledger is llm-gateway's.
+#
+# A Shadow is a detached second route for a primary route: after the primary call is returned
+# to the caller, the same request is sent to the shadow route; its answer reaches only its
+# CallRecord (role Shadow) and the comparison, never the caller. A shadow call is admitted only
+# while the shadow's UTC-day spend, held on an llm.budget ledger, stays within its daily cap;
+# past it the shadow is skipped and recorded so. A shadow failure never changes the primary.
+#
+# A ReplayRun sends every case of a recorded corpus to a candidate route offline, under a money
+# cap held on an llm.budget ledger, and compares each answer with the recorded one. Past the cap
+# the run stops and says how many cases it did not send.
+types:
+  - name: llm.calls.Role
+    kind: enum
+    variants: [Primary, Shadow, Replay]
+  - name: llm.calls.Kind
+    kind: enum
+    variants: [Turn, Classification, Verdict, EmbedBatch]
+  - name: llm.calls.Outcome
+    kind: enum
+    # Skipped: a shadow or replay call not sent because its cap would be passed.
+    variants: [Succeeded, Failed, Cancelled, Skipped]
+  - name: llm.calls.Cost
+    kind: struct
+    fields:
+      - {name: currency, type: String}
+      - {name: known_subtotal, type: String}
+      - {name: complete, type: Boolean}
+      - {name: price_revision, type: String}
+  - name: llm.calls.CaseResult
+    kind: enum
+    # Same: equal label, equal canonical verdict JSON, or equal text. Differs: not equal.
+    # Failed: the candidate call failed. NotSent: the cap stopped the run first.
+    variants: [Same, Differs, Failed, NotSent]
+entities:
+  - name: llm.calls.CallRecord
+    identity: {name: id, type: String}
+    fields:
+      - {name: role, type: llm.calls.Role}
+      - {name: kind, type: llm.calls.Kind}
+      - {name: route_id, type: String}
+      # The target that answered or failed last; absent when no target was attempted.
+      - {name: route_target_id, type: Optional<String>}
+      - {name: upstream_model, type: Optional<String>}
+      - {name: outcome, type: llm.calls.Outcome}
+      - {name: error_code, type: Optional<String>}
+      - {name: attempts, type: Integer}
+      - {name: started_at_unix_ms, type: Integer}
+      - {name: latency_ms, type: Optional<Integer>}
+      - {name: time_to_first_event_ms, type: Optional<Integer>}
+      - {name: usage, type: llm.accounting.Usage}
+      - {name: cost, type: Optional<llm.calls.Cost>}
+      # The primary call a shadow or replay call is compared with.
+      - {name: primary_record_id, type: Optional<String>}
+    relations:
+      - {name: route, kind: references, target: llm.catalog.Route, cardinality: one, via: route_id}
+      - {name: target, kind: references, target: llm.catalog.RouteTarget, cardinality: one, via: route_target_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.calls.Shadow
+    identity: {name: id, type: String}
+    fields:
+      - {name: primary_route_id, type: String}
+      - {name: shadow_route_id, type: String}
+      # Exact decimal in the ledger's currency, per UTC day.
+      - {name: daily_cap, type: String}
+      - {name: ledger_id, type: String}
+    relations:
+      - {name: primary, kind: references, target: llm.catalog.Route, cardinality: one, via: primary_route_id}
+      - {name: shadow, kind: references, target: llm.catalog.Route, cardinality: one, via: shadow_route_id}
+      - {name: ledger, kind: references, target: llm.budget.Ledger, cardinality: one, via: ledger_id}
+    lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
+  - name: llm.calls.ReplayRun
+    identity: {name: id, type: String}
+    fields:
+      - {name: candidate_route_id, type: String}
+      # sha256 of the corpus document, so two runs over one corpus are comparable.
+      - {name: corpus_digest, type: String}
+      - {name: money_cap, type: String}
+      - {name: ledger_id, type: String}
+      - {name: cases, type: Integer}
+      - {name: same, type: Integer}
+      - {name: differs, type: Integer}
+      - {name: failed, type: Integer}
+      - {name: not_sent, type: Integer}
+    relations:
+      - {name: candidate, kind: references, target: llm.catalog.Route, cardinality: one, via: candidate_route_id}
+      - {name: ledger, kind: references, target: llm.budget.Ledger, cardinality: one, via: ledger_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.calls.CallObservation
+    identity: {name: observation_id, type: String}
+    fields: &call_facts
+      - {name: valid_program, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # The text the caller received from the primary call.
+      - {name: delivered_text, type: Optional<String>}
+      # Every record the sink received, as canonical JSON, in order.
+      - {name: records, type: List<String>}
+      # Per shadow: shadow-route:outcome.
+      - {name: shadow_results, type: List<String>}
+      # Per replay case: case-id:result.
+      - {name: case_results, type: List<String>}
+      - {name: spent_today, type: Optional<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.calls.Call
+    # A routed call with a record sink and optional shadows, over in-process scripted models
+    # and a scripted clock and price book; no network.
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: turn_json, type: String}
+      - {name: prices_toml, type: Optional<String>}
+      - {name: shadows_json, type: Optional<String>}
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.calls.Observed]
+        payload:
+          llm.calls.Observed:
+            valid_program: {generated: true}
+        summary: Return what the caller received, every record the sink got and each shadow's outcome.
+  - name: llm.calls.Replay
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: corpus_json, type: String}
+      - {name: prices_toml, type: String}
+      - {name: run_json, type: String}
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.calls.Observed]
+        payload:
+          llm.calls.Observed:
+            valid_program: {generated: true}
+        summary: Return each case's result, the records and the spend against the cap.
+events:
+  - name: llm.calls.Observed
+    fields:
+      - {name: valid_program, type: Boolean}
+views:
+  - name: llm.calls.LastCall
+    source: llm.calls.CallObservation
+    consistency: read_your_writes
+    fields: *call_facts
