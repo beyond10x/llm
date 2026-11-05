@@ -6,9 +6,11 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-05
+
 ### Added
 
-- `Controls::output_format` (`OutputFormat`): a JSON Schema answer format, sent on every wire or refused before I/O
+- `Controls::output_format` (`OutputFormat`): a JSON Schema answer format, sent on every wire or refused before I/O; a `Controls` literal adds `..Default::default()`
 - Responses `text.format`, Chat `response_format` and Messages `output_config.format` of type `json_schema` are read on ingress
 - `llm-bedrock`: `WebIdentityCredentials` fetches keys with STS `AssumeRoleWithWebIdentity`, the token read on each fetch
 - `llm-http`: `HttpClient::post_form` sends one form and returns `FormAnswer` (status, headers, bounded body)
@@ -513,7 +515,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.20.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.21.0...HEAD
+[0.21.0]: https://github.com/beyond10x/llm/compare/0.20.0...0.21.0
 [0.20.0]: https://github.com/beyond10x/llm/compare/0.19.0...0.20.0
 [0.19.0]: https://github.com/beyond10x/llm/compare/0.18.0...0.19.0
 [0.18.0]: https://github.com/beyond10x/llm/compare/0.17.1...0.18.0
