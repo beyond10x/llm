@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-http-endpoint-taking-aws-web-identity-is-refused
+summary: an endpoint without a bedrock table that names auth kind aws-web-identity is refused as invalid-request, since only a Bedrock endpoint takes an AWS credential source
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        gateway: {base_url: https://gateway.internal/v1, protocol: messages,
+                  auth: {kind: aws-web-identity}}
+      routes:
+        sonnet: gateway/claude-sonnet-4-5
+    probe_names: [sonnet]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "endpoint `gateway`: only a Bedrock endpoint (one with a `bedrock` table) takes `auth.kind` aws-keys, aws-container, aws-process or aws-web-identity"
+    endpoints: []
+    answers: []

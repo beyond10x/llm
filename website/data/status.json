@@ -262,8 +262,14 @@
     },
     {
       "area": "Amazon Bedrock",
-      "detail": "llm_bedrock::WebIdentityCredentials reads the token through a secret reference on every fetch and sends the STS AssumeRoleWithWebIdentity call unsigned, as one form post (llm_http::HttpClient::post_form) to an https endpoint or http on loopback, with no ambient proxy and no redirect followed; it reads the XML Credentials with a strict, bounded reader of its own and keeps them with the same single-flight refresh as ContainerCredentials. ExpiredToken, InvalidIdentityToken, any other 4xx but 408 and an unusable answer are unauthorized and final; no answer, a cut, a 5xx, a 408 and IDPCommunicationError are retriable; nothing was sent for any of them, and no message carries the token, the answer or a key. A routes document cannot name it yet: aws-web-identity needs a variant of AwsCredentialKind it does not have. 14 authored web-identity-* scenarios. Fixture evidence only; no request reached STS.",
+      "detail": "llm_bedrock::WebIdentityCredentials reads the token through a secret reference on every fetch and sends the STS AssumeRoleWithWebIdentity call unsigned, as one form post (llm_http::HttpClient::post_form) to an https endpoint or http on loopback, with no ambient proxy and no redirect followed; it reads the XML Credentials with a strict, bounded reader of its own and keeps them with the same single-flight refresh as ContainerCredentials. ExpiredToken, InvalidIdentityToken, any other 4xx but 408 and an unusable answer are unauthorized and final; no answer, a cut, a 5xx, a 408 and IDPCommunicationError are retriable; nothing was sent for any of them, and no message carries the token, the answer or a key. A routes document names it through bedrock-web-identity-route. 14 authored web-identity-* scenarios. Fixture evidence only; no request reached STS.",
       "label": "Bedrock keys from a web identity token",
+      "status": "shipped"
+    },
+    {
+      "area": "Amazon Bedrock",
+      "detail": "llm.routes/1 takes auth = { kind = \"aws-web-identity\" } on a Bedrock endpoint, in YAML and TOML, and nothing else: the role ARN, session name and STS endpoint (WebIdentityRole) and the token file come from the caller through SecretSources::with_web_identity, as aws-container values do, and Routes::port builds WebIdentityCredentials for its routes. The token file is read as a mounted file at each fetch. Without the caller's values, or with values STS would not take, only that endpoint's routes are refused as unauthorized, quoting no value. The llm command supplies no web identity role yet. 6 authored llm.routes scenarios; a turn against a loopback STS and Bedrock in crates/llm-models/tests/web_identity_routes.rs. Fixture evidence only; no request reached STS.",
+      "label": "A routes document reaches Bedrock through web identity",
       "status": "shipped"
     },
     {

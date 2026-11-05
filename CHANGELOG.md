@@ -10,6 +10,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 - `Capabilities::with_tools`, `with_tool_choice`, `with_temperature`, `with_top_p` and `with_reasoning_efforts`
 - `Item::kind`: the item's serialized `kind` as fixed text, so a wildcard arm can refuse an item by name
+- `llm-models`: routes `auth.kind = "aws-web-identity"` (`AwsCredentialKind::WebIdentity`) on `WebIdentityCredentials`
+- `llm-models`: `SecretSources::with_web_identity` and `WebIdentityRole` take the caller's role and token file
+- `llm-models`: `Resolvers::web_identity_role`, defaulted to `None`, beside `container_credentials_uri`
+- ESS: 6 `llm.routes` scenarios for `aws-web-identity` endpoints; the conformance floor is 993 (was 987)
 
 ### Changed
 

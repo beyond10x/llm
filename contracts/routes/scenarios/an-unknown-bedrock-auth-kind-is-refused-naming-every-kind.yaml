@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-unknown-bedrock-auth-kind-is-refused-naming-every-kind
+summary: a Bedrock endpoint whose auth kind is none of aws-keys, aws-container, aws-process and aws-web-identity is refused as invalid-request naming the four
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        bedrock-irsa: {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+                       auth: {kind: aws-sso}}
+      routes:
+        nova: bedrock-irsa/eu.amazon.nova-pro-v1:0
+    probe_names: [nova]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "endpoint `bedrock-irsa`: a Bedrock endpoint's `auth.kind` must be aws-keys, aws-container, aws-process or aws-web-identity"
+    bedrock_endpoints: []
+    answers: []
