@@ -6,6 +6,12 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-calls`: `record_turn` writes one text-free `CallRecord` per routed turn to the caller's `CallSink`, timed by its `Clock`
+- `CallRecord` carries route, target, upstream model, outcome, error code, dispatch, attempts, timings, usage and priced cost
+- ESS: domain `llm.calls`, 6 call record scenarios and 2 generated outcome scenarios; the conformance floor is 1021 (was 1013)
+
 ### Changed
 
 - ESS 0.87.0 (was 0.86.0) in CI and `llm-conformance`; the suite and the schema are byte-identical

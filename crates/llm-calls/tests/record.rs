@@ -341,7 +341,11 @@ fn a_serialized_record_holds_none_of_the_turns_text() {
     );
     let record = only(&ran.records);
     assert_eq!(
-        (record.outcome, record.attempts, record.route_target_id.as_ref()),
+        (
+            record.outcome,
+            record.attempts,
+            record.route_target_id.as_ref()
+        ),
         (Outcome::Succeeded, 2, Some(&id("coding-secondary"))),
         "the record is of this turn, so its silence about the text means something"
     );
@@ -360,11 +364,12 @@ fn a_serialized_record_holds_none_of_the_turns_text() {
     }
 
     // A failure is recorded by its code; its message, prose included, stays the caller's.
-    let refused = Fake::on(&catalog, "local-small", &clock).failing(
+    let primary_only = self::catalog(false);
+    let refused = Fake::on(&primary_only, "local-small", &clock).failing(
         Error::new(ErrorCode::Unauthorized, ERROR_PROSE).with_dispatch(Dispatch::Rejected),
     );
     let models = fleet([("local-small", refused)]);
-    let ran = run(&catalog, &models, &self::request(), &clock, None);
+    let ran = run(&primary_only, &models, &self::request(), &clock, None);
     let error = ran.run.as_ref().unwrap().result.as_ref().unwrap_err();
     assert!(error.message.contains(ERROR_PROSE));
     let record = only(&ran.records);
@@ -424,9 +429,15 @@ fn a_record_keeps_unknown_usage_unknown_and_its_cost_incomplete() {
     let json = serde_json::to_value(record).unwrap();
     assert!(json["usage"].get("output_tokens").is_none(), "{json}");
     let cost = record.cost.as_ref().unwrap();
-    assert!(!cost.complete, "an unknown output count leaves the cost incomplete");
+    assert!(
+        !cost.complete,
+        "an unknown output count leaves the cost incomplete"
+    );
     assert_eq!(cost.known_subtotal.to_string(), "0.1");
-    assert_eq!((cost.currency.as_str(), cost.price_revision.as_str()), ("USD", "prices-r7"));
+    assert_eq!(
+        (cost.currency.as_str(), cost.price_revision.as_str()),
+        ("USD", "prices-r7")
+    );
 
     // The same call with every counter known is complete.
     let mut answering = Fake::on(&catalog, "local-small", &clock).usage(Usage {
@@ -450,9 +461,8 @@ fn a_failed_call_records_its_error_code_and_dispatch_without_a_zero_cost() {
     let clock = Scripted::at(1_000);
     let models = fleet([(
         "local-small",
-        Fake::on(&catalog, "local-small", &clock).failing(
-            Error::new(ErrorCode::Unauthorized, "no").with_dispatch(Dispatch::Rejected),
-        ),
+        Fake::on(&catalog, "local-small", &clock)
+            .failing(Error::new(ErrorCode::Unauthorized, "no").with_dispatch(Dispatch::Rejected)),
     )]);
     let book = prices(&catalog, "local-small", "example/Small-Model");
     let ran = run(&catalog, &models, &request(), &clock, Some(&book));
@@ -464,7 +474,10 @@ fn a_failed_call_records_its_error_code_and_dispatch_without_a_zero_cost() {
     assert_eq!(record.route_target_id, Some(id("coding-primary")));
     assert_eq!(record.usage, Usage::default());
     let cost = record.cost.as_ref().unwrap();
-    assert!(!cost.complete, "an attempt with unknown usage is never priced at zero");
+    assert!(
+        !cost.complete,
+        "an attempt with unknown usage is never priced at zero"
+    );
 }
 
 #[test]
@@ -540,8 +553,9 @@ fn recording_returns_the_run_unchanged() {
         fleet([
             (
                 "local-small",
-                Fake::on(&catalog, "local-small", &clock)
-                    .failing(Error::new(ErrorCode::Transport, "cut").with_dispatch(Dispatch::Rejected)),
+                Fake::on(&catalog, "local-small", &clock).failing(
+                    Error::new(ErrorCode::Transport, "cut").with_dispatch(Dispatch::Rejected),
+                ),
             ),
             ("remote-large", Fake::on(&catalog, "remote-large", &clock)),
         ])

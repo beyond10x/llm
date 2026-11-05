@@ -69,6 +69,7 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 | `llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
 | `llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account; reads `llm.routes/1` model routes in YAML or TOML, Bedrock endpoints included ([guide](https://beyond10x.github.io/llm/docs/guides/configure-model-routes)) |
 | `llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |
+| `llm-calls` | One text-free record per routed call (route, target, timings, usage, priced cost) on a sink the caller injects |
 | `llm-tool-call` | `call_tool` (one forced tool, its JSON input back) and the Codex Responses preset |
 | `llm-blocking` | A blocking adapter over any `Model` for a synchronous loop |
 | `llm-cli` | The `llm` command: lists the models an `llm.toml` routes file declares and streams one turn on any of them, with its usage and cost ([guide](https://beyond10x.github.io/llm/docs/guides/use-the-llm-command)) |

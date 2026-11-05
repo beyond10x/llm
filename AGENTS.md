@@ -15,13 +15,13 @@ llm owns the client side of model inference: the neutral turn (`llm-core`), the 
 three protocol crates (each with its ingress decoder and encoder), the Amazon Bedrock Runtime
 client (`llm-bedrock`: Converse, Anthropic `InvokeModel`, Signature Version 4, event-stream
 frames, static, container and web identity AWS credentials), credentials, provider bindings,
-routing, port construction from a catalog or an `llm.routes/1` routes document in YAML or TOML,
-Bedrock endpoints included (`llm-models`), pricing, `call_tool`, the blocking adapter and the
-`llm` command (`llm-cli`: `model list` and `infer` over one `llm.toml`; it injects only the
-`environment` and `file` sources, no keychain). The accepted design is
-`docs/design.md` (its "Client request fields" section is the rule for every field an ingress
-decoder reads); per-protocol detail is in `docs/responses.md`, `docs/messages.md`,
-`docs/chat.md` and `docs/bedrock.md`.
+routing, per-call records (`llm-calls`), port construction from a catalog or an `llm.routes/1`
+routes document in YAML or TOML, Bedrock endpoints included (`llm-models`), pricing,
+`call_tool`, the blocking adapter and the `llm` command (`llm-cli`: `model list` and `infer`
+over one `llm.toml`; it injects only the `environment` and `file` sources, no keychain). The
+accepted design is `docs/design.md` (its "Client request fields" section is the rule for every
+field an ingress decoder reads); per-protocol detail is in `docs/responses.md`,
+`docs/messages.md`, `docs/chat.md` and `docs/bedrock.md`.
 
 It does not own:
 
@@ -51,6 +51,7 @@ story that says so.
 | No workspace crate depends on a consumer; `llm-core` has no transport dependency; `llm-routing` depends on no protocol crate | `crates/llm-core/tests/dependency_boundary.rs::inference_workspace_does_not_depend_on_its_consumers_and_core_has_no_transport` |
 | The `secrets` library is reached only through `llm-credentials` feature `secrets`: optional, off by default, tag `v0.5.0` at the commit the lockfile records, forwarded by no core crate | `crates/llm-credentials/tests/secrets_boundary.rs::the_secrets_library_is_reached_only_through_the_credentials_feature` (moving the tag means moving `TAG` and `REVISION` there) |
 | Unknown usage stays unknown, never zero | `crates/llm-core/tests/embedding.rs::unknown_usage_stays_distinct_from_zero_and_invalid_subsets_refuse`, and per protocol `crates/llm-responses/tests/adversary.rs::an_unreported_input_count_stays_unknown_and_is_never_zero`, `crates/llm-messages/tests/streaming.rs::a_counter_the_route_never_reported_stays_unknown`, `crates/llm-chat/tests/incoming.rs::a_counter_a_present_usage_report_omits_stays_absent_and_never_becomes_zero`, `crates/llm-chat/tests/incoming.rs::removing_any_one_timings_counter_leaves_unknown_exactly_what_it_counted`; ingress encoders `crates/llm-responses/tests/ingress.rs::an_unknown_input_count_is_omitted_and_decodes_back_unknown_never_zero`, `crates/llm-messages/tests/ingress.rs::an_unknown_output_count_is_left_out_and_decodes_back_unknown`; Bedrock Converse, whose body never carries a `cachePoint`, so an absent cache counter is a known 0 and only an absent `inputTokens` leaves the input unknown: `crates/llm-bedrock/tests/converse.rs::an_absent_cache_counter_is_a_known_zero_on_converse`, `crates/llm-bedrock/tests/converse.rs::the_converse_body_never_carries_a_cache_point`, `crates/llm-bedrock/tests/converse.rs::cache_counters_add_up_to_the_whole_input`; the command `crates/llm-cli/tests/command.rs::infer_reads_the_prompt_from_stdin_and_an_unreported_counter_prints_unknown` |
+| A call record holds no text of the turn: no instructions, prompt, tool description, answer, reasoning, tool argument or error message | `crates/llm-calls/tests/record.rs::a_serialized_record_holds_none_of_the_turns_text`; scenario `contracts/calls/scenarios/a-routed-turn-writes-one-record-with-no-text.yaml` |
 | Secret material is never a configuration value | `crates/llm-credentials/tests/injected.rs::secret_material_is_not_a_config_value_and_binary_custody_is_supported`, `crates/llm-providers/tests/bindings.rs::binding_documents_have_strict_versions_and_no_literal_secret_fields`, `crates/llm-models/tests/routes.rs::no_secret_material_leaves_the_document`, `crates/llm-cli/tests/command.rs::a_literal_secret_in_the_file_is_refused_without_echoing_it` |
 | Opaque provider state crosses no binding coordinate, even under fallback | `crates/llm-core/tests/embedding.rs::opaque_state_cannot_cross_any_binding_coordinate`, `crates/llm-routing/tests/catalog.rs::opaque_state_never_crosses_bindings_even_with_explicit_fallback` |
 | A routes document alone never starts a program: an `aws-process` route runs its command only with feature `process` and the caller's `allow_credential_process`, and `llm` refuses such a routes file that others could have written | `crates/llm-models/tests/process_routes.rs::without_the_callers_permission_the_route_is_refused_and_nothing_runs`, `crates/llm-models/tests/routes_toml_bedrock.rs::without_feature_process_an_aws_process_route_is_refused_and_nothing_runs`, `crates/llm-cli/tests/credential_process.rs::a_routes_file_its_group_or_others_can_write_is_refused_and_runs_nothing`, `crates/llm-cli/tests/credential_process.rs::a_routes_file_in_a_directory_others_can_write_is_refused_and_runs_nothing` |
@@ -68,7 +69,7 @@ story that says so.
 | No crate depends on an AWS SDK crate or on `aws-lc`; `llm-bedrock` signs with `ring` | `crates/llm-core/tests/dependency_boundary.rs::no_package_in_the_lockfile_is_an_aws_sdk_crate_or_aws_lc` |
 | No `unsafe` code | `unsafe_code = "forbid"` in the root `Cargo.toml`; Clippy `all` and `pedantic` deny |
 | No field a client sends is dropped: each ingress decoder carries, translates, reports or refuses it, and refuses an unknown key at every level by its path | `crates/llm-messages/tests/client_request_fields.rs::every_refusal_names_its_field_by_path`, `crates/llm-responses/tests/client_fields.rs::a_key_outside_the_subset_is_refused_by_its_path_at_every_level`, `crates/llm-chat/tests/ingress.rs::an_unknown_key_on_a_content_part_is_refused_by_its_path` and the other `an_unknown_key_on_*` cases there, `crates/llm-chat/tests/every_output_delta.rs::a_refusal_only_message_reads_back_and_a_refusal_that_is_not_a_string_is_refused_by_its_path`; advisory omissions `checks/conformance/tests/client_turns.rs` |
-| The conformance suite answers at least 1013 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
+| The conformance suite answers at least 1021 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.

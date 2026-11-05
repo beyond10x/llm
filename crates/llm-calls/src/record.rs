@@ -182,9 +182,10 @@ impl CallLog {
     }
     /// A copy of every record so far.
     pub fn records(&self) -> Vec<CallRecord> {
-        self.0
-            .lock()
-            .map_or_else(|poisoned| poisoned.into_inner().clone(), |held| held.clone())
+        self.0.lock().map_or_else(
+            |poisoned| poisoned.into_inner().clone(),
+            |held| held.clone(),
+        )
     }
 }
 
@@ -229,7 +230,7 @@ impl Clock for SystemClock {
     fn unix_ms(&self) -> u64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_or(0, |since| millis(since))
+            .map_or(0, millis)
     }
     fn monotonic(&self) -> Duration {
         self.origin.elapsed()

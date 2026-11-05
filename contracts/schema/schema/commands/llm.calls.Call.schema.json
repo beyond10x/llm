@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Call input",
+  "x-ess-name": "llm.calls.Call",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "turn_json": {
+      "type": "string"
+    },
+    "prices_toml": {
+      "type": "string"
+    },
+    "shadows_json": {
+      "type": "string"
+    },
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "turn_json",
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
+    "contract_digest": "slice-sha256/2:0897b91821d87a9beb20f0a57eea24ea7e74bf39785f5508332779ee2b81686b",
+    "regenerate": "ess generate"
+  }
+}

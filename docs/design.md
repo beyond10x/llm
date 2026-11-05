@@ -571,6 +571,34 @@ back by the receiving decoder's rules, as above.
 [openai-python-retry-after]: https://github.com/openai/openai-python/blob/0e5794dc48b8f8d51f6047f8a0b1814eb1e65850/src/openai/_base_client.py#L900-L907
 [anthropic-ts-refresh]: https://github.com/anthropics/anthropic-sdk-typescript/blob/04a4c28c70de498d6d0e930e43edb5edb9ac545e/src/client.ts#L1753-L1763
 
+### Call records
+
+`llm-calls` gives a routed caller one `CallRecord` per model call, on a `CallSink` it injects:
+the route, the target that answered or failed last, the upstream model the far side reported, the
+role (`primary`, `shadow`, `replay`) and kind (`turn`, `classification`, `verdict`,
+`embed-batch`), the outcome, the error code and dispatch of a failure, the attempt count, the
+start time, the latency, the time to the first event, the usage and the priced cost. llm keeps
+no ledger of these records; the deployed ledger is llm-gateway's.
+
+The record has no text field of any kind. Every field is an identifier, a closed set, a count, a
+time or an exact amount, so no prompt, answer, reasoning, tool argument or error message can
+reach it, and a failure is its code alone. Usage is the last attempt's report, and a counter it
+did not report stays absent, never zero. The cost prices that usage under the caller's
+`llm-cost` price book, matched by serving model and binding revision; any unknown line leaves
+it `complete: false` with the known lines' subtotal as a lower bound. With no price book, or no
+attempt, the record has no cost.
+
+`record_turn` wraps `Catalog::run_turn` and returns its run unchanged. It reads the target, the
+attempt count and the usage from `FallbackRun.attempts`, so routing needs nothing new. A counting
+wrapper around the caller's stream sink marks the first event that is not a warning (a retry
+warning is not output); latency runs from the start of the run to its return. Both are read from
+a `Clock` the caller injects (wall-clock milliseconds and a monotonic reading), so tests script
+time. `CallSink::record` returns nothing and cannot fail: a sink can never change what the
+caller receives. A turn the run refuses before it starts is no call and writes no record; the
+caller has the refusal. `CallRecord::new`, `Stopwatch` and `Cost::quote` build a record without a
+turn, for the classification, verdict and embedding calls that later stories add. The contract
+is `spec/domains/calls.yaml`.
+
 ## Client request fields
 
 Accepted for wave 2026-10-16-w08 (llm 0.7.0). Coding-agent clients send fields the 0.6.0 ingress
