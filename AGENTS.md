@@ -96,6 +96,11 @@ tests and lints `llm-credentials` and `llm-cost` with all features on macOS and 
 a native keychain change cannot be checked on Linux alone. `.github/workflows/shared-gates.yml`
 runs the organisation's common Gates checks on pull requests, `main` and tags.
 
+An ESS pin move changes `ESS_VERSION` and `ESS_SHA256` in `gate.yml` together, the digest read from
+the `ess-<version>-x86_64-unknown-linux-gnu.tar.gz` line of that release's `SHA256SUMS`, and moves
+the `ess-conformance` and `ess-primitives` tags in `checks/conformance/Cargo.toml` with them. A
+version moved without its digest fails the "Install ess" step before any test runs.
+
 Build into the worktree's own `target/` and never set `CARGO_TARGET_DIR`. Let cargo create
 `target/`: one made by hand before the first build has no `CACHEDIR.TAG`, and
 `worktree discard-cache` then keeps the whole build as unrecognised. End every tree with
