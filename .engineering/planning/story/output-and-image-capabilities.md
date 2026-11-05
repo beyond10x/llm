@@ -10,7 +10,7 @@ relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
 - depends_on: story:image-input
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-05T01:52:02Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-05T01:52:02Z", actor: "human:timo", revision: 3}
@@ -33,7 +33,10 @@ to one that does not.
 
 - A catalog declares per model whether it takes structured output and image input; a document from
   before the fields means not declared, and the bytes of such a document are unchanged.
-- Selection rejects a target without the feature by a named rejection, and no fallback moves such a
-  turn to it; `llm route explain` names the rejection.
+- Selection rejects a target that declares the feature `false` by a named rejection, and no fallback
+  moves such a turn to it; an undeclared feature is not rejected, and the wire carries or refuses the
+  turn as before. `Catalog::explain` and the "route has no compatible target" refusal name the
+  rejection. (Amended 2026-11-05 by the wave lead: llm has no `llm route explain` command; the command
+  is `story:cli-route-explain`.)
 - Released together with any other breaking change to `llm-core`, with `#[non_exhaustive]` or a
   `Default` added so the next such field is additive.
