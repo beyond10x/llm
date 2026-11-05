@@ -70,7 +70,7 @@
     },
     {
       "area": "Neutral turn",
-      "detail": "Item::UserImage holds inline PNG, JPEG, GIF or WebP bytes (at most 5 MiB) or an https URL, and no byte or URL reaches a diagnostic or a Debug form. Responses, Chat Completions, Messages and Bedrock InvokeModel send it in the user message beside its text, in item order, Converse sends inline bytes and refuses a URL before I/O, and the three ingress decoders read the image parts of a user message back in order. Request bytes pinned against the published request shapes; no provider was called.",
+      "detail": "Item::UserImage holds inline PNG, JPEG, GIF or WebP bytes (at most 5 MiB) or an https URL, and no byte or URL reaches a diagnostic or a Debug form. Responses, Chat Completions and Messages send it in the user message beside its text, in item order; Bedrock InvokeModel and Converse send inline bytes and refuse a URL before I/O, InvokeModel also inline bytes whose base64 passes 5,000,000 characters; and the three ingress decoders read the image parts of a user message back in order. Request bytes pinned against the published request shapes; no provider was called.",
       "label": "A user turn carries an image on every wire",
       "status": "shipped"
     },

@@ -52,8 +52,12 @@ The Anthropic body is the Messages body `llm-messages` encodes, plus
 operation says it). A turn's `anthropic-beta` names, which the Messages route takes as a header,
 travel as the body's `anthropic_beta` array, and no `anthropic-beta` header is sent. An output
 format is the Messages body's `output_config.format`, under the Messages rules, and a user image
-the Messages `image` block, a `base64` or `url` source; whether Bedrock fetches an image by URL on
-this operation has not been observed (no turn has been sent to Bedrock). Its stream is
+the Messages `image` block with a `base64` source. Anthropic documents only base64 image sources on
+Bedrock and a per-image limit of 5 MB, base64-encoded
+(`https://platform.claude.com/docs/en/build-with-claude/vision.md`, lines 32-34, 60 and 1283), so
+an image by URL is refused by name before any I/O (`Bedrock InvokeModel carries an image only as
+inline bytes, not by URL`), and so are inline bytes whose base64 passes 5,000,000 characters
+(`too-large`), the smaller reading of 5 MB; neither refusal quotes a byte or the URL. Its stream is
 `chunk` frames, each `{"bytes": base64(<Messages event>)}`, read by
 the Messages stream decoder. So text, tool calls, thinking, stop reasons and refusals on that wire
 are the Messages wire's ([messages.md](messages.md)).
