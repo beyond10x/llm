@@ -1,0 +1,34 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-aws-web-identity-endpoint-loads-and-its-routes-answer-outside-the-catalog
+summary: an aws-web-identity Bedrock endpoint loads naming only its kind, its routes answer its endpoint, protocol and model id, and the catalog keeps only the HTTP route
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        anthropic: {base_url: https://api.anthropic.com/v1, protocol: messages,
+                    auth: {kind: api-key, header: x-api-key, secret: env:ANTHROPIC_API_KEY}}
+        bedrock-irsa: {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+                       auth: {kind: aws-web-identity}}
+      routes:
+        sonnet: anthropic/claude-sonnet-4-5
+        nova: bedrock-irsa/eu.amazon.nova-pro-v1:0
+    probe_names: [sonnet, nova, bedrock-irsa/eu.amazon.nova-lite-v1:0]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: true
+    error_code: null
+    error_message: null
+    endpoints: ["anthropic:messages:api-key:env"]
+    bedrock_endpoints: ["bedrock-irsa:bedrock-converse:eu-central-1:aws-web-identity"]
+    answers: ["sonnet=anthropic:messages:claude-sonnet-4-5", "nova=bedrock-irsa:bedrock-converse:eu.amazon.nova-pro-v1:0", "bedrock-irsa/eu.amazon.nova-lite-v1:0=bedrock-irsa:bedrock-converse:eu.amazon.nova-lite-v1:0"]
+    catalog_serving_models: [sonnet]
