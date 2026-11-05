@@ -156,6 +156,7 @@ are llm-gateway's ([GitHub](https://github.com/beyond10x/llm-gateway)).
 | Story | Capability |
 | --- | --- |
 | `usage-pricing` | **Usage pricing.** Versioned `llm.prices/1` books, exact decimal amounts, cache and compute pricing, six separate bases and unknown quantities kept unknown. |
+| `call-records` | **One text-free record per routed call.** `llm-calls`: `record_turn` runs `Catalog::run_turn` and writes one `CallRecord` to the caller's `CallSink`: route, the target that answered or failed last, upstream model, role, kind, outcome, error code and dispatch, attempt count, start time, latency and time to first event from the caller's `Clock`, usage with unknown counters absent, and the cost under an optional price book, `complete: false` when a line is unknown. The record has no text field. |
 | `spending-limits` | **Durable spending limits.** Opt-in `sqlite`: reservations committed before dispatch, concurrent callers serialized, uncertain charges kept across restart, and compute stop obligations. |
 
 ### Serving

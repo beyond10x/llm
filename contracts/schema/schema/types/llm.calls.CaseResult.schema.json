@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.calls.CaseResult",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
+    "contract_digest": "slice-sha256/2:6bc96aebbc43b1e7a11307381cdf85458232c99ec8d40af6cb382c03b5d571e5",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.calls.CaseResult": {
+      "title": "CaseResult",
+      "x-ess-name": "llm.calls.CaseResult",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Same",
+        "Differs",
+        "Failed",
+        "NotSent"
+      ]
+    }
+  }
+}

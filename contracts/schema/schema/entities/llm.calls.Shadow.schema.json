@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shadow",
+  "x-ess-name": "llm.calls.Shadow",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "primary_route_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "primary",
+        "kind": "references",
+        "source": "llm.calls.Shadow",
+        "target": "llm.catalog.Route",
+        "cardinality": "one",
+        "via": "primary_route_id"
+      }
+    },
+    "shadow_route_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "shadow",
+        "kind": "references",
+        "source": "llm.calls.Shadow",
+        "target": "llm.catalog.Route",
+        "cardinality": "one",
+        "via": "shadow_route_id"
+      }
+    },
+    "daily_cap": {
+      "type": "string"
+    },
+    "ledger_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "ledger",
+        "kind": "references",
+        "source": "llm.calls.Shadow",
+        "target": "llm.budget.Ledger",
+        "cardinality": "one",
+        "via": "ledger_id"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.calls.Shadow.State"
+    }
+  },
+  "required": [
+    "id",
+    "primary_route_id",
+    "shadow_route_id",
+    "daily_cap",
+    "ledger_id",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
+    "contract_digest": "slice-sha256/2:0e4a5397b0a8990b3b8a567e5b7eb3e973987da7087a6aae9acae5bf192096a2",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.calls.Shadow.State": {
+      "title": "State",
+      "x-ess-name": "llm.calls.Shadow.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

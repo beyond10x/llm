@@ -171,7 +171,8 @@ impl ConformanceTarget for CatalogTarget {
             .or_else(|| crate::transport::observe(&command, &input))
             .or_else(|| crate::models::observe(&command, &input))
             .or_else(|| crate::routes::observe(&command, &input))
-            .or_else(|| crate::bedrock::observe(&command, &input));
+            .or_else(|| crate::bedrock::observe(&command, &input))
+            .or_else(|| crate::calls::observe(&command, &input));
         let (facts, view, event, field) = if let Some(observed) = owned {
             let observed = observed?;
             (
@@ -258,6 +259,7 @@ impl ConformanceTarget for CatalogTarget {
             crate::models::VIEWS,
             crate::routes::VIEWS,
             crate::bedrock::VIEWS,
+            crate::calls::VIEWS,
         ]
         .iter()
         .any(|views| views.contains(&view.as_str()));

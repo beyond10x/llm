@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CallRecord",
+  "x-ess-name": "llm.calls.CallRecord",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/llm.calls.Role"
+    },
+    "kind": {
+      "$ref": "#/$defs/llm.calls.Kind"
+    },
+    "route_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "route",
+        "kind": "references",
+        "source": "llm.calls.CallRecord",
+        "target": "llm.catalog.Route",
+        "cardinality": "one",
+        "via": "route_id"
+      }
+    },
+    "route_target_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "target",
+        "kind": "references",
+        "source": "llm.calls.CallRecord",
+        "target": "llm.catalog.RouteTarget",
+        "cardinality": "one",
+        "via": "route_target_id"
+      }
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "outcome": {
+      "$ref": "#/$defs/llm.calls.Outcome"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "dispatch": {
+      "$ref": "#/$defs/llm.catalog.Dispatch"
+    },
+    "attempts": {
+      "type": "integer"
+    },
+    "started_at_unix_ms": {
+      "type": "integer"
+    },
+    "latency_ms": {
+      "type": "integer"
+    },
+    "time_to_first_event_ms": {
+      "type": "integer"
+    },
+    "usage": {
+      "$ref": "#/$defs/llm.accounting.Usage"
+    },
+    "cost": {
+      "$ref": "#/$defs/llm.calls.Cost"
+    },
+    "primary_record_id": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.calls.CallRecord.State"
+    }
+  },
+  "required": [
+    "id",
+    "role",
+    "kind",
+    "route_id",
+    "outcome",
+    "attempts",
+    "started_at_unix_ms",
+    "usage",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
+    "contract_digest": "slice-sha256/2:64cba2f00508c62d72ccc61832ac6d3f8078d9fb3bd8a6bbbf087c5688180a6c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.accounting.Usage": {
+      "title": "Usage",
+      "x-ess-name": "llm.accounting.Usage",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "input_tokens": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        },
+        "cached_input_tokens": {
+          "type": "integer"
+        },
+        "cache_creation_input_tokens": {
+          "type": "integer"
+        },
+        "reasoning_output_tokens": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "llm.calls.CallRecord.State": {
+      "title": "State",
+      "x-ess-name": "llm.calls.CallRecord.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.calls.Cost": {
+      "title": "Cost",
+      "x-ess-name": "llm.calls.Cost",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "known_subtotal": {
+          "type": "string"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "price_revision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "currency",
+        "known_subtotal",
+        "complete",
+        "price_revision"
+      ],
+      "additionalProperties": false
+    },
+    "llm.calls.Kind": {
+      "title": "Kind",
+      "x-ess-name": "llm.calls.Kind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Turn",
+        "Classification",
+        "Verdict",
+        "EmbedBatch"
+      ]
+    },
+    "llm.calls.Outcome": {
+      "title": "Outcome",
+      "x-ess-name": "llm.calls.Outcome",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Succeeded",
+        "Failed",
+        "Cancelled",
+        "Skipped"
+      ]
+    },
+    "llm.calls.Role": {
+      "title": "Role",
+      "x-ess-name": "llm.calls.Role",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Primary",
+        "Shadow",
+        "Replay"
+      ]
+    },
+    "llm.catalog.Dispatch": {
+      "title": "Dispatch",
+      "x-ess-name": "llm.catalog.Dispatch",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "NotSent",
+        "Rejected",
+        "Unknown",
+        "Accepted"
+      ]
+    }
+  }
+}

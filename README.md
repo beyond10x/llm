@@ -69,6 +69,7 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 | `llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
 | `llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account; reads `llm.routes/1` model routes in YAML or TOML, Bedrock endpoints included ([guide](https://beyond10x.github.io/llm/docs/guides/configure-model-routes)) |
 | `llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |
+| `llm-calls` | One text-free record per routed call (route, target, timings, usage, priced cost) on a sink the caller injects |
 | `llm-tool-call` | `call_tool` (one forced tool, its JSON input back) and the Codex Responses preset |
 | `llm-blocking` | A blocking adapter over any `Model` for a synchronous loop |
 | `llm-cli` | The `llm` command: lists the models an `llm.toml` routes file declares and streams one turn on any of them, with its usage and cost ([guide](https://beyond10x.github.io/llm/docs/guides/use-the-llm-command)) |
@@ -80,7 +81,7 @@ The [crate reference](https://beyond10x.github.io/llm/docs/reference/crates) is 
 
 The gate and the toolchain it runs on are in [AGENTS.md](AGENTS.md#gate). Besides Rust it needs
 [Task](https://taskfile.dev),
-[ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.86.0 and
+[ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) 0.87.0 and
 [AEP](https://beyond10x.github.io/ecosystem/aep/) ([GitHub](https://github.com/beyond10x/aep))
 0.68.0; [Run the checks](https://beyond10x.github.io/llm/docs/guides/run-the-checks) says what it
 proves and what it does not. The site builds with

@@ -16,3 +16,4 @@ domains:
   - llm.providers
   - llm.transport
   - llm.bedrock
+  - llm.calls

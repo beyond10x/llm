@@ -1,8 +1,5 @@
 domain: llm.calls
 
-# Draft (2026-11-05), not yet part of spec/system.yaml. The wave that implements it moves this
-# file to spec/domains/calls.yaml and adds `llm.calls` to the system.
-#
 # Router-level records and the two router-level call roles beside the primary call.
 #
 # A CallRecord is written for every model call a routed caller makes (turn, classification,
@@ -11,6 +8,18 @@ domain: llm.calls
 # field. Unknown usage stays unknown, never zero; a cost with an unknown line keeps its known
 # subtotal and says it is incomplete (llm.accounting.QuotedTotal). The records go to a sink the
 # caller injects; llm keeps no ledger of them. A deployed ledger is llm-gateway's.
+#
+# A routed turn (crate llm-calls, `record_turn`) writes its record once the ordered fallback run
+# (llm.routing) returns, and returns that run unchanged; the sink cannot fail. A turn the run
+# refuses before it starts (invalid request, unknown alias, invalid policy, no model for a
+# target) is no call and writes no record. The record's target, upstream model and usage are the
+# last attempt's; its attempt count is every attempt, retries included. Its outcome, error code
+# and dispatch are the run's final result: cancelled when the run was cancelled, failed for any
+# other failure, and a failure is its code and dispatch, never its message. Latency runs from the
+# start of the run to its return, and time to first event to the first event the caller's sink
+# was offered that is not a warning (a retry warning is not output). The cost prices the last
+# attempt's usage under the caller's price book, matched by serving model and binding revision;
+# without a price book, or without an attempt, there is no cost.
 #
 # A Shadow is a detached second route for a primary route: after the primary call is returned
 # to the caller, the same request is sent to the shadow route; its answer reaches only its
@@ -56,6 +65,8 @@ entities:
       - {name: upstream_model, type: Optional<String>}
       - {name: outcome, type: llm.calls.Outcome}
       - {name: error_code, type: Optional<String>}
+      # The failure's dispatch evidence; absent when the call succeeded.
+      - {name: dispatch, type: Optional<llm.catalog.Dispatch>}
       - {name: attempts, type: Integer}
       - {name: started_at_unix_ms, type: Integer}
       - {name: latency_ms, type: Optional<Integer>}

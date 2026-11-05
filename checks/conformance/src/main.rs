@@ -1,5 +1,6 @@
 mod bedrock;
 mod budgets;
+mod calls;
 mod chat;
 mod fallback;
 mod gate;

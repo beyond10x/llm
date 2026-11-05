@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Replay input",
+  "x-ess-name": "llm.calls.Replay",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "corpus_json": {
+      "type": "string"
+    },
+    "prices_toml": {
+      "type": "string"
+    },
+    "run_json": {
+      "type": "string"
+    },
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "corpus_json",
+    "prices_toml",
+    "run_json",
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
+    "contract_digest": "slice-sha256/2:8e09b6bfd54923429e1cef33efe5ca7e2b197a4669a6e0101174f459bdb46df9",
+    "regenerate": "ess generate"
+  }
+}

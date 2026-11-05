@@ -176,6 +176,12 @@
       "llm.budget/authored/wide-aggregate-charge-is-exact",
       "llm.budget/authored/write-failure-freezes-owner-until-reopen",
       "llm.budget/authored/zero-cap-allows-only-declared-zero",
+      "llm.calls/authored/a-call-without-a-price-book-records-usage-and-no-cost",
+      "llm.calls/authored/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost",
+      "llm.calls/authored/a-fallback-run-records-the-target-that-answered-and-its-attempt-count",
+      "llm.calls/authored/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock",
+      "llm.calls/authored/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete",
+      "llm.calls/authored/a-routed-turn-writes-one-record-with-no-text",
       "llm.chat/authored/egress-a-user-image-shares-the-user-message-of-its-text",
       "llm.chat/authored/egress-an-output-format-without-a-name-is-refused",
       "llm.chat/authored/incoming-a-completion-without-a-finish-reason-is-refused",
@@ -1692,6 +1698,36 @@
         "digest": "sha256:3fba2c120d9cab40d8329ed399cd004f50bce87a0144bac72f3d24fe0b5bfd17",
         "disposition": "accepted",
         "scenario": "llm.budget/authored/zero-cap-allows-only-declared-zero"
+      },
+      "calls/scenarios/a-call-without-a-price-book-records-usage-and-no-cost.yaml": {
+        "digest": "sha256:c03a49d4667c2782b5fb07ea7cbabb43815c1d62c41606db9806f302c2105c94",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-call-without-a-price-book-records-usage-and-no-cost"
+      },
+      "calls/scenarios/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost.yaml": {
+        "digest": "sha256:c5d2cf6b23bdd31bb0b5488730528021cfa191f959046595fb00cdfa9a7d1ae0",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost"
+      },
+      "calls/scenarios/a-fallback-run-records-the-target-that-answered-and-its-attempt-count.yaml": {
+        "digest": "sha256:172ef47e0f60f9614f82a63cc67a4db3521d9bc8f410f10a43c625905980b380",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-fallback-run-records-the-target-that-answered-and-its-attempt-count"
+      },
+      "calls/scenarios/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock.yaml": {
+        "digest": "sha256:8a2793e91d25e4f5685e9fc18f40d194d5c224d0f829ab16648f66453d1d576d",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock"
+      },
+      "calls/scenarios/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete.yaml": {
+        "digest": "sha256:b3ffac43f24ff84759822c4f3098247497c56012dc919a25431f02e652d83960",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete"
+      },
+      "calls/scenarios/a-routed-turn-writes-one-record-with-no-text.yaml": {
+        "digest": "sha256:41c53e26db69a8ff1b954b0c10af8158a5f554c2c4f0cbe7ebb9e7f1b96842f3",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-routed-turn-writes-one-record-with-no-text"
       },
       "chat/scenarios/egress-a-user-image-shares-the-user-message-of-its-text.yaml": {
         "digest": "sha256:ad728487c51ada6ab72830fc1e6e70b28291e51cfaee1c29d775562a683bfb5b",
@@ -5855,8 +5891,8 @@
       }
     },
     "counts": {
-      "authored": 975,
-      "generated": 38,
+      "authored": 981,
+      "generated": 40,
       "outside": 0,
       "refused": 0
     },
@@ -5868,6 +5904,8 @@
       "llm.bedrock.RunTurn/outcome/observed",
       "llm.bedrock.SignSuiteCase/outcome/observed",
       "llm.budget.Exercise/outcome/observed",
+      "llm.calls.Call/outcome/observed",
+      "llm.calls.Replay/outcome/observed",
       "llm.chat.DecodeIngress/outcome/observed",
       "llm.chat.EncodeIngress/outcome/observed",
       "llm.chat.ProjectRequest/outcome/observed",
@@ -5914,9 +5952,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "47dd6488be400601cefe26b1833d74228b1007903132f4ec495f677200502d64",
+    "contract_digest": "cc453e0cfbf7e620ab756b6344ea484554f4ed32ae3145a811bce0724440ea53",
     "scenario_initial_state": "empty",
-    "spec_digest": "847810151d0649bc6c4ef43b089ded32accfd573023f47f0dd3bdf0c33170f7e",
+    "spec_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -5963,6 +6001,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -6107,6 +6149,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -13562,6 +13608,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -13702,6 +13752,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -13836,6 +13890,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -13987,6 +14045,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -14121,6 +14183,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -14272,6 +14338,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -14406,6 +14476,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -14569,6 +14643,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -14699,6 +14777,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -14839,6 +14921,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -22027,6 +22113,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -22164,6 +22254,10 @@
         },
         {
           "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -28648,6 +28742,1240 @@
         }
       ]
     },
+    "llm.calls.Call/outcome/observed": {
+      "purpose": "`llm.calls.Call` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Answered"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Decoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Fetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Encoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "program_json"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "turn_json"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.calls.Observed",
+          "shape": {
+            "valid_program": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Answered",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Decoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Encoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.calls.Replay/outcome/observed": {
+      "purpose": "`llm.calls.Replay` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.calls.Replay"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Answered"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Decoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Fetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Encoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Replay",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "corpus_json": {
+              "kind": "literal",
+              "value": "corpus_json"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "prices_toml"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "program_json"
+            },
+            "run_json": {
+              "kind": "literal",
+              "value": "run_json"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.calls.Observed",
+          "shape": {
+            "valid_program": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Answered",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Decoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Encoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.calls/authored/a-call-without-a-price-book-records-usage-and-no-cost": {
+      "purpose": "a call made without a price book records the usage the model reported and no cost",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-unpriced\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"answer\":\"hi\",\"usage\":{\"input_tokens\":12,\"output_tokens\":3}}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "hi"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-unpriced\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":12,\"output_tokens\":3},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost": {
+      "purpose": "an unauthorized failure the far side rejected is recorded by its code and dispatch, with no message and a cost that is not complete, never a zero total",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-refused\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"fail\":{\"code\":\"unauthorized\",\"dispatch\":\"rejected\",\"message\":\"credentials refused\"}}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-refused\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"failed\",\"error_code\":\"unauthorized\",\"dispatch\":\"rejected\",\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0\",\"complete\":false,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-fallback-run-records-the-target-that-answered-and-its-attempt-count": {
+      "purpose": "the primary fails before sending, the next declared target answers, and the one record names that target, its reported model and two attempts",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-fallback\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\"}},\"remote-large\":{\"answer\":\"hi\",\"upstream_model\":\"example/Large-Model-2026-11\"}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "hi"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-fallback\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-secondary\",\"upstream_model\":\"example/Large-Model-2026-11\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":2,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock": {
+      "purpose": "the scripted clock shows the first event 40 ms after the call starts and the turn returning 210 ms later; the record says when it started, 40 and 250",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-timed\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"answer\":\"hi\",\"first_event_after_ms\":40,\"ends_after_ms\":210}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "hi"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-timed\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":250,\"time_to_first_event_ms\":40,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete": {
+      "purpose": "the model reports input and cache counts but no output count; the record leaves the output count out and its cost incomplete, keeping the known subtotal",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-partial\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"answer\":\"hi\",\"usage\":{\"input_tokens\":100,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Small-Model\"}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "hi"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-partial\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.1\",\"complete\":false,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-routed-turn-writes-one-record-with-no-text": {
+      "purpose": "a routed turn whose instructions, prompt, tool description, answer, tool arguments and retried failure all carry marked text writes one record holding none of it, while the caller receives the answer",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-text\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"remote-large\":{\"answer\":\"answer-marker-okapi-4412\",\"tool_arguments\":\"{\\\"q\\\":\\\"argument-marker-gecko-2096\\\"}\",\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\",\"retriable\":true,\"message\":\"error-prose-marker-civet-8834\"},\"fail_times\":1,\"usage\":{\"input_tokens\":100,\"output_tokens\":20,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0,\"reasoning_output_tokens\":5},\"upstream_model\":\"example/Large-Model\"}}}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"instructions-marker-heron-5521\",\"items\":[{\"kind\":\"user-text\",\"text\":\"prompt-marker-quokka-7781\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"tool-description-marker-ibis-3307\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "answer-marker-okapi-4412"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-text\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-secondary\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":2,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":20,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0,\"reasoning_output_tokens\":5},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.14\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
     "llm.chat.DecodeIngress/outcome/observed": {
       "purpose": "`llm.chat.DecodeIngress` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -28689,6 +30017,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -28836,6 +30168,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -28962,6 +30298,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -29117,6 +30457,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -29243,6 +30587,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -29406,6 +30754,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -29532,6 +30884,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -29680,6 +31036,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -41411,6 +42771,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -41556,6 +42920,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -47052,6 +48420,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -47200,6 +48572,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -47326,6 +48702,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -47477,6 +48857,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -47603,6 +48987,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -47758,6 +49146,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -47884,6 +49276,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -48031,6 +49427,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -48157,6 +49557,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -48316,6 +49720,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -48442,6 +49850,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -48590,6 +50002,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -63071,6 +64487,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -63223,6 +64643,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -63349,6 +64773,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -63501,6 +64929,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -64466,6 +65898,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -64604,6 +66040,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -64738,6 +66178,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -64886,6 +66330,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -73457,6 +74905,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -73609,6 +75061,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -73735,6 +75191,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -73890,6 +75350,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -74016,6 +75480,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -74171,6 +75639,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -74297,6 +75769,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -74449,6 +75925,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -91139,6 +92619,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -91291,6 +92775,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -91417,6 +92905,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -91565,6 +93057,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -95509,6 +97005,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -95657,6 +97157,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -95783,6 +97287,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -95935,6 +97443,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -106182,6 +107694,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -106334,6 +107850,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -106468,6 +107988,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -106635,6 +108159,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -106761,6 +108289,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -106924,6 +108456,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -107054,6 +108590,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -107213,6 +108753,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -107343,6 +108887,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -107510,6 +109058,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -107652,6 +109204,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -107824,6 +109380,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {
@@ -118808,6 +120368,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
           "name": "llm.chat.Observed"
         },
         {
@@ -118952,6 +120516,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.chat.Observed",
           "step": "expect_no_event"
         },
@@ -119078,6 +120646,10 @@
         {
           "kind": "event",
           "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
         },
         {
           "kind": "event",
@@ -119222,6 +120794,10 @@
         },
         {
           "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
           "step": "expect_no_event"
         },
         {

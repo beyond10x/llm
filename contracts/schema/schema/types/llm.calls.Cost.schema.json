@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.calls.Cost",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
+    "contract_digest": "slice-sha256/2:0de876858b99ac9b01f1f2d7edc10a354cd03ea862cef191fab6b5724fa5ccda",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.calls.Cost": {
+      "title": "Cost",
+      "x-ess-name": "llm.calls.Cost",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "known_subtotal": {
+          "type": "string"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "price_revision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "currency",
+        "known_subtotal",
+        "complete",
+        "price_revision"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

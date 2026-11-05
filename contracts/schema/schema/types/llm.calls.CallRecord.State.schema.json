@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.calls.CallRecord.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
+    "contract_digest": "slice-sha256/2:c493cbaf5e492046bc737c129b66bcdd000c277a24243c1f68b02cc2f13cff86",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.calls.CallRecord.State": {
+      "title": "State",
+      "x-ess-name": "llm.calls.CallRecord.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

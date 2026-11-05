@@ -1,0 +1,24 @@
+[package]
+name = "llm-calls"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "One text-free record per routed model call: route, target, timings, usage and priced cost, on a sink the caller injects."
+
+[lints]
+workspace = true
+
+[lib]
+name = "llm_calls"
+
+[dependencies]
+llm-core.workspace = true
+llm-routing = { path = "../llm-routing" }
+llm-cost = { path = "../llm-cost" }
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

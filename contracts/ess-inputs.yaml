@@ -976,3 +976,9 @@ scenarios:
 - routing/scenarios/a-catalog-declaring-neither-feature-keeps-its-digest-and-takes-a-turn-needing-both.yaml
 - routing/scenarios/a-target-declaring-both-features-takes-a-turn-needing-both.yaml
 - routing/scenarios/a-route-with-no-target-taking-the-turns-features-is-refused-naming-each.yaml
+- calls/scenarios/a-routed-turn-writes-one-record-with-no-text.yaml
+- calls/scenarios/a-fallback-run-records-the-target-that-answered-and-its-attempt-count.yaml
+- calls/scenarios/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete.yaml
+- calls/scenarios/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost.yaml
+- calls/scenarios/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock.yaml
+- calls/scenarios/a-call-without-a-price-book-records-usage-and-no-cost.yaml
