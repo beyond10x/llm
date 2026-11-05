@@ -1,0 +1,29 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-converse-turn-sends-a-user-image-as-inline-bytes
+summary: "a user image of inline bytes is a Converse image block, its format by Converse's name and its bytes as base64, in the user message beside its text (story:image-input)"
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    request_json: '{"format":"llm.turn/3","request":{"model":"us.anthropic.claude-3-7-sonnet-20250219-v1:0","instructions":"","items":[{"kind":"user-text","text":"What is in this picture?"},{"kind":"user-image","source":{"kind":"bytes","media_type":"image/png","data":"iVBORw0KGgo="}}],"tools":[]}}'
+    recording: "ddtrace-bedrock_converse_stream_prompt_caching-1.bin"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    request_body: '{"messages":[{"content":[{"text":"What is in this picture?"},{"image":{"format":"png","source":{"bytes":"iVBORw0KGgo="}}}],"role":"user"}]}'
+    signature_verifies: true
+    stop_reason: "end-turn"

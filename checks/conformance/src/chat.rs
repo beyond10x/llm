@@ -408,6 +408,9 @@ fn decode_ingress(input: &IngressInput, facts: &mut Value) -> Result<(), Error> 
             .iter()
             .map(|item| match item {
                 Item::UserText { text } => format!("user:{text}"),
+                Item::UserImage { source } => {
+                    format!("user-image:{}", crate::messages::image_label(source))
+                }
                 Item::AssistantText { text } => format!("assistant:{text}"),
                 Item::AssistantRefusal { text } => format!("assistant-refusal:{text}"),
                 Item::ToolCall(call) => format!(

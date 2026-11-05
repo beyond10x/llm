@@ -370,6 +370,7 @@ impl IngressStream {
                 }
                 // `check_outcome` refused every other item.
                 Item::UserText { .. }
+                | Item::UserImage { .. }
                 | Item::ToolResult { .. }
                 | Item::UnattributedOpaque { .. }
                 | Item::AssistantRefusal { .. } => {}
@@ -577,7 +578,7 @@ fn check_outcome(outcome: &TurnOutcome) -> Result<Terminal, Error> {
                     "the Responses ingress encoder carries no assistant refusal text",
                 ));
             }
-            Item::UserText { .. } | Item::ToolResult { .. } => {
+            Item::UserText { .. } | Item::UserImage { .. } | Item::ToolResult { .. } => {
                 return Err(Error::protocol(
                     "model outcome contains caller-owned content",
                 ));
@@ -749,6 +750,7 @@ fn wire_item(item: &Item, item_id: &str) -> Result<Value, Error> {
         Item::Opaque { payload, .. } => payload.clone(),
         Item::AssistantText { text } => message_item(item_id, text),
         Item::UserText { .. }
+        | Item::UserImage { .. }
         | Item::ToolResult { .. }
         | Item::UnattributedOpaque { .. }
         | Item::AssistantRefusal { .. } => Value::Null,

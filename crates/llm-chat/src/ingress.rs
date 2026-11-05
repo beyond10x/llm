@@ -6,8 +6,9 @@
 //! That holds at every level: each object of the request is closed, and a key it does not
 //! publish is refused naming its path (`messages[].content[].cache_control`).
 use llm_core::{
-    CallId, Error, Item, MAX_TOOL_RESULT_BYTES, OutputFormat, Sampling, StopReason, StreamEvent,
-    ToolChoice, ToolName, ToolSpec, TurnOutcome, TurnRequest, Usage, Verbosity, field_path,
+    CallId, Error, ImageSource, Item, MAX_TOOL_RESULT_BYTES, OutputFormat, Sampling, StopReason,
+    StreamEvent, ToolChoice, ToolName, ToolSpec, TurnOutcome, TurnRequest, Usage, Verbosity,
+    field_path,
 };
 use serde_json::{Map, Value, json};
 
@@ -38,6 +39,9 @@ const TEXT_MESSAGE_KEYS: &[&str] = &["role", "content"];
 const ASSISTANT_MESSAGE_KEYS: &[&str] = &["role", "content", "refusal", "tool_calls"];
 const TOOL_MESSAGE_KEYS: &[&str] = &["role", "content", "tool_call_id"];
 const CONTENT_PART_KEYS: &[&str] = &["type", "text"];
+/// An `image_url` part of a user message, and its `image_url` object.
+const IMAGE_PART_KEYS: &[&str] = &["type", "image_url"];
+const IMAGE_URL_KEYS: &[&str] = &["url", "detail"];
 const TOOL_CALL_KEYS: &[&str] = &["id", "type", "function"];
 const TOOL_CALL_FUNCTION_KEYS: &[&str] = &["name", "arguments"];
 const TOOL_KEYS: &[&str] = &["type", "function"];
@@ -211,10 +215,20 @@ fn decode_messages(messages: &[Value], request: &mut TurnRequest) -> Result<(), 
                 }
                 request.instructions.push_str(&text);
             }
-            "user" => {
-                let text = content_text(message.get("content"))?;
-                request.items.push(Item::user(text));
-            }
+            "user" => match message.get("content") {
+                // A message holding an image is read part for part, each part an item in order,
+                // which is the message the outgoing projection writes back for them.
+                Some(Value::Array(parts)) if parts.iter().any(is_image_part) => {
+                    for part in parts {
+                        request.items.push(if is_image_part(part) {
+                            image_item(part)?
+                        } else {
+                            Item::user(text_part(part)?)
+                        });
+                    }
+                }
+                content => request.items.push(Item::user(content_text(content)?)),
+            },
             "assistant" => {
                 let text = content_text(message.get("content"))?;
                 if !text.is_empty() {
@@ -444,6 +458,8 @@ fn decode_output_limit(object: &Map<String, Value>) -> Result<Option<u64>, Error
     }
 }
 
+/// The text of a message: a string, or its text parts joined. An image part is carried only in
+/// a user message, which reads one part for part instead, so here it is refused by its path.
 fn content_text(content: Option<&Value>) -> Result<String, Error> {
     match content {
         None | Some(Value::Null) => Ok(String::new()),
@@ -451,26 +467,64 @@ fn content_text(content: Option<&Value>) -> Result<String, Error> {
         Some(Value::Array(parts)) => {
             let mut text = String::new();
             for part in parts {
-                if part.get("type").and_then(Value::as_str) != Some("text") {
+                if is_image_part(part) {
                     return Err(Error::unsupported(
-                        "chat content part type is outside the published subset",
+                        "chat image part is carried only in a user message: messages[].content[]",
                     ));
                 }
-                closed(part, "messages[].content[]", CONTENT_PART_KEYS)?;
-                // A text part carries its text: an absent or null one is a part nobody wrote,
-                // and reading it as empty would invent the content.
-                match part.get("text") {
-                    None | Some(Value::Null) => {
-                        return Err(Error::invalid("chat content part carries no text"));
-                    }
-                    Some(Value::String(part)) => text.push_str(part),
-                    Some(_) => return Err(Error::invalid("chat content part text is not text")),
-                }
+                text.push_str(text_part(part)?);
             }
             Ok(text)
         }
         Some(_) => Err(Error::invalid("chat message content is not text")),
     }
+}
+
+/// One `text` part's text.
+fn text_part(part: &Value) -> Result<&str, Error> {
+    if part.get("type").and_then(Value::as_str) != Some("text") {
+        return Err(Error::unsupported(
+            "chat content part type is outside the published subset",
+        ));
+    }
+    closed(part, "messages[].content[]", CONTENT_PART_KEYS)?;
+    // A text part carries its text: an absent or null one is a part nobody wrote, and reading it
+    // as empty would invent the content.
+    match part.get("text") {
+        None | Some(Value::Null) => Err(Error::invalid("chat content part carries no text")),
+        Some(Value::String(part)) => Ok(part),
+        Some(_) => Err(Error::invalid("chat content part text is not text")),
+    }
+}
+
+fn is_image_part(part: &Value) -> bool {
+    part.get("type").and_then(Value::as_str) == Some("image_url")
+}
+
+/// One `image_url` part: `image_url.url` a base64 `data:` URL or an `https` URL, and
+/// `image_url.detail` absent, `null` or `auto`, the wire's default, which the neutral image holds.
+fn image_item(part: &Value) -> Result<Item, Error> {
+    closed(part, "messages[].content[]", IMAGE_PART_KEYS)?;
+    let image = part
+        .get("image_url")
+        .filter(|image| image.is_object())
+        .ok_or_else(|| Error::invalid("chat image part carries no url"))?;
+    closed(image, "messages[].content[].image_url", IMAGE_URL_KEYS)?;
+    match image.get("detail") {
+        None | Some(Value::Null) => {}
+        Some(Value::String(detail)) if detail == "auto" => {}
+        Some(Value::String(_)) => {
+            return Err(Error::unsupported(
+                "chat image detail other than `auto` is outside the published subset",
+            ));
+        }
+        Some(_) => return Err(Error::invalid("chat image detail is not text")),
+    }
+    let url = image
+        .get("url")
+        .and_then(Value::as_str)
+        .ok_or_else(|| Error::invalid("chat image part carries no url"))?;
+    Ok(Item::user_image(ImageSource::from_wire_url(url)?))
 }
 
 fn flag(value: Option<&Value>, field: &'static str) -> Result<bool, Error> {
@@ -859,7 +913,7 @@ fn split_items(items: &[Item]) -> Result<Split, Error> {
             Item::UnattributedOpaque { .. } => {
                 return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
             }
-            Item::UserText { .. } | Item::ToolResult { .. } => {
+            Item::UserText { .. } | Item::UserImage { .. } | Item::ToolResult { .. } => {
                 return Err(Error::protocol(
                     "model outcome contains caller-owned content",
                 ));

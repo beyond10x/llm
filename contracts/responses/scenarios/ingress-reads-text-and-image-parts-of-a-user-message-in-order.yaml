@@ -1,0 +1,28 @@
+type: ess-scenario/1
+domain: llm.responses
+scenario: ingress-reads-text-and-image-parts-of-a-user-message-in-order
+summary: a user message of input_text and input_image parts reads part by part into user text and user image items in order, and projects back to the body it was read from (story:image-input)
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.responses.Ingest
+  input:
+    binding_json: '{"protocol":"responses","provider":"my-lab","account":"local","endpoint":"local-vllm","model":"small","binding_revision":"rev-1"}'
+    upstream_model: example/Small-Model
+    body_json: '{"model":"example/Small-Model","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Compare"},{"type":"input_image","image_url":"data:image/png;base64,iVBORw0KGgo=","detail":"auto"},{"type":"input_image","image_url":"https://images.example/a.png","detail":"auto"}]}],"tools":[],"stream":true,"store":false,"include":["reasoning.encrypted_content"]}'
+  outcome: observed
+assert:
+- view: llm.responses.LastIngestion
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.responses.LastIngestion
+  contains:
+    accepted: true
+    error_code: null
+    item_kinds:
+    - user-text
+    - user-image
+    - user-image
+    reprojected: true
+    body_preserved: true
+    turn_json: '{"format":"llm.turn/3","request":{"instructions":"","items":[{"kind":"user-text","text":"Compare"},{"kind":"user-image","source":{"data":"iVBORw0KGgo=","kind":"bytes","media_type":"image/png"}},{"kind":"user-image","source":{"kind":"url","url":"https://images.example/a.png"}}],"model":"small","tools":[]}}'

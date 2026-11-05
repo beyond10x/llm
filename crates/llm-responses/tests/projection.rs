@@ -1052,12 +1052,12 @@ fn every_ingress_content_refusal_the_contract_promises_is_reachable() {
             ErrorCode::Unsupported,
         ),
         (
-            "content this version does not carry",
+            "content this version does not carry: a file part (an image part is carried since story:image-input)",
             wire_body(&[(
                 "input",
                 json!([
             {"type": "message", "role": "user",
-             "content": [{"type": "input_image", "image_url": "https://a.invalid/a.png"}]}]),
+             "content": [{"type": "input_file", "file_id": "file-1"}]}]),
             )]),
             ErrorCode::Unsupported,
         ),
@@ -1473,9 +1473,9 @@ fn a_message_this_version_cannot_represent_part_for_part_is_refused() {
             json!([{"type": "message", "role": "user", "content": []}]),
         ),
         (
-            "a part this version does not carry",
+            "a part this version does not carry: a file (an image part is carried since story:image-input)",
             json!([{"type": "message", "role": "user", "content": [
-                {"type": "input_image", "image_url": "https://a.invalid/a.png"}]}]),
+                {"type": "input_file", "file_id": "file-1"}]}]),
         ),
     ];
     for (why, input) in cases {

@@ -406,7 +406,8 @@ fn ingress_refuses_a_request_field_outside_the_declared_subset() {
 #[test]
 fn ingress_refuses_content_outside_the_declared_subset() {
     for content in [
-        json!({"type":"image","source":{"type":"base64","media_type":"image/png","data":"AA=="}}),
+        // An image block is a user image since story:image-input; a document block is not.
+        json!({"type":"document","source":{"type":"base64","media_type":"application/pdf","data":"AA=="}}),
         json!({"type":"server_tool_use","id":"srvtoolu_1","name":"web_search","input":{}}),
         // An `ephemeral` mark is the prompt-cache hint since wave 2026-10-16-w08; a mark of
         // another shape is still refused.

@@ -1,0 +1,26 @@
+type: ess-scenario/1
+domain: llm.messages
+scenario: egress-a-user-image-is-an-image-block-in-the-user-message
+summary: user images are image blocks, bytes as a base64 source and a URL as a url source, beside the text in item order; the rolling breakpoint lands on the last (story:image-input)
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.messages.Project
+  input:
+    request_json: '{"format":"llm.turn/3","request":{"model":"internal-model","instructions":"","items":[{"kind":"user-text","text":"What is in these pictures?"},{"kind":"user-image","source":{"kind":"bytes","media_type":"image/png","data":"iVBORw0KGgo="}},{"kind":"user-image","source":{"kind":"url","url":"https://images.example/a.png"}}],"tools":[],"max_output_tokens":512}}'
+    ingress: false
+  outcome: observed
+assert:
+- view: llm.messages.LastInspection
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.messages.LastInspection
+  contains:
+    accepted: true
+    error_code: null
+    dispatch: null
+    wire_request: '{"max_tokens":512,"messages":[{"content":[{"text":"What is in these pictures?","type":"text"},{"source":{"data":"iVBORw0KGgo=","media_type":"image/png","type":"base64"},"type":"image"},{"cache_control":{"type":"ephemeral"},"source":{"type":"url","url":"https://images.example/a.png"},"type":"image"}],"role":"user"}],"model":"example/Model-Revision","stream":true}'
+    items:
+      - "user-text:What is in these pictures?"
+      - "user-image:bytes:image/png:iVBORw0KGgo="
+      - "user-image:url:https://images.example/a.png"

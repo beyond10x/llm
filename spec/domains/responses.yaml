@@ -319,7 +319,9 @@ commands:
       # production decoder instead of being filtered by the test target.
       - {name: binding_json, type: String}
       - {name: upstream_model, type: String}
-      # Serialized llm.turn/3, raw for the same reason.
+      # Serialized llm.turn/3, raw for the same reason. A llm.inference.UserImage item is sent as
+      # an `input_image` part, `image_url` its https URL or base64 `data:` URL and `detail`
+      # `auto`, in one user message with the user text and images beside it, in item order.
       - {name: turn_json, type: String}
       # The conversation the caller opted the client into. Absent means none (R8, R13).
       - {name: conversation_id, type: Optional<String>}
@@ -354,6 +356,9 @@ commands:
     input:
       - {name: binding_json, type: String}
       - {name: upstream_model, type: String}
+      # A user message holding an `input_image` part is read part by part into user text and
+      # llm.inference.UserImage items, in order; an image part elsewhere is refused by its path,
+      # and a `detail` other than `auto` or a `file_id` is refused by name.
       - {name: body_json, type: String}
     outcomes:
       - name: observed

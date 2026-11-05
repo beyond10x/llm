@@ -3,9 +3,9 @@
 use std::collections::BTreeSet;
 
 use llm_core::{
-    Advisory, CallId, Controls, Error, Hints, Item, OutputFormat, Protocol, ReasoningSummary,
-    Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded, Verbosity,
-    field_path, wire_effort,
+    Advisory, CallId, Controls, Error, Hints, ImageSource, Item, OutputFormat, Protocol,
+    ReasoningSummary, Sampling, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded,
+    Verbosity, field_path, wire_effort,
 };
 use serde_json::{Map, Value, json};
 
@@ -124,6 +124,8 @@ fn closed(object: &Map<String, Value>, at: &str, keys: &[&str]) -> Result<(), Er
 ///
 /// Every item is sent, in order, except an opaque item of this binding holding a
 /// `response.metadata` stream event, which llm 0.16.0 and earlier kept and the endpoint refuses.
+/// A user image is an `input_image` part, inline bytes as a base64 `data:` URL, `detail` `auto`;
+/// a run of user texts and images holding one is a single user message, in item order.
 ///
 /// # Errors
 /// Refuses a binding of another protocol, a request the neutral contract already refuses, a
@@ -146,7 +148,20 @@ pub fn project_request(binding: &Binding, request: &TurnRequest) -> Result<Value
     if !request.instructions.is_empty() {
         input.push(message("developer", "input_text", &request.instructions));
     }
-    for item in &request.items {
+    let mut rest = request.items.as_slice();
+    while let Some(item) = rest.first() {
+        // A run of user content holding an image is one user message, its parts in item order.
+        // A run without one is sent as before, one message per text.
+        let run = rest.iter().take_while(|item| is_user_content(item)).count();
+        if rest[..run]
+            .iter()
+            .any(|item| matches!(item, Item::UserImage { .. }))
+        {
+            input.push(user_message(&rest[..run])?);
+            rest = &rest[run..];
+            continue;
+        }
+        rest = &rest[1..];
         let entry = item_to_input(binding, item)?;
         if is_saved_metadata_event(item) {
             continue;
@@ -328,25 +343,10 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
         Some(Value::String(text)) => vec![text.clone()],
         Some(_) => return Err(Error::invalid("`instructions` is not a string")),
     };
-    let mut items = Vec::new();
-    if let Some(input) = object.get("input") {
-        let entries = input
-            .as_array()
-            .ok_or_else(|| Error::invalid("`input` is not an array"))?;
-        for entry in entries {
-            if is_developer_message(entry) {
-                // The neutral turn has no item that places an instruction between two turns.
-                if !items.is_empty() {
-                    return Err(Error::unsupported(
-                        "a standing instruction is carried once, at the head of `input`",
-                    ));
-                }
-                instructions.extend(developer_parts(entry, &mut unforwarded)?);
-                continue;
-            }
-            items.push(input_to_item(entry, &mut unforwarded)?);
-        }
-    }
+    let items = match object.get("input") {
+        None => Vec::new(),
+        Some(input) => input_items(input, &mut instructions, &mut unforwarded)?,
+    };
 
     let mut tools = Vec::new();
     if let Some(published) = object.get("tools") {
@@ -422,6 +422,37 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
     // that binding is a decision only the caller can make.
     check_tool_names(&request.tools)?;
     Ok(request)
+}
+
+/// The items of `input`, in order: a developer message at the head adds to `instructions`, a user
+/// message holding an image part is read part for part, and every other entry is one item.
+fn input_items(
+    input: &Value,
+    instructions: &mut Vec<String>,
+    unforwarded: &mut BTreeSet<Unforwarded>,
+) -> Result<Vec<Item>, Error> {
+    let entries = input
+        .as_array()
+        .ok_or_else(|| Error::invalid("`input` is not an array"))?;
+    let mut items = Vec::new();
+    for entry in entries {
+        if is_developer_message(entry) {
+            // The neutral turn has no item that places an instruction between two turns.
+            if !items.is_empty() {
+                return Err(Error::unsupported(
+                    "a standing instruction is carried once, at the head of `input`",
+                ));
+            }
+            instructions.extend(developer_parts(entry, unforwarded)?);
+            continue;
+        }
+        if let Some(read) = user_parts(entry, unforwarded)? {
+            items.extend(read);
+            continue;
+        }
+        items.push(input_to_item(entry, unforwarded)?);
+    }
+    Ok(items)
 }
 
 /// A field this projection writes with a fixed value must arrive carrying exactly that value.
@@ -685,9 +716,38 @@ fn is_saved_metadata_event(item: &Item) -> bool {
         if payload.get("type").and_then(Value::as_str) == Some("response.metadata"))
 }
 
+const fn is_user_content(item: &Item) -> bool {
+    matches!(item, Item::UserText { .. } | Item::UserImage { .. })
+}
+
+/// One `input_image` part. `detail` is the schema's required field and `auto` its documented
+/// default, so writing it chooses nothing.
+fn image_part(source: &ImageSource) -> Value {
+    json!({"type": "input_image", "image_url": source.to_wire_url(), "detail": "auto"})
+}
+
+/// A run of user texts and images as the one user message holding all of them, in order.
+fn user_message(run: &[Item]) -> Result<Value, Error> {
+    let mut content = Vec::with_capacity(run.len());
+    for item in run {
+        content.push(match item {
+            Item::UserText { text } => json!({"type": "input_text", "text": text}),
+            Item::UserImage { source } => image_part(source),
+            _ => {
+                return Err(Error::unsupported(format!(
+                    "the Responses projection carries no {} item in a user message",
+                    item.kind()
+                )));
+            }
+        });
+    }
+    Ok(json!({"type": "message", "role": "user", "content": content}))
+}
+
 fn item_to_input(binding: &Binding, item: &Item) -> Result<Value, Error> {
     Ok(match item {
         Item::UserText { text } => message("user", "input_text", text),
+        Item::UserImage { .. } => user_message(std::slice::from_ref(item))?,
         Item::AssistantText { text } => message("assistant", "output_text", text),
         // Carried or refused, never dropped: this projection sends no refusal content part.
         Item::AssistantRefusal { .. } => {
@@ -781,6 +841,7 @@ fn developer_parts(
     closed(fields, "input[]", MESSAGE_KEYS)?;
     item_id(fields, unforwarded)?;
     let parts = content_parts(fields)?;
+    refuse_image_parts(parts)?;
     // A message with no parts would vanish from the body without a trace in the turn.
     if parts.is_empty() {
         return Err(Error::unsupported(
@@ -923,15 +984,104 @@ fn call_id(entry: &Value) -> Result<CallId, Error> {
 /// **Exactly one, not however many arrive.** `Item::UserText` holds a single string, so two
 /// parts joined into it come back out as one part and the client is answered with a body it did
 /// not send; zero parts come back out as one empty part. Egress writes exactly one part, so
-/// requiring exactly one here is the symmetric rule rather than a new restriction. Image and
-/// audio parts are outside this contract version and refused with the same code.
+/// requiring exactly one here is the symmetric rule rather than a new restriction. Audio parts
+/// are outside this contract version and refused with the same code. A user message holding an
+/// image part is read by [`user_parts`] instead; an image part in any other message is refused by
+/// its path.
 fn content_text(entry: &Map<String, Value>, part: &str) -> Result<String, Error> {
-    let [only] = content_parts(entry)? else {
+    let parts = content_parts(entry)?;
+    refuse_image_parts(parts)?;
+    let [only] = parts else {
         return Err(Error::unsupported(
             "a message carries content this version cannot represent part for part",
         ));
     };
     part_text(only, part)
+}
+
+/// The type of an image content part.
+const INPUT_IMAGE: &str = "input_image";
+
+fn is_image_part(part: &Value) -> bool {
+    string(part.get("type")) == Some(INPUT_IMAGE)
+}
+
+/// Only a user message carries an image.
+fn refuse_image_parts(parts: &[Value]) -> Result<(), Error> {
+    if parts.iter().any(is_image_part) {
+        return Err(Error::unsupported(
+            "an image part is carried only in a user message: input[].content[]",
+        ));
+    }
+    Ok(())
+}
+
+/// A user message holding an image part, read part for part: each `input_text` part a user text
+/// and each `input_image` part a user image, in order. `None` for every other entry, which
+/// [`input_to_item`] reads as before.
+///
+/// Egress sends a run of user texts and images holding an image as one message, so the message
+/// projects back part for part. Consecutive user messages around an image come back as one.
+fn user_parts(
+    entry: &Value,
+    unforwarded: &mut BTreeSet<Unforwarded>,
+) -> Result<Option<Vec<Item>>, Error> {
+    let Some(fields) = entry.as_object() else {
+        return Ok(None);
+    };
+    let parts = match fields.get("content").and_then(Value::as_array) {
+        Some(parts)
+            if string(fields.get("type")) == Some("message")
+                && string(fields.get("role")) == Some("user")
+                && parts.iter().any(is_image_part) =>
+        {
+            parts
+        }
+        _ => return Ok(None),
+    };
+    closed(fields, "input[]", MESSAGE_KEYS)?;
+    item_id(fields, unforwarded)?;
+    parts
+        .iter()
+        .map(|part| {
+            if is_image_part(part) {
+                image_item(part)
+            } else {
+                part_text(part, "input_text").map(Item::user)
+            }
+        })
+        .collect::<Result<_, _>>()
+        .map(Some)
+}
+
+/// One `input_image` part: `image_url` a base64 `data:` URL or an `https` URL, `detail` absent,
+/// `null` or `auto` (the documented default, which egress writes), `file_id` absent or `null`.
+fn image_item(part: &Value) -> Result<Item, Error> {
+    const AT: &str = "input[].content[]";
+    let fields = part
+        .as_object()
+        .ok_or_else(|| Error::unsupported("message content is outside the pinned subset"))?;
+    closed(fields, AT, &["type", "image_url", "detail", "file_id"])?;
+    match fields.get("detail") {
+        None | Some(Value::Null) => {}
+        Some(Value::String(detail)) if detail == "auto" => {}
+        Some(Value::String(_)) => {
+            return Err(Error::unsupported(
+                "`input[].content[].detail` other than `auto` is outside the pinned subset",
+            ));
+        }
+        Some(_) => {
+            return Err(Error::invalid("`input[].content[].detail` is not a string"));
+        }
+    }
+    if fields.get("file_id").is_some_and(|id| !id.is_null()) {
+        return Err(Error::unsupported(
+            "an image part refers to a file the provider stored, which this projection never keeps",
+        ));
+    }
+    let url = string(fields.get("image_url"))
+        .ok_or_else(|| Error::invalid("an image part has no `image_url`"))?;
+    Ok(Item::user_image(ImageSource::from_wire_url(url)?))
 }
 
 fn content_parts(entry: &Map<String, Value>) -> Result<&[Value], Error> {

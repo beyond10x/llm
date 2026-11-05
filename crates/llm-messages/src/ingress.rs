@@ -584,7 +584,7 @@ fn content(outcome: &TurnOutcome) -> Result<Vec<Value>, Error> {
             Item::UnattributedOpaque { .. } => {
                 return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
             }
-            Item::UserText { .. } | Item::ToolResult { .. } => {
+            Item::UserText { .. } | Item::UserImage { .. } | Item::ToolResult { .. } => {
                 return Err(Error::protocol(CALLER_OWNED));
             }
             _ => {

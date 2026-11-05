@@ -950,3 +950,15 @@ scenarios:
 - bedrock/scenarios/web-identity-credentials-are-fetched-once-and-kept-until-the-refresh-window.yaml
 - bedrock/scenarios/web-identity-credentials-inside-the-refresh-window-are-fetched-again.yaml
 - bedrock/scenarios/web-identity-the-container-agent-address-is-not-an-sts-endpoint.yaml
+- chat/scenarios/egress-a-user-image-shares-the-user-message-of-its-text.yaml
+- chat/scenarios/ingress-text-and-image-parts-of-a-user-message-decode-in-order.yaml
+- chat/scenarios/ingress-an-image-part-outside-a-user-message-is-refused-by-its-path.yaml
+- responses/scenarios/egress-sends-user-images-in-the-user-message-of-their-text.yaml
+- responses/scenarios/ingress-reads-text-and-image-parts-of-a-user-message-in-order.yaml
+- responses/scenarios/ingress-refuses-an-image-part-outside-a-user-message-by-its-path.yaml
+- messages/scenarios/egress-a-user-image-is-an-image-block-in-the-user-message.yaml
+- messages/scenarios/ingress-reads-text-and-image-blocks-of-a-user-message-in-order.yaml
+- messages/scenarios/ingress-refuses-an-image-block-outside-a-user-message-by-its-path.yaml
+- bedrock/scenarios/turn-a-converse-turn-sends-a-user-image-as-inline-bytes.yaml
+- bedrock/scenarios/turn-converse-refuses-a-user-image-by-url-before-any-request.yaml
+- inference/scenarios/model-output-carrying-a-user-image-is-refused.yaml

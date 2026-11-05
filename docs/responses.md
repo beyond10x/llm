@@ -157,12 +157,23 @@ nothing was omitted. A sink that refuses that warning fails the turn with its ow
 
 | neutral item | wire entry |
 | --- | --- |
-| `UserText` | `message` / `user` / `input_text`, exactly one part |
+| `UserText` | `message` / `user` / `input_text`, exactly one part; in a message holding an image, one `input_text` part of it |
+| `UserImage` | an `input_image` part of a `user` message: `image_url` the image as a base64 `data:` URL of its media type, or its `https` URL; `detail` `auto` |
 | `AssistantText` | `message` / `assistant` / `output_text`, exactly one part; an empty `annotations` array is accepted on ingress |
 | `ToolCall` | `function_call` with `arguments` as a JSON **string** |
 | `ToolResult` | `function_call_output` with the envelope below |
 | `Opaque` | outgoing: the payload, verbatim, after all six coordinates match; one whose `type` is `response.metadata`, saved under 0.16.0 or earlier, is left out |
 | `UnattributedOpaque` | ingress: an entry of a type in `CARRIED_ENTRY_TYPES` (today `reasoning`), carried JSON-equal; refused outgoing until a caller binds it |
+
+**A user image shares the message of the user text beside it** (story:image-input). Egress sends
+a run of consecutive user texts and images that holds an image as one `user` message, its
+`input_text` and `input_image` parts in item order; a run without an image is sent as before, one
+message per text. `detail` is the schema's required field and `auto` its documented default, so
+writing it chooses nothing. Ingress reads a user message holding an `input_image` part a part per
+item and accepts `detail` absent, `null` or `auto` and `file_id` absent or `null`; consecutive
+user messages around an image come back out as one. An image part in an assistant or developer
+message is refused by its path, and a `function_call_output` carries one string, as before. llm
+counts no image tokens itself: an image is in whatever `input_tokens` the endpoint reports.
 
 **Tool results are always enveloped**, as `{"ok": <bool>, "output": <value>}` serialized into the
 single string this wire's `function_call_output` carries. The wire has no failure channel, so the
@@ -183,11 +194,11 @@ read back as failed. This wire has no rejected state, and llm adds none: a third
 envelope would make a 0.7.0 reader take the whole string for a successful result
 ([design](design.md#failed-and-rejected-tool-results)).
 
-Each modelled item names its keys: a message `type`, `id`, `role` and `content`; a content part
-`type` and `text`; a `function_call` `type`, `id`, `call_id`, `name` and `arguments`; a
-`function_call_output` `type`, `id`, `call_id` and `output`. An `id` (a string) is the unforwarded
-hint `input-item-ids`: its value is not kept and egress writes no id. A `reasoning` item is carried
-whole, its `id` inside the payload.
+Each modelled item names its keys: a message `type`, `id`, `role` and `content`; a text part
+`type` and `text`; an image part `type`, `image_url`, `detail` and `file_id`; a `function_call`
+`type`, `id`, `call_id`, `name` and `arguments`; a `function_call_output` `type`, `id`, `call_id`
+and `output`. An `id` (a string) is the unforwarded hint `input-item-ids`: its value is not kept
+and egress writes no id. A `reasoning` item is carried whole, its `id` inside the payload.
 
 ### Opaque state goes out bound and comes back in unattributed
 
@@ -231,13 +242,15 @@ is read back as that shape rather than as opaque.
 | opaque state whose protocol, provider, account, endpoint, model or binding revision differs | `Unsupported` |
 | a tool name outside `^[a-zA-Z0-9_-]+$`, **on either side** | `Unsupported` |
 | a fixed field absent, or carrying any other value, on ingress | `Unsupported` |
-| a message whose content is not exactly one part of the expected type | `Unsupported` |
+| a message whose content is not exactly one part of the expected type, unless it is a user message holding an image | `Unsupported` |
 | unattributed opaque state no caller has bound, outgoing (`Item::UNATTRIBUTED_REFUSAL`) | `Unsupported` |
 | an `input` entry whose `type` is absent or empty, on ingress | `Unsupported` |
 | an `item_reference` entry, on ingress | `Unsupported` |
 | an `input` entry of a type neither modelled nor in `CARRIED_ENTRY_TYPES`, on ingress | `Unsupported` |
 | a binding not declaring the Responses protocol | `Unsupported` |
-| image or audio content, on either side | `Unsupported` |
+| audio content on either side, and image content anywhere but a user message (`an image part is carried only in a user message: input[].content[]`) | `Unsupported` |
+| an image part with `detail` other than `auto` or a `file_id`, on ingress | `Unsupported` |
+| an image URL that is neither a base64 `data:` URL of `image/png`, `image/jpeg`, `image/gif` or `image/webp` nor an `https` URL of visible ASCII naming a host; inline bytes past 5 MiB, in fixed text | `InvalidRequest`, `TooLarge` |
 | a key outside the subset at any level, on ingress, named by its path | `Unsupported` |
 | a tool of another type than `function`, on ingress | `Unsupported` |
 | a developer message after the first item of another kind, on ingress | `Unsupported` |
@@ -329,7 +342,10 @@ absent when it does not report them.
 **Exactly one content part, in both directions.** `Item::UserText` holds a single string, so two
 `input_text` parts joined into it come back out as one part and the client is answered with a body
 it did not send; zero parts come back out as one empty part. Egress writes exactly one part, so
-requiring exactly one on ingress is the symmetric rule rather than a new restriction.
+requiring exactly one on ingress is the symmetric rule rather than a new restriction. A user
+message holding an `input_image` part is the one exception, by the same symmetry: egress writes a
+run of user texts and images holding an image as one message, a part per item, so ingress reads
+such a message a part per item, every text and every image in order.
 
 An output **message** whose content carries a part outside `output_text`/`text` — a model
 `refusal`, an image — is refused with `Unsupported`, not filtered down to the parts this version

@@ -1,12 +1,12 @@
 type: ess-scenario/1
 domain: llm.messages
 scenario: ingress-refuses-content-outside-the-subset
-summary: image content is refused rather than translated into text
+summary: document content is refused rather than translated into text; an image block is a user image since story:image-input
 timeline:
 - at: '2026-09-21T12:00:00Z'
   command: llm.messages.Project
   input:
-    request_json: "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"source\":{\"data\":\"AA==\",\"media_type\":\"image/png\",\"type\":\"base64\"},\"type\":\"image\"}],\"role\":\"user\"}],\"model\":\"caller-alias\"}"
+    request_json: "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"source\":{\"data\":\"AA==\",\"media_type\":\"application/pdf\",\"type\":\"base64\"},\"type\":\"document\"}],\"role\":\"user\"}],\"model\":\"caller-alias\"}"
     ingress: true
   outcome: observed
 assert:

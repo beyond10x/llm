@@ -5,8 +5,8 @@
 
 use ess_conformance::target::TargetError;
 use llm_core::{
-    Cancel, Error, ErrorCode, Id, Item, OutcomeDocument, StopReason, StreamEvent, TurnDocument,
-    TurnOutcome, TurnRequest, VecSink,
+    Cancel, Error, ErrorCode, Id, ImageSource, Item, OutcomeDocument, StopReason, StreamEvent,
+    TurnDocument, TurnOutcome, TurnRequest, VecSink,
 };
 use llm_messages::{
     IngressStream, decode_message, decode_request, decode_stream, encode_ingress_message,
@@ -354,6 +354,7 @@ fn labels(items: &[Item]) -> Vec<String> {
 fn label(item: &Item) -> String {
     match item {
         Item::UserText { text } => format!("user-text:{text}"),
+        Item::UserImage { source } => format!("user-image:{}", image_label(source)),
         Item::AssistantText { text } => format!("assistant-text:{text}"),
         Item::AssistantRefusal { text } => format!("assistant-refusal:{text}"),
         Item::ToolCall(call) => format!(
@@ -382,6 +383,22 @@ fn label(item: &Item) -> String {
         ),
         // A kind this runner does not know yet is labelled by its name and matches no expectation.
         _ => item.kind().to_owned(),
+    }
+}
+
+/// An image source as a label: `bytes:<media type>:<base64>` or `url:<url>`.
+pub(crate) fn image_label(source: &ImageSource) -> String {
+    match source {
+        ImageSource::Bytes { media_type, .. } => {
+            format!(
+                "bytes:{}:{}",
+                media_type.name(),
+                source.base64().unwrap_or_default()
+            )
+        }
+        ImageSource::Url { url } => format!("url:{url}"),
+        // A source this runner does not know yet matches no expectation.
+        _ => "unknown-source".to_owned(),
     }
 }
 

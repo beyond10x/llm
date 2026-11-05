@@ -10,6 +10,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 - `Capabilities::with_tools`, `with_tool_choice`, `with_temperature`, `with_top_p` and `with_reasoning_efforts`
 - `Item::kind`: the item's serialized `kind` as fixed text, so a wildcard arm can refuse an item by name
+- `Item::UserImage` (`ImageSource`, `ImageMediaType`): inline PNG, JPEG, GIF or WebP bytes up to 5 MiB, or an https URL
+- A user image is sent on Responses, Chat, Messages, InvokeModel and Converse beside its text; Converse refuses a URL
+- Responses, Chat and Messages ingress read image parts of a user message in order; elsewhere they stay refused by path
+- ESS: `llm.inference.UserImage` and 12 image scenarios across five domains; the conformance floor is 999 (was 987)
 
 ### Changed
 

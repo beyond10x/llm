@@ -9,6 +9,10 @@ pub const MAX_TOOL_DESCRIPTION_BYTES: usize = 16 * 1024;
 pub const MAX_TOOLS: usize = 512;
 pub const MAX_ITEMS: usize = 4096;
 pub const MAX_REQUEST_BYTES: usize = 16 * 1024 * 1024;
+/// The bytes one inline image carries, before any encoding.
+pub const MAX_IMAGE_BYTES: usize = 5 * 1024 * 1024;
+/// The bytes of one image URL.
+pub const MAX_IMAGE_URL_BYTES: usize = 8 * 1024;
 
 struct Counter {
     length: usize,

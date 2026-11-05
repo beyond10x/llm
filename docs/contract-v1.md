@@ -1,8 +1,9 @@
 # Neutral inference contract (unreleased revision 2)
 
 This is the first LLM contract. It is independent of Harness execution authority and supports
-stateless text and tool turns. Image/audio, vendor-side tools, provider thread management and
-unrecognized request settings are outside this version and must be refused by adapters.
+stateless text and tool turns, and images in a user turn. Audio, images anywhere but a user turn,
+vendor-side tools, provider thread management and unrecognized request settings are outside this
+version and must be refused by adapters.
 The ESS declaration vocabulary is in `spec/domains/catalog.yaml`.
 
 ## Turn ownership
@@ -14,8 +15,16 @@ A client performs one attempt. Routing owns retries, alternate accounts and fall
 Sink emission is awaited, allowing bounded backpressure. Sink failure terminates the attempt.
 Cancellation is monotonic, cloneable, wakes pending work and wins over simultaneous completion.
 
-An `Item` contains user/assistant text, a tool call, its successful or failed result, or an opaque
-provider item. Tool definitions contain only name, description and JSON Schema. They confer no
+An `Item` contains user/assistant text, a user image, a tool call, its successful or failed result,
+or an opaque provider item. A user image (`Item::UserImage`) is inline bytes of `image/png`,
+`image/jpeg`, `image/gif` or `image/webp`, at most `MAX_IMAGE_BYTES` (5 MiB), or an `https` URL of
+visible ASCII naming a host, at most `MAX_IMAGE_URL_BYTES` (8 KiB); a URL carries no media type,
+since no wire has a place for one. Every adapter sends it in the user message of the user content
+beside it, in item order, or refuses it before I/O, and no image byte or URL reaches a diagnostic
+or a `Debug` form. A model's output carrying one is caller-owned content and is refused. llm
+counts no image tokens itself: an image is in whatever input count the far side reports, and an
+absent counter stays unknown.
+Tool definitions contain only name, description and JSON Schema. They confer no
 execution permission; LLM never executes a tool, carries an approval envelope or imports an agent
 loop. A caller supplies tool results in a subsequent request.
 

@@ -982,6 +982,9 @@ fn report_turn_outcome(outcome: &TurnOutcome, facts: &mut Value) {
 fn label(item: &Item) -> String {
     match item {
         Item::UserText { text } => format!("user-text:{text}"),
+        Item::UserImage { source } => {
+            format!("user-image:{}", crate::messages::image_label(source))
+        }
         Item::AssistantText { text } => format!("assistant-text:{text}"),
         Item::AssistantRefusal { text } => format!("assistant-refusal:{text}"),
         Item::ToolCall(call) => format!(

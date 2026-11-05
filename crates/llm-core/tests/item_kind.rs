@@ -2,12 +2,15 @@
 //! a match on it outside `llm-core` ends in a wildcard arm, and that arm refuses by this name: fixed
 //! text, never a byte of the item's content.
 
-use llm_core::{CallId, Id, Item, Protocol, Provenance, ToolCall, ToolName};
+use llm_core::{
+    CallId, Id, ImageMediaType, ImageSource, Item, Protocol, Provenance, ToolCall, ToolName,
+};
 use serde_json::json;
 
 fn every_kind() -> Vec<Item> {
     vec![
         Item::user("What does a.txt say?"),
+        Item::user_image(ImageSource::bytes(ImageMediaType::Png, b"\x89PNG")),
         Item::assistant("Reading it."),
         Item::AssistantRefusal {
             text: "I cannot help with that.".to_owned(),

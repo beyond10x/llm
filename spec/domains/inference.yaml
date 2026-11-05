@@ -69,6 +69,31 @@ types:
       # Absent leaves the wire's own default. A wire that always holds the answer to the schema
       # refuses false.
       - {name: strict, type: Optional<Boolean>}
+  # The media type of inline image bytes (story:image-input), written as its MIME name:
+  # image/png, image/jpeg, image/gif, image/webp. Any other name is refused without quoting it.
+  - name: llm.inference.ImageMediaType
+    kind: enum
+    variants: [Png, Jpeg, Gif, Webp]
+  - name: llm.inference.ImageSourceKind
+    kind: enum
+    variants: [Bytes, Url]
+  # The image a user turn carries, the `user-image` item of llm.turn/3 and llm.turn/4:
+  # `{"kind":"user-image","source":{"kind":"bytes","media_type":…,"data":…}}` or
+  # `{"kind":"user-image","source":{"kind":"url","url":…}}`. Bytes are canonical standard base64,
+  # 1 byte to 5 MiB before encoding. A URL is `https://`, a host and visible ASCII, at most 8 KiB,
+  # and carries no media type: the far side reads the type of what it fetches. Every wire sends it
+  # in the user message beside the user content around it, in item order, or refuses it before
+  # I/O; no image byte or URL reaches an error message or a debug form. A model's output carrying
+  # one is caller-owned content and is refused. A turn without one keeps its bytes.
+  - name: llm.inference.UserImage
+    kind: struct
+    fields:
+      - {name: kind, type: llm.inference.ImageSourceKind}
+      # Present exactly when the kind is Bytes.
+      - {name: media_type, type: Optional<llm.inference.ImageMediaType>}
+      - {name: data, type: Optional<String>}
+      # Present exactly when the kind is Url.
+      - {name: url, type: Optional<String>}
   - name: llm.inference.Controls
     kind: struct
     fields:

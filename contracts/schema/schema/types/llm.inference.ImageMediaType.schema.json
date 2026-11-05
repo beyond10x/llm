@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.ImageMediaType",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "530fac002589b0a7460f2a348378e01c712b11f6c2bd2bc84982720f932a2c55",
+    "contract_digest": "slice-sha256/2:b432b8dc64b210dfcbc974dc00cc568c86f8744398ec203e024c4ec41e8d1c5e",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.ImageMediaType": {
+      "title": "ImageMediaType",
+      "x-ess-name": "llm.inference.ImageMediaType",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Png",
+        "Jpeg",
+        "Gif",
+        "Webp"
+      ]
+    }
+  }
+}

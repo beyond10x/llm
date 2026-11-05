@@ -86,6 +86,7 @@
       "llm.bedrock/authored/turn-a-429-service-quota-answer-is-final",
       "llm.bedrock/authored/turn-a-429-throttling-answer-stays-a-retriable-rate-limit",
       "llm.bedrock/authored/turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call",
+      "llm.bedrock/authored/turn-a-converse-turn-sends-a-user-image-as-inline-bytes",
       "llm.bedrock/authored/turn-a-converse-turn-sends-its-output-format-as-text-format",
       "llm.bedrock/authored/turn-a-cut-after-content-is-final",
       "llm.bedrock/authored/turn-a-cut-before-any-content-may-be-retried",
@@ -97,6 +98,7 @@
       "llm.bedrock/authored/turn-an-anthropic-invoke-stream-sends-the-messages-body-with-the-bedrock-version",
       "llm.bedrock/authored/turn-an-anthropic-invoke-turn-sends-the-messages-output-format",
       "llm.bedrock/authored/turn-converse-cache-counters-make-the-input-total-known",
+      "llm.bedrock/authored/turn-converse-refuses-a-user-image-by-url-before-any-request",
       "llm.bedrock/authored/turn-converse-refuses-an-output-format-that-is-not-strict",
       "llm.bedrock/authored/turn-converse-thinking-is-sent-as-an-additional-field-and-streamed-as-reasoning",
       "llm.bedrock/authored/web-identity-a-503-is-a-retriable-transport-failure",
@@ -174,6 +176,7 @@
       "llm.budget/authored/wide-aggregate-charge-is-exact",
       "llm.budget/authored/write-failure-freezes-owner-until-reopen",
       "llm.budget/authored/zero-cap-allows-only-declared-zero",
+      "llm.chat/authored/egress-a-user-image-shares-the-user-message-of-its-text",
       "llm.chat/authored/egress-an-output-format-without-a-name-is-refused",
       "llm.chat/authored/incoming-a-completion-without-a-finish-reason-is-refused",
       "llm.chat/authored/incoming-a-counter-a-present-report-omits-stays-absent",
@@ -233,6 +236,7 @@
       "llm.chat/authored/ingress-a-tool-that-is-not-a-function-is-refused",
       "llm.chat/authored/ingress-an-accepted-encoding-carries-no-refusal",
       "llm.chat/authored/ingress-an-accepted-request-carries-no-refusal",
+      "llm.chat/authored/ingress-an-image-part-outside-a-user-message-is-refused-by-its-path",
       "llm.chat/authored/ingress-an-outcome-leaving-out-an-announced-call-is-refused",
       "llm.chat/authored/ingress-an-outcome-renaming-an-announced-call-is-refused",
       "llm.chat/authored/ingress-an-unknown-key-on-a-content-part-is-refused-by-its-path",
@@ -262,6 +266,7 @@
       "llm.chat/authored/ingress-other-json-in-a-tool-message-stays-a-successful-string",
       "llm.chat/authored/ingress-stream-options-that-are-not-an-object-are-refused",
       "llm.chat/authored/ingress-streamed-closing-chunks-carry-calls-then-the-finish-reason",
+      "llm.chat/authored/ingress-text-and-image-parts-of-a-user-message-decode-in-order",
       "llm.chat/authored/outgoing-a-refused-projection-builds-no-body",
       "llm.chat/authored/outgoing-a-thinking-budget-is-refused",
       "llm.chat/authored/outgoing-absent-settings-stay-absent",
@@ -312,6 +317,7 @@
       "llm.inference/authored/missing-final-usage-refused",
       "llm.inference/authored/model-output-calling-an-unpublished-tool-is-refused",
       "llm.inference/authored/model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it",
+      "llm.inference/authored/model-output-carrying-a-user-image-is-refused",
       "llm.inference/authored/model-output-carrying-another-accounts-opaque-state-is-refused",
       "llm.inference/authored/model-output-carrying-caller-content-is-refused",
       "llm.inference/authored/model-output-carrying-its-own-opaque-state-is-accepted",
@@ -377,6 +383,7 @@
       "llm.messages/authored/disabled-thinking-is-projected-as-read",
       "llm.messages/authored/duplicate-message-start-refused",
       "llm.messages/authored/effort-max-is-projected-as-its-own-name",
+      "llm.messages/authored/egress-a-user-image-is-an-image-block-in-the-user-message",
       "llm.messages/authored/egress-refuses-an-output-format-that-is-not-strict",
       "llm.messages/authored/egress-writes-the-output-format-beside-the-effort",
       "llm.messages/authored/event-name-contradicting-its-payload-refused",
@@ -393,6 +400,7 @@
       "llm.messages/authored/ingress-reads-metadata-as-client-metadata-and-reports-it-omitted",
       "llm.messages/authored/ingress-reads-parallel-tool-use-left-enabled",
       "llm.messages/authored/ingress-reads-system-messages-as-instructions-and-marked-user-text",
+      "llm.messages/authored/ingress-reads-text-and-image-blocks-of-a-user-message-in-order",
       "llm.messages/authored/ingress-reads-the-output-format-beside-the-effort",
       "llm.messages/authored/ingress-reads-thinking-with-a-budget",
       "llm.messages/authored/ingress-refuses-a-cache-mark-on-thinking",
@@ -405,6 +413,7 @@
       "llm.messages/authored/ingress-refuses-a-system-message-block-that-is-not-text",
       "llm.messages/authored/ingress-refuses-a-system-shape-outside-the-subset",
       "llm.messages/authored/ingress-refuses-a-temperature-above-one",
+      "llm.messages/authored/ingress-refuses-an-image-block-outside-a-user-message-by-its-path",
       "llm.messages/authored/ingress-refuses-citations-on-a-system-block",
       "llm.messages/authored/ingress-refuses-content-outside-the-subset",
       "llm.messages/authored/ingress-refuses-context-management",
@@ -575,6 +584,7 @@
       "llm.responses/authored/egress-reports-the-hints-it-does-not-send",
       "llm.responses/authored/egress-sends-disabled-thinking-as-effort-none",
       "llm.responses/authored/egress-sends-the-effort-max-as-xhigh",
+      "llm.responses/authored/egress-sends-user-images-in-the-user-message-of-their-text",
       "llm.responses/authored/egress-the-first-codex-turn-with-verbosity-drops-only-its-unforwarded-hints",
       "llm.responses/authored/egress-writes-the-carried-controls-and-hints",
       "llm.responses/authored/egress-writes-the-output-format-as-text-format",
@@ -599,6 +609,7 @@
       "llm.responses/authored/ingress-reads-a-plain-string-tool-result",
       "llm.responses/authored/ingress-reads-an-envelope-with-an-extra-field-as-a-plain-string",
       "llm.responses/authored/ingress-reads-instructions-alone",
+      "llm.responses/authored/ingress-reads-text-and-image-parts-of-a-user-message-in-order",
       "llm.responses/authored/ingress-reads-the-first-codex-turn",
       "llm.responses/authored/ingress-reads-the-first-codex-turn-with-verbosity",
       "llm.responses/authored/ingress-reads-the-second-codex-turn",
@@ -631,6 +642,7 @@
       "llm.responses/authored/ingress-refuses-a-web-search-tool-by-its-type",
       "llm.responses/authored/ingress-refuses-an-empty-include",
       "llm.responses/authored/ingress-refuses-an-entry-whose-type-is-empty",
+      "llm.responses/authored/ingress-refuses-an-image-part-outside-a-user-message-by-its-path",
       "llm.responses/authored/ingress-refuses-an-include-outside-the-subset",
       "llm.responses/authored/ingress-refuses-an-unknown-tool-type-without-naming-it",
       "llm.responses/authored/ingress-refuses-content-this-version-does-not-carry",
@@ -1217,6 +1229,11 @@
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call"
       },
+      "bedrock/scenarios/turn-a-converse-turn-sends-a-user-image-as-inline-bytes.yaml": {
+        "digest": "sha256:c10ded4c75435b75ec3998a6febd258cfe72cec5d5776979051c72c8fd5c50c8",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-turn-sends-a-user-image-as-inline-bytes"
+      },
       "bedrock/scenarios/turn-a-converse-turn-sends-its-output-format-as-text-format.yaml": {
         "digest": "sha256:674aa4c24cfff5ac086a513968bf24cf6f6ee09946342cb002d50fb5a741dd7b",
         "disposition": "accepted",
@@ -1271,6 +1288,11 @@
         "digest": "sha256:795fa30616a28f0f4ec4e2b1ad5e2a0025630b42adf8873cbda7a323b947176e",
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-converse-cache-counters-make-the-input-total-known"
+      },
+      "bedrock/scenarios/turn-converse-refuses-a-user-image-by-url-before-any-request.yaml": {
+        "digest": "sha256:3074dd39703f88dff47906a10f21e5db89d762bc149ccdc1c12f7e1312303352",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-converse-refuses-a-user-image-by-url-before-any-request"
       },
       "bedrock/scenarios/turn-converse-refuses-an-output-format-that-is-not-strict.yaml": {
         "digest": "sha256:f9ffff7d9ba97dab6b4541179ccc535afbdc91600a5ab5e5db72c46e92843080",
@@ -1657,6 +1679,11 @@
         "disposition": "accepted",
         "scenario": "llm.budget/authored/zero-cap-allows-only-declared-zero"
       },
+      "chat/scenarios/egress-a-user-image-shares-the-user-message-of-its-text.yaml": {
+        "digest": "sha256:ad728487c51ada6ab72830fc1e6e70b28291e51cfaee1c29d775562a683bfb5b",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/egress-a-user-image-shares-the-user-message-of-its-text"
+      },
       "chat/scenarios/egress-an-output-format-without-a-name-is-refused.yaml": {
         "digest": "sha256:970c19cb686cefde6311a067a82dfdbd08d5bef93f1d5b9f02d52bf8deca2d5c",
         "disposition": "accepted",
@@ -1868,7 +1895,7 @@
         "scenario": "llm.chat/authored/ingress-a-named-unsupported-field-is-refused-by-its-own-name"
       },
       "chat/scenarios/ingress-a-non-text-content-part-is-refused.yaml": {
-        "digest": "sha256:fd3dcaff806f66e571ceab7f6ef2aeb951446f77eb90fab066a745a49f88a862",
+        "digest": "sha256:e1398bd158cec8a44625a382f2b2cb49358b3b7840459cdf89891f6864fc5752",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-non-text-content-part-is-refused"
       },
@@ -1878,7 +1905,7 @@
         "scenario": "llm.chat/authored/ingress-a-refused-encoding-carries-no-content"
       },
       "chat/scenarios/ingress-a-refused-request-decodes-to-no-turn.yaml": {
-        "digest": "sha256:9c7b5999c2f05c732c1ea79f0a27a1e33fc2bd38b04bcaada710d3a56e7efe7a",
+        "digest": "sha256:f7be9f7d9570bcab4cd85ee049b49627e8a6cf50dc2465bc3fdcd0b22c7f0e22",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-refused-request-decodes-to-no-turn"
       },
@@ -1951,6 +1978,11 @@
         "digest": "sha256:758594b093a5e22d0e7d8bbef1bb343856db3db45205c6cf65f202747bf94537",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-an-accepted-request-carries-no-refusal"
+      },
+      "chat/scenarios/ingress-an-image-part-outside-a-user-message-is-refused-by-its-path.yaml": {
+        "digest": "sha256:8a4cd002901a5404f8452c3182f77ce93e1fa97522d5c43d70e8963b74e60902",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-an-image-part-outside-a-user-message-is-refused-by-its-path"
       },
       "chat/scenarios/ingress-an-outcome-leaving-out-an-announced-call-is-refused.yaml": {
         "digest": "sha256:8d5d674b1da7b258849ea9bd95ad6a90e906d55433d0eaca2c1d113983fae799",
@@ -2096,6 +2128,11 @@
         "digest": "sha256:defacab5b8efbe440d9d58291c279bb7ed51200a90f18a9a2a5aadf2d0346d3d",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-streamed-closing-chunks-carry-calls-then-the-finish-reason"
+      },
+      "chat/scenarios/ingress-text-and-image-parts-of-a-user-message-decode-in-order.yaml": {
+        "digest": "sha256:d1f787b96d6bef2e91d8b4f41d60239881f5a3d46bd1c0acc58776af19ed3d8f",
+        "disposition": "accepted",
+        "scenario": "llm.chat/authored/ingress-text-and-image-parts-of-a-user-message-decode-in-order"
       },
       "chat/scenarios/outgoing-a-refused-projection-builds-no-body.yaml": {
         "digest": "sha256:5e82b10b57385c44bfd8737bdaca9e00556af271bd339c046af612eccb8169f4",
@@ -2346,6 +2383,11 @@
         "digest": "sha256:2fdcd005d82988790710d284af5319d643eeb0b6fdb52e2981e283561593f6e8",
         "disposition": "accepted",
         "scenario": "llm.inference/authored/model-output-calling-an-unpublished-tool-reaches-a-caller-that-asked-for-it"
+      },
+      "inference/scenarios/model-output-carrying-a-user-image-is-refused.yaml": {
+        "digest": "sha256:9da7687150ac22a4799c17e702dad1e1a68afe809d5fa78b0f48caedead788de",
+        "disposition": "accepted",
+        "scenario": "llm.inference/authored/model-output-carrying-a-user-image-is-refused"
       },
       "inference/scenarios/model-output-carrying-another-accounts-opaque-state-is-refused.yaml": {
         "digest": "sha256:224dff38c8542ec82f8bbf0894deeeced815d5b8f561073fe84e948da279924c",
@@ -2627,6 +2669,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/effort-max-is-projected-as-its-own-name"
       },
+      "messages/scenarios/egress-a-user-image-is-an-image-block-in-the-user-message.yaml": {
+        "digest": "sha256:73411e3d1d153d8bf7b1274eca2120db9afaf98508b3d5a0bd45a85abfcaf3e8",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/egress-a-user-image-is-an-image-block-in-the-user-message"
+      },
       "messages/scenarios/egress-refuses-an-output-format-that-is-not-strict.yaml": {
         "digest": "sha256:8b698c1d639ca76597eaf7285fd5fad4624e3162a006bfae0d6d155c25a50e9c",
         "disposition": "accepted",
@@ -2707,6 +2754,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-system-messages-as-instructions-and-marked-user-text"
       },
+      "messages/scenarios/ingress-reads-text-and-image-blocks-of-a-user-message-in-order.yaml": {
+        "digest": "sha256:81cddfa181302272c5449fbc9e5562f440af40b9ca20060f42e7dbfaea91f335",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/ingress-reads-text-and-image-blocks-of-a-user-message-in-order"
+      },
       "messages/scenarios/ingress-reads-the-output-format-beside-the-effort.yaml": {
         "digest": "sha256:dea58d9553cffe0b5ada24ac3990e200698f2fda3b2440153cab0fe9cf440a46",
         "disposition": "accepted",
@@ -2767,13 +2819,18 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-refuses-a-temperature-above-one"
       },
+      "messages/scenarios/ingress-refuses-an-image-block-outside-a-user-message-by-its-path.yaml": {
+        "digest": "sha256:2cd81fba784fdde5febc0105e6284c8a467df0629c6479e49ed2076f590f7086",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/ingress-refuses-an-image-block-outside-a-user-message-by-its-path"
+      },
       "messages/scenarios/ingress-refuses-citations-on-a-system-block.yaml": {
         "digest": "sha256:023178a75b818fcbe33eead2a11e26b5bbaa68784a55ddef332359b1b2a59b74",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-refuses-citations-on-a-system-block"
       },
       "messages/scenarios/ingress-refuses-content-outside-the-subset.yaml": {
-        "digest": "sha256:ac8f409e514d829096cc90356d0d8b3862ff2360eae840738f9ebfc8e3208193",
+        "digest": "sha256:d5ae61d332cc038d03c770fed4c435b84474fb78885915338c38af3530094aa5",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-refuses-content-outside-the-subset"
       },
@@ -3847,6 +3904,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/egress-sends-the-effort-max-as-xhigh"
       },
+      "responses/scenarios/egress-sends-user-images-in-the-user-message-of-their-text.yaml": {
+        "digest": "sha256:a0a73a3f0d4e81894ae8903375c56756d96cd53233f8cad1030c1c5862980369",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/egress-sends-user-images-in-the-user-message-of-their-text"
+      },
       "responses/scenarios/egress-the-first-codex-turn-with-verbosity-drops-only-its-unforwarded-hints.yaml": {
         "digest": "sha256:9a06b5d4b47c9bd1c0791e26b9c70db9c39b39145104f8a97c24c95152133720",
         "disposition": "accepted",
@@ -3966,6 +4028,11 @@
         "digest": "sha256:55643bc27ec4fe38869dd2da2dc5ce0072937eed0514499c314ebcf43a2b22bc",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/ingress-reads-instructions-alone"
+      },
+      "responses/scenarios/ingress-reads-text-and-image-parts-of-a-user-message-in-order.yaml": {
+        "digest": "sha256:1a4469e780eec95a16f3a32658459768e9c1812810a5348264f187da881397c3",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/ingress-reads-text-and-image-parts-of-a-user-message-in-order"
       },
       "responses/scenarios/ingress-reads-the-first-codex-turn-with-verbosity.yaml": {
         "digest": "sha256:bcc1b081895044d1577c34bbb7bdfa09e930fdf2397b966103291e14bcf777b0",
@@ -4127,6 +4194,11 @@
         "disposition": "accepted",
         "scenario": "llm.responses/authored/ingress-refuses-an-entry-whose-type-is-empty"
       },
+      "responses/scenarios/ingress-refuses-an-image-part-outside-a-user-message-by-its-path.yaml": {
+        "digest": "sha256:3c9c27f2ba4dbad0153016614934830d09d475f87ca086fed71d392e0d769b34",
+        "disposition": "accepted",
+        "scenario": "llm.responses/authored/ingress-refuses-an-image-part-outside-a-user-message-by-its-path"
+      },
       "responses/scenarios/ingress-refuses-an-include-outside-the-subset.yaml": {
         "digest": "sha256:e05d58d62a9491450b58e87be94e74574ed892e5881c206b55bbcf3ab8e42ad4",
         "disposition": "accepted",
@@ -4138,7 +4210,7 @@
         "scenario": "llm.responses/authored/ingress-refuses-an-unknown-tool-type-without-naming-it"
       },
       "responses/scenarios/ingress-refuses-content-this-version-does-not-carry.yaml": {
-        "digest": "sha256:69d526ae31c15065ed01da978674d427d04f45f3527fdffdbaf1115fe2538eaa",
+        "digest": "sha256:ed48e9d4770ef2ee46712f6212185d1c23ae91f8ef56f9145bcbd9ed0f7d0e7a",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/ingress-refuses-content-this-version-does-not-carry"
       },
@@ -5699,7 +5771,7 @@
       }
     },
     "counts": {
-      "authored": 949,
+      "authored": 961,
       "generated": 38,
       "outside": 0,
       "refused": 0
@@ -5758,9 +5830,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "3fb37e16ada17bac3a2903abe0d71e6ad1f5767e732327d32f0b8ce548e37bac",
+    "contract_digest": "81006577a20f12d052d1d7d7939d925560c9f0de0480320a2bf3c6df61263e2e",
     "scenario_initial_state": "empty",
-    "spec_digest": "75071b75bc6991dd43c3b8492604a78dae67e197b16999c8296350961e78a721",
+    "spec_digest": "530fac002589b0a7460f2a348378e01c712b11f6c2bd2bc84982720f932a2c55",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -18245,6 +18317,130 @@
         }
       ]
     },
+    "llm.bedrock/authored/turn-a-converse-turn-sends-a-user-image-as-inline-bytes": {
+      "purpose": "a user image of inline bytes is a Converse image block, its format by Converse's name and its bytes as base64, in the user message beside its text (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "ddtrace-bedrock_converse_stream_prompt_caching-1.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.anthropic.claude-3-7-sonnet-20250219-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"What is in this picture?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "request_body": {
+                "kind": "literal",
+                "value": "{\"messages\":[{\"content\":[{\"text\":\"What is in this picture?\"},{\"image\":{\"format\":\"png\",\"source\":{\"bytes\":\"iVBORw0KGgo=\"}}}],\"role\":\"user\"}]}"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "signature_verifies": {
+                "kind": "literal",
+                "value": true
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "end-turn"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
     "llm.bedrock/authored/turn-a-converse-turn-sends-its-output-format-as-text-format": {
       "purpose": "a named JSON Schema output format is outputConfig.textFormat, the schema as a JSON string and the name kept",
       "source": [
@@ -19711,6 +19907,126 @@
               "usage_json": {
                 "kind": "literal",
                 "value": "{\"input_tokens\":1040,\"output_tokens\":250,\"cached_input_tokens\":1028,\"cache_creation_input_tokens\":0}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-converse-refuses-a-user-image-by-url-before-any-request": {
+      "purpose": "Converse's image source holds no URL, so a user image by URL is refused by name before any request (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "ddtrace-bedrock_converse_stream_prompt_caching-1.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.anthropic.claude-3-7-sonnet-20250219-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Look\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"url\",\"url\":\"https://images.example/a.png\"}}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "request_body": {
+                "kind": "literal",
+                "value": null
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
               }
             }
           },
@@ -29368,6 +29684,114 @@
         }
       ]
     },
+    "llm.chat/authored/egress-a-user-image-shares-the-user-message-of-its-text": {
+      "purpose": "user images are image_url parts, inline bytes as a base64 data URL, in one user message with the text beside them in item order; a text-only message keeps its string content (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.ProjectRequest"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.ProjectRequest",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastRequestProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.ProjectRequest",
+          "input": {
+            "capabilities_json": {
+              "kind": "literal",
+              "value": "{\"tools\":true,\"tool_choice\":true,\"temperature\":true,\"top_p\":true,\"reasoning_efforts\":[\"low\",\"high\"],\"context_window\":32768,\"max_output_tokens\":4096}"
+            },
+            "protocol": {
+              "kind": "literal",
+              "value": "chat-completions"
+            },
+            "streaming": {
+              "kind": "literal",
+              "value": false
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"What is in these pictures?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}},{\"kind\":\"user-image\",\"source\":{\"kind\":\"url\",\"url\":\"https://images.example/a.png\"}},{\"kind\":\"assistant-text\",\"text\":\"A logo and a chart.\"},{\"kind\":\"user-text\",\"text\":\"Thanks\"}],\"tools\":[]}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "small"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.ProjectRequest",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastRequestProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "message_roles": {
+                "kind": "literal",
+                "value": [
+                  "user",
+                  "assistant",
+                  "user"
+                ]
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": "{\"messages\":[{\"content\":[{\"text\":\"What is in these pictures?\",\"type\":\"text\"},{\"image_url\":{\"url\":\"data:image/png;base64,iVBORw0KGgo=\"},\"type\":\"image_url\"},{\"image_url\":{\"url\":\"https://images.example/a.png\"},\"type\":\"image_url\"}],\"role\":\"user\"},{\"content\":\"A logo and a chart.\",\"role\":\"assistant\"},{\"content\":\"Thanks\",\"role\":\"user\"}],\"model\":\"small\",\"stream\":false}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastRequestProjection"
+        }
+      ]
+    },
     "llm.chat/authored/egress-an-output-format-without-a-name-is-refused": {
       "purpose": "response_format needs a name, and llm invents none, so an unnamed output format is refused before any I/O",
       "source": [
@@ -33810,7 +34234,7 @@
           "input": {
             "request_json": {
               "kind": "literal",
-              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"https://example.invalid/a.png\"}}]}]}"
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_audio\",\"input_audio\":{\"data\":\"AA==\",\"format\":\"wav\"}}]}]}"
             }
           },
           "step": "execute_command"
@@ -34002,7 +34426,7 @@
           "input": {
             "request_json": {
               "kind": "literal",
-              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"https://example.invalid/a.png\"}}]}]}"
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"input_audio\",\"input_audio\":{\"data\":\"AA==\",\"format\":\"wav\"}}]}]}"
             }
           },
           "step": "execute_command"
@@ -35387,6 +35811,94 @@
               "error_message": {
                 "kind": "literal",
                 "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        }
+      ]
+    },
+    "llm.chat/authored/ingress-an-image-part-outside-a-user-message-is-refused-by-its-path": {
+      "purpose": "an image_url part in an assistant message is refused by its path before anything is sent, without quoting the URL (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"https://images.example/private.png?signature=fixture-signature\"}}]}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "chat image part is carried only in a user message: messages[].content[]"
               }
             }
           },
@@ -38128,6 +38640,99 @@
           },
           "step": "expect_view",
           "view": "llm.chat.LastIngressResponse"
+        }
+      ]
+    },
+    "llm.chat/authored/ingress-text-and-image-parts-of-a-user-message-decode-in-order": {
+      "purpose": "a user message of text and image_url parts decodes part by part into user text and user image items in order, a data URL into inline bytes and an https URL into a URL (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.chat"
+        },
+        {
+          "kind": "command",
+          "name": "llm.chat.DecodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.chat.LastIngressRequest"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.chat.DecodeIngress",
+          "input": {
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"code\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Compare\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,iVBORw0KGgo=\"}},{\"type\":\"text\",\"text\":\"with\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"https://images.example/a.png\",\"detail\":\"auto\"}}]}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.chat.DecodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.chat.LastIngressRequest"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user:Compare",
+                  "user-image:bytes:image/png:iVBORw0KGgo=",
+                  "user:with",
+                  "user-image:url:https://images.example/a.png"
+                ]
+              },
+              "turn_valid": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.chat.LastIngressRequest"
         }
       ]
     },
@@ -44279,6 +44884,114 @@
               "upstream_model": {
                 "kind": "literal",
                 "value": "wire-model-revision"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.inference.LastResult"
+        }
+      ]
+    },
+    "llm.inference/authored/model-output-carrying-a-user-image-is-refused": {
+      "purpose": "model output carrying a user image, which is caller-owned content, is refused (story:image-input, turn.rs TurnOutcome::validate_for)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.inference"
+        },
+        {
+          "kind": "command",
+          "name": "llm.inference.InspectResult"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.inference.InspectResult",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.inference.LastResult"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.inference.InspectResult",
+          "input": {
+            "failure": {
+              "kind": "literal",
+              "value": false
+            },
+            "result_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"end-turn\"},\"items\":[{\"kind\":\"assistant-text\",\"text\":\"A logo.\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"url\",\"url\":\"https://images.example/a.png\"}}],\"observation\":{\"binding\":{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"binding-r1\"},\"upstream_model\":\"wire-model-revision\",\"response_id\":\"response-1\",\"final_usage\":true,\"usage\":{\"input_tokens\":100,\"output_tokens\":5}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.inference.InspectResult",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.inference.LastResult"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "failed": {
+                "kind": "literal",
+                "value": false
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": null
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "roundtrip_preserved": {
+                "kind": "literal",
+                "value": false
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": null
               }
             }
           },
@@ -53853,6 +54566,106 @@
         }
       ]
     },
+    "llm.messages/authored/egress-a-user-image-is-an-image-block-in-the-user-message": {
+      "purpose": "user images are image blocks, bytes as a base64 source and a URL as a url source, beside the text in item order; the rolling breakpoint lands on the last (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": false
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"What is in these pictures?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}},{\"kind\":\"user-image\",\"source\":{\"kind\":\"url\",\"url\":\"https://images.example/a.png\"}}],\"tools\":[],\"max_output_tokens\":512}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user-text:What is in these pictures?",
+                  "user-image:bytes:image/png:iVBORw0KGgo=",
+                  "user-image:url:https://images.example/a.png"
+                ]
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"text\":\"What is in these pictures?\",\"type\":\"text\"},{\"source\":{\"data\":\"iVBORw0KGgo=\",\"media_type\":\"image/png\",\"type\":\"base64\"},\"type\":\"image\"},{\"cache_control\":{\"type\":\"ephemeral\"},\"source\":{\"type\":\"url\",\"url\":\"https://images.example/a.png\"},\"type\":\"image\"}],\"role\":\"user\"}],\"model\":\"example/Model-Revision\",\"stream\":true}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/egress-refuses-an-output-format-that-is-not-strict": {
       "purpose": "the route always holds the answer to an output format's schema and cannot be asked not to, so a format with strict false is refused before any I/O",
       "source": [
@@ -55708,6 +56521,115 @@
         }
       ]
     },
+    "llm.messages/authored/ingress-reads-text-and-image-blocks-of-a-user-message-in-order": {
+      "purpose": "a user message of text and image blocks reads block by block into user text and user image items in order, and a mark on an image block is read into the prompt-cache hint (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": true
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"text\":\"Compare\",\"type\":\"text\"},{\"source\":{\"data\":\"iVBORw0KGgo=\",\"media_type\":\"image/jpeg\",\"type\":\"base64\"},\"type\":\"image\"},{\"text\":\"with\",\"type\":\"text\"},{\"cache_control\":{\"type\":\"ephemeral\"},\"source\":{\"type\":\"url\",\"url\":\"https://images.example/a.png\"},\"type\":\"image\"}],\"role\":\"user\"}],\"model\":\"caller-alias\",\"stream\":true}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "user-text:Compare",
+                  "user-image:bytes:image/jpeg:iVBORw0KGgo=",
+                  "user-text:with",
+                  "user-image:url:https://images.example/a.png"
+                ]
+              },
+              "omitted_advisories": {
+                "kind": "literal",
+                "value": []
+              },
+              "stream": {
+                "kind": "literal",
+                "value": true
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/ingress-reads-the-output-format-beside-the-effort": {
       "purpose": "output_config.format of type json_schema is the turn's output format, with no name and no strict flag, and the effort beside it is still read",
       "source": [
@@ -57200,6 +58122,106 @@
         }
       ]
     },
+    "llm.messages/authored/ingress-refuses-an-image-block-outside-a-user-message-by-its-path": {
+      "purpose": "an image block in an assistant message is refused by its path before anything is sent, without quoting the URL (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.Project",
+          "input": {
+            "ingress": {
+              "kind": "literal",
+              "value": true
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"max_tokens\":512,\"messages\":[{\"content\":\"hi\",\"role\":\"user\"},{\"content\":[{\"source\":{\"type\":\"url\",\"url\":\"https://images.example/private.png?signature=fixture-signature\"},\"type\":\"image\"}],\"role\":\"assistant\"}],\"model\":\"caller-alias\"}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "Messages image block is carried only in a user message: messages[].content[]"
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/ingress-refuses-citations-on-a-system-block": {
       "purpose": "citations on a system text block are refused by their path",
       "source": [
@@ -57313,7 +58335,7 @@
       ]
     },
     "llm.messages/authored/ingress-refuses-content-outside-the-subset": {
-      "purpose": "image content is refused rather than translated into text",
+      "purpose": "document content is refused rather than translated into text; an image block is a user image since story:image-input",
       "source": [
         {
           "kind": "domain",
@@ -57345,7 +58367,7 @@
             },
             "request_json": {
               "kind": "literal",
-              "value": "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"source\":{\"data\":\"AA==\",\"media_type\":\"image/png\",\"type\":\"base64\"},\"type\":\"image\"}],\"role\":\"user\"}],\"model\":\"caller-alias\"}"
+              "value": "{\"max_tokens\":512,\"messages\":[{\"content\":[{\"source\":{\"data\":\"AA==\",\"media_type\":\"application/pdf\",\"type\":\"base64\"},\"type\":\"document\"}],\"role\":\"user\"}],\"model\":\"caller-alias\"}"
             }
           },
           "step": "execute_command"
@@ -78776,6 +79798,102 @@
         }
       ]
     },
+    "llm.responses/authored/egress-sends-user-images-in-the-user-message-of-their-text": {
+      "purpose": "user images are input_image parts with detail auto, inline bytes as a base64 data URL, in one user message with the text beside them in item order, and read back as the same turn (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Project"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastProjection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Project",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"small\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"What is in these pictures?\"},{\"kind\":\"user-image\",\"source\":{\"kind\":\"bytes\",\"media_type\":\"image/png\",\"data\":\"iVBORw0KGgo=\"}},{\"kind\":\"user-image\",\"source\":{\"kind\":\"url\",\"url\":\"https://images.example/a.png\"}}],\"tools\":[]}}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Project",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastProjection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "encoded_body": {
+                "kind": "literal",
+                "value": "{\"include\":[\"reasoning.encrypted_content\"],\"input\":[{\"content\":[{\"text\":\"What is in these pictures?\",\"type\":\"input_text\"},{\"detail\":\"auto\",\"image_url\":\"data:image/png;base64,iVBORw0KGgo=\",\"type\":\"input_image\"},{\"detail\":\"auto\",\"image_url\":\"https://images.example/a.png\",\"type\":\"input_image\"}],\"role\":\"user\",\"type\":\"message\"}],\"model\":\"example/Small-Model\",\"store\":false,\"stream\":true,\"tools\":[]}"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "request_preserved": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastProjection"
+        }
+      ]
+    },
     "llm.responses/authored/egress-the-first-codex-turn-with-verbosity-drops-only-its-unforwarded-hints": {
       "purpose": "the ingested Codex turn projects its verbosity, controls and hints, and only the unforwarded hints do not come back",
       "source": [
@@ -81525,6 +82643,114 @@
               "turn_json": {
                 "kind": "literal",
                 "value": "{\"format\":\"llm.turn/3\",\"request\":{\"instructions\":\"Be brief\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"model\":\"small\",\"tools\":[{\"description\":\"d\",\"input_schema\":{\"type\":\"object\"},\"name\":\"file_read\"}]}}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngestion"
+        }
+      ]
+    },
+    "llm.responses/authored/ingress-reads-text-and-image-parts-of-a-user-message-in-order": {
+      "purpose": "a user message of input_text and input_image parts reads part by part into user text and user image items in order, and projects back to the body it was read from (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Ingest"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Ingest",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngestion"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Ingest",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "body_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"example/Small-Model\",\"input\":[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Compare\"},{\"type\":\"input_image\",\"image_url\":\"data:image/png;base64,iVBORw0KGgo=\",\"detail\":\"auto\"},{\"type\":\"input_image\",\"image_url\":\"https://images.example/a.png\",\"detail\":\"auto\"}]}],\"tools\":[],\"stream\":true,\"store\":false,\"include\":[\"reasoning.encrypted_content\"]}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Ingest",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "body_preserved": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "item_kinds": {
+                "kind": "literal",
+                "value": [
+                  "user-text",
+                  "user-image",
+                  "user-image"
+                ]
+              },
+              "reprojected": {
+                "kind": "literal",
+                "value": true
+              },
+              "turn_json": {
+                "kind": "literal",
+                "value": "{\"format\":\"llm.turn/3\",\"request\":{\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Compare\"},{\"kind\":\"user-image\",\"source\":{\"data\":\"iVBORw0KGgo=\",\"kind\":\"bytes\",\"media_type\":\"image/png\"}},{\"kind\":\"user-image\",\"source\":{\"kind\":\"url\",\"url\":\"https://images.example/a.png\"}}],\"model\":\"small\",\"tools\":[]}}"
               }
             }
           },
@@ -84844,6 +86070,102 @@
         }
       ]
     },
+    "llm.responses/authored/ingress-refuses-an-image-part-outside-a-user-message-by-its-path": {
+      "purpose": "an input_image part in a developer message is refused by its path, without quoting the URL (story:image-input)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.responses"
+        },
+        {
+          "kind": "command",
+          "name": "llm.responses.Ingest"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.responses.Ingest",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.responses.LastIngestion"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.responses.Ingest",
+          "input": {
+            "binding_json": {
+              "kind": "literal",
+              "value": "{\"protocol\":\"responses\",\"provider\":\"my-lab\",\"account\":\"local\",\"endpoint\":\"local-vllm\",\"model\":\"small\",\"binding_revision\":\"rev-1\"}"
+            },
+            "body_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"example/Small-Model\",\"input\":[{\"type\":\"message\",\"role\":\"developer\",\"content\":[{\"type\":\"input_image\",\"image_url\":\"https://images.example/private.png?signature=fixture-signature\",\"detail\":\"auto\"}]},{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Hello\"}]}],\"tools\":[],\"stream\":true,\"store\":false,\"include\":[\"reasoning.encrypted_content\"]}"
+            },
+            "upstream_model": {
+              "kind": "literal",
+              "value": "example/Small-Model"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.responses.Ingest",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.responses.LastIngestion"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "an image part is carried only in a user message: input[].content[]"
+              },
+              "turn_json": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.responses.LastIngestion"
+        }
+      ]
+    },
     "llm.responses/authored/ingress-refuses-an-include-outside-the-subset": {
       "purpose": "ingress refuses an include outside the subset",
       "source": [
@@ -85081,7 +86403,7 @@
             },
             "body_json": {
               "kind": "literal",
-              "value": "{\"model\":\"example/Small-Model\",\"input\":[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_image\",\"image_url\":\"https://example.invalid/a.png\"}]}],\"tools\":[],\"stream\":true,\"store\":false,\"include\":[\"reasoning.encrypted_content\"]}"
+              "value": "{\"model\":\"example/Small-Model\",\"input\":[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_file\",\"file_id\":\"file-1\"}]}],\"tools\":[],\"stream\":true,\"store\":false,\"include\":[\"reasoning.encrypted_content\"]}"
             },
             "upstream_model": {
               "kind": "literal",

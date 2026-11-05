@@ -1,0 +1,1 @@
+{"messages":[{"content":[{"text":"What is in this picture?"},{"image":{"format":"png","source":{"bytes":"iVBORw0KGgo="}}}],"role":"user"}],"system":[{"text":"describe images"}]}

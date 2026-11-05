@@ -1,9 +1,9 @@
 use crate::{absent, fields, optional, string};
 use llm_core::{
-    Advisory, AuthKind, CacheTtl, CallId, Capabilities, Error, Item, MAX_ANTHROPIC_BETAS,
-    MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, OutputFormat, PromptCache, Protocol, Provenance,
-    Sampling, Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, Unforwarded,
-    anthropic_beta_name, exceeds, wire_effort,
+    Advisory, AuthKind, CacheTtl, CallId, Capabilities, Error, ImageMediaType, ImageSource, Item,
+    MAX_ANTHROPIC_BETAS, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, OutputFormat, PromptCache,
+    Protocol, Provenance, Sampling, Thinking, ToolCall, ToolChoice, ToolName, ToolSpec,
+    TurnRequest, Unforwarded, anthropic_beta_name, exceeds, wire_effort,
 };
 use llm_providers::Binding;
 use serde_json::{Map, Value, json};
@@ -45,6 +45,7 @@ pub(crate) fn block(item: &Item) -> Result<Value, Error> {
         Item::UserText { text } | Item::AssistantText { text } => {
             json!({"type":"text","text":text})
         }
+        Item::UserImage { source } => json!({"type":"image","source":image_source(source)?}),
         // Carried or refused, never dropped: Messages has no block for refusal text, and sending
         // it as text would make it the assistant's answer.
         Item::AssistantRefusal { .. } => {
@@ -83,12 +84,29 @@ pub(crate) fn block(item: &Item) -> Result<Value, Error> {
         }
     })
 }
+
+/// The `source` of an `image` block: inline bytes as `base64` with their media type, or a `url`.
+/// Bedrock `InvokeModel` carries the same block in its body.
+fn image_source(source: &ImageSource) -> Result<Value, Error> {
+    Ok(match source {
+        ImageSource::Bytes { media_type, .. } => {
+            json!({"type":"base64","media_type":media_type.name(),"data":source.base64()})
+        }
+        ImageSource::Url { url } => json!({"type":"url","url":url}),
+        _ => {
+            return Err(Error::unsupported(
+                "Messages carries no image source of this kind",
+            ));
+        }
+    })
+}
+
 /// Content blocks this projection builds itself, and may therefore annotate.
 ///
 /// A marker modifies the block it lands on. On a block carried through from the model — a
 /// `thinking` block, whose signature covers the block as it was produced — that is a turn the
 /// route rejects. An allowlist, so that a new opaque shape never becomes markable unnoticed.
-const MARKABLE: [&str; 2] = ["text", "tool_result"];
+const MARKABLE: [&str; 3] = ["text", "tool_result", "image"];
 
 /// The breakpoint this projection places: `ephemeral`, with the lifetime `1h` when the turn's
 /// prompt-cache hint asks for it. The default lifetime is written by leaving `ttl` out.
@@ -126,8 +144,12 @@ fn mark_rolling_breakpoint(messages: &mut [Value], mark: Value) {
     }
 }
 
+/// Whether `item` is sent in a user message: user text, a user image or a tool result.
 fn user(item: &Item) -> bool {
-    matches!(item, Item::UserText { .. } | Item::ToolResult { .. })
+    matches!(
+        item,
+        Item::UserText { .. } | Item::UserImage { .. } | Item::ToolResult { .. }
+    )
 }
 
 /// Project a bound request. The binding's declared maximum supplies Messages' mandatory default.
@@ -464,7 +486,9 @@ impl Marks {
                 let markable = block
                     .get("type")
                     .and_then(Value::as_str)
-                    .is_some_and(|kind| matches!(kind, "text" | "tool_use" | "tool_result"));
+                    .is_some_and(|kind| {
+                        matches!(kind, "text" | "tool_use" | "tool_result" | "image")
+                    });
                 if !markable || block.get("cache_control").is_none() {
                     continue;
                 }
@@ -917,10 +941,50 @@ pub(crate) fn decode_block(
                 },
             })
         }
+        "image" if user => {
+            fields(value, at, &["type", "source"])?;
+            decode_image_source(
+                value
+                    .get("source")
+                    .ok_or_else(|| Error::invalid("Messages image block carries no source"))?,
+                &format!("{at}.source"),
+            )
+        }
+        "image" => Err(Error::unsupported(format!(
+            "Messages image block is carried only in a user message: {at}"
+        ))),
         _ => Err(Error::unsupported(
             "Messages content is outside the declared subset",
         )),
     }
+}
+
+/// The image a user `image` block's `source` at `at` names: `base64` bytes of one of the four
+/// media types, or a `url`. Neither a byte nor the URL reaches a refusal.
+fn decode_image_source(source: &Value, at: &str) -> Result<Item, Error> {
+    let image = match source.get("type").and_then(Value::as_str) {
+        Some("base64") => {
+            fields(source, at, &["type", "media_type", "data"])?;
+            let media_type = ImageMediaType::from_name(string(source, "media_type")?)
+                .ok_or_else(|| {
+                    Error::unsupported(
+                        "Messages image media type is none of image/png, image/jpeg, image/gif and image/webp",
+                    )
+                })?;
+            ImageSource::from_base64(media_type, string(source, "data")?)?
+        }
+        Some("url") => {
+            fields(source, at, &["type", "url"])?;
+            ImageSource::url(string(source, "url")?)
+        }
+        _ => {
+            return Err(Error::unsupported(
+                "Messages image source type is outside the declared subset",
+            ));
+        }
+    };
+    image.validate()?;
+    Ok(Item::user_image(image))
 }
 
 /// The advisory hints this projection sends: the prompt cache, as the lifetime of the

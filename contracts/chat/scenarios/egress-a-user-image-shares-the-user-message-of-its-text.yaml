@@ -1,0 +1,23 @@
+type: ess-scenario/1
+domain: llm.chat
+scenario: egress-a-user-image-shares-the-user-message-of-its-text
+summary: user images are image_url parts, inline bytes as a base64 data URL, in one user message with the text beside them in item order; a text-only message keeps its string content (story:image-input)
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.chat.ProjectRequest
+  input:
+    turn_json: '{"format":"llm.turn/3","request":{"model":"small","instructions":"","items":[{"kind":"user-text","text":"What is in these pictures?"},{"kind":"user-image","source":{"kind":"bytes","media_type":"image/png","data":"iVBORw0KGgo="}},{"kind":"user-image","source":{"kind":"url","url":"https://images.example/a.png"}},{"kind":"assistant-text","text":"A logo and a chart."},{"kind":"user-text","text":"Thanks"}],"tools":[]}}'
+    protocol: chat-completions
+    upstream_model: small
+    capabilities_json: '{"tools":true,"tool_choice":true,"temperature":true,"top_p":true,"reasoning_efforts":["low","high"],"context_window":32768,"max_output_tokens":4096}'
+    streaming: false
+  outcome: observed
+assert:
+- view: llm.chat.LastRequestProjection
+  counts: {at_least: 1, at_most: 1}
+- view: llm.chat.LastRequestProjection
+  contains:
+    accepted: true
+    error_code: null
+    message_roles: [user, assistant, user]
+    wire_request: '{"messages":[{"content":[{"text":"What is in these pictures?","type":"text"},{"image_url":{"url":"data:image/png;base64,iVBORw0KGgo="},"type":"image_url"},{"image_url":{"url":"https://images.example/a.png"},"type":"image_url"}],"role":"user"},{"content":"A logo and a chart.","role":"assistant"},{"content":"Thanks","role":"user"}],"model":"small","stream":false}'
