@@ -18,6 +18,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `llm-models`: `SecretSources::with_web_identity` and `WebIdentityRole` take the caller's role and token file
 - `llm-models`: `Resolvers::web_identity_role`, defaulted to `None`, beside `container_credentials_uri`
 - ESS: 6 `llm.routes` scenarios for `aws-web-identity` endpoints; the conformance floor is 1005 (was 987)
+- `Capabilities::structured_output` and `image_input` (`Option<bool>`, absent is undeclared), `with_*` setters
+- `llm-routing`: `Rejection::StructuredOutput` and `ImageInput` reject a target declaring the feature `false`
+- `TurnRequest::validate_for` refuses an output format or user image the capabilities declare `false`
+- ESS: 8 `llm.routing` scenarios for the two declarations; the conformance floor is 1013 (was 1005)
 
 ### Changed
 

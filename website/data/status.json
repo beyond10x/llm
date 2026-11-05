@@ -340,6 +340,12 @@
     },
     {
       "area": "Providers and routing",
+      "detail": "Capabilities declares structured_output and image_input, each optional; a binding, catalog or routes document from before them leaves both undeclared and keeps its bytes. A target declaring one false is rejected for a turn with an output format or a user image as structured-output or image-input, fallback never moves the turn to it, the explanation and the refusal name the rejection, and TurnRequest::validate_for refuses the turn before I/O. An undeclared target is not rejected; its wire carries or refuses the turn as before. No built-in declaration makes either claim.",
+      "label": "Selection knows which models take structured output and image input",
+      "status": "shipped"
+    },
+    {
+      "area": "Providers and routing",
       "detail": "Catalog::run_turn tries a route's declared targets in order and stops on visible output, an ineligible failure, an ambiguous dispatch, the attempt bound, the deadline, cancellation or the caller's limit.",
       "label": "Ordered fallback",
       "status": "shipped"

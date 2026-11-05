@@ -49,6 +49,14 @@ domain: llm.routing
 # target under other billing"), in either order, so a turn never moves from the subscription to
 # metered or self-hosted billing. A route without fallback may hold both: only its first target is
 # ever selected.
+#
+# Structured output and image input (story:output-and-image-capabilities). A turn whose
+# `controls.output_format` is set needs structured output, and a turn holding a `user-image` item
+# needs image input. A target whose capabilities declare either `false` is rejected for such a
+# turn as `structured-output` or `image-input`, so neither selection nor fallback moves the turn to
+# it, and a route left with no other target is refused as `unsupported` naming the rejection. A
+# target that leaves the declaration out is not rejected: its wire carries the turn or refuses it
+# before I/O, as before the declarations existed.
 types:
   - name: llm.routing.RetryPolicy
     kind: struct

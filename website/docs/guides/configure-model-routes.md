@@ -137,7 +137,11 @@ model that does not fit the default is written as a mapping with its own `capabi
 catalog: the seven settings, plus `output_streaming` (default `true`) and `input_during_output`
 (default `false`), which may be left out. A route claiming input during output, or output that does
 not stream, is refused by name: no protocol here carries input during output, and every one streams
-its output.
+its output. `structured_output` and `image_input` may also be declared, and are not declared when
+left out: a route declaring one `false` refuses a turn with an output format or a user image
+before I/O, and selection over the route's catalog rejects it
+([Routing](../concepts/routing.md#structured-output-and-image-input)); an undeclared route's wire
+carries the turn or refuses it before I/O. No built-in default declares either.
 
 ## Aliases and prices
 

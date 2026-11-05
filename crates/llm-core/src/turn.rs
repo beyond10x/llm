@@ -215,7 +215,8 @@ impl TurnRequest {
     }
 
     /// # Errors
-    /// Refuses incompatible or unbound opaque state, target model or unsupported settings.
+    /// Refuses incompatible or unbound opaque state, target model or unsupported settings, and a
+    /// structured output or image input the capabilities declare `false`.
     pub fn validate_for(
         &self,
         target: &Provenance,
@@ -265,6 +266,20 @@ impl TurnRequest {
             return Err(Error::unsupported(
                 "requested output exceeds binding capability",
             ));
+        }
+        // Only a declared `false` refuses: an undeclared feature is the wire's to carry or refuse.
+        if capabilities.structured_output == Some(false) && self.controls.output_format.is_some() {
+            return Err(Error::unsupported(
+                "binding does not take structured output",
+            ));
+        }
+        if capabilities.image_input == Some(false)
+            && self
+                .items
+                .iter()
+                .any(|item| matches!(item, Item::UserImage { .. }))
+        {
+            return Err(Error::unsupported("binding does not take image input"));
         }
         Ok(())
     }

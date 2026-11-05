@@ -184,6 +184,9 @@ requires an input-token upper bound supplied by the caller and valid for every c
 input counts refuse admission. Fallback defaults off; opt-in permits local selection of the first
 compatible named target. Same-target retry is on by default and described under errors above;
 integrating pricing/budget admission with those attempts remains separate planned behavior.
+A model may declare whether it takes structured output and image input: selection rejects a
+target declaring either `false` for a turn that needs it (`structured-output`, `image-input`) and
+never falls back to it, and one that leaves it undeclared is not rejected.
 Explain exposes safe IDs, capabilities and refusal reasons;
 it does not resolve secrets or include prompt/opaque payloads.
 

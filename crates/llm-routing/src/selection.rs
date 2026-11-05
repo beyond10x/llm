@@ -19,7 +19,9 @@ use serde::{Deserialize, Serialize};
 ///         | Rejection::Temperature
 ///         | Rejection::TopP
 ///         | Rejection::ReasoningEffort
-///         | Rejection::OutputLimit => Ok(true),
+///         | Rejection::OutputLimit
+///         | Rejection::StructuredOutput
+///         | Rejection::ImageInput => Ok(true),
 ///         Rejection::InputTokensUnknown
 ///         | Rejection::ContextWindow
 ///         | Rejection::OpaqueState
@@ -44,7 +46,9 @@ use serde::{Deserialize, Serialize};
 ///         | Rejection::Temperature
 ///         | Rejection::TopP
 ///         | Rejection::ReasoningEffort
-///         | Rejection::OutputLimit => Ok(true),
+///         | Rejection::OutputLimit
+///         | Rejection::StructuredOutput
+///         | Rejection::ImageInput => Ok(true),
 ///         Rejection::InputTokensUnknown
 ///         | Rejection::ContextWindow
 ///         | Rejection::OpaqueState
@@ -64,6 +68,12 @@ pub enum Rejection {
     TopP,
     ReasoningEffort,
     OutputLimit,
+    /// The turn asks for an output format and the target declares `structured_output` false. A
+    /// target that leaves it undeclared is not rejected.
+    StructuredOutput,
+    /// The turn carries a user image and the target declares `image_input` false. A target that
+    /// leaves it undeclared is not rejected.
+    ImageInput,
     InputTokensUnknown,
     ContextWindow,
     OpaqueState,
@@ -79,6 +89,8 @@ impl Rejection {
             Self::TopP => "top-p",
             Self::ReasoningEffort => "reasoning-effort",
             Self::OutputLimit => "output-limit",
+            Self::StructuredOutput => "structured-output",
+            Self::ImageInput => "image-input",
             Self::InputTokensUnknown => "input-tokens-unknown",
             Self::ContextWindow => "context-window",
             Self::OpaqueState => "opaque-state",
@@ -254,6 +266,19 @@ fn capability_rejections(
                 .max_output_tokens
                 .is_some_and(|limit| limit > caps.max_output_tokens),
             Rejection::OutputLimit,
+        ),
+        // Only a declared `false` rejects: an undeclared target is the wire's to carry or refuse.
+        (
+            caps.structured_output == Some(false) && request.controls.output_format.is_some(),
+            Rejection::StructuredOutput,
+        ),
+        (
+            caps.image_input == Some(false)
+                && request
+                    .items
+                    .iter()
+                    .any(|item| matches!(item, Item::UserImage { .. })),
+            Rejection::ImageInput,
         ),
     ] {
         if rejected {

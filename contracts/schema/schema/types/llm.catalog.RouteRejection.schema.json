@@ -4,8 +4,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "530fac002589b0a7460f2a348378e01c712b11f6c2bd2bc84982720f932a2c55",
-    "contract_digest": "slice-sha256/2:b84ef554a2a27c048fe32de0fc482871b2bef9c34c75885b421c146c68f7f5aa",
+    "source_digest": "847810151d0649bc6c4ef43b089ded32accfd573023f47f0dd3bdf0c33170f7e",
+    "contract_digest": "slice-sha256/2:f26b68f27880128547dc6539c244f2aaf0a58006f84836334e0647473a7dc0e2",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -21,9 +21,12 @@
         "TopP",
         "ReasoningEffort",
         "OutputLimit",
+        "StructuredOutput",
+        "ImageInput",
         "InputTokensUnknown",
         "ContextWindow",
         "OpaqueState",
+        "RefusalText",
         "FallbackDisabled"
       ]
     }
