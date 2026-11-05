@@ -9,6 +9,7 @@ tags:
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
+- depends_on: story:core-types-non-exhaustive
 scope:
 - confidence: inferred
   path: crates/llm-bedrock/src/converse.rs
@@ -46,7 +47,7 @@ scope:
   path: spec/domains/messages.yaml
 - confidence: inferred
   path: spec/domains/responses.yaml
-revision: 22
+revision: 23
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 20}
 - {from: "proposed", to: "active", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 21}
@@ -87,8 +88,8 @@ A caller sends an image in a user turn, and every wire carries it or refuses it 
   by its path.
 - Inline bytes have a size bound refused before I/O; no image byte or URL reaches a diagnostic or a
   `Debug` form.
-- A catalog capability says whether a model takes image input; selection rejects a target without it
-  by a named `Rejection`, and no fallback moves an image turn to such a target.
+- The catalog capability and the selection rejection for image input are
+  `story:output-and-image-capabilities`, which follows this story in the same wave.
 - Image tokens are reported as the far side counts them; an absent counter stays unknown.
 - `docs/contract-v1.md` and `docs/design.md` move image input inside the contract; audio stays out.
 - ESS: the `llm.inference` domain and the four protocol domains declare the item; authored
@@ -98,9 +99,7 @@ A caller sends an image in a user turn, and every wire carries it or refuses it 
 
 Targeted tests per touched crate, fixture bodies per wire, conformance scenarios. No live call.
 
-## Held
+## Schedule
 
-Wave 2026-11-04-w25 runs additive only (approval-record:wave-2026-11-04-w25-proposal). `Item`
-(`crates/llm-core/src/item.rs:17`) is not `#[non_exhaustive]`, and a new variant breaks every
-consumer that matches it exhaustively. The story does not run until the operator decides how the
-break ships.
+Ships in the breaking minor 0.22.0, wave 2026-11-05-w26 (`approval-record:image-input-breaking-minor`,
+`approval-record:wave-2026-11-05-w26-proposal`), after `story:core-types-non-exhaustive`.

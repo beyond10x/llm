@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:bedrock-web-identity-route
 kind: story
-status: draft
+status: active
 title: A routes document reaches Bedrock through web identity (IRSA)
 tags:
 - from-adopter-report
@@ -10,7 +10,11 @@ relations:
 - decomposes: epic:bedrock
 - serves: vision:portable-model-inference
 - depends_on: story:bedrock-web-identity
-revision: 1
+- depends_on: story:core-types-non-exhaustive
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-05T01:52:02Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-05T01:52:03Z", actor: "human:timo", revision: 3}
 ---
 ## Context
 
