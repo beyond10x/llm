@@ -1,8 +1,9 @@
 //! Adversary pass 1, wave 2026-11-04-w25, story:structured-output, both Bedrock wires.
 //!
-//! The acceptance reads: "A member a wire has no place for (Messages and Converse have no
-//! `strict`) is refused by name before I/O ... never dropped silently". Converse and the Messages
-//! body `InvokeModel` sends both leave `strict: true` out without a word.
+//! The acceptance, amended after this pass (revision 21), reads: "`strict` on Messages, Anthropic
+//! `InvokeModel` and Converse: those wires always constrain the answer to the schema ..., so
+//! `strict: true` is honoured by construction and sends no member, and `strict: false` is refused
+//! by name before I/O."
 
 use llm_bedrock::{Api, BedrockTarget, encode_request};
 use llm_core::{
@@ -62,19 +63,41 @@ fn turn(format: OutputFormat) -> TurnRequest {
     request
 }
 
-fn assert_strict_refused(api: Api) {
+/// The route always holds the answer to the schema: `strict: true` is sent as no member and is
+/// not refused, and `strict: false` is refused by name before any I/O.
+fn assert_strict_honoured_by_construction(api: Api) {
     let request = turn(OutputFormat::json_schema(schema()).with_strict(true));
+    let sent = match encode_request(&request, &target(api)) {
+        Ok(bytes) => String::from_utf8(bytes).unwrap(),
+        Err(error) => panic!(
+            "story:structured-output: {api:?}: strict true is honoured by construction, not refused: {}",
+            error.message
+        ),
+    };
+    assert!(
+        !sent.contains("\"strict\""),
+        "story:structured-output: {api:?}: strict true sends no strict member: {sent}"
+    );
+    let request = turn(OutputFormat::json_schema(schema()).with_strict(false));
     match encode_request(&request, &target(api)) {
         Ok(bytes) => panic!(
-            "{api:?}: strict: true was dropped, not refused; sent {}",
+            "story:structured-output: {api:?}: strict false must be refused before I/O; sent {}",
             String::from_utf8_lossy(&bytes)
         ),
         Err(error) => {
-            assert_eq!(error.code, ErrorCode::Unsupported, "{api:?}");
-            assert_eq!(error.dispatch, Dispatch::NotSent, "{api:?}");
+            assert_eq!(
+                error.code,
+                ErrorCode::Unsupported,
+                "story:structured-output: {api:?}: strict false is unsupported"
+            );
+            assert_eq!(
+                error.dispatch,
+                Dispatch::NotSent,
+                "story:structured-output: {api:?}: strict false is refused before I/O"
+            );
             assert!(
                 error.message.contains("strict"),
-                "{api:?}: {}",
+                "story:structured-output: {api:?}: strict false is refused by name: {}",
                 error.message
             );
         }
@@ -82,13 +105,13 @@ fn assert_strict_refused(api: Api) {
 }
 
 #[test]
-fn converse_refuses_a_strict_flag_it_has_no_place_for_by_name_before_io() {
-    assert_strict_refused(Api::Converse);
+fn converse_sends_no_member_for_strict_true_and_refuses_strict_false_by_name_before_io() {
+    assert_strict_honoured_by_construction(Api::Converse);
 }
 
 #[test]
-fn invoke_model_refuses_a_strict_flag_it_has_no_place_for_by_name_before_io() {
-    assert_strict_refused(Api::AnthropicInvoke);
+fn invoke_model_sends_no_member_for_strict_true_and_refuses_strict_false_by_name_before_io() {
+    assert_strict_honoured_by_construction(Api::AnthropicInvoke);
 }
 
 /// Converse checks the format's name like every wire: one outside the class is refused before

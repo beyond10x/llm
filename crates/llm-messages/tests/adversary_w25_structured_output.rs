@@ -1,9 +1,9 @@
 //! Adversary pass 1, wave 2026-11-04-w25, story:structured-output, Messages wire.
 //!
-//! The acceptance reads: "A member a wire has no place for (Messages and Converse have no
-//! `strict`) is refused by name before I/O, or, where `docs/design.md` "Client request fields"
-//! classes it as a label the wire has no place for, written there as not sent; never dropped
-//! silently". `strict` is a flag, not a label, so a format carrying it is refused by name.
+//! The acceptance, amended after this pass (revision 21), reads: "`strict` on Messages, Anthropic
+//! `InvokeModel` and Converse: those wires always constrain the answer to the schema ..., so
+//! `strict: true` is honoured by construction and sends no member, and `strict: false` is refused
+//! by name before I/O."
 mod support;
 
 use llm_core::{Dispatch, ErrorCode, Item, OutputFormat, TurnRequest};
@@ -38,20 +38,51 @@ fn body(extra: &[(&str, Value)]) -> Value {
     body
 }
 
-/// Messages has no `strict`. A format whose strict flag is `true` is sent with the flag
-/// silently left out; the acceptance asks for a refusal by name before any I/O.
+/// Messages has no `strict` and always holds the answer to the schema: `true` is what the route
+/// does anyway, so it is sent as no member; `false` asks for what the route cannot do, so it is
+/// refused by name before any I/O.
 #[test]
-fn a_strict_flag_messages_has_no_place_for_is_refused_by_name_before_io() {
+fn strict_true_sends_no_member_and_strict_false_is_refused_by_name_before_io() {
     let request = turn(OutputFormat::json_schema(schema()).with_strict(true));
+    let sent = match encode_request(&request, &binding()) {
+        Ok(bytes) => String::from_utf8(bytes).unwrap(),
+        Err(error) => panic!(
+            "story:structured-output: strict true is honoured by construction, not refused: {}",
+            error.message
+        ),
+    };
+    assert!(
+        !sent.contains("\"strict\""),
+        "story:structured-output: strict true sends no strict member: {sent}"
+    );
+    let sent: Value = serde_json::from_str(&sent).unwrap();
+    assert_eq!(
+        sent["output_config"],
+        json!({"format": {"type": "json_schema", "schema": schema()}}),
+        "story:structured-output: strict true sends the format and nothing more"
+    );
+    let request = turn(OutputFormat::json_schema(schema()).with_strict(false));
     match encode_request(&request, &binding()) {
         Ok(bytes) => panic!(
-            "strict: true was dropped, not refused; sent {}",
+            "story:structured-output: strict false must be refused before I/O; sent {}",
             String::from_utf8_lossy(&bytes)
         ),
         Err(error) => {
-            assert_eq!(error.code, ErrorCode::Unsupported);
-            assert_eq!(error.dispatch, Dispatch::NotSent);
-            assert!(error.message.contains("strict"), "{}", error.message);
+            assert_eq!(
+                error.code,
+                ErrorCode::Unsupported,
+                "story:structured-output: strict false is unsupported"
+            );
+            assert_eq!(
+                error.dispatch,
+                Dispatch::NotSent,
+                "story:structured-output: strict false is refused before I/O"
+            );
+            assert!(
+                error.message.contains("strict"),
+                "story:structured-output: strict false is refused by name: {}",
+                error.message
+            );
         }
     }
 }

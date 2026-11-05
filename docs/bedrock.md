@@ -33,9 +33,11 @@ The Converse body carries `messages`, `system` (only when the turn has instructi
 control as `additionalModelRequestFields.thinking` for an Anthropic model id only. A JSON Schema
 output format is `outputConfig.textFormat` `{"type": "json_schema", "structure": {"jsonSchema":
 {"schema", "name"}}}`: the schema as a JSON string, as the API reference's
-`JsonSchemaDefinition` takes it, and the name only when the format has one. Bedrock always holds
-the answer to the schema, so a format whose `strict` is `false` is refused, and `true` sends
-nothing more; llm does not validate the answer ([design](design.md#structured-output)). A
+`JsonSchemaDefinition` takes it, and the format's name as `jsonSchema.name` when it has one.
+Bedrock always holds the answer to the schema through constrained decoding
+([user guide](https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html)), so a
+format whose `strict` is `false` is refused by name, and `true` sends nothing more; llm does not
+validate the answer ([design](design.md#structured-output)). A
 reasoning effort, the parallel tool call control, thinking for another model and opaque state
 from another wire are refused by name before any I/O. Advisory hints are never sent, `anthropic-beta`
 included; a successful turn that carried any ends with one `advisory-omitted` warning. Converse reports no response id and no

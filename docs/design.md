@@ -579,8 +579,13 @@ and checking it is the caller's. A name is 1 to 64 ASCII letters, digits, `_` or
 Each choice follows this design's rules: absent stays absent, so a `strict` nobody set is not
 written; a field is carried or refused, never dropped, so a wire that requires a name refuses a
 format without one, and llm invents none; a flag the wire cannot honour is refused, and one it
-always honours sends nothing. A name on Messages is the one exception that is not sent: it labels
-the format and asks for nothing the route would do differently, so nothing is lost.
+always honours sends nothing. Messages, Bedrock InvokeModel and Converse always constrain the
+answer to the schema ([Anthropic structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs),
+[Bedrock structured output](https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html)),
+so `strict: true` is honoured by construction and `strict: false` is refused by name. A name is
+sent wherever the wire has a place for it: Chat and Responses require one, and Converse sends it as
+`structure.jsonSchema.name`. Messages has none, and a name there is the one exception that is not
+sent: it labels the format and asks for nothing the route would do differently, so nothing is lost.
 
 Ingress reads the same field back on every wire that has it, and the egress encoder of each wire
 writes it back as it was read:

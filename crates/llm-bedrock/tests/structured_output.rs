@@ -123,6 +123,28 @@ fn converse_sends_the_schema_as_a_json_string_and_no_name_it_was_not_given() {
     assert_eq!(sent, schema());
 }
 
+/// Converse has a place for the name, `structure.jsonSchema.name` (Bedrock user guide,
+/// <https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html>), so a named
+/// format sends it there beside the schema. Mutation: the name dropped or moved.
+#[test]
+fn converse_sends_the_format_name_as_json_schema_name() {
+    let body = encoded(
+        &turn(Some(
+            OutputFormat::json_schema(schema()).with_name("place_v1"),
+        )),
+        Api::Converse,
+    );
+    let definition = body["outputConfig"]["textFormat"]["structure"]["jsonSchema"]
+        .as_object()
+        .expect("a JSON Schema definition");
+    assert_eq!(
+        definition.keys().map(String::as_str).collect::<Vec<_>>(),
+        ["name", "schema"],
+        "story:structured-output: the name has its place on Converse"
+    );
+    assert_eq!(definition["name"], "place_v1");
+}
+
 #[test]
 fn absent_stays_absent_on_both_wires() {
     assert!(
