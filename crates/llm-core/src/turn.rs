@@ -146,7 +146,11 @@ impl TurnRequest {
                         return Err(Error::too_large("tool result exceeds its bound"));
                     }
                 }
-                _ => {}
+                Item::UserText { .. }
+                | Item::AssistantText { .. }
+                | Item::AssistantRefusal { .. }
+                | Item::Opaque { .. }
+                | Item::UnattributedOpaque { .. } => {}
             }
         }
         if calls != results {
@@ -232,7 +236,12 @@ impl TurnRequest {
                 Item::UnattributedOpaque { .. } => {
                     return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
                 }
-                _ => {}
+                Item::UserText { .. }
+                | Item::AssistantText { .. }
+                | Item::AssistantRefusal { .. }
+                | Item::ToolCall(_)
+                | Item::ToolResult { .. }
+                | Item::Opaque { .. } => {}
             }
         }
         if (!self.tools.is_empty() && !capabilities.tools)
@@ -409,7 +418,9 @@ impl TurnOutcome {
                         "model output carries unattributed opaque state",
                     ));
                 }
-                _ => {}
+                Item::AssistantText { .. }
+                | Item::AssistantRefusal { .. }
+                | Item::Opaque { .. } => {}
             }
         }
         if (self.stop_reason == StopReason::ToolCalls && calls.is_empty())

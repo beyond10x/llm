@@ -152,7 +152,7 @@ The supported pattern, cancel then continue:
      what it showed checks for that warning.
    - **Finished in tool calls:** its outcome's items, then a result for every call it proposed,
      because a request with an unanswered call is refused before it is sent (`every prior tool
-     call needs a result before the next turn`, `crates/llm-core/src/turn.rs:152-156`). Run the
+     call needs a result before the next turn`, `crates/llm-core/src/turn.rs:156-160`). Run the
      tool and carry its result, or carry the call as rejected: a failed `Item::ToolResult` whose
      output is the caller's reason
      ([Failed and rejected tool results](#failed-and-rejected-tool-results)). The new input comes

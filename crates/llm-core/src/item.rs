@@ -155,7 +155,12 @@ impl Item {
                     payload,
                 })
             }
-            other => Ok(other),
+            other @ (Self::UserText { .. }
+            | Self::AssistantText { .. }
+            | Self::AssistantRefusal { .. }
+            | Self::ToolCall(_)
+            | Self::ToolResult { .. }
+            | Self::Opaque { .. }) => Ok(other),
         }
     }
 }
