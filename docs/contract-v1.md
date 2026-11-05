@@ -18,10 +18,10 @@ Cancellation is monotonic, cloneable, wakes pending work and wins over simultane
 An `Item` contains user/assistant text, a user image, a tool call, its successful or failed result,
 or an opaque provider item. A user image (`Item::UserImage`) is inline bytes of `image/png`,
 `image/jpeg`, `image/gif` or `image/webp`, at most `MAX_IMAGE_BYTES` (5 MiB), or an `https` URL of
-visible ASCII naming a host, at most `MAX_IMAGE_URL_BYTES` (8 KiB); a URL carries no media type,
-since no wire has a place for one. Every adapter sends it in the user message of the user content
-beside it, in item order, or refuses it before I/O, and no image byte or URL reaches a diagnostic
-or a `Debug` form. A model's output carrying one is caller-owned content and is refused. llm
+visible ASCII naming a host and no userinfo, at most `MAX_IMAGE_URL_BYTES` (8 KiB); a URL carries
+no media type, since no wire has a place for one. Every adapter sends it in the user message of the
+user content beside it, in item order, or refuses it before I/O, and no image byte or URL reaches a
+diagnostic or a `Debug` form. A model's output carrying one is caller-owned content and is refused. llm
 counts no image tokens itself: an image is in whatever input count the far side reports, and an
 absent counter stays unknown.
 Tool definitions contain only name, description and JSON Schema. They confer no

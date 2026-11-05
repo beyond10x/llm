@@ -286,8 +286,9 @@ commands:
       - {name: model_id, type: String}
       # Serialized llm.turn/3, or llm.turn/4 when it carries controls. A llm.inference.UserImage
       # item of inline bytes is a Converse `image` block, `format` and `source.bytes`, in the user
-      # message beside its text; Converse refuses one by URL before any I/O. InvokeModel sends it
-      # as the Messages `image` block.
+      # message beside its text. InvokeModel sends it as the Messages `image` block with a `base64`
+      # source, and refuses inline bytes whose base64 passes 5,000,000 characters as too-large.
+      # Both refuse an image by URL before any I/O.
       - {name: request_json, type: String}
       # A recorded answer under `tests/data/frames/`: a `.bin` event-stream body, or a `.json`
       # whole answer.

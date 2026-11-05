@@ -70,6 +70,16 @@ const CONFIRMED: &[&str] = &[
     // warning code that carries the value is this projection's own name, not the producer's.
     "cost",
     "usage-extension",
+    // Read 2026-11-05 for story:image-input in Anthropic's API reference
+    // (`https://platform.claude.com/docs/en/api/messages.md`, lines 260-288): `ImageBlockParam`
+    // is `type: "image"` with a `source` that is a `Base64ImageSource` (`type: "base64"`, `data`,
+    // `media_type` one of `image/jpeg`, `image/png`, `image/gif`, `image/webp`) or a
+    // `URLImageSource` (`type: "url"`, `url`).
+    "base64",
+    "image",
+    "media_type",
+    "source",
+    "url",
     "unknown-output-item",
     "unknown-stream-event",
     "any",
@@ -158,14 +168,6 @@ const CARRIED: &[&str] = &[
     "metadata",
     "ttl",
     "user_id",
-    // Named by story:image-input, which cites the Messages `image` content block with a `base64`
-    // source (`media_type`, `data`) or a `url` source; the recorded body is
-    // `tests/fixtures/image-request.json`. Not read against the producer for that story.
-    "base64",
-    "image",
-    "media_type",
-    "source",
-    "url",
     "auto",
     "cache_creation",
     "caller",

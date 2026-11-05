@@ -43,8 +43,8 @@ fetches. A document writes the item as
 `llm.turn/3` or `llm.turn/4` bytes, and an older reader refuses the unknown kind.
 
 - **Bounds, before I/O.** Inline bytes are 1 to `MAX_IMAGE_BYTES` (5 MiB) before encoding; a URL
-  is `https://`, a host and visible ASCII, at most `MAX_IMAGE_URL_BYTES` (8 KiB). The whole
-  encoded turn stays within `MAX_REQUEST_BYTES`.
+  is `https://`, a host (no userinfo; a port is not a host) and visible ASCII, at most
+  `MAX_IMAGE_URL_BYTES` (8 KiB). The whole encoded turn stays within `MAX_REQUEST_BYTES`.
 - **Redaction.** A URL may carry a signed query and the bytes are the caller's content, so neither
   reaches a diagnostic or a `Debug` form: `Debug` shows the media type and the length, every
   refusal is fixed text, and a document reader refuses a malformed image without quoting it.

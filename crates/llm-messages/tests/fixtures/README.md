@@ -36,6 +36,6 @@ in it: the route has no place for the one and always holds the answer to the sch
 The exact bytes `encode_request` returns for a turn with instructions, one user text, an inline
 PNG (the eight bytes of the PNG signature) and an image by `https` URL (story `image-input`). It is
 **written by this repository, not captured**: the `image` block with a `base64` source
-(`media_type`, `data`) or a `url` source follows the published Messages API reference as the
-story cites it. Both images share the user message of the text, and the rolling breakpoint lands on
-the last image.
+(`media_type`, `data`) or a `url` source follows Anthropic's API reference
+(`https://platform.claude.com/docs/en/api/messages.md`, lines 260-288, read 2026-11-05). Both
+images share the user message of the text, and the rolling breakpoint lands on the last image.

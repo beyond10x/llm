@@ -85,7 +85,7 @@ pub enum ImageSource {
         media_type: ImageMediaType,
         data: Vec<u8>,
     },
-    /// `https://`, a host, visible ASCII only, at most [`MAX_IMAGE_URL_BYTES`].
+    /// `https://`, a host and no userinfo, visible ASCII only, at most [`MAX_IMAGE_URL_BYTES`].
     Url { url: String },
 }
 
@@ -104,8 +104,9 @@ impl ImageSource {
     /// Inline bytes read from standard base64 text with its padding, as every wire writes them.
     ///
     /// # Errors
-    /// Refuses text that would decode past [`MAX_IMAGE_BYTES`], before decoding it, and text that
-    /// is not canonical standard base64. Neither refusal quotes the text.
+    /// Refuses text that would decode past [`MAX_IMAGE_BYTES`], before decoding it when its length
+    /// alone says so and after when it does not, and text that is not canonical standard base64.
+    /// Neither refusal quotes the text.
     pub fn from_base64(media_type: ImageMediaType, text: &str) -> Result<Self, Error> {
         if text.len() > MAX_IMAGE_BYTES.div_ceil(3) * 4 {
             return Err(Error::too_large("an inline image exceeds its bound"));
@@ -113,6 +114,11 @@ impl ImageSource {
         let data = STANDARD
             .decode(text)
             .map_err(|_| Error::invalid(BASE64_REFUSAL))?;
+        // Text of the longest admitted length decodes to one of three byte lengths, its padding
+        // deciding which, and two of them pass the bound; so the bound is checked on the bytes.
+        if data.len() > MAX_IMAGE_BYTES {
+            return Err(Error::too_large("an inline image exceeds its bound"));
+        }
         Ok(Self::Bytes { media_type, data })
     }
 
@@ -162,7 +168,8 @@ impl ImageSource {
 
     /// # Errors
     /// Refuses inline bytes that are empty or past [`MAX_IMAGE_BYTES`], and a URL past
-    /// [`MAX_IMAGE_URL_BYTES`] or other than `https://`, a host and visible ASCII. Fixed text.
+    /// [`MAX_IMAGE_URL_BYTES`] or other than `https://`, a host without userinfo and visible ASCII.
+    /// Fixed text.
     pub fn validate(&self) -> Result<(), Error> {
         match self {
             Self::Bytes { data, .. } => {
@@ -177,11 +184,20 @@ impl ImageSource {
                 if url.len() > MAX_IMAGE_URL_BYTES {
                     return Err(Error::too_large("an image URL exceeds its bound"));
                 }
-                let host = url
+                let authority = url
                     .strip_prefix("https://")
                     .and_then(|rest| rest.split(['/', '?', '#']).next())
                     .unwrap_or_default();
-                if host.is_empty() || !url.bytes().all(|byte| byte.is_ascii_graphic()) {
+                // Userinfo is refused outright: it names no host, and it may carry a credential.
+                // A port is not a host either.
+                let host = match authority.rsplit_once(':') {
+                    Some((host, port)) if port.bytes().all(|byte| byte.is_ascii_digit()) => host,
+                    _ => authority,
+                };
+                if authority.contains('@')
+                    || host.is_empty()
+                    || !url.bytes().all(|byte| byte.is_ascii_graphic())
+                {
                     return Err(Error::invalid(URL_REFUSAL));
                 }
             }

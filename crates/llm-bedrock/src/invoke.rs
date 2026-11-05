@@ -12,8 +12,8 @@
 use crate::{client::BedrockTarget, errors, eventstream::Message};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use llm_core::{
-    Cancel, Dispatch, Error, Item, MAX_REQUEST_BYTES, Provenance, StreamEvent, StreamSink,
-    TurnOutcome, TurnRequest, exceeds,
+    Cancel, Dispatch, Error, ImageSource, Item, MAX_REQUEST_BYTES, Provenance, StreamEvent,
+    StreamSink, TurnOutcome, TurnRequest, exceeds,
 };
 use llm_http::SseEvent;
 use serde_json::{Map, Value, json};
@@ -48,11 +48,18 @@ const COUNTERS: [(&str, &str); 4] = [
 /// reports it too.
 const CREATED: usize = 3;
 
+/// The longest base64 text of one inline image this operation takes: Anthropic's vision guide
+/// gives Bedrock a per-image limit of 5 MB, base64-encoded
+/// (`https://platform.claude.com/docs/en/build-with-claude/vision.md`, line 1283), read here as
+/// 5,000,000 characters, the smaller reading of "5 MB".
+const MAX_IMAGE_BASE64_CHARS: usize = 5_000_000;
+
 /// Encodes the `InvokeModel` body for `request` on `target`.
 ///
 /// # Errors
 /// Refuses what the Messages encoder refuses (a provenance that is not Messages, unsupported
-/// semantics, the request bound) before any I/O.
+/// semantics, the request bound) before any I/O, and an image this operation does not take: one
+/// by URL, and inline bytes past [`MAX_IMAGE_BASE64_CHARS`] once encoded.
 pub(crate) fn encode_request(
     request: &TurnRequest,
     target: &BedrockTarget,
@@ -63,6 +70,11 @@ pub(crate) fn encode_request(
         &target.capabilities,
         &target.model_id,
     )?;
+    for item in &request.items {
+        if let Item::UserImage { source } = item {
+            image(source)?;
+        }
+    }
     let fields = body
         .as_object_mut()
         .ok_or_else(|| Error::invalid("Bedrock InvokeModel body is not an object"))?;
@@ -88,6 +100,28 @@ pub(crate) fn encode_request(
     }
     serde_json::to_vec(&body)
         .map_err(|_| Error::invalid("Bedrock InvokeModel request encoding failed"))
+}
+
+/// Refuses a user image `InvokeModel` does not take. Anthropic documents only base64 image
+/// sources on Bedrock (vision guide, lines 32-34 and 60), so an image by URL is refused by name,
+/// as Converse refuses it; neither refusal quotes a byte or the URL.
+fn image(source: &ImageSource) -> Result<(), Error> {
+    match source {
+        ImageSource::Bytes { data, .. } => {
+            if data.len().div_ceil(3) * 4 > MAX_IMAGE_BASE64_CHARS {
+                return Err(Error::too_large(
+                    "Bedrock InvokeModel carries an inline image of at most 5,000,000 base64 characters",
+                ));
+            }
+            Ok(())
+        }
+        ImageSource::Url { .. } => Err(Error::unsupported(
+            "Bedrock InvokeModel carries an image only as inline bytes, not by URL",
+        )),
+        _ => Err(Error::unsupported(
+            "Bedrock InvokeModel carries no image source of this kind",
+        )),
+    }
 }
 
 /// Accumulates one `invoke-with-response-stream` answer into a bound neutral outcome.
