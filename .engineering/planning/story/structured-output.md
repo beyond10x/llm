@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:structured-output
 kind: story
-status: active
+status: implemented
 title: A turn asks for JSON-schema structured output on every wire
 tags:
 - from-adopter-report
@@ -42,10 +42,11 @@ scope:
   path: spec/domains/messages.yaml
 - confidence: inferred
   path: spec/domains/responses.yaml
-revision: 21
+revision: 22
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-04T07:35:27Z", actor: "human:timo", revision: 18}
 - {from: "proposed", to: "active", at: "2026-11-04T07:35:27Z", actor: "human:timo", revision: 19}
+- {from: "active", to: "implemented", at: "2026-11-05T01:13:10Z", actor: "human:timo", revision: 22, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Context
 

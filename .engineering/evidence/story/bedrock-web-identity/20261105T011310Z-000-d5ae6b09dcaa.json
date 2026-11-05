@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-05T01:13:10Z",
+  "actor": "human:timo",
+  "artifact": "story:bedrock-web-identity",
+  "kind": "story",
+  "revision": 10,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate at 7150f2005 on Rust 1.98.0: workspace tests 1747 passed 0 failed; web_identity 14, adversary 13+1, security 7+5, form_exchange 6 green; conformance 987/987 x3"
+  }
+}

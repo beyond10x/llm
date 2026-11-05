@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-05T01:13:10Z",
+  "actor": "human:timo",
+  "artifact": "story:structured-output",
+  "kind": "story",
+  "revision": 21,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate at 7150f2005 on Rust 1.98.0: workspace tests 1747 passed 0 failed; structured_output and adversary_w25_structured_output in four wire crates green; conformance 987/987 x3"
+  }
+}

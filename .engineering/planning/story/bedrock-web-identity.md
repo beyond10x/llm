@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:bedrock-web-identity
 kind: story
-status: active
+status: implemented
 title: Bedrock credentials from web identity (IRSA) without an AWS SDK
 tags:
 - from-adopter-report
@@ -22,10 +22,11 @@ scope:
   path: docs/bedrock.md
 - confidence: inferred
   path: spec/domains/bedrock.yaml
-revision: 10
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 8}
 - {from: "proposed", to: "active", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 9}
+- {from: "active", to: "implemented", at: "2026-11-05T01:13:10Z", actor: "human:timo", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 ## Context
 
