@@ -45,18 +45,22 @@ must match; it is independent of `model_id`.
 ## Credentials
 
 The client asks its `CredentialSource` for credentials on every turn, so a rotated key is used
-without a restart. Three sources ship:
+without a restart. Four sources ship:
 
 - `StaticCredentials` resolves an access key id, a secret access key and an optional session token
   through a `SecretResolver` you inject, as every other account in llm does.
 - `ContainerCredentials` reads the container credentials endpoint that EKS Pod Identity and ECS
   task roles serve. You pass the endpoint URI and a secret reference bound to the token file.
+- `WebIdentityCredentials` exchanges a web identity token for role credentials with the STS
+  `AssumeRoleWithWebIdentity` call, as IAM roles for service accounts do. You pass the role ARN, a
+  session name, your region's STS endpoint and a secret reference bound to the token file, which
+  is read again on every fetch. A routes document cannot name it yet; build it in code.
 - `ProcessCredentials`, behind feature `process`, runs a program with its arguments, without a
   shell, and reads the JSON answer an AWS `credential_process` command prints, for example
   `aws configure export-credentials --profile dev`. The keys stay in your process's memory.
 
-Shared config files, profiles, instance metadata, web identity and SSO are not read. Name the
-command that resolves them, or resolve the keys yourself and hand them to `StaticCredentials`.
+Shared config files, profiles, instance metadata and SSO are not read. Name the command that
+resolves them, or resolve the keys yourself and hand them to `StaticCredentials`.
 
 ## A turn with Pod Identity credentials
 

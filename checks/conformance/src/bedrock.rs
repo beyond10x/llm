@@ -1,5 +1,5 @@
 //! Observe `llm-bedrock`: the Signature Version 4 signer, the event-stream decoder, the container
-//! credential source and whole turns through `BedrockClient`.
+//! and web identity credential sources and whole turns through `BedrockClient`.
 //!
 //! Every fact below is what a public `llm_bedrock` item returned or what a scripted server on
 //! 127.0.0.1 received. The inputs are the crate's vendored test data and fixtures written here.
@@ -17,6 +17,7 @@ use std::{
 use ess_conformance::target::TargetError;
 use llm_bedrock::{
     Api, AwsCredentials, BedrockClient, BedrockTarget, ContainerCredentials, CredentialSource,
+    WebIdentityCredentials,
     eventstream::{self, HeaderValue as FrameValue, Message, MessageDecoder},
     sigv4::{SigningParams, sign},
 };
@@ -45,6 +46,7 @@ pub const VIEWS: &[&str] = &[
     "llm.bedrock.LastFrames",
     "llm.bedrock.LastTurn",
     "llm.bedrock.LastContainerCredentials",
+    "llm.bedrock.LastWebIdentityCredentials",
 ];
 
 /// Observe one command of this domain, or `None` when the command belongs to another.
@@ -65,6 +67,11 @@ pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetEr
             container(input),
             "llm.bedrock.LastContainerCredentials",
             "llm.bedrock.Fetched",
+        ),
+        "llm.bedrock.FetchWebIdentityCredentials" => (
+            web_identity(input),
+            "llm.bedrock.LastWebIdentityCredentials",
+            "llm.bedrock.WebIdentityFetched",
         ),
         _ => return None,
     };
@@ -1215,6 +1222,321 @@ async fn fetch_on_loopback(input: &ContainerInput, fetches: u64) -> Result<Value
         Some(error) => {
             report_error(error, &mut facts);
             facts["diagnostics_safe"] = json!(clean(error, &secrets));
+        }
+    }
+    Ok(facts)
+}
+
+// ---------------------------------------------------------------------------------------------
+// llm.bedrock.FetchWebIdentityCredentials: `WebIdentityCredentials` against a scripted STS.
+// ---------------------------------------------------------------------------------------------
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WebIdentityInput {
+    #[serde(default)]
+    endpoint: Option<String>,
+    answer: String,
+    token: bool,
+    #[serde(deserialize_with = "crate::target::token_bound")]
+    fetches: Option<u64>,
+}
+
+const WEB_IDENTITY_REFERENCE: &str = "web-identity-token";
+const WEB_IDENTITY_TOKEN: &str = "llm-fixture-web-identity-token.eyJzdWIiOiJmaXh0dXJlIn0.signature";
+const WEB_IDENTITY_ROLE: &str = "arn:aws:iam::000000000000:role/llm-fixture-role";
+const WEB_IDENTITY_SESSION: &str = "llm-fixture-session";
+const WEB_IDENTITY_KEY_ID: &str = "ASIAFIXTUREWEBIDENTITY";
+const WEB_IDENTITY_SECRET: &str = "llm-fixture-web-identity-secret-access-key";
+const WEB_IDENTITY_SESSION_TOKEN: &str = "llm-fixture-web-identity-session-token";
+const STS_MESSAGE: &str = "llm-fixture-sts-refusal-text";
+
+/// The form `AssumeRoleWithWebIdentity` is asked with, as AWS's query API reference states its
+/// parameters, each value percent-encoded.
+const WEB_IDENTITY_FORM: &str = "Action=AssumeRoleWithWebIdentity&Version=2011-06-15\
+    &RoleArn=arn%3Aaws%3Aiam%3A%3A000000000000%3Arole%2Fllm-fixture-role\
+    &RoleSessionName=llm-fixture-session\
+    &WebIdentityToken=llm-fixture-web-identity-token.eyJzdWIiOiJmaXh0dXJlIn0.signature";
+
+/// Answers the web identity token for its reference while `known`, and reports it missing
+/// otherwise.
+struct WebIdentityTokenFile {
+    known: bool,
+}
+
+impl SecretResolver for WebIdentityTokenFile {
+    fn resolve<'a>(
+        &'a self,
+        reference: &'a SecretRef,
+    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
+        let known = self.known && reference.as_str() == WEB_IDENTITY_REFERENCE;
+        Box::pin(async move {
+            if !known {
+                return Err(SecretError::Missing);
+            }
+            Ok(ResolvedSecret {
+                secret: Secret::new(format!("{WEB_IDENTITY_TOKEN}\n").into_bytes())?,
+                version: SecretVersion::new("generation-1".to_owned())?,
+            })
+        })
+    }
+}
+
+/// An `AssumeRoleWithWebIdentity` answer holding `members` in its `Credentials`.
+fn sts_success(members: &[(&str, &str)]) -> Vec<u8> {
+    let credentials = members
+        .iter()
+        .fold(String::new(), |mut credentials, (name, value)| {
+            let _ = write!(credentials, "<{name}>{value}</{name}>");
+            credentials
+        });
+    let body = format!(
+        "<AssumeRoleWithWebIdentityResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\">\
+         <AssumeRoleWithWebIdentityResult>\
+         <SubjectFromWebIdentityToken>system:serviceaccount:default:llm</SubjectFromWebIdentityToken>\
+         <Audience>sts.amazonaws.com</Audience>\
+         <Credentials>{credentials}</Credentials>\
+         </AssumeRoleWithWebIdentityResult>\
+         <ResponseMetadata><RequestId>00000000-0000-0000-0000-000000000000</RequestId></ResponseMetadata>\
+         </AssumeRoleWithWebIdentityResponse>"
+    );
+    http_answer("200 OK", "Content-Type: text/xml\r\n", body.as_bytes())
+}
+
+/// An STS error document naming `code`, its message the fixture refusal text and the token.
+fn sts_refusal(status: &str, code: &str) -> Vec<u8> {
+    let body = format!(
+        "<ErrorResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\"><Error>\
+         <Type>Sender</Type><Code>{code}</Code><Message>{STS_MESSAGE} {WEB_IDENTITY_TOKEN}</Message>\
+         </Error><RequestId>00000000-0000-0000-0000-000000000000</RequestId></ErrorResponse>"
+    );
+    http_answer(status, "Content-Type: text/xml\r\n", body.as_bytes())
+}
+
+/// What the scripted STS answers each request, its expiry counted from the request; a redirect
+/// names `elsewhere`.
+fn sts_answer(answer: &str, elsewhere: &str) -> Vec<u8> {
+    let expiring = |seconds: u64| {
+        format_timestamp(SystemTime::now() + Duration::from_secs(seconds)).unwrap_or_default()
+    };
+    match answer {
+        "Valid" | "ExpiresSoon" => {
+            let expiration = expiring(if answer == "Valid" { 3600 } else { 120 });
+            sts_success(&[
+                ("SessionToken", WEB_IDENTITY_SESSION_TOKEN),
+                ("SecretAccessKey", WEB_IDENTITY_SECRET),
+                ("Expiration", &expiration),
+                ("AccessKeyId", WEB_IDENTITY_KEY_ID),
+            ])
+        }
+        "MissingSecret" => sts_success(&[
+            ("SessionToken", WEB_IDENTITY_SESSION_TOKEN),
+            ("Expiration", &expiring(3600)),
+            ("AccessKeyId", WEB_IDENTITY_KEY_ID),
+        ]),
+        "MemberTwice" => sts_success(&[
+            ("AccessKeyId", "ASIAFIXTUREOTHERKEY"),
+            ("SessionToken", WEB_IDENTITY_SESSION_TOKEN),
+            ("SecretAccessKey", WEB_IDENTITY_SECRET),
+            ("Expiration", &expiring(3600)),
+            ("AccessKeyId", WEB_IDENTITY_KEY_ID),
+        ]),
+        "ExpiredToken" => sts_refusal("400 Bad Request", "ExpiredToken"),
+        "InvalidIdentityToken" => sts_refusal("400 Bad Request", "InvalidIdentityToken"),
+        "IdpCommunicationError" => sts_refusal("400 Bad Request", "IDPCommunicationError"),
+        "Redirect" => http_answer(
+            "307 Temporary Redirect",
+            &format!("Location: {elsewhere}\r\n"),
+            b"",
+        ),
+        _ => http_answer("503 Service Unavailable", "", STS_MESSAGE.as_bytes()),
+    }
+}
+
+fn web_identity_facts() -> Value {
+    json!({"accepted":false,"error_code":null,"dispatch":null,"retriable":null,
+        "requests":0,"form_presented":null,"redirect_target_requests":0,
+        "access_key_id":null,"session_token":null,"debug_redacted":null,
+        "diagnostics_safe":true})
+}
+
+fn web_identity(input: &Value) -> Result<Value, TargetError> {
+    let input: WebIdentityInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
+    let fetches = input.fetches.unwrap_or(0);
+    let scripted = matches!(
+        input.answer.as_str(),
+        "Valid"
+            | "ExpiresSoon"
+            | "ExpiredToken"
+            | "InvalidIdentityToken"
+            | "IdpCommunicationError"
+            | "ServiceUnavailable"
+            | "MissingSecret"
+            | "MemberTwice"
+            | "Redirect"
+            | "Unreachable"
+    );
+    if fetches == 0 || fetches > MAX_FETCHES || !scripted {
+        let mut facts = web_identity_facts();
+        report_error(
+            &Error::invalid("the fetch count or the scripted answer is outside this adapter"),
+            &mut facts,
+        );
+        return Ok(facts);
+    }
+    runtime()?.block_on(ask_sts_on_loopback(&input, fetches))
+}
+
+/// Whether `request` is the unsigned `AssumeRoleWithWebIdentity` form POST, the token in its
+/// body and nowhere in its target.
+fn presents_the_form(request: &Captured) -> bool {
+    request.request_line() == "POST /"
+        && request.body == WEB_IDENTITY_FORM.as_bytes()
+        && request.header("authorization").is_empty()
+        && request.header("content-type") == ["application/x-www-form-urlencoded; charset=utf-8"]
+        && !request
+            .head
+            .to_ascii_lowercase()
+            .split("\r\n")
+            .any(|line| line.starts_with("x-amz-"))
+        && !request.head.contains(WEB_IDENTITY_TOKEN)
+}
+
+fn web_identity_source(endpoint: &str, known: bool) -> Result<WebIdentityCredentials, Error> {
+    WebIdentityCredentials::new(
+        http_client()?,
+        endpoint,
+        WEB_IDENTITY_ROLE,
+        WEB_IDENTITY_SESSION,
+        Arc::new(WebIdentityTokenFile { known }),
+        SecretRef::new(WEB_IDENTITY_REFERENCE)
+            .map_err(|_| Error::invalid("the fixture token reference is not a reference"))?,
+    )
+}
+
+/// Every value of the web identity fixture no message may carry.
+const WEB_IDENTITY_SECRETS: [&str; 5] = [
+    WEB_IDENTITY_TOKEN,
+    WEB_IDENTITY_KEY_ID,
+    WEB_IDENTITY_SECRET,
+    WEB_IDENTITY_SESSION_TOKEN,
+    STS_MESSAGE,
+];
+
+/// A literal endpoint, only given to the constructor: nothing is fetched from it.
+fn admit_endpoint(endpoint: &str, token: bool) -> Value {
+    let mut facts = web_identity_facts();
+    match web_identity_source(endpoint, token) {
+        Ok(_) => facts["accepted"] = json!(true),
+        Err(error) => {
+            report_error(&error, &mut facts);
+            facts["diagnostics_safe"] =
+                json!(clean(&error, &WEB_IDENTITY_SECRETS) && !error.message.contains(endpoint));
+        }
+    }
+    facts
+}
+
+/// Asks `source` `fetches` times, stopping at the first failure, then waits for a background
+/// refresh to land; returns the last credentials, the failure and the source's `Debug` form.
+async fn fetch_repeatedly(
+    source: &WebIdentityCredentials,
+    fetches: u64,
+) -> (Option<AwsCredentials>, Option<Error>, String) {
+    let cancel = Cancel::new();
+    let mut last = None;
+    let mut failure = None;
+    for _ in 0..fetches {
+        match source.credentials(&cancel).await {
+            Ok(credentials) => last = Some(credentials),
+            Err(error) => {
+                failure = Some(error);
+                break;
+            }
+        }
+    }
+    // A refresh inside the window runs in the background: count it once it has landed.
+    let _ = tokio::time::timeout(Duration::from_secs(5), async {
+        while source.refreshing() {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+    })
+    .await;
+    (last, failure, format!("{source:?}"))
+}
+
+async fn ask_sts_on_loopback(input: &WebIdentityInput, fetches: u64) -> Result<Value, TargetError> {
+    if let Some(endpoint) = &input.endpoint {
+        return Ok(admit_endpoint(endpoint, input.token));
+    }
+    let mut facts = web_identity_facts();
+    // The redirect target: it counts every connection it is offered.
+    let elsewhere = TcpListener::bind("127.0.0.1:0")
+        .await
+        .map_err(unavailable)?;
+    let elsewhere_uri = format!("http://{}/", elsewhere.local_addr().map_err(unavailable)?);
+    let offered = Arc::new(Mutex::new(0_usize));
+    let counter = offered.clone();
+    let target = tokio::spawn(async move {
+        while let Ok((_socket, _)) = elsewhere.accept().await {
+            if let Ok(mut offered) = counter.lock() {
+                *offered += 1;
+            }
+        }
+    });
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .map_err(unavailable)?;
+    let address = listener.local_addr().map_err(unavailable)?;
+    let captured = Arc::new(Mutex::new(Vec::new()));
+    let server = if input.answer == "Unreachable" {
+        // Nothing listens on the address once the listener is gone.
+        drop(listener);
+        None
+    } else {
+        let answer = input.answer.clone();
+        Some(tokio::spawn(serve(listener, captured.clone(), move || {
+            sts_answer(&answer, &elsewhere_uri)
+        })))
+    };
+    let outcome = match web_identity_source(&format!("http://{address}/"), input.token) {
+        Ok(source) => fetch_repeatedly(&source, fetches).await,
+        Err(error) => (None, Some(error), String::new()),
+    };
+    if let Some(server) = server {
+        server.abort();
+    }
+    target.abort();
+    let captured = captured
+        .lock()
+        .map(|captured| captured.clone())
+        .unwrap_or_default();
+    facts["requests"] = json!(captured.len());
+    if !captured.is_empty() {
+        facts["form_presented"] = json!(captured.iter().all(presents_the_form));
+    }
+    facts["redirect_target_requests"] = json!(offered.lock().map_or(0, |offered| *offered));
+    let (last, failure, source_debug) = outcome;
+    if let Some(credentials) = &last {
+        let debug = format!("{credentials:?} {source_debug}");
+        facts["access_key_id"] = json!(credentials.access_key_id());
+        facts["session_token"] =
+            json!(credentials.session_token() == Some(WEB_IDENTITY_SESSION_TOKEN));
+        facts["debug_redacted"] = json!(
+            [
+                WEB_IDENTITY_TOKEN,
+                WEB_IDENTITY_SECRET,
+                WEB_IDENTITY_SESSION_TOKEN
+            ]
+            .iter()
+            .all(|secret| !debug.contains(secret))
+        );
+    }
+    match &failure {
+        None => facts["accepted"] = json!(true),
+        Some(error) => {
+            report_error(error, &mut facts);
+            facts["diagnostics_safe"] = json!(clean(error, &WEB_IDENTITY_SECRETS));
         }
     }
     Ok(facts)

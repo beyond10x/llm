@@ -42,7 +42,7 @@ scope:
   path: spec/domains/messages.yaml
 - confidence: inferred
   path: spec/domains/responses.yaml
-revision: 20
+revision: 21
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-04T07:35:27Z", actor: "human:timo", revision: 18}
 - {from: "proposed", to: "active", at: "2026-11-04T07:35:27Z", actor: "human:timo", revision: 19}
@@ -91,9 +91,14 @@ refuses it before I/O; none drops it.
 - The Responses, Chat and Messages ingress decoders read the same fields into the neutral format
   instead of refusing them, and the ingress encoders round-trip them; an unknown key inside them is
   still refused by its path.
-- A member a wire has no place for (Messages and Converse have no `strict`) is refused by name before
-  I/O, or, where `docs/design.md` "Client request fields" classes it as a label the wire has no
-  place for, written there as not sent; never dropped silently, and no new `Advisory` variant.
+- `strict` on Messages, Anthropic InvokeModel and Converse: those wires always constrain the answer
+  to the schema (Anthropic structured outputs; Bedrock "strict schema compliance" through constrained
+  decoding, https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html), so
+  `strict: true` is honoured by construction and sends no member, and `strict: false` is refused by
+  name before I/O. Amended after adversary pass 1 (`review-result:adversary-w25-structured-output-pass-1`).
+- `name` is sent wherever the wire has a place for it, Converse `structure.jsonSchema.name`
+  included; Messages has none, and `docs/design.md` "Client request fields" says so. Nothing is
+  dropped silently, and no new `Advisory` variant.
 - The assistant text is returned as text; llm does not validate it against the schema and says so in
   `docs/design.md`.
 - ESS: the `llm.inference` domain and the four protocol domains declare the field; authored

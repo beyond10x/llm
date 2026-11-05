@@ -255,6 +255,12 @@
       "status": "shipped"
     },
     {
+      "area": "Amazon Bedrock",
+      "detail": "llm_bedrock::WebIdentityCredentials reads the token through a secret reference on every fetch and sends the STS AssumeRoleWithWebIdentity call unsigned, as one form post (llm_http::HttpClient::post_form) to an https endpoint or http on loopback, with no ambient proxy and no redirect followed; it reads the XML Credentials with a strict, bounded reader of its own and keeps them with the same single-flight refresh as ContainerCredentials. ExpiredToken, InvalidIdentityToken, any other 4xx but 408 and an unusable answer are unauthorized and final; no answer, a cut, a 5xx, a 408 and IDPCommunicationError are retriable; nothing was sent for any of them, and no message carries the token, the answer or a key. A routes document cannot name it: aws-web-identity would need a variant of the exhaustive AwsCredentialKind. 14 authored web-identity-* scenarios. Fixture evidence only; no request reached STS.",
+      "label": "Bedrock keys from a web identity token",
+      "status": "shipped"
+    },
+    {
       "area": "Credentials",
       "detail": "A catalog names an opaque SecretRef; the embedding injects the SecretResolver, resolution happens on every request, and renewal refreshes only the rejected generation.",
       "label": "Injected secret resolution and coordinated renewal",

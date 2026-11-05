@@ -99,6 +99,20 @@
       "llm.bedrock/authored/turn-converse-cache-counters-make-the-input-total-known",
       "llm.bedrock/authored/turn-converse-refuses-an-output-format-that-is-not-strict",
       "llm.bedrock/authored/turn-converse-thinking-is-sent-as-an-additional-field-and-streamed-as-reasoning",
+      "llm.bedrock/authored/web-identity-a-503-is-a-retriable-transport-failure",
+      "llm.bedrock/authored/web-identity-a-plain-http-endpoint-by-name-is-refused",
+      "llm.bedrock/authored/web-identity-a-redirect-is-unauthorized-and-its-target-hears-nothing",
+      "llm.bedrock/authored/web-identity-a-token-that-does-not-resolve-is-unauthorized-before-a-request",
+      "llm.bedrock/authored/web-identity-an-answer-naming-a-member-twice-is-unauthorized",
+      "llm.bedrock/authored/web-identity-an-answer-without-a-secret-key-is-unauthorized",
+      "llm.bedrock/authored/web-identity-an-endpoint-that-does-not-listen-is-a-retriable-transport-failure",
+      "llm.bedrock/authored/web-identity-an-expired-token-is-unauthorized-and-final",
+      "llm.bedrock/authored/web-identity-an-https-regional-endpoint-is-admitted",
+      "llm.bedrock/authored/web-identity-an-idp-communication-error-is-a-retriable-transport-failure",
+      "llm.bedrock/authored/web-identity-an-invalid-identity-token-is-unauthorized-and-final",
+      "llm.bedrock/authored/web-identity-credentials-are-fetched-once-and-kept-until-the-refresh-window",
+      "llm.bedrock/authored/web-identity-credentials-inside-the-refresh-window-are-fetched-again",
+      "llm.bedrock/authored/web-identity-the-container-agent-address-is-not-an-sts-endpoint",
       "llm.budget/authored/a-policy-admitting-no-concurrent-work-is-refused",
       "llm.budget/authored/a-reconciled-charge-cannot-be-reconciled-again",
       "llm.budget/authored/a-renewal-one-past-the-expiry-is-admitted",
@@ -1267,6 +1281,76 @@
         "digest": "sha256:fe98ee9f34a0af2c4eb65e6c968ad41fa51513edc758c9566c01b83870bf5f5b",
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-converse-thinking-is-sent-as-an-additional-field-and-streamed-as-reasoning"
+      },
+      "bedrock/scenarios/web-identity-a-503-is-a-retriable-transport-failure.yaml": {
+        "digest": "sha256:b903dacf9ad284831beff6c26df9febe14efa9677f2b9aa2a4a8a6a51fe950f3",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-a-503-is-a-retriable-transport-failure"
+      },
+      "bedrock/scenarios/web-identity-a-plain-http-endpoint-by-name-is-refused.yaml": {
+        "digest": "sha256:17ef8ae2cf18b44dc567d665223c2ec7c9f7d5a942b3ecb172c3a960a0a93c66",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-a-plain-http-endpoint-by-name-is-refused"
+      },
+      "bedrock/scenarios/web-identity-a-redirect-is-unauthorized-and-its-target-hears-nothing.yaml": {
+        "digest": "sha256:2b3b561cee971f746d793ac1934a8d5740807f97d971cb9ff8ef75a64b8741ae",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-a-redirect-is-unauthorized-and-its-target-hears-nothing"
+      },
+      "bedrock/scenarios/web-identity-a-token-that-does-not-resolve-is-unauthorized-before-a-request.yaml": {
+        "digest": "sha256:2a488eb266e2b8c1a19ea83b9885a32b07802e1ede10b5066d66d583415bdd94",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-a-token-that-does-not-resolve-is-unauthorized-before-a-request"
+      },
+      "bedrock/scenarios/web-identity-an-answer-naming-a-member-twice-is-unauthorized.yaml": {
+        "digest": "sha256:7b56ed8503a40d75b3bf068aae8dc79a58e78e782ab76db31713139bfbcec53a",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-an-answer-naming-a-member-twice-is-unauthorized"
+      },
+      "bedrock/scenarios/web-identity-an-answer-without-a-secret-key-is-unauthorized.yaml": {
+        "digest": "sha256:6e24c7766c1f317d23261e7385f91b6aafc98e458deba5a5dc9b7480388bd572",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-an-answer-without-a-secret-key-is-unauthorized"
+      },
+      "bedrock/scenarios/web-identity-an-endpoint-that-does-not-listen-is-a-retriable-transport-failure.yaml": {
+        "digest": "sha256:640d6d2fcc0c6546184a6498238205beaedbc5e850b07d0203983778d4b2b422",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-an-endpoint-that-does-not-listen-is-a-retriable-transport-failure"
+      },
+      "bedrock/scenarios/web-identity-an-expired-token-is-unauthorized-and-final.yaml": {
+        "digest": "sha256:55c4889239d450c60fab93366fb13c0391cd15069d07e6380472ee36f1e5ebd9",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-an-expired-token-is-unauthorized-and-final"
+      },
+      "bedrock/scenarios/web-identity-an-https-regional-endpoint-is-admitted.yaml": {
+        "digest": "sha256:161dea40d8d3b61090ccd6104f659063b942e3d0320e99c8101844689f906f64",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-an-https-regional-endpoint-is-admitted"
+      },
+      "bedrock/scenarios/web-identity-an-idp-communication-error-is-a-retriable-transport-failure.yaml": {
+        "digest": "sha256:52fe10d83e5afde02445d8484147f15992a7f6d22b87a69f34da4306f1f9dceb",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-an-idp-communication-error-is-a-retriable-transport-failure"
+      },
+      "bedrock/scenarios/web-identity-an-invalid-identity-token-is-unauthorized-and-final.yaml": {
+        "digest": "sha256:50bffe36cd3136ff704edb9506cf2a857124092e088c0db8e042c5894941a4ef",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-an-invalid-identity-token-is-unauthorized-and-final"
+      },
+      "bedrock/scenarios/web-identity-credentials-are-fetched-once-and-kept-until-the-refresh-window.yaml": {
+        "digest": "sha256:4d9286186a29dfa4050b56ce53d45669e21388a56fcf7a452b7724bbad6c4d7e",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-credentials-are-fetched-once-and-kept-until-the-refresh-window"
+      },
+      "bedrock/scenarios/web-identity-credentials-inside-the-refresh-window-are-fetched-again.yaml": {
+        "digest": "sha256:09b5a95392bb43767677ad273299e02f1cdb235504559e3c12f7db634ece3872",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-credentials-inside-the-refresh-window-are-fetched-again"
+      },
+      "bedrock/scenarios/web-identity-the-container-agent-address-is-not-an-sts-endpoint.yaml": {
+        "digest": "sha256:b83cf9b021c6f075f76facfd09edc5bf15f4d314025d6b7518f9e3b51a49a1c1",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/web-identity-the-container-agent-address-is-not-an-sts-endpoint"
       },
       "budget/scenarios/a-policy-admitting-no-concurrent-work-is-refused.yaml": {
         "digest": "sha256:1be08a37133e6dd0cbc0461e4d49983300af6c8eca40ae2694c4d52d7296cd18",
@@ -5615,8 +5699,8 @@
       }
     },
     "counts": {
-      "authored": 935,
-      "generated": 37,
+      "authored": 949,
+      "generated": 38,
       "outside": 0,
       "refused": 0
     },
@@ -5624,6 +5708,7 @@
       "llm.accounting.Quote/outcome/observed",
       "llm.bedrock.DecodeEventStream/outcome/observed",
       "llm.bedrock.FetchContainerCredentials/outcome/observed",
+      "llm.bedrock.FetchWebIdentityCredentials/outcome/observed",
       "llm.bedrock.RunTurn/outcome/observed",
       "llm.bedrock.SignSuiteCase/outcome/observed",
       "llm.budget.Exercise/outcome/observed",
@@ -5673,9 +5758,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "e2168572823c87a2c66c516376f3feab50b099a7c257e6582f9ee87c781fe6b5",
+    "contract_digest": "3fb37e16ada17bac3a2903abe0d71e6ad1f5767e732327d32f0b8ce548e37bac",
     "scenario_initial_state": "empty",
-    "spec_digest": "3e620c3e5a506b4ef075b17f1509196edb2a74d6db2d58d487abb5586f0c1133",
+    "spec_digest": "75071b75bc6991dd43c3b8492604a78dae67e197b16999c8296350961e78a721",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -5714,6 +5799,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -5854,6 +5943,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -13305,6 +13398,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -13441,6 +13538,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -13571,6 +13672,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -13718,6 +13823,295 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Encoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.bedrock.FetchWebIdentityCredentials/outcome/observed": {
+      "purpose": "`llm.bedrock.FetchWebIdentityCredentials` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Answered"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Decoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Fetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Encoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Valid"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "shape": {
+            "accepted": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Answered",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Decoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -13848,6 +14242,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -14007,6 +14405,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -14133,6 +14535,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -14269,6 +14675,10 @@
         },
         {
           "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -19569,6 +19979,1610 @@
         }
       ]
     },
+    "llm.bedrock/authored/web-identity-a-503-is-a-retriable-transport-failure": {
+      "purpose": "an STS endpoint answering 503 is transport, not-sent and retriable",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "ServiceUnavailable"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-a-plain-http-endpoint-by-name-is-refused": {
+      "purpose": "plain http to a named STS host is refused when the source is built, before a connection, without quoting the endpoint",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Valid"
+            },
+            "endpoint": {
+              "kind": "literal",
+              "value": "http://sts.eu-central-1.amazonaws.com/"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": null
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-a-redirect-is-unauthorized-and-its-target-hears-nothing": {
+      "purpose": "a 307 from the STS endpoint is unauthorized and final, and the redirect target receives no connection",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Redirect"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": true
+              },
+              "redirect_target_requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-a-token-that-does-not-resolve-is-unauthorized-before-a-request": {
+      "purpose": "a token file the resolver cannot read is unauthorized before STS is asked",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Valid"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": null
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-an-answer-naming-a-member-twice-is-unauthorized": {
+      "purpose": "Credentials naming AccessKeyId twice are refused rather than one of the two chosen",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "MemberTwice"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-an-answer-without-a-secret-key-is-unauthorized": {
+      "purpose": "Credentials without SecretAccessKey are refused as unauthorized and final, quoting no answer value",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "MissingSecret"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-an-endpoint-that-does-not-listen-is-a-retriable-transport-failure": {
+      "purpose": "a refused connection to the STS endpoint is transport, not-sent and retriable",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Unreachable"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": null
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-an-expired-token-is-unauthorized-and-final": {
+      "purpose": "STS refusing the token as ExpiredToken is unauthorized, not-sent and final, and quotes neither the token nor the STS message",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "ExpiredToken"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-an-https-regional-endpoint-is-admitted": {
+      "purpose": "an https regional STS endpoint is admitted when the source is built; nothing is fetched from it",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Valid"
+            },
+            "endpoint": {
+              "kind": "literal",
+              "value": "https://sts.eu-central-1.amazonaws.com"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-an-idp-communication-error-is-a-retriable-transport-failure": {
+      "purpose": "STS reporting IDPCommunicationError, its 400 included, is transport, not-sent and retriable",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "IdpCommunicationError"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "transport"
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-an-invalid-identity-token-is-unauthorized-and-final": {
+      "purpose": "STS refusing the token as InvalidIdentityToken is unauthorized, not-sent and final",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "InvalidIdentityToken"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-credentials-are-fetched-once-and-kept-until-the-refresh-window": {
+      "purpose": "three calls for credentials valid for an hour make one unsigned form POST that carries the token",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Valid"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 3.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": "ASIAFIXTUREWEBIDENTITY"
+              },
+              "debug_redacted": {
+                "kind": "literal",
+                "value": true
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": true
+              },
+              "redirect_target_requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "session_token": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-credentials-inside-the-refresh-window-are-fetched-again": {
+      "purpose": "credentials that expire within five minutes are answered and refreshed by a second form POST that reads the token again",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "ExpiresSoon"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 2.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "access_key_id": {
+                "kind": "literal",
+                "value": "ASIAFIXTUREWEBIDENTITY"
+              },
+              "debug_redacted": {
+                "kind": "literal",
+                "value": true
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "form_presented": {
+                "kind": "literal",
+                "value": true
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 2.0
+              },
+              "session_token": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
+    "llm.bedrock/authored/web-identity-the-container-agent-address-is-not-an-sts-endpoint": {
+      "purpose": "plain http to the Pod Identity agent address, admitted for container credentials, is refused as an STS endpoint",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.WebIdentityAnswer"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.FetchWebIdentityCredentials"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.FetchWebIdentityCredentials",
+          "input": {
+            "answer": {
+              "kind": "literal",
+              "value": "Valid"
+            },
+            "endpoint": {
+              "kind": "literal",
+              "value": "http://169.254.170.23/"
+            },
+            "fetches": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "token": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.FetchWebIdentityCredentials",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 0.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastWebIdentityCredentials"
+        }
+      ]
+    },
     "llm.budget.Exercise/outcome/observed": {
       "purpose": "`llm.budget.Exercise` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -19602,6 +21616,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -19742,6 +21760,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -26262,6 +28284,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -26402,6 +28428,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -26524,6 +28554,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -26675,6 +28709,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -26797,6 +28835,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -26956,6 +28998,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -27078,6 +29124,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -27222,6 +29272,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -38660,6 +40714,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -38801,6 +40859,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -44185,6 +46247,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -44329,6 +46395,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -44451,6 +46521,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -44598,6 +46672,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -44720,6 +46798,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -44871,6 +46953,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -44993,6 +47079,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -45136,6 +47226,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -45258,6 +47352,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -45413,6 +47511,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -45535,6 +47637,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -45679,6 +47785,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -59847,6 +61957,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -59995,6 +62109,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -60117,6 +62235,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -60265,6 +62387,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -61226,6 +63352,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -61360,6 +63490,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -61490,6 +63624,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -61634,6 +63772,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -70201,6 +72343,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -70349,6 +72495,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -70471,6 +72621,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -70622,6 +72776,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -70744,6 +72902,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -70895,6 +73057,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -71017,6 +73183,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -71165,6 +73335,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -87551,6 +89725,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -87699,6 +89877,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -87821,6 +90003,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -87965,6 +90151,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -91289,6 +93479,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -91433,6 +93627,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -91555,6 +93753,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -91703,6 +93905,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -101024,6 +103230,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -101172,6 +103382,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -101302,6 +103516,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -101465,6 +103683,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -101587,6 +103809,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -101746,6 +103972,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -101872,6 +104102,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -102027,6 +104261,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -102153,6 +104391,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -102316,6 +104558,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -102454,6 +104700,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -102622,6 +104872,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {
@@ -113602,6 +115856,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
           "name": "llm.budget.Exercised"
         },
         {
@@ -113742,6 +116000,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.budget.Exercised",
           "step": "expect_no_event"
         },
@@ -113864,6 +116126,10 @@
         {
           "kind": "event",
           "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
         },
         {
           "kind": "event",
@@ -114004,6 +116270,10 @@
         },
         {
           "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
           "step": "expect_no_event"
         },
         {

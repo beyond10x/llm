@@ -1,0 +1,27 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: web-identity-a-token-that-does-not-resolve-is-unauthorized-before-a-request
+summary: "a token file the resolver cannot read is unauthorized before STS is asked"
+timeline:
+- at: '2026-11-04T12:00:00Z'
+  command: llm.bedrock.FetchWebIdentityCredentials
+  input:
+    answer: "Valid"
+    token: false
+    fetches: 1
+  outcome: observed
+assert:
+- view: llm.bedrock.LastWebIdentityCredentials
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastWebIdentityCredentials
+  contains:
+    accepted: false
+    error_code: "unauthorized"
+    dispatch: "not-sent"
+    retriable: false
+    requests: 0
+    form_presented: null
+    access_key_id: null
+    diagnostics_safe: true

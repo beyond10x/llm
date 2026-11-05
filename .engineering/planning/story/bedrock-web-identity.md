@@ -22,7 +22,7 @@ scope:
   path: docs/bedrock.md
 - confidence: inferred
   path: spec/domains/bedrock.yaml
-revision: 9
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 8}
 - {from: "proposed", to: "active", at: "2026-11-04T07:35:28Z", actor: "human:timo", revision: 9}
@@ -75,3 +75,11 @@ A pod using IRSA reaches Bedrock without the AWS CLI, an AWS SDK or feature `pro
 
 Targeted `llm-bedrock` and `llm-models` tests and conformance scenarios against a loopback STS
 fixture. No AWS account or live call; a live run is `story:bedrock-live-qualification`.
+
+## Delivered in wave 2026-11-04-w25
+
+The credential source, its failure classes, the ESS declarations and 14 authored scenarios shipped.
+The routes-document item (`auth.kind = "aws-web-identity"`) did not: it needs a variant on
+`AwsCredentialKind` (`crates/llm-models/src/routes.rs:760`), which is not `#[non_exhaustive]`, and the
+wave ran additive only (`approval-record:wave-2026-11-04-w25-proposal`). It moved to
+`story:bedrock-web-identity-route`, which ships with the breaking minor.
