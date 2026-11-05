@@ -367,6 +367,12 @@ scenarios:
 - routes/scenarios/an-anonymous-endpoint-prepares-nothing-and-succeeds.yaml
 - routes/scenarios/an-anonymous-endpoint-with-a-secret-is-refused.yaml
 - routes/scenarios/an-api-key-endpoint-without-a-header-is-refused.yaml
+- routes/scenarios/an-aws-web-identity-endpoint-loads-and-its-routes-answer-outside-the-catalog.yaml
+- routes/scenarios/an-aws-web-identity-endpoint-naming-an-access-key-is-refused.yaml
+- routes/scenarios/an-aws-web-identity-endpoint-naming-its-role-is-refused-without-echoing-it.yaml
+- routes/scenarios/an-aws-web-identity-endpoint-naming-its-token-as-a-secret-is-refused.yaml
+- routes/scenarios/an-http-endpoint-taking-aws-web-identity-is-refused.yaml
+- routes/scenarios/an-unknown-bedrock-auth-kind-is-refused-naming-every-kind.yaml
 - routes/scenarios/an-endpoint-declared-twice-is-refused.yaml
 - routes/scenarios/an-undeclared-name-reading-a-declared-endpoint-and-model-resolves-directly.yaml
 - routes/scenarios/an-unknown-auth-field-is-refused.yaml

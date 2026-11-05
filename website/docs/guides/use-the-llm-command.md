@@ -144,6 +144,10 @@ cluster. `llm` follows a link only when it sits in a directory owned by you or r
 else can write. The file it reaches must be a regular file owned by you or root that only its
 owner can write.
 
+`llm` does not read the IAM roles for service accounts variables (`AWS_ROLE_ARN`,
+`AWS_WEB_IDENTITY_TOKEN_FILE`) yet. It supplies no web identity role, so a route on an
+`aws-web-identity` endpoint is refused and every other route still works.
+
 A Bedrock endpoint can also take its keys from a command, the way an AWS profile's
 `credential_process` does. This endpoint runs the AWS CLI for profile `dev`:
 

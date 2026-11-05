@@ -1,0 +1,31 @@
+type: ess-scenario/1
+domain: llm.routes
+scenario: an-aws-web-identity-endpoint-naming-its-role-is-refused-without-echoing-it
+summary: the role ARN of an aws-web-identity endpoint comes from the caller, so a document naming one in its auth is refused as an unknown field, by its location only, without echoing the value
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.routes.Load
+  input:
+    routes_yaml: |
+      format: llm.routes/1
+      endpoints:
+        bedrock-irsa: {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+                       auth: {kind: aws-web-identity, role_arn: 'arn:aws:iam::000000000000:role/routes-private-marker'}}
+      routes:
+        nova: bedrock-irsa/eu.amazon.nova-pro-v1:0
+    probe_names: [nova]
+  outcome: observed
+assert:
+- view: llm.routes.LastLoad
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.routes.LastLoad
+  contains:
+    loaded: false
+    error_code: invalid-request
+    error_message: "invalid llm.routes/1 YAML document at line 4 column 49"
+    routes: []
+    endpoints: []
+    bedrock_endpoints: []
+    answers: []

@@ -43,7 +43,7 @@ routes:
 | `base_url` | An HTTP(S) API prefix with no userinfo, query or fragment |
 | `protocol` | `messages`, `responses` or `chat-completions`; on a Bedrock endpoint `bedrock-converse` or `messages` |
 | `bedrock.region` | Makes the endpoint a Bedrock endpoint; see [Bedrock endpoints](#bedrock-endpoints) |
-| `auth.kind` | `anonymous`, `bearer` or `api-key`; on a Bedrock endpoint `aws-keys`, `aws-container` or `aws-process` |
+| `auth.kind` | `anonymous`, `bearer` or `api-key`; on a Bedrock endpoint `aws-keys`, `aws-container`, `aws-web-identity` or `aws-process` |
 | `auth.header` | The header an `api-key` endpoint sends; required for `api-key` and refused otherwise |
 | `auth.secret` | A reference, never a value: `env:<VARIABLE>`, `file:<absolute path or ~/path>` or `keychain:<service>/<entry>`; required for `bearer` and `api-key`, refused for `anonymous` |
 
@@ -66,6 +66,8 @@ endpoints:
   bedrock-dev:    {protocol: bedrock-converse, bedrock: {region: eu-central-1},
                    auth: {kind: aws-process,
                           command: [aws, configure, export-credentials, --profile, dev]}}
+  bedrock-irsa:   {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+                   auth: {kind: aws-web-identity}}
 ```
 
 | Field | Values |
@@ -73,7 +75,7 @@ endpoints:
 | `protocol` | `bedrock-converse` for Converse; `messages` for the Anthropic body on `InvokeModel` |
 | `bedrock.region` | Required; the request is signed for it |
 | `base_url` | Optional; replaces `https://bedrock-runtime.{region}.amazonaws.com` |
-| `auth.kind` | `aws-keys`, `aws-container` or `aws-process`; exactly one credential source |
+| `auth.kind` | `aws-keys`, `aws-container`, `aws-web-identity` or `aws-process`; exactly one credential source |
 | `auth.access_key_id`, `auth.secret_access_key` | References, required for `aws-keys` |
 | `auth.session_token` | A reference, optional for `aws-keys` |
 | `auth.command` | A list of strings: the program (non-empty), then its arguments; required for `aws-process`, refused otherwise |
@@ -83,6 +85,26 @@ Identity, ECS task roles). The caller supplies that endpoint's URI and its token
 `SecretSources::with_container_credentials`; without them the endpoint gets no resolver, so
 `Routes::port` refuses its routes as `unauthorized` and every other route still builds. The
 endpoint's name is the provider, account and endpoint of its turns' provenance.
+
+An `aws-web-identity` endpoint signs with the credentials STS `AssumeRoleWithWebIdentity` answers,
+as IAM roles for service accounts (IRSA) use it. The document names only the kind. The caller
+supplies the role ARN (`AWS_ROLE_ARN` on IRSA), a session name and its region's STS endpoint as a
+`WebIdentityRole`, and the token file (`AWS_WEB_IDENTITY_TOKEN_FILE`), with
+`SecretSources::with_web_identity`:
+
+```rust
+let sources = SecretSources::new().with_web_identity(
+    WebIdentityRole::new(role_arn, "my-service", "https://sts.eu-central-1.amazonaws.com"),
+    token_file,
+);
+```
+
+The token file is read as a platform-mounted file, the same way as the container token, at
+each fetch and never when the resolvers or the port are built. Any other `auth` field is refused,
+the four values included, so no secret is a document value. Without them the endpoint gets no
+resolver and `Routes::port` refuses its routes as `unauthorized`. So does a role ARN, session name
+or STS endpoint that `WebIdentityCredentials` refuses. Every other route still builds. The `llm`
+command supplies no web identity role yet, so it refuses such a route.
 
 An `aws-process` endpoint runs its `command` without a shell, as an AWS profile's
 `credential_process` does, and signs with the keys it prints: the `credential_process` JSON

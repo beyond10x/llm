@@ -189,7 +189,7 @@ The supported pattern, cancel then continue:
      what it showed checks for that warning.
    - **Finished in tool calls:** its outcome's items, then a result for every call it proposed,
      because a request with an unanswered call is refused before it is sent (`every prior tool
-     call needs a result before the next turn`, `crates/llm-core/src/turn.rs:152-156`). Run the
+     call needs a result before the next turn`, `crates/llm-core/src/turn.rs:156-160`). Run the
      tool and carry its result, or carry the call as rejected: a failed `Item::ToolResult` whose
      output is the caller's reason
      ([Failed and rejected tool results](#failed-and-rejected-tool-results)). The new input comes
@@ -335,9 +335,11 @@ fall back to billable API credentials. The future Connectors arbitrary-secret ad
 require changing route references. Core never depends on Connectors.
 
 The `llm.routes/1` document is the short form, in YAML or TOML with one digest for both. A Bedrock
-endpoint (`bedrock.region`, `aws-keys`, `aws-container` or `aws-process`) has no binding: it
-stays outside the expanded catalog, and `Routes::port` builds `llm-bedrock`'s client for its
-routes. An `aws-process` endpoint names a command that prints AWS `credential_process` keys; it
+endpoint (`bedrock.region`, `aws-keys`, `aws-container`, `aws-web-identity` or `aws-process`) has
+no binding: it stays outside the expanded catalog, and `Routes::port` builds `llm-bedrock`'s
+client for its routes. An `aws-web-identity` endpoint names only its kind; the caller supplies the
+role, session name, STS endpoint and token file, as it supplies an `aws-container` endpoint's
+URI and token file. An `aws-process` endpoint names a command that prints AWS `credential_process` keys; it
 is the one credential source that starts a program, so a routes document alone never runs it:
 `llm-models` builds its resolver only with feature `process` and only after the caller calls
 `RouteResolvers::allow_credential_process`, and refuses its routes as `unauthorized` otherwise.

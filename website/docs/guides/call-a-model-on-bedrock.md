@@ -54,7 +54,9 @@ without a restart. Four sources ship:
 - `WebIdentityCredentials` exchanges a web identity token for role credentials with the STS
   `AssumeRoleWithWebIdentity` call, as IAM roles for service accounts do. You pass the role ARN, a
   session name, your region's STS endpoint and a secret reference bound to the token file, which
-  is read again on every fetch. A routes document cannot name it yet; build it in code.
+  is read again on every fetch. A routes document names it as `auth.kind = "aws-web-identity"`,
+  the four values supplied by the caller
+  ([Configure model routes](configure-model-routes.md#bedrock-endpoints)).
 - `ProcessCredentials`, behind feature `process`, runs a program with its arguments, without a
   shell, and reads the JSON answer an AWS `credential_process` command prints, for example
   `aws configure export-credentials --profile dev`. The keys stay in your process's memory.

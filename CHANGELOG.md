@@ -13,11 +13,15 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `Item::UserImage` (`ImageSource`, `ImageMediaType`): inline PNG, JPEG, GIF or WebP bytes up to 5 MiB, or an https URL
 - A user image is sent on Responses, Chat, Messages, InvokeModel and Converse beside its text; Converse refuses a URL
 - Responses, Chat and Messages ingress read image parts of a user message in order; elsewhere they stay refused by path
-- ESS: `llm.inference.UserImage` and 12 image scenarios across five domains; the conformance floor is 999 (was 987)
+- ESS: `llm.inference.UserImage` and 12 image scenarios across five domains
+- `llm-models`: routes `auth.kind = "aws-web-identity"` (`AwsCredentialKind::WebIdentity`) on `WebIdentityCredentials`
+- `llm-models`: `SecretSources::with_web_identity` and `WebIdentityRole` take the caller's role and token file
+- `llm-models`: `Resolvers::web_identity_role`, defaulted to `None`, beside `container_credentials_uri`
+- ESS: 6 `llm.routes` scenarios for `aws-web-identity` endpoints; the conformance floor is 1005 (was 987)
 
 ### Changed
 
-- **Breaking:** `Item` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm that refuses the item
+- **Breaking:** `Item` is `#[non_exhaustive]`: harness adds a wildcard arm when it leaves 0.17.0; control-plane stays on 0.4.0
 - **Breaking:** `Capabilities` is `#[non_exhaustive]`: a struct literal becomes `Capabilities::text` and `with_*`
 - **Breaking:** `llm-routing`: `Rejection` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm
 - **Breaking:** `llm-models`: `AwsCredentialKind` is `#[non_exhaustive]`: an exhaustive match on it adds a wildcard arm

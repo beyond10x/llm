@@ -494,7 +494,7 @@ haiku = \"open/claude-haiku-5-5\"
     for (auth, expected) in [
         (
             r#"{ kind = "aws-process", command = ["aws"] }"#,
-            "takes `auth.kind` aws-keys, aws-container or aws-process",
+            "takes `auth.kind` aws-keys, aws-container, aws-process or aws-web-identity",
         ),
         (
             r#"{ kind = "anonymous", command = ["aws"] }"#,

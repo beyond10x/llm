@@ -232,9 +232,14 @@ The same reference states the limits `WebIdentityCredentials` checks before send
 20000 characters. It lists `IDPCommunicationError` as the identity provider not answering STS,
 which `WebIdentityCredentials` reports as retriable; every other error it lists is final here.
 
-A routes document cannot name this source yet: `auth.kind = "aws-web-identity"` needs a variant of
-`AwsCredentialKind` it does not have. Until then a caller builds `WebIdentityCredentials` and
-hands it to `BedrockClient` itself.
+A routes document names this source as `auth.kind = "aws-web-identity"` on a Bedrock endpoint, in
+YAML or TOML, and nothing else: the role ARN, the session name, the STS endpoint and the token
+file are the caller's, given to `SecretSources::with_web_identity` as a `WebIdentityRole` and a
+path, as an `aws-container` endpoint's URI and token file are given to
+`SecretSources::with_container_credentials`. The token file resolves through
+`FileResolver::mounted`, read at each fetch. Without them, or with a value `WebIdentityCredentials`
+refuses, only that endpoint's routes are refused as `unauthorized`. The `llm` command supplies no
+web identity role yet.
 
 ## Usage
 

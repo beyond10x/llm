@@ -69,6 +69,11 @@ entities:
       # output_streaming true, input_during_output false. A mapping that leaves out
       # output_streaming or input_during_output declares true and false.
       - {name: capabilities, type: List<String>}
+      # Every Bedrock endpoint (one with a `bedrock` table), in name order:
+      # `<endpoint>:<protocol>:<region>:<auth kind>`, the kind aws-keys, aws-container,
+      # aws-process or aws-web-identity. An aws-container or aws-web-identity endpoint names
+      # only its kind: the container endpoint and its token file, or the web identity role ARN,
+      # session name, STS endpoint and token file, come from the caller, never the document.
       - {name: bedrock_endpoints, type: List<String>}
       - {name: aliases, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
