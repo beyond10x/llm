@@ -10,14 +10,17 @@
 //!
 //! A routes document's `bedrock` endpoint has no binding: [`routes::Routes::port`] builds
 //! `llm-bedrock`'s `BedrockClient` for its routes, signing with the endpoint's AWS keys, with
-//! the container credentials endpoint the caller supplies, or with the keys the endpoint's
-//! `aws-process` command prints. That command runs only in a build with feature `process` and
-//! for a caller that allows it ([`routes::RouteResolvers::allow_credential_process`]).
+//! the container credentials endpoint the caller supplies, with the credentials STS answers for
+//! the web identity role the caller supplies ([`WebIdentityRole`]), or with the keys the
+//! endpoint's `aws-process` command prints. That command runs only in a build with feature
+//! `process` and for a caller that allows it
+//! ([`routes::RouteResolvers::allow_credential_process`]).
 
 pub mod routes;
 
 use llm_bedrock::{
     BedrockClient, BedrockTarget, ContainerCredentials, CredentialSource, StaticCredentials,
+    WebIdentityCredentials,
 };
 use llm_chat::ChatClient;
 use llm_core::{
@@ -30,7 +33,60 @@ use llm_messages::MessagesClient;
 use llm_providers::Binding;
 use llm_responses::ResponsesClient;
 use llm_routing::{Catalog, Models};
-use std::{collections::BTreeMap, sync::Arc};
+use std::{collections::BTreeMap, fmt, sync::Arc};
+
+/// The role an `aws-web-identity` Bedrock endpoint assumes with STS `AssumeRoleWithWebIdentity`,
+/// as the caller supplies it: on IAM roles for service accounts (IRSA), the role ARN is the value
+/// of `AWS_ROLE_ARN`, and the STS endpoint the caller's regional one, such as
+/// `https://sts.eu-central-1.amazonaws.com`. None of the three is a secret; the token is read
+/// from its file at each fetch, never kept here.
+///
+/// Nothing is checked or sent when the role is made: building the endpoint's port checks the
+/// three as `llm_bedrock::WebIdentityCredentials::new` does, and refuses as `unauthorized`. The
+/// `Debug` form shows the role ARN and the session name, never the endpoint.
+#[derive(Clone, PartialEq, Eq)]
+pub struct WebIdentityRole {
+    role_arn: String,
+    session_name: String,
+    sts_endpoint: String,
+}
+
+impl WebIdentityRole {
+    /// The role `role_arn`, assumed as `session_name` at the STS `sts_endpoint`.
+    pub fn new(
+        role_arn: impl Into<String>,
+        session_name: impl Into<String>,
+        sts_endpoint: impl Into<String>,
+    ) -> Self {
+        Self {
+            role_arn: role_arn.into(),
+            session_name: session_name.into(),
+            sts_endpoint: sts_endpoint.into(),
+        }
+    }
+
+    pub fn role_arn(&self) -> &str {
+        &self.role_arn
+    }
+
+    pub fn session_name(&self) -> &str {
+        &self.session_name
+    }
+
+    /// The STS endpoint, as the caller wrote it.
+    pub fn sts_endpoint(&self) -> &str {
+        &self.sts_endpoint
+    }
+}
+
+impl fmt::Debug for WebIdentityRole {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("WebIdentityRole")
+            .field("role_arn", &self.role_arn)
+            .field("session_name", &self.session_name)
+            .finish_non_exhaustive()
+    }
+}
 
 /// The caller's credential resolvers, looked up by account id.
 ///
@@ -43,6 +99,12 @@ pub trait Resolvers {
     /// `aws-container` Bedrock endpoint fetches its credentials from, when the caller supplies
     /// one. None by default.
     fn container_credentials_uri(&self) -> Option<&str> {
+        None
+    }
+
+    /// The role an `aws-web-identity` Bedrock endpoint assumes, when the caller supplies one.
+    /// None by default.
+    fn web_identity_role(&self) -> Option<&WebIdentityRole> {
         None
     }
 
@@ -91,6 +153,10 @@ pub(crate) enum AwsReferences {
         session_token: Option<SecretRef>,
     },
     Container {
+        account: Id,
+        token: SecretRef,
+    },
+    WebIdentity {
         account: Id,
         token: SecretRef,
     },
@@ -195,9 +261,11 @@ impl Port {
     }
 
     /// The port of one Bedrock Runtime target, signing with credentials from the caller's
-    /// resolver for its account: the keys themselves (`aws-keys`), or the container endpoint's
-    /// token (`aws-container`), whose URI the caller supplies too; or with the keys the
-    /// endpoint's command prints (`aws-process`), when the caller allows it to run.
+    /// resolver for its account: the keys themselves (`aws-keys`), the container endpoint's
+    /// token (`aws-container`), whose URI the caller supplies too, or the web identity token
+    /// (`aws-web-identity`), whose role, session name and STS endpoint the caller supplies too;
+    /// or with the keys the endpoint's command prints (`aws-process`), when the caller allows it
+    /// to run.
     pub(crate) fn bedrock(
         target: BedrockTarget,
         references: AwsReferences,
@@ -236,6 +304,26 @@ impl Port {
                 })?;
                 let credentials =
                     ContainerCredentials::new(http.clone(), uri, resolver.clone(), token)?;
+                (Some(resolver), Arc::new(credentials))
+            }
+            AwsReferences::WebIdentity { account, token } => {
+                let resolver = resolvers
+                    .resolver(&account)
+                    .ok_or_else(|| unresolved(resolvers, &account))?;
+                let role = resolvers.web_identity_role().ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::Unauthorized,
+                        format!("no web identity role is supplied for account `{account}`"),
+                    )
+                })?;
+                let credentials = WebIdentityCredentials::new(
+                    http.clone(),
+                    role.sts_endpoint(),
+                    role.role_arn(),
+                    role.session_name(),
+                    resolver.clone(),
+                    token,
+                )?;
                 (Some(resolver), Arc::new(credentials))
             }
             AwsReferences::Process { endpoint, command } => {

@@ -45,6 +45,8 @@
 //!   bedrock-dev: {protocol: bedrock-converse, bedrock: {region: eu-central-1},
 //!                 auth: {kind: aws-process,
 //!                        command: [aws, configure, export-credentials, --profile, dev]}}
+//!   bedrock-irsa: {protocol: bedrock-converse, bedrock: {region: eu-central-1},
+//!                  auth: {kind: aws-web-identity}}
 //! ```
 //!
 //! Its `protocol` is `bedrock-converse` (Converse) or `messages` (the Anthropic body on
@@ -52,13 +54,15 @@
 //! is the Bedrock model or inference-profile id. It authenticates with `aws-keys` (an access key
 //! id, a secret access key and optionally a session token, each a secret reference) or
 //! `aws-container` (the container credentials endpoint and its token file, which the caller
-//! supplies through [`SecretSources::with_container_credentials`]) or `aws-process` (a
-//! `command`, the program and then its arguments, run without a shell when a turn needs keys;
-//! it prints them as an AWS `credential_process` answer, and they stay in this process's
-//! memory). An `aws-process` route builds only with feature `process` and only when the caller
-//! allows it through [`RouteResolvers::allow_credential_process`]. Its routes are served by
-//! `llm-bedrock`'s `BedrockClient` and stay out of the catalog, whose bindings are the three
-//! HTTP wires.
+//! supplies through [`SecretSources::with_container_credentials`]) or `aws-web-identity` (STS
+//! `AssumeRoleWithWebIdentity`, as IAM roles for service accounts use it: the role ARN, the
+//! session name, the STS endpoint and the token file, which the caller supplies through
+//! [`SecretSources::with_web_identity`]) or `aws-process` (a `command`, the program and then its
+//! arguments, run without a shell when a turn needs keys; it prints them as an AWS
+//! `credential_process` answer, and they stay in this process's memory). An `aws-process` route
+//! builds only with feature `process` and only when the caller allows it through
+//! [`RouteResolvers::allow_credential_process`]. Its routes are served by `llm-bedrock`'s
+//! `BedrockClient` and stay out of the catalog, whose bindings are the three HTTP wires.
 //!
 //! [`Routes::parse_toml`] reads the same document written in TOML, with the same keys and the
 //! same refusals.
@@ -71,7 +75,7 @@
 //! missing file is refused at turn time, as `unauthorized`, by the endpoint's reference, before
 //! any request is sent.
 
-use crate::{AwsReferences, Port, Resolvers, port};
+use crate::{AwsReferences, Port, Resolvers, WebIdentityRole, port};
 use llm_bedrock::{Api, BedrockTarget};
 use llm_core::{
     AuthKind, BillingKind, BoxFuture, Capabilities, Dispatch, Error, ErrorCode, Id, Protocol,
@@ -596,11 +600,11 @@ fn read_endpoint(name: Id, raw: RawEndpoint) -> Result<Declared, Error> {
     }
     if matches!(
         raw.auth.kind.as_str(),
-        "aws-keys" | "aws-container" | "aws-process"
+        "aws-keys" | "aws-container" | "aws-process" | "aws-web-identity"
     ) {
         return Err(refuse(
             "only a Bedrock endpoint (one with a `bedrock` table) takes `auth.kind` aws-keys, \
-             aws-container or aws-process",
+             aws-container, aws-process or aws-web-identity",
         ));
     }
     if raw.auth.command.is_some() {
@@ -764,6 +768,7 @@ impl EndpointDeclaration {
 ///         AwsCredentialKind::Keys => Ok("keys"),
 ///         AwsCredentialKind::Container => Ok("container"),
 ///         AwsCredentialKind::Process => Ok("process"),
+///         AwsCredentialKind::WebIdentity => Ok("web identity"),
 ///         _ => Err(Error::unsupported("this caller does not know the AWS credential kind")),
 ///     }
 /// }
@@ -781,6 +786,7 @@ impl EndpointDeclaration {
 ///         AwsCredentialKind::Keys => Ok("keys"),
 ///         AwsCredentialKind::Container => Ok("container"),
 ///         AwsCredentialKind::Process => Ok("process"),
+///         AwsCredentialKind::WebIdentity => Ok("web identity"),
 ///     }
 /// }
 /// assert_eq!(source(AwsCredentialKind::Process).unwrap(), "process");
@@ -797,15 +803,21 @@ pub enum AwsCredentialKind {
     /// `aws-process`: a command that prints the keys on the AWS `credential_process` contract,
     /// run only when the caller allows it and the build enables feature `process`.
     Process,
+    /// `aws-web-identity`: STS `AssumeRoleWithWebIdentity` (IAM roles for service accounts),
+    /// with the role ARN, the session name, the STS endpoint and the token file, which the
+    /// caller supplies.
+    WebIdentity,
 }
 
 impl AwsCredentialKind {
-    /// The `auth.kind` the document writes: `aws-keys`, `aws-container` or `aws-process`.
+    /// The `auth.kind` the document writes: `aws-keys`, `aws-container`, `aws-process` or
+    /// `aws-web-identity`.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Keys => "aws-keys",
             Self::Container => "aws-container",
             Self::Process => "aws-process",
+            Self::WebIdentity => "aws-web-identity",
         }
     }
 }
@@ -818,6 +830,7 @@ enum AwsCredentials {
         session_token: Option<SecretSource>,
     },
     Container,
+    WebIdentity,
     /// The program, then its arguments; never empty, the program never empty.
     Process {
         command: Vec<String>,
@@ -956,10 +969,14 @@ impl BedrockEndpointDeclaration {
                 one_source(&auth, "aws-container", &refuse)?;
                 AwsCredentials::Container
             }
+            "aws-web-identity" => {
+                one_source(&auth, "aws-web-identity", &refuse)?;
+                AwsCredentials::WebIdentity
+            }
             _ => {
                 return Err(refuse(
-                    "a Bedrock endpoint's `auth.kind` must be aws-keys, aws-container or \
-                     aws-process",
+                    "a Bedrock endpoint's `auth.kind` must be aws-keys, aws-container, \
+                     aws-process or aws-web-identity",
                 ));
             }
         };
@@ -1011,6 +1028,7 @@ impl BedrockEndpointDeclaration {
         match self.credentials {
             AwsCredentials::Keys { .. } => AwsCredentialKind::Keys,
             AwsCredentials::Container => AwsCredentialKind::Container,
+            AwsCredentials::WebIdentity => AwsCredentialKind::WebIdentity,
             AwsCredentials::Process { .. } => AwsCredentialKind::Process,
         }
     }
@@ -1020,12 +1038,14 @@ impl BedrockEndpointDeclaration {
     pub fn command(&self) -> Option<&[String]> {
         match &self.credentials {
             AwsCredentials::Process { command } => Some(command),
-            AwsCredentials::Keys { .. } | AwsCredentials::Container => None,
+            AwsCredentials::Keys { .. }
+            | AwsCredentials::Container
+            | AwsCredentials::WebIdentity => None,
         }
     }
 
-    /// The source kinds of the aws-keys references, in field order; empty for aws-container
-    /// and aws-process.
+    /// The source kinds of the aws-keys references, in field order; empty for aws-container,
+    /// aws-web-identity and aws-process.
     pub fn secret_kinds(&self) -> Vec<SecretKind> {
         match &self.credentials {
             AwsCredentials::Keys {
@@ -1041,7 +1061,9 @@ impl BedrockEndpointDeclaration {
             .flatten()
             .map(SecretSource::kind)
             .collect(),
-            AwsCredentials::Container | AwsCredentials::Process { .. } => Vec::new(),
+            AwsCredentials::Container
+            | AwsCredentials::WebIdentity
+            | AwsCredentials::Process { .. } => Vec::new(),
         }
     }
 
@@ -1120,6 +1142,12 @@ impl BedrockEndpointDeclaration {
                     about("endpoint", &self.name, "its name is not a secret reference")
                 })?,
             },
+            AwsCredentials::WebIdentity => AwsReferences::WebIdentity {
+                account: self.name.clone(),
+                token: SecretRef::new(self.name.as_str()).map_err(|_| {
+                    about("endpoint", &self.name, "its name is not a secret reference")
+                })?,
+            },
             AwsCredentials::Process { command } => AwsReferences::Process {
                 endpoint: self.name.clone(),
                 command: command.clone(),
@@ -1140,6 +1168,7 @@ impl BedrockEndpointDeclaration {
                 "session_token": session_token.as_ref().map(SecretSource::canonical),
             }),
             AwsCredentials::Container => json!({"kind": "aws-container"}),
+            AwsCredentials::WebIdentity => json!({"kind": "aws-web-identity"}),
             AwsCredentials::Process { command } => {
                 json!({"kind": "aws-process", "command": command})
             }
@@ -1769,8 +1798,10 @@ impl Routes {
     /// # Errors
     /// As [`Routes::target`], and as [`crate::port`] refuses a credentialed endpoint the caller
     /// has no resolver for (`unauthorized`); an `aws-container` endpoint without a container
-    /// credentials endpoint from the caller is `unauthorized` too, and so is an `aws-process`
-    /// endpoint the caller does not allow or this build cannot run (without feature `process`).
+    /// credentials endpoint from the caller is `unauthorized` too, so is an `aws-web-identity`
+    /// endpoint without a web identity role from the caller or with one STS would not take, and
+    /// so is an `aws-process` endpoint the caller does not allow or this build cannot run
+    /// (without feature `process`).
     /// Nothing is sent and no command runs; an `aws-process` endpoint runs its command at its
     /// first turn, not here.
     pub fn port(
@@ -1886,9 +1917,10 @@ impl Routes {
     /// only its routes, as `unauthorized` naming the endpoint and why: a source kind whose
     /// feature (`environment`, `file`, `keychain`) this build does not enable, a `file:~/`
     /// reference without an absolute home, a `keychain:` reference without an injected store,
-    /// a path the file source refuses, and an `aws-container` endpoint whose container token
-    /// file the caller did not supply or supplied as a path the file source refuses. Every
-    /// other route still builds. An `aws-process` endpoint needs no resolver; the result allows
+    /// a path the file source refuses, an `aws-container` endpoint whose container token file
+    /// the caller did not supply or supplied as a path the file source refuses, and an
+    /// `aws-web-identity` endpoint whose web identity role and token file the caller did not
+    /// supply or whose token file the file source refuses. Every other route still builds. An `aws-process` endpoint needs no resolver; the result allows
     /// no credential process until the caller calls [`RouteResolvers::allow_credential_process`],
     /// and building it runs no command.
     ///
@@ -1947,14 +1979,33 @@ impl Routes {
                 .map(|by_reference| Arc::new(ByReference(by_reference)) as Arc<dyn SecretResolver>),
                 (AwsCredentials::Container, AwsReferences::Container { token, .. }) => {
                     match sources.container_token_file.as_ref() {
-                        Some(token_file) => {
-                            container_token(&endpoint.name, &token, token_file.clone())
-                        }
+                        Some(token_file) => mounted_token(
+                            &endpoint.name,
+                            &token,
+                            token_file.clone(),
+                            "container authorization",
+                        ),
                         None => Err(about(
                             "endpoint",
                             &endpoint.name,
                             "an `aws-container` endpoint needs the container authorization \
                              token file, and none was supplied",
+                        )),
+                    }
+                }
+                (AwsCredentials::WebIdentity, AwsReferences::WebIdentity { token, .. }) => {
+                    match sources.web_identity.as_ref() {
+                        Some((_, token_file)) => mounted_token(
+                            &endpoint.name,
+                            &token,
+                            token_file.clone(),
+                            "web identity",
+                        ),
+                        None => Err(about(
+                            "endpoint",
+                            &endpoint.name,
+                            "an `aws-web-identity` endpoint needs the web identity role and \
+                             its token file, and none was supplied",
                         )),
                     }
                 }
@@ -1975,6 +2026,7 @@ impl Routes {
             resolvers,
             unavailable,
             container_uri: sources.container_uri.clone(),
+            web_identity: sources.web_identity.as_ref().map(|(role, _)| role.clone()),
             credential_process: false,
         })
     }
@@ -1996,14 +2048,16 @@ fn resolver(
     }
 }
 
-/// The resolver of an `aws-container` endpoint's authorization token file: the platform mounts
-/// it, so links from protected directories are followed and others may read it
-/// ([`llm_credentials::file::FileResolver::mounted`]).
+/// The resolver of an `aws-container` endpoint's authorization token file or an
+/// `aws-web-identity` endpoint's web identity token file, `what` naming which: the platform
+/// mounts it, so links from protected directories are followed and others may read it
+/// ([`llm_credentials::file::FileResolver::mounted`]). It is read at each fetch, never here.
 #[cfg(feature = "file")]
-fn container_token(
+fn mounted_token(
     endpoint: &Id,
     token: &SecretRef,
     path: PathBuf,
+    what: &str,
 ) -> Result<Arc<dyn SecretResolver>, Error> {
     llm_credentials::file::FileResolver::mounted(BTreeMap::from([(token.clone(), path)]))
         .map(|resolver| Arc::new(resolver) as Arc<dyn SecretResolver>)
@@ -2011,16 +2065,17 @@ fn container_token(
             about(
                 "endpoint",
                 endpoint,
-                "its container authorization token file is not an absolute path without `.` or `..`",
+                &format!("its {what} token file is not an absolute path without `.` or `..`"),
             )
         })
 }
 
 #[cfg(not(feature = "file"))]
-fn container_token(
+fn mounted_token(
     endpoint: &Id,
     _token: &SecretRef,
     _path: PathBuf,
+    _what: &str,
 ) -> Result<Arc<dyn SecretResolver>, Error> {
     Err(compiled_out(endpoint, "file:", "file"))
 }
@@ -2196,14 +2251,31 @@ pub struct SecretSources {
     home: Option<PathBuf>,
     container_uri: Option<String>,
     container_token_file: Option<PathBuf>,
+    /// The role an `aws-web-identity` endpoint assumes, and the path of its token file.
+    web_identity: Option<(WebIdentityRole, PathBuf)>,
     #[cfg(feature = "keychain")]
     keychain: Option<Arc<keyring_core::CredentialStore>>,
 }
 
 impl SecretSources {
-    /// No home, no container credentials endpoint and no keychain store.
+    /// No home, no container credentials endpoint, no web identity role and no keychain store.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// The role and the absolute path of the web identity token file that an
+    /// `aws-web-identity` Bedrock endpoint uses: on IAM roles for service accounts, the role ARN
+    /// is the value of `AWS_ROLE_ARN` and the token file that of `AWS_WEB_IDENTITY_TOKEN_FILE`.
+    /// Nothing is read or checked here; the token file is read, and STS asked, at turn time.
+    /// Needs feature `file`.
+    #[must_use]
+    pub fn with_web_identity(
+        mut self,
+        role: WebIdentityRole,
+        token_file: impl Into<PathBuf>,
+    ) -> Self {
+        self.web_identity = Some((role, token_file.into()));
+        self
     }
 
     /// The container credentials endpoint and the absolute path of its authorization token file
@@ -2244,6 +2316,7 @@ impl fmt::Debug for SecretSources {
         debug.field("home", &self.home.is_some());
         debug.field("container_uri", &self.container_uri.is_some());
         debug.field("container_token_file", &self.container_token_file.is_some());
+        debug.field("web_identity", &self.web_identity.is_some());
         #[cfg(feature = "keychain")]
         debug.field("keychain", &self.keychain.is_some());
         debug.finish()
@@ -2257,6 +2330,7 @@ pub struct RouteResolvers {
     /// Why each credentialed endpoint without a resolver has none.
     unavailable: BTreeMap<Id, String>,
     container_uri: Option<String>,
+    web_identity: Option<WebIdentityRole>,
     credential_process: bool,
 }
 
@@ -2282,6 +2356,7 @@ impl fmt::Debug for RouteResolvers {
             .field("accounts", &self.resolvers.keys().collect::<Vec<_>>())
             .field("unavailable", &self.unavailable.keys().collect::<Vec<_>>())
             .field("container_uri", &self.container_uri.is_some())
+            .field("web_identity", &self.web_identity.is_some())
             .field("credential_process", &self.credential_process)
             .finish()
     }
@@ -2294,6 +2369,10 @@ impl Resolvers for RouteResolvers {
 
     fn container_credentials_uri(&self) -> Option<&str> {
         self.container_uri.as_deref()
+    }
+
+    fn web_identity_role(&self) -> Option<&WebIdentityRole> {
+        self.web_identity.as_ref()
     }
 
     fn unavailable(&self, account_id: &Id) -> Option<&str> {
