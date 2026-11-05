@@ -202,10 +202,7 @@ fn model() -> Result<Speaking, InvalidId> {
             model: Id::new("example")?,
             binding_revision: Id::new("speaking-v1")?,
         },
-        capabilities: Capabilities {
-            tools: true,
-            ..Capabilities::text(4096, 1024)
-        },
+        capabilities: Capabilities::text(4096, 1024).with_tools(true),
         sent: Mutex::new(Vec::new()),
     })
 }

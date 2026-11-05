@@ -160,7 +160,10 @@ presentation. A rejected subscription credential never changes billing kind or a
 
 ## Compatibility and source provenance
 
-Published Rust APIs follow the crate release's semantic version. Persisted neutral requests carry
+Published Rust APIs follow the crate release's semantic version. `Item`, `Capabilities`,
+`Rejection` and `AwsCredentialKind` are `#[non_exhaustive]`: a caller matching one ends in a
+wildcard arm and builds `Capabilities` with `Capabilities::text` and its setters, so an added
+variant or declaration does not break it. Persisted neutral requests carry
 an explicit `llm.turn/3` envelope (`llm.turn/4` when they carry controls) and outputs carry `llm.outcome/4`; old/unknown versions and fields refuse. Both moved when `Item` gained the
 unattributed opaque variant, so a `llm.turn/2` or `llm.outcome/3` reader is never handed one. Unversioned Rust
 values are in-process values, not a claim of a stable vendor wire format. Unsupported additions

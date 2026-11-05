@@ -397,17 +397,11 @@ mod tests {
     }
 
     fn capabilities() -> Capabilities {
-        Capabilities {
-            tools: true,
-            tool_choice: true,
-            temperature: true,
-            top_p: true,
-            reasoning_efforts: Vec::new(),
-            context_window: 200_000,
-            max_output_tokens: 4_096,
-            output_streaming: true,
-            input_during_output: false,
-        }
+        Capabilities::text(200_000, 4_096)
+            .with_tools(true)
+            .with_tool_choice(true)
+            .with_temperature(true)
+            .with_top_p(true)
     }
 
     fn target() -> BedrockTarget {

@@ -197,17 +197,9 @@ pub fn codex_model_at(
             endpoint_id: id("codex-backend")?,
             model_id: id(model_id)?,
             protocol: Protocol::Responses,
-            capabilities: Capabilities {
-                tools: true,
-                tool_choice: true,
-                temperature: false,
-                top_p: false,
-                reasoning_efforts: Vec::new(),
-                context_window: CONTEXT_WINDOW,
-                max_output_tokens: MAX_OUTPUT_TOKENS,
-                output_streaming: true,
-                input_during_output: false,
-            },
+            capabilities: Capabilities::text(CONTEXT_WINDOW, MAX_OUTPUT_TOKENS)
+                .with_tools(true)
+                .with_tool_choice(true),
         },
     )
     .bind()

@@ -213,6 +213,12 @@ fn messages(request: &TurnRequest) -> Result<Vec<Value>, Error> {
             Item::UnattributedOpaque { .. } => {
                 return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
             }
+            _ => {
+                return Err(Error::unsupported(format!(
+                    "chat completions carries no {} item",
+                    item.kind()
+                )));
+            }
         }
     }
     OpenAssistant::close(&mut open, &mut out);

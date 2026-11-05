@@ -18,6 +18,11 @@ settings are outside this version and adapters must refuse them. Every field a c
 carries is carried, translated by a written table, reported as an omitted advisory hint, or refused
 by its path; the rules are the design's "Client request fields".
 
+`Item` and `Capabilities` may grow, so both are `#[non_exhaustive]`. A caller's `match` on `Item`
+ends in a wildcard arm, as every adapter's does; an adapter's arm refuses a kind it does not carry
+by its `Item::kind` name, and never drops or sends it. `Capabilities` is built with
+`Capabilities::text` and its `with_*` setters.
+
 ## Streamed events
 
 A turn streams `StreamEvent`s into the caller's sink: text deltas, reasoning deltas, the start of a

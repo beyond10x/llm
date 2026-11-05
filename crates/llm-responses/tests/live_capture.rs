@@ -38,17 +38,10 @@ fn id(value: &str) -> Id {
 }
 
 fn capabilities() -> Capabilities {
-    Capabilities {
-        tools: true,
-        tool_choice: true,
-        temperature: false,
-        top_p: false,
-        reasoning_efforts: vec!["medium".to_owned()],
-        context_window: 272_000,
-        max_output_tokens: 128_000,
-        output_streaming: true,
-        input_during_output: false,
-    }
+    Capabilities::text(272_000, 128_000)
+        .with_tools(true)
+        .with_tool_choice(true)
+        .with_reasoning_efforts(["medium"])
 }
 
 /// A bearer-authenticated Responses binding at `base_url`, naming the recorded model.

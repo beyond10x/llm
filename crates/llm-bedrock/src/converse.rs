@@ -256,6 +256,12 @@ fn content_block(item: &Item) -> Result<Value, Error> {
         Item::UnattributedOpaque { .. } => {
             return Err(Error::unsupported(Item::UNATTRIBUTED_REFUSAL));
         }
+        _ => {
+            return Err(Error::unsupported(format!(
+                "Bedrock Converse carries no {} item",
+                item.kind()
+            )));
+        }
     })
 }
 

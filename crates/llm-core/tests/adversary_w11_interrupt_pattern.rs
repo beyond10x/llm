@@ -33,10 +33,7 @@ fn target(protocol: Protocol) -> Provenance {
 }
 
 fn with_tools() -> Capabilities {
-    Capabilities {
-        tools: true,
-        ..Capabilities::text(8192, 1024)
-    }
+    Capabilities::text(8192, 1024).with_tools(true)
 }
 
 /// The first turn of a caller that offers the model one tool.

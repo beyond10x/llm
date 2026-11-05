@@ -52,8 +52,39 @@ pub struct Provenance {
 }
 
 /// Declared model/settings support. Context tokens require separate tokenizer/accounting evidence.
+///
+/// The struct may gain declarations, so it is not built by literal outside this crate: build one
+/// with [`Capabilities::text`] and the `with_*` setters.
+///
+/// ```
+/// use llm_core::Capabilities;
+///
+/// let capabilities = Capabilities::text(200_000, 64_000)
+///     .with_tools(true)
+///     .with_tool_choice(true)
+///     .with_reasoning_efforts(["low", "high"]);
+/// assert!(capabilities.tools && !capabilities.temperature);
+/// ```
+///
+/// ```compile_fail,E0639
+/// use llm_core::Capabilities;
+///
+/// let capabilities = Capabilities {
+///     tools: true,
+///     tool_choice: true,
+///     temperature: false,
+///     top_p: false,
+///     reasoning_efforts: vec!["low".to_owned(), "high".to_owned()],
+///     context_window: 200_000,
+///     max_output_tokens: 64_000,
+///     output_streaming: true,
+///     input_during_output: false,
+/// };
+/// assert!(capabilities.tools && !capabilities.temperature);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+#[non_exhaustive]
 // Independent capability dimensions can be combined; they are not lifecycle states.
 #[allow(clippy::struct_excessive_bools)]
 pub struct Capabilities {
@@ -104,6 +135,41 @@ impl Capabilities {
             output_streaming: true,
             input_during_output: false,
         }
+    }
+
+    #[must_use]
+    pub const fn with_tools(mut self, tools: bool) -> Self {
+        self.tools = tools;
+        self
+    }
+
+    #[must_use]
+    pub const fn with_tool_choice(mut self, tool_choice: bool) -> Self {
+        self.tool_choice = tool_choice;
+        self
+    }
+
+    #[must_use]
+    pub const fn with_temperature(mut self, temperature: bool) -> Self {
+        self.temperature = temperature;
+        self
+    }
+
+    #[must_use]
+    pub const fn with_top_p(mut self, top_p: bool) -> Self {
+        self.top_p = top_p;
+        self
+    }
+
+    /// The reasoning effort names the model accepts, in place of any declared before.
+    #[must_use]
+    pub fn with_reasoning_efforts<I, S>(mut self, efforts: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.reasoning_efforts = efforts.into_iter().map(Into::into).collect();
+        self
     }
 
     #[must_use]

@@ -851,17 +851,12 @@ async fn run_turn(
             model: id(&input.model_id)?,
             binding_revision: id("fixture-revision")?,
         },
-        capabilities: Capabilities {
-            tools: true,
-            tool_choice: true,
-            temperature: true,
-            top_p: true,
-            reasoning_efforts: Vec::new(),
-            context_window: 200_000,
-            max_output_tokens: 4096,
-            output_streaming: input.stream,
-            input_during_output: false,
-        },
+        capabilities: Capabilities::text(200_000, 4096)
+            .with_tools(true)
+            .with_tool_choice(true)
+            .with_temperature(true)
+            .with_top_p(true)
+            .with_output_streaming(input.stream),
         region: REGION.to_owned(),
         model_id: input.model_id.clone(),
         api,
@@ -1009,6 +1004,8 @@ fn label(item: &Item) -> String {
             "unattributed-opaque:{}:{payload}",
             serde_json::to_string(protocol).unwrap_or_default()
         ),
+        // A kind this runner does not know yet is labelled by its name and matches no expectation.
+        _ => item.kind().to_owned(),
     }
 }
 

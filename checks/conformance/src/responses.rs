@@ -476,6 +476,7 @@ fn item_kind(item: &Item) -> &'static str {
         Item::ToolResult { .. } => "tool-result",
         Item::Opaque { .. } => "opaque",
         Item::UnattributedOpaque { .. } => "unattributed-opaque",
+        _ => item.kind(),
     }
 }
 

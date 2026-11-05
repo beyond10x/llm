@@ -380,6 +380,8 @@ fn label(item: &Item) -> String {
             "unattributed-opaque:{}:{payload}",
             serde_json::to_string(protocol).unwrap_or_default()
         ),
+        // A kind this runner does not know yet is labelled by its name and matches no expectation.
+        _ => item.kind().to_owned(),
     }
 }
 

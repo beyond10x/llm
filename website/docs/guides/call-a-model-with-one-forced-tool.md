@@ -91,11 +91,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             model: Id::new("triage")?,
             binding_revision: Id::new("recorded-v1")?,
         },
-        capabilities: Capabilities {
-            tools: true,
-            tool_choice: true,
-            ..Capabilities::text(8192, 1024)
-        },
+        capabilities: Capabilities::text(8192, 1024)
+            .with_tools(true)
+            .with_tool_choice(true),
     };
     let tool = ToolSpec {
         name: ToolName::new("classify_report")?,

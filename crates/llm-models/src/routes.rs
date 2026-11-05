@@ -125,17 +125,12 @@ const AWS_KEY_FIELDS: [&str; 3] = ["access_key_id", "secret_access_key", "sessio
 /// context window of 200000 tokens, at most 16384 output tokens, streamed output and no input
 /// during output. A route whose model differs writes its own `capabilities`.
 pub fn default_capabilities() -> Capabilities {
-    Capabilities {
-        tools: true,
-        tool_choice: true,
-        temperature: true,
-        top_p: true,
-        reasoning_efforts: ["low", "medium", "high"].map(str::to_owned).into(),
-        context_window: DEFAULT_CONTEXT_WINDOW,
-        max_output_tokens: DEFAULT_MAX_OUTPUT_TOKENS,
-        output_streaming: true,
-        input_during_output: false,
-    }
+    Capabilities::text(DEFAULT_CONTEXT_WINDOW, DEFAULT_MAX_OUTPUT_TOKENS)
+        .with_tools(true)
+        .with_tool_choice(true)
+        .with_temperature(true)
+        .with_top_p(true)
+        .with_reasoning_efforts(["low", "medium", "high"])
 }
 
 #[derive(Deserialize)]
@@ -756,7 +751,42 @@ impl EndpointDeclaration {
 }
 
 /// How a Bedrock endpoint gets the AWS credentials it signs with.
+///
+/// The set of sources may grow, so code matching it outside this crate needs a wildcard arm,
+/// and that arm refuses the kind it does not know:
+///
+/// ```
+/// use llm_core::Error;
+/// use llm_models::routes::AwsCredentialKind;
+///
+/// fn source(kind: AwsCredentialKind) -> Result<&'static str, Error> {
+///     match kind {
+///         AwsCredentialKind::Keys => Ok("keys"),
+///         AwsCredentialKind::Container => Ok("container"),
+///         AwsCredentialKind::Process => Ok("process"),
+///         _ => Err(Error::unsupported("this caller does not know the AWS credential kind")),
+///     }
+/// }
+/// assert_eq!(source(AwsCredentialKind::Process).unwrap(), "process");
+/// ```
+///
+/// Without the wildcard arm the same match does not compile:
+///
+/// ```compile_fail,E0004
+/// use llm_core::Error;
+/// use llm_models::routes::AwsCredentialKind;
+///
+/// fn source(kind: AwsCredentialKind) -> Result<&'static str, Error> {
+///     match kind {
+///         AwsCredentialKind::Keys => Ok("keys"),
+///         AwsCredentialKind::Container => Ok("container"),
+///         AwsCredentialKind::Process => Ok("process"),
+///     }
+/// }
+/// assert_eq!(source(AwsCredentialKind::Process).unwrap(), "process");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum AwsCredentialKind {
     /// `aws-keys`: an access key id, a secret access key and optionally a session token, each
     /// a secret reference.
