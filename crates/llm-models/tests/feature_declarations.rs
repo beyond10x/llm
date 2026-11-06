@@ -2,7 +2,9 @@
 //! checked-in document that carries capabilities (the example catalog, and every catalog,
 //! routes, binding and capabilities document an authored scenario holds) reads with both
 //! undeclared, and its capabilities write exactly the bytes the 0.21.0 struct wrote, so no
-//! configuration digest or binding revision moves. A routes document that declares them carries
+//! configuration digest or binding revision moves. A document that declares a later member
+//! (`embed_batch_limit`, 0.23.0) is not one from before them and is skipped; that member is not
+//! written when absent either, so no other document's bytes move. A routes document that declares them carries
 //! them into the catalog it expands into, where selection reads them.
 
 use llm_core::{Capabilities, ImageMediaType, ImageSource, Item, TurnRequest};
@@ -170,8 +172,11 @@ fn every_scenario_document_from_before_the_declarations_reads_them_undeclared_an
                     let (Some(key), Some(text)) = (key.as_str(), value.as_str()) else {
                         continue;
                     };
-                    // A document naming either declaration is not one from before them.
-                    if text.contains("structured_output") || text.contains("image_input") {
+                    // A document naming a later declaration is not one from before them.
+                    if text.contains("structured_output")
+                        || text.contains("image_input")
+                        || text.contains("embed_batch_limit")
+                    {
                         continue;
                     }
                     let place = format!("{place} {key}");
