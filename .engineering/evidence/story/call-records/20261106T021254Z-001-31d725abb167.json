@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-06T02:12:54Z",
+  "actor": "human:timo",
+  "artifact": "story:call-records",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo-unit.sh u1 test -p llm-calls --test record --test adversary_u1_attempts; llm-conformance check x3",
+    "reference": "impl/call-records 972064d73: record 9/9, adversary 3/3, conformance 1021/1021; base cf1c21e6d has no llm-calls crate (new behaviour)"
+  }
+}
