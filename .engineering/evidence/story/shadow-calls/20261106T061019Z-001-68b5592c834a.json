@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-06T06:10:19Z",
+  "actor": "human:timo",
+  "artifact": "story:shadow-calls",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo-unit.sh u4 test -p llm-calls --lib --test shadow --test adversary_u4_shadow --test security_u4_cap --test record --test adversary_u1_attempts; llm-conformance check",
+    "reference": "impl/shadow-calls 09bc2cc00: shadow 14/14, adversary_u4 3/3, security_u4 3/3 (400-sequence cap property); conformance 1040/1040 at aebec66e6; base bbdee8d15 has no shadow (new behaviour)"
+  }
+}
