@@ -1,26 +1,34 @@
 //! Call record conformance observations.
 //!
-//! This module drives the real `llm_calls::record_turn` over the real `Catalog::run_turn`, with
-//! in-process scripted `Model`s, a scripted clock, the caller's price book and an in-memory
-//! record sink, and reports every record the sink received. The scripted models only replay the
+//! This module drives the real `llm_calls::record_turn_shadowed` over the real
+//! `Catalog::run_turn`, with in-process scripted `Model`s, a scripted clock, the caller's price
+//! book, the authored shadows on a real `ShadowLedger` and an in-memory record sink, and reports
+//! every record the sink received and each shadow's result. Shadows are driven only once the
+//! primary call has returned. The scripted models only replay the
 //! authored answer or failure and move the clock as the program says; every record field comes
 //! back out of the library. It reads no suite and branches on no scenario name.
 
 use std::{
     collections::BTreeMap,
-    sync::atomic::{AtomicU64, AtomicUsize, Ordering},
+    sync::{
+        Arc,
+        atomic::{AtomicU64, AtomicUsize, Ordering},
+    },
     time::Duration,
 };
 
 use ess_conformance::target::TargetError;
-use llm_calls::{CallIdentity, CallLog, Clock, Recording, record_turn};
+use llm_calls::{
+    CallIdentity, CallLog, Clock, Recording, Shadow, ShadowLedger, ShadowOutcome, ShadowResult,
+    Shadowing, record_turn_shadowed, utc_day,
+};
 use llm_core::{
     BoxFuture, CallId, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model,
     Provenance, StopReason, StreamEvent, StreamSink, ToolCall, TurnDocument, TurnObservation,
     TurnOutcome, TurnRequest, Usage, VecSink,
 };
-use llm_cost::PriceBook;
-use llm_routing::{Catalog, FallbackPolicy, Models, Ports, Selection};
+use llm_cost::{Amount, Currency, PriceBook};
+use llm_routing::{Catalog, FallbackPolicy, FallbackRun, Models, Ports, Selection};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
@@ -98,6 +106,88 @@ struct Program {
     #[serde(default)]
     start_unix_ms: u64,
     models: BTreeMap<String, Script>,
+    /// Later calls of the same request on the same models and shadow ledger, in order.
+    #[serde(default)]
+    then: Vec<LaterCall>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LaterCall {
+    record_id: String,
+    /// The wall clock when this call starts; never earlier than where the previous one left it.
+    at_unix_ms: u64,
+}
+
+const MAX_CALLS: usize = 16;
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ShadowsInput {
+    ledger: LedgerInput,
+    shadows: Vec<ShadowInput>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LedgerInput {
+    id: String,
+    currency: String,
+    max_active: u32,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ShadowInput {
+    id: String,
+    primary_route_id: String,
+    shadow_route_id: String,
+    daily_cap: Amount,
+    reserve: Amount,
+}
+
+const MAX_SHADOWS: usize = 8;
+
+/// The authored shadows over one shared ledger.
+fn shadows(source: &str) -> Result<(Arc<ShadowLedger>, Vec<Shadow>), Error> {
+    let input: ShadowsInput =
+        serde_json::from_str(source).map_err(|_| Error::invalid("invalid shadows"))?;
+    if input.shadows.len() > MAX_SHADOWS {
+        return Err(Error::too_large("too many shadows"));
+    }
+    let id = |value: &str| Id::new(value).map_err(|_| Error::invalid("invalid shadow id"));
+    let currency =
+        Currency::new(&input.ledger.currency).map_err(|_| Error::invalid("invalid currency"))?;
+    let ledger = Arc::new(
+        ShadowLedger::new(id(&input.ledger.id)?, currency, input.ledger.max_active)
+            .map_err(|_| Error::invalid("invalid shadow ledger"))?,
+    );
+    let shadows = input
+        .shadows
+        .iter()
+        .map(|shadow| {
+            Shadow::new(
+                id(&shadow.id)?,
+                id(&shadow.primary_route_id)?,
+                id(&shadow.shadow_route_id)?,
+                shadow.daily_cap,
+                shadow.reserve,
+                Arc::clone(&ledger),
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok((ledger, shadows))
+}
+
+/// `route:outcome`, and for a shadow not sent the ledger's or the route's refusal after it.
+fn shadow_result(result: &ShadowResult) -> String {
+    let label = |value: Value| value.as_str().unwrap_or_default().to_owned();
+    let outcome = match &result.outcome {
+        ShadowOutcome::Sent(outcome) => label(json!(outcome)),
+        ShadowOutcome::Skipped(cause) => format!("skipped:{}", label(json!(cause))),
+        ShadowOutcome::Refused(code) => format!("refused:{}", label(json!(code))),
+    };
+    format!("{}:{outcome}", result.shadow_route_id)
 }
 
 #[derive(Deserialize)]
@@ -139,7 +229,7 @@ struct Failure {
     message: Option<String>,
 }
 
-/// A clock that moves only when a scripted model says time passed.
+/// A clock that moves only when a scripted model says time passed, or a later call starts.
 struct ScriptedClock {
     start_unix_ms: u64,
     now_ms: AtomicU64,
@@ -148,6 +238,14 @@ struct ScriptedClock {
 impl ScriptedClock {
     fn advance(&self, ms: u64) {
         self.now_ms.fetch_add(ms, Ordering::SeqCst);
+    }
+    /// Moves both readings on to a later wall-clock time; an earlier one is refused.
+    fn move_to(&self, unix_ms: u64) -> Result<(), Error> {
+        let gap = unix_ms
+            .checked_sub(self.unix_ms())
+            .ok_or_else(|| Error::invalid("a later call starts before the previous one ended"))?;
+        self.advance(gap);
+        Ok(())
     }
 }
 
@@ -344,9 +442,10 @@ fn execute(input: &CallInput, facts: &mut Value) -> Result<(), Error> {
     let program: Program = serde_json::from_str(&input.program_json)
         .map_err(|_| Error::invalid("invalid call program"))?;
     facts["valid_program"] = json!(true);
-    if input.shadows_json.is_some() {
-        return Err(Error::unsupported("shadow routes are not implemented"));
+    if program.then.len() >= MAX_CALLS {
+        return Err(Error::too_large("too many calls"));
     }
+    let shadowed = input.shadows_json.as_deref().map(shadows).transpose()?;
     let catalog = Catalog::parse(&input.catalog_toml)?;
     let document: TurnDocument = serde_json::from_str(&input.turn_json)
         .map_err(|_| Error::invalid("invalid turn envelope"))?;
@@ -364,32 +463,48 @@ fn execute(input: &CallInput, facts: &mut Value) -> Result<(), Error> {
     let models = scripted_fleet(program.models, &catalog, &document.request, &clock)?;
     let log = CallLog::new();
     let mut sink = VecSink::new(MAX_SINK_EVENTS, MAX_SINK_BYTES);
-    let cancel = Cancel::new();
-    let mut admit = |_: &Selection<'_>| Ok(());
-    // Retry waits are not what this domain observes: the scripted clock is what moves.
-    let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(async {}) };
-    let run = tokio::runtime::Builder::new_current_thread()
+    let runtime = tokio::runtime::Builder::new_current_thread()
         .build()
-        .map_err(|_| Error::new(ErrorCode::Unavailable, "no local runtime"))?
-        .block_on(record_turn(
-            &catalog,
-            &document.request,
-            program.input_tokens,
-            FallbackPolicy::default(),
-            Ports {
-                models: &models,
-                admit: &mut admit,
-                sink: &mut sink,
-                cancel: &cancel,
-                pause: &pause,
-            },
-            CallIdentity::primary(record_id),
-            Recording {
-                sink: &log,
-                clock: &clock,
-                prices: prices.as_ref(),
-            },
-        ));
+        .map_err(|_| Error::new(ErrorCode::Unavailable, "no local runtime"))?;
+    let mut calls = vec![(record_id, None)];
+    for later in &program.then {
+        let id = Id::new(&later.record_id).map_err(|_| Error::invalid("invalid record id"))?;
+        calls.push((id, Some(later.at_unix_ms)));
+    }
+    let (ledger, declared) = match &shadowed {
+        Some((ledger, declared)) => (Some(ledger), declared.as_slice()),
+        None => (None, [].as_slice()),
+    };
+    let caller = Caller {
+        catalog: &catalog,
+        request: &document.request,
+        input_tokens: program.input_tokens,
+        models: &models,
+        log: &log,
+        clock: &clock,
+        prices: prices.as_ref(),
+        shadows: declared,
+    };
+    let mut shadow_results = Vec::new();
+    let mut ended = Ok(None);
+    for (record_id, at_unix_ms) in calls {
+        if let Some(at_unix_ms) = at_unix_ms
+            && let Err(error) = clock.move_to(at_unix_ms)
+        {
+            ended = Err(error);
+            break;
+        }
+        match runtime.block_on(caller.call(record_id, &mut sink)) {
+            Ok((run, results)) => {
+                shadow_results.extend(results.iter().map(shadow_result));
+                ended = Ok(Some(run));
+            }
+            Err(error) => {
+                ended = Err(error);
+                break;
+            }
+        }
+    }
     facts["records"] = json!(
         log.records()
             .iter()
@@ -397,10 +512,88 @@ fn execute(input: &CallInput, facts: &mut Value) -> Result<(), Error> {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|_| Error::new(ErrorCode::Protocol, "a record did not serialize"))?
     );
-    let run = run?;
+    facts["shadow_results"] = json!(shadow_results);
+    if let (Some(ledger), Some(first)) = (ledger, declared.first()) {
+        facts["spent_today"] = json!(spent(ledger, first, &clock));
+    }
+    let Some(run) = ended? else {
+        return Ok(());
+    };
     facts["delivered_text"] = json!(sink.text());
     if let Err(error) = &run.result {
         facts["error_code"] = json!(error.code);
     }
     Ok(())
+}
+
+/// What every call of one program shares.
+struct Caller<'c> {
+    catalog: &'c Catalog,
+    request: &'c TurnRequest,
+    input_tokens: Option<u64>,
+    models: &'c Fleet<'c>,
+    log: &'c CallLog,
+    clock: &'c ScriptedClock,
+    prices: Option<&'c PriceBook>,
+    shadows: &'c [Shadow],
+}
+
+impl Caller<'_> {
+    /// One primary call, then its shadows, driven only once the primary has returned.
+    async fn call(
+        &self,
+        record_id: Id,
+        sink: &mut VecSink,
+    ) -> Result<(FallbackRun, Vec<ShadowResult>), Error> {
+        let cancel = Cancel::new();
+        // Retry waits are not what this domain observes: the scripted clock is what moves.
+        let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(async {}) };
+        let mut admit = |_: &Selection<'_>| Ok(());
+        let (run, shadows) = record_turn_shadowed(
+            self.catalog,
+            self.request,
+            self.input_tokens,
+            FallbackPolicy::default(),
+            Ports {
+                models: self.models,
+                admit: &mut admit,
+                sink,
+                cancel: &cancel,
+                pause: &pause,
+            },
+            CallIdentity::primary(record_id),
+            Recording {
+                sink: self.log,
+                clock: self.clock,
+                prices: self.prices,
+            },
+            Shadowing {
+                shadows: self.shadows,
+                models: self.models,
+                cancel: &cancel,
+                pause: &pause,
+            },
+        )
+        .await?;
+        // The caller holds its result here; only now are the shadows driven.
+        let results = shadows.run().await;
+        Ok((run, results))
+    }
+}
+
+/// The first shadow's exposure on its ledger for the clock's UTC day: settled plus held.
+fn spent(ledger: &ShadowLedger, shadow: &Shadow, clock: &ScriptedClock) -> String {
+    ledger
+        .totals(shadow.id(), utc_day(clock.unix_ms()))
+        .map_or_else(
+            || Amount::ZERO.to_string(),
+            |totals| {
+                totals
+                    .exposure_nanos
+                    .parse::<u64>()
+                    .map_or(totals.exposure_nanos.clone(), |nanos| {
+                        Amount::from_nanos(nanos).to_string()
+                    })
+            },
+        )
 }

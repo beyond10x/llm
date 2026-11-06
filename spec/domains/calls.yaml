@@ -28,9 +28,17 @@ domain: llm.calls
 #
 # A Shadow is a detached second route for a primary route: after the primary call is returned
 # to the caller, the same request is sent to the shadow route; its answer reaches only its
-# CallRecord (role Shadow) and the comparison, never the caller. A shadow call is admitted only
-# while the shadow's UTC-day spend, held on an llm.budget ledger, stays within its daily cap;
-# past it the shadow is skipped and recorded so. A shadow failure never changes the primary.
+# CallRecord (role Shadow, primary_record_id naming the primary's record), never the caller.
+# The caller receives a handle with nothing sent and drives it after answering; dropping it
+# sends nothing. A shadow call is admitted on an llm.budget ledger per shadow and UTC day of
+# the injected clock, whose limit is the daily cap: its reserve is reserved and started in one
+# step, so two shadows never both take the last room under the cap, and a day earlier than one
+# already admitted is never opened again. Past the cap (or while that day holds spend it cannot
+# know) the shadow is not sent and its record says Skipped, not-sent, no attempt and no cost.
+# Afterwards the reservation is settled with the record's cost, which covers every attempt; a
+# cost that is incomplete, absent for want of a price book, or in another currency is held at
+# its reservation, never settled as zero. A shadow failure, slowness or skip never changes,
+# delays or fails the primary.
 #
 # A ReplayRun sends every case of a recorded corpus to a candidate route offline, under a money
 # cap held on an llm.budget ledger, and compares each answer with the recorded one. Past the cap
@@ -91,6 +99,8 @@ entities:
       - {name: shadow_route_id, type: String}
       # Exact decimal in the ledger's currency, per UTC day.
       - {name: daily_cap, type: String}
+      # Exact decimal each shadow call holds until its cost settles it; above zero, at most the cap.
+      - {name: reserve, type: String}
       - {name: ledger_id, type: String}
     relations:
       - {name: primary, kind: references, target: llm.catalog.Route, cardinality: one, via: primary_route_id}
@@ -123,16 +133,19 @@ entities:
       - {name: delivered_text, type: Optional<String>}
       # Every record the sink received, as canonical JSON, in order.
       - {name: records, type: List<String>}
-      # Per shadow: shadow-route:outcome.
+      # Per shadow and call: shadow-route:outcome, a skip followed by the ledger's refusal
+      # (shadow-route:skipped:limit-exceeded) and a refused route by its error code.
       - {name: shadow_results, type: List<String>}
       # Per replay case: case-id:result.
       - {name: case_results, type: List<String>}
+      # The first shadow's exposure (settled plus held) on its ledger for the clock's UTC day.
       - {name: spent_today, type: Optional<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
   - name: llm.calls.Call
     # A routed call with a record sink and optional shadows, over in-process scripted models
-    # and a scripted clock and price book; no network.
+    # and a scripted clock and price book; no network. The program may repeat the call at later
+    # wall-clock times on the same models and shadow ledger.
     input:
       - {name: catalog_toml, type: String}
       - {name: turn_json, type: String}

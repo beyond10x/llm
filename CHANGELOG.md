@@ -13,6 +13,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - ESS: domain `llm.calls`, 6 call record scenarios and 2 generated outcome scenarios; the conformance floor is 1021 (was 1013)
 - `llm-decide`: a closed-label classifier `Chain` returning one label with per-label confidence or a caused abstention
 - ESS: domain `llm.decisions`, 11 classification scenarios and 2 generated outcome scenarios; the floor is 1034 (was 1021)
+- `llm-calls`: `record_turn_shadowed` sends a `Shadow` route the request after the primary, under a daily `ShadowLedger` cap
 
 ### Changed
 
