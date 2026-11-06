@@ -607,6 +607,36 @@ caller has the refusal. `CallRecord::new`, `Stopwatch` and `Cost::quote` build a
 turn, for the classification, verdict and embedding calls that later stories add. The contract
 is `spec/domains/calls.yaml`.
 
+A `Shadow` binds a primary route to a shadow route, with a daily cap in its `ShadowLedger`'s
+currency and a reserve: the explicit amount each shadow call holds until its cost settles it,
+above zero and at most the cap. `record_turn_shadowed` runs the primary call exactly as
+`record_turn` does and returns its run with a `ShadowCalls` handle that has sent nothing. The
+caller answers its own caller first and then drives `ShadowCalls::run` on any executor it
+chooses (the handle is `Send`), or drops it, which sends and holds nothing (dropped mid-flight,
+the shadow in flight stays held for its day); llm owns no runtime,
+as `Ports::pause` owns no timer. Each shadow of the primary's route then gets the same request,
+re-addressed to the shadow route's alias. Its events go to no sink and no admission hook of the
+caller's sees it: its answer reaches only its own record, role `shadow`, id
+`<primary id>/shadow/<shadow id>`, `primary_record_id` naming the primary's record. A shadow
+failure, slowness or skip cannot change, delay or fail the primary, whose result the caller
+already holds.
+
+Admission reuses the `llm-cost` budget engine; there is no second ledger. A `ShadowLedger` keeps
+one `BudgetEngine` per shadow and UTC day of the injected clock, its limit the shadow's daily
+cap. Before the shadow call is sent, its reserve is reserved and started in one step under the
+ledger's lock, so two shadows in flight never both take the last room under the cap. A refused
+reservation (past the cap, too many unsettled, spend the day cannot know, or a day earlier than
+one already admitted, which never opens again) sends nothing and writes a record `skipped`,
+dispatch `not-sent`, no attempt, no latency and no cost; the caller's `ShadowResult` carries the
+ledger's refusal as its cause. Afterwards the reservation is settled with the record's cost,
+which covers every attempt because routing retries and falls back after accepted failures too.
+A cost that is incomplete, absent for want of a price book, or quoted in another currency
+settles nothing beyond its known part and stays held at its reservation, never settled as zero;
+the engine then admits no further shadow that day. A call that costs more than its reserve is
+settled at its cost, so the cap can be passed by at most the excess of the shadows already in
+flight. A call counts against the day it was admitted on; the next UTC day opens a fresh engine.
+Keep one ledger for as long as its shadows run: a new ledger starts every day's cap afresh.
+
 ### Typed decisions
 
 `llm-decide` turns a routed model into a typed decision. It depends on `llm-core`,

@@ -982,6 +982,12 @@ scenarios:
 - calls/scenarios/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost.yaml
 - calls/scenarios/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock.yaml
 - calls/scenarios/a-call-without-a-price-book-records-usage-and-no-cost.yaml
+- calls/scenarios/a-shadow-answer-never-reaches-the-caller.yaml
+- calls/scenarios/a-shadow-call-starts-only-after-the-primary-returned.yaml
+- calls/scenarios/a-shadow-past-its-daily-cap-is-skipped-and-recorded.yaml
+- calls/scenarios/the-daily-cap-starts-again-at-utc-midnight.yaml
+- calls/scenarios/a-failing-shadow-leaves-the-primary-result-unchanged.yaml
+- calls/scenarios/a-shadow-record-names-its-primary-record.yaml
 - decisions/scenarios/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label.yaml
 - decisions/scenarios/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label.yaml
 - decisions/scenarios/an-answer-naming-no-label-of-the-set-abstains-off-label.yaml

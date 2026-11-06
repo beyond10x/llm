@@ -33,6 +33,9 @@
     "daily_cap": {
       "type": "string"
     },
+    "reserve": {
+      "type": "string"
+    },
     "ledger_id": {
       "type": "string",
       "x-ess-relation": {
@@ -53,6 +56,7 @@
     "primary_route_id",
     "shadow_route_id",
     "daily_cap",
+    "reserve",
     "ledger_id",
     "state"
   ],
@@ -60,8 +64,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
-    "contract_digest": "slice-sha256/2:0e4a5397b0a8990b3b8a567e5b7eb3e973987da7087a6aae9acae5bf192096a2",
+    "source_digest": "f0de2b3eb402ab88caba1c7cdea55627babc7d358350ea5977e3a94c72655f25",
+    "contract_digest": "slice-sha256/2:d7b265d0de33dc51c7262d5599aec6de57e9227e40a283e03580a41a5dffb582",
     "regenerate": "ess generate"
   },
   "$defs": {

@@ -178,10 +178,16 @@
       "llm.budget/authored/zero-cap-allows-only-declared-zero",
       "llm.calls/authored/a-call-without-a-price-book-records-usage-and-no-cost",
       "llm.calls/authored/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost",
+      "llm.calls/authored/a-failing-shadow-leaves-the-primary-result-unchanged",
       "llm.calls/authored/a-fallback-run-records-the-target-that-answered-and-its-attempt-count",
       "llm.calls/authored/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock",
       "llm.calls/authored/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete",
       "llm.calls/authored/a-routed-turn-writes-one-record-with-no-text",
+      "llm.calls/authored/a-shadow-answer-never-reaches-the-caller",
+      "llm.calls/authored/a-shadow-call-starts-only-after-the-primary-returned",
+      "llm.calls/authored/a-shadow-past-its-daily-cap-is-skipped-and-recorded",
+      "llm.calls/authored/a-shadow-record-names-its-primary-record",
+      "llm.calls/authored/the-daily-cap-starts-again-at-utc-midnight",
       "llm.chat/authored/egress-a-user-image-shares-the-user-message-of-its-text",
       "llm.chat/authored/egress-an-output-format-without-a-name-is-refused",
       "llm.chat/authored/incoming-a-completion-without-a-finish-reason-is-refused",
@@ -1720,6 +1726,11 @@
         "disposition": "accepted",
         "scenario": "llm.calls/authored/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost"
       },
+      "calls/scenarios/a-failing-shadow-leaves-the-primary-result-unchanged.yaml": {
+        "digest": "sha256:f14962a4bd7f699340278c2766927a902e8e6aba9dbcb76fececb58e213cff0a",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-failing-shadow-leaves-the-primary-result-unchanged"
+      },
       "calls/scenarios/a-fallback-run-records-the-target-that-answered-and-its-attempt-count.yaml": {
         "digest": "sha256:172ef47e0f60f9614f82a63cc67a4db3521d9bc8f410f10a43c625905980b380",
         "disposition": "accepted",
@@ -1739,6 +1750,31 @@
         "digest": "sha256:f3f85842c08bbbcfe9b13035f123dd3b128aed30f6d8dedf4b6480bf363c6364",
         "disposition": "accepted",
         "scenario": "llm.calls/authored/a-routed-turn-writes-one-record-with-no-text"
+      },
+      "calls/scenarios/a-shadow-answer-never-reaches-the-caller.yaml": {
+        "digest": "sha256:6aa3c7e813894f95465ab80209f8863127763db4d61311098cb77e61784caa57",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-shadow-answer-never-reaches-the-caller"
+      },
+      "calls/scenarios/a-shadow-call-starts-only-after-the-primary-returned.yaml": {
+        "digest": "sha256:33e38483a367dfa3a700d86a0c360ec7c8687dbc886c393c78d2d87b7bacd3ab",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-shadow-call-starts-only-after-the-primary-returned"
+      },
+      "calls/scenarios/a-shadow-past-its-daily-cap-is-skipped-and-recorded.yaml": {
+        "digest": "sha256:bfcdd495b36c20dd6a6b4668576751a133e12d0317433dc3c1c169c4293f5236",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-shadow-past-its-daily-cap-is-skipped-and-recorded"
+      },
+      "calls/scenarios/a-shadow-record-names-its-primary-record.yaml": {
+        "digest": "sha256:b6e1fd91fc05ab57f7025063d5587f2b6d1328eeb3bd1a838afb38eb79fdce29",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-shadow-record-names-its-primary-record"
+      },
+      "calls/scenarios/the-daily-cap-starts-again-at-utc-midnight.yaml": {
+        "digest": "sha256:81fdcc00a48aeb592ce91bb92baa2e21f4dbd2cb0655c5cf7b38022d83691b66",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/the-daily-cap-starts-again-at-utc-midnight"
       },
       "chat/scenarios/egress-a-user-image-shares-the-user-message-of-its-text.yaml": {
         "digest": "sha256:ad728487c51ada6ab72830fc1e6e70b28291e51cfaee1c29d775562a683bfb5b",
@@ -5957,7 +5993,7 @@
       }
     },
     "counts": {
-      "authored": 992,
+      "authored": 998,
       "generated": 42,
       "outside": 0,
       "refused": 0
@@ -6020,9 +6056,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "12dbf26866a5ba93b6796bc5cd112c9f7c8720b78357d3139fe06fa878dc07db",
+    "contract_digest": "c749d0a59c52715cd5afefe0a857aa87684801f13c31f899e0656875ec6ab257",
     "scenario_initial_state": "empty",
-    "spec_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "spec_digest": "f0de2b3eb402ab88caba1c7cdea55627babc7d358350ea5977e3a94c72655f25",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -29756,6 +29792,127 @@
         }
       ]
     },
+    "llm.calls/authored/a-failing-shadow-leaves-the-primary-result-unchanged": {
+      "purpose": "the shadow route fails after the far side accepted it; the caller's text, error code and record are those of a plain call, and the shadow's unknown cost stays held at its reservation",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-shadow\"\nalias = \"code-shadow\"\n\n[[targets]]\nid = \"shadow-large\"\nroute_id = \"coding-shadow\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-1\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"answer\":\"primary answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Small-Model\"},\"remote-large\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"accepted\",\"message\":\"shadow upstream failed\"},\"upstream_model\":\"example/Large-Model\"}}}"
+            },
+            "shadows_json": {
+              "kind": "literal",
+              "value": "{\"ledger\":{\"id\":\"shadow-spend\",\"currency\":\"USD\",\"max_active\":4},\"shadows\":[{\"id\":\"compare-large\",\"primary_route_id\":\"coding\",\"shadow_route_id\":\"coding-shadow\",\"daily_cap\":\"0.3\",\"reserve\":\"0.25\"}]}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "primary answer"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-1\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-1/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":\"shadow-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"failed\",\"error_code\":\"unavailable\",\"dispatch\":\"accepted\",\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0\",\"complete\":false,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":\"call-1\"}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-shadow:failed"
+                ]
+              },
+              "spent_today": {
+                "kind": "literal",
+                "value": "0.25"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
     "llm.calls/authored/a-fallback-run-records-the-target-that-answered-and-its-attempt-count": {
       "purpose": "the primary fails before sending, the next declared target answers, and the one record names that target, its reported model and two attempts",
       "source": [
@@ -30176,6 +30333,620 @@
               "shadow_results": {
                 "kind": "literal",
                 "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-shadow-answer-never-reaches-the-caller": {
+      "purpose": "the shadow route answers after the primary; the caller receives only the primary's text, and the shadow's answer reaches only its own record, which holds no text",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-shadow\"\nalias = \"code-shadow\"\n\n[[targets]]\nid = \"shadow-large\"\nroute_id = \"coding-shadow\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-1\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"answer\":\"primary answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Small-Model\"},\"remote-large\":{\"answer\":\"shadow answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}}}"
+            },
+            "shadows_json": {
+              "kind": "literal",
+              "value": "{\"ledger\":{\"id\":\"shadow-spend\",\"currency\":\"USD\",\"max_active\":4},\"shadows\":[{\"id\":\"compare-large\",\"primary_route_id\":\"coding\",\"shadow_route_id\":\"coding-shadow\",\"daily_cap\":\"0.3\",\"reserve\":\"0.25\"}]}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "primary answer"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-1\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-1/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":\"shadow-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":\"call-1\"}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-shadow:succeeded"
+                ]
+              },
+              "spent_today": {
+                "kind": "literal",
+                "value": "0.2"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-shadow-call-starts-only-after-the-primary-returned": {
+      "purpose": "the primary returns after 300 ms; the shadow is sent only then, so its record starts where the primary ended and its 150 ms are not the caller's",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-shadow\"\nalias = \"code-shadow\"\n\n[[targets]]\nid = \"shadow-large\"\nroute_id = \"coding-shadow\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-1\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"answer\":\"primary answer\",\"ends_after_ms\":300,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Small-Model\"},\"remote-large\":{\"answer\":\"shadow answer\",\"first_event_after_ms\":50,\"ends_after_ms\":100,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}}}"
+            },
+            "shadows_json": {
+              "kind": "literal",
+              "value": "{\"ledger\":{\"id\":\"shadow-spend\",\"currency\":\"USD\",\"max_active\":4},\"shadows\":[{\"id\":\"compare-large\",\"primary_route_id\":\"coding\",\"shadow_route_id\":\"coding-shadow\",\"daily_cap\":\"0.3\",\"reserve\":\"0.25\"}]}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "primary answer"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-1\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":300,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-1/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":\"shadow-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000300,\"latency_ms\":150,\"time_to_first_event_ms\":50,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":\"call-1\"}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-shadow:succeeded"
+                ]
+              },
+              "spent_today": {
+                "kind": "literal",
+                "value": "0.2"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-shadow-past-its-daily-cap-is-skipped-and-recorded": {
+      "purpose": "the first shadow settles 0.2 of a 0.3 daily cap; the second would need 0.25 more, so it is not sent and its record says skipped, not sent, with no attempt and no cost",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-shadow\"\nalias = \"code-shadow\"\n\n[[targets]]\nid = \"shadow-large\"\nroute_id = \"coding-shadow\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-1\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"then\":[{\"record_id\":\"call-2\",\"at_unix_ms\":1762344060000}],\"models\":{\"local-small\":{\"answer\":\"primary answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Small-Model\"},\"remote-large\":{\"answer\":\"shadow answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}}}"
+            },
+            "shadows_json": {
+              "kind": "literal",
+              "value": "{\"ledger\":{\"id\":\"shadow-spend\",\"currency\":\"USD\",\"max_active\":4},\"shadows\":[{\"id\":\"compare-large\",\"primary_route_id\":\"coding\",\"shadow_route_id\":\"coding-shadow\",\"daily_cap\":\"0.3\",\"reserve\":\"0.25\"}]}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "primary answerprimary answer"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-1\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-1/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":\"shadow-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":\"call-1\"}",
+                  "{\"id\":\"call-2\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344060000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-2/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":null,\"upstream_model\":null,\"outcome\":\"skipped\",\"error_code\":null,\"dispatch\":\"not-sent\",\"attempts\":0,\"started_at_unix_ms\":1762344060000,\"latency_ms\":null,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":\"call-2\"}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-shadow:succeeded",
+                  "coding-shadow:skipped:limit-exceeded"
+                ]
+              },
+              "spent_today": {
+                "kind": "literal",
+                "value": "0.2"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-shadow-record-names-its-primary-record": {
+      "purpose": "the shadow's record has role shadow and names the primary call's record id; the primary's record names none",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-shadow\"\nalias = \"code-shadow\"\n\n[[targets]]\nid = \"shadow-large\"\nroute_id = \"coding-shadow\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-7\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"local-small\":{\"answer\":\"primary answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Small-Model\"},\"remote-large\":{\"answer\":\"shadow answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}}}"
+            },
+            "shadows_json": {
+              "kind": "literal",
+              "value": "{\"ledger\":{\"id\":\"shadow-spend\",\"currency\":\"USD\",\"max_active\":4},\"shadows\":[{\"id\":\"compare-large\",\"primary_route_id\":\"coding\",\"shadow_route_id\":\"coding-shadow\",\"daily_cap\":\"0.3\",\"reserve\":\"0.25\"}]}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "primary answer"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-7\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-7/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":\"shadow-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":\"call-7\"}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-shadow:succeeded"
+                ]
+              },
+              "spent_today": {
+                "kind": "literal",
+                "value": "0.2"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/the-daily-cap-starts-again-at-utc-midnight": {
+      "purpose": "a shadow at 23:59 spends the day's cap and the next one is skipped; after UTC midnight a new day's cap admits the shadow again",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Call"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Call",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-shadow\"\nalias = \"code-shadow\"\n\n[[targets]]\nid = \"shadow-large\"\nroute_id = \"coding-shadow\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"record_id\":\"call-1\",\"input_tokens\":100,\"start_unix_ms\":1762387140000,\"then\":[{\"record_id\":\"call-2\",\"at_unix_ms\":1762387170000},{\"record_id\":\"call-3\",\"at_unix_ms\":1762387210000}],\"models\":{\"local-small\":{\"answer\":\"primary answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Small-Model\"},\"remote-large\":{\"answer\":\"shadow answer\",\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}}}"
+            },
+            "shadows_json": {
+              "kind": "literal",
+              "value": "{\"ledger\":{\"id\":\"shadow-spend\",\"currency\":\"USD\",\"max_active\":4},\"shadows\":[{\"id\":\"compare-large\",\"primary_route_id\":\"coding\",\"shadow_route_id\":\"coding-shadow\",\"daily_cap\":\"0.3\",\"reserve\":\"0.25\"}]}"
+            },
+            "turn_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Call",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": "primary answerprimary answerprimary answer"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"call-1\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762387140000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-1/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":\"shadow-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762387140000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":\"call-1\"}",
+                  "{\"id\":\"call-2\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762387170000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-2/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":null,\"upstream_model\":null,\"outcome\":\"skipped\",\"error_code\":null,\"dispatch\":\"not-sent\",\"attempts\":0,\"started_at_unix_ms\":1762387170000,\"latency_ms\":null,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":\"call-2\"}",
+                  "{\"id\":\"call-3\",\"role\":\"primary\",\"kind\":\"turn\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762387210000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"call-3/shadow/compare-large\",\"role\":\"shadow\",\"kind\":\"turn\",\"route_id\":\"coding-shadow\",\"route_target_id\":\"shadow-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762387210000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":100,\"output_tokens\":50,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.2\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":\"call-3\"}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": [
+                  "coding-shadow:succeeded",
+                  "coding-shadow:skipped:limit-exceeded",
+                  "coding-shadow:succeeded"
+                ]
+              },
+              "spent_today": {
+                "kind": "literal",
+                "value": "0.2"
               },
               "valid_program": {
                 "kind": "literal",

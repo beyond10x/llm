@@ -1,0 +1,140 @@
+type: ess-scenario/1
+domain: llm.calls
+scenario: a-shadow-call-starts-only-after-the-primary-returned
+summary: the primary returns after 300 ms; the shadow is sent only then, so its record starts where the primary ended and its 150 ms are not the caller's
+timeline:
+- at: '2026-11-05T12:00:00Z'
+  command: llm.calls.Call
+  input:
+    catalog_toml: |
+      # Illustrative declarations, not qualification of a particular model or deployment.
+      format = "llm.catalog/1"
+
+      [[providers]]
+      id = "my-lab"
+      category = "self-hosted"
+
+      [[accounts]]
+      id = "local"
+      provider_id = "my-lab"
+      auth_kind = "anonymous"
+      billing_kind = "self-hosted"
+
+      [[accounts]]
+      id = "remote"
+      provider_id = "my-lab"
+      auth_kind = "bearer"
+      billing_kind = "metered"
+      secret_reference_id = "lab-llm-token"
+
+      [[endpoints]]
+      id = "local-vllm"
+      account_id = "local"
+      base_url = "http://127.0.0.1:8000/v1"
+
+      [[endpoints]]
+      id = "remote-models"
+      account_id = "remote"
+      base_url = "https://models.example.invalid/v1"
+
+      [[models]]
+      id = "small"
+      upstream_name = "example/Small-Model"
+
+      [[models]]
+      id = "large"
+      upstream_name = "example/Large-Model"
+
+      [[serving_models]]
+      id = "local-small"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[serving_models]]
+      id = "remote-large"
+      endpoint_id = "remote-models"
+      model_id = "large"
+      protocol = "responses"
+      [serving_models.capabilities]
+      tools = true
+      tool_choice = true
+      temperature = true
+      top_p = true
+      reasoning_efforts = ["medium", "high"]
+      context_window = 32768
+      max_output_tokens = 8192
+
+      [[routes]]
+      id = "coding"
+      alias = "code"
+
+      [[targets]]
+      id = "coding-primary"
+      route_id = "coding"
+      serving_model_id = "local-small"
+      position = 0
+
+      [[routes]]
+      id = "coding-shadow"
+      alias = "code-shadow"
+
+      [[targets]]
+      id = "shadow-large"
+      route_id = "coding-shadow"
+      serving_model_id = "remote-large"
+      position = 0
+    turn_json: '{"format":"llm.turn/3","request":{"model":"code","instructions":"","items":[{"kind":"user-text","text":"hello"}],"tools":[],"max_output_tokens":128}}'
+    prices_toml: |
+      # Fictional fixture prices. No vendor, model or resource is qualified by this example.
+      format = "llm.prices/1"
+      revision = "lab-prices-r1"
+      source = "fixture price list"
+      as_of_unix_ms = 1762300800000
+      currency = "USD"
+
+      [[models]]
+      id = "local-small-price"
+      serving_model_id = "local-small"
+      # The binding revision the catalog above derives for local-small.
+      binding_revision = "1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1"
+      upstream_model = "example/Small-Model"
+      input = { amount = "1", per_units = 1000 }
+      output = { amount = "2", per_units = 1000 }
+
+      [[models]]
+      id = "remote-large-price"
+      serving_model_id = "remote-large"
+      # The binding revision the catalog above derives for remote-large.
+      binding_revision = "5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13"
+      upstream_model = "example/Large-Model"
+      input = { amount = "1", per_units = 1000 }
+      output = { amount = "2", per_units = 1000 }
+    shadows_json: '{"ledger":{"id":"shadow-spend","currency":"USD","max_active":4},"shadows":[{"id":"compare-large","primary_route_id":"coding","shadow_route_id":"coding-shadow","daily_cap":"0.3","reserve":"0.25"}]}'
+    program_json: '{"record_id":"call-1","input_tokens":100,"start_unix_ms":1762344000000,"models":{"local-small":{"answer":"primary answer","ends_after_ms":300,"usage":{"input_tokens":100,"output_tokens":50,"cached_input_tokens":0,"cache_creation_input_tokens":0},"upstream_model":"example/Small-Model"},"remote-large":{"answer":"shadow answer","first_event_after_ms":50,"ends_after_ms":100,"usage":{"input_tokens":100,"output_tokens":50,"cached_input_tokens":0,"cache_creation_input_tokens":0},"upstream_model":"example/Large-Model"}}}'
+  outcome: observed
+assert:
+- view: llm.calls.LastCall
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.calls.LastCall
+  contains:
+    valid_program: true
+    error_code: null
+    delivered_text: primary answer
+    records:
+    - '{"id":"call-1","role":"primary","kind":"turn","route_id":"coding","route_target_id":"coding-primary","upstream_model":"example/Small-Model","outcome":"succeeded","error_code":null,"dispatch":null,"attempts":1,"started_at_unix_ms":1762344000000,"latency_ms":300,"time_to_first_event_ms":0,"usage":{"input_tokens":100,"output_tokens":50,"cached_input_tokens":0,"cache_creation_input_tokens":0},"cost":{"currency":"USD","known_subtotal":"0.2","complete":true,"price_revision":"lab-prices-r1"},"primary_record_id":null}'
+    - '{"id":"call-1/shadow/compare-large","role":"shadow","kind":"turn","route_id":"coding-shadow","route_target_id":"shadow-large","upstream_model":"example/Large-Model","outcome":"succeeded","error_code":null,"dispatch":null,"attempts":1,"started_at_unix_ms":1762344000300,"latency_ms":150,"time_to_first_event_ms":50,"usage":{"input_tokens":100,"output_tokens":50,"cached_input_tokens":0,"cache_creation_input_tokens":0},"cost":{"currency":"USD","known_subtotal":"0.2","complete":true,"price_revision":"lab-prices-r1"},"primary_record_id":"call-1"}'
+    shadow_results:
+    - coding-shadow:succeeded
+    case_results: []
+    spent_today: '0.2'
