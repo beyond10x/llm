@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClassificationObservation",
+  "x-ess-name": "llm.decisions.ClassificationObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "valid_program": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "tried": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "label": {
+      "type": "string"
+    },
+    "confidences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/llm.decisions.LabelConfidence"
+      }
+    },
+    "final_cause": {
+      "$ref": "#/$defs/llm.decisions.AbstentionCause"
+    },
+    "call_record_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.decisions.ClassificationObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "valid_program",
+    "tried",
+    "results",
+    "confidences",
+    "call_record_ids",
+    "records",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:0a7fb7da864b55c7aa8b36c4dc5bc01a5f875f8d797eff4e2bad6f04905d9c98",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.AbstentionCause": {
+      "title": "AbstentionCause",
+      "x-ess-name": "llm.decisions.AbstentionCause",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Timeout",
+        "ProviderError",
+        "OffLabel"
+      ]
+    },
+    "llm.decisions.ClassificationObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.ClassificationObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.decisions.LabelConfidence": {
+      "title": "LabelConfidence",
+      "x-ess-name": "llm.decisions.LabelConfidence",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "confidence_bps": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

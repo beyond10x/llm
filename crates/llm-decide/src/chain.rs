@@ -1,6 +1,6 @@
 //! An ordered chain of classifiers for one label set under one deadline.
 
-use crate::classify::{Classification, Classifier, Decision, LabelSet, Ports, SetupError};
+use crate::classify::{Ask, Classification, Classifier, Decision, LabelSet, Ports, SetupError};
 use llm_core::Id;
 use std::{collections::BTreeSet, time::Duration};
 
@@ -63,14 +63,61 @@ impl Chain {
         })
     }
 
-    /// Not yet: the chain runs no classifier.
-    pub async fn classify(&self, _request_id: &Id, _input: &str, _ports: Ports<'_>) -> ChainOutcome {
-        let _ = (self.deadline, self.classifiers.len());
+    pub const fn id(&self) -> &Id {
+        &self.id
+    }
+    pub const fn label_set(&self) -> &LabelSet {
+        &self.label_set
+    }
+    pub const fn deadline(&self) -> Duration {
+        self.deadline
+    }
+    pub fn classifiers(&self) -> impl Iterator<Item = &dyn Classifier> {
+        self.classifiers.iter().map(AsRef::as_ref)
+    }
+
+    /// Asks each classifier in order until one decides, and reports every attempt.
+    ///
+    /// The deadline runs from the start on the recording clock; each classifier is told the
+    /// time left. When every classifier abstains, the last abstention is final. `request_id`
+    /// names this classification: a model call's record id is `<request id>/<classifier id>`.
+    /// `input_tokens` is the caller's estimate of a model turn's input, which routing admits each
+    /// target against (see [`Ask::input_tokens`]).
+    pub async fn classify(
+        &self,
+        request_id: &Id,
+        input: &str,
+        input_tokens: Option<u64>,
+        ports: Ports<'_>,
+    ) -> ChainOutcome {
+        let clock = ports.recording.clock;
+        let start = clock.monotonic();
+        let mut attempts = Vec::with_capacity(self.classifiers.len());
+        for classifier in &self.classifiers {
+            let elapsed = clock.monotonic().saturating_sub(start);
+            let ask = Ask {
+                label_set: &self.label_set,
+                input,
+                remaining: self.deadline.saturating_sub(elapsed),
+                request_id,
+                input_tokens,
+                ports,
+            };
+            let attempt = classifier.classify(ask).await;
+            let decided = matches!(attempt, Classification::Decided(_));
+            attempts.push(attempt);
+            if decided {
+                break;
+            }
+        }
+        if let Some(Classification::Abstained(last)) = attempts.last_mut() {
+            last.is_final = true;
+        }
         ChainOutcome {
             chain_id: self.id.clone(),
             label_set_id: self.label_set.id().clone(),
             label_set_version: self.label_set.version().to_owned(),
-            attempts: Vec::new(),
+            attempts,
         }
     }
 }

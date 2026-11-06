@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.decisions.AbstentionCause",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:e554e8394fada6a2c933713cd2a1963ad1911e0808071bef8c502ffc57a16ed1",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.AbstentionCause": {
+      "title": "AbstentionCause",
+      "x-ess-name": "llm.decisions.AbstentionCause",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Timeout",
+        "ProviderError",
+        "OffLabel"
+      ]
+    }
+  }
+}

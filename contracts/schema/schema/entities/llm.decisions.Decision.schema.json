@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Decision",
+  "x-ess-name": "llm.decisions.Decision",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "chain_id": {
+      "type": "string"
+    },
+    "classifier_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "classifier",
+        "kind": "references",
+        "source": "llm.decisions.Decision",
+        "target": "llm.decisions.Classifier",
+        "cardinality": "one",
+        "via": "classifier_id"
+      }
+    },
+    "label_set_version": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "confidences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/llm.decisions.LabelConfidence"
+      }
+    },
+    "latency_ms": {
+      "type": "integer"
+    },
+    "call_record_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "call",
+        "kind": "references",
+        "source": "llm.decisions.Decision",
+        "target": "llm.calls.CallRecord",
+        "cardinality": "one",
+        "via": "call_record_id"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.decisions.Decision.State"
+    }
+  },
+  "required": [
+    "id",
+    "chain_id",
+    "classifier_id",
+    "label_set_version",
+    "label",
+    "confidences",
+    "latency_ms",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:61613b110e430094a233ae56b8ae0a1419813817e16740e903be802d46f98ca0",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.Decision.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.Decision.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.decisions.LabelConfidence": {
+      "title": "LabelConfidence",
+      "x-ess-name": "llm.decisions.LabelConfidence",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "confidence_bps": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

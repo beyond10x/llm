@@ -2,6 +2,7 @@ mod bedrock;
 mod budgets;
 mod calls;
 mod chat;
+mod decisions;
 mod fallback;
 mod gate;
 mod inference;

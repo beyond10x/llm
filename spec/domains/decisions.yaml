@@ -1,17 +1,27 @@
 domain: llm.decisions
 
-# Draft (2026-11-05), not yet part of spec/system.yaml. Typed decisions over a model: a
-# closed-label classification and a rubric verdict. The spec unit of the wave that implements
-# them moves this file to spec/domains/decisions.yaml and adds `llm.decisions` to the system.
+# Typed decisions over a model: a closed-label classification (crate llm-decide) and a rubric
+# verdict (declared here, not yet implemented).
 #
-# A classification asks one closed label set. The answer is one label of that set with a
-# confidence per label in basis points (0 to 10000), or an abstention with a cause. Nothing else:
-# a label outside the set is an abstention `OffLabel`, never a decision.
+# A classification asks one closed label set: at least two distinct, non-empty labels, versioned.
+# The answer is one label of that set with a confidence per label in basis points (0 to 10000),
+# or an abstention with a cause. Nothing else: a label outside the set is an abstention
+# `OffLabel`, never a decision. A model path asks for `{"label": <one of the labels>,
+# "confidences": {<every label>: <integer basis points>}}` and no other key, as a strict output
+# schema (JsonSchema) or as the parameters of one forced tool (ForcedTool); an answer that does
+# not decode as that schema is `OffLabel`, and so is a decision whose label's confidence is under
+# the classifier's floor (an unknown confidence meets no floor).
 #
-# A chain is an ordered fallback over classifiers for one label set. The first classifier that
-# decides ends the chain; every earlier one left an abstention. A chain may end in a lexical
-# classifier the caller supplies, which makes no model call. Every model call a classifier
-# makes yields one llm.calls.CallRecord, which carries latency and cost.
+# A chain is an ordered fallback over classifiers for one label set under one deadline. The
+# first classifier that decides ends the chain; every earlier one left an abstention, and when
+# every classifier abstains the last abstention is final. A model call still open at the
+# deadline is cancelled and abstains `Timeout`; an answer arriving at or after it is not used;
+# a model classifier reached with no time left abstains `Timeout` without a call. A chain may end
+# in a lexical classifier the caller supplies, which makes no model call and so runs even past
+# the deadline. A failed call abstains `ProviderError` with its llm error code. Every model call
+# a classifier makes goes through the routed, recorded call of llm.calls and yields one
+# llm.calls.CallRecord of kind Classification, which carries latency and the cost of every
+# attempt, retries and fallbacks included.
 #
 # A verdict is one rubric call: the rubric, its version and the pinned model are named in the
 # result, and the answer is strict JSON held to the rubric's verdict schema.
@@ -65,12 +75,10 @@ entities:
       - {name: chain_id, type: String}
       - {name: position, type: Integer}
       - {name: path, type: llm.decisions.Path}
-      # The catalog route a model path calls; absent exactly for Lexical.
-      - {name: route_id, type: Optional<String>}
+      # The catalog route alias a model path's turn names; absent exactly for Lexical.
+      - {name: route_alias, type: Optional<String>}
       # A decision below this confidence is an abstention OffLabel; absent admits every one.
       - {name: min_confidence_bps, type: Optional<Integer>}
-    relations:
-      - {name: route, kind: references, target: llm.catalog.Route, cardinality: one, via: route_id}
     lifecycle: {initial: Declared, states: [Declared], terminal: [Declared]}
   - name: llm.decisions.Decision
     identity: {name: id, type: String}
@@ -136,15 +144,20 @@ entities:
     identity: {name: observation_id, type: String}
     fields: &classification_facts
       - {name: valid_program, type: Boolean}
+      # The refusal before any classifier ran (an llm error code, or a label set or chain
+      # refusal: duplicate-label, too-few-labels, ...), else the final abstention's llm error code.
       - {name: error_code, type: Optional<String>}
       # Classifier ids in the order the chain tried them.
       - {name: tried, type: List<String>}
-      # Per tried classifier: id:decided or id:abstained:<cause>.
+      # Per tried classifier: id:decided, or id:abstained:<cause> with :<llm error code> after
+      # ProviderError.
       - {name: results, type: List<String>}
       - {name: label, type: Optional<String>}
       - {name: confidences, type: List<llm.decisions.LabelConfidence>}
       - {name: final_cause, type: Optional<llm.decisions.AbstentionCause>}
       - {name: call_record_ids, type: List<String>}
+      # Every record the sink received, as canonical JSON (llm.calls.CallRecord), in order.
+      - {name: records, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
   - name: llm.decisions.VerdictObservation
     identity: {name: observation_id, type: String}
@@ -161,12 +174,14 @@ entities:
 commands:
   - name: llm.decisions.Classify
     # Run the real chain over in-process scripted models and an optional scripted lexical
-    # classifier; no network. program_json scripts each route's answer, failure or delay.
+    # classifier, a scripted clock and an optional price book; no network. program_json scripts
+    # each serving model's answer, failure, delay or hang, and each lexical classifier's answer.
     input:
       - {name: catalog_toml, type: String}
       - {name: label_set_json, type: String}
       - {name: chain_json, type: String}
       - {name: input_text, type: String}
+      - {name: prices_toml, type: Optional<String>}
       - {name: program_json, type: String}
     outcomes:
       - name: observed

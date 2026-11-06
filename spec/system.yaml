@@ -17,3 +17,4 @@ domains:
   - llm.transport
   - llm.bedrock
   - llm.calls
+  - llm.decisions

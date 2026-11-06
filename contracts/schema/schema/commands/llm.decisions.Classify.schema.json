@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Classify input",
+  "x-ess-name": "llm.decisions.Classify",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "label_set_json": {
+      "type": "string"
+    },
+    "chain_json": {
+      "type": "string"
+    },
+    "input_text": {
+      "type": "string"
+    },
+    "prices_toml": {
+      "type": "string"
+    },
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "label_set_json",
+    "chain_json",
+    "input_text",
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:b4ca59017ee4cd7c1b21dc94fc71e0e565d9c1f330881d91aa610b8bc8200784",
+    "regenerate": "ess generate"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Verdict",
+  "x-ess-name": "llm.decisions.Verdict",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "rubric_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "rubric",
+        "kind": "references",
+        "source": "llm.decisions.Verdict",
+        "target": "llm.decisions.Rubric",
+        "cardinality": "one",
+        "via": "rubric_id"
+      }
+    },
+    "rubric_version": {
+      "type": "string"
+    },
+    "rubric_digest": {
+      "type": "string"
+    },
+    "route_target_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "target",
+        "kind": "references",
+        "source": "llm.decisions.Verdict",
+        "target": "llm.catalog.RouteTarget",
+        "cardinality": "one",
+        "via": "route_target_id"
+      }
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "verdict_json": {
+      "type": "string"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "call_record_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "call",
+        "kind": "references",
+        "source": "llm.decisions.Verdict",
+        "target": "llm.calls.CallRecord",
+        "cardinality": "one",
+        "via": "call_record_id"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.decisions.Verdict.State"
+    }
+  },
+  "required": [
+    "id",
+    "rubric_id",
+    "rubric_version",
+    "rubric_digest",
+    "route_target_id",
+    "upstream_model",
+    "call_record_id",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:1cd0db04007329e929c585bdd86df11208269fff990e1c74e8022219ee3cdc21",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.Verdict.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.Verdict.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

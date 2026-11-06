@@ -297,6 +297,17 @@
       "llm.chat/authored/round-trip-parallel-tool-calls-decode-back-to-the-same-turn",
       "llm.chat/authored/round-trip-verbosity-decodes-back-to-the-same-turn",
       "llm.chat/authored/round-trip-verbosity-is-projected-under-its-own-name",
+      "llm.decisions/authored/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final",
+      "llm.decisions/authored/a-classifier-past-the-chain-deadline-abstains-with-timeout",
+      "llm.decisions/authored/a-confidence-below-the-classifier-floor-abstains-off-label",
+      "llm.decisions/authored/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label",
+      "llm.decisions/authored/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label",
+      "llm.decisions/authored/a-label-set-with-a-duplicate-or-a-single-label-is-refused",
+      "llm.decisions/authored/a-provider-failure-abstains-with-its-error-code",
+      "llm.decisions/authored/an-answer-naming-no-label-of-the-set-abstains-off-label",
+      "llm.decisions/authored/an-answer-that-does-not-decode-as-the-schema-abstains-off-label",
+      "llm.decisions/authored/each-model-classifier-call-yields-a-call-record-with-latency-and-cost",
+      "llm.decisions/authored/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier",
       "llm.inference/authored/a-tool-calls-stop-without-a-call-is-refused",
       "llm.inference/authored/actual-model-and-response-preserved",
       "llm.inference/authored/contradictory-cache-refused",
@@ -2303,6 +2314,61 @@
         "digest": "sha256:776aee363a43e9884f7ba1c2c23edd608305588bfd76a10c9b70de1af688f690",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/round-trip-verbosity-is-projected-under-its-own-name"
+      },
+      "decisions/scenarios/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final.yaml": {
+        "digest": "sha256:425cba33e13c57a4116d75573f32863e3df588cc797259cda1700a069c775641",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final"
+      },
+      "decisions/scenarios/a-classifier-past-the-chain-deadline-abstains-with-timeout.yaml": {
+        "digest": "sha256:7165e6b2fff2d05f0032a65e97f1a9a4e902b6a2370f3cfdc26b532de31ed0b6",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-classifier-past-the-chain-deadline-abstains-with-timeout"
+      },
+      "decisions/scenarios/a-confidence-below-the-classifier-floor-abstains-off-label.yaml": {
+        "digest": "sha256:a2c27b869db61a732adfbf419b1580eb3c9a16af609d9f277ee0863560298b4b",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-confidence-below-the-classifier-floor-abstains-off-label"
+      },
+      "decisions/scenarios/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label.yaml": {
+        "digest": "sha256:372f7cf4bb99d4d1c0e8441ba2af7b7acdc1cfb97f83d6ae567505abe497a056",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label"
+      },
+      "decisions/scenarios/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label.yaml": {
+        "digest": "sha256:795daffa9e84803b3e9a4f1d68434d20903b74cf7e25ec4c3f3e392fac5fda2d",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label"
+      },
+      "decisions/scenarios/a-label-set-with-a-duplicate-or-a-single-label-is-refused.yaml": {
+        "digest": "sha256:04554f8576eb7ecef5c5827dc4ea061e958efe8405025569c8a8c8e3fd20d91a",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-label-set-with-a-duplicate-or-a-single-label-is-refused"
+      },
+      "decisions/scenarios/a-provider-failure-abstains-with-its-error-code.yaml": {
+        "digest": "sha256:f79feab21f52a2d745cbf1a7fee6e0d522a69d48921e84699141903fee647a24",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-provider-failure-abstains-with-its-error-code"
+      },
+      "decisions/scenarios/an-answer-naming-no-label-of-the-set-abstains-off-label.yaml": {
+        "digest": "sha256:76580888a9b6fef427ae0662edb499eee6ce4eafa45d07cfdf435f0426bfc800",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/an-answer-naming-no-label-of-the-set-abstains-off-label"
+      },
+      "decisions/scenarios/an-answer-that-does-not-decode-as-the-schema-abstains-off-label.yaml": {
+        "digest": "sha256:9205ca0172a1d8736fc3b7cdedd97804d0e820d98e0171934786fa48999a549a",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/an-answer-that-does-not-decode-as-the-schema-abstains-off-label"
+      },
+      "decisions/scenarios/each-model-classifier-call-yields-a-call-record-with-latency-and-cost.yaml": {
+        "digest": "sha256:668b88e1c385a781630194a76e5157e9a7f41160c65bd4779185957363854444",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/each-model-classifier-call-yields-a-call-record-with-latency-and-cost"
+      },
+      "decisions/scenarios/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier.yaml": {
+        "digest": "sha256:95ed9cbad009abab34d2552a6355b19f543f7c9334bae0287eaf03507b48c772",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier"
       },
       "inference/scenarios/a-tool-calls-stop-without-a-call-is-refused.yaml": {
         "digest": "sha256:5855925f3da7b494e2ce9c4729b62fc2ef7e08b48bb307ca173ada32ffa8b570",
@@ -5891,8 +5957,8 @@
       }
     },
     "counts": {
-      "authored": 981,
-      "generated": 40,
+      "authored": 992,
+      "generated": 42,
       "outside": 0,
       "refused": 0
     },
@@ -5910,6 +5976,8 @@
       "llm.chat.EncodeIngress/outcome/observed",
       "llm.chat.ProjectRequest/outcome/observed",
       "llm.chat.ProjectResponse/outcome/observed",
+      "llm.decisions.Classify/outcome/observed",
+      "llm.decisions.Judge/outcome/observed",
       "llm.inference.InspectResult/outcome/observed",
       "llm.messages.DecodeMessage/outcome/observed",
       "llm.messages.DecodeStream/outcome/observed",
@@ -5952,9 +6020,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "cc453e0cfbf7e620ab756b6344ea484554f4ed32ae3145a811bce0724440ea53",
+    "contract_digest": "12dbf26866a5ba93b6796bc5cd112c9f7c8720b78357d3139fe06fa878dc07db",
     "scenario_initial_state": "empty",
-    "spec_digest": "383670bbb34c94b966faf5b3db09b95c90d99e6769fb7fe28f6fff8a0fac7085",
+    "spec_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -6009,6 +6077,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -6157,6 +6233,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -13616,6 +13700,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -13760,6 +13852,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -13898,6 +13998,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -14053,6 +14161,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -14191,6 +14307,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -14346,6 +14470,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -14484,6 +14616,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -14651,6 +14791,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -14785,6 +14933,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -14929,6 +15085,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -22121,6 +22285,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -22262,6 +22434,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -28794,6 +28974,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -28946,6 +29134,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -29080,6 +29276,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -29240,6 +29444,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -30028,6 +30240,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -30172,6 +30392,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -30306,6 +30534,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -30461,6 +30697,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -30595,6 +30839,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -30758,6 +31010,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -30892,6 +31152,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -31040,6 +31308,14 @@
         },
         {
           "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -42727,6 +43003,2230 @@
         }
       ]
     },
+    "llm.decisions.Classify/outcome/observed": {
+      "purpose": "`llm.decisions.Classify` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Answered"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Decoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Fetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Encoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "chain_json"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "input_text"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "label_set_json"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "program_json"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "shape": {
+            "valid_program": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Answered",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Decoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Encoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.decisions.Judge/outcome/observed": {
+      "purpose": "`llm.decisions.Judge` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.decisions.Judge"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Answered"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Decoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Fetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Encoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Judge",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "program_json"
+            },
+            "rubric_json": {
+              "kind": "literal",
+              "value": "rubric_json"
+            },
+            "subject_text": {
+              "kind": "literal",
+              "value": "subject_text"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "shape": {
+            "valid_program": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Answered",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Decoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Encoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final": {
+      "purpose": "the schema classifier abstains OffLabel and the caller's lexical classifier finds no label; the chain decides nothing and its answer is the lexical classifier's abstention",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\"},{\"id\":\"words\",\"path\":\"Lexical\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "it was awful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\"}},\"local-small\":{\"answer\":\"{\\\"label\\\":\\\"furious\\\",\\\"confidences\\\":{\\\"positive\\\":9000,\\\"negative\\\":500,\\\"neutral\\\":500}}\"}},\"lexical\":{\"words\":null}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": "OffLabel"
+              },
+              "label": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:abstained:OffLabel",
+                  "words:abstained:OffLabel"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema",
+                  "words"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-classifier-past-the-chain-deadline-abstains-with-timeout": {
+      "purpose": "a call still open at the chain's 2000 ms deadline is cancelled, abstains Timeout and records a cancelled call; the next model classifier, reached with no time left, abstains Timeout without a call",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":2000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\"},{\"id\":\"tool\",\"path\":\"ForcedTool\",\"route_alias\":\"code\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the film was wonderful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"local-small\":{\"hang\":true},\"remote-large\":{\"tool_arguments\":\"{\\\"label\\\":\\\"positive\\\",\\\"confidences\\\":{\\\"positive\\\":9000,\\\"negative\\\":500,\\\"neutral\\\":500}}\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": "Timeout"
+              },
+              "label": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"cancelled\",\"error_code\":\"cancelled\",\"dispatch\":\"unknown\",\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":2000,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:abstained:Timeout",
+                  "tool:abstained:Timeout"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema",
+                  "tool"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-confidence-below-the-classifier-floor-abstains-off-label": {
+      "purpose": "a well-formed answer whose label's confidence is 7999 basis points, one under the classifier's floor of 8000, abstains OffLabel instead of deciding",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\",\"min_confidence_bps\":8000}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the film was wonderful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\"}},\"local-small\":{\"answer\":\"{\\\"label\\\":\\\"positive\\\",\\\"confidences\\\":{\\\"positive\\\":7999,\\\"negative\\\":1000,\\\"neutral\\\":1001}}\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": "OffLabel"
+              },
+              "label": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:abstained:OffLabel"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label": {
+      "purpose": "a classifier forcing one tool whose parameters are the label set's schema reaches only the target with tools and reads one label with a confidence per label from the call's arguments",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"tool\",\"path\":\"ForcedTool\",\"route_alias\":\"code\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the film was dreadful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"tool_arguments\":\"{\\\"label\\\":\\\"negative\\\",\\\"confidences\\\":{\\\"positive\\\":200,\\\"negative\\\":9700,\\\"neutral\\\":100}}\",\"upstream_model\":\"example/Large-Model\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/tool"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": [
+                  {
+                    "confidence_bps": 200.0,
+                    "label": "positive"
+                  },
+                  {
+                    "confidence_bps": 9700.0,
+                    "label": "negative"
+                  },
+                  {
+                    "confidence_bps": 100.0,
+                    "label": "neutral"
+                  }
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": null
+              },
+              "label": {
+                "kind": "literal",
+                "value": "negative"
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/tool\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-secondary\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "tool:decided"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "tool"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label": {
+      "purpose": "a classifier asking for the label set's strict output schema gets one label of the set with a confidence per label, and its one call writes one classification record",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\",\"instructions\":\"Classify the sentiment of the text.\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the film was wonderful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\"}},\"local-small\":{\"answer\":\"{\\\"label\\\":\\\"positive\\\",\\\"confidences\\\":{\\\"positive\\\":9100,\\\"negative\\\":300,\\\"neutral\\\":600}}\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": [
+                  {
+                    "confidence_bps": 9100.0,
+                    "label": "positive"
+                  },
+                  {
+                    "confidence_bps": 300.0,
+                    "label": "negative"
+                  },
+                  {
+                    "confidence_bps": 600.0,
+                    "label": "neutral"
+                  }
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": null
+              },
+              "label": {
+                "kind": "literal",
+                "value": "positive"
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:decided"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-label-set-with-a-duplicate-or-a-single-label-is-refused": {
+      "purpose": "a label set naming one label twice, so a single distinct label, is refused as a duplicate before any classifier runs; no call is made and no record written",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"answer-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "is the sky blue"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"answer\",\"version\":\"v1\",\"labels\":[\"yes\",\"yes\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\"}},\"local-small\":{\"answer\":\"{\\\"label\\\":\\\"yes\\\",\\\"confidences\\\":{\\\"yes\\\":10000}}\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": []
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "duplicate-label"
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": null
+              },
+              "label": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": []
+              },
+              "results": {
+                "kind": "literal",
+                "value": []
+              },
+              "tried": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-provider-failure-abstains-with-its-error-code": {
+      "purpose": "a call refused as unauthorized never falls back; the classifier abstains ProviderError with the llm error code, and the record keeps the code and its dispatch",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the film was wonderful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"local-small\":{\"fail\":{\"code\":\"unauthorized\",\"dispatch\":\"rejected\"}},\"remote-large\":{\"answer\":\"{\\\"label\\\":\\\"positive\\\",\\\"confidences\\\":{\\\"positive\\\":9000,\\\"negative\\\":500,\\\"neutral\\\":500}}\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unauthorized"
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": "ProviderError"
+              },
+              "label": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"failed\",\"error_code\":\"unauthorized\",\"dispatch\":\"rejected\",\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:abstained:ProviderError:unauthorized"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/an-answer-naming-no-label-of-the-set-abstains-off-label": {
+      "purpose": "an answer that names a label outside the set is never a decision; the classifier abstains OffLabel and the call still writes its record",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the film was wonderful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\"}},\"local-small\":{\"answer\":\"{\\\"label\\\":\\\"furious\\\",\\\"confidences\\\":{\\\"positive\\\":9000,\\\"negative\\\":500,\\\"neutral\\\":500}}\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": "OffLabel"
+              },
+              "label": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:abstained:OffLabel"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/an-answer-that-does-not-decode-as-the-schema-abstains-off-label": {
+      "purpose": "an answer naming a label of the set but leaving out one label's confidence does not decode as the strict schema, so the classifier abstains OffLabel",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the film was wonderful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\"}},\"local-small\":{\"answer\":\"{\\\"label\\\":\\\"positive\\\",\\\"confidences\\\":{\\\"positive\\\":9000,\\\"negative\\\":500}}\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": "OffLabel"
+              },
+              "label": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:abstained:OffLabel"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/each-model-classifier-call-yields-a-call-record-with-latency-and-cost": {
+      "purpose": "two model classifiers each make one call and each call writes one classification record with its latency from the scripted clock and its cost under the caller's price book",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\"},{\"id\":\"tool\",\"path\":\"ForcedTool\",\"route_alias\":\"code\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the film was wonderful"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"local-small\":{\"answer\":\"{\\\"label\\\":\\\"furious\\\",\\\"confidences\\\":{\\\"positive\\\":9000,\\\"negative\\\":500,\\\"neutral\\\":500}}\",\"takes_ms\":120,\"usage\":{\"input_tokens\":100,\"output_tokens\":20,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Small-Model\"},\"remote-large\":{\"tool_arguments\":\"{\\\"label\\\":\\\"positive\\\",\\\"confidences\\\":{\\\"positive\\\":9000,\\\"negative\\\":500,\\\"neutral\\\":500}}\",\"takes_ms\":80,\"usage\":{\"input_tokens\":200,\"output_tokens\":10,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema",
+                  "req-1/tool"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": [
+                  {
+                    "confidence_bps": 9000.0,
+                    "label": "positive"
+                  },
+                  {
+                    "confidence_bps": 500.0,
+                    "label": "negative"
+                  },
+                  {
+                    "confidence_bps": 500.0,
+                    "label": "neutral"
+                  }
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": null
+              },
+              "label": {
+                "kind": "literal",
+                "value": "positive"
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":\"example/Small-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":120,\"time_to_first_event_ms\":120,\"usage\":{\"input_tokens\":100,\"output_tokens\":20,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.14\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"req-1/tool\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-secondary\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400120,\"latency_ms\":80,\"time_to_first_event_ms\":80,\"usage\":{\"input_tokens\":200,\"output_tokens\":10,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.22\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:abstained:OffLabel",
+                  "tool:decided"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema",
+                  "tool"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier": {
+      "purpose": "the schema classifier abstains OffLabel, the forced-tool classifier abstains with its provider error, and the caller's lexical classifier decides without a call, its unknown confidences left absent",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Classify"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastClassification"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Classify",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"schema\",\"path\":\"JsonSchema\",\"route_alias\":\"code\"},{\"id\":\"tool\",\"path\":\"ForcedTool\",\"route_alias\":\"code\"},{\"id\":\"words\",\"path\":\"Lexical\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "it was fine"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"sentiment\",\"version\":\"v1\",\"labels\":[\"positive\",\"negative\",\"neutral\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"models\":{\"local-small\":{\"answer\":\"{\\\"label\\\":\\\"furious\\\",\\\"confidences\\\":{\\\"positive\\\":9000,\\\"negative\\\":500,\\\"neutral\\\":500}}\"},\"remote-large\":{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"rejected\"}}},\"lexical\":{\"words\":{\"label\":\"neutral\",\"confidences_bps\":{\"neutral\":6000}}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Classify",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastClassification"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/schema",
+                  "req-1/tool"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": [
+                  {
+                    "confidence_bps": null,
+                    "label": "positive"
+                  },
+                  {
+                    "confidence_bps": null,
+                    "label": "negative"
+                  },
+                  {
+                    "confidence_bps": 6000.0,
+                    "label": "neutral"
+                  }
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": null
+              },
+              "label": {
+                "kind": "literal",
+                "value": "neutral"
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/schema\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-primary\",\"upstream_model\":null,\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}",
+                  "{\"id\":\"req-1/tool\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"coding\",\"route_target_id\":\"coding-secondary\",\"upstream_model\":null,\"outcome\":\"failed\",\"error_code\":\"unavailable\",\"dispatch\":\"rejected\",\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "schema:abstained:OffLabel",
+                  "tool:abstained:ProviderError:unavailable",
+                  "words:decided"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "schema",
+                  "tool",
+                  "words"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
     "llm.inference.InspectResult/outcome/observed": {
       "purpose": "`llm.inference.InspectResult` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -42776,6 +45276,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -42928,6 +45436,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -48428,6 +50944,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -48580,6 +51104,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -48710,6 +51242,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -48865,6 +51405,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -48995,6 +51543,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -49154,6 +51710,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -49284,6 +51848,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -49435,6 +52007,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -49565,6 +52145,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -49728,6 +52316,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -49858,6 +52454,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -50010,6 +52614,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -64495,6 +67107,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -64651,6 +67271,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -64781,6 +67409,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -64937,6 +67573,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -65906,6 +68550,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -66048,6 +68700,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -66186,6 +68846,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -66338,6 +69006,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -74913,6 +77589,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -75069,6 +77753,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -75199,6 +77891,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -75358,6 +78058,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -75488,6 +78196,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -75647,6 +78363,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -75777,6 +78501,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -75933,6 +78665,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -92627,6 +95367,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -92783,6 +95531,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -92913,6 +95669,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -93065,6 +95829,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -97013,6 +99785,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -97165,6 +99945,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -97295,6 +100083,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -97451,6 +100247,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -107702,6 +110506,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -107858,6 +110670,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -107996,6 +110816,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -108167,6 +110995,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -108297,6 +111133,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -108464,6 +111308,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -108598,6 +111450,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -108761,6 +111621,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -108895,6 +111763,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -109066,6 +111942,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -109212,6 +112096,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -109388,6 +112280,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {
@@ -120376,6 +123276,14 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -120524,6 +123432,14 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -120654,6 +123570,14 @@
         {
           "kind": "event",
           "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
         },
         {
           "kind": "event",
@@ -120802,6 +123726,14 @@
         },
         {
           "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
         {

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.decisions.AnswerKind",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:e117a110651e399d50824e561900dbbb6cdbdbc764f46dc5f22b227bcf69dd46",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.AnswerKind": {
+      "title": "AnswerKind",
+      "x-ess-name": "llm.decisions.AnswerKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Predicate",
+        "Choice",
+        "Score",
+        "Refusal"
+      ]
+    }
+  }
+}

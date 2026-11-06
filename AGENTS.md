@@ -15,8 +15,9 @@ llm owns the client side of model inference: the neutral turn (`llm-core`), the 
 three protocol crates (each with its ingress decoder and encoder), the Amazon Bedrock Runtime
 client (`llm-bedrock`: Converse, Anthropic `InvokeModel`, Signature Version 4, event-stream
 frames, static, container and web identity AWS credentials), credentials, provider bindings,
-routing, per-call records (`llm-calls`), port construction from a catalog or an `llm.routes/1`
-routes document in YAML or TOML, Bedrock endpoints included (`llm-models`), pricing,
+routing, per-call records (`llm-calls`), closed-label classification (`llm-decide`), port
+construction from a catalog or an `llm.routes/1` routes document in YAML or TOML, Bedrock
+endpoints included (`llm-models`), pricing,
 `call_tool`, the blocking adapter and the `llm` command (`llm-cli`: `model list` and `infer`
 over one `llm.toml`; it injects only the `environment` and `file` sources, no keychain). The
 accepted design is `docs/design.md` (its "Client request fields" section is the rule for every

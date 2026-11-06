@@ -11,6 +11,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `llm-calls`: `record_turn` writes one text-free `CallRecord` per routed turn to the caller's `CallSink`, timed by its `Clock`
 - `CallRecord` carries route, target, upstream model, outcome, error code, dispatch, attempts, timings, usage and priced cost
 - ESS: domain `llm.calls`, 6 call record scenarios and 2 generated outcome scenarios; the conformance floor is 1021 (was 1013)
+- `llm-decide`: a closed-label classifier `Chain` returning one label with per-label confidence or a caused abstention
+- ESS: domain `llm.decisions`, 11 classification scenarios and 2 generated outcome scenarios; the floor is 1034 (was 1021)
 
 ### Changed
 

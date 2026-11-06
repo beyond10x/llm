@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VerdictObservation",
+  "x-ess-name": "llm.decisions.VerdictObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "valid_program": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "rubric_version": {
+      "type": "string"
+    },
+    "rubric_digest": {
+      "type": "string"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "verdict_json": {
+      "type": "string"
+    },
+    "request_digest": {
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.decisions.VerdictObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "valid_program",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:8627e41b04188798ed6643578751b0c7b271a8b57a71bc463fe67dbde50cb175",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.VerdictObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.VerdictObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

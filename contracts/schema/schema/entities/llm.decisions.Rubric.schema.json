@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rubric",
+  "x-ess-name": "llm.decisions.Rubric",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "digest": {
+      "type": "string"
+    },
+    "route_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "route",
+        "kind": "references",
+        "source": "llm.decisions.Rubric",
+        "target": "llm.catalog.Route",
+        "cardinality": "one",
+        "via": "route_id"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.decisions.Rubric.State"
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "digest",
+    "route_id",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:ccd0e25f79ac347aae79ecf87c19fa5782a804110e5f02e9a493062385860d99",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.Rubric.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.Rubric.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}

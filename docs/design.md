@@ -607,6 +607,54 @@ caller has the refusal. `CallRecord::new`, `Stopwatch` and `Cost::quote` build a
 turn, for the classification, verdict and embedding calls that later stories add. The contract
 is `spec/domains/calls.yaml`.
 
+### Typed decisions
+
+`llm-decide` turns a routed model into a typed decision. It depends on `llm-core`,
+`llm-routing` and `llm-calls` only: no protocol crate and no transport, so a decision runs over
+any `Model` a caller's catalog binds. The contract is `spec/domains/decisions.yaml`.
+
+**Classification.** A `LabelSet` is an id, a version and at least two distinct, non-empty labels
+in the caller's order (at most 256, each at most 256 bytes); anything else is a typed
+`SetupError` before any call. A `Classifier` returns exactly one of two things: a `Decision`,
+one label of the set with every label's confidence in basis points (0 to 10000, unknown left
+absent, never 0), its latency and the id of the call record; or an `Abstention` with its cause,
+`Timeout`, `ProviderError` with the llm `ErrorCode`, or `OffLabel`. A label outside the set is
+never a decision.
+
+A model classifier asks for `{"label": <one of the labels>, "confidences": {<every label>:
+<integer basis points>}}` with no other key, on one of two paths. `JsonSchema` sends that schema
+as the turn's strict `controls.output_format` and decodes the assistant text; `ForcedTool`
+publishes one tool, `classify`, whose parameters are the same schema, forces it with
+`ToolChoice::Named` and reads that call's arguments from `TurnOutcome::tool_calls`, as
+`llm-tool-call` does (`call_tool` itself sends one unrouted attempt and so cannot be reused). An
+answer that does not decode as the schema, names no label of the set, or whose label's confidence
+is under the classifier's `min_confidence_bps` abstains `OffLabel`; an unknown confidence meets
+no floor. The caller owns the prompt (`with_instructions`) and the label set.
+
+Every model call goes through `llm_calls::record_turn`, so it is routed with the route's retry and
+fallback and writes one record, relabelled kind `classification`, to the caller's sink, with the
+id `<request id>/<classifier id>`. The decision reads its answer from the run's final result and
+its failure code from the run's final error; latency and cost are the record's, which cover every
+attempt. A call the run refuses before any attempt abstains `ProviderError` and has no record.
+The caller passes `Chain::classify` its input-token estimate, which routing admits each target
+against as it does for `record_turn`; llm counts no tokens, and without an estimate routing finds
+no compatible target, so each model classifier abstains `ProviderError` (`unsupported`).
+
+**Chain.** A `Chain` holds one label set, one deadline and its classifiers in order (at least one,
+distinct ids). It asks each in turn, telling it the time left on the recording clock, until one
+decides; every earlier one left an abstention, and when all abstain the last abstention is
+`final`. Every attempt is returned. A model call still open at the deadline is cancelled through
+its own child of the caller's `Cancel`, then awaited so its record is written, and abstains
+`Timeout`; an answer that arrives at or after the deadline is not used; routing is also given the
+deadline so no attempt or retry wait starts past it. A model classifier reached with no time
+left abstains `Timeout` without a call. The deadline timer is the caller's `Pause`, the same port
+routing waits on between retries, so no executor is assumed.
+
+A `LexicalClassifier` wraps the caller's `Lexical` (`classify(label_set, input) ->
+Option<Answer>`), synchronous and with no model call and no record; `None` abstains `OffLabel`,
+and its answer is held to the set and the floor like a model's. Because it makes no call, it runs
+even past the deadline, so a chain ending in one always ends in its answer or its abstention.
+
 ## Client request fields
 
 Accepted for wave 2026-10-16-w08 (llm 0.7.0). Coding-agent clients send fields the 0.6.0 ingress

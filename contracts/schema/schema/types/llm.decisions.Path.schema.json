@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.decisions.Path",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:1f9d5e8556c94b3c5f525906a48e0fa4ba30ad507e6675312cdf1961737ea8aa",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.Path": {
+      "title": "Path",
+      "x-ess-name": "llm.decisions.Path",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "JsonSchema",
+        "ForcedTool",
+        "DecisionEndpoint",
+        "Lexical"
+      ]
+    }
+  }
+}

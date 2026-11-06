@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Abstention",
+  "x-ess-name": "llm.decisions.Abstention",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "chain_id": {
+      "type": "string"
+    },
+    "classifier_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "classifier",
+        "kind": "references",
+        "source": "llm.decisions.Abstention",
+        "target": "llm.decisions.Classifier",
+        "cardinality": "one",
+        "via": "classifier_id"
+      }
+    },
+    "cause": {
+      "$ref": "#/$defs/llm.decisions.AbstentionCause"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "final": {
+      "type": "boolean"
+    },
+    "latency_ms": {
+      "type": "integer"
+    },
+    "call_record_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "call",
+        "kind": "references",
+        "source": "llm.decisions.Abstention",
+        "target": "llm.calls.CallRecord",
+        "cardinality": "one",
+        "via": "call_record_id"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.decisions.Abstention.State"
+    }
+  },
+  "required": [
+    "id",
+    "chain_id",
+    "classifier_id",
+    "cause",
+    "final",
+    "latency_ms",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:80ff66836941e01d0f3f8f4ebc9977e417534b6d96ca88b5e496a8ec7ee06307",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.Abstention.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.Abstention.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.decisions.AbstentionCause": {
+      "title": "AbstentionCause",
+      "x-ess-name": "llm.decisions.AbstentionCause",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Timeout",
+        "ProviderError",
+        "OffLabel"
+      ]
+    }
+  }
+}

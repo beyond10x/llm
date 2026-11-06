@@ -81,7 +81,10 @@ impl fmt::Display for SetupError {
             Self::DuplicateClassifier(id) => write!(f, "the classifier {id} is given twice"),
             Self::ZeroDeadline => f.write_str("a chain deadline must be longer than zero"),
             Self::FloorAboveMax(bps) => {
-                write!(f, "a confidence floor of {bps} is above {MAX_BPS} basis points")
+                write!(
+                    f,
+                    "a confidence floor of {bps} is above {MAX_BPS} basis points"
+                )
             }
         }
     }
@@ -364,6 +367,9 @@ pub struct Ask<'a> {
     pub remaining: Duration,
     /// The chain request's id; a model call's record id is `<request id>/<classifier id>`.
     pub request_id: &'a Id,
+    /// The caller's estimate of a model turn's input tokens, which routing admits each target
+    /// against; llm counts none, and without one routing finds no compatible target.
+    pub input_tokens: Option<u64>,
     pub ports: Ports<'a>,
 }
 
@@ -574,8 +580,7 @@ impl ModelClassifier {
         let mut request = TurnRequest::new(self.route.clone(), vec![Item::user(input)]);
         request.instructions.clone_from(&self.instructions);
         if self.path == Path::ForcedTool {
-            let name =
-                ToolName::new(TOOL_NAME).map_err(|_| Error::invalid("invalid tool name"))?;
+            let name = ToolName::new(TOOL_NAME).map_err(|_| Error::invalid("invalid tool name"))?;
             request.tools = vec![ToolSpec {
                 name: name.clone(),
                 description: TOOL_DESCRIPTION.to_owned(),
@@ -636,13 +641,12 @@ impl ModelClassifier {
         }
         let cancel = ports.cancel.child_token();
         let classifying = Classifying(ports.recording.sink);
-        let admit = |selection: &Selection<'_>| (ports.admit)(selection);
-        let mut admit = admit;
+        let mut admit = |selection: &Selection<'_>| (ports.admit)(selection);
         let mut discard = Discard;
         let call = record_turn(
             ports.catalog,
             &request,
-            None,
+            ask.input_tokens,
             policy,
             llm_routing::Ports {
                 models: ports.models,

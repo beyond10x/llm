@@ -105,6 +105,7 @@ struct Fake {
     reply: Reply,
     takes_ms: u64,
     usage: Option<Usage>,
+    upstream_model: Option<Id>,
     /// Fails the first attempt with this error, then replies.
     fail_first: Option<Error>,
     seen: Mutex<Vec<TurnRequest>>,
@@ -122,6 +123,7 @@ impl Fake {
             reply,
             takes_ms: 0,
             usage: None,
+            upstream_model: None,
             fail_first: None,
             seen: Mutex::new(Vec::new()),
             calls: AtomicUsize::new(0),
@@ -151,6 +153,7 @@ impl Model for Fake {
             let attempt = self.calls.fetch_add(1, Ordering::SeqCst);
             let mut observation = TurnObservation::new(self.provenance.clone());
             observation.usage.clone_from(&self.usage);
+            observation.upstream_model.clone_from(&self.upstream_model);
             if attempt == 0
                 && let Some(error) = &self.fail_first
             {
@@ -209,13 +212,25 @@ impl Models for Fleet {
 }
 
 impl Fleet {
-    fn of(models: impl IntoIterator<Item = (&'static str, Fake)>) -> Self {
-        Self(
-            models
-                .into_iter()
-                .map(|(serving, model)| (id(serving), model))
-                .collect(),
-        )
+    /// `models`, and an idle model for every other serving model of the example catalog:
+    /// routing binds a model for every compatible target before its first attempt.
+    fn of(
+        catalog: &Catalog,
+        clock: &Arc<Scripted>,
+        models: impl IntoIterator<Item = (&'static str, Fake)>,
+    ) -> Self {
+        let mut fleet: BTreeMap<Id, Fake> = models
+            .into_iter()
+            .map(|(serving, model)| (id(serving), model))
+            .collect();
+        for serving in ["local-small", "remote-large"] {
+            fleet.entry(id(serving)).or_insert_with(|| {
+                let idle =
+                    Error::new(ErrorCode::Unavailable, "idle").with_dispatch(Dispatch::NotSent);
+                Fake::on(catalog, serving, clock, Reply::Fail(idle))
+            });
+        }
+        Self(fleet)
     }
     fn get(&self, serving: &str) -> &Fake {
         &self.0[&id(serving)]
@@ -250,15 +265,16 @@ fn run(
     let log = CallLog::new();
     let cancel = Cancel::new();
     let admit = |_: &Selection<'_>| Ok(());
-    let paused = clock.clone();
+    let moved_by_waits = clock.clone();
     // A pause moves the scripted clock by its wait and returns at once.
     let pause = move |wait: Duration| -> BoxFuture<'static, ()> {
-        let clock = paused.clone();
+        let clock = moved_by_waits.clone();
         Box::pin(async move { clock.advance(u64::try_from(wait.as_millis()).unwrap()) })
     };
     let outcome = block_on(chain.classify(
         &id("req-1"),
         input,
+        Some(100),
         Ports {
             catalog,
             models: fleet,
@@ -328,15 +344,19 @@ fn the_schema() -> Value {
 fn a_json_schema_classifier_returns_one_label_with_a_confidence_per_label() {
     let catalog = catalog();
     let clock = Scripted::at(1_000);
-    let fleet = Fleet::of([(
-        "local-small",
-        Fake::on(
-            &catalog,
+    let fleet = Fleet::of(
+        &catalog,
+        &clock,
+        [(
             "local-small",
-            &clock,
-            Reply::Text(answer("positive", 9100, 300, 600).to_string()),
-        ),
-    )]);
+            Fake::on(
+                &catalog,
+                "local-small",
+                &clock,
+                Reply::Text(answer("positive", 9100, 300, 600).to_string()),
+            ),
+        )],
+    );
     let chain = chain(vec![Box::new(
         ModelClassifier::json_schema(id("schema"), "code").with_instructions("Classify."),
     )]);
@@ -371,6 +391,10 @@ fn a_json_schema_classifier_returns_one_label_with_a_confidence_per_label() {
     assert_eq!(seen[0].tool_choice, ToolChoice::Auto);
     assert_eq!(seen[0].instructions, "Classify.");
     assert_eq!(seen[0].items, vec![Item::user(INPUT)]);
+    assert!(
+        fleet.get("remote-large").seen().is_empty(),
+        "the first target answered"
+    );
 
     assert_eq!(ran.records.len(), 1, "{:?}", ran.records);
     assert_eq!(ran.records[0].kind, Kind::Classification);
@@ -382,21 +406,25 @@ fn a_json_schema_classifier_returns_one_label_with_a_confidence_per_label() {
 fn a_forced_tool_classifier_returns_one_label_with_a_confidence_per_label() {
     let catalog = catalog();
     let clock = Scripted::at(1_000);
-    let fleet = Fleet::of([
-        (
-            "local-small",
-            Fake::on(&catalog, "local-small", &clock, Reply::Hang),
-        ),
-        (
-            "remote-large",
-            Fake::on(
-                &catalog,
-                "remote-large",
-                &clock,
-                Reply::Tool(answer("negative", 200, 9700, 100)),
+    let fleet = Fleet::of(
+        &catalog,
+        &clock,
+        [
+            (
+                "local-small",
+                Fake::on(&catalog, "local-small", &clock, Reply::Hang),
             ),
-        ),
-    ]);
+            (
+                "remote-large",
+                Fake::on(
+                    &catalog,
+                    "remote-large",
+                    &clock,
+                    Reply::Tool(answer("negative", 200, 9700, 100)),
+                ),
+            ),
+        ],
+    );
     let chain = chain(vec![Box::new(ModelClassifier::forced_tool(
         id("tool"),
         "code",
@@ -448,7 +476,11 @@ fn an_answer_naming_no_label_of_the_set_abstains_off_label() {
         ),
     ] {
         let clock = Scripted::at(1_000);
-        let fleet = Fleet::of([(serving, Fake::on(&catalog, serving, &clock, reply))]);
+        let fleet = Fleet::of(
+            &catalog,
+            &clock,
+            [(serving, Fake::on(&catalog, serving, &clock, reply))],
+        );
         let chain = chain(vec![Box::new(classifier)]);
         let ran = run(&chain, &catalog, &fleet, &clock, INPUT, None);
         assert!(ran.outcome.decision().is_none());
@@ -492,10 +524,14 @@ fn an_answer_that_does_not_decode_as_the_schema_abstains_off_label() {
         json!(["positive"]).to_string(),
     ] {
         let clock = Scripted::at(1_000);
-        let fleet = Fleet::of([(
-            "local-small",
-            Fake::on(&catalog, "local-small", &clock, Reply::Text(text.clone())),
-        )]);
+        let fleet = Fleet::of(
+            &catalog,
+            &clock,
+            [(
+                "local-small",
+                Fake::on(&catalog, "local-small", &clock, Reply::Text(text.clone())),
+            )],
+        );
         let chain = chain(vec![Box::new(ModelClassifier::json_schema(
             id("m"),
             "code",
@@ -516,21 +552,25 @@ fn a_classifier_past_the_chain_deadline_abstains_with_timeout() {
     // A call still open at the deadline is cancelled and its record written; the next model
     // classifier starts past the deadline, so it abstains without a call.
     let clock = Scripted::at(1_000);
-    let fleet = Fleet::of([
-        (
-            "local-small",
-            Fake::on(&catalog, "local-small", &clock, Reply::Hang),
-        ),
-        (
-            "remote-large",
-            Fake::on(
-                &catalog,
-                "remote-large",
-                &clock,
-                Reply::Tool(answer("positive", 9000, 500, 500)),
+    let fleet = Fleet::of(
+        &catalog,
+        &clock,
+        [
+            (
+                "local-small",
+                Fake::on(&catalog, "local-small", &clock, Reply::Hang),
             ),
-        ),
-    ]);
+            (
+                "remote-large",
+                Fake::on(
+                    &catalog,
+                    "remote-large",
+                    &clock,
+                    Reply::Tool(answer("positive", 9000, 500, 500)),
+                ),
+            ),
+        ],
+    );
     let chain = Chain::new(
         id("chain"),
         labels(),
@@ -573,7 +613,7 @@ fn a_classifier_past_the_chain_deadline_abstains_with_timeout() {
         Reply::Text(answer("positive", 9000, 500, 500).to_string()),
     );
     late.takes_ms = 2_000;
-    let fleet = Fleet::of([("local-small", late)]);
+    let fleet = Fleet::of(&catalog, &clock, [("local-small", late)]);
     let chain = Chain::new(
         id("chain"),
         labels(),
@@ -594,17 +634,22 @@ fn a_classifier_past_the_chain_deadline_abstains_with_timeout() {
 fn a_provider_failure_abstains_with_its_error_code() {
     let catalog = catalog();
     let clock = Scripted::at(1_000);
-    let fleet = Fleet::of([(
-        "local-small",
-        Fake::on(
-            &catalog,
+    let fleet = Fleet::of(
+        &catalog,
+        &clock,
+        [(
             "local-small",
-            &clock,
-            Reply::Fail(
-                Error::new(ErrorCode::Unauthorized, "scripted").with_dispatch(Dispatch::Rejected),
+            Fake::on(
+                &catalog,
+                "local-small",
+                &clock,
+                Reply::Fail(
+                    Error::new(ErrorCode::Unauthorized, "scripted")
+                        .with_dispatch(Dispatch::Rejected),
+                ),
             ),
-        ),
-    )]);
+        )],
+    );
     let chain = chain(vec![Box::new(ModelClassifier::json_schema(
         id("schema"),
         "code",
@@ -629,15 +674,19 @@ fn a_confidence_below_the_classifier_floor_abstains_off_label() {
     let catalog = catalog();
     for (positive, decides) in [(7999, false), (8000, true)] {
         let clock = Scripted::at(1_000);
-        let fleet = Fleet::of([(
-            "local-small",
-            Fake::on(
-                &catalog,
+        let fleet = Fleet::of(
+            &catalog,
+            &clock,
+            [(
                 "local-small",
-                &clock,
-                Reply::Text(answer("positive", positive, 1000, 1001).to_string()),
-            ),
-        )]);
+                Fake::on(
+                    &catalog,
+                    "local-small",
+                    &clock,
+                    Reply::Text(answer("positive", positive, 1000, 1001).to_string()),
+                ),
+            )],
+        );
         let chain = chain(vec![Box::new(
             ModelClassifier::json_schema(id("schema"), "code")
                 .with_min_confidence_bps(8000)
@@ -645,7 +694,10 @@ fn a_confidence_below_the_classifier_floor_abstains_off_label() {
         )]);
         let ran = run(&chain, &catalog, &fleet, &clock, INPUT, None);
         if decides {
-            assert_eq!(ran.outcome.decision().map(|d| d.label.as_str()), Some("positive"));
+            assert_eq!(
+                ran.outcome.decision().map(|d| d.label.as_str()),
+                Some("positive")
+            );
         } else {
             assert_eq!(
                 ran.outcome.result().and_then(cause),
@@ -662,7 +714,14 @@ fn a_confidence_below_the_classifier_floor_abstains_off_label() {
             .with_min_confidence_bps(1)
             .unwrap(),
     )]);
-    let ran = run(&chain, &catalog, &Fleet::of([]), &clock, "fine", None);
+    let ran = run(
+        &chain,
+        &catalog,
+        &Fleet::of(&catalog, &clock, []),
+        &clock,
+        "fine",
+        None,
+    );
     assert_eq!(
         ran.outcome.result().and_then(cause),
         Some(AbstentionCause::OffLabel)
@@ -691,29 +750,33 @@ impl Lexical for WordsUnknown {
 fn the_chain_falls_back_in_order_and_ends_in_the_caller_lexical_classifier() {
     let catalog = catalog();
     let clock = Scripted::at(1_000);
-    let fleet = Fleet::of([
-        (
-            "local-small",
-            Fake::on(
-                &catalog,
+    let fleet = Fleet::of(
+        &catalog,
+        &clock,
+        [
+            (
                 "local-small",
-                &clock,
-                Reply::Text(answer("furious", 9000, 500, 500).to_string()),
-            ),
-        ),
-        (
-            "remote-large",
-            Fake::on(
-                &catalog,
-                "remote-large",
-                &clock,
-                Reply::Fail(
-                    Error::new(ErrorCode::Unavailable, "scripted")
-                        .with_dispatch(Dispatch::Rejected),
+                Fake::on(
+                    &catalog,
+                    "local-small",
+                    &clock,
+                    Reply::Text(answer("furious", 9000, 500, 500).to_string()),
                 ),
             ),
-        ),
-    ]);
+            (
+                "remote-large",
+                Fake::on(
+                    &catalog,
+                    "remote-large",
+                    &clock,
+                    Reply::Fail(
+                        Error::new(ErrorCode::Unavailable, "scripted")
+                            .with_dispatch(Dispatch::Rejected),
+                    ),
+                ),
+            ),
+        ],
+    );
     let chain = chain(vec![
         Box::new(ModelClassifier::json_schema(id("schema"), "code")),
         Box::new(ModelClassifier::forced_tool(id("tool"), "code")),
@@ -742,12 +805,19 @@ fn the_chain_falls_back_in_order_and_ends_in_the_caller_lexical_classifier() {
             .iter()
             .all(|attempt| matches!(attempt, Classification::Abstained(a) if !a.is_final))
     );
-    let decision = ran.outcome.decision().expect("the lexical classifier decides");
+    let decision = ran
+        .outcome
+        .decision()
+        .expect("the lexical classifier decides");
     assert_eq!(decision.classifier_id, id("words"));
     assert_eq!(decision.label, "neutral");
     assert_eq!(
         decision.confidences,
-        confidences(&[("positive", None), ("negative", None), ("neutral", Some(6000))])
+        confidences(&[
+            ("positive", None),
+            ("negative", None),
+            ("neutral", Some(6000))
+        ])
     );
     assert_eq!(decision.call_record_id, None);
     assert_eq!(
@@ -767,15 +837,19 @@ fn the_chain_falls_back_in_order_and_ends_in_the_caller_lexical_classifier() {
 fn a_chain_where_every_classifier_abstains_returns_the_last_abstention_as_final() {
     let catalog = catalog();
     let clock = Scripted::at(1_000);
-    let fleet = Fleet::of([(
-        "local-small",
-        Fake::on(
-            &catalog,
+    let fleet = Fleet::of(
+        &catalog,
+        &clock,
+        [(
             "local-small",
-            &clock,
-            Reply::Text(answer("furious", 9000, 500, 500).to_string()),
-        ),
-    )]);
+            Fake::on(
+                &catalog,
+                "local-small",
+                &clock,
+                Reply::Text(answer("furious", 9000, 500, 500).to_string()),
+            ),
+        )],
+    );
     let chain = chain(vec![
         Box::new(ModelClassifier::json_schema(id("schema"), "code")),
         Box::new(LexicalClassifier::new(id("words"), Words)),
@@ -844,12 +918,13 @@ fn each_model_classifier_call_yields_a_call_record_with_latency_and_cost() {
         );
         fake.takes_ms = 40;
         fake.usage = Some(usage.clone());
+        fake.upstream_model = Some(id("example/Small-Model"));
         fake
     };
 
     // One attempt: latency from the scripted clock, cost fully priced.
     let clock = Scripted::at(1_000);
-    let fleet = Fleet::of([("local-small", answering(&clock))]);
+    let fleet = Fleet::of(&catalog, &clock, [("local-small", answering(&clock))]);
     let chain = chain(vec![Box::new(ModelClassifier::json_schema(
         id("schema"),
         "code",
@@ -875,14 +950,17 @@ fn each_model_classifier_call_yields_a_call_record_with_latency_and_cost() {
             .with_dispatch(Dispatch::Accepted)
             .with_retriable(true),
     );
-    let fleet = Fleet::of([("local-small", retried)]);
+    let fleet = Fleet::of(&catalog, &clock, [("local-small", retried)]);
     let ran = run(&chain, &catalog, &fleet, &clock, INPUT, Some(&prices));
     let decision = ran.outcome.decision().expect("the retry decides");
     assert_eq!(ran.records.len(), 1);
     let record = &ran.records[0];
     assert_eq!(record.attempts, 2);
     assert_eq!(record.latency_ms, Some(decision.latency_ms));
-    assert!(decision.latency_ms > 40, "the retry wait is part of the call");
+    assert!(
+        decision.latency_ms > 40,
+        "the retry wait is part of the call"
+    );
     let cost = record.cost.as_ref().expect("a priced call has a cost");
     assert!(!cost.complete, "{cost:?}");
 }
@@ -910,7 +988,10 @@ fn a_label_set_with_a_duplicate_or_a_single_label_is_refused() {
     );
     let decoded: Result<LabelSet, _> =
         serde_json::from_str(r#"{"id":"set","version":"v1","labels":["yes","yes"]}"#);
-    assert!(decoded.is_err(), "a decoded label set is held to the same rules");
+    assert!(
+        decoded.is_err(),
+        "a decoded label set is held to the same rules"
+    );
 
     assert_eq!(
         Chain::new(id("chain"), labels(), Duration::from_secs(1), Vec::new()).err(),

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Classifier",
+  "x-ess-name": "llm.decisions.Classifier",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "chain_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "classifiers",
+        "kind": "owns",
+        "source": "llm.decisions.Chain",
+        "target": "llm.decisions.Classifier",
+        "cardinality": "many",
+        "via": "chain_id"
+      }
+    },
+    "position": {
+      "type": "integer"
+    },
+    "path": {
+      "$ref": "#/$defs/llm.decisions.Path"
+    },
+    "route_alias": {
+      "type": "string"
+    },
+    "min_confidence_bps": {
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.decisions.Classifier.State"
+    }
+  },
+  "required": [
+    "id",
+    "chain_id",
+    "position",
+    "path",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:42daa42c4a5589976f02657a7977b27b9f9db94ed6c335ae048385b3661cd168",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.Classifier.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.Classifier.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    },
+    "llm.decisions.Path": {
+      "title": "Path",
+      "x-ess-name": "llm.decisions.Path",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "JsonSchema",
+        "ForcedTool",
+        "DecisionEndpoint",
+        "Lexical"
+      ]
+    }
+  }
+}

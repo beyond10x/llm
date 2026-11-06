@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.decisions.LabelConfidence",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:07fbb04314320062ab4cbee831e4ac6f5d730965845d9c9b269303c0a022845d",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.LabelConfidence": {
+      "title": "LabelConfidence",
+      "x-ess-name": "llm.decisions.LabelConfidence",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "confidence_bps": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
