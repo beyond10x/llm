@@ -3,6 +3,7 @@ mod budgets;
 mod calls;
 mod chat;
 mod decisions;
+mod embeddings;
 mod fallback;
 mod gate;
 mod inference;

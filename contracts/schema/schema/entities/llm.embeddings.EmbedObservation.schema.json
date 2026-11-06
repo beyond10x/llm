@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbedObservation",
+  "x-ess-name": "llm.embeddings.EmbedObservation",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "valid_program": {
+      "type": "boolean"
+    },
+    "error_code": {
+      "type": "string"
+    },
+    "config_digest": {
+      "type": "string"
+    },
+    "vectors": {
+      "type": "integer"
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "leading": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "batch_texts": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "input_tokens": {
+      "type": "integer"
+    },
+    "upstream_model": {
+      "type": "string"
+    },
+    "request_bodies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ended_within": {
+      "type": "boolean"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.embeddings.EmbedObservation.State"
+    }
+  },
+  "required": [
+    "observation_id",
+    "valid_program",
+    "vectors",
+    "dimensions",
+    "leading",
+    "batch_texts",
+    "request_bodies",
+    "records",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "c34ccddea7f4cc53d92a9b1d5b8b2a32b338f999f9d934ab70de21ac8a1bcc6b",
+    "contract_digest": "slice-sha256/2:934215ba6ccf64c77b7eddaf9963062eb0e813e50cbee54885b777a8557c6e13",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.embeddings.EmbedObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.embeddings.EmbedObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

@@ -999,3 +999,11 @@ scenarios:
 - decisions/scenarios/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final.yaml
 - decisions/scenarios/each-model-classifier-call-yields-a-call-record-with-latency-and-cost.yaml
 - decisions/scenarios/a-label-set-with-a-duplicate-or-a-single-label-is-refused.yaml
+- embeddings/scenarios/embed-returns-one-vector-per-text-in-input-order.yaml
+- embeddings/scenarios/a-request-over-the-batch-limit-is-split-and-returned-in-input-order.yaml
+- embeddings/scenarios/an-unreported-token-count-stays-unknown.yaml
+- embeddings/scenarios/an-embed-request-past-its-timeout-fails-deadline.yaml
+- embeddings/scenarios/a-turn-to-an-embed-route-is-refused-before-io.yaml
+- embeddings/scenarios/an-embed-request-to-a-turn-route-is-refused-before-io.yaml
+- embeddings/scenarios/a-catalog-without-route-kind-keeps-its-digest.yaml
+- embeddings/scenarios/each-batch-yields-a-call-record-of-kind-embed-batch.yaml

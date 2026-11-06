@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.embeddings.EmbedObservation.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "c34ccddea7f4cc53d92a9b1d5b8b2a32b338f999f9d934ab70de21ac8a1bcc6b",
+    "contract_digest": "slice-sha256/2:7723927223c34d5e131705c5ff22c7ebf32f3bfb4d96970ffdfce835a490a4d0",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.embeddings.EmbedObservation.State": {
+      "title": "State",
+      "x-ess-name": "llm.embeddings.EmbedObservation.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

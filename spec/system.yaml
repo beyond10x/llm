@@ -18,3 +18,4 @@ domains:
   - llm.bedrock
   - llm.calls
   - llm.decisions
+  - llm.embeddings

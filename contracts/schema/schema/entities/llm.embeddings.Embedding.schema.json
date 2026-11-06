@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Embedding",
+  "x-ess-name": "llm.embeddings.Embedding",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string",
+      "x-ess-relation": {
+        "name": "request",
+        "kind": "references",
+        "source": "llm.embeddings.Embedding",
+        "target": "llm.embeddings.EmbedRequest",
+        "cardinality": "one",
+        "via": "request_id"
+      }
+    },
+    "index": {
+      "type": "integer"
+    },
+    "dimensions": {
+      "type": "integer"
+    },
+    "vector": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "decimal",
+        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.embeddings.Embedding.State"
+    }
+  },
+  "required": [
+    "id",
+    "request_id",
+    "index",
+    "dimensions",
+    "vector",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "c34ccddea7f4cc53d92a9b1d5b8b2a32b338f999f9d934ab70de21ac8a1bcc6b",
+    "contract_digest": "slice-sha256/2:7581bfbe7d8222ed54cc4c9e1cd00a4942f7aed5d8d4ee265ff5f461c033a793",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.embeddings.Embedding.State": {
+      "title": "State",
+      "x-ess-name": "llm.embeddings.Embedding.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

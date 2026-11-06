@@ -314,6 +314,14 @@
       "llm.decisions/authored/an-answer-that-does-not-decode-as-the-schema-abstains-off-label",
       "llm.decisions/authored/each-model-classifier-call-yields-a-call-record-with-latency-and-cost",
       "llm.decisions/authored/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier",
+      "llm.embeddings/authored/a-catalog-without-route-kind-keeps-its-digest",
+      "llm.embeddings/authored/a-request-over-the-batch-limit-is-split-and-returned-in-input-order",
+      "llm.embeddings/authored/a-turn-to-an-embed-route-is-refused-before-io",
+      "llm.embeddings/authored/an-embed-request-past-its-timeout-fails-deadline",
+      "llm.embeddings/authored/an-embed-request-to-a-turn-route-is-refused-before-io",
+      "llm.embeddings/authored/an-unreported-token-count-stays-unknown",
+      "llm.embeddings/authored/each-batch-yields-a-call-record-of-kind-embed-batch",
+      "llm.embeddings/authored/embed-returns-one-vector-per-text-in-input-order",
       "llm.inference/authored/a-tool-calls-stop-without-a-call-is-refused",
       "llm.inference/authored/actual-model-and-response-preserved",
       "llm.inference/authored/contradictory-cache-refused",
@@ -2405,6 +2413,46 @@
         "digest": "sha256:95ed9cbad009abab34d2552a6355b19f543f7c9334bae0287eaf03507b48c772",
         "disposition": "accepted",
         "scenario": "llm.decisions/authored/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier"
+      },
+      "embeddings/scenarios/a-catalog-without-route-kind-keeps-its-digest.yaml": {
+        "digest": "sha256:7c347e36779b260ab469dde5ade19a435a4efd4056e99c1548f06e5b591e01f5",
+        "disposition": "accepted",
+        "scenario": "llm.embeddings/authored/a-catalog-without-route-kind-keeps-its-digest"
+      },
+      "embeddings/scenarios/a-request-over-the-batch-limit-is-split-and-returned-in-input-order.yaml": {
+        "digest": "sha256:92c2cde7afd85aa881966e774a32b3270eee528b5e1ce322bb72c9bd366501c8",
+        "disposition": "accepted",
+        "scenario": "llm.embeddings/authored/a-request-over-the-batch-limit-is-split-and-returned-in-input-order"
+      },
+      "embeddings/scenarios/a-turn-to-an-embed-route-is-refused-before-io.yaml": {
+        "digest": "sha256:791175f7291023db65a64e34c07d27a14d34cd56a052f1fe4b58c8419df799bc",
+        "disposition": "accepted",
+        "scenario": "llm.embeddings/authored/a-turn-to-an-embed-route-is-refused-before-io"
+      },
+      "embeddings/scenarios/an-embed-request-past-its-timeout-fails-deadline.yaml": {
+        "digest": "sha256:866fd5604bf6393dc366454c46d21e8b32994d82b476fe134ca0eaa8118d6a8a",
+        "disposition": "accepted",
+        "scenario": "llm.embeddings/authored/an-embed-request-past-its-timeout-fails-deadline"
+      },
+      "embeddings/scenarios/an-embed-request-to-a-turn-route-is-refused-before-io.yaml": {
+        "digest": "sha256:4d395c1c43855c645ec1fb10649105e30c977f87ae8f1ed260ffbc6e8b66ea9e",
+        "disposition": "accepted",
+        "scenario": "llm.embeddings/authored/an-embed-request-to-a-turn-route-is-refused-before-io"
+      },
+      "embeddings/scenarios/an-unreported-token-count-stays-unknown.yaml": {
+        "digest": "sha256:b05a5f3223636ccf5e51f6a2523772dc7f3538590546e0810f2cc138f036d55d",
+        "disposition": "accepted",
+        "scenario": "llm.embeddings/authored/an-unreported-token-count-stays-unknown"
+      },
+      "embeddings/scenarios/each-batch-yields-a-call-record-of-kind-embed-batch.yaml": {
+        "digest": "sha256:989bf7fab3b8afc006f713030d6cd320e1015e0b955e451ebaa33f7c3e60c6f6",
+        "disposition": "accepted",
+        "scenario": "llm.embeddings/authored/each-batch-yields-a-call-record-of-kind-embed-batch"
+      },
+      "embeddings/scenarios/embed-returns-one-vector-per-text-in-input-order.yaml": {
+        "digest": "sha256:267b4b2999cf76035a2066671379a9b676e6d9212291c558afd2f6f6b5f9a16b",
+        "disposition": "accepted",
+        "scenario": "llm.embeddings/authored/embed-returns-one-vector-per-text-in-input-order"
       },
       "inference/scenarios/a-tool-calls-stop-without-a-call-is-refused.yaml": {
         "digest": "sha256:5855925f3da7b494e2ce9c4729b62fc2ef7e08b48bb307ca173ada32ffa8b570",
@@ -5993,8 +6041,8 @@
       }
     },
     "counts": {
-      "authored": 998,
-      "generated": 42,
+      "authored": 1006,
+      "generated": 43,
       "outside": 0,
       "refused": 0
     },
@@ -6014,6 +6062,7 @@
       "llm.chat.ProjectResponse/outcome/observed",
       "llm.decisions.Classify/outcome/observed",
       "llm.decisions.Judge/outcome/observed",
+      "llm.embeddings.Embed/outcome/observed",
       "llm.inference.InspectResult/outcome/observed",
       "llm.messages.DecodeMessage/outcome/observed",
       "llm.messages.DecodeStream/outcome/observed",
@@ -6056,9 +6105,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "c749d0a59c52715cd5afefe0a857aa87684801f13c31f899e0656875ec6ab257",
+    "contract_digest": "66eb12c5ad1f16797857a493edc8fea1fcb2fe2d9f43b2fcfa4a473df6d2e2fd",
     "scenario_initial_state": "empty",
-    "spec_digest": "f0de2b3eb402ab88caba1c7cdea55627babc7d358350ea5977e3a94c72655f25",
+    "spec_digest": "c34ccddea7f4cc53d92a9b1d5b8b2a32b338f999f9d934ab70de21ac8a1bcc6b",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -6121,6 +6170,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -6277,6 +6330,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -13744,6 +13801,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -13896,6 +13957,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -14042,6 +14107,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -14205,6 +14274,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -14351,6 +14424,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -14514,6 +14591,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -14660,6 +14741,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -14835,6 +14920,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -14977,6 +15066,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -15129,6 +15222,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -22329,6 +22426,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -22478,6 +22579,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -29018,6 +29123,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -29178,6 +29287,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -29320,6 +29433,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -29488,6 +29605,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -31019,6 +31140,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -31171,6 +31296,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -31313,6 +31442,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -31476,6 +31609,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -31618,6 +31755,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -31789,6 +31930,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -31931,6 +32076,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -32087,6 +32236,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -43834,6 +43987,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -44002,6 +44159,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -44144,6 +44305,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -44308,6 +44473,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -45998,6 +46167,1223 @@
         }
       ]
     },
+    "llm.embeddings.Embed/outcome/observed": {
+      "purpose": "`llm.embeddings.Embed` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Answered"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Decoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Fetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Encoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "program_json"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "request_json"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
+          "shape": {
+            "valid_program": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Answered",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Decoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Encoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.embeddings/authored/a-catalog-without-route-kind-keeps-its-digest": {
+      "purpose": "the example catalog, written before routes had a kind, keeps the digest the routing scenarios pin; its route is a turn route, so an embed request to it is refused before I/O",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.embeddings"
+        },
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.embeddings.LastEmbed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\n# Replace the endpoint, upstream model name and capabilities with your deployment's facts.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n# Omission is false. Set true to permit selection from the explicitly named alternatives.\nfallback_enabled = false\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762430400000,\"answers\":[{\"status\":500}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"alias\":\"code\",\"texts\":[\"one\"],\"timeout_ms\":10000}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "config_digest": {
+                "kind": "literal",
+                "value": "1365b05fe63542f8211e21a9a2566c71f2a6d44ec9bdc564ba46c592a861825f"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "records": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "vectors": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        }
+      ]
+    },
+    "llm.embeddings/authored/a-request-over-the-batch-limit-is-split-and-returned-in-input-order": {
+      "purpose": "five texts under a batch limit of two go out as three requests of two, two and one text in order; the vectors return in input order and the input tokens add up",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.embeddings"
+        },
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.embeddings.LastEmbed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"embedding-small\"\nupstream_name = \"text-embedding-3-small\"\n\n[[models]]\nid = \"chat-small\"\nupstream_name = \"gpt-4o-mini\"\n\n[[serving_models]]\nid = \"embedder\"\nendpoint_id = \"fixture\"\nmodel_id = \"embedding-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 8191\nmax_output_tokens = 1\nembed_batch_limit = 2\n\n[[serving_models]]\nid = \"chatter\"\nendpoint_id = \"fixture\"\nmodel_id = \"chat-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"embedding\"\nalias = \"embed\"\nkind = \"embed\"\n\n[[routes]]\nid = \"chatting\"\nalias = \"chat\"\n\n[[targets]]\nid = \"embed-primary\"\nroute_id = \"embedding\"\nserving_model_id = \"embedder\"\nposition = 0\n\n[[targets]]\nid = \"chat-primary\"\nroute_id = \"chatting\"\nserving_model_id = \"chatter\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[1.25,-1.5,0.5],\"index\":1},{\"object\":\"embedding\",\"embedding\":[0.25,-0.5,0.5],\"index\":0}],\"model\":\"text-embedding-3-small\",\"usage\":{\"prompt_tokens\":4,\"total_tokens\":4}}},{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[2.25,-2.5,0.5],\"index\":0},{\"object\":\"embedding\",\"embedding\":[3.25,-3.5,0.5],\"index\":1}],\"model\":\"text-embedding-3-small\",\"usage\":{\"prompt_tokens\":5,\"total_tokens\":5}}},{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[4.25,-4.5,0.5],\"index\":0}],\"model\":\"text-embedding-3-small\",\"usage\":{\"prompt_tokens\":2,\"total_tokens\":2}}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"alias\":\"embed\",\"texts\":[\"one\",\"two\",\"three\",\"four\",\"five\"],\"timeout_ms\":10000}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "batch_texts": {
+                "kind": "literal",
+                "value": [
+                  2.0,
+                  2.0,
+                  1.0
+                ]
+              },
+              "dimensions": {
+                "kind": "literal",
+                "value": [
+                  3.0,
+                  3.0,
+                  3.0,
+                  3.0,
+                  3.0
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": 11.0
+              },
+              "leading": {
+                "kind": "literal",
+                "value": [
+                  "0.25",
+                  "1.25",
+                  "2.25",
+                  "3.25",
+                  "4.25"
+                ]
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": [
+                  "{\"model\":\"text-embedding-3-small\",\"input\":[\"one\",\"two\"],\"encoding_format\":\"float\"}",
+                  "{\"model\":\"text-embedding-3-small\",\"input\":[\"three\",\"four\"],\"encoding_format\":\"float\"}",
+                  "{\"model\":\"text-embedding-3-small\",\"input\":[\"five\"],\"encoding_format\":\"float\"}"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "vectors": {
+                "kind": "literal",
+                "value": 5.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        }
+      ]
+    },
+    "llm.embeddings/authored/a-turn-to-an-embed-route-is-refused-before-io": {
+      "purpose": "a routed, recorded turn naming the embed route is refused as unsupported before any target is bound; nothing reaches the server and no record is written",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.embeddings"
+        },
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.embeddings.LastEmbed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"embedding-small\"\nupstream_name = \"text-embedding-3-small\"\n\n[[models]]\nid = \"chat-small\"\nupstream_name = \"gpt-4o-mini\"\n\n[[serving_models]]\nid = \"embedder\"\nendpoint_id = \"fixture\"\nmodel_id = \"embedding-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 8191\nmax_output_tokens = 1\n\n[[serving_models]]\nid = \"chatter\"\nendpoint_id = \"fixture\"\nmodel_id = \"chat-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"embedding\"\nalias = \"embed\"\nkind = \"embed\"\n\n[[routes]]\nid = \"chatting\"\nalias = \"chat\"\n\n[[targets]]\nid = \"embed-primary\"\nroute_id = \"embedding\"\nserving_model_id = \"embedder\"\nposition = 0\n\n[[targets]]\nid = \"chat-primary\"\nroute_id = \"chatting\"\nserving_model_id = \"chatter\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"object\":\"list\",\"data\":[],\"model\":\"text-embedding-3-small\"}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":16,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"embed\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":1}}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "batch_texts": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "records": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "vectors": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        }
+      ]
+    },
+    "llm.embeddings/authored/an-embed-request-past-its-timeout-fails-deadline": {
+      "purpose": "a server that takes the request and never answers holds the call only until the caller's 300 ms timeout; the request fails deadline, dispatch unknown, returns no vector and records its batch failed",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.embeddings"
+        },
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.embeddings.LastEmbed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"embedding-small\"\nupstream_name = \"text-embedding-3-small\"\n\n[[models]]\nid = \"chat-small\"\nupstream_name = \"gpt-4o-mini\"\n\n[[serving_models]]\nid = \"embedder\"\nendpoint_id = \"fixture\"\nmodel_id = \"embedding-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 8191\nmax_output_tokens = 1\n\n[[serving_models]]\nid = \"chatter\"\nendpoint_id = \"fixture\"\nmodel_id = \"chat-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"embedding\"\nalias = \"embed\"\nkind = \"embed\"\n\n[[routes]]\nid = \"chatting\"\nalias = \"chat\"\n\n[[targets]]\nid = \"embed-primary\"\nroute_id = \"embedding\"\nserving_model_id = \"embedder\"\nposition = 0\n\n[[targets]]\nid = \"chat-primary\"\nroute_id = \"chatting\"\nserving_model_id = \"chatter\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762430400000,\"answers\":[{\"hang\":true}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"alias\":\"embed\",\"texts\":[\"one\",\"two\"],\"timeout_ms\":300}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "batch_texts": {
+                "kind": "literal",
+                "value": [
+                  2.0
+                ]
+              },
+              "ended_within": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "deadline"
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/0\",\"role\":\"primary\",\"kind\":\"embed-batch\",\"route_id\":\"embedding\",\"route_target_id\":\"embed-primary\",\"upstream_model\":null,\"outcome\":\"failed\",\"error_code\":\"deadline\",\"dispatch\":\"unknown\",\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "vectors": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        }
+      ]
+    },
+    "llm.embeddings/authored/an-embed-request-to-a-turn-route-is-refused-before-io": {
+      "purpose": "an embed request naming a turn route is refused as unsupported when its embedder is built; nothing reaches the server and no record is written",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.embeddings"
+        },
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.embeddings.LastEmbed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"embedding-small\"\nupstream_name = \"text-embedding-3-small\"\n\n[[models]]\nid = \"chat-small\"\nupstream_name = \"gpt-4o-mini\"\n\n[[serving_models]]\nid = \"embedder\"\nendpoint_id = \"fixture\"\nmodel_id = \"embedding-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 8191\nmax_output_tokens = 1\n\n[[serving_models]]\nid = \"chatter\"\nendpoint_id = \"fixture\"\nmodel_id = \"chat-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"embedding\"\nalias = \"embed\"\nkind = \"embed\"\n\n[[routes]]\nid = \"chatting\"\nalias = \"chat\"\n\n[[targets]]\nid = \"embed-primary\"\nroute_id = \"embedding\"\nserving_model_id = \"embedder\"\nposition = 0\n\n[[targets]]\nid = \"chat-primary\"\nroute_id = \"chatting\"\nserving_model_id = \"chatter\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[0.25],\"index\":0}],\"model\":\"text-embedding-3-small\"}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"alias\":\"chat\",\"texts\":[\"one\"],\"timeout_ms\":10000}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "batch_texts": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "records": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "vectors": {
+                "kind": "literal",
+                "value": 0.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        }
+      ]
+    },
+    "llm.embeddings/authored/an-unreported-token-count-stays-unknown": {
+      "purpose": "of two batches only the first reports input tokens; the request's count stays unknown, not zero and not the known part, and each batch record keeps its own",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.embeddings"
+        },
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.embeddings.LastEmbed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"embedding-small\"\nupstream_name = \"text-embedding-3-small\"\n\n[[models]]\nid = \"chat-small\"\nupstream_name = \"gpt-4o-mini\"\n\n[[serving_models]]\nid = \"embedder\"\nendpoint_id = \"fixture\"\nmodel_id = \"embedding-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 8191\nmax_output_tokens = 1\nembed_batch_limit = 1\n\n[[serving_models]]\nid = \"chatter\"\nendpoint_id = \"fixture\"\nmodel_id = \"chat-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"embedding\"\nalias = \"embed\"\nkind = \"embed\"\n\n[[routes]]\nid = \"chatting\"\nalias = \"chat\"\n\n[[targets]]\nid = \"embed-primary\"\nroute_id = \"embedding\"\nserving_model_id = \"embedder\"\nposition = 0\n\n[[targets]]\nid = \"chat-primary\"\nroute_id = \"chatting\"\nserving_model_id = \"chatter\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[0.25,-0.5,0.5],\"index\":0}],\"model\":\"text-embedding-3-small\",\"usage\":{\"prompt_tokens\":3,\"total_tokens\":3}}},{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[1.25,-1.5,0.5],\"index\":0}],\"model\":\"text-embedding-3-small\"}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"alias\":\"embed\",\"texts\":[\"one\",\"two\"],\"timeout_ms\":10000}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "batch_texts": {
+                "kind": "literal",
+                "value": [
+                  1.0,
+                  1.0
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/0\",\"role\":\"primary\",\"kind\":\"embed-batch\",\"route_id\":\"embedding\",\"route_target_id\":\"embed-primary\",\"upstream_model\":\"text-embedding-3-small\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{\"input_tokens\":3},\"cost\":null,\"primary_record_id\":null}",
+                  "{\"id\":\"req-1/1\",\"role\":\"primary\",\"kind\":\"embed-batch\",\"route_id\":\"embedding\",\"route_target_id\":\"embed-primary\",\"upstream_model\":\"text-embedding-3-small\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "vectors": {
+                "kind": "literal",
+                "value": 2.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        }
+      ]
+    },
+    "llm.embeddings/authored/each-batch-yields-a-call-record-of-kind-embed-batch": {
+      "purpose": "three texts under a batch limit of two go out as two batches, each writing one embed-batch record with route, target, reported model and its input tokens, and no text",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.embeddings"
+        },
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.embeddings.LastEmbed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"embedding-small\"\nupstream_name = \"text-embedding-3-small\"\n\n[[models]]\nid = \"chat-small\"\nupstream_name = \"gpt-4o-mini\"\n\n[[serving_models]]\nid = \"embedder\"\nendpoint_id = \"fixture\"\nmodel_id = \"embedding-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 8191\nmax_output_tokens = 1\nembed_batch_limit = 2\n\n[[serving_models]]\nid = \"chatter\"\nendpoint_id = \"fixture\"\nmodel_id = \"chat-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"embedding\"\nalias = \"embed\"\nkind = \"embed\"\n\n[[routes]]\nid = \"chatting\"\nalias = \"chat\"\n\n[[targets]]\nid = \"embed-primary\"\nroute_id = \"embedding\"\nserving_model_id = \"embedder\"\nposition = 0\n\n[[targets]]\nid = \"chat-primary\"\nroute_id = \"chatting\"\nserving_model_id = \"chatter\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[0.25,-0.5,0.5],\"index\":0},{\"object\":\"embedding\",\"embedding\":[1.25,-1.5,0.5],\"index\":1}],\"model\":\"text-embedding-3-small\",\"usage\":{\"prompt_tokens\":4,\"total_tokens\":4}}},{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[2.25,-2.5,0.5],\"index\":0}],\"model\":\"text-embedding-3-small\",\"usage\":{\"prompt_tokens\":2,\"total_tokens\":2}}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"alias\":\"embed\",\"texts\":[\"one\",\"two\",\"three\"],\"timeout_ms\":10000}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "batch_texts": {
+                "kind": "literal",
+                "value": [
+                  2.0,
+                  1.0
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": 6.0
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/0\",\"role\":\"primary\",\"kind\":\"embed-batch\",\"route_id\":\"embedding\",\"route_target_id\":\"embed-primary\",\"upstream_model\":\"text-embedding-3-small\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{\"input_tokens\":4},\"cost\":null,\"primary_record_id\":null}",
+                  "{\"id\":\"req-1/1\",\"role\":\"primary\",\"kind\":\"embed-batch\",\"route_id\":\"embedding\",\"route_target_id\":\"embed-primary\",\"upstream_model\":\"text-embedding-3-small\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{\"input_tokens\":2},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "vectors": {
+                "kind": "literal",
+                "value": 3.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        }
+      ]
+    },
+    "llm.embeddings/authored/embed-returns-one-vector-per-text-in-input-order": {
+      "purpose": "three texts sent in one request, answered with their vectors listed out of order, come back one vector per text in input order, with the reported input tokens and model",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.embeddings"
+        },
+        {
+          "kind": "command",
+          "name": "llm.embeddings.Embed"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.embeddings.LastEmbed"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.embeddings.Embed",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"embedding-small\"\nupstream_name = \"text-embedding-3-small\"\n\n[[models]]\nid = \"chat-small\"\nupstream_name = \"gpt-4o-mini\"\n\n[[serving_models]]\nid = \"embedder\"\nendpoint_id = \"fixture\"\nmodel_id = \"embedding-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 8191\nmax_output_tokens = 1\n\n[[serving_models]]\nid = \"chatter\"\nendpoint_id = \"fixture\"\nmodel_id = \"chat-small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"embedding\"\nalias = \"embed\"\nkind = \"embed\"\n\n[[routes]]\nid = \"chatting\"\nalias = \"chat\"\n\n[[targets]]\nid = \"embed-primary\"\nroute_id = \"embedding\"\nserving_model_id = \"embedder\"\nposition = 0\n\n[[targets]]\nid = \"chat-primary\"\nroute_id = \"chatting\"\nserving_model_id = \"chatter\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[2.25,-2.5,0.0023064255],\"index\":2},{\"object\":\"embedding\",\"embedding\":[0.25,-0.5,0.0023064255],\"index\":0},{\"object\":\"embedding\",\"embedding\":[1.25,-1.5,0.0023064255],\"index\":1}],\"model\":\"text-embedding-3-small\",\"usage\":{\"prompt_tokens\":8,\"total_tokens\":8}}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"alias\":\"embed\",\"texts\":[\"the food was delicious\",\"the waiter was friendly\",\"the bill was fair\"],\"timeout_ms\":10000}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.embeddings.Embed",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.embeddings.LastEmbed"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "batch_texts": {
+                "kind": "literal",
+                "value": [
+                  3.0
+                ]
+              },
+              "dimensions": {
+                "kind": "literal",
+                "value": [
+                  3.0,
+                  3.0,
+                  3.0
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": 8.0
+              },
+              "leading": {
+                "kind": "literal",
+                "value": [
+                  "0.25",
+                  "1.25",
+                  "2.25"
+                ]
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": [
+                  "{\"model\":\"text-embedding-3-small\",\"input\":[\"the food was delicious\",\"the waiter was friendly\",\"the bill was fair\"],\"encoding_format\":\"float\"}"
+                ]
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "text-embedding-3-small"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "vectors": {
+                "kind": "literal",
+                "value": 3.0
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.embeddings.LastEmbed"
+        }
+      ]
+    },
     "llm.inference.InspectResult/outcome/observed": {
       "purpose": "`llm.inference.InspectResult` answers `observed` for an input no other branch's guard claims",
       "source": [
@@ -46055,6 +47441,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -46215,6 +47605,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -51723,6 +53117,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -51883,6 +53281,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -52021,6 +53423,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -52184,6 +53590,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -52322,6 +53732,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -52489,6 +53903,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -52627,6 +54045,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -52786,6 +54208,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -52924,6 +54350,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -53095,6 +54525,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -53233,6 +54667,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -53393,6 +54831,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -67886,6 +69328,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -68050,6 +69496,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -68188,6 +69638,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -68352,6 +69806,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -69329,6 +70787,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -69479,6 +70941,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -69625,6 +71091,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -69785,6 +71255,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -78368,6 +79842,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -78532,6 +80010,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -78670,6 +80152,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -78837,6 +80323,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -78975,6 +80465,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -79142,6 +80636,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -79280,6 +80778,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -79444,6 +80946,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -96146,6 +97652,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -96310,6 +97820,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -96448,6 +97962,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -96608,6 +98126,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -100564,6 +102086,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -100724,6 +102250,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -100862,6 +102392,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -101026,6 +102560,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -111285,6 +112823,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -111449,6 +112991,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -111595,6 +113141,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -111774,6 +113324,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -111912,6 +113466,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -112087,6 +113645,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -112229,6 +113791,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -112400,6 +113966,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -112542,6 +114112,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -112721,6 +114295,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -112875,6 +114453,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -113059,6 +114641,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {
@@ -124055,6 +125641,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
           "name": "llm.inference.Inspected"
         },
         {
@@ -124211,6 +125801,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.inference.Inspected",
           "step": "expect_no_event"
         },
@@ -124349,6 +125943,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
         },
         {
           "kind": "event",
@@ -124505,6 +126103,10 @@
         },
         {
           "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
           "step": "expect_no_event"
         },
         {

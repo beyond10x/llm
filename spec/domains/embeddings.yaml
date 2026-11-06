@@ -1,0 +1,119 @@
+domain: llm.embeddings
+
+# Embeddings over an embed route (crate llm-embed, port llm_core::Embedder).
+#
+# An embed route is a catalog route whose kind is Embed (llm.catalog.Route.kind, absent meaning
+# Turn, so a catalog from before keeps its bytes and digest). A turn is never sent to an embed
+# route and an embed request never to a turn route; either is refused before I/O as
+# `unsupported`. An embed request goes to the route's first target only: vectors of two models
+# are not comparable, so a catalog declaring fallback on an embed route is refused.
+#
+# embed(texts) returns one vector per text in input order, all of one length, with input token
+# usage and within the caller's timeout, which bounds the whole request; past it the request
+# fails `deadline`, dispatch `unknown` once a batch was on the wire. Usage is the sum over
+# batches; when any batch reported none it is unknown, never zero and never the known part. A
+# request larger than the serving model's declared batch limit
+# (llm.catalog.Capabilities.embed_batch_limit) is split into batches in order and sent one after
+# the other; the vectors come back in input order. A failed batch ends the request with its own
+# code, dispatch and retry class; later batches are not sent. Nothing is retried or fallen back.
+#
+# The first wire is OpenAI's: POST <endpoint base URL>embeddings with the injected credential the
+# account declares, body {model, input: [texts], encoding_format: float, dimensions?}. An answer
+# is refused as `protocol`, dispatch `accepted`, unless its data holds exactly one vector per
+# text of the batch, its indexes are each position of the batch once, every vector is non-empty,
+# of the asked dimensions when asked, and of the length of every other vector of the request.
+#
+# Each batch sent yields one llm.calls.CallRecord of kind EmbedBatch (id <request id>/<batch
+# position>), with its usage and, under a price book, its priced input; an invalid request
+# refused before any batch writes none.
+types:
+  - name: llm.embeddings.Wire
+    kind: enum
+    # OpenAiEmbeddings: POST /v1/embeddings (OpenAI and OpenAI-compatible servers).
+    variants: [OpenAiEmbeddings]
+entities:
+  - name: llm.embeddings.EmbedRequest
+    identity: {name: id, type: String}
+    fields:
+      # The catalog route alias the request names.
+      - {name: route_alias, type: String}
+      - {name: texts, type: Integer}
+      - {name: timeout_ms, type: Integer}
+      # Dimensions the caller asks for; absent leaves the model's default.
+      - {name: dimensions, type: Optional<Integer>}
+    relations:
+      - {name: batches, kind: owns, target: llm.embeddings.EmbedBatch, cardinality: many, via: request_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.embeddings.EmbedBatch
+    identity: {name: id, type: String}
+    fields:
+      - {name: request_id, type: String}
+      - {name: position, type: Integer}
+      - {name: route_target_id, type: String}
+      - {name: wire, type: llm.embeddings.Wire}
+      - {name: texts, type: Integer}
+      - {name: input_tokens, type: Optional<Integer>}
+      - {name: call_record_id, type: String}
+    relations:
+      - {name: target, kind: references, target: llm.catalog.RouteTarget, cardinality: one, via: route_target_id}
+      - {name: call, kind: references, target: llm.calls.CallRecord, cardinality: one, via: call_record_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.embeddings.Embedding
+    identity: {name: id, type: String}
+    fields:
+      - {name: request_id, type: String}
+      # Index of the text in the caller's input.
+      - {name: index, type: Integer}
+      - {name: dimensions, type: Integer}
+      - {name: vector, type: List<Decimal>}
+    relations:
+      - {name: request, kind: references, target: llm.embeddings.EmbedRequest, cardinality: one, via: request_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.embeddings.EmbedObservation
+    identity: {name: observation_id, type: String}
+    fields: &embed_facts
+      - {name: valid_program, type: Boolean}
+      - {name: error_code, type: Optional<String>}
+      # The digest of the catalog as authored, before the fixture address is put in.
+      - {name: config_digest, type: Optional<String>}
+      - {name: vectors, type: Integer}
+      # Per vector, in the order returned: its length and its first component as written.
+      - {name: dimensions, type: List<Integer>}
+      - {name: leading, type: List<String>}
+      # Per request the fixture server received, in order: how many texts its input carried.
+      - {name: batch_texts, type: List<Integer>}
+      - {name: input_tokens, type: Optional<Integer>}
+      - {name: upstream_model, type: Optional<String>}
+      # The request bodies the fixture server received, in order, as the wire wrote them; empty
+      # when nothing reached it.
+      - {name: request_bodies, type: List<String>}
+      # Whether the call returned before its timeout and two seconds more; absent without one.
+      - {name: ended_within, type: Optional<Boolean>}
+      # Every record the sink received, as canonical JSON (llm.calls.CallRecord), in order.
+      - {name: records, type: List<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+commands:
+  - name: llm.embeddings.Embed
+    # Run the real embed path, or a routed turn when request_json carries one, over a loopback
+    # fixture server scripted by program_json; the catalog's `http://fixture.invalid` is the
+    # server's address. A frozen clock stamps the records.
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: request_json, type: String}
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.embeddings.Embedded]
+        payload:
+          llm.embeddings.Embedded:
+            valid_program: {generated: true}
+        summary: Return the vectors, batches, usage, records and refusal the library reported.
+events:
+  - name: llm.embeddings.Embedded
+    fields:
+      - {name: valid_program, type: Boolean}
+views:
+  - name: llm.embeddings.LastEmbed
+    source: llm.embeddings.EmbedObservation
+    consistency: read_your_writes
+    fields: *embed_facts

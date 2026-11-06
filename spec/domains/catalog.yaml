@@ -15,6 +15,11 @@ types:
   - name: llm.catalog.Dispatch
     kind: enum
     variants: [NotSent, Rejected, Unknown, Accepted]
+  - name: llm.catalog.RouteKind
+    kind: enum
+    # What a route serves. Selection refuses a turn on an Embed route and an embed request on a
+    # Turn route as `unsupported` before any I/O (llm.embeddings).
+    variants: [Turn, Embed]
   - name: llm.catalog.Capabilities
     kind: struct
     # output_streaming: the model's text reaches the sink as it is generated; absent means true.
@@ -29,6 +34,9 @@ types:
     # Selection rejects a target declaring either false for a turn needing it (StructuredOutput,
     # ImageInput) and never falls back to it; a target leaving it undeclared is not rejected, and
     # its wire carries the turn or refuses it before I/O.
+    # embed_batch_limit: the most texts one embed request to the model carries (llm.embeddings);
+    # a larger request is sent in ordered batches. Absent sends one request, and is not written;
+    # zero is refused.
     fields:
       - { name: tools, type: Boolean }
       - { name: tool_choice, type: Boolean }
@@ -41,6 +49,7 @@ types:
       - { name: input_during_output, type: 'Optional<Boolean>' }
       - { name: structured_output, type: 'Optional<Boolean>' }
       - { name: image_input, type: 'Optional<Boolean>' }
+      - { name: embed_batch_limit, type: 'Optional<Integer>' }
   - name: llm.catalog.RouteRejection
     kind: enum
     variants: [Tools, ToolChoice, Temperature, TopP, ReasoningEffort, OutputLimit, StructuredOutput, ImageInput, InputTokensUnknown, ContextWindow, OpaqueState, RefusalText, FallbackDisabled]
@@ -180,6 +189,9 @@ entities:
     fields:
       - { name: alias, type: String }
       - { name: fallback_enabled, type: Boolean }
+      # Absent is Turn, and Turn is not written, so a catalog from before keeps its digest. An
+      # Embed route serves its first target only and refuses fallback_enabled.
+      - { name: kind, type: 'Optional<llm.catalog.RouteKind>' }
     lifecycle:
       initial: Declared
       states: [Declared]
