@@ -104,6 +104,55 @@ fn observation(attempt: &Attempt) -> Option<&TurnObservation> {
     }
 }
 
+/// What the far side may have done with an attempt: a success was accepted.
+const fn attempt_dispatch(attempt: &Attempt) -> Dispatch {
+    match &attempt.result {
+        AttemptResult::Succeeded { .. } => Dispatch::Accepted,
+        AttemptResult::Failed { dispatch, .. } => *dispatch,
+    }
+}
+
+/// Orders dispatch evidence by how much the far side may have done: not sent, rejected, unknown,
+/// accepted.
+const fn reach(dispatch: Dispatch) -> u8 {
+    match dispatch {
+        Dispatch::NotSent => 0,
+        Dispatch::Rejected => 1,
+        Dispatch::Unknown => 2,
+        Dispatch::Accepted => 3,
+    }
+}
+
+/// A failed call's dispatch: the furthest any attempt or the final failure may have reached. A
+/// limit refusal, deadline or cancellation after an accepted attempt is itself not sent, and
+/// does not make the call so.
+fn call_dispatch(run: &FallbackRun, error: &Error) -> Dispatch {
+    run.attempts
+        .iter()
+        .map(attempt_dispatch)
+        .chain([error.dispatch])
+        .max_by_key(|dispatch| reach(*dispatch))
+        .unwrap_or(error.dispatch)
+}
+
+/// Every attempt that may have cost something, priced; `None` when none may have.
+///
+/// An attempt that was not sent and reported no usage cost nothing and is left out. Every other
+/// attempt (accepted, rejected or of unknown dispatch, retried or fallen back from) is quoted, so
+/// one with unknown usage leaves the call's cost incomplete.
+fn call_cost(record_id: &Id, run: &FallbackRun, prices: &PriceBook) -> Option<Cost> {
+    let usages: Vec<AttemptUsage> = run
+        .attempts
+        .iter()
+        .filter(|attempt| {
+            attempt_dispatch(attempt) != Dispatch::NotSent
+                || observation(attempt).is_some_and(|observed| observed.usage.is_some())
+        })
+        .map(|attempt| attempt_usage(record_id, attempt, observation(attempt), prices))
+        .collect();
+    Cost::of_attempts(prices, usages)
+}
+
 fn turn_record(
     identity: CallIdentity,
     run: &FallbackRun,
@@ -120,12 +169,10 @@ fn turn_record(
             } else {
                 Outcome::Failed
             };
-            (outcome, Some(error.code), Some(error.dispatch))
+            (outcome, Some(error.code), Some(call_dispatch(run, error)))
         }
     };
-    let cost = prices.zip(last).and_then(|(book, attempt)| {
-        Cost::quote(book, attempt_usage(&identity.id, attempt, observed, book))
-    });
+    let cost = prices.and_then(|book| call_cost(&identity.id, run, book));
     CallRecord::new(
         identity,
         Kind::Turn,
@@ -169,10 +216,8 @@ fn attempt_usage(
             || attempt.serving_model_id.clone(),
             |price| price.id.clone(),
         );
-    let (dispatch, failed) = match &attempt.result {
-        AttemptResult::Succeeded { .. } => (Dispatch::Accepted, false),
-        AttemptResult::Failed { dispatch, .. } => (*dispatch, true),
-    };
+    let dispatch = attempt_dispatch(attempt);
+    let failed = matches!(attempt.result, AttemptResult::Failed { .. });
     AttemptUsage {
         id: record_id.clone(),
         usage_record_id: record_id.clone(),

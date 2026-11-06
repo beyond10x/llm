@@ -66,6 +66,34 @@ impl Cost {
             price_revision: report.price_revision.clone(),
         })
     }
+
+    /// Prices every attempt of one call and adds them up: complete only when every attempt is.
+    /// An attempt the book cannot quote counts as an unknown line. `None` when there is no
+    /// attempt to price, or the known subtotals overflow.
+    pub fn of_attempts(
+        prices: &PriceBook,
+        attempts: impl IntoIterator<Item = AttemptUsage>,
+    ) -> Option<Self> {
+        let mut quoted = 0_usize;
+        let mut nanos = 0_u64;
+        let mut complete = true;
+        for usage in attempts {
+            quoted += 1;
+            match Self::quote(prices, usage) {
+                Some(cost) => {
+                    nanos = nanos.checked_add(cost.known_subtotal.nanos())?;
+                    complete &= cost.complete;
+                }
+                None => complete = false,
+            }
+        }
+        (quoted > 0).then(|| Self {
+            currency: prices.document().currency.clone(),
+            known_subtotal: llm_cost::Amount::from_nanos(nanos),
+            complete,
+            price_revision: prices.document().revision.clone(),
+        })
+    }
 }
 
 /// One model call, as `llm.calls.CallRecord` declares it. It has no text field of any kind.
@@ -90,7 +118,8 @@ pub struct CallRecord {
     pub time_to_first_event_ms: Option<u64>,
     /// The counters reported for the last attempt; a counter never reported stays absent.
     pub usage: Usage,
-    /// Absent when the caller supplied no price book or no attempt was made.
+    /// Every attempt that may have cost something, priced; absent without a price book or such
+    /// an attempt.
     pub cost: Option<Cost>,
     /// The primary call a shadow or replay call is compared with.
     pub primary_record_id: Option<Id>,

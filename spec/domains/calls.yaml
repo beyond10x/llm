@@ -13,13 +13,18 @@ domain: llm.calls
 # (llm.routing) returns, and returns that run unchanged; the sink cannot fail. A turn the run
 # refuses before it starts (invalid request, unknown alias, invalid policy, no model for a
 # target) is no call and writes no record. The record's target, upstream model and usage are the
-# last attempt's; its attempt count is every attempt, retries included. Its outcome, error code
-# and dispatch are the run's final result: cancelled when the run was cancelled, failed for any
-# other failure, and a failure is its code and dispatch, never its message. Latency runs from the
-# start of the run to its return, and time to first event to the first event the caller's sink
-# was offered that is not a warning (a retry warning is not output). The cost prices the last
-# attempt's usage under the caller's price book, matched by serving model and binding revision;
-# without a price book, or without an attempt, there is no cost.
+# last attempt's; its attempt count is every attempt, retries included. Its outcome and error
+# code are the run's final result: cancelled when the run was cancelled, failed for any other
+# failure, and a failure is its code and dispatch, never its message. A failure's dispatch is the
+# furthest any attempt or the final failure reached (not-sent, rejected, unknown, accepted), so a
+# limit refusal, deadline or cancellation after an accepted attempt is not recorded as not sent.
+# Latency runs from the start of the run to its return, and time to first event to the first
+# event the caller's sink was offered that is not a warning (a retry warning is not output). The
+# cost covers every attempt, since routing retries and falls back after an accepted retriable
+# failure too: each attempt is priced under the caller's price book, matched by serving model and
+# binding revision, and the amounts added; only an attempt that was not sent and reported no
+# usage is left out, and any unknown line leaves the cost incomplete. Without a price book, or
+# without an attempt to price, there is no cost.
 #
 # A Shadow is a detached second route for a primary route: after the primary call is returned
 # to the caller, the same request is sent to the shadow route; its answer reaches only its
