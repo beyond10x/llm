@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-06T03:40:36Z",
+  "actor": "human:timo",
+  "artifact": "story:closed-label-classifier",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo-unit.sh u2 test -p llm-decide --test classify --test adversary_u2_chain --lib; llm-conformance check x3 at 247fdadb4",
+    "reference": "impl/closed-label-classifier 4c8ad3a85: classify 11/11, adversary 4/4; conformance 1034/1034; base 4df8fc4a0 has no llm-decide crate (new behaviour)"
+  }
+}
