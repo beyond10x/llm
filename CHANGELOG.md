@@ -564,7 +564,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.22.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.23.0...HEAD
+[0.23.0]: https://github.com/beyond10x/llm/compare/0.22.0...0.23.0
 [0.22.0]: https://github.com/beyond10x/llm/compare/0.21.0...0.22.0
 [0.21.0]: https://github.com/beyond10x/llm/compare/0.20.0...0.21.0
 [0.20.0]: https://github.com/beyond10x/llm/compare/0.19.0...0.20.0

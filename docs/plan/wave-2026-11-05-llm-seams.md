@@ -1,20 +1,22 @@
 # Wave 2026-11-05-llm-seams
 
-Status: **open 2026-11-05** (`approval-record:wave-2026-11-05-llm-seams-go`, stories accepted in
-`approval-record:seam-stories-2026-11-05`). Base: `main` at `5e34b4026` (llm 0.22.0, ESS 0.86.0).
-Integration branch `wave-2026-11-05-llm-seams`, tree `llm-seams-int`. Release: 0.23.0 (additive).
-Skill: AEP implementing 0.26.0.
+Status: **closed 2026-11-06: four stories implemented, release 0.23.0**
+(`approval-record:wave-2026-11-05-llm-seams-go`, stories accepted in
+`approval-record:seam-stories-2026-11-05`, corrections in `approval-record:seams-u2-correction`
+and `approval-record:seams-u3-correction`). Base: `main` at `5e34b4026` (llm 0.22.0, ESS 0.86.0).
+Integration branch `wave-2026-11-05-llm-seams`, tree `llm-seams-int`. Release: 0.23.0, with one
+**Breaking** line: `llm_routing::Route` gains a public `kind`. Skill: AEP implementing 0.26.0.
 
 ## Units
 
-One unit tree at a time, in this order; each tree is finished when its unit merges.
+One unit tree at a time, in this order; each tree was finished when its unit merged.
 
-| Order | Story | Branch | Tree | Depends on | Stage |
+| Order | Story | Head | Tree | Depends on | Stage |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `story:call-records` (and the ESS 0.87.0 pin) | `impl/call-records` | `llm-seams-u1` | | planned |
-| 2 | `story:closed-label-classifier` | `impl/closed-label-classifier` | `llm-seams-u2` | 1 | planned |
-| 3 | `story:shadow-calls` | `impl/shadow-calls` | `llm-seams-u4` | 1 | planned |
-| 4 | `story:embed-route-kind` | `impl/embed-route-kind` | `llm-seams-u3` | 1 | planned |
+| 1 | `story:call-records` (and the ESS 0.87.0 pin) | `b0bd124c` | `llm-seams-u1` | | merged `b0de4037`; adversary red, fixed `972064d7` (merged `4df8fc4a`) |
+| 2 | `story:closed-label-classifier` | `247fdadb` | `llm-seams-u2` | 1 | merged `ce859d2b`; adversary 4 red, fixed `4c8ad3a8` (merged `bbdee8d1`) |
+| 3 | `story:shadow-calls` | `aebec66e` | `llm-seams-u4` | 1 | merged `5065e6da`; adversary and security review red, fixed `09bc2cc0` (merged `0f887ca6`) |
+| 4 | `story:embed-route-kind` | `8c6dfdc6` | `llm-seams-u3` | 1 | merged `926524f2`; adversary red, fixed `e48fa571` (merged `160b9b85`) |
 
 Each tree is a managed worktree under the worktree tool's tree root (`llm/<tree>`), building into
 its own `target/`. Scratch lives outside the repository in the coordinator's scratch directory.
@@ -37,3 +39,17 @@ specification, S4 conformance three times; two slots, cache discarded between st
 ## Reviews
 
 An adversary pass on each unit; a security-review pass on `story:shadow-calls` (the money cap).
+
+## Close
+
+- All four stories implemented on `test_result`, `verification` and `review_outcome` (fixed) records.
+- Every unit review found something; each was fixed in its unit before the next unit started. U2 and U3
+  corrections are recorded in their approval-records. The shadow cap is per process and documented as
+  such; durable persistence is the backlog draft `story:durable-shadow-cap`, which stays a draft.
+- `llm_routing::Route` gains a public `kind`; a `Route` literal sets `kind: RouteKind::Turn`. No known
+  consumer builds a `Route` literal; the CHANGELOG carries the **Breaking** line.
+- Local gate at `84fb8353`, Rust 1.98.0, four stages, cache discarded between them. S1 tests: 1,710
+  passed, 1 red (`feature_declarations` read the new embed scenarios that declare `embed_batch_limit`;
+  fixed in `84fb8353`, 3/3). S2: fmt and Clippy `-D warnings`. S3: docs drift, `ess specify validate`
+  (0.87.0), store valid. S4: conformance 1049/1049 three times. Peaks 12.2G, 0.6G, 0.1G and 1.3G;
+  cargo seconds 407, 76, 9 and 446.

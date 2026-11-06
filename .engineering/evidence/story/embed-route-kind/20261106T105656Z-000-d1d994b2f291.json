@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-06T10:56:56Z",
+  "actor": "human:timo",
+  "artifact": "story:embed-route-kind",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate at 84fb8353a on Rust 1.98.0, cache discarded between stages: workspace tests 1710 passed and 1 red fixed in 84fb8353a (feature_declarations 3/3); fmt and Clippy -D warnings; docs drift; ess 0.87.0 specify validate; conformance 1049/1049 x3; embed, embedding and adversary_u3_embed green"
+  }
+}
