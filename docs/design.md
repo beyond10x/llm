@@ -747,7 +747,9 @@ tokens, and under a price book the priced input of that batch: the wire has no o
 cache classes, so `llm-cost` is handed those as known zeros, while the record's usage keeps only
 the count the answer reported, and an unreported input count leaves the cost incomplete. A
 request refused before its
-first batch writes none; a batch refused by its credential is recorded `not-sent` without a cost.
+first batch writes none. A request id too long for its longest batch record id (the `Id` bound
+is 256 bytes) is refused `invalid-request`, not sent, before the first batch, so no two batches
+share one record id. A batch refused by its credential is recorded `not-sent` without a cost.
 The record has no text field, so no text reaches it.
 
 ## Client request fields
