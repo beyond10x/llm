@@ -101,7 +101,8 @@ impl OpenAiEmbedder {
 
     /// [`Embedder::embed`], writing one record per batch sent to `recording`'s sink, with the id
     /// `<identity id>/<batch position>`, timed by its clock and priced under its price book. An
-    /// invalid request refused before any batch writes none.
+    /// invalid request refused before any batch writes none; so does an identity id too long for
+    /// its longest batch record id, refused `invalid-request` and not sent.
     ///
     /// # Errors
     /// As [`Embedder::embed`].
@@ -123,11 +124,15 @@ impl OpenAiEmbedder {
         recording: Option<(&CallIdentity, Recording<'_>)>,
     ) -> Result<Embeddings, Error> {
         request.validate()?;
+        let limit = self.batch_limit().unwrap_or(request.texts.len()).max(1);
+        // Every record id is known before the first batch, so none can be shared.
+        let record_ids = recording
+            .map(|(identity, _)| batch_record_ids(identity, request.texts.len().div_ceil(limit)))
+            .transpose()?;
         if cancel.is_cancelled() {
             return Err(Error::cancelled());
         }
         let deadline = Instant::now() + request.timeout;
-        let limit = self.batch_limit().unwrap_or(request.texts.len()).max(1);
         let mut vectors = Vec::with_capacity(request.texts.len());
         let mut input_tokens = Some(0_u64);
         let mut upstream_model: Option<Id> = None;
@@ -156,11 +161,15 @@ impl OpenAiEmbedder {
                     "batches of one embed request were answered by different models",
                 ));
             }
-            if let (Some((identity, recording)), Some(stopwatch)) = (recording, stopwatch) {
+            if let (Some((identity, recording)), Some(stopwatch), Some(id)) = (
+                recording,
+                stopwatch,
+                record_ids.as_ref().and_then(|ids| ids.get(position)),
+            ) {
                 let timing = stopwatch.stop(recording.clock);
                 recording.sink.record(self.record(
                     identity,
-                    position,
+                    id.clone(),
                     timing,
                     &answered,
                     recording.prices,
@@ -246,13 +255,11 @@ impl OpenAiEmbedder {
     fn record(
         &self,
         identity: &CallIdentity,
-        position: usize,
+        id: Id,
         timing: llm_calls::Timing,
         answered: &Answered,
         prices: Option<&llm_cost::PriceBook>,
     ) -> CallRecord {
-        let id = Id::new(format!("{}/{position}", identity.id.as_str()))
-            .unwrap_or_else(|_| identity.id.clone());
         let (outcome, error_code, dispatch) = match &answered.result {
             Ok(_) => (Outcome::Succeeded, None, Dispatch::Accepted),
             Err(error) => (
@@ -374,6 +381,19 @@ impl Answered {
             upstream_model: None,
         }
     }
+}
+
+/// Every batch's record id, `<request id>/<position>`. When the longest does not fit an [`Id`] the
+/// request is refused as a whole, `invalid-request` and not sent, before any batch: two batches never
+/// share one record id. The message is fixed.
+fn batch_record_ids(identity: &CallIdentity, batches: usize) -> Result<Vec<Id>, Error> {
+    (0..batches)
+        .map(|position| {
+            Id::new(format!("{}/{position}", identity.id.as_str())).map_err(|_| {
+                Error::invalid("the request id leaves no room for its batch record ids")
+            })
+        })
+        .collect()
 }
 
 /// The caller's timeout passed. Dispatch is `unknown` once the batch may have been on the wire.

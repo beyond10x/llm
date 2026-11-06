@@ -260,23 +260,56 @@ fn prices(catalog: &Catalog) -> PriceBook {
     .unwrap()
 }
 
-/// The record id is `<request id>/<batch position>`. A request id at the `Id` bound (256 bytes,
-/// valid) leaves no room for the suffix, and every batch must still get its own record id.
+/// The record id is `<request id>/<batch position>`. A request id (255 bytes, valid) whose longest
+/// batch record id (`/1`, 257 bytes) passes the `Id` bound is refused before the first batch:
+/// `invalid-request`, not sent, nothing reaches the server and no record is written.
 #[tokio::test]
-async fn a_request_id_at_its_bound_still_gives_each_batch_its_own_record_id() {
-    let (address, _) = serve(vec![
+async fn a_request_id_too_long_for_its_batch_record_ids_is_refused_before_any_batch() {
+    let (address, seen) = serve(vec![
         Answer::Json(answer(0, 1, "text-embedding-3-small", Some(1))),
         Answer::Json(answer(1, 1, "text-embedding-3-small", Some(1))),
     ])
     .await;
     let catalog = catalog(address, "embed_batch_limit = 1");
-    let long = "r".repeat(256);
+    let request_id = "r".repeat(255);
     let log = CallLog::new();
-    embedder(&catalog)
+    let error = embedder(&catalog)
         .embed_recorded(
             &request(2),
             &Cancel::new(),
-            CallIdentity::primary(id(&long)),
+            CallIdentity::primary(id(&request_id)),
+            Recording {
+                sink: &log,
+                clock: &Frozen,
+                prices: None,
+            },
+        )
+        .await
+        .unwrap_err();
+    let decision = "story:embed-route-kind, approval-record:seams-u3-correction: an id too long for \
+                    its longest batch record id is refused invalid-request/not-sent before any batch";
+    assert_eq!(error.code, ErrorCode::InvalidRequest, "{decision}");
+    assert_eq!(error.dispatch, Dispatch::NotSent, "{decision}");
+    assert_eq!(seen.connections.load(Ordering::SeqCst), 0, "{decision}");
+    assert!(log.records().is_empty(), "{decision}");
+}
+
+/// The longest fitting id: 253 bytes with eleven batches makes `/10` exactly 256 bytes, and every
+/// batch gets its own record id.
+#[tokio::test]
+async fn a_request_id_at_the_longest_fitting_length_gives_each_batch_its_own_record_id() {
+    let answers = (0..11)
+        .map(|first| Answer::Json(answer(first, 1, "text-embedding-3-small", Some(1))))
+        .collect();
+    let (address, _) = serve(answers).await;
+    let catalog = catalog(address, "embed_batch_limit = 1");
+    let request_id = "r".repeat(253);
+    let log = CallLog::new();
+    embedder(&catalog)
+        .embed_recorded(
+            &request(11),
+            &Cancel::new(),
+            CallIdentity::primary(id(&request_id)),
             Recording {
                 sink: &log,
                 clock: &Frozen,
@@ -290,11 +323,14 @@ async fn a_request_id_at_its_bound_still_gives_each_batch_its_own_record_id() {
         .iter()
         .map(|record| record.id.as_str().to_owned())
         .collect();
-    assert_eq!(ids.len(), 2);
-    assert_ne!(
-        ids[0], ids[1],
-        "two batches of one request share one record id"
+    let expected: Vec<String> = (0..11)
+        .map(|position| format!("{request_id}/{position}"))
+        .collect();
+    assert_eq!(
+        ids, expected,
+        "story:embed-route-kind: each batch has its own record id"
     );
+    assert_eq!(ids[10].len(), 256);
 }
 
 #[tokio::test]
