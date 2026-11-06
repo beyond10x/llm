@@ -617,9 +617,12 @@ the shadow in flight stays held for its day); llm owns no runtime,
 as `Ports::pause` owns no timer. Each shadow of the primary's route then gets the same request,
 re-addressed to the shadow route's alias. Its events go to no sink and no admission hook of the
 caller's sees it: its answer reaches only its own record, role `shadow`, id
-`<primary id>/shadow/<shadow id>`, `primary_record_id` naming the primary's record. A shadow
-failure, slowness or skip cannot change, delay or fail the primary, whose result the caller
-already holds.
+`<primary id>/shadow/<shadow id>` (or `shadow-sha256-<hex>` of the two ids when that would pass
+the 256-byte id bound, so a long primary id still gets its shadow recorded), `primary_record_id`
+naming the primary's record. A primary that made no attempt (its caller's admission refused it,
+or it was cancelled first) keeps its record and gets no shadow: there is nothing to compare, and
+nothing is paid. A shadow failure, slowness or skip cannot change, delay or fail the primary,
+whose result the caller already holds.
 
 Admission reuses the `llm-cost` budget engine; there is no second ledger. A `ShadowLedger` keeps
 one `BudgetEngine` per shadow and UTC day of the injected clock, its limit the shadow's daily
@@ -635,7 +638,10 @@ settles nothing beyond its known part and stays held at its reservation, never s
 the engine then admits no further shadow that day. A call that costs more than its reserve is
 settled at its cost, so the cap can be passed by at most the excess of the shadows already in
 flight. A call counts against the day it was admitted on; the next UTC day opens a fresh engine.
-Keep one ledger for as long as its shadows run: a new ledger starts every day's cap afresh.
+The cap is per process and lost on restart: the engine is in memory, and `llm-cost` documents it
+as no durable permission. A restarted process, a second process or a second ledger each start
+every day's cap afresh, so one `ShadowLedger` must serve every shadow of a deployment for as long
+as it runs. A durable cap is a later story.
 
 ### Typed decisions
 
