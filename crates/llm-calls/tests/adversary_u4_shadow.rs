@@ -261,7 +261,9 @@ fn primary<'e>(
 }
 
 fn record<'r>(records: &'r [CallRecord], record_id: &str) -> Option<&'r CallRecord> {
-    records.iter().find(|record| record.id.as_str() == record_id)
+    records
+        .iter()
+        .find(|record| record.id.as_str() == record_id)
 }
 
 /// The caller's own admission hook refuses the primary before anything is sent: the primary
