@@ -1,0 +1,113 @@
+type: ess-scenario/1
+domain: llm.decisions
+scenario: a-confidence-below-the-classifier-floor-abstains-off-label
+summary: a well-formed answer whose label's confidence is 7999 basis points, one under the classifier's floor of 8000, abstains OffLabel instead of deciding
+timeline:
+- at: '2026-11-06T12:00:00Z'
+  command: llm.decisions.Classify
+  input:
+    catalog_toml: |
+      # Illustrative declarations, not qualification of a particular model or deployment.
+      format = "llm.catalog/1"
+
+      [[providers]]
+      id = "my-lab"
+      category = "self-hosted"
+
+      [[accounts]]
+      id = "local"
+      provider_id = "my-lab"
+      auth_kind = "anonymous"
+      billing_kind = "self-hosted"
+
+      [[accounts]]
+      id = "remote"
+      provider_id = "my-lab"
+      auth_kind = "bearer"
+      billing_kind = "metered"
+      secret_reference_id = "lab-llm-token"
+
+      [[endpoints]]
+      id = "local-vllm"
+      account_id = "local"
+      base_url = "http://127.0.0.1:8000/v1"
+
+      [[endpoints]]
+      id = "remote-models"
+      account_id = "remote"
+      base_url = "https://models.example.invalid/v1"
+
+      [[models]]
+      id = "small"
+      upstream_name = "example/Small-Model"
+
+      [[models]]
+      id = "large"
+      upstream_name = "example/Large-Model"
+
+      [[serving_models]]
+      id = "local-small"
+      endpoint_id = "local-vllm"
+      model_id = "small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[serving_models]]
+      id = "remote-large"
+      endpoint_id = "remote-models"
+      model_id = "large"
+      protocol = "responses"
+      [serving_models.capabilities]
+      tools = true
+      tool_choice = true
+      temperature = true
+      top_p = true
+      reasoning_efforts = ["medium", "high"]
+      context_window = 32768
+      max_output_tokens = 8192
+
+      [[routes]]
+      id = "coding"
+      alias = "code"
+      fallback_enabled = true
+
+      [[targets]]
+      id = "coding-primary"
+      route_id = "coding"
+      serving_model_id = "local-small"
+      position = 0
+
+      [[targets]]
+      id = "coding-secondary"
+      route_id = "coding"
+      serving_model_id = "remote-large"
+      position = 1
+    label_set_json: '{"id":"sentiment","version":"v1","labels":["positive","negative","neutral"]}'
+    chain_json: '{"id":"sentiment-chain","deadline_ms":30000,"classifiers":[{"id":"schema","path":"JsonSchema","route_alias":"code","min_confidence_bps":8000}]}'
+    input_text: the film was wonderful
+    program_json: '{"request_id":"req-1","input_tokens":100,"start_unix_ms":1762430400000,"models":{"remote-large":{"fail":{"code":"unavailable","dispatch":"not-sent"}},"local-small":{"answer":"{\"label\":\"positive\",\"confidences\":{\"positive\":7999,\"negative\":1000,\"neutral\":1001}}"}}}'
+  outcome: observed
+assert:
+- view: llm.decisions.LastClassification
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.decisions.LastClassification
+  contains:
+    valid_program: true
+    error_code: null
+    tried: [schema]
+    results: ['schema:abstained:OffLabel']
+    label: null
+    confidences: []
+    final_cause: OffLabel
+    call_record_ids: [req-1/schema]
+    records:
+    - '{"id":"req-1/schema","role":"primary","kind":"classification","route_id":"coding","route_target_id":"coding-primary","upstream_model":null,"outcome":"succeeded","error_code":null,"dispatch":null,"attempts":1,"started_at_unix_ms":1762430400000,"latency_ms":0,"time_to_first_event_ms":0,"usage":{},"cost":null,"primary_record_id":null}'

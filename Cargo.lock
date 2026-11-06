@@ -1257,6 +1257,7 @@ dependencies = [
  "llm-core",
  "llm-cost",
  "llm-credentials",
+ "llm-decide",
  "llm-http",
  "llm-messages",
  "llm-models",
@@ -1326,6 +1327,18 @@ dependencies = [
  "windows-native-keyring-store",
  "zbus-secret-service-keyring-store",
  "zeroize",
+]
+
+[[package]]
+name = "llm-decide"
+version = "0.22.0"
+dependencies = [
+ "llm-calls",
+ "llm-core",
+ "llm-cost",
+ "llm-routing",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

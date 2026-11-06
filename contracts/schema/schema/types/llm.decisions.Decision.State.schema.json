@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.decisions.Decision.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:618d00d44cfdf05e3c0e9e1d3094b1c1ea760616ff58328375f1a3ec8e23ebe7",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.Decision.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.Decision.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    }
+  }
+}

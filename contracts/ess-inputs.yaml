@@ -982,3 +982,14 @@ scenarios:
 - calls/scenarios/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost.yaml
 - calls/scenarios/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock.yaml
 - calls/scenarios/a-call-without-a-price-book-records-usage-and-no-cost.yaml
+- decisions/scenarios/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label.yaml
+- decisions/scenarios/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label.yaml
+- decisions/scenarios/an-answer-naming-no-label-of-the-set-abstains-off-label.yaml
+- decisions/scenarios/an-answer-that-does-not-decode-as-the-schema-abstains-off-label.yaml
+- decisions/scenarios/a-classifier-past-the-chain-deadline-abstains-with-timeout.yaml
+- decisions/scenarios/a-provider-failure-abstains-with-its-error-code.yaml
+- decisions/scenarios/a-confidence-below-the-classifier-floor-abstains-off-label.yaml
+- decisions/scenarios/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier.yaml
+- decisions/scenarios/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final.yaml
+- decisions/scenarios/each-model-classifier-call-yields-a-call-record-with-latency-and-cost.yaml
+- decisions/scenarios/a-label-set-with-a-duplicate-or-a-single-label-is-refused.yaml

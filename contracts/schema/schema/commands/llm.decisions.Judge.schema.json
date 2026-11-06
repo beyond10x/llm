@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Judge input",
+  "x-ess-name": "llm.decisions.Judge",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "rubric_json": {
+      "type": "string"
+    },
+    "subject_text": {
+      "type": "string"
+    },
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "rubric_json",
+    "subject_text",
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:b37cb556b723cd0c54a87f37f6a74ef4ab4891447b9c4e4d641988c4d7f621e0",
+    "regenerate": "ess generate"
+  }
+}

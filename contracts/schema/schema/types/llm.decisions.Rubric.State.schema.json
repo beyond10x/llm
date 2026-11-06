@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.decisions.Rubric.State",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "4df20fac0ac132453e966932257523e8a66e7ff5a5ab7ae03f69c5ada41c85b8",
+    "contract_digest": "slice-sha256/2:ad81f9a912665620071bab81a07c5822f901a4de1e93173433e1fd659141cd90",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.Rubric.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.Rubric.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Declared"
+      ]
+    }
+  }
+}
