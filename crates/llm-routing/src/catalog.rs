@@ -25,14 +25,12 @@ pub enum RouteKind {
     Embed,
 }
 
-impl RouteKind {
-    #[expect(
-        clippy::trivially_copy_pass_by_ref,
-        reason = "serde's skip_serializing_if passes the field by reference"
-    )]
-    const fn is_turn(&self) -> bool {
-        matches!(self, Self::Turn)
-    }
+#[expect(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde's skip_serializing_if passes the field by reference"
+)]
+const fn is_turn(kind: &RouteKind) -> bool {
+    matches!(kind, RouteKind::Turn)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,7 +42,7 @@ pub struct Route {
     pub fallback_enabled: bool,
     /// Absent is [`RouteKind::Turn`], and a turn route does not write it, so a catalog from
     /// before the field keeps its bytes and digest.
-    #[serde(default, skip_serializing_if = "RouteKind::is_turn")]
+    #[serde(default, skip_serializing_if = "is_turn")]
     pub kind: RouteKind,
 }
 
@@ -162,6 +160,12 @@ impl CatalogDocument {
             if targets.is_empty() || targets.len() > MAX_ROUTE_TARGETS {
                 return Err(Error::invalid(
                     "each route requires between one and 64 targets",
+                ));
+            }
+            // Vectors of two models are not comparable, so an embed request has no fallback.
+            if route.kind == RouteKind::Embed && route.fallback_enabled {
+                return Err(Error::invalid(
+                    "an embed route serves its first target only and cannot enable fallback",
                 ));
             }
             subscription_billing_kept(route, &targets, &bindings)?;

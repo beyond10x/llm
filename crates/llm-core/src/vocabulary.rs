@@ -285,6 +285,9 @@ impl Capabilities {
         if self.reasoning_efforts.iter().any(String::is_empty) {
             return Err(Error::invalid("reasoning effort names cannot be empty"));
         }
+        if self.embed_batch_limit == Some(0) {
+            return Err(Error::invalid("an embed batch limit must be positive"));
+        }
         Ok(())
     }
 }

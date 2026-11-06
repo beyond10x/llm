@@ -1,5 +1,5 @@
-//! The OpenAI embeddings wire against a loopback fixture server whose answers are the shapes of
-//! OpenAI's API reference (`POST /v1/embeddings`): no live call.
+//! The `OpenAI` embeddings wire against a loopback fixture server whose answers are the shapes of
+//! the `OpenAI` API reference (`POST /v1/embeddings`): no live call.
 
 use llm_calls::{CallIdentity, CallLog, CallRecord, Clock, Kind, Outcome, Recording, Role};
 use llm_core::{BoxFuture, Cancel, Dispatch, EmbedRequest, Embedder, ErrorCode, Id};
@@ -250,10 +250,10 @@ fn request(count: usize) -> EmbedRequest {
 /// The vector the fixture returns for the text at `position` of the whole request.
 fn vector(position: usize) -> Vec<f32> {
     let base = f32::from(u16::try_from(position).unwrap());
-    vec![base + 0.25, -base - 0.5, 0.0023064255]
+    vec![base + 0.25, -base - 0.5, 0.002_306_425_5]
 }
 
-/// An answer in the shape of OpenAI's API reference, for the texts at `positions` of the whole
+/// An answer in the shape of the `OpenAI` API reference, for the texts at `positions` of the whole
 /// request, listed in `order` (indexes into the batch).
 fn answer(positions: &[usize], order: &[usize], usage: Option<u64>) -> Value {
     let data: Vec<Value> = order
@@ -511,7 +511,17 @@ async fn a_priced_batch_record_carries_the_cost_of_its_input_tokens() {
         )
         .await
         .unwrap();
-    let cost = log.records()[0].cost.clone().unwrap();
+    let record = log.records()[0].clone();
+    // Only the reported count is recorded; output and cache classes are priced as the zeros the
+    // embeddings wire has, never written as reported zeros.
+    assert_eq!(
+        record.usage,
+        llm_core::Usage {
+            input_tokens: Some(1000),
+            ..llm_core::Usage::default()
+        }
+    );
+    let cost = record.cost.unwrap();
     assert!(cost.complete);
     assert_eq!(cost.known_subtotal, Amount::parse("0.02").unwrap());
 }

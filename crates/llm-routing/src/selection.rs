@@ -1,4 +1,4 @@
-use crate::{Catalog, RouteTarget};
+use crate::{Catalog, RouteKind, RouteTarget};
 use llm_core::{
     AuthKind, BillingKind, Capabilities, Error, Id, Item, Protocol, Provenance, TurnRequest,
 };
@@ -145,13 +145,16 @@ pub struct EmbedSelection<'a> {
 impl Catalog {
     /// Selects the target an embed request to `alias` is sent to, without any I/O.
     /// # Errors
-    /// Refuses an invalid or unknown alias (`invalid-request`).
+    /// Refuses an invalid or unknown alias (`invalid-request`) and a turn route (`unsupported`).
     pub fn resolve_embed(&self, alias: &str) -> Result<EmbedSelection<'_>, Error> {
         let alias = Id::new(alias).map_err(|_| Error::invalid("invalid route alias"))?;
         let route = self
             .routes
             .get(&alias)
             .ok_or_else(|| Error::invalid("unknown route alias"))?;
+        if route.declaration.kind != RouteKind::Embed {
+            return Err(Error::unsupported("a turn route takes no embed request"));
+        }
         let target = route
             .targets
             .first()
@@ -183,6 +186,9 @@ impl Catalog {
             .routes
             .get(&alias)
             .ok_or_else(|| Error::invalid("unknown route alias"))?;
+        if route.declaration.kind != RouteKind::Turn {
+            return Err(Error::unsupported("an embed route takes no turn"));
+        }
         let mut targets = Vec::with_capacity(route.targets.len());
         let mut selected = None;
         for target in &route.targets {

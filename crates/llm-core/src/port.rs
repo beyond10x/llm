@@ -133,10 +133,10 @@ impl EmbedRequest {
         {
             return Err(Error::too_large("embed request exceeds its text bounds"));
         }
-        if self
-            .dimensions
-            .is_some_and(|dimensions| dimensions == 0 || dimensions as usize > MAX_EMBED_DIMENSIONS)
-        {
+        if self.dimensions.is_some_and(|dimensions| {
+            dimensions == 0
+                || !usize::try_from(dimensions).is_ok_and(|wide| wide <= MAX_EMBED_DIMENSIONS)
+        }) {
             return Err(Error::invalid(
                 "embed dimensions must be positive and within their bound",
             ));
