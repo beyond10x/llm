@@ -696,6 +696,60 @@ Option<Answer>`), synchronous and with no model call and no record; `None` absta
 and its answer is held to the set and the floor like a model's. Because it makes no call, it runs
 even past the deadline, so a chain ending in one always ends in its answer or its abstention.
 
+### Embeddings
+
+An embedding is not a turn, so it has its own port and its own route kind. The contract is
+`spec/domains/embeddings.yaml`.
+
+**Route kind.** `llm.catalog.Route` has an optional `kind`, `turn` or `embed`. Absent is `turn`,
+and a turn route does not write it, so a catalog from before the field keeps its bytes, revision
+and digest. Selection refuses a turn on an embed route (`Catalog::explain`, `resolve` and
+`run_turn`) and an embed request on a turn route (`Catalog::resolve_embed`) as `unsupported`,
+before any port is bound or credential resolved. An embed request goes to the route's first
+target only: vectors of two models are not comparable, so there is no fallback, and a catalog
+declaring `fallback_enabled` on an embed route is refused. A serving model may declare
+`embed_batch_limit` in its capabilities, the most texts one request to it carries; absent sends
+every text in one request and is not written, and zero is refused.
+
+**Port.** `llm_core::Embedder::embed(&EmbedRequest, &Cancel)` takes texts, optional
+`dimensions` and a timeout, and returns `Embeddings`: one `f32` vector per text in input order,
+all of one length, the input tokens in `Usage`, and the model the far side reported. `llm-core`
+holds the port and no transport. A request with no text, an empty text, more than
+`MAX_EMBED_TEXTS` texts or more than `MAX_REQUEST_BYTES` of them, zero dimensions or a zero
+timeout is refused before any I/O, and no message quotes a text.
+
+**Wire.** `llm-embed`'s `OpenAiEmbedder` serves OpenAI's `POST /v1/embeddings` (OpenAI and
+compatible servers) at `<endpoint base URL>embeddings`, over `llm-http` with the credential the
+account declares, resolved through the injected resolver. The body is `{model, input: [texts],
+encoding_format: "float", dimensions?}`; `input` is always an array, `dimensions` is sent only
+when asked for. A target served over Messages has no such endpoint and is refused as
+`unsupported`. A request larger than the batch limit is split into batches in input order and
+sent one after the other; each answer is placed back by its `index`. An answer is refused as
+`protocol`, dispatch `accepted`, final, unless it holds exactly one vector per text of its batch,
+names every index of the batch once, every vector is non-empty and of the length of every other
+vector of the request (the asked dimensions when asked), and the batches name one model. The
+answer's `usage.prompt_tokens` is the batch's input tokens; an absent count stays unknown, and
+the request's count is the sum only when every batch reported one, never zero and never the
+known part.
+
+**Timeout and failure.** The timeout bounds the whole request, every batch, credential and read
+included; past it the request fails `deadline` with the fixed message "the embed request passed
+its timeout", dispatch `unknown` once a batch was on the wire and `not-sent` before. A deadline of
+the HTTP client's own limits is the transport's `deadline` with its own message. A failed batch
+ends the request with its own code, dispatch and retry class, and later batches are not sent;
+nothing is retried or fallen back, so a caller that retries a retriable failure resends the
+whole request. Cancellation ends it `cancelled`.
+
+**Records.** `OpenAiEmbedder::embed_recorded` writes one `llm_calls::CallRecord` of kind
+`embed-batch` per batch sent, with the id `<request id>/<batch position>`: route, target,
+reported model, outcome, error code and dispatch, one attempt, the batch's timings and input
+tokens, and under a price book the priced input of that batch: the wire has no output and no
+cache classes, so `llm-cost` is handed those as known zeros, while the record's usage keeps only
+the count the answer reported, and an unreported input count leaves the cost incomplete. A
+request refused before its
+first batch writes none; a batch refused by its credential is recorded `not-sent` without a cost.
+The record has no text field, so no text reaches it.
+
 ## Client request fields
 
 Accepted for wave 2026-10-16-w08 (llm 0.7.0). Coding-agent clients send fields the 0.6.0 ingress

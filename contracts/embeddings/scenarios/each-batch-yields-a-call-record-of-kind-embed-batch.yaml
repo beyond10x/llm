@@ -1,0 +1,102 @@
+type: ess-scenario/1
+domain: llm.embeddings
+scenario: each-batch-yields-a-call-record-of-kind-embed-batch
+summary: three texts under a batch limit of two go out as two batches, each writing one embed-batch record with route, target, reported model and its input tokens, and no text
+timeline:
+- at: '2026-11-06T12:00:00Z'
+  command: llm.embeddings.Embed
+  input:
+    catalog_toml: |
+      # Illustrative declarations, not qualification of a particular model or deployment.
+      format = "llm.catalog/1"
+
+      [[providers]]
+      id = "openai-compatible"
+      category = "hosted"
+
+      [[accounts]]
+      id = "main"
+      provider_id = "openai-compatible"
+      auth_kind = "anonymous"
+      billing_kind = "self-hosted"
+
+      [[endpoints]]
+      id = "fixture"
+      account_id = "main"
+      base_url = "http://fixture.invalid/v1"
+
+      [[models]]
+      id = "embedding-small"
+      upstream_name = "text-embedding-3-small"
+
+      [[models]]
+      id = "chat-small"
+      upstream_name = "gpt-4o-mini"
+
+      [[serving_models]]
+      id = "embedder"
+      endpoint_id = "fixture"
+      model_id = "embedding-small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 8191
+      max_output_tokens = 1
+      embed_batch_limit = 2
+
+      [[serving_models]]
+      id = "chatter"
+      endpoint_id = "fixture"
+      model_id = "chat-small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[routes]]
+      id = "embedding"
+      alias = "embed"
+      kind = "embed"
+
+      [[routes]]
+      id = "chatting"
+      alias = "chat"
+
+      [[targets]]
+      id = "embed-primary"
+      route_id = "embedding"
+      serving_model_id = "embedder"
+      position = 0
+
+      [[targets]]
+      id = "chat-primary"
+      route_id = "chatting"
+      serving_model_id = "chatter"
+      position = 0
+    request_json: '{"request_id":"req-1","alias":"embed","texts":["one","two","three"],"timeout_ms":10000}'
+    program_json: '{"start_unix_ms":1762430400000,"answers":[{"body":{"object":"list","data":[{"object":"embedding","embedding":[0.25,-0.5,0.5],"index":0},{"object":"embedding","embedding":[1.25,-1.5,0.5],"index":1}],"model":"text-embedding-3-small","usage":{"prompt_tokens":4,"total_tokens":4}}},{"body":{"object":"list","data":[{"object":"embedding","embedding":[2.25,-2.5,0.5],"index":0}],"model":"text-embedding-3-small","usage":{"prompt_tokens":2,"total_tokens":2}}}]}'
+  outcome: observed
+assert:
+- view: llm.embeddings.LastEmbed
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.embeddings.LastEmbed
+  contains:
+    valid_program: true
+    error_code: null
+    vectors: 3
+    batch_texts: [2, 1]
+    input_tokens: 6
+    records:
+    - '{"id":"req-1/0","role":"primary","kind":"embed-batch","route_id":"embedding","route_target_id":"embed-primary","upstream_model":"text-embedding-3-small","outcome":"succeeded","error_code":null,"dispatch":null,"attempts":1,"started_at_unix_ms":1762430400000,"latency_ms":0,"time_to_first_event_ms":null,"usage":{"input_tokens":4},"cost":null,"primary_record_id":null}'
+    - '{"id":"req-1/1","role":"primary","kind":"embed-batch","route_id":"embedding","route_target_id":"embed-primary","upstream_model":"text-embedding-3-small","outcome":"succeeded","error_code":null,"dispatch":null,"attempts":1,"started_at_unix_ms":1762430400000,"latency_ms":0,"time_to_first_event_ms":null,"usage":{"input_tokens":2},"cost":null,"primary_record_id":null}'

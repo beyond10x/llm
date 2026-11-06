@@ -1,9 +1,11 @@
 use llm_core::{
-    Capabilities, ErrorCode, Id, ImageMediaType, ImageSource, Item, OutputFormat, ToolChoice,
-    ToolName, ToolSpec, TurnRequest,
+    Cancel, Capabilities, Dispatch, ErrorCode, Id, ImageMediaType, ImageSource, Item, OutputFormat,
+    ToolChoice, ToolName, ToolSpec, TurnRequest, VecSink,
 };
 use llm_providers::BaseUrl;
-use llm_routing::{Catalog, CatalogDocument, MAX_CONFIG_BYTES, Rejection};
+use llm_routing::{
+    Catalog, CatalogDocument, FallbackPolicy, MAX_CONFIG_BYTES, Models, Ports, Rejection, RouteKind,
+};
 use serde_json::json;
 
 const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
@@ -569,4 +571,127 @@ fn unattributed_opaque_state_is_refused_by_every_target_until_the_caller_binds_i
             .rejections
             .contains(&Rejection::OpaqueState)
     );
+}
+
+/// The example with its route declared as `kind`.
+fn of_kind(kind: &str) -> String {
+    let declared = EXAMPLE.replace(
+        "alias = \"code\"\n",
+        &format!("alias = \"code\"\nkind = \"{kind}\"\n"),
+    );
+    assert_ne!(declared, EXAMPLE);
+    declared
+}
+
+#[test]
+fn a_catalog_without_route_kind_keeps_its_digest() {
+    for source in [EXAMPLE.to_owned(), of_kind("turn")] {
+        let catalog = Catalog::parse(&source).unwrap();
+        assert_eq!(catalog.digest(), BEFORE_DIGEST);
+        assert_eq!(catalog.routes().next().unwrap().kind, RouteKind::Turn);
+        let written = serde_json::to_value(catalog.routes().next().unwrap()).unwrap();
+        assert!(written.get("kind").is_none(), "{written}");
+    }
+    let embed = Catalog::parse(&of_kind("embed")).unwrap();
+    assert_eq!(embed.routes().next().unwrap().kind, RouteKind::Embed);
+    assert_ne!(embed.digest(), BEFORE_DIGEST);
+    let error = Catalog::parse(&of_kind("classify")).unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidRequest);
+}
+
+/// Counts every model a run asks for; it has none, so a run that reached one would fail.
+struct NoModels(std::sync::atomic::AtomicUsize);
+
+impl Models for NoModels {
+    fn model(&self, _: &Id) -> Option<&dyn llm_core::Model> {
+        self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        None
+    }
+}
+
+#[tokio::test]
+async fn a_turn_to_an_embed_route_is_refused_before_io() {
+    let catalog = Catalog::parse(&of_kind("embed")).unwrap();
+    let turn = request();
+    for error in [
+        catalog.explain(&turn, Some(512)).unwrap_err(),
+        catalog.resolve(&turn, Some(512)).unwrap_err(),
+    ] {
+        assert_eq!(error.code, ErrorCode::Unsupported);
+        assert_eq!(error.dispatch, Dispatch::NotSent);
+    }
+    let models = NoModels(std::sync::atomic::AtomicUsize::new(0));
+    let mut sink = VecSink::new(16, 4096);
+    let mut admitted = 0_usize;
+    let mut admit = |_: &llm_routing::Selection<'_>| {
+        admitted += 1;
+        Ok(())
+    };
+    let error = catalog
+        .run_turn(
+            &turn,
+            Some(512),
+            FallbackPolicy::default(),
+            Ports {
+                models: &models,
+                admit: &mut admit,
+                sink: &mut sink,
+                cancel: &Cancel::new(),
+                pause: &|wait| Box::pin(tokio::time::sleep(wait)),
+            },
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(admitted, 0);
+    assert_eq!(models.0.load(std::sync::atomic::Ordering::SeqCst), 0);
+    assert!(sink.events().is_empty());
+}
+
+#[test]
+fn an_embed_request_to_a_turn_route_is_refused_before_io() {
+    let error = Catalog::parse(EXAMPLE)
+        .unwrap()
+        .resolve_embed("code")
+        .map(|_| ())
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::Unsupported);
+    assert_eq!(error.dispatch, Dispatch::NotSent);
+    let embed = Catalog::parse(&of_kind("embed")).unwrap();
+    let selection = embed.resolve_embed("code").unwrap();
+    assert_eq!(selection.target.id, id("coding-primary"));
+    assert_eq!(selection.route_id, &id("coding"));
+    assert_eq!(selection.config_digest, embed.digest());
+    assert_eq!(
+        embed.resolve_embed("nothing").map(|_| ()).unwrap_err().code,
+        ErrorCode::InvalidRequest
+    );
+}
+
+#[test]
+fn an_embed_route_declaring_fallback_is_refused() {
+    let source = of_kind("embed").replace("fallback_enabled = false", "fallback_enabled = true");
+    let error = Catalog::parse(&source).unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidRequest);
+    assert!(error.message.contains("embed route"), "{}", error.message);
+}
+
+#[test]
+fn an_embed_batch_limit_is_declared_or_absent_and_never_zero() {
+    let catalog = Catalog::parse(&declaring("embed_batch_limit = 2048\n")).unwrap();
+    for (_, binding) in catalog.bindings() {
+        assert_eq!(binding.capabilities().embed_batch_limit, Some(2048));
+    }
+    assert_ne!(catalog.digest(), BEFORE_DIGEST);
+    let undeclared = Catalog::parse(EXAMPLE).unwrap();
+    assert_eq!(
+        undeclared
+            .binding(&id("local-small"))
+            .unwrap()
+            .capabilities()
+            .embed_batch_limit,
+        None
+    );
+    let error = Catalog::parse(&declaring("embed_batch_limit = 0\n")).unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidRequest);
 }

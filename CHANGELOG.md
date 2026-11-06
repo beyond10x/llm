@@ -14,6 +14,9 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `llm-decide`: a closed-label classifier `Chain` returning one label with per-label confidence or a caused abstention
 - ESS: domain `llm.decisions`, 11 classification scenarios and 2 generated outcome scenarios; the floor is 1034 (was 1021)
 - `llm-calls`: `record_turn_shadowed` sends a `Shadow` route the request after the primary, under a daily `ShadowLedger` cap
+- Catalog routes declare `kind = "embed"`; selection refuses a turn there and an embed request on a turn route before I/O
+- `llm-embed`: `OpenAiEmbedder` serves `llm_core::Embedder` over `/v1/embeddings` in ordered batches, one record per batch
+- ESS: domain `llm.embeddings`, 8 embedding scenarios and 1 generated outcome scenario; the floor is 1049 (was 1040)
 
 ### Changed
 

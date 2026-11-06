@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Embedded payload",
+  "x-ess-name": "llm.embeddings.Embedded",
+  "x-ess-kind": "event-payload",
+  "type": "object",
+  "properties": {
+    "valid_program": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "valid_program"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "c34ccddea7f4cc53d92a9b1d5b8b2a32b338f999f9d934ab70de21ac8a1bcc6b",
+    "contract_digest": "slice-sha256/2:2e048ce9930dbe6a5366fe5295295ededf554857f775b5d47c10a6514d25a425",
+    "regenerate": "ess generate"
+  }
+}

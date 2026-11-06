@@ -14,6 +14,9 @@
     "fallback_enabled": {
       "type": "boolean"
     },
+    "kind": {
+      "$ref": "#/$defs/llm.catalog.RouteKind"
+    },
     "state": {
       "$ref": "#/$defs/llm.catalog.Route.State"
     }
@@ -28,8 +31,8 @@
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "f0de2b3eb402ab88caba1c7cdea55627babc7d358350ea5977e3a94c72655f25",
-    "contract_digest": "slice-sha256/2:87302cf18a8edc91f5ac0a04f4a7d350b3c79919d14bb600a18a5d3fda92dd09",
+    "source_digest": "c34ccddea7f4cc53d92a9b1d5b8b2a32b338f999f9d934ab70de21ac8a1bcc6b",
+    "contract_digest": "slice-sha256/2:b3ce6ea1b76046066a7e85348df5471a9d009741d6a7d7348e6a6baf1a41bb41",
     "regenerate": "ess generate"
   },
   "$defs": {
@@ -40,6 +43,16 @@
       "type": "string",
       "enum": [
         "Declared"
+      ]
+    },
+    "llm.catalog.RouteKind": {
+      "title": "RouteKind",
+      "x-ess-name": "llm.catalog.RouteKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Turn",
+        "Embed"
       ]
     }
   }

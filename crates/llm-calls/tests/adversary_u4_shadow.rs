@@ -61,6 +61,7 @@ fn catalog() -> Catalog {
         id: id("coding-shadow"),
         alias: id("code-shadow"),
         fallback_enabled: false,
+        kind: llm_routing::RouteKind::Turn,
     });
     doc.targets.push(RouteTarget {
         id: id("shadow-large"),

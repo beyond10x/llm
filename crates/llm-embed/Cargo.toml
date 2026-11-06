@@ -1,0 +1,30 @@
+[package]
+name = "llm-embed"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "Embeddings over an embed route: the OpenAI POST /v1/embeddings wire, ordered batches, token usage and one call record per batch."
+
+[lints]
+workspace = true
+
+[lib]
+name = "llm_embed"
+
+[dependencies]
+llm-core.workspace = true
+llm-credentials.workspace = true
+llm-http.workspace = true
+llm-providers.workspace = true
+llm-routing = { path = "../llm-routing" }
+llm-calls = { path = "../llm-calls" }
+llm-cost = { path = "../llm-cost" }
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

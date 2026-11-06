@@ -1,0 +1,103 @@
+type: ess-scenario/1
+domain: llm.embeddings
+scenario: embed-returns-one-vector-per-text-in-input-order
+summary: three texts sent in one request, answered with their vectors listed out of order, come back one vector per text in input order, with the reported input tokens and model
+timeline:
+- at: '2026-11-06T12:00:00Z'
+  command: llm.embeddings.Embed
+  input:
+    catalog_toml: |
+      # Illustrative declarations, not qualification of a particular model or deployment.
+      format = "llm.catalog/1"
+
+      [[providers]]
+      id = "openai-compatible"
+      category = "hosted"
+
+      [[accounts]]
+      id = "main"
+      provider_id = "openai-compatible"
+      auth_kind = "anonymous"
+      billing_kind = "self-hosted"
+
+      [[endpoints]]
+      id = "fixture"
+      account_id = "main"
+      base_url = "http://fixture.invalid/v1"
+
+      [[models]]
+      id = "embedding-small"
+      upstream_name = "text-embedding-3-small"
+
+      [[models]]
+      id = "chat-small"
+      upstream_name = "gpt-4o-mini"
+
+      [[serving_models]]
+      id = "embedder"
+      endpoint_id = "fixture"
+      model_id = "embedding-small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 8191
+      max_output_tokens = 1
+
+      [[serving_models]]
+      id = "chatter"
+      endpoint_id = "fixture"
+      model_id = "chat-small"
+      protocol = "chat-completions"
+      [serving_models.capabilities]
+      tools = false
+      tool_choice = false
+      temperature = false
+      top_p = false
+      reasoning_efforts = []
+      context_window = 4096
+      max_output_tokens = 1024
+
+      [[routes]]
+      id = "embedding"
+      alias = "embed"
+      kind = "embed"
+
+      [[routes]]
+      id = "chatting"
+      alias = "chat"
+
+      [[targets]]
+      id = "embed-primary"
+      route_id = "embedding"
+      serving_model_id = "embedder"
+      position = 0
+
+      [[targets]]
+      id = "chat-primary"
+      route_id = "chatting"
+      serving_model_id = "chatter"
+      position = 0
+    request_json: '{"request_id":"req-1","alias":"embed","texts":["the food was delicious","the waiter was friendly","the bill was fair"],"timeout_ms":10000}'
+    program_json: '{"start_unix_ms":1762430400000,"answers":[{"body":{"object":"list","data":[{"object":"embedding","embedding":[2.25,-2.5,0.0023064255],"index":2},{"object":"embedding","embedding":[0.25,-0.5,0.0023064255],"index":0},{"object":"embedding","embedding":[1.25,-1.5,0.0023064255],"index":1}],"model":"text-embedding-3-small","usage":{"prompt_tokens":8,"total_tokens":8}}}]}'
+  outcome: observed
+assert:
+- view: llm.embeddings.LastEmbed
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.embeddings.LastEmbed
+  contains:
+    valid_program: true
+    error_code: null
+    vectors: 3
+    dimensions: [3, 3, 3]
+    leading: ['0.25', '1.25', '2.25']
+    batch_texts: [3]
+    input_tokens: 8
+    upstream_model: text-embedding-3-small
+    request_bodies:
+    - '{"model":"text-embedding-3-small","input":["the food was delicious","the waiter was friendly","the bill was fair"],"encoding_format":"float"}'

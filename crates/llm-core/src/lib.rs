@@ -26,7 +26,8 @@ pub use id::{CallId, Id, InvalidId, ToolName};
 pub use image::{ImageMediaType, ImageSource};
 pub use item::{Item, ToolCall};
 pub use port::{
-    BoxFuture, Model, SHOWN_TEXT_KEPT, SHOWN_TEXT_UNPAIRED, StreamEvent, StreamSink, VecSink,
+    BoxFuture, EmbedRequest, Embedder, Embeddings, MAX_EMBED_DIMENSIONS, MAX_EMBED_TEXTS, Model,
+    SHOWN_TEXT_KEPT, SHOWN_TEXT_UNPAIRED, StreamEvent, StreamSink, VecSink,
 };
 pub use tokio_util::sync::CancellationToken as Cancel;
 pub use turn::{

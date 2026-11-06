@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Embed input",
+  "x-ess-name": "llm.embeddings.Embed",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "request_json": {
+      "type": "string"
+    },
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "request_json",
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "c34ccddea7f4cc53d92a9b1d5b8b2a32b338f999f9d934ab70de21ac8a1bcc6b",
+    "contract_digest": "slice-sha256/2:0f8d3bbb796c166f56384062efe32b057bb9f98010cb8e0f4aa7236a04e57ca1",
+    "regenerate": "ess generate"
+  }
+}

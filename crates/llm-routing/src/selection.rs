@@ -1,4 +1,4 @@
-use crate::{Catalog, RouteTarget};
+use crate::{Catalog, RouteKind, RouteTarget};
 use llm_core::{
     AuthKind, BillingKind, Capabilities, Error, Id, Item, Protocol, Provenance, TurnRequest,
 };
@@ -133,7 +133,44 @@ pub struct Selection<'a> {
     pub config_digest: &'a str,
 }
 
+/// The target an embed request is sent to: an embed route's first target, never a fallback.
+#[derive(Debug)]
+pub struct EmbedSelection<'a> {
+    pub route_id: &'a Id,
+    pub binding: &'a Binding,
+    pub target: &'a RouteTarget,
+    pub config_digest: &'a str,
+}
+
 impl Catalog {
+    /// Selects the target an embed request to `alias` is sent to, without any I/O.
+    /// # Errors
+    /// Refuses an invalid or unknown alias (`invalid-request`) and a turn route (`unsupported`).
+    pub fn resolve_embed(&self, alias: &str) -> Result<EmbedSelection<'_>, Error> {
+        let alias = Id::new(alias).map_err(|_| Error::invalid("invalid route alias"))?;
+        let route = self
+            .routes
+            .get(&alias)
+            .ok_or_else(|| Error::invalid("unknown route alias"))?;
+        if route.declaration.kind != RouteKind::Embed {
+            return Err(Error::unsupported("a turn route takes no embed request"));
+        }
+        let target = route
+            .targets
+            .first()
+            .ok_or_else(|| Error::invalid("route has no target"))?;
+        let binding = self
+            .bindings
+            .get(&target.serving_model_id)
+            .ok_or_else(|| Error::invalid("route binding is missing"))?;
+        Ok(EmbedSelection {
+            route_id: &route.declaration.id,
+            binding,
+            target,
+            config_digest: &self.digest,
+        })
+    }
+
     /// Explain admission using a caller-supplied conservative input-token bound for all candidates.
     /// Unknown counts remain unknown and cannot prove context admission. No tokenization is implied.
     /// # Errors
@@ -149,6 +186,9 @@ impl Catalog {
             .routes
             .get(&alias)
             .ok_or_else(|| Error::invalid("unknown route alias"))?;
+        if route.declaration.kind != RouteKind::Turn {
+            return Err(Error::unsupported("an embed route takes no turn"));
+        }
         let mut targets = Vec::with_capacity(route.targets.len());
         let mut selected = None;
         for target in &route.targets {
