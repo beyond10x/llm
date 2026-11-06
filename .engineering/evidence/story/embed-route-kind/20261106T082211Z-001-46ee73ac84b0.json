@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-06T08:22:11Z",
+  "actor": "human:timo",
+  "artifact": "story:embed-route-kind",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo-unit.sh u3 test -p llm-embed --test embed --test adversary_u3_embed; -p llm-routing --test catalog; llm-conformance check x3 at 8c6dfdc6f",
+    "reference": "impl/embed-route-kind e48fa5712: embed 14/14, adversary_u3 11/11, catalog 24/24; conformance 1049/1049; base 0f887ca68 has no embed route (new behaviour)"
+  }
+}
