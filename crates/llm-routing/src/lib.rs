@@ -9,10 +9,10 @@ mod fallback;
 mod selection;
 
 pub use catalog::{
-    Catalog, CatalogDocument, MAX_CONFIG_BYTES, MAX_ROUTE_TARGETS, Route, RouteTarget,
+    Catalog, CatalogDocument, MAX_CONFIG_BYTES, MAX_ROUTE_TARGETS, Route, RouteKind, RouteTarget,
 };
 pub use fallback::{
     Attempt, AttemptResult, FallbackPolicy, FallbackRun, Halt, MAX_RETRY_ATTEMPTS, Models, Pause,
     Ports, RETRY_WARNING, RetryPolicy,
 };
-pub use selection::{Rejection, RouteExplanation, Selection, TargetExplanation};
+pub use selection::{EmbedSelection, Rejection, RouteExplanation, Selection, TargetExplanation};

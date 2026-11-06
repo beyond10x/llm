@@ -16,6 +16,25 @@ enum Format {
     V1,
 }
 
+/// What a route serves: turns, or embed requests. Selection never sends one to the other.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum RouteKind {
+    #[default]
+    Turn,
+    Embed,
+}
+
+impl RouteKind {
+    #[expect(
+        clippy::trivially_copy_pass_by_ref,
+        reason = "serde's skip_serializing_if passes the field by reference"
+    )]
+    const fn is_turn(&self) -> bool {
+        matches!(self, Self::Turn)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Route {
@@ -23,6 +42,10 @@ pub struct Route {
     pub alias: Id,
     #[serde(default)]
     pub fallback_enabled: bool,
+    /// Absent is [`RouteKind::Turn`], and a turn route does not write it, so a catalog from
+    /// before the field keeps its bytes and digest.
+    #[serde(default, skip_serializing_if = "RouteKind::is_turn")]
+    pub kind: RouteKind,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

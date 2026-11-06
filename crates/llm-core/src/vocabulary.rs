@@ -125,6 +125,11 @@ pub struct Capabilities {
         skip_serializing_if = "Option::is_none"
     )]
     pub image_input: Option<bool>,
+    /// The most texts one embed request to the model may carry; a larger request is sent in
+    /// batches of at most this many, in order. Absent sends every text in one request, and
+    /// absent is not written, so a document from before the field keeps its bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub embed_batch_limit: Option<u32>,
 }
 
 const fn streams() -> bool {
@@ -161,6 +166,7 @@ impl Capabilities {
             input_during_output: false,
             structured_output: None,
             image_input: None,
+            embed_batch_limit: None,
         }
     }
 
@@ -224,6 +230,14 @@ impl Capabilities {
     #[must_use]
     pub const fn with_image_input(mut self, image_input: bool) -> Self {
         self.image_input = Some(image_input);
+        self
+    }
+
+    /// Declares the most texts one embed request may carry; set the field to `None` to send
+    /// every text in one request again.
+    #[must_use]
+    pub const fn with_embed_batch_limit(mut self, texts: u32) -> Self {
+        self.embed_batch_limit = Some(texts);
         self
     }
 

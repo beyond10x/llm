@@ -12,6 +12,7 @@ members = [
     "crates/llm-models",
     "crates/llm-cost",
     "crates/llm-calls",
+    "crates/llm-embed",
     "crates/llm-decide",
     "crates/llm-cli",
     "crates/llm-tool-call",

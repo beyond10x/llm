@@ -1259,6 +1259,7 @@ dependencies = [
  "llm-cost",
  "llm-credentials",
  "llm-decide",
+ "llm-embed",
  "llm-http",
  "llm-messages",
  "llm-models",
@@ -1355,6 +1356,22 @@ dependencies = [
  "llm-models",
  "llm-routing",
  "llm-tool-call",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "llm-embed"
+version = "0.22.0"
+dependencies = [
+ "llm-calls",
+ "llm-core",
+ "llm-cost",
+ "llm-credentials",
+ "llm-http",
+ "llm-providers",
+ "llm-routing",
+ "serde",
  "serde_json",
  "tokio",
 ]

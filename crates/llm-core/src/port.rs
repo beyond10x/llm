@@ -1,9 +1,9 @@
 use crate::{
-    CallId, Cancel, Capabilities, Error, Provenance, ToolName, TurnOutcome, TurnRequest,
+    CallId, Cancel, Capabilities, Error, Id, Provenance, ToolName, TurnOutcome, TurnRequest, Usage,
     encoded_len,
 };
 use serde::{Deserialize, Serialize};
-use std::{future::Future, pin::Pin};
+use std::{future::Future, pin::Pin, time::Duration};
 
 pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
@@ -84,6 +84,92 @@ pub trait Model: Send + Sync {
         sink: &'a mut dyn StreamSink,
         cancel: &'a Cancel,
     ) -> BoxFuture<'a, Result<TurnOutcome, Error>>;
+}
+
+/// The most texts one embed request carries, all batches together.
+pub const MAX_EMBED_TEXTS: usize = 16 * 1024;
+
+/// The widest dimension count a vector may have, asked for or returned.
+pub const MAX_EMBED_DIMENSIONS: usize = 64 * 1024;
+
+/// Texts to embed and the bounds of one embed request.
+///
+/// `timeout` bounds the whole request, every batch, credential and read included; past it the
+/// request fails `deadline`. `dimensions` asks for vectors of that length; absent leaves the
+/// model's default.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EmbedRequest {
+    pub texts: Vec<String>,
+    pub dimensions: Option<u32>,
+    pub timeout: Duration,
+}
+
+impl EmbedRequest {
+    pub const fn new(texts: Vec<String>, timeout: Duration) -> Self {
+        Self {
+            texts,
+            dimensions: None,
+            timeout,
+        }
+    }
+
+    /// # Errors
+    /// Refuses no text, an empty text, more than [`MAX_EMBED_TEXTS`] texts or texts past
+    /// [`crate::MAX_REQUEST_BYTES`] together (`too-large`), zero or more than
+    /// [`MAX_EMBED_DIMENSIONS`] dimensions, and a timeout of zero or past one day. No message
+    /// quotes a text.
+    pub fn validate(&self) -> Result<(), Error> {
+        if self.texts.is_empty() || self.texts.iter().any(String::is_empty) {
+            return Err(Error::invalid(
+                "an embed request needs at least one text and no text may be empty",
+            ));
+        }
+        let bytes = self
+            .texts
+            .iter()
+            .try_fold(0_usize, |total, text| total.checked_add(text.len()));
+        if self.texts.len() > MAX_EMBED_TEXTS
+            || bytes.is_none_or(|bytes| bytes > crate::MAX_REQUEST_BYTES)
+        {
+            return Err(Error::too_large("embed request exceeds its text bounds"));
+        }
+        if self
+            .dimensions
+            .is_some_and(|dimensions| dimensions == 0 || dimensions as usize > MAX_EMBED_DIMENSIONS)
+        {
+            return Err(Error::invalid(
+                "embed dimensions must be positive and within their bound",
+            ));
+        }
+        if self.timeout.is_zero() || self.timeout > Duration::from_hours(24) {
+            return Err(Error::invalid(
+                "an embed timeout must be positive and at most one day",
+            ));
+        }
+        Ok(())
+    }
+}
+
+/// One vector per text of the request, in the request's order, all of one length.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Embeddings {
+    pub vectors: Vec<Vec<f32>>,
+    /// Input tokens of every batch together; unknown when any batch reported none.
+    pub usage: Usage,
+    /// The model the far side reported; absent when it reported none.
+    pub upstream_model: Option<Id>,
+}
+
+/// An asynchronous, object-safe embedding port: texts in, one vector per text out, in input
+/// order. Implementations own the wire; this crate owns no transport.
+pub trait Embedder: Send + Sync {
+    /// Embeds every text of `request` within its timeout, or fails with a typed [`Error`]:
+    /// `deadline` past the timeout, `cancelled` when `cancel` fires.
+    fn embed<'a>(
+        &'a self,
+        request: &'a EmbedRequest,
+        cancel: &'a Cancel,
+    ) -> BoxFuture<'a, Result<Embeddings, Error>>;
 }
 
 /// A bounded sink for embedded consumers. Failure leaves the already accepted prefix intact.

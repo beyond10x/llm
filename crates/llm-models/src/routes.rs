@@ -1496,6 +1496,7 @@ fn expand<'a>(
             id: entry.id.clone(),
             alias: entry.id.clone(),
             fallback_enabled: false,
+            kind: llm_routing::RouteKind::Turn,
         });
         targets.push(RouteTarget {
             id: entry.id.clone(),
