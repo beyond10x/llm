@@ -1,7 +1,7 @@
 ---
 title: Crates
 sidebar_position: 1
-description: "Every package in the llm workspace at 0.22.0: what it is, its library name and its optional features."
+description: "Every package in the llm workspace at 0.23.0: what it is, its library name and its optional features."
 custom_edit_url: null
 ---
 
@@ -9,19 +9,22 @@ custom_edit_url: null
 
 # Crates
 
-The workspace holds 16 packages at version `0.22.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
+The workspace holds 19 packages at version `0.23.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
 
 | Package | Library | Directory | What it is |
 | --- | --- | --- | --- |
 | `llm-conformance` | binary `llm-conformance` | `checks/conformance` | — |
 | `llm-bedrock` | `llm_bedrock` | `crates/llm-bedrock` | Amazon Bedrock Runtime behind the model port: Converse and Anthropic InvokeModel, event-stream decoding and hand-written SigV4. |
 | `llm-blocking` | `llm_blocking` | `crates/llm-blocking` | A blocking turn adapter over any asynchronous model port, for a synchronous agent loop. |
+| `llm-calls` | `llm_calls` | `crates/llm-calls` | One text-free record per routed model call: route, target, timings, usage and priced cost, on a sink the caller injects. |
 | `llm-chat` | `llm_chat` | `crates/llm-chat` | Chat Completions protocol projection and gateway ingress for the declared supported subset. |
 | `llm-cli` | `llm_cli` | `crates/llm-cli` | The llm command: lists the models an llm.routes/1 configuration file declares and runs one streamed turn on any of them. |
 | `llm-core` | `llm_core` | `crates/llm-core` | Neutral model requests, results, streaming, capabilities and typed failures; no I/O or execution authority. |
 | `llm-cost` | `llm_cost` | `crates/llm-cost` | Usage accounting, versioned price estimates and explicit admission limits. |
 | `llm-credentials` | `llm_credentials` | `crates/llm-credentials` | Injected secret resolution and caller-managed credential refresh; optional backend adapters. |
+| `llm-decide` | `llm_decide` | `crates/llm-decide` | Typed decisions over a routed model: a closed-label classifier chain returning one label with per-label confidence or an abstention with its cause. |
 | `llm-docs` | binary `llm-docs` | `crates/llm-docs` | Generates and drift-checks the derived pages of the llm documentation site, and holds the programs its guides quote. |
+| `llm-embed` | `llm_embed` | `crates/llm-embed` | Embeddings over an embed route: the OpenAI POST /v1/embeddings wire, ordered batches, token usage and one call record per batch. |
 | `llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |
 | `llm-messages` | `llm_messages` | `crates/llm-messages` | Messages protocol projection and gateway ingress for the declared supported subset. |
 | `llm-models` | `llm_models` | `crates/llm-models` | Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account, and reads llm.routes/1 model routes into a catalog and resolvers. |

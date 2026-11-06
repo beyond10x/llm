@@ -1165,7 +1165,7 @@ checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 
 [[package]]
 name = "llm-bedrock"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "base64",
  "http",
@@ -1185,7 +1185,7 @@ dependencies = [
 
 [[package]]
 name = "llm-blocking"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "llm-core",
  "llm-credentials",
@@ -1199,7 +1199,7 @@ dependencies = [
 
 [[package]]
 name = "llm-calls"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "llm-core",
  "llm-cost",
@@ -1211,7 +1211,7 @@ dependencies = [
 
 [[package]]
 name = "llm-chat"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "http",
  "llm-core",
@@ -1225,7 +1225,7 @@ dependencies = [
 
 [[package]]
 name = "llm-cli"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "base64",
  "clap",
@@ -1244,7 +1244,7 @@ dependencies = [
 
 [[package]]
 name = "llm-conformance"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "async-trait",
  "clap",
@@ -1278,7 +1278,7 @@ dependencies = [
 
 [[package]]
 name = "llm-core"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "base64",
  "serde",
@@ -1290,7 +1290,7 @@ dependencies = [
 
 [[package]]
 name = "llm-cost"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "llm-core",
  "rusqlite",
@@ -1304,7 +1304,7 @@ dependencies = [
 
 [[package]]
 name = "llm-credentials"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "apple-native-keyring-store",
  "async-trait",
@@ -1333,7 +1333,7 @@ dependencies = [
 
 [[package]]
 name = "llm-decide"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "llm-calls",
  "llm-core",
@@ -1345,7 +1345,7 @@ dependencies = [
 
 [[package]]
 name = "llm-docs"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "clap",
  "llm-blocking",
@@ -1362,7 +1362,7 @@ dependencies = [
 
 [[package]]
 name = "llm-embed"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "llm-calls",
  "llm-core",
@@ -1378,7 +1378,7 @@ dependencies = [
 
 [[package]]
 name = "llm-http"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "bytes",
  "httpdate",
@@ -1392,7 +1392,7 @@ dependencies = [
 
 [[package]]
 name = "llm-messages"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "http",
  "llm-core",
@@ -1406,7 +1406,7 @@ dependencies = [
 
 [[package]]
 name = "llm-models"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "keyring-core",
  "llm-bedrock",
@@ -1431,7 +1431,7 @@ dependencies = [
 
 [[package]]
 name = "llm-providers"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "http",
  "llm-core",
@@ -1447,7 +1447,7 @@ dependencies = [
 
 [[package]]
 name = "llm-responses"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "llm-core",
  "llm-credentials",
@@ -1459,7 +1459,7 @@ dependencies = [
 
 [[package]]
 name = "llm-routing"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "llm-core",
  "llm-credentials",
@@ -1473,7 +1473,7 @@ dependencies = [
 
 [[package]]
 name = "llm-tool-call"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "llm-core",
  "llm-credentials",

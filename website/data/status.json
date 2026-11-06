@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-05",
+  "asOf": "2026-11-06",
   "format": "b10x-status/1",
   "items": [
     {
@@ -394,6 +394,18 @@
     },
     {
       "area": "Helpers for agent loops",
+      "detail": "llm-decide: a Chain asks its classifiers in order under one deadline for one LabelSet and returns a Decision (one label of the set, a confidence per label in basis points, unknown absent) or an Abstention caused Timeout, ProviderError with the llm error code, or OffLabel, and every attempt. ModelClassifier asks a routed model by a strict output schema or one forced tool through record_turn, one classification record per call; LexicalClassifier wraps the caller's Lexical and makes no call. Fixture evidence only; no live model was asked.",
+      "label": "A closed-label classifier chain",
+      "status": "shipped"
+    },
+    {
+      "area": "Helpers for agent loops",
+      "detail": "A catalog route declares kind = \"embed\" (absent is turn, so older catalogs keep their digest); selection refuses a turn there and an embed request on a turn route as unsupported before I/O. llm-embed: OpenAiEmbedder implements llm_core::Embedder over OpenAI's POST /v1/embeddings, returns one vector per text in input order with input tokens (unknown stays unknown) within the request's timeout (deadline past it), splits a request past the serving model's embed_batch_limit into ordered batches, refuses an answer whose count, indexes or lengths do not fit, and writes one embed-batch record per batch. Fixture evidence only; no live endpoint was asked.",
+      "label": "Embeddings over an embed route",
+      "status": "shipped"
+    },
+    {
+      "area": "Helpers for agent loops",
       "detail": "llm-blocking: BlockingModel runs one turn on the calling thread, hands events to a BlockingSink as they arrive, takes cancellation from any thread, and forks for concurrent turns.",
       "label": "A blocking adapter for a synchronous loop",
       "status": "shipped"
@@ -408,6 +420,18 @@
       "area": "Accounting",
       "detail": "Versioned llm.prices/1 books, exact decimal amounts, cache and compute pricing, six separate bases and unknown quantities kept unknown.",
       "label": "Usage pricing",
+      "status": "shipped"
+    },
+    {
+      "area": "Accounting",
+      "detail": "llm-calls: record_turn runs Catalog::run_turn and writes one CallRecord to the caller's CallSink: route, the target that answered or failed last, upstream model, role, kind, outcome, error code and dispatch, attempt count, start time, latency and time to first event from the caller's Clock, usage with unknown counters absent, and the cost under an optional price book, complete: false when a line is unknown. The record has no text field.",
+      "label": "One text-free record per routed call",
+      "status": "shipped"
+    },
+    {
+      "area": "Accounting",
+      "detail": "llm-calls: record_turn_shadowed returns the primary run with a ShadowCalls handle that has sent nothing; driven after the caller is answered, it sends the same request to each Shadow route of the primary route, whose answer reaches only its CallRecord (role shadow, naming the primary record). Each shadow call reserves on a ShadowLedger, one llm-cost budget engine per shadow and UTC day with the daily cap as its limit, in one step with the cap check; past the cap it is recorded skipped and not sent. The reservation settles at the priced cost of every attempt, and an incomplete cost stays held. A primary that made no attempt gets no shadow. The cap is per process and lost on restart (an in-memory budget engine), so one ledger must serve every shadow of a deployment; a durable cap is not built. Fixture evidence only: no paid shadow call has been made.",
+      "label": "A shadow route beside the primary, under a daily cap",
       "status": "shipped"
     },
     {
@@ -429,5 +453,5 @@
       "status": "planned"
     }
   ],
-  "source": "docs/implementation-status.md in the llm repository, at 0.22.0"
+  "source": "docs/implementation-status.md in the llm repository, at 0.23.0"
 }

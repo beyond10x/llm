@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-06
+
 ### Added
 
 - `llm-calls`: `record_turn` writes one text-free `CallRecord` per routed turn to the caller's `CallSink`, timed by its `Clock`
@@ -14,12 +16,16 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `llm-decide`: a closed-label classifier `Chain` returning one label with per-label confidence or a caused abstention
 - ESS: domain `llm.decisions`, 11 classification scenarios and 2 generated outcome scenarios; the floor is 1034 (was 1021)
 - `llm-calls`: `record_turn_shadowed` sends a `Shadow` route the request after the primary, under a daily `ShadowLedger` cap
+- The shadow cap is per process and lost on restart; a primary that made no attempt gets no shadow
+- ESS: 6 shadow call scenarios; the conformance floor is 1040 (was 1034)
 - Catalog routes declare `kind = "embed"`; selection refuses a turn there and an embed request on a turn route before I/O
 - `llm-embed`: `OpenAiEmbedder` serves `llm_core::Embedder` over `/v1/embeddings` in ordered batches, one record per batch; a request id too long for its batch record ids is refused `invalid-request` before the first batch
 - ESS: domain `llm.embeddings`, 8 embedding scenarios and 1 generated outcome scenario; the floor is 1049 (was 1040)
 
 ### Changed
 
+- **Breaking:** `llm_routing::Route` gains a public `kind` (`RouteKind`): a `Route` literal adds `kind: RouteKind::Turn`
+- `RouteKind::Turn` is the default and is not written, so a TOML catalog needs no change and keeps its digest
 - ESS 0.87.0 (was 0.86.0) in CI and `llm-conformance`; the suite and the schema are byte-identical
 
 ## [0.22.0] - 2026-11-05
