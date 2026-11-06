@@ -141,21 +141,35 @@ fn call_dispatch(run: &FallbackRun, error: &Error) -> Dispatch {
 }
 
 /// Every attempt that may have cost something, priced; `None` when none may have.
+fn call_cost(record_id: &Id, run: &FallbackRun, prices: &PriceBook) -> Option<Cost> {
+    Cost::of_attempts(prices, costly_attempts(record_id, run, prices))
+}
+
+/// Every attempt that may have cost something, as `llm-cost` prices it.
 ///
 /// An attempt that was not sent and reported no usage cost nothing and is left out. Every other
 /// attempt (accepted, rejected or of unknown dispatch, retried or fallen back from) is quoted, so
 /// one with unknown usage leaves the call's cost incomplete.
-fn call_cost(record_id: &Id, run: &FallbackRun, prices: &PriceBook) -> Option<Cost> {
-    let usages: Vec<AttemptUsage> = run
-        .attempts
+fn costly_attempts(record_id: &Id, run: &FallbackRun, prices: &PriceBook) -> Vec<AttemptUsage> {
+    run.attempts
         .iter()
         .filter(|attempt| {
             attempt_dispatch(attempt) != Dispatch::NotSent
                 || observation(attempt).is_some_and(|observed| observed.usage.is_some())
         })
         .map(|attempt| attempt_usage(record_id, attempt, observation(attempt), prices))
-        .collect();
-    Cost::of_attempts(prices, usages)
+        .collect()
+}
+
+/// How a run ended: cancelled when the run was cancelled, failed for any other failure.
+fn run_outcome(run: &FallbackRun) -> Outcome {
+    match &run.result {
+        Ok(_) => Outcome::Succeeded,
+        Err(error) if run.halt == Halt::Cancelled || error.code == ErrorCode::Cancelled => {
+            Outcome::Cancelled
+        }
+        Err(_) => Outcome::Failed,
+    }
 }
 
 fn turn_record(
@@ -166,17 +180,11 @@ fn turn_record(
 ) -> CallRecord {
     let last = run.attempts.last();
     let observed = last.and_then(observation);
-    let (outcome, error_code, dispatch) = match &run.result {
-        Ok(_) => (Outcome::Succeeded, None, None),
-        Err(error) => {
-            let outcome = if run.halt == Halt::Cancelled || error.code == ErrorCode::Cancelled {
-                Outcome::Cancelled
-            } else {
-                Outcome::Failed
-            };
-            (outcome, Some(error.code), Some(call_dispatch(run, error)))
-        }
+    let (error_code, dispatch) = match &run.result {
+        Ok(_) => (None, None),
+        Err(error) => (Some(error.code), Some(call_dispatch(run, error))),
     };
+    let outcome = run_outcome(run);
     let cost = prices.and_then(|book| call_cost(&identity.id, run, book));
     CallRecord::new(
         identity,

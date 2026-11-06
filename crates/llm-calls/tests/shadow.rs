@@ -140,7 +140,7 @@ impl<'c> Fake<'c> {
             text: text.to_owned(),
             after_ms: 0,
             usage: Some(usage(100, 50)),
-            upstream_model: None,
+            upstream_model: Some(id("example/Any-Model")),
             fail: None,
             fail_times: None,
             gate: None,
