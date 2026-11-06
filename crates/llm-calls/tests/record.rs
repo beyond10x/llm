@@ -300,7 +300,7 @@ fn a_serialized_record_holds_none_of_the_turns_text() {
     let mut answering = Fake::on(&catalog, "remote-large", &clock)
         .failing(
             Error::new(ErrorCode::RateLimited, ERROR_PROSE)
-                .with_dispatch(Dispatch::Rejected)
+                .with_dispatch(Dispatch::NotSent)
                 .with_retriable(true),
         )
         .usage(Usage {
@@ -543,6 +543,43 @@ fn a_call_without_a_price_book_records_usage_and_no_cost() {
         (Some(12), Some(3))
     );
     assert_eq!(record.cost, None);
+}
+
+/// The cost covers every attempt that may have cost something: an unsent attempt that reported
+/// nothing is left out, and one the far side rejected is priced, its unknown usage leaving the
+/// call incomplete while the answering attempt's amount stays the known subtotal.
+#[test]
+fn a_call_cost_covers_every_attempt_that_may_have_cost_something() {
+    let catalog = catalog(true);
+    let clock = Scripted::at(1_000);
+    let book = prices(&catalog, "remote-large", "example/Large-Model");
+    for (dispatch, complete) in [(Dispatch::NotSent, true), (Dispatch::Rejected, false)] {
+        let mut answering = Fake::on(&catalog, "remote-large", &clock).usage(Usage {
+            input_tokens: Some(100),
+            output_tokens: Some(20),
+            cached_input_tokens: Some(0),
+            cache_creation_input_tokens: Some(0),
+            reasoning_output_tokens: None,
+        });
+        answering.upstream_model = Some(id("example/Large-Model"));
+        let models = fleet([
+            (
+                "local-small",
+                Fake::on(&catalog, "local-small", &clock)
+                    .failing(Error::new(ErrorCode::Unavailable, "down").with_dispatch(dispatch)),
+            ),
+            ("remote-large", answering),
+        ]);
+        let ran = run(&catalog, &models, &request(), &clock, Some(&book));
+        let record = only(&ran.records);
+        assert_eq!(record.attempts, 2, "{dispatch:?}: {record:?}");
+        let cost = record.cost.as_ref().unwrap();
+        assert_eq!(
+            (cost.complete, cost.known_subtotal.to_string().as_str()),
+            (complete, "0.14"),
+            "{dispatch:?}: {record:?}"
+        );
+    }
 }
 
 #[test]

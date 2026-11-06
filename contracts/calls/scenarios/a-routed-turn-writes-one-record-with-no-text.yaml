@@ -115,7 +115,7 @@ timeline:
       upstream_model = "example/Large-Model"
       input = { amount = "1", per_units = 1000 }
       output = { amount = "2", per_units = 1000 }
-    program_json: '{"record_id":"call-text","input_tokens":100,"start_unix_ms":1762344000000,"models":{"remote-large":{"answer":"answer-marker-okapi-4412","tool_arguments":"{\"q\":\"argument-marker-gecko-2096\"}","fail":{"code":"rate-limited","dispatch":"rejected","retriable":true,"message":"error-prose-marker-civet-8834"},"fail_times":1,"usage":{"input_tokens":100,"output_tokens":20,"cached_input_tokens":0,"cache_creation_input_tokens":0,"reasoning_output_tokens":5},"upstream_model":"example/Large-Model"}}}'
+    program_json: '{"record_id":"call-text","input_tokens":100,"start_unix_ms":1762344000000,"models":{"remote-large":{"answer":"answer-marker-okapi-4412","tool_arguments":"{\"q\":\"argument-marker-gecko-2096\"}","fail":{"code":"rate-limited","dispatch":"not-sent","retriable":true,"message":"error-prose-marker-civet-8834"},"fail_times":1,"usage":{"input_tokens":100,"output_tokens":20,"cached_input_tokens":0,"cache_creation_input_tokens":0,"reasoning_output_tokens":5},"upstream_model":"example/Large-Model"}}}'
   outcome: observed
 assert:
 - view: llm.calls.LastCall

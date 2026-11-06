@@ -1725,7 +1725,7 @@
         "scenario": "llm.calls/authored/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete"
       },
       "calls/scenarios/a-routed-turn-writes-one-record-with-no-text.yaml": {
-        "digest": "sha256:41c53e26db69a8ff1b954b0c10af8158a5f554c2c4f0cbe7ebb9e7f1b96842f3",
+        "digest": "sha256:f3f85842c08bbbcfe9b13035f123dd3b128aed30f6d8dedf4b6480bf363c6364",
         "disposition": "accepted",
         "scenario": "llm.calls/authored/a-routed-turn-writes-one-record-with-no-text"
       },
@@ -29903,7 +29903,7 @@
             },
             "program_json": {
               "kind": "literal",
-              "value": "{\"record_id\":\"call-text\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"remote-large\":{\"answer\":\"answer-marker-okapi-4412\",\"tool_arguments\":\"{\\\"q\\\":\\\"argument-marker-gecko-2096\\\"}\",\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\",\"retriable\":true,\"message\":\"error-prose-marker-civet-8834\"},\"fail_times\":1,\"usage\":{\"input_tokens\":100,\"output_tokens\":20,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0,\"reasoning_output_tokens\":5},\"upstream_model\":\"example/Large-Model\"}}}"
+              "value": "{\"record_id\":\"call-text\",\"input_tokens\":100,\"start_unix_ms\":1762344000000,\"models\":{\"remote-large\":{\"answer\":\"answer-marker-okapi-4412\",\"tool_arguments\":\"{\\\"q\\\":\\\"argument-marker-gecko-2096\\\"}\",\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"not-sent\",\"retriable\":true,\"message\":\"error-prose-marker-civet-8834\"},\"fail_times\":1,\"usage\":{\"input_tokens\":100,\"output_tokens\":20,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0,\"reasoning_output_tokens\":5},\"upstream_model\":\"example/Large-Model\"}}}"
             },
             "turn_json": {
               "kind": "literal",

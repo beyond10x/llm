@@ -583,10 +583,18 @@ no ledger of these records; the deployed ledger is llm-gateway's.
 The record has no text field of any kind. Every field is an identifier, a closed set, a count, a
 time or an exact amount, so no prompt, answer, reasoning, tool argument or error message can
 reach it, and a failure is its code alone. Usage is the last attempt's report, and a counter it
-did not report stays absent, never zero. The cost prices that usage under the caller's
-`llm-cost` price book, matched by serving model and binding revision; any unknown line leaves
-it `complete: false` with the known lines' subtotal as a lower bound. With no price book, or no
-attempt, the record has no cost.
+did not report stays absent, never zero.
+
+The cost and a failure's dispatch cover every attempt, because routing retries and falls back
+after a retriable failure whatever its dispatch, `accepted` included. The cost prices each
+attempt that may have cost something under the caller's `llm-cost` price book, matched by
+serving model and binding revision, and adds them up; only an attempt that was not sent and
+reported no usage is left out. Any unknown line, an earlier accepted attempt's unknown usage
+included, leaves it `complete: false` with the known lines' subtotal as a lower bound. With no
+price book, or no attempt to price, the record has no cost. A failed call's dispatch is the
+furthest any attempt or the final failure reached (not sent, rejected, unknown, accepted), so a
+limit refusal, deadline or cancellation after an accepted attempt does not record it as not
+sent.
 
 `record_turn` wraps `Catalog::run_turn` and returns its run unchanged. It reads the target, the
 attempt count and the usage from `FallbackRun.attempts`, so routing needs nothing new. A counting
