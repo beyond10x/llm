@@ -6,10 +6,15 @@
 //! [`Stopwatch`] and [`Cost::quote`] build a record for a call that is not a turn.
 
 mod record;
+mod shadow;
 
 pub use record::{
     CallFacts, CallIdentity, CallLog, CallRecord, CallSink, Clock, Cost, Kind, Outcome, Role,
     Stopwatch, SystemClock, Timing,
+};
+pub use shadow::{
+    Shadow, ShadowCalls, ShadowLedger, ShadowOutcome, ShadowResult, Shadowing,
+    record_turn_shadowed, utc_day,
 };
 
 use llm_core::{
