@@ -26,8 +26,10 @@ use llm_cost::{
     },
 };
 use llm_routing::{Catalog, FallbackPolicy, FallbackRun, Models, Pause, Ports, Selection};
+use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, btree_map::Entry},
+    fmt::Write as _,
     sync::{Arc, Mutex, PoisonError},
 };
 
@@ -39,8 +41,12 @@ pub const fn utc_day(unix_ms: u64) -> u64 {
 }
 
 /// Where shadow calls are admitted: one `llm.budget` ledger per shadow and UTC day, its limit the
-/// shadow's daily cap. Keep one for as long as the shadows it admits run: a new ledger starts
-/// every day's cap afresh.
+/// shadow's daily cap.
+///
+/// The cap is held in memory, in `llm-cost`'s `BudgetEngine`, which is not a durable permission:
+/// it is per process and lost on restart. A restarted process, a second process, or a second
+/// ledger in the same process each start every day's cap afresh, so one ledger must serve every
+/// shadow of a deployment, for as long as the deployment runs. A durable cap is not built yet.
 #[derive(Debug)]
 pub struct ShadowLedger {
     id: Id,
@@ -229,7 +235,8 @@ pub enum ShadowOutcome {
 pub struct ShadowResult {
     pub shadow_id: Id,
     pub shadow_route_id: Id,
-    /// `<primary record id>/shadow/<shadow id>`; absent when the shadow was refused.
+    /// `<primary record id>/shadow/<shadow id>`, or `shadow-sha256-<hex>` of both when that would
+    /// pass the 256-byte id bound; absent when the shadow was refused.
     pub record_id: Option<Id>,
     pub outcome: ShadowOutcome,
 }
@@ -303,8 +310,8 @@ impl ShadowCalls<'_> {
             .find(|target| explanation.selected_target_id.as_ref() == Some(&target.target_id))
             .or_else(|| explanation.targets.first())
             .ok_or(ErrorCode::InvalidRequest)?;
-        let record_id = Id::new(format!("{}/shadow/{}", self.primary_record_id, shadow.id))
-            .map_err(|_| ErrorCode::InvalidRequest)?;
+        let record_id = shadow_record_id(&self.primary_record_id, &shadow.id)
+            .ok_or(ErrorCode::InvalidRequest)?;
         let assumption = Id::new("shadow-reserve").map_err(|_| ErrorCode::InvalidRequest)?;
         let reservation = ReservationRequest {
             id: record_id.clone(),
@@ -423,6 +430,27 @@ impl ShadowCalls<'_> {
     }
 }
 
+/// A shadow call's record id, which is also its reservation id: `<primary>/shadow/<shadow>`
+/// while that fits an id, else `shadow-sha256-<hex>` of the two ids, length-prefixed so no two
+/// pairs share an input. The readable form always holds `/shadow/` and the digest form never
+/// does, so the two never meet.
+fn shadow_record_id(primary: &Id, shadow: &Id) -> Option<Id> {
+    Id::new(format!("{primary}/shadow/{shadow}"))
+        .ok()
+        .or_else(|| {
+            let mut hasher = Sha256::new();
+            for part in [primary.as_str(), shadow.as_str()] {
+                hasher.update(u64::try_from(part.len()).unwrap_or(u64::MAX).to_be_bytes());
+                hasher.update(part.as_bytes());
+            }
+            let mut digest = String::from("shadow-sha256-");
+            for byte in hasher.finalize() {
+                write!(digest, "{byte:02x}").ok()?;
+            }
+            Id::new(digest).ok()
+        })
+}
+
 /// The record of a shadow the ledger did not admit: not sent, no attempt, no latency.
 fn skipped(identity: CallIdentity, route_id: &Id, now: u64) -> CallRecord {
     CallRecord::new(
@@ -461,7 +489,8 @@ impl StreamSink for Unseen {
 ///
 /// The primary call, its record and what its caller is shown are exactly those of
 /// [`crate::record_turn`]: the shadows start only when the returned handle is driven. A primary
-/// call refused before it starts has no record and no shadow.
+/// call refused before it starts has no record and no shadow, and one that made no attempt (its
+/// caller's admission refused it, or it was cancelled first) has its record and no shadow.
 ///
 /// # Errors
 /// Exactly the refusals of [`crate::record_turn`].
@@ -490,10 +519,13 @@ pub async fn record_turn_shadowed<'a>(
         recording,
     )
     .await?;
+    // A primary that sent nothing has nothing to compare with: no shadow is sent or paid.
     let shadows = shadowing
         .shadows
         .iter()
-        .filter(|shadow| shadow.primary_route_id == run.explanation.route_id)
+        .filter(|shadow| {
+            !run.attempts.is_empty() && shadow.primary_route_id == run.explanation.route_id
+        })
         .collect();
     Ok((
         run,

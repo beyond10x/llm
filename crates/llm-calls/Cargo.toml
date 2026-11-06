@@ -19,6 +19,7 @@ llm-core.workspace = true
 llm-routing = { path = "../llm-routing" }
 llm-cost = { path = "../llm-cost" }
 serde.workspace = true
+sha2.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
