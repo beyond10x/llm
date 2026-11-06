@@ -1,0 +1,25 @@
+[package]
+name = "llm-decide"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+description = "Typed decisions over a routed model: a closed-label classifier chain returning one label with per-label confidence or an abstention with its cause."
+
+[lints]
+workspace = true
+
+[lib]
+name = "llm_decide"
+
+[dependencies]
+llm-core.workspace = true
+llm-routing = { path = "../llm-routing" }
+llm-calls = { path = "../llm-calls" }
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+llm-cost = { path = "../llm-cost" }
