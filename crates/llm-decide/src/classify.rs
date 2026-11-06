@@ -6,7 +6,7 @@ use llm_core::{
     BoxFuture, Cancel, Error, ErrorCode, Id, Item, OutputFormat, StreamEvent, StreamSink,
     ToolChoice, ToolName, ToolSpec, TurnOutcome, TurnRequest,
 };
-use llm_routing::{Catalog, FallbackPolicy, Models, Pause, Selection};
+use llm_routing::{Catalog, FallbackPolicy, Halt, Models, Pause, Selection};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 use std::{
@@ -400,13 +400,12 @@ fn millis(duration: Duration) -> u64 {
 /// Holds an answer to the set and the floor: a decision, or an abstention `OffLabel`.
 fn settle(
     classifier_id: &Id,
-    ask: &Ask<'_>,
+    set: &LabelSet,
     answer: Option<Answer>,
     min_confidence_bps: Option<u16>,
     latency_ms: u64,
     call_record_id: Option<Id>,
 ) -> Classification {
-    let set = ask.label_set;
     let decided = answer.filter(|answer| {
         set.contains(&answer.label)
             && answer
@@ -444,6 +443,47 @@ fn settle(
         latency_ms,
         call_record_id,
     })
+}
+
+/// What a chain makes of one classifier's result, whoever implemented the classifier: a decision
+/// is held again to the set and the classifier's floor (a label outside the set, a confidence
+/// above [`MAX_BPS`], a confidence given twice or under the floor abstains `OffLabel`), both
+/// results carry the classifier's id, and no abstention is final; the chain alone marks that.
+pub(crate) fn hold(
+    classifier: &dyn Classifier,
+    set: &LabelSet,
+    result: Classification,
+) -> Classification {
+    match result {
+        Classification::Abstained(mut abstention) => {
+            abstention.classifier_id = classifier.id().clone();
+            abstention.is_final = false;
+            Classification::Abstained(abstention)
+        }
+        Classification::Decided(decision) => {
+            let mut confidences_bps = BTreeMap::new();
+            let mut distinct = true;
+            for confidence in &decision.confidences {
+                if let Some(bps) = confidence.confidence_bps {
+                    distinct &= confidences_bps
+                        .insert(confidence.label.clone(), bps)
+                        .is_none();
+                }
+            }
+            let answer = distinct.then_some(Answer {
+                label: decision.label,
+                confidences_bps,
+            });
+            settle(
+                classifier.id(),
+                set,
+                answer,
+                classifier.min_confidence_bps(),
+                decision.latency_ms,
+                decision.call_record_id,
+            )
+        }
+    }
 }
 
 fn abstain(
@@ -505,7 +545,7 @@ impl<L: Lexical> Classifier for LexicalClassifier<L> {
             let latency_ms = millis(clock.monotonic().saturating_sub(start));
             settle(
                 &self.id,
-                &ask,
+                ask.label_set,
                 answer,
                 self.min_confidence_bps,
                 latency_ms,
@@ -624,7 +664,8 @@ impl ModelClassifier {
         let ports = ask.ports;
         let clock: &dyn Clock = ports.recording.clock;
         let start = clock.monotonic();
-        let latency = || millis(clock.monotonic().saturating_sub(start));
+        let elapsed = || clock.monotonic().saturating_sub(start);
+        let latency = || millis(elapsed());
         if ask.remaining.is_zero() {
             return abstain(&self.id, AbstentionCause::Timeout, 0, None);
         }
@@ -636,7 +677,10 @@ impl ModelClassifier {
         };
         let mut policy = self.policy;
         // No attempt starts, and no retry wait begins that would end, past the chain's deadline.
+        // `chain_bound`: routing's deadline is the chain's, not an earlier one of the classifier.
+        let mut chain_bound = false;
         if let Some(by) = Instant::now().checked_add(ask.remaining) {
+            chain_bound = policy.deadline.is_none_or(|own| by <= own);
             policy.deadline = Some(policy.deadline.map_or(by, |own| own.min(by)));
         }
         let cancel = ports.cancel.child_token();
@@ -662,13 +706,15 @@ impl ModelClassifier {
             },
         );
         let (ran, cancelled) = race(call, (ports.pause)(ask.remaining), &cancel).await;
-        let latency_ms = latency();
+        let spent = elapsed();
+        let latency_ms = millis(spent);
         // An answer at or after the deadline is not used, whoever noticed the deadline first.
-        let timed_out = cancelled || latency_ms >= millis(ask.remaining);
+        // Compared as durations: whole milliseconds would hide a deadline not yet reached.
+        let timed_out = cancelled || spent >= ask.remaining;
         let run = match ran {
             // Refused before any attempt: no call was made and no record written.
             Err(error) => {
-                let cause = if timed_out || error.code == ErrorCode::Deadline {
+                let cause = if timed_out {
                     AbstentionCause::Timeout
                 } else {
                     AbstentionCause::ProviderError(error.code)
@@ -678,13 +724,12 @@ impl ModelClassifier {
             Ok(run) => run,
         };
         let record = Some(record_id);
-        if timed_out {
+        // Routing halting on the chain's deadline is a timeout; a provider's own deadline error
+        // (a transport or client deadline) is a failed call with its code.
+        if timed_out || (chain_bound && run.halt == Halt::Deadline) {
             return abstain(&self.id, AbstentionCause::Timeout, latency_ms, record);
         }
         match run.result {
-            Err(error) if error.code == ErrorCode::Deadline => {
-                abstain(&self.id, AbstentionCause::Timeout, latency_ms, record)
-            }
             Err(error) => abstain(
                 &self.id,
                 AbstentionCause::ProviderError(error.code),
@@ -693,7 +738,7 @@ impl ModelClassifier {
             ),
             Ok(outcome) => settle(
                 &self.id,
-                &ask,
+                ask.label_set,
                 self.answer(ask.label_set, &outcome),
                 self.min_confidence_bps,
                 latency_ms,
