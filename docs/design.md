@@ -643,10 +643,15 @@ no compatible target, so each model classifier abstains `ProviderError` (`unsupp
 **Chain.** A `Chain` holds one label set, one deadline and its classifiers in order (at least one,
 distinct ids). It asks each in turn, telling it the time left on the recording clock, until one
 decides; every earlier one left an abstention, and when all abstain the last abstention is
-`final`. Every attempt is returned. A model call still open at the deadline is cancelled through
-its own child of the caller's `Cancel`, then awaited so its record is written, and abstains
-`Timeout`; an answer that arrives at or after the deadline is not used; routing is also given the
-deadline so no attempt or retry wait starts past it. A model classifier reached with no time
+`final`; only the chain sets that flag. Every attempt is returned. `Classifier` is a public
+trait, so the chain holds every result again to its set and the classifier's floor: a decision
+naming a label outside the set, a confidence above 10000 or given twice, or one under the floor
+abstains `OffLabel`. A model call still open at the deadline is cancelled through its own child
+of the caller's `Cancel`, then awaited so its record is written, and abstains `Timeout`; an answer
+that arrives at or after the deadline (compared as durations, not whole milliseconds) is not
+used; routing is also given the deadline so no attempt or retry wait starts past it, and its
+halting there is a `Timeout` too. A provider's own deadline error inside the chain's deadline is
+a failed call: `ProviderError` with code `deadline`. A model classifier reached with no time
 left abstains `Timeout` without a call. The deadline timer is the caller's `Pause`, the same port
 routing waits on between retries, so no executor is assumed.
 

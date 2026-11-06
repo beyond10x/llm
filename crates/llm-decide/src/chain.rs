@@ -1,6 +1,8 @@
 //! An ordered chain of classifiers for one label set under one deadline.
 
-use crate::classify::{Ask, Classification, Classifier, Decision, LabelSet, Ports, SetupError};
+use crate::classify::{
+    Ask, Classification, Classifier, Decision, LabelSet, Ports, SetupError, hold,
+};
 use llm_core::Id;
 use std::{collections::BTreeSet, time::Duration};
 
@@ -79,7 +81,9 @@ impl Chain {
     /// Asks each classifier in order until one decides, and reports every attempt.
     ///
     /// The deadline runs from the start on the recording clock; each classifier is told the
-    /// time left. When every classifier abstains, the last abstention is final. `request_id`
+    /// time left. Every result is held to the chain's label set and the classifier's floor, so a
+    /// decision outside them abstains `OffLabel`, whoever wrote the classifier. Only the last
+    /// abstention of a chain where none decided is final. `request_id`
     /// names this classification: a model call's record id is `<request id>/<classifier id>`.
     /// `input_tokens` is the caller's estimate of a model turn's input, which routing admits each
     /// target against (see [`Ask::input_tokens`]).
@@ -103,7 +107,12 @@ impl Chain {
                 input_tokens,
                 ports,
             };
-            let attempt = classifier.classify(ask).await;
+            // Held again here: a classifier is any implementation of a public trait.
+            let attempt = hold(
+                classifier.as_ref(),
+                &self.label_set,
+                classifier.classify(ask).await,
+            );
             let decided = matches!(attempt, Classification::Decided(_));
             attempts.push(attempt);
             if decided {
