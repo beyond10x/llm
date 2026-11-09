@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:routes-resolve-one-endpoint
 kind: story
-status: active
+status: implemented
 title: An endpoint whose source cannot be built refuses only its own routes
 summary: 'Issue 36: already fixed on main by 4e18172f (0.12.0); proven by test output'
 tags:
@@ -16,10 +16,11 @@ relations:
 scope:
 - confidence: cited
   path: crates/llm-models/tests/routes.rs
-revision: 4
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-09T22:06:21Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-09T22:06:21Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-09T22:34:44Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Context
 
@@ -46,3 +47,8 @@ release from 0.12.0 on carries it. Nothing was built for this story.
 `crates/llm-models/tests/routes.rs::an_endpoint_whose_source_cannot_be_built_refuses_only_its_own_routes`
 passes at `origin/main` `7c56b19b` on the feature sets the issue names (`environment,file` without
 `keychain`, and with `keychain`), and the issue is closed through the bot citing that output.
+
+## Issue
+
+Closed 2026-11-09 by b10x-bot with the test output as evidence:
+https://github.com/beyond10x/llm/issues/36#issuecomment-6753301729

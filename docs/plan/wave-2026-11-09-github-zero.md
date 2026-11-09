@@ -1,6 +1,6 @@
 # Wave 2026-11-09-github-zero
 
-Status: **open** (`approval-record:github-zero-acceptance-2026-11-09`, `non-interactive`). Epic
+Status: **paused 2026-11-09** (operator correction: the goal applies to ess only; nothing is merged or released) (`approval-record:github-zero-acceptance-2026-11-09`, `non-interactive`). Epic
 `epic:github-zero-2026-11-09`. Base: `main` at `7c56b19b` (llm 0.23.0). Integration branch
 `epic/github-zero`, tree `llm-gh-zero-int`. One pull request carries the wave; no release is part of
 it. Skill: AEP implementing 0.26.0.
@@ -31,7 +31,7 @@ One unit tree at a time; at most one sub-agent runs at once.
 
 | Story | Branch | Head | Tree | Stage |
 | --- | --- | --- | --- | --- |
-| `story:ingress-block-boundaries` | `impl/ingress-block-boundaries` | | `llm-gh-zero-u1` | planned |
+| `story:ingress-block-boundaries` | `impl/ingress-block-boundaries` | see branch | `llm-gh-zero-u1` | implementor ran; work committed on the branch, no adversary pass, not merged |
 
 Each tree is a managed worktree under the worktree tool's tree root (`llm/<tree>`), building into
 its own `target/`; every cargo call goes through the shared build slot. Scratch lives outside the
