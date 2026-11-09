@@ -6,6 +6,7 @@ status: open
 title: The live API and subscription runs need the operator's credentials
 relations:
 - blocks: story:anthropic-access
+- blocks: story:subscription-access-for-loom-consumers
 revision: 4
 ---
 ## What is missing

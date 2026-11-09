@@ -6,6 +6,7 @@ status: open
 title: The OpenAI subscription route needs the operator to name the ChatGPT account and route
 relations:
 - blocks: story:openai-access
+- blocks: story:subscription-access-for-loom-consumers
 revision: 1
 ---
 ## What is missing
