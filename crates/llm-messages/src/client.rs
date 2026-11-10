@@ -43,18 +43,75 @@ pub const OAUTH_BETA: &str = "oauth-2025-04-20";
 /// this wire, not a header a caller can configure.
 pub const OPENCODE_SESSION_HEADER: &str = "x-opencode-session";
 
-/// Every `OpenCode` Go base URL starts with this, as [`BaseUrl`] writes one.
-const OPENCODE_GO_PREFIX: &str = "https://opencode.ai/inference/go/";
-
-/// Whether `base_url` is `OpenCode` Go: scheme `https`, host `opencode.ai`, the default port and a
-/// path under `/inference/go/`.
+/// Whether `base_url` is `OpenCode` Go: scheme `https`, host `opencode.ai` (any case, one trailing
+/// dot allowed), the default port and a path under `/inference/go/` (percent-encoded unreserved
+/// characters decoded first).
 ///
 /// [`BaseUrl`] holds the `url` crate's serialisation: scheme and host lowercased, the scheme's
-/// default port dropped, dot segments resolved, no userinfo, and a path ending in `/`. On that
-/// form the prefix is exact: `http`, `opencode.ai.example`, `www.opencode.ai`, an explicit port
-/// such as `:8443` and a path such as `/zen/` or `/inference/gox/` all differ from it.
+/// default port dropped, dot segments resolved, no userinfo, and a path ending in `/`. That form is
+/// normalised further before the comparison; `http`, `opencode.ai.example`, `www.opencode.ai`, an
+/// explicit port such as `:8443` and a path such as `/zen/` or `/inference/gox/` all differ from it.
+/// A spelling that hides a path separator as `%2F` or `%5C` under the prefix is neither: the
+/// client constructor refuses it (see `classify_opencode`), and this returns `false`.
 pub fn is_opencode_go(base_url: &BaseUrl) -> bool {
-    base_url.as_str().starts_with(OPENCODE_GO_PREFIX)
+    matches!(classify_opencode(base_url), Ok(true))
+}
+
+/// The host [`is_opencode_go`] recognises, and the path it is served under.
+const OPENCODE_HOST: &str = "opencode.ai";
+const OPENCODE_GO_PATH: &str = "/inference/go/";
+
+/// Whether `base_url` is `OpenCode` Go on its normalised form: the host lower-cased with one
+/// trailing dot stripped, and the path with percent-encoded unreserved characters
+/// (`A-Z a-z 0-9 - . _ ~`) decoded. The request still goes to the URL as written.
+///
+/// # Errors
+/// Refuses a spelling that reaches `OpenCode` Go's host but whose path hides a `/` or `\` as
+/// `%2F` or `%5C` where the `OpenCode` Go prefix is, which cannot be told from `OpenCode` Go
+/// by any normalisation that keeps path segments apart.
+fn classify_opencode(base_url: &BaseUrl) -> Result<bool, Error> {
+    let Some(rest) = base_url.as_str().strip_prefix("https://") else {
+        return Ok(false);
+    };
+    let (authority, path) = rest.find('/').map_or((rest, ""), |at| rest.split_at(at));
+    let host = authority.to_ascii_lowercase();
+    let host = host.strip_suffix('.').unwrap_or(&host);
+    if host != OPENCODE_HOST {
+        return Ok(false);
+    }
+    let mut decoded = String::with_capacity(path.len());
+    let bytes = path.as_bytes();
+    let mut at = 0;
+    while at < bytes.len() {
+        let hex = |byte: u8| char::from(byte).to_digit(16);
+        let escaped = (bytes[at] == b'%' && at + 2 < bytes.len())
+            .then(|| hex(bytes[at + 1]).zip(hex(bytes[at + 2])))
+            .flatten()
+            .map(|(high, low)| u8::try_from(high * 16 + low).unwrap_or(0));
+        match escaped {
+            Some(b'/' | b'\\') => {
+                if OPENCODE_GO_PATH.starts_with(decoded.as_str())
+                    || decoded.starts_with(OPENCODE_GO_PATH)
+                {
+                    return Err(Error::invalid(
+                        "an OpenCode Go base URL hides a path separator in a percent escape",
+                    ));
+                }
+                return Ok(false);
+            }
+            Some(byte)
+                if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~') =>
+            {
+                decoded.push(char::from(byte));
+                at += 3;
+            }
+            _ => {
+                decoded.push(char::from(bytes[at]));
+                at += 1;
+            }
+        }
+    }
+    Ok(decoded.starts_with(OPENCODE_GO_PATH))
 }
 
 /// How many sessions this process has minted, so two clients built in the same nanosecond still
@@ -151,7 +208,7 @@ impl MessagesClient {
                 "a Messages client requires a Messages binding",
             ));
         }
-        let session = if is_opencode_go(&binding.declaration().endpoint.base_url) {
+        let session = if classify_opencode(&binding.declaration().endpoint.base_url)? {
             Some(mint_session())
         } else {
             None
