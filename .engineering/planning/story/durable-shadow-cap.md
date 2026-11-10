@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:durable-shadow-cap
 kind: story
-status: active
+status: implemented
 title: The shadow daily cap survives a restart and a second process
 tags:
 - from-finding
@@ -20,10 +20,11 @@ scope:
   path: crates/llm-calls/src/shadow.rs
 - confidence: inferred
   path: crates/llm-calls/tests/shadow.rs
-revision: 19
+revision: 20
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:25Z", actor: "human:timo", revision: 12}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:25Z", actor: "human:timo", revision: 13}
+- {from: "active", to: "implemented", at: "2026-11-10T04:21:42Z", actor: "human:timo", revision: 20, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 ## Context
 

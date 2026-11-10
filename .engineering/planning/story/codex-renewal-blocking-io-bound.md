@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:codex-renewal-blocking-io-bound
 kind: story
-status: active
+status: implemented
 title: A stalled Codex renewal file read ends within a bound
 summary: The renewal's blocking file I/O is unbounded, so the runtime cannot shut down while it hangs
 tags:
@@ -22,10 +22,11 @@ scope:
   path: crates/llm-credentials/tests/adversary_codex_renewal.rs
 - confidence: inferred
   path: docs/local-secrets.md
-revision: 13
+revision: 14
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:25Z", actor: "human:timo", revision: 10}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:25Z", actor: "human:timo", revision: 11}
+- {from: "active", to: "implemented", at: "2026-11-10T04:21:41Z", actor: "human:timo", revision: 14, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 ## Context
 

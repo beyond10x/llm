@@ -1,6 +1,6 @@
 # Wave 2026-11-09-github-zero
 
-Status: **delivered to the pull request** (resumed 2026-11-10 after a pause of 2026-11-09). Approvals:
+Status: **delivered to the pull request**, all six stories `implemented` (resumed 2026-11-10 after a pause of 2026-11-09). Approvals:
 `approval-record:github-zero-acceptance-2026-11-09`, `approval-record:github-zero-wave-2026-11-09`,
 `approval-record:github-zero-defects-2026-11-10` (all `non-interactive`). Epic
 `epic:github-zero-2026-11-09`. Base: `main` at `7c56b19b` (llm 0.23.0). Integration branch
@@ -76,6 +76,11 @@ wave of this plan takes: `story:call-tool-concurrent-spawned-refusals` (u4 pass 
   names, so no home directory path enters the repository.
 - `llm-conformance check` runs locally with ESS 0.87.0, the version CI pins, because the
   workstation's newer `ess` reports schema drift that CI does not.
+- The full gate on `epic/github-zero` failed twice, and only the failed step was rerun each time. Run 1
+  (`task rust`, `cargo test`): unit 2's adversary cases assumed an InvokeModel `redacted_thinking`
+  block shows the caller nothing, while unit 1 now relays it as an `OpaqueItem`. Fixed in `a4ebb5e1`.
+  Run 2 (`task rust`, workspace clippy): `doc_markdown` on a bare `InvokeModel` in that file. Fixed
+  in `76e116a2`. Then `cargo test -p llm-bedrock`, fmt and the four clippy lines all exit 0.
 
 ## Commits this wave makes
 

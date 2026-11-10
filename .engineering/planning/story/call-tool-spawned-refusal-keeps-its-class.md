@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:call-tool-spawned-refusal-keeps-its-class
 kind: story
-status: active
+status: implemented
 title: A credential refusal keeps its class through call_tool on a spawned task
 summary: A model turn run on tokio::spawn turns MissingCredential into ModelError::Model
 tags:
@@ -19,10 +19,11 @@ scope:
   path: crates/llm-tool-call/src/lib.rs
 - confidence: cited
   path: crates/llm-tool-call/tests/adversary_model.rs
-revision: 11
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 8}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 9}
+- {from: "active", to: "implemented", at: "2026-11-10T04:21:40Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"test_result":1,"review_outcome":3}}}
 ---
 ## Context
 

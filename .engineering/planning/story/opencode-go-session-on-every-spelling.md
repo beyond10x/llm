@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:opencode-go-session-on-every-spelling
 kind: story
-status: active
+status: implemented
 title: Every spelling of the OpenCode Go base URL gets the session header or is refused
 summary: A trailing-dot host or a percent-encoded path reaches OpenCode Go without x-opencode-session
 tags:
@@ -18,10 +18,11 @@ scope:
   path: crates/llm-messages/tests/opencode_session.rs
 - confidence: inferred
   path: crates/llm-providers/src/declaration.rs
-revision: 10
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 7}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 8}
+- {from: "active", to: "implemented", at: "2026-11-10T04:21:39Z", actor: "human:timo", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 ## Context
 

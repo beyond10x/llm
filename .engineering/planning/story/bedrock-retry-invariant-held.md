@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:bedrock-retry-invariant-held
 kind: story
-status: active
+status: implemented
 title: The Bedrock retry-before-answer invariant is held by llm-bedrock tests on both wires
 summary: AGENTS.md marks the Bedrock retry invariant UNMAPPED; InvokeModel and silent output are untested
 tags:
@@ -15,10 +15,11 @@ scope:
   path: crates/llm-bedrock/src/invoke.rs
 - confidence: cited
   path: crates/llm-bedrock/tests/client.rs
-revision: 11
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:23Z", actor: "human:timo", revision: 7}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 8}
+- {from: "active", to: "implemented", at: "2026-11-10T04:21:38Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Context
 

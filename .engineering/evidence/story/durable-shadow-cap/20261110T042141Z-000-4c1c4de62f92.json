@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-10T04:21:41Z",
+  "actor": "human:timo",
+  "artifact": "story:durable-shadow-cap",
+  "kind": "story",
+  "revision": 19,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 task rust on epic/github-zero at 76e116a2 (the whole cargo test lane: 2030 passed, 0 failed, after the integration fix a4ebb5e1; clippy fixed in 76e116a2, then cargo test -p llm-bedrock 174 passed, fmt and the four clippy lines exit 0), task docs exit 0, ess specify validate exit 0, task conformance 1049/1049 three times exit 0 (ESS 0.87.0), aep plan artifact validate exit 0",
+    "reference": "wave 2026-11-09-github-zero, docs/plan/wave-2026-11-09-github-zero.md"
+  }
+}

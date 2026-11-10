@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ingress-block-boundaries
 kind: story
-status: active
+status: implemented
 title: A Messages relay keeps redacted thinking between streamed blocks
 summary: StreamEvent has no block boundary, so the Messages ingress encoder refuses an answer with redacted thinking between streamed blocks
 relations:
@@ -75,10 +75,11 @@ scope:
   path: website/docs/concepts/neutral-boundary.md
 - confidence: inferred
   path: website/docs/status.mdx
-revision: 37
+revision: 38
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-09T22:06:24Z", actor: "human:timo", revision: 36}
 - {from: "proposed", to: "active", at: "2026-11-09T22:06:24Z", actor: "human:timo", revision: 37}
+- {from: "active", to: "implemented", at: "2026-11-10T04:21:38Z", actor: "human:timo", revision: 38, decided_on: {"recorded":{"test_result":1,"review_outcome":4}}}
 ---
 ## Context
 
