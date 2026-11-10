@@ -348,7 +348,14 @@ pub(crate) async fn decode_response(
         Error::protocol("Bedrock InvokeModel answer is not JSON").with_dispatch(Dispatch::Accepted)
     })?;
     let outcome = llm_messages::decode_message(&message, request, provenance)?;
+    let mut text_shown = false;
     for item in &outcome.items {
+        if matches!(item, Item::AssistantText { text } if !text.is_empty()) {
+            if text_shown {
+                show(sink, StreamEvent::MessageBoundary {}, cancel).await?;
+            }
+            text_shown = true;
+        }
         for event in shown(item) {
             show(sink, event, cancel).await?;
         }
@@ -372,6 +379,15 @@ fn shown(item: &Item) -> Vec<StreamEvent> {
                 delta: call.arguments.to_string(),
             },
         ],
+        Item::Opaque {
+            provenance,
+            payload,
+        } if payload.get("type").and_then(Value::as_str) == Some("redacted_thinking") => {
+            vec![StreamEvent::OpaqueItem {
+                provenance: provenance.clone(),
+                payload: payload.clone(),
+            }]
+        }
         Item::Opaque { payload, .. } => payload
             .get("thinking")
             .and_then(Value::as_str)

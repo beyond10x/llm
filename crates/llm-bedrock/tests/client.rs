@@ -5,6 +5,7 @@
 //! Every event-stream frame here is synthetic, built with `eventstream::encode_message`; the
 //! recorded answers are replayed in `tests/converse.rs`.
 
+use base64::{Engine, engine::general_purpose::STANDARD};
 use llm_bedrock::{
     Api, AwsCredentials, BedrockClient, BedrockTarget, CredentialSource, check_request,
     encode_request,
@@ -259,10 +260,65 @@ async fn attempt(client: &BedrockClient) -> (Result<TurnOutcome, Error>, Vec<Str
 /// Serves `head` and `body` to one streamed Converse turn and returns its failure, what was
 /// shown and the request.
 async fn failed(head: String, body: Vec<u8>) -> (Error, Vec<StreamEvent>, Request) {
+    failed_on(Api::Converse, head, body).await
+}
+
+/// Serves `head` and `body` to one streamed turn on `api` and returns its failure, what was
+/// shown and the request.
+async fn failed_on(api: Api, head: String, body: Vec<u8>) -> (Error, Vec<StreamEvent>, Request) {
     let (origin, server) = serve(head, body).await;
-    let (result, events) = attempt(&client(converse(&origin), Keys::new(None))).await;
+    let target = target(api, true, "us-east-1", model_of(api), origin.as_str());
+    let (result, events) = attempt(&client(target, Keys::new(None))).await;
     let error = result.expect_err("the attempt fails");
     (error, events, server.await.unwrap())
+}
+
+fn model_of(api: Api) -> &'static str {
+    match api {
+        Api::Converse => NOVA,
+        Api::AnthropicInvoke => "anthropic.claude-3-sonnet-20240229-v1:0",
+    }
+}
+
+/// Synthetic: on `api`'s wire, the message opened and nothing answered yet.
+fn opening_on(api: Api) -> Vec<u8> {
+    match api {
+        Api::Converse => opening(),
+        Api::AnthropicInvoke => chunk(&json!({
+            "type": "message_start",
+            "message": {"id": "msg_fixture", "type": "message", "role": "assistant",
+                "content": [], "model": "claude-fixture", "stop_reason": null,
+                "stop_sequence": null, "usage": {"input_tokens": 1, "output_tokens": 0}}
+        })),
+    }
+}
+
+/// Synthetic: on `api`'s wire, the message opened and then a tool call's block started: no text
+/// was shown, yet the model has answered.
+fn silent_on(api: Api) -> Vec<u8> {
+    let mut body = opening_on(api);
+    body.extend(match api {
+        Api::Converse => event(
+            "contentBlockStart",
+            &json!({"contentBlockIndex": 0,
+                "start": {"toolUse": {"toolUseId": "tool_1", "name": "lookup"}}}),
+        ),
+        Api::AnthropicInvoke => chunk(&json!({
+            "type": "content_block_start", "index": 0,
+            "content_block": {"type": "tool_use", "id": "tool_1", "name": "lookup", "input": {}}
+        })),
+    });
+    body
+}
+
+/// One `InvokeModel` `chunk` frame carrying the Messages `event`, base64 as Bedrock sends it.
+fn chunk(event: &Value) -> Vec<u8> {
+    frame(
+        "event",
+        ":event-type",
+        "chunk",
+        &json!({"bytes": STANDARD.encode(event.to_string())}),
+    )
 }
 
 /// A synthetic frame of `message_type`, named by `name_header`.
@@ -515,6 +571,48 @@ async fn a_cut_is_retriable_before_the_turn_answered_and_final_after() {
     assert!(!error.retriable);
     assert_eq!(error.dispatch, Dispatch::Accepted);
     assert_eq!(events, shown_partial());
+}
+
+/// The invariant on both wires: after a block opened and before any text, a throttling exception
+/// is final; before any content it is retriable.
+#[tokio::test]
+async fn throttling_after_silent_output_is_final_and_before_any_content_retriable_on_both_wires() {
+    for api in [Api::Converse, Api::AnthropicInvoke] {
+        let mut body = opening_on(api);
+        body.extend(exception("throttlingException"));
+        let (error, events, _) = failed_on(api, streamed(), body).await;
+        assert_eq!(error.code, ErrorCode::RateLimited, "{api:?}");
+        assert!(error.retriable && error.may_retry(), "{api:?}");
+        assert_eq!(error.dispatch, Dispatch::Accepted, "{api:?}");
+        assert_eq!(events, [] as [StreamEvent; 0], "{api:?}");
+
+        let mut body = silent_on(api);
+        body.extend(exception("throttlingException"));
+        let (error, events, _) = failed_on(api, streamed(), body).await;
+        assert_eq!(error.code, ErrorCode::RateLimited, "{api:?}");
+        assert!(!error.retriable && !error.may_retry(), "{api:?}");
+        assert_eq!(error.dispatch, Dispatch::Accepted, "{api:?}");
+        assert!(!shows_text(&events), "{api:?}");
+    }
+}
+
+#[tokio::test]
+async fn a_cut_after_silent_output_is_final_and_before_any_content_retriable_on_both_wires() {
+    for api in [Api::Converse, Api::AnthropicInvoke] {
+        let body = opening_on(api);
+        let (error, events, _) = failed_on(api, cut_short(EVENT_STREAM, &body), body).await;
+        assert_eq!(error.code, ErrorCode::Transport, "{api:?}");
+        assert!(error.retriable && error.may_retry(), "{api:?}");
+        assert_eq!(error.dispatch, Dispatch::Accepted, "{api:?}");
+        assert_eq!(events, [] as [StreamEvent; 0], "{api:?}");
+
+        let body = silent_on(api);
+        let (error, events, _) = failed_on(api, cut_short(EVENT_STREAM, &body), body).await;
+        assert_eq!(error.code, ErrorCode::Transport, "{api:?}");
+        assert!(!error.retriable && !error.may_retry(), "{api:?}");
+        assert_eq!(error.dispatch, Dispatch::Accepted, "{api:?}");
+        assert!(!shows_text(&events), "{api:?}");
+    }
 }
 
 #[tokio::test]
@@ -922,4 +1020,10 @@ fn a_client_shows_no_secret_in_its_debug_output() {
     );
     assert!(shown.contains("BedrockClient"));
     assert!(!shown.contains(SECRET) && !shown.contains(SESSION_TOKEN));
+}
+
+fn shows_text(events: &[StreamEvent]) -> bool {
+    events
+        .iter()
+        .any(|event| matches!(event, StreamEvent::TextDelta { .. }))
 }

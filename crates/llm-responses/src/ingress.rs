@@ -49,14 +49,13 @@
 //! | `cancelled` | `cancelled` | `refused` | no |
 //! | `deadline` | `deadline` | `refused` | no |
 //!
-//! # Limits
+//! # Messages
 //!
-//! - Two consecutive assistant messages streamed with nothing between them are refused at close: [`StreamEvent`] carries no message boundary, so their deltas share one item (story:ingress-block-boundaries).
-//! - One assistant message whose deltas another item interrupts (text, reasoning, text, or text, a
-//!   call, text) is refused at close when the outcome carries it as one message. Text after
-//!   another item opens a new message item, so that a Responses upstream's message, reasoning,
-//!   message reads back as the two messages it was; [`StreamEvent`] carries no item boundary that
-//!   would tell the two shapes apart (story:ingress-block-boundaries).
+//! Text deltas continue one message item until a [`StreamEvent::MessageBoundary`], whatever is
+//! relayed between them, and the next text opens a new item. So one message whose deltas a
+//! reasoning delta or a call interrupts (a Chat Completions upstream) stays one item, and two
+//! messages a Responses or Messages upstream streamed, with or without anything between them,
+//! stay two.
 
 use llm_core::{
     CallId, Error, ErrorCode, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Protocol, RefusalCause,
@@ -117,10 +116,11 @@ pub struct IngressStream {
     /// The `output_index` the next opened item takes.
     next_index: u64,
     /// The assistant message items text deltas opened, in order. A text delta continues the last
-    /// one only while nothing else was relayed since; after a reasoning delta or a call it opens a
-    /// new one, so each item's deltas are exactly one message's text.
+    /// one until a [`StreamEvent::MessageBoundary`], whatever was relayed between them, and opens
+    /// a new one after it, so each item's deltas are exactly one message's text.
     messages: Vec<OpenText>,
-    /// Whether the last relayed delta was text, so the next text delta continues its message.
+    /// Whether the next text delta continues the last message: from its first delta until a
+    /// message boundary.
     in_message: bool,
     /// The one reasoning item every reasoning delta continues.
     reasoning: Option<OpenText>,
@@ -169,7 +169,8 @@ impl IngressStream {
     /// One delta can need several payloads: the first text delta opens a message item and its
     /// content part before the text itself. A delta this wire has no payload for returns nothing:
     /// a warning, a repeated announcement, a fragment of a call never announced (it is emitted
-    /// whole by [`IngressStream::close`]), and anything after the stream ended.
+    /// whole by [`IngressStream::close`]), a message boundary (the next text delta opens a new
+    /// message item), an opaque item, and anything after the stream ended.
     pub fn chunk(&mut self, event: &StreamEvent) -> Vec<Value> {
         if self.finished {
             return Vec::new();
@@ -195,7 +196,6 @@ impl IngressStream {
                 }
             }
             StreamEvent::ReasoningDelta { text } => {
-                self.in_message = false;
                 let open = match &mut self.reasoning {
                     Some(open) => open,
                     slot => {
@@ -223,7 +223,6 @@ impl IngressStream {
                 if self.position(call_id).is_some() || self.unannounced.contains(call_id) {
                     return Vec::new();
                 }
-                self.in_message = false;
                 let output_index = self.next_index;
                 self.next_index += 1;
                 let item_id = format!("fc_{}_{output_index}", self.id);
@@ -247,13 +246,21 @@ impl IngressStream {
                     }
                     return Vec::new();
                 };
-                self.in_message = false;
                 let open = &mut self.calls[index];
                 open.arguments.push_str(delta);
                 payloads.push(arguments_delta(open.output_index, &open.item_id, delta));
             }
-            // Refusal text has no payload here; `close` refuses the outcome carrying it.
-            StreamEvent::Warning { .. } | StreamEvent::RefusalDelta { .. } => return Vec::new(),
+            // The message the text so far was shown for has ended: the next text opens another.
+            StreamEvent::MessageBoundary {} => {
+                self.in_message = false;
+                return Vec::new();
+            }
+            // Refusal text has no payload here; `close` refuses the outcome carrying it. Opaque
+            // state this wire relays only from the outcome, after what was streamed, and `close`
+            // refuses state of another binding.
+            StreamEvent::Warning { .. }
+            | StreamEvent::RefusalDelta { .. }
+            | StreamEvent::OpaqueItem { .. } => return Vec::new(),
         }
         self.number(payloads)
     }

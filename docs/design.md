@@ -156,6 +156,48 @@ Only Responses can replace a server's text ([responses.md](responses.md)). Messa
 block's opening text as a delta ([messages.md](messages.md)), and Chat Completions carries text
 only as deltas ([chat.md](chat.md)).
 
+### Where one streamed item ends
+
+Text deltas alone cannot say which message they belong to: a Chat Completions answer of text,
+reasoning and more text is one message, and a Responses answer of two message items, or a Messages
+answer of a text block, a call and a text block, is two. An ingress encoder that relays the stream
+has to put each delta in the item the outcome carries it in, before it knows the outcome. Two
+events say where an item ends without a delta saying so:
+
+- `StreamEvent::MessageBoundary`: the next text delta belongs to another assistant message than
+  the text delta before it. A decoder emits it only immediately before a text delta when text of
+  another message of the turn was shown just before (Responses: another output item; Messages and
+  Bedrock: another content block), so messages streamed one after another are separated by exactly
+  one boundary. Without it, text deltas continue one message, whatever is shown between them, so
+  Chat Completions never emits it. A Responses wire that interleaved the deltas of two items would
+  give one boundary per change, and the text after a boundary would then continue a message shown
+  before it; no server is known to interleave.
+- `StreamEvent::OpaqueItem { provenance, payload }`: an item that arrived whole, with no delta to
+  show it, in its place among the streamed ones, exactly as the turn carries it in `Item::Opaque`.
+  The Messages decoder emits it for a `redacted_thinking` block when the block opens.
+
+The boundary carries nothing and is not model output. Fallback eligibility does not count it
+(`crates/llm-routing/src/fallback.rs`, `Counting`), the first-output clock does not start on it
+(`crates/llm-calls/src/lib.rs`, `Timed`) and `VecSink` charges it to neither of its bounds, holding
+at most as many boundaries as its event bound; because a decoder emits it only after shown text, it
+never precedes a turn's first output either way.
+`VecSink` counts an opaque item as one event and does not charge its payload to its byte bound,
+which bounds shown text. The opaque item is model output the caller is
+shown no text of, and ends eligibility and starts the clock as any delta does: a relay has already
+sent it on.
+
+The opaque item carries the block rather than marking where one sits, because a bare marker is not
+enough on Messages: the redacted block's data arrives in its `content_block_start`, and the
+Messages decoder (`crates/llm-messages/src/decode.rs`, `start_block`) refuses a block that starts
+at an index below one already started. An encoder holding a marker could only send the block at
+`close`, after the text that follows it, or hold back every later delta until `close`. Carrying it lets the encoder send it in
+place as it arrives; `close` still checks that the outcome carries exactly that item there.
+
+Both are new variants of an exhaustive `StreamEvent`, a breaking change for every consumer that
+matches it. `StreamEvent` stays exhaustive rather than `#[non_exhaustive]`: a relay that does not
+decide what an event means drops it silently, and that is how this gap went unseen; the compiler
+making each consumer decide is the check.
+
 ### Input into a running turn
 
 llm does not carry input into a turn that is still producing output. A caller with new input
@@ -638,10 +680,14 @@ settles nothing beyond its known part and stays held at its reservation, never s
 the engine then admits no further shadow that day. A call that costs more than its reserve is
 settled at its cost, so the cap can be passed by at most the excess of the shadows already in
 flight. A call counts against the day it was admitted on; the next UTC day opens a fresh engine.
-The cap is per process and lost on restart: the engine is in memory, and `llm-cost` documents it
-as no durable permission. A restarted process, a second process or a second ledger each start
-every day's cap afresh, so one `ShadowLedger` must serve every shadow of a deployment for as long
-as it runs. A durable cap is a later story.
+The cap of `ShadowLedger::new` is per process and lost on restart: the engine is in memory, and
+`llm-cost` documents it as no durable permission, so one ledger must serve every shadow of a
+deployment for as long as it runs. With the `sqlite` feature, `ShadowLedger::durable(dir, ..)`
+keeps each shadow's day on a `llm-cost` `SqliteLedger` at `<dir>/<shadow id>/<utc day>`: the
+day's spend survives a restart, and a second ledger on the same directory is refused while the
+first is alive, so its shadows are skipped and never sent. A day ledger that cannot be opened
+(changed cap, damaged files, an earlier clock, or a later day already on disk) skips that shadow
+for the day.
 
 ### Typed decisions
 

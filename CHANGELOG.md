@@ -6,6 +6,19 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- **Breaking:** `StreamEvent::MessageBoundary` (`message-boundary`) and `StreamEvent::OpaqueItem` (`opaque-item`)
+- `llm-calls`: `ShadowLedger::durable` (`sqlite` feature) keeps each shadow's daily cap on a `SqliteLedger`, surviving a restart; a later day already on disk refuses an earlier one
+
+### Fixed
+
+- Responses and Messages ingress relay two messages, an interrupted message and redacted thinking in place
+- `VecSink` charges a `StreamEvent::MessageBoundary` to neither bound, holding at most as many as its event bound, and an `OpaqueItem`'s payload to no byte bound
+- `llm-messages`: an OpenCode Go base URL with a trailing host dot or percent-encoded path sends `x-opencode-session`; an encoded `/` is refused
+- `llm-tool-call`: a Codex login refusal keeps its credential class through `call_tool` when the model runs its turn on a spawned task
+- `llm-credentials`: the Codex renewal write-back re-read opens the login file without blocking, so a FIFO swapped in is refused
+
 ## [0.23.0] - 2026-11-06
 
 ### Added

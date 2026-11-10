@@ -957,6 +957,9 @@ fn report_turn_sink(sink: &VecSink, facts: &mut Value) {
             }
             StreamEvent::Warning { code, message } => warnings.push(format!("{code}:{message}")),
             StreamEvent::RefusalDelta { text: delta } => warnings.push(format!("refusal:{delta}")),
+            // The facts are the shown text, joined: a boundary between two messages adds none.
+            StreamEvent::MessageBoundary {} => {}
+            StreamEvent::OpaqueItem { payload, .. } => warnings.push(format!("opaque:{payload}")),
         }
     }
     facts["text"] = json!(text);

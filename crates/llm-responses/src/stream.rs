@@ -144,6 +144,9 @@ pub(crate) struct Decoder<'a> {
     /// the deltas named, in order of first delta. Each is the text of the message the turn
     /// carries for that item, or a message of its own when the turn carries none (row R36).
     shown: Vec<ShownText>,
+    /// The entry of `shown` whose item the caller was last shown text of. Text of another item
+    /// after it is a new message, preceded by [`StreamEvent::MessageBoundary`].
+    shown_last: Option<usize>,
     /// Where every message among `streamed` sits, in order.
     streamed_messages: Vec<Placed>,
     /// `item_id` -> `call_id`, so an arguments delta can name the call a reader is watching.
@@ -332,6 +335,7 @@ impl<'a> Decoder<'a> {
             answered: false,
             events: Vec::new(),
             shown: Vec::new(),
+            shown_last: None,
             calls: BTreeMap::new(),
             announced: Vec::new(),
             streamed: Vec::new(),
@@ -348,7 +352,14 @@ impl<'a> Decoder<'a> {
         match kind {
             Some("response.output_text.delta") => {
                 if let Some(text) = string(event.get("delta")) {
-                    self.show(event, text);
+                    let item = self.show(event, text);
+                    if !text.is_empty() {
+                        // Text of another output item than the one last shown is a new message.
+                        if self.shown_last.is_some_and(|last| last != item) {
+                            self.events.push(StreamEvent::MessageBoundary {});
+                        }
+                        self.shown_last = Some(item);
+                    }
                     self.events.push(StreamEvent::TextDelta {
                         text: text.to_owned(),
                     });
@@ -463,25 +474,29 @@ impl<'a> Decoder<'a> {
     /// Records text the caller is being shown, under the output item the delta names: its
     /// `item_id`, or, for a delta that names no item, its `output_index`. Deltas at two indexes
     /// are two items whether or not they name one. Deltas that name neither belong to the
-    /// message whose `response.output_item.done` comes next ([`Decoder::end_message`]).
-    fn show(&mut self, event: &Value, text: &str) {
+    /// message whose `response.output_item.done` comes next ([`Decoder::end_message`]). Returns
+    /// the place of that item's entry in `shown`.
+    fn show(&mut self, event: &Value, text: &str) -> usize {
         let item_id = string(event.get("item_id"));
         let output_index = event.get("output_index").and_then(Value::as_u64);
-        if let Some(shown) = self
-            .shown
-            .iter_mut()
-            .find(|shown| match (item_id, output_index) {
-                (Some(_), _) => shown.item_id.as_deref() == item_id,
-                (None, Some(_)) => shown.item_id.is_none() && shown.output_index == output_index,
-                (None, None) => {
-                    shown.item_id.is_none()
-                        && shown.output_index.is_none()
-                        && shown.ended_by.is_none()
-                }
-            })
+        if let Some((at, shown)) =
+            self.shown
+                .iter_mut()
+                .enumerate()
+                .find(|(_, shown)| match (item_id, output_index) {
+                    (Some(_), _) => shown.item_id.as_deref() == item_id,
+                    (None, Some(_)) => {
+                        shown.item_id.is_none() && shown.output_index == output_index
+                    }
+                    (None, None) => {
+                        shown.item_id.is_none()
+                            && shown.output_index.is_none()
+                            && shown.ended_by.is_none()
+                    }
+                })
         {
             shown.text.push_str(text);
-            return;
+            return at;
         }
         self.shown.push(ShownText {
             item_id: item_id.map(str::to_owned),
@@ -489,6 +504,7 @@ impl<'a> Decoder<'a> {
             ended_by: None,
             text: text.to_owned(),
         });
+        self.shown.len() - 1
     }
 
     /// Records a message `response.output_item.done` finished, and ends the shown text that

@@ -71,10 +71,21 @@ enum Script {
     FailNamed(RefusalCause),
 }
 
+/// What each of a scripted model's emitted events is.
+#[derive(Clone, Copy)]
+enum Shows {
+    Text,
+    /// A message boundary, which is not output.
+    Boundary,
+    /// An item that arrived whole with no delta: output the caller is shown no text of.
+    Opaque,
+}
+
 struct Scripted {
     provenance: llm_core::Provenance,
     capabilities: llm_core::Capabilities,
     emits: usize,
+    shows: Shows,
     script: Script,
     usage: Option<u64>,
     /// Reports evidence under this binding instead of its own, when set.
@@ -99,8 +110,15 @@ impl Model for Scripted {
             self.calls.fetch_add(1, Ordering::SeqCst);
             assert_eq!(request.model, self.provenance.model.as_str());
             for _ in 0..self.emits {
-                sink.emit(StreamEvent::TextDelta {
-                    text: format!("from {}", self.provenance.endpoint.as_str()),
+                sink.emit(match self.shows {
+                    Shows::Text => StreamEvent::TextDelta {
+                        text: format!("from {}", self.provenance.endpoint.as_str()),
+                    },
+                    Shows::Boundary => StreamEvent::MessageBoundary {},
+                    Shows::Opaque => StreamEvent::OpaqueItem {
+                        provenance: self.provenance.clone(),
+                        payload: serde_json::json!({"type": "redacted_thinking", "data": "AAAA"}),
+                    },
                 })
                 .await?;
             }
@@ -163,6 +181,7 @@ impl Fleet {
                             provenance: binding.provenance().clone(),
                             capabilities: binding.capabilities().clone(),
                             emits: *emits,
+                            shows: Shows::Text,
                             script: script.clone(),
                             usage: *usage,
                             observed_as: None,
@@ -315,6 +334,51 @@ fn refuses_fallback_after_partial_output_became_visible() {
     assert_eq!(run.attempts[0].visible_events, 1);
     assert_eq!(run.result.unwrap_err().code, ErrorCode::Transport);
     assert_eq!(sink.text(), "from local-vllm");
+}
+
+/// story:ingress-block-boundaries. A message boundary carries nothing and is not output, so an
+/// attempt that offered only boundaries before an eligible failure still falls back, and counts
+/// none of them as visible.
+#[test]
+fn an_eligible_failure_after_only_message_boundaries_still_falls_back() {
+    let catalog = catalog(true);
+    let mut models = fleet(&catalog, TRANSPORT_UNSENT, 2);
+    models.0.get_mut(&id("local-small")).unwrap().shows = Shows::Boundary;
+    let mut sink = VecSink::new(16, 4096);
+    let run = run(
+        &catalog,
+        &request(),
+        FallbackPolicy::default(),
+        &models,
+        &mut admit_all(),
+        &mut sink,
+    );
+    assert_eq!(run.halt, Halt::Succeeded);
+    assert_eq!(attempted(&run), ["coding-primary", "coding-secondary"]);
+    assert_eq!(run.attempts[0].visible_events, 0);
+    assert_eq!(sink.text(), "from remote-models");
+}
+
+/// The other new event is output: an item that arrived whole ends eligibility as any delta
+/// does, though the caller was shown no text of it.
+#[test]
+fn an_opaque_item_is_output_and_ends_fallback_eligibility() {
+    let catalog = catalog(true);
+    let mut models = fleet(&catalog, TRANSPORT_UNSENT, 1);
+    models.0.get_mut(&id("local-small")).unwrap().shows = Shows::Opaque;
+    let mut sink = VecSink::new(16, 4096);
+    let run = run(
+        &catalog,
+        &request(),
+        FallbackPolicy::default(),
+        &models,
+        &mut admit_all(),
+        &mut sink,
+    );
+    assert_eq!(run.halt, Halt::VisibleOutput);
+    assert_eq!(attempted(&run), ["coding-primary"]);
+    assert_eq!(models.calls("remote-large"), 0);
+    assert_eq!(run.attempts[0].visible_events, 1);
 }
 
 #[test]

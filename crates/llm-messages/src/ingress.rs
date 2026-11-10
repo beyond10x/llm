@@ -6,16 +6,18 @@
 //! so an answer this encoder emits is one this crate reads back as the same outcome, and one it
 //! would read back as anything else is refused rather than approximated.
 //!
-//! Two limits of the streamed answer, each because `StreamEvent` carries less than this wire:
+//! **The model travels only in `message_start`**, which precedes the outcome: a limit of the
+//! streamed answer, because `StreamEvent` carries no model. A stream carries the model passed to
+//! `IngressStream::new`; an outcome model the stream never announced is not sent, and reads back
+//! unknown. `encode_ingress_message` carries the outcome's own model.
 //!
-//! - **The model travels only in `message_start`**, which precedes the outcome. A stream carries
-//!   the model passed to `IngressStream::new`; an outcome model the stream never announced is not
-//!   sent, and reads back unknown. `encode_ingress_message` carries the outcome's own model.
-//! - **Content with no neutral event cannot sit between streamed blocks.** A `redacted_thinking`
-//!   block emits no `StreamEvent`, so a relayed answer of thinking, redacted thinking and then
-//!   text has already shown the text at the index the redacted block holds in the outcome.
-//!   `close` refuses it as a contradiction and sends nothing; such content is carried only after
-//!   every streamed block. Relaying it in place needs block boundaries in `StreamEvent`.
+//! **Blocks are placed by the events that separate them.** `StreamEvent::MessageBoundary` stops
+//! the open text block, so the next text opens a block of its own. `StreamEvent::OpaqueItem` of
+//! a block this wire reads back as that same item (a `redacted_thinking` block a Messages
+//! upstream relayed) is sent whole at the next index as it arrives, so a relayed answer of
+//! thinking, redacted thinking and text keeps its order. Any other opaque item sends nothing;
+//! content the stream never showed is carried only after every streamed block, and `close`
+//! refuses an outcome that places it between them.
 //!
 //! **Reasoning is relayed live only from an upstream that signs it.** A relayed `thinking` block
 //! is signed by `close` from the outcome's opaque state, and only a Messages upstream carries
@@ -32,7 +34,7 @@
 
 use crate::{codec::decode_block, decode::read_reason, usage::Snapshot};
 use llm_core::{
-    CallId, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, StopReason,
+    CallId, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Provenance, StopReason,
     StreamEvent, ToolName, TurnOutcome, Usage,
 };
 use serde_json::{Map, Value, json};
@@ -83,6 +85,11 @@ enum Shown {
         /// A fragment arrived that could not be relayed: after the block stopped, or past the
         /// argument bound. What the caller assembled is then not the call.
         withheld: bool,
+    },
+    /// Sent whole as it arrived: the outcome carries exactly this item at its index.
+    Opaque {
+        provenance: Provenance,
+        payload: Value,
     },
 }
 
@@ -171,7 +178,10 @@ impl IngressStream {
     ///
     /// An empty delta, a warning and refusal text carry nothing (`close` refuses an outcome
     /// carrying refusal text). A call announced twice is announced once. A fragment for a call
-    /// never announced is held and its call sent complete by `close`.
+    /// never announced is held and its call sent complete by `close`. A message boundary stops
+    /// the open text block, so the next text opens a block of its own. An opaque item is sent
+    /// whole at the next index when this wire reads it back as itself, and sends nothing
+    /// otherwise.
     pub fn chunk(&mut self, event: &StreamEvent) -> Vec<Value> {
         if self.ended {
             return Vec::new();
@@ -190,7 +200,18 @@ impl IngressStream {
             StreamEvent::ToolArgumentsDelta { call_id, delta } if !delta.is_empty() => {
                 self.fragment(call_id, delta, &mut out);
             }
-            _ => {}
+            StreamEvent::MessageBoundary {} => self.end_text(&mut out),
+            StreamEvent::OpaqueItem {
+                provenance,
+                payload,
+            } => self.whole(provenance, payload, &mut out),
+            // Nothing on this wire: empty deltas, warnings, refusal text, and reasoning a stream
+            // without reasoning relay withholds.
+            StreamEvent::TextDelta { .. }
+            | StreamEvent::ReasoningDelta { .. }
+            | StreamEvent::ToolArgumentsDelta { .. }
+            | StreamEvent::RefusalDelta { .. }
+            | StreamEvent::Warning { .. } => {}
         }
         if !out.is_empty() && !self.started {
             self.started = true;
@@ -395,6 +416,39 @@ impl IngressStream {
         }
     }
 
+    /// Stops the open text block, so the next text opens a block of its own.
+    fn end_text(&mut self, out: &mut Vec<Value>) {
+        let index = self.blocks.len().wrapping_sub(1);
+        if let Some(block) = self.blocks.last_mut()
+            && block.open
+            && matches!(block.shown, Shown::Text(_))
+        {
+            block.open = false;
+            out.push(stop(index));
+        }
+    }
+
+    /// Sends an item no delta showed whole at the next index, when the shared block reader reads
+    /// it back as exactly this item; otherwise it is left for `close`, which carries such content
+    /// only after every streamed block.
+    fn whole(&mut self, provenance: &Provenance, payload: &Value, out: &mut Vec<Value>) {
+        let item = Item::Opaque {
+            provenance: provenance.clone(),
+            payload: payload.clone(),
+        };
+        if decode_block(payload, false, Some(provenance), BLOCK).ok() != Some(item) {
+            return;
+        }
+        let shown = Shown::Opaque {
+            provenance: provenance.clone(),
+            payload: payload.clone(),
+        };
+        if let Some(index) = self.open(shown, payload.clone(), out) {
+            self.blocks[index].open = false;
+            out.push(stop(index));
+        }
+    }
+
     fn position(&self, call_id: &CallId) -> Option<usize> {
         self.blocks.iter().position(|block| {
             matches!(&block.shown, Shown::Tool { call_id: announced, .. } if announced == call_id)
@@ -454,6 +508,16 @@ fn settle(index: usize, block: &Block, item: &Item) -> Result<Vec<Value>, Error>
                 return Err(Error::protocol(CONTRADICTION));
             }
         }
+        (
+            Shown::Opaque {
+                provenance: sent,
+                payload: whole,
+            },
+            Item::Opaque {
+                provenance,
+                payload,
+            },
+        ) if sent == provenance && whole == payload => {}
         _ => return Err(Error::protocol(CONTRADICTION)),
     }
     if block.open {

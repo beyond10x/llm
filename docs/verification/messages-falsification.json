@@ -2007,6 +2007,7 @@
   "`anthropic-beta` names do not form a header value",
   "a Messages client requires a Messages binding",
   "a turn limit must be positive and at most one day",
+  "an OpenCode Go base URL hides a path separator in a percent escape",
   "invalid Messages model name",
   "invalid Messages response id",
   "invalid Messages tool call ID",

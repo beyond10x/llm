@@ -163,7 +163,8 @@ pub struct Attempt {
     pub provenance: Provenance,
     pub auth_kind: AuthKind,
     pub billing_kind: BillingKind,
-    /// Stream events offered to the caller's sink during this attempt.
+    /// Stream events offered to the caller's sink during this attempt, a message boundary not
+    /// counted: it is not output.
     pub visible_events: usize,
     pub result: AttemptResult,
 }
@@ -223,7 +224,10 @@ struct Counting<'s> {
 
 impl StreamSink for Counting<'_> {
     fn emit(&mut self, event: StreamEvent) -> BoxFuture<'_, Result<(), Error>> {
-        self.offered = self.offered.saturating_add(1);
+        // A message boundary is not output: it carries nothing, and ends no eligibility.
+        if !matches!(event, StreamEvent::MessageBoundary {}) {
+            self.offered = self.offered.saturating_add(1);
+        }
         self.inner.emit(event)
     }
 }

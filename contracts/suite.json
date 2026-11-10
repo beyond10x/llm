@@ -4185,7 +4185,7 @@
         "scenario": "llm.responses/authored/encoding-fail-relays-a-context-length-refusal-under-its-code"
       },
       "responses/scenarios/encoding-text-after-a-call-is-a-new-message.yaml": {
-        "digest": "sha256:e5f0abe3710782f3f2e2ed53476beb9e3f60446b1819a2e2d0e0df1aba71c0e1",
+        "digest": "sha256:709bfeef25552cc1492dd9735d7e93379fe1e5ad2e3769b3736355d89c30c60a",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/encoding-text-after-a-call-is-a-new-message"
       },
@@ -4490,7 +4490,7 @@
         "scenario": "llm.responses/authored/kept-text-a-message-no-delta-showed-keeps-its-own-text"
       },
       "responses/scenarios/kept-text-a-second-message-shown-only-as-deltas-is-kept.yaml": {
-        "digest": "sha256:f9e3e57688e6fb44ad22770b410b24b51afb73c578d103643ea61caeec370405",
+        "digest": "sha256:37fa3bbad8734f631843aedaf09dceaed27287b8b67a61378db597ffc3ca0963",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/kept-text-a-second-message-shown-only-as-deltas-is-kept"
       },
@@ -4505,22 +4505,22 @@
         "scenario": "llm.responses/authored/kept-text-a-terminal-message-gives-way-to-the-shown-deltas"
       },
       "responses/scenarios/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas.yaml": {
-        "digest": "sha256:115cb725922a69bf38b1735430d4db5459a517a58325642fb65ad031d327069f",
+        "digest": "sha256:c3acb504030e8ee8b40842811d170d9268988159152fb2c423e825b03e2f8d74",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/kept-text-a-terminal-message-under-the-same-id-gives-way-to-the-shown-deltas"
       },
       "responses/scenarios/kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next.yaml": {
-        "digest": "sha256:43cd07c36adf1d3c93999117c87bb9350fa003e6677396c035b82b1c0f63c492",
+        "digest": "sha256:98eea36334083d453f63bf6fb32564a5945926efe97454aee857e010a4215cbe",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/kept-text-deltas-naming-no-coordinate-belong-to-the-message-done-next"
       },
       "responses/scenarios/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages.yaml": {
-        "digest": "sha256:de1ffd5132537f9167e56327e5fc294b92814e862cfef7c87000aaa256e4e2d7",
+        "digest": "sha256:baa9b0e2b353796dbadd77e6c38a1d346d41ec5a1a2c3cea1ed28067ad251b15",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/kept-text-deltas-naming-no-item-at-two-indexes-stay-two-messages"
       },
       "responses/scenarios/kept-text-of-two-shown-messages-stays-two-messages.yaml": {
-        "digest": "sha256:68b6d0f61e951d26eaa77ad0bc29e42eb7a012542a4a14f1afe02f1fec6bf5d6",
+        "digest": "sha256:6ddb84baa44ae07c1f3663685d0d3fec3b1cc49637d05a6ed163ee1281a010b0",
         "disposition": "accepted",
         "scenario": "llm.responses/authored/kept-text-of-two-shown-messages-stays-two-messages"
       },
@@ -88248,7 +88248,7 @@
       ]
     },
     "llm.responses/authored/encoding-text-after-a-call-is-a-new-message": {
-      "purpose": "text streamed after a call opens a new message item, so each message shows its own text once",
+      "purpose": "text streamed after a call and a message boundary opens a new message item, so each message shows its own text once",
       "source": [
         {
           "kind": "domain",
@@ -88280,7 +88280,7 @@
             },
             "events_json": {
               "kind": "literal",
-              "value": "[{\"kind\":\"text-delta\",\"text\":\"First.\"},{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"clock\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{}\"},{\"kind\":\"text-delta\",\"text\":\"Second.\"}]"
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"First.\"},{\"kind\":\"tool-call-started\",\"call_id\":\"call-1\",\"name\":\"clock\"},{\"kind\":\"tool-arguments-delta\",\"call_id\":\"call-1\",\"delta\":\"{}\"},{\"kind\":\"message-boundary\"},{\"kind\":\"text-delta\",\"text\":\"Second.\"}]"
             },
             "outcome_json": {
               "kind": "literal",
@@ -88338,6 +88338,7 @@
                   "text-delta:First.",
                   "tool-call-started:call-1:clock",
                   "tool-arguments-delta:call-1:{}",
+                  "message-boundary",
                   "text-delta:Second."
                 ]
               },
@@ -94689,6 +94690,7 @@
                 "kind": "literal",
                 "value": [
                   "text-delta:The answer is 42.",
+                  "message-boundary",
                   "text-delta:Working on it."
                 ]
               }
@@ -94987,6 +94989,7 @@
                 "value": [
                   "text-delta:First",
                   "reasoning-delta:weighing",
+                  "message-boundary",
                   "text-delta:Sec",
                   "text-delta:ond",
                   "warning:shown-text-kept"
@@ -95088,6 +95091,7 @@
                 "kind": "literal",
                 "value": [
                   "text-delta:A",
+                  "message-boundary",
                   "text-delta:B"
                 ]
               }
@@ -95187,6 +95191,7 @@
                 "kind": "literal",
                 "value": [
                   "text-delta:A",
+                  "message-boundary",
                   "text-delta:B"
                 ]
               }
@@ -95287,6 +95292,7 @@
                 "value": [
                   "text-delta:Fir",
                   "text-delta:st",
+                  "message-boundary",
                   "text-delta:Second"
                 ]
               }

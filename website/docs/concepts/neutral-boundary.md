@@ -40,6 +40,11 @@ warning with the fixed code `shown-text-kept` says so before the turn is returne
 text could belong to more than one message, no message is overwritten: the server's messages are
 kept as sent and `shown-text-unpaired` says so.
 
+Text deltas continue one message until a message boundary, which a decoder sends before the first
+text of a later message; it carries nothing and is not output. An item that arrives whole with no
+delta to show it, such as a Messages redacted thinking block, is shown as an opaque item in its
+place. A gateway relaying the stream uses both to put each piece where the finished turn has it.
+
 ## One attempt, one port
 
 `Model::turn` is an object-safe asynchronous port taking one request, a caller-owned asynchronous

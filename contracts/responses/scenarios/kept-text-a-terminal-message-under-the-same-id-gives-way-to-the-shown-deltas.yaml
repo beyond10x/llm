@@ -23,6 +23,7 @@ assert:
     stream_events:
     - text-delta:First
     - reasoning-delta:weighing
+    - message-boundary
     - text-delta:Sec
     - text-delta:ond
     - warning:shown-text-kept

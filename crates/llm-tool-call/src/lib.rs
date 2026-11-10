@@ -25,12 +25,12 @@ use std::{
     cell::RefCell,
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex, PoisonError, Weak},
 };
 
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol,
-    StreamEvent, StreamSink, ToolChoice, ToolSpec, TurnRequest,
+    Provenance, StreamEvent, StreamSink, ToolChoice, ToolSpec, TurnRequest,
 };
 use llm_credentials::{
     ResolvedSecret, SecretError, SecretRef, SecretResolver,
@@ -207,6 +207,7 @@ pub fn codex_model_at(
     let http = HttpClient::new(Limits::default()).map_err(ModelError::Setup)?;
     let login = CodexLogin {
         file: CodexAuthFile::new(reference, auth_path),
+        refusal: refusal_slot(binding.provenance(), true),
     };
     ResponsesClient::new(binding, http, Arc::new(login)).map_err(ModelError::Setup)
 }
@@ -221,12 +222,38 @@ tokio::task_local! {
 
 /// llm's `CodexAuthFile`, keeping its typed refusal for the call in progress.
 ///
-/// The slot is task-local: the refusal is kept only when this resolver runs on the task that
-/// awaits [`call_tool`]. A [`Model`] that runs its turn on a spawned task (`tokio::spawn`) resolves
-/// outside the slot, and `call_tool` then sees only llm's untyped `Unauthorized` or `Unavailable`
-/// refusal, returned as [`ModelError::Model`].
+/// On the task that awaits [`call_tool`] the refusal goes to the task-local slot, which belongs to
+/// that one call. Only when that slot is out of reach, as on a [`Model`] that runs its turn on
+/// `tokio::spawn`, does it go to the slot shared by every model of the same provenance, which
+/// `call_tool` finds through the model's `provenance()`.
 struct CodexLogin {
     file: CodexAuthFile,
+    refusal: Arc<SharedRefusal>,
+}
+
+/// The refusal slot Codex models of one provenance share with the [`call_tool`] calls made on them.
+type SharedRefusal = Mutex<Option<CodexAuthError>>;
+
+/// Shared slots by the provenance of the models that own them; a slot whose models are all gone is
+/// dropped on the next registration.
+static REFUSAL_SLOTS: Mutex<Vec<(Provenance, Weak<SharedRefusal>)>> = Mutex::new(Vec::new());
+
+/// The shared slot of the models with `provenance`; `create` makes it when there is none.
+fn refusal_slot(provenance: &Provenance, create: bool) -> Arc<SharedRefusal> {
+    let mut slots = REFUSAL_SLOTS.lock().unwrap_or_else(PoisonError::into_inner);
+    slots.retain(|(_, slot)| slot.strong_count() > 0);
+    if let Some(slot) = slots
+        .iter()
+        .find(|(known, _)| known == provenance)
+        .and_then(|(_, slot)| slot.upgrade())
+    {
+        return slot;
+    }
+    let slot = Arc::new(Mutex::new(None));
+    if create {
+        slots.push((provenance.clone(), Arc::downgrade(&slot)));
+    }
+    slot
 }
 
 impl SecretResolver for CodexLogin {
@@ -237,8 +264,10 @@ impl SecretResolver for CodexLogin {
         Box::pin(async move {
             self.file.read(reference).await.map_err(|refusal| {
                 let kind = refusal.kind();
-                // Outside `call_tool` there is no slot, and the untyped kind is all there is.
-                let _ = LOGIN_REFUSAL.try_with(|slot| slot.replace(Some(refusal)));
+                let kept = LOGIN_REFUSAL.try_with(|slot| slot.replace(Some(refusal.clone())));
+                if kept.is_err() {
+                    *self.refusal.lock().unwrap_or_else(PoisonError::into_inner) = Some(refusal);
+                }
                 kind
             })
         })
@@ -258,9 +287,13 @@ impl SecretResolver for CodexLogin {
 /// when the Codex login cannot be used (before anything is sent), and [`ModelError::Model`] for any
 /// other refusal, including arguments that are not a JSON object.
 ///
-/// A Codex login refusal is typed only when the model resolves its credential on the task that
-/// awaits this call; a model that spawns its turn onto another task gets [`ModelError::Model`]
-/// for it instead (see `CodexLogin`). A refusal kept from a turn that still succeeded, such as a
+/// A Codex login refusal is typed whichever task the model resolves its credential on, a spawned
+/// one included (see `CodexLogin`). Limit: a call starts by clearing the shared slot its model
+/// uses for spawned-task refusals, so a second call on the same spawning model that starts while
+/// the first is in flight can cost the first its typed refusal, which then comes back as
+/// [`ModelError::Model`] (`story:call-tool-concurrent-spawned-refusals`). Likewise a concurrent
+/// refusal of another login on a model of equal provenance, of the same untyped class
+/// (`Unauthorized` or `Unavailable`, not sent), can still be read as this call's. A refusal kept from a turn that still succeeded, such as a
 /// model that falls back to another after the login is refused, does not override its answer.
 pub async fn call_tool(
     model: &dyn Model,
@@ -273,15 +306,28 @@ pub async fn call_tool(
     request.instructions = instructions.to_owned();
     request.tools = vec![tool];
     request.tool_choice = ToolChoice::Named(name.clone());
+    let shared = refusal_slot(model.provenance(), false);
+    shared.lock().unwrap_or_else(PoisonError::into_inner).take();
     let outcome = LOGIN_REFUSAL
         .scope(RefCell::new(None), async {
             model
                 .turn(&request, &mut Discard, &Cancel::new())
                 .await
                 // The slot is read only for a failed turn.
-                .map_err(|error| match LOGIN_REFUSAL.with(RefCell::take) {
-                    Some(refusal) => credential_error(&refusal),
-                    None => classify(error),
+                .map_err(|error| {
+                    // The shared slot is consulted only for the untyped refusal a resolver's
+                    // failure becomes: `Unauthorized` or `Unavailable`, never sent.
+                    let untyped_refusal =
+                        matches!(error.code, ErrorCode::Unauthorized | ErrorCode::Unavailable)
+                            && error.dispatch == Dispatch::NotSent;
+                    match LOGIN_REFUSAL.with(RefCell::take).or_else(|| {
+                        untyped_refusal
+                            .then(|| shared.lock().unwrap_or_else(PoisonError::into_inner).take())
+                            .flatten()
+                    }) {
+                        Some(refusal) => credential_error(&refusal),
+                        None => classify(error),
+                    }
                 })
         })
         .await?;
