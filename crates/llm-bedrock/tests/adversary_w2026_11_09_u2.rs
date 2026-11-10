@@ -3,7 +3,7 @@
 //! The unit's cases call a `toolUse` / `tool_use` block start "silent output", but that start
 //! shows the caller a `ToolCallStarted`. These cases drive output the caller is shown nothing
 //! of (a redacted or signature-only reasoning delta on Converse, a `redacted_thinking` or empty
-//! `thinking` block on InvokeModel), a stop with no content, and every transient exception type,
+//! `thinking` block on `InvokeModel`), a stop with no content, and every transient exception type,
 //! on both wires. Every frame is synthetic.
 
 use base64::{Engine, engine::general_purpose::STANDARD};
