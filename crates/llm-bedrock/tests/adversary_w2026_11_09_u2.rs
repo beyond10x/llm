@@ -38,7 +38,14 @@ struct Keys;
 
 impl CredentialSource for Keys {
     fn credentials<'a>(&'a self, _: &'a Cancel) -> BoxFuture<'a, Result<AwsCredentials, Error>> {
-        Box::pin(async { Ok(AwsCredentials::new("AKIDFIXTURE", "fixture-secret", None, None)) })
+        Box::pin(async {
+            Ok(AwsCredentials::new(
+                "AKIDFIXTURE",
+                "fixture-secret",
+                None,
+                None,
+            ))
+        })
     }
 }
 
@@ -161,7 +168,10 @@ fn event(kind: &str, payload: &Value) -> Vec<u8> {
 }
 
 fn chunk(payload: &Value) -> Vec<u8> {
-    event("chunk", &json!({"bytes": STANDARD.encode(payload.to_string())}))
+    event(
+        "chunk",
+        &json!({"bytes": STANDARD.encode(payload.to_string())}),
+    )
 }
 
 fn exception(kind: &str) -> Vec<u8> {
@@ -185,7 +195,8 @@ fn opening(api: Api) -> Vec<u8> {
     }
 }
 
-/// After the opening, output of which the caller is shown nothing, on `api`, by name.
+/// After the opening, output of which the caller is shown no text, call or reasoning, on `api`,
+/// by name. A redacted thinking block reaches the caller only as an `OpaqueItem`.
 fn unshown(api: Api) -> Vec<(&'static str, Vec<u8>)> {
     let with = |rest: Vec<u8>| {
         let mut body = opening(api);
@@ -267,7 +278,12 @@ async fn throttling_after_output_the_caller_was_not_shown_is_final_on_both_wires
             let mut body = body;
             body.extend(exception("throttlingException"));
             let (error, events) = failed(api, streamed(), body).await;
-            assert_eq!(events, [] as [StreamEvent; 0], "{api:?} {name}: shown nothing");
+            assert!(
+                events
+                    .iter()
+                    .all(|event| matches!(event, StreamEvent::OpaqueItem { .. })),
+                "{api:?} {name}: shown no text, call or reasoning: {events:?}"
+            );
             assert_eq!(error.code, ErrorCode::RateLimited, "{api:?} {name}");
             assert_eq!(error.dispatch, Dispatch::Accepted, "{api:?} {name}");
             assert!(
@@ -283,7 +299,12 @@ async fn a_cut_after_output_the_caller_was_not_shown_is_final_on_both_wires() {
     for api in WIRES {
         for (name, body) in unshown(api) {
             let (error, events) = failed(api, cut_short(&body), body).await;
-            assert_eq!(events, [] as [StreamEvent; 0], "{api:?} {name}: shown nothing");
+            assert!(
+                events
+                    .iter()
+                    .all(|event| matches!(event, StreamEvent::OpaqueItem { .. })),
+                "{api:?} {name}: shown no text, call or reasoning: {events:?}"
+            );
             assert_eq!(error.code, ErrorCode::Transport, "{api:?} {name}");
             assert!(
                 !error.retriable && !error.may_retry(),
@@ -300,12 +321,18 @@ async fn every_transient_exception_is_retriable_before_content_and_final_after_o
             let mut before = opening(api);
             before.extend(exception(kind));
             let (error, _) = failed(api, streamed(), before).await;
-            assert!(error.retriable && error.may_retry(), "{api:?} {kind} before content");
+            assert!(
+                error.retriable && error.may_retry(),
+                "{api:?} {kind} before content"
+            );
 
             let mut after = tool_start(api);
             after.extend(exception(kind));
             let (error, _) = failed(api, streamed(), after).await;
-            assert!(!error.retriable && !error.may_retry(), "{api:?} {kind} after a tool start");
+            assert!(
+                !error.retriable && !error.may_retry(),
+                "{api:?} {kind} after a tool start"
+            );
         }
         let mut stream_error = opening(api);
         stream_error.extend(exception("modelStreamErrorException"));
