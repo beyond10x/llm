@@ -178,8 +178,9 @@ events say where an item ends without a delta saying so:
 
 The boundary carries nothing and is not model output. Fallback eligibility does not count it
 (`crates/llm-routing/src/fallback.rs`, `Counting`), the first-output clock does not start on it
-(`crates/llm-calls/src/lib.rs`, `Timed`) and `VecSink` charges it to neither of its bounds; because
-a decoder emits it only after shown text, it never precedes a turn's first output either way.
+(`crates/llm-calls/src/lib.rs`, `Timed`) and `VecSink` charges it to neither of its bounds, holding
+at most as many boundaries as its event bound; because a decoder emits it only after shown text, it
+never precedes a turn's first output either way.
 `VecSink` counts an opaque item as one event and does not charge its payload to its byte bound,
 which bounds shown text. The opaque item is model output the caller is
 shown no text of, and ends eligibility and starts the clock as any delta does: a relay has already

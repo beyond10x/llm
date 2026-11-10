@@ -13,7 +13,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 ### Fixed
 
 - Responses and Messages ingress relay two messages, an interrupted message and redacted thinking in place
-- `VecSink` charges a `StreamEvent::MessageBoundary` to neither bound and an `OpaqueItem`'s payload to no byte bound
+- `VecSink` charges a `StreamEvent::MessageBoundary` to neither bound, holding at most as many as its event bound, and an `OpaqueItem`'s payload to no byte bound
 
 ## [0.23.0] - 2026-11-06
 

@@ -74,7 +74,7 @@ pub enum StreamEvent {
     /// **Not model output.** It carries nothing. A producer emits it only immediately before a
     /// text delta when text of another message of the turn was shown just before, so it never
     /// precedes a turn's first output event. Fallback eligibility and the first-output clock do
-    /// not count it, and a [`VecSink`] stores it without charging it to either of its bounds. It
+    /// not count it, and a [`VecSink`] stores it apart from its event and byte bounds. It
     /// has braces so that, as every other event, it refuses a field it does not have (a unit
     /// variant of this enum would read one and drop it).
     MessageBoundary {},
@@ -209,9 +209,9 @@ pub trait Embedder: Send + Sync {
 /// the byte bound charges each counted event's JSON encoding, except for two events:
 ///
 /// - A [`StreamEvent::MessageBoundary`] is stored and charged to neither bound: it carries
-///   nothing and is not output. A producer emits one only after text of another message was
-///   shown, so the sink holds at most as many boundaries as counted events before them, and
-///   refuses one past that `too-large`.
+///   nothing and is not output. The sink holds at most as many boundaries as its event bound,
+///   wherever they arrive (a leading one included), and refuses one past that `too-large`; a
+///   turn that fits the event bound emits fewer, one before each text of another message.
 /// - A [`StreamEvent::OpaqueItem`] counts as one event, but its payload is not charged to the
 ///   byte bound, which bounds shown text.
 #[derive(Debug)]
@@ -256,7 +256,7 @@ impl StreamSink for VecSink {
     fn emit(&mut self, event: StreamEvent) -> BoxFuture<'_, Result<(), Error>> {
         Box::pin(async move {
             if matches!(event, StreamEvent::MessageBoundary {}) {
-                if self.boundaries >= self.counted {
+                if self.boundaries >= self.max_events {
                     return Err(Error::too_large("stream sink event bound reached"));
                 }
                 self.boundaries += 1;
@@ -367,23 +367,32 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_vec_sink_holds_no_more_boundaries_than_counted_events_before_them() {
-        let mut sink = VecSink::new(4, 1024);
-        let first = sink.emit(StreamEvent::MessageBoundary {}).await;
-        assert_eq!(
-            first.expect_err("a boundary first").code,
-            ErrorCode::TooLarge
-        );
+    async fn a_vec_sink_holds_no_more_boundaries_than_its_event_bound() {
+        let mut sink = VecSink::new(2, 1024);
+        sink.emit(StreamEvent::MessageBoundary {})
+            .await
+            .expect("a leading boundary");
         sink.emit(text("A")).await.expect("text");
         sink.emit(StreamEvent::MessageBoundary {})
             .await
-            .expect("one boundary after text");
-        let second = sink.emit(StreamEvent::MessageBoundary {}).await;
+            .expect("a second boundary within the event bound");
+        let third = sink.emit(StreamEvent::MessageBoundary {}).await;
         assert_eq!(
-            second.expect_err("a second boundary").code,
+            third.expect_err("a boundary past the event bound").code,
             ErrorCode::TooLarge
         );
-        assert_eq!(sink.events(), [text("A"), StreamEvent::MessageBoundary {}]);
+        sink.emit(text("B"))
+            .await
+            .expect("text within the event bound");
+        assert_eq!(
+            sink.events(),
+            [
+                StreamEvent::MessageBoundary {},
+                text("A"),
+                StreamEvent::MessageBoundary {},
+                text("B"),
+            ]
+        );
     }
 
     #[tokio::test]
