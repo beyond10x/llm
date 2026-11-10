@@ -22,7 +22,7 @@ scope:
   path: crates/llm-credentials/tests/adversary_codex_renewal.rs
 - confidence: inferred
   path: docs/local-secrets.md
-revision: 12
+revision: 13
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:25Z", actor: "human:timo", revision: 10}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:25Z", actor: "human:timo", revision: 11}
@@ -48,3 +48,4 @@ Derived 2026-11-10 by `aep:story-scoper` at `c10908eb`; confidence high.
 - cited: `crates/llm-credentials/src/codex/renewal.rs:844` (the write-back re-read is a plain `fs::read` after the `lstat` at `:836-837`, so a path swapped for a FIFO between them blocks), `crates/llm-credentials/src/local.rs:62-78` (`blocking` has no limit; a cancelled waiter keeps its permit), `crates/llm-credentials/tests/adversary_codex_renewal.rs`.
 - cited: a FIFO already at the path is refused before any blocking read (`renewal.rs:644`, `codex.rs:267` `NONBLOCK`, `renewal.rs:649` `fstat`). `resolve_now` holds the `bound` mutex across both blocking awaits (`renewal.rs:571-595`), so one stall blocks every later resolve; eight stalls use up the shared permits (`local.rs:39`).
 - inferred: `crates/llm-credentials/src/codex.rs:258-274` (reuse its `NONBLOCK` open and `fstat` check at `:844`), `docs/local-secrets.md:133-134,275-276`, `CHANGELOG.md`.
+- landed (wave 2026-11-09-github-zero, branch head `2626cd50`, from `git diff --name-only`): `crates/llm-credentials/src/codex/renewal.rs`, `crates/llm-credentials/tests/adversary_w2026_11_09_u5.rs`, `CHANGELOG.md` (coordinator).

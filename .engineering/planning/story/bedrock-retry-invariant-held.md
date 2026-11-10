@@ -15,7 +15,7 @@ scope:
   path: crates/llm-bedrock/src/invoke.rs
 - confidence: cited
   path: crates/llm-bedrock/tests/client.rs
-revision: 10
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:23Z", actor: "human:timo", revision: 7}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 8}
@@ -39,3 +39,4 @@ Written 2026-11-10 by the coordinator from the `aep:plan-reviewer` triage at `c1
 - cited: `crates/llm-bedrock/tests/client.rs:468`, `:504` (the Converse cases; helper `failed` at `:261-263` is Converse-only), `AGENTS.md` (the UNMAPPED row).
 - cited, read only: `crates/llm-bedrock/src/converse.rs:916`, `crates/llm-bedrock/src/client.rs:529-533`.
 - inferred: `crates/llm-bedrock/src/invoke.rs` only if InvokeModel turns out not to mark the turn answered on silent output; `CHANGELOG.md`.
+- landed (wave 2026-11-09-github-zero, branch head `cb3e115d`, from `git diff --name-only`): `crates/llm-bedrock/tests/adversary_w2026_11_09_u2.rs`, `crates/llm-bedrock/tests/client.rs`, `AGENTS.md` (coordinator).

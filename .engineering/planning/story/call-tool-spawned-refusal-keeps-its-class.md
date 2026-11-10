@@ -19,7 +19,7 @@ scope:
   path: crates/llm-tool-call/src/lib.rs
 - confidence: cited
   path: crates/llm-tool-call/tests/adversary_model.rs
-revision: 10
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 8}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 9}
@@ -43,3 +43,4 @@ Derived 2026-11-10 by `aep:story-scoper` at `c10908eb`; confidence high for `llm
 - cited: `crates/llm-tool-call/src/lib.rs:214-284` (`LOGIN_REFUSAL` task-local slot, `CodexLogin::resolve`, `call_tool`, `classify`), `crates/llm-tool-call/tests/adversary_model.rs:607-621`.
 - inferred: `crates/llm-core/src/error.rs:41-79` (`Error` has no credential class; `RefusalCause` is `#[non_exhaustive]`, so a new variant is not a Rust break, while a new `Error` field is), `crates/llm-providers/src/auth.rs:113-131` (`secret_error`, where the class is lost), `CHANGELOG.md`.
 - Options (scoper): a `RefusalCause` variant set from the typed secret error (not breaking; stretches its doc), a new `Error` field (breaking), or message classification inside `llm-tool-call` (not breaking, by prose).
+- landed (wave 2026-11-09-github-zero, branch head `2a6fbca4`, from `git diff --name-only`): `crates/llm-tool-call/src/lib.rs`, `crates/llm-tool-call/tests/adversary_model.rs`, `crates/llm-tool-call/tests/adversary_w2026_11_09_u4.rs`, `CHANGELOG.md` (coordinator).

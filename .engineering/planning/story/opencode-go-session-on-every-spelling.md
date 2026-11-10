@@ -18,7 +18,7 @@ scope:
   path: crates/llm-messages/tests/opencode_session.rs
 - confidence: inferred
   path: crates/llm-providers/src/declaration.rs
-revision: 9
+revision: 10
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 7}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:24Z", actor: "human:timo", revision: 8}
@@ -41,3 +41,4 @@ Written 2026-11-10 by the coordinator from the `aep:plan-reviewer` triage at `c1
 
 - cited: `crates/llm-messages/src/client.rs:56-57` (the exact prefix check).
 - inferred: `crates/llm-providers/src/declaration.rs:23-40` (`BaseUrl::new`, if normalising there), `crates/llm-messages/tests/opencode_session.rs`, `CHANGELOG.md`.
+- landed (wave 2026-11-09-github-zero, branch head `18ba386b`, from `git diff --name-only`): `crates/llm-messages/src/client.rs`, `crates/llm-messages/tests/adversary_w2026_11_09_u3.rs`, `crates/llm-messages/tests/opencode_go_spellings.rs`, `docs/verification/messages-falsification.json`, `CHANGELOG.md` (coordinator).

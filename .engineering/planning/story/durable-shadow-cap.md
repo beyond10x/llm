@@ -20,7 +20,7 @@ scope:
   path: crates/llm-calls/src/shadow.rs
 - confidence: inferred
   path: crates/llm-calls/tests/shadow.rs
-revision: 18
+revision: 19
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-10T00:19:25Z", actor: "human:timo", revision: 12}
 - {from: "proposed", to: "active", at: "2026-11-10T00:19:25Z", actor: "human:timo", revision: 13}
@@ -54,3 +54,4 @@ Derived 2026-11-10 by `aep:story-scoper` at `c10908eb`; confidence high for `sha
 - Smallest change (scoper): reuse `llm_cost::budget::SqliteLedger` behind an off-by-default `llm-calls` feature; a new constructor such as `ShadowLedger::durable(dir, …)` keeping one ledger per shadow and UTC day at `<dir>/<shadow-id>/<utc-day>`. Not breaking.
 - Safety fact: `SqliteLedger` has one owner per directory; a second process's `open` is refused while the first holds `owner.lock` (`sqlite.rs:41-58`), and `ShadowLedger::open` turns any error into `Skipped` (`shadow.rs:350-354`), so a second process skips the shadow and never takes the reservation (unproven).
 - Not established: day rollover layout; whether conformance needs a durable scenario.
+- landed (wave 2026-11-09-github-zero, branch head `eaf0430d`, from `git diff --name-only`): `.github/workflows/gate.yml`, `Cargo.lock`, `Taskfile.yml`, `crates/llm-calls/Cargo.toml`, `crates/llm-calls/src/shadow.rs`, `crates/llm-calls/tests/adversary_w2026_11_09_u6.rs`, `crates/llm-calls/tests/shadow.rs`, `CHANGELOG.md`, `AGENTS.md`, `docs/design.md`, `docs/implementation-status.md`, `website/data/status.json` (coordinator).
