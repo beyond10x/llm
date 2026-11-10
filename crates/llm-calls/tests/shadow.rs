@@ -1001,3 +1001,152 @@ fn a_shadow_reserving_nothing_or_more_than_its_cap_is_refused() {
     assert!(make("1", "1").is_ok());
     assert!(ShadowLedger::new(id("shadow-spend"), usd(), 0).is_err());
 }
+
+#[cfg(feature = "sqlite")]
+mod durable {
+    use super::*;
+    use std::path::Path;
+
+    fn durable(dir: &Path) -> Arc<ShadowLedger> {
+        Arc::new(ShadowLedger::durable(dir, id("shadow-spend"), usd(), 4).unwrap())
+    }
+
+    /// One primary call and its shadow on `ledger`, at the clock's time; the shadow's outcome.
+    fn one_shadow(
+        catalog: &Catalog,
+        models: &Fleet<'_>,
+        clock: &Scripted,
+        prices: &PriceBook,
+        ledger: &Arc<ShadowLedger>,
+        record_id: &str,
+    ) -> ShadowOutcome {
+        let log = CallLog::new();
+        let cancel = Cancel::new();
+        let shadows = [shadow(ledger)];
+        let env = Env {
+            catalog,
+            models,
+            clock,
+            log: &log,
+            prices: Some(prices),
+            cancel: &cancel,
+            shadows: &shadows,
+        };
+        let (_, results) = call_and_shadow(&env, record_id);
+        results[0].outcome
+    }
+
+    #[test]
+    fn a_days_spend_survives_a_reopen_and_the_next_shadow_past_the_cap_is_skipped() {
+        let dir = tempfile::tempdir().unwrap();
+        let catalog = catalog();
+        let clock = Scripted::at(LAST_MINUTE);
+        let models = fleet(&catalog, &clock);
+        let prices = prices(&catalog);
+
+        let first = durable(dir.path());
+        let sent = one_shadow(&catalog, &models, &clock, &prices, &first, "call-1");
+        assert_eq!(sent, ShadowOutcome::Sent(Outcome::Succeeded));
+        drop(first);
+
+        let second = durable(dir.path());
+        clock.set(LAST_MINUTE + 30_000);
+        let skipped = one_shadow(&catalog, &models, &clock, &prices, &second, "call-2");
+        assert_eq!(skipped, ShadowOutcome::Skipped(BudgetError::LimitExceeded));
+        assert_eq!(
+            models.shadow.calls(),
+            1,
+            "the skipped shadow was never sent"
+        );
+        let totals = second
+            .totals(&id("compare-large"), utc_day(LAST_MINUTE))
+            .unwrap();
+        assert_eq!(totals.settled_nanos, nanos("0.2"));
+    }
+
+    #[test]
+    fn a_second_ledger_on_a_live_directory_skips_the_shadow_and_never_sends_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let catalog = catalog();
+        let clock = Scripted::at(LAST_MINUTE);
+        let models = fleet(&catalog, &clock);
+        let prices = prices(&catalog);
+
+        let first = durable(dir.path());
+        let sent = one_shadow(&catalog, &models, &clock, &prices, &first, "call-1");
+        assert_eq!(sent, ShadowOutcome::Sent(Outcome::Succeeded));
+
+        let second = durable(dir.path());
+        let refused = one_shadow(&catalog, &models, &clock, &prices, &second, "call-2");
+        assert_eq!(refused, ShadowOutcome::Skipped(BudgetError::OwnerBusy));
+        assert_eq!(
+            models.shadow.calls(),
+            1,
+            "the refused shadow was never sent"
+        );
+        assert!(
+            second
+                .totals(&id("compare-large"), utc_day(LAST_MINUTE))
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn a_new_utc_day_starts_a_fresh_cap_on_a_durable_ledger() {
+        let dir = tempfile::tempdir().unwrap();
+        let catalog = catalog();
+        let clock = Scripted::at(LAST_MINUTE);
+        let models = fleet(&catalog, &clock);
+        let prices = prices(&catalog);
+
+        let first = durable(dir.path());
+        let sent = one_shadow(&catalog, &models, &clock, &prices, &first, "call-1");
+        assert_eq!(sent, ShadowOutcome::Sent(Outcome::Succeeded));
+        drop(first);
+
+        let second = durable(dir.path());
+        clock.set(NEXT_DAY);
+        let next = one_shadow(&catalog, &models, &clock, &prices, &second, "call-2");
+        assert_eq!(next, ShadowOutcome::Sent(Outcome::Succeeded));
+        assert_eq!(models.shadow.calls(), 2);
+        let today = second
+            .totals(&id("compare-large"), utc_day(NEXT_DAY))
+            .unwrap();
+        assert_eq!(today.settled_nanos, nanos("0.2"));
+    }
+
+    #[test]
+    fn a_shadow_id_that_is_not_a_safe_name_stays_inside_the_directory() {
+        let outer = tempfile::tempdir().unwrap();
+        let dir = outer.path().join("ledgers");
+        let ledger = durable(&dir);
+        let catalog = catalog();
+        let clock = Scripted::at(LAST_MINUTE);
+        let models = fleet(&catalog, &clock);
+        let prices = prices(&catalog);
+        let log = CallLog::new();
+        let cancel = Cancel::new();
+        let shadows = [Shadow::new(
+            id("../escape/x"),
+            id("coding"),
+            id("coding-shadow"),
+            amount("0.3"),
+            amount("0.25"),
+            Arc::clone(&ledger),
+        )
+        .unwrap()];
+        let env = Env {
+            catalog: &catalog,
+            models: &models,
+            clock: &clock,
+            log: &log,
+            prices: Some(&prices),
+            cancel: &cancel,
+            shadows: &shadows,
+        };
+        let (_, results) = call_and_shadow(&env, "call-1");
+        assert_eq!(results[0].outcome, ShadowOutcome::Sent(Outcome::Succeeded));
+        assert!(!outer.path().join("escape").exists());
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+    }
+}
