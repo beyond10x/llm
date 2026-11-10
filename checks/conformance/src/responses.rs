@@ -493,6 +493,8 @@ fn stream_event(event: &StreamEvent) -> String {
         }
         StreamEvent::Warning { code, .. } => format!("warning:{code}"),
         StreamEvent::RefusalDelta { text } => format!("refusal-delta:{text}"),
+        StreamEvent::MessageBoundary {} => "message-boundary".to_owned(),
+        StreamEvent::OpaqueItem { payload, .. } => format!("opaque-item:{payload}"),
     }
 }
 

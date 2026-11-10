@@ -780,7 +780,12 @@ impl IngressStream {
                 self.announced[index].arguments.push_str(delta);
                 json!({"tool_calls": [{"index": index, "function": {"arguments": delta}}]})
             }
-            StreamEvent::Warning { .. } => return None,
+            // One choice carries one assistant message, whose `content` deltas a reader
+            // concatenates: a message boundary has no chunk. Opaque state has none either, and
+            // `close` refuses an outcome carrying it.
+            StreamEvent::Warning { .. }
+            | StreamEvent::MessageBoundary {}
+            | StreamEvent::OpaqueItem { .. } => return None,
         };
         Some(self.envelope(
             json!([{"index": 0, "delta": delta, "finish_reason": null}]),

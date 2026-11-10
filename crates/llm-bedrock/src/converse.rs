@@ -818,6 +818,9 @@ pub(crate) struct StreamDecoder {
     preserved: Vec<(u64, Item)>,
     /// Whether any event other than `messageStart` was read, shown to the caller or not.
     answered: bool,
+    /// The index of the text block whose text the caller was last shown. Text of another block
+    /// after it is a new message, preceded by [`StreamEvent::MessageBoundary`].
+    shown_text: Option<u64>,
 }
 
 impl StreamDecoder {
@@ -834,6 +837,7 @@ impl StreamDecoder {
             announced: Vec::new(),
             preserved: Vec::new(),
             answered: false,
+            shown_text: None,
         }
     }
 
@@ -1114,6 +1118,13 @@ impl StreamDecoder {
             .get_mut(&index)
             .ok_or_else(|| Error::protocol("Bedrock Converse delta names no open block"))?
             .apply(kind, value)?;
+        if matches!(event, Some(StreamEvent::TextDelta { .. })) {
+            let boundary = self.shown_text.is_some_and(|shown| shown != index);
+            self.shown_text = Some(index);
+            if boundary {
+                emit(sink, StreamEvent::MessageBoundary {}, cancel, self.deadline).await?;
+            }
+        }
         match event {
             Some(event) => emit(sink, event, cancel, self.deadline).await,
             None => Ok(()),
@@ -1356,6 +1367,13 @@ fn whole_block(
                 .ok_or_else(|| Error::protocol("Bedrock Converse text is not a string"))?;
             if text.is_empty() {
                 return Ok(None);
+            }
+            // Text after an earlier block's text is a new message, as the stream would show it.
+            if shown
+                .iter()
+                .any(|event| matches!(event, StreamEvent::TextDelta { .. }))
+            {
+                shown.push(StreamEvent::MessageBoundary {});
             }
             shown.push(StreamEvent::TextDelta {
                 text: text.to_owned(),

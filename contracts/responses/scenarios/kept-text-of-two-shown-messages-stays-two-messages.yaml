@@ -23,4 +23,5 @@ assert:
     stream_events:
     - text-delta:Fir
     - text-delta:st
+    - message-boundary
     - text-delta:Second

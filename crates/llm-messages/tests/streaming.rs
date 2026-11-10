@@ -232,6 +232,83 @@ async fn text_a_block_opens_with_is_shown_so_the_turn_carries_only_what_was_show
     }
 }
 
+/// story:ingress-block-boundaries. Text of a later block is a new message, so the caller is shown
+/// a message boundary before it, and never before the first text it is shown. A redacted thinking
+/// block has no delta to show it: it is shown whole, in its place, as the item the turn carries.
+/// The events relay through the ingress encoder and read back as themselves.
+#[tokio::test]
+async fn text_of_a_later_block_follows_a_message_boundary_and_redacted_thinking_shows_whole() {
+    let redacted = json!({"type":"redacted_thinking","data":"opaque-bytes"});
+    let events = vec![
+        message_start(json!({"input_tokens":11,"output_tokens":1})),
+        json!({"type":"content_block_start","index":0,
+            "content_block":{"type":"thinking","thinking":"","signature":""}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"thinking_delta","thinking":"Let me look"}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"signature_delta","signature":"sig-1"}}),
+        json!({"type":"content_block_stop","index":0}),
+        json!({"type":"content_block_start","index":1,"content_block":redacted}),
+        json!({"type":"content_block_stop","index":1}),
+        json!({"type":"content_block_start","index":2,
+            "content_block":{"type":"text","text":"Hel"}}),
+        json!({"type":"content_block_delta","index":2,
+            "delta":{"type":"text_delta","text":"lo"}}),
+        json!({"type":"content_block_stop","index":2}),
+        json!({"type":"content_block_start","index":3,
+            "content_block":{"type":"text","text":""}}),
+        json!({"type":"content_block_delta","index":3,
+            "delta":{"type":"text_delta","text":"Bye"}}),
+        json!({"type":"content_block_stop","index":3}),
+        message_delta(
+            json!("end_turn"),
+            json!({"input_tokens":11,"output_tokens":5}),
+        ),
+        json!({"type":"message_stop"}),
+    ];
+    let (outcome, sink) = decode(&events).await;
+    let outcome = outcome.expect("the turn decodes");
+    let text = |text: &str| StreamEvent::TextDelta {
+        text: text.to_owned(),
+    };
+    assert_eq!(
+        sink.events(),
+        [
+            StreamEvent::ReasoningDelta {
+                text: "Let me look".to_owned()
+            },
+            StreamEvent::OpaqueItem {
+                provenance: binding().provenance().clone(),
+                payload: redacted.clone(),
+            },
+            text("Hel"),
+            text("lo"),
+            StreamEvent::MessageBoundary {},
+            text("Bye"),
+        ]
+    );
+    assert_eq!(outcome.items[1], opaque(redacted));
+    assert_eq!(
+        outcome.items[2..],
+        [Item::assistant("Hello"), Item::assistant("Bye")]
+    );
+
+    let mut relay = IngressStream::new("msg_014a", Some("example-model-20260201"))
+        .expect("a relay for the route's model");
+    let mut relayed = Vec::new();
+    for event in sink.events() {
+        relayed.extend(relay.chunk(event));
+    }
+    relayed.extend(relay.close(&outcome).expect("the relay closes on the turn"));
+    let (read_back, shown) = decode(&relayed).await;
+    let read_back = read_back.expect("the relayed turn decodes");
+    assert_eq!(
+        (read_back.items, read_back.stop_reason),
+        (outcome.items, outcome.stop_reason)
+    );
+    assert_eq!(shown.events(), sink.events());
+}
+
 /// The thinking block exactly as Harness's emulator opens it (`crates/harness-cli/tests/fixtures/
 /// fake_messages.py` `thinking_events`, and Harness's pinned `anthropic-messages/2026-08-29`
 /// through `2026-08-30.1` stream fixtures): no `signature` field on `content_block_start`, the
@@ -1059,7 +1136,9 @@ async fn content_blocks_are_bounded_while_the_stream_is_still_arriving() {
             "delta":{"type":"text_delta","text":"x"}}));
         events.push(json!({"type":"content_block_stop","index":index}));
     }
-    let mut sink = VecSink::new(MAX_ITEMS + 8, 4 * 1024 * 1024);
+    // Room for every block's text and the message boundary before each after the first, so the
+    // bound that refuses is the decoder's and not the sink's.
+    let mut sink = VecSink::new(2 * MAX_ITEMS + 8, 4 * 1024 * 1024);
     let error = decode_stream(
         &sse(&events),
         &request(),
@@ -1074,11 +1153,13 @@ async fn content_blocks_are_bounded_while_the_stream_is_still_arriving() {
         ErrorCode::TooLarge,
         "the overrun was not refused while the stream was arriving; it was carried to the end",
     );
+    assert_eq!(error.message, "Messages content exceeds its bound");
     assert_eq!(
-        sink.events().len(),
+        sink.text().len(),
         MAX_ITEMS,
         "content past the bound reached the caller before anything refused it",
     );
+    assert_eq!(sink.events().len(), 2 * MAX_ITEMS - 1);
 }
 
 /// A field this subset accepts and never consumes still arrives in the shape the producer

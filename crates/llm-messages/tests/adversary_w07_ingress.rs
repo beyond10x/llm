@@ -5,8 +5,8 @@
 mod support;
 
 use llm_core::{
-    CallId, Cancel, Error, ErrorCode, Id, Item, Provenance, StopReason, StreamEvent, ToolCall,
-    ToolName, TurnObservation, TurnOutcome, TurnRequest, Usage, VecSink,
+    CallId, Cancel, Error, Id, Item, Provenance, StopReason, StreamEvent, ToolCall, ToolName,
+    TurnObservation, TurnOutcome, TurnRequest, Usage, VecSink,
 };
 use llm_messages::{IngressStream, decode_request, decode_stream};
 use serde_json::{Value, json};
@@ -173,13 +173,12 @@ fn a_call_held_for_its_name_is_refused_when_the_outcome_omits_it() {
 
 /// Messages to Messages relay: an upstream answer of thinking, redacted thinking, then text,
 /// read by this crate's decoder, then answered with this crate's encoder from exactly the events
-/// and outcome the decoder produced. The redacted block emits no neutral event, so the encoder
-/// opens the text at the index the redacted block holds in the outcome and `close` refuses after
-/// the caller was already shown the text.
+/// and outcome the decoder produced. The decoder relays the redacted block whole in its place
+/// (`StreamEvent::OpaqueItem`), so the encoder sends it at the index it holds in the outcome and
+/// the text after it; the answer reads back as the same turn and the same events.
 ///
-/// Decided (correction round 1): out of this story's reach, because `StreamEvent` carries no
-/// block boundaries; filed as its own story. This pins the documented limit: `close` refuses with
-/// the contradiction and sends nothing.
+/// Decided (correction round 1): out of the ingress encoder story's reach, because `StreamEvent`
+/// carried no block boundaries; story:ingress-block-boundaries asserts the round trip.
 #[tokio::test]
 async fn a_relayed_answer_with_redacted_thinking_reads_back_whole() {
     let upstream = [
@@ -213,25 +212,29 @@ async fn a_relayed_answer_with_redacted_thinking_reads_back_whole() {
     for event in &events {
         payloads.extend(stream.chunk(event));
     }
-    let note = "story:messages-ingress-encoder: relaying redacted thinking between streamed blocks \
-                needs block boundaries in StreamEvent; assert the round trip when they exist";
-    let refused = stream.close(&relayed).expect_err(note);
-    assert_eq!(refused.code, ErrorCode::Protocol, "{note}");
+    payloads.extend(
+        stream
+            .close(&relayed)
+            .expect("the relayed answer closes on the outcome it streamed"),
+    );
+    let (decoded, shown) = decode(&payloads).await;
     assert_eq!(
-        refused.message, "Messages answer contradicts what was already streamed",
-        "{note}"
+        decoded.expect("the relayed answer decodes"),
+        relayed,
+        "the turn read back"
     );
-    // Nothing was sent by the refused close: the stream is still open, so `fail` is what ends it,
-    // and it needs no `message_start` because the chunks already sent one.
-    let ended = stream.fail(&Error::new(ErrorCode::Protocol, "refused"));
-    assert_eq!(ended.len(), 1, "{note}");
-    assert_eq!(ended[0]["type"], json!("error"), "{note}");
-    assert!(
-        payloads
-            .iter()
-            .all(|payload| payload["type"] != "message_delta" && payload["type"] != "message_stop"),
-        "{note}"
-    );
+    assert_eq!(shown, events, "the events read back");
+    // The redacted block went out whole, in its place, before the text was shown.
+    let redacted = payloads
+        .iter()
+        .position(|payload| payload["content_block"]["type"] == "redacted_thinking")
+        .expect("the redacted block is relayed");
+    let text = payloads
+        .iter()
+        .position(|payload| payload["delta"]["type"] == "text_delta")
+        .expect("the text is relayed");
+    assert!(redacted < text, "{payloads:?}");
+    assert_eq!(payloads[redacted]["index"], json!(1));
 }
 
 /// Keeps the helper used by the omitted-call cases honest: the same call, when the outcome does

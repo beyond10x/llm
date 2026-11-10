@@ -160,45 +160,11 @@ fn fail_does_not_turn_a_partial_usage_snapshot_into_final_counters() {
     );
 }
 
-const ONE_MESSAGE_INTERRUPTED_PENDING: &str = "story:responses-ingress-encoder: one message \
-     interrupted by another item needs an item boundary in StreamEvent \
-     (story:ingress-block-boundaries); assert the round trip when it exists";
-
-/// Today's answer to one message whose deltas another item interrupts: text after another item
-/// opens a new message item, because a Responses upstream's message, reasoning, message must stay
-/// two messages, and `StreamEvent` cannot tell the two shapes apart. `close` refuses the outcome
-/// that holds one message, the stream stays open, and `fail` ends it; the caller keeps what it
-/// was shown.
-fn assert_one_message_interrupted_is_refused(events: &[StreamEvent], encoded: &TurnOutcome) {
-    assert_valid_answer(encoded);
-    let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
-    let mut payloads = Vec::new();
-    for event in events {
-        payloads.extend(stream.chunk(event));
-    }
-    let refusal = stream
-        .close(encoded)
-        .expect_err(ONE_MESSAGE_INTERRUPTED_PENDING);
-    assert_eq!(
-        refusal.code,
-        ErrorCode::Protocol,
-        "{ONE_MESSAGE_INTERRUPTED_PENDING}"
-    );
-    assert_eq!(
-        refusal.message, "model outcome contradicts what was already streamed",
-        "{ONE_MESSAGE_INTERRUPTED_PENDING}"
-    );
-    payloads.extend(stream.fail(&refusal));
-    let decoded = decode_stream(&binding(), &payloads);
-    assert_eq!(decoded.events, events, "{ONE_MESSAGE_INTERRUPTED_PENDING}");
-    assert!(decoded.result.is_err(), "{ONE_MESSAGE_INTERRUPTED_PENDING}");
-}
-
 /// The Chat decoder concatenates every `content` delta of a completion into one `AssistantText`
 /// (`llm-chat/src/incoming.rs` `outcome`), and within one chunk relays `content` before
 /// `reasoning_content` (`delta`). A chunk that carries the end of the reasoning and the start of
-/// the answer therefore yields text, reasoning, then more text of the same message. Pinned to
-/// today's refusal (module Limits).
+/// the answer therefore yields text, reasoning, then more text of the same message, and no message
+/// boundary: it stays one message item (story:ingress-block-boundaries).
 #[test]
 fn one_message_with_reasoning_between_its_deltas_reads_back_whole() {
     let events = vec![
@@ -211,11 +177,15 @@ fn one_message_with_reasoning_between_its_deltas_reads_back_whole() {
         StopReason::EndTurn,
         vec![Item::assistant("The answer is 4.")],
     );
-    assert_one_message_interrupted_is_refused(&events, &encoded);
+    assert_round_trip(
+        "reasoning between the deltas of one message",
+        &events,
+        &encoded,
+    );
 }
 
 /// The same Chat shape with a call between two content deltas: the outcome holds one message and
-/// the call. Pinned to today's refusal (module Limits).
+/// the call, one message item (story:ingress-block-boundaries).
 #[test]
 fn one_message_with_a_call_between_its_deltas_reads_back_whole() {
     let events = vec![
@@ -237,7 +207,11 @@ fn one_message_with_a_call_between_its_deltas_reads_back_whole() {
             call("call-1", "clock", json!({})),
         ],
     );
-    assert_one_message_interrupted_is_refused(&events, &encoded);
+    assert_round_trip(
+        "a call between the deltas of one message",
+        &events,
+        &encoded,
+    );
 }
 
 /// A call announced with no argument fragments: the Chat decoder reads an empty argument string as

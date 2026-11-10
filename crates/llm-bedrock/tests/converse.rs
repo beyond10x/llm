@@ -262,6 +262,8 @@ fn shape(events: &[StreamEvent]) -> Vec<(&'static str, usize)> {
             StreamEvent::ReasoningDelta { .. } => "reasoning",
             StreamEvent::Warning { .. } => "warning",
             StreamEvent::RefusalDelta { .. } => "refusal",
+            StreamEvent::MessageBoundary {} => "message-boundary",
+            StreamEvent::OpaqueItem { .. } => "opaque-item",
         };
         match runs.last_mut() {
             Some((last, count)) if *last == tag => *count += 1,
@@ -945,6 +947,40 @@ async fn an_event_outside_the_subset_is_kept_whole_and_reported() {
     ));
 }
 
+/// story:ingress-block-boundaries. Text of a later content block is a new message: the caller is
+/// shown a message boundary before it, and never before the first text.
+#[tokio::test]
+async fn text_of_a_later_block_follows_a_message_boundary() {
+    // Synthetic: two text blocks, each opened by its first delta.
+    let mut body = event("messageStart", &json!({"role": "assistant"}));
+    for (index, text) in [(0, "One"), (1, "Two")] {
+        body.extend(event(
+            "contentBlockDelta",
+            &json!({"contentBlockIndex": index, "delta": {"text": text}}),
+        ));
+        body.extend(event(
+            "contentBlockStop",
+            &json!({"contentBlockIndex": index}),
+        ));
+    }
+    body.extend(event("messageStop", &json!({"stopReason": "end_turn"})));
+    body.extend(event(
+        "metadata",
+        &json!({"usage": {"inputTokens": 3, "outputTokens": 2, "totalTokens": 5}}),
+    ));
+    let (origin, _server) = serve(success(EVENT_STREAM), body).await;
+    let request = TurnRequest::new(NOVA, vec![Item::user("Hello")]);
+    let (result, events) = turn(target(NOVA, true, origin), &request).await;
+    assert_eq!(
+        result.unwrap().items,
+        vec![Item::assistant("One"), Item::assistant("Two")]
+    );
+    assert_eq!(
+        shape(&events),
+        vec![("text", 1), ("message-boundary", 1), ("text", 1)]
+    );
+}
+
 #[tokio::test]
 async fn a_stream_without_its_usage_report_is_refused() {
     // Synthetic: the recorded shape, cut after `messageStop`, its connection closed cleanly.
@@ -1108,7 +1144,16 @@ async fn a_block_that_stops_without_opening_is_not_counted_against_the_item_boun
     let (result, events) = turn(target(NOVA, true, origin), &request).await;
     let outcome = result.expect("a turn at the item bound");
     assert_eq!(outcome.items.len(), MAX_ITEMS);
-    assert_eq!(events.len(), MAX_ITEMS);
+    // One text delta per block, each after the first preceded by a message boundary.
+    assert_eq!(
+        shape(&events)
+            .iter()
+            .filter(|(tag, _)| *tag == "text")
+            .map(|(_, count)| count)
+            .sum::<usize>(),
+        MAX_ITEMS
+    );
+    assert_eq!(events.len(), 2 * MAX_ITEMS - 1);
 
     let opened = event(
         "contentBlockDelta",

@@ -320,6 +320,9 @@ fn report_events(events: &[StreamEvent], facts: &mut Value) {
             }
             StreamEvent::Warning { code, message } => deltas.push(format!("{code}:{message}")),
             StreamEvent::RefusalDelta { text } => deltas.push(format!("refusal:{text}")),
+            // The facts are the shown text, joined: a boundary between two messages adds none.
+            StreamEvent::MessageBoundary {} => {}
+            StreamEvent::OpaqueItem { payload, .. } => deltas.push(format!("opaque:{payload}")),
         }
     }
     facts["stream_text"] = json!(stream_text);

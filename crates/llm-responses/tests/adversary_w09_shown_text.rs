@@ -284,15 +284,14 @@ fn where_ids_pair_each_message_keeps_exactly_what_was_shown_for_it() {
 /// Design decision 2.4: "feeding the same events to the protocol's ingress encoder,
 /// `close(outcome)` succeeds". The unit's own relay case puts a reasoning delta between its two
 /// messages. Two messages shown back to back, with nothing between them, decode to the turn the
-/// port rule asks for, and the relay of those events refuses it: the neutral events carry no
-/// message boundary, so the encoder streamed one message `AB` and the turn carries `A` and `B`.
+/// port rule asks for, with a message boundary between their texts, and the relay of those
+/// events closes on that turn: each message streams as its own item and reads back as itself.
 ///
-/// That refusal is the encoder's, it predates this unit, and `story:ingress-block-boundaries`
-/// owns it (correction round 1, F3). This case pins today's refusal so it cannot change
-/// unnoticed; it flips to asserting that `close` succeeds when that story lands. Formerly
-/// `two_messages_shown_back_to_back_relay_and_close_on_the_turn`.
+/// The relay refused it until `StreamEvent` carried a message boundary (correction round 1, F3;
+/// story:ingress-block-boundaries). Formerly
+/// `two_messages_shown_back_to_back_are_refused_by_the_relay_until_ingress_block_boundaries`.
 #[test]
-fn two_messages_shown_back_to_back_are_refused_by_the_relay_until_ingress_block_boundaries() {
+fn two_messages_shown_back_to_back_relay_and_close_on_the_turn() {
     let payloads = vec![
         created(),
         delta(Some("msg_a"), 0, "A"),
@@ -309,17 +308,33 @@ fn two_messages_shown_back_to_back_are_refused_by_the_relay_until_ingress_block_
         vec![Item::assistant("A"), Item::assistant("B")]
     );
     assert_eq!(warning_codes(&decoded.events), [] as [&str; 0]);
-    let mut relay = IngressStream::new("resp_gateway_1", 1_700_000_000);
-    for event in &decoded.events {
-        relay.chunk(event);
-    }
-    let refused = relay.close(&outcome).expect_err(
-        "the relay closed on two back-to-back messages: story:ingress-block-boundaries has \
-         landed, so flip this case to assert that close succeeds",
-    );
     assert_eq!(
-        refused.message, "model outcome contradicts what was already streamed",
-        "today's refusal changed before story:ingress-block-boundaries landed: {refused:?}"
+        decoded.events,
+        [
+            StreamEvent::TextDelta {
+                text: "A".to_owned()
+            },
+            StreamEvent::MessageBoundary {},
+            StreamEvent::TextDelta {
+                text: "B".to_owned()
+            },
+        ]
+    );
+    let mut relay = IngressStream::new("resp_gateway_1", 1_700_000_000);
+    let mut relayed = Vec::new();
+    for event in &decoded.events {
+        relayed.extend(relay.chunk(event));
+    }
+    relayed.extend(
+        relay
+            .close(&outcome)
+            .expect("the relay closes on two back-to-back messages"),
+    );
+    let read_back = decode_stream(&binding(), &relayed);
+    assert_eq!(read_back.events, decoded.events);
+    assert_eq!(
+        read_back.result.expect("the relayed turn decodes").items,
+        outcome.items
     );
 }
 

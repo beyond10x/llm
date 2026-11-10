@@ -305,6 +305,11 @@ fn report_sink(sink: &VecSink, facts: &mut Value) {
             }
             StreamEvent::Warning { code, message } => arguments.push(format!("{code}:{message}")),
             StreamEvent::RefusalDelta { text: delta } => arguments.push(format!("refusal:{delta}")),
+            // The facts are the shown text, joined: a boundary between two messages adds none.
+            StreamEvent::MessageBoundary {} => {}
+            StreamEvent::OpaqueItem { payload, .. } => {
+                tool_stream.push(format!("opaque:{payload}"));
+            }
         }
     }
     facts["text"] = json!(text);
@@ -553,6 +558,8 @@ fn shown(event: &StreamEvent) -> String {
         }
         StreamEvent::Warning { code, message } => format!("warning:{code}:{message}"),
         StreamEvent::RefusalDelta { text } => format!("refusal:{text}"),
+        StreamEvent::MessageBoundary {} => "message-boundary".to_owned(),
+        StreamEvent::OpaqueItem { payload, .. } => format!("opaque:{payload}"),
     }
 }
 

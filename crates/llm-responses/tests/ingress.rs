@@ -785,10 +785,12 @@ fn what_the_decoder_would_refuse_to_read_back_is_refused_not_emitted() {
     }
 }
 
-/// Text after a call is a new message item: each item's deltas are one message's text, and the
-/// close finishes each with that text, as the outcome's message in the same position.
+/// Text after a message boundary is a new message item, a call between them or not: each item's
+/// deltas are one message's text, and the close finishes each with that text, as the outcome's
+/// message in the same position. Before story:ingress-block-boundaries text after a call opened
+/// the new item; without the boundary it now continues the message (Chat's text, call, text).
 #[test]
-fn text_after_a_call_opens_a_new_message() {
+fn text_after_a_message_boundary_opens_a_new_message() {
     let events = vec![
         StreamEvent::TextDelta {
             text: "First.".to_owned(),
@@ -801,6 +803,7 @@ fn text_after_a_call_opens_a_new_message() {
             call_id: call_id("call-1"),
             delta: "{}".to_owned(),
         },
+        StreamEvent::MessageBoundary {},
         StreamEvent::TextDelta {
             text: "Second.".to_owned(),
         },
@@ -959,7 +962,13 @@ fn an_empty_message_anywhere_in_the_outcome_reads_back_unchanged() {
         ),
         (
             "two shown messages around a call, empty between",
-            vec![shown("A."), started, arguments, shown("B.")],
+            vec![
+                shown("A."),
+                started,
+                arguments,
+                StreamEvent::MessageBoundary {},
+                shown("B."),
+            ],
             StopReason::ToolCalls,
             vec![
                 Item::assistant("A."),
