@@ -157,7 +157,11 @@ with is a `StreamEvent::TextDelta` when the block opens, and is folded into the 
 `thinking_delta` is shown and folded. Nothing later replaces a block's text, so the turn's text
 cannot differ from what was shown and `shown-text-kept` never appears on this route
 (`docs/design.md` "Streamed events are final"). Every pinned fixture opens a text block with
-`"text": ""`; the route's documentation does not say it always will.
+`"text": ""`; the route's documentation does not say it always will. Text of a block other than
+the one whose text was shown last is a new message: `StreamEvent::MessageBoundary` comes before
+it, never before the first text shown. A `redacted_thinking` block has no delta: it is shown as
+`StreamEvent::OpaqueItem` when it opens, carrying the block as the turn's `Item::Opaque` holds it
+([design.md](design.md#where-one-streamed-item-ends)).
 
 A `thinking` block may open with `"signature": ""` or with no `signature` field at all, and its
 `signature_delta` signs it either way; a finished thinking block without a non-empty signature is
@@ -420,8 +424,12 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
   `input_json_delta`s, reasoning a `thinking` block with `thinking_delta`s. A thinking block stays
   open until `close`, which sends the signature the outcome's opaque state holds and then stops it;
   every other block stops when the next opens. Reasoning with no signature, or signed for another
-  binding, is refused. Content the stream never showed (redacted thinking, a call whose fragments
-  arrived before it was announced) is sent whole at `close`, after the streamed blocks.
+  binding, is refused. `StreamEvent::MessageBoundary` stops the open text block, so the next text
+  opens its own. `StreamEvent::OpaqueItem` of a block this crate reads back as that same item (the
+  redacted thinking a Messages upstream relays) is sent whole at the next index as it arrives, so
+  thinking, redacted thinking and text relay in their order. Content the stream never showed (any
+  other opaque item, a call whose fragments arrived before it was announced) is sent whole at
+  `close`, after the streamed blocks.
 - **Reasons.** `end_turn`, `tool_use`, `max_tokens`, and an `Incomplete` reason under its own name;
   a reason the decoder would read as another one is refused.
 - **Usage.** Only reported counters, in `message_delta`; an unknown counter is left out, never zero.
@@ -440,8 +448,8 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
   `story:relayed-failures-keep-their-retry-decision`).
 - **Refusals.** `UserText`, `ToolResult` and `UnattributedOpaque` items, and an outcome that
   contradicts the streamed calls. Argument fragments for a call whose block already stopped make
-  `close` refuse, and redacted thinking that would precede streamed text is refused because it
-  would read back in another order.
+  `close` refuse, and redacted thinking the stream did not relay in its place that would precede
+  streamed text is refused because it would read back in another order.
 
 ## Verification
 

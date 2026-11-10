@@ -266,6 +266,9 @@ pub struct StreamDecoder {
     /// is output to fallback, so showing it earlier would make a stream that fails before
     /// answering final; held, it is dropped with that attempt.
     held: Option<String>,
+    /// The index of the text block whose text the caller was last shown. Text of another block
+    /// after it is a new message, preceded by [`StreamEvent::MessageBoundary`].
+    shown_text: Option<u64>,
     started: bool,
     /// Whether any payload outside [`LIFECYCLE_EVENTS`] was read, shown to the caller or not.
     answered: bool,
@@ -284,6 +287,7 @@ impl StreamDecoder {
             announced: Vec::new(),
             preserved: Vec::new(),
             held: None,
+            shown_text: None,
             started: false,
             answered: false,
             complete: false,
@@ -475,7 +479,20 @@ impl StreamDecoder {
                 .map(|text| StreamEvent::TextDelta {
                     text: text.to_owned(),
                 }),
-            "thinking" | "redacted_thinking" => None,
+            "thinking" => None,
+            // Arrives whole and has no delta to show it: relayed whole in its place, read as the
+            // finished block will be, so a re-encoder of this wire can put it between the blocks
+            // around it.
+            "redacted_thinking" => match decode_block(&value, false, Some(&self.target), BLOCK)? {
+                Item::Opaque {
+                    provenance,
+                    payload,
+                } => Some(StreamEvent::OpaqueItem {
+                    provenance,
+                    payload,
+                }),
+                _ => None,
+            },
             "tool_use" => {
                 let call_id = CallId::new(string(&value, "id")?)
                     .map_err(|_| Error::protocol("invalid Messages tool call id"))?;
@@ -515,6 +532,8 @@ impl StreamDecoder {
             }
             _ => None,
         };
+        let boundary =
+            matches!(announcement, Some(StreamEvent::TextDelta { .. })) && self.new_message(index);
         self.next_index = index.saturating_add(1);
         self.blocks.insert(
             index,
@@ -525,10 +544,21 @@ impl StreamDecoder {
                 unknown,
             },
         );
+        if boundary {
+            emit(sink, StreamEvent::MessageBoundary {}, cancel, self.deadline).await?;
+        }
         match announcement {
             Some(event) => emit(sink, event, cancel, self.deadline).await,
             None => Ok(()),
         }
+    }
+
+    /// Whether text shown for block `index` begins a new message: the caller was last shown
+    /// another block's text. Records `index` as the block whose text was shown last.
+    fn new_message(&mut self, index: u64) -> bool {
+        let boundary = self.shown_text.is_some_and(|shown| shown != index);
+        self.shown_text = Some(index);
+        boundary
     }
 
     async fn apply_delta(
@@ -606,6 +636,9 @@ impl StreamDecoder {
             // names still assembles from the deltas around it.
             _ => return self.preserve_delta(data, sink, cancel).await,
         };
+        if matches!(event, Some(StreamEvent::TextDelta { .. })) && self.new_message(index) {
+            emit(sink, StreamEvent::MessageBoundary {}, cancel, self.deadline).await?;
+        }
         match event {
             Some(event) => emit(sink, event, cancel, self.deadline).await,
             None => Ok(()),

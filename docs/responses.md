@@ -302,7 +302,7 @@ dropped event is a hole in the conversation the next turn cannot see.
 
 | event | effect |
 | --- | --- |
-| `response.output_text.delta` | `StreamEvent::TextDelta` |
+| `response.output_text.delta` | `StreamEvent::TextDelta`, preceded by `StreamEvent::MessageBoundary` when it is the first text of an output item and another item's text was shown before it |
 | `response.reasoning_summary_text.delta` | `StreamEvent::ReasoningDelta` |
 | `response.reasoning_text.delta` | `StreamEvent::ReasoningDelta` |
 | `response.output_item.added` of a `function_call` | `StreamEvent::ToolCallStarted` with its `call_id` and `name`; one without a usable name is not announced, and its argument deltas are not relayed. A repeated opening item, or a second item under a `call_id` already announced, announces nothing. An outcome that does not carry each announced call under the same `call_id` and `name` is refused, with the terminal counters |
@@ -518,11 +518,13 @@ without opaque state in the outcome adds no output item. `ingest_request` still 
 One identifier per answer: every payload, the terminal one included, carries the caller-supplied
 `id`; the upstream's response id belongs to the upstream exchange and is not relayed, so the decoded
 `response_id` is the caller's. `fail` carries counters only when the error's observation reports
-them as final; a partial snapshot is left out rather than read back as a final cost. A text delta
-after any other item opens a new message item, and each message ends with exactly the text its
-deltas showed. Because `StreamEvent` carries no item boundary, two consecutive messages with
-nothing streamed between them, and one message whose text a reasoning delta or a call interrupts,
-are refused at `close` (story `ingress-block-boundaries`). The `fail` code mapping (which error codes
+them as final; a partial snapshot is left out rather than read back as a final cost. Text deltas
+continue one message item until a `StreamEvent::MessageBoundary`, whatever is relayed between them,
+and the next text opens a new item; each message ends with exactly the text its deltas showed. So
+two messages relay as two items with or without anything between them, and one message whose text
+a reasoning delta or a call interrupts (a Chat Completions upstream) as one
+([design.md](design.md#where-one-streamed-item-ends)). A `StreamEvent::OpaqueItem` sends nothing:
+this wire carries opaque state only from the outcome, after what was streamed. The `fail` code mapping (which error codes
 read back as themselves and which as `refused`) is a table in the module documentation of
 `crates/llm-responses/src/ingress.rs`.
 

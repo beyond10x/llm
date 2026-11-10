@@ -8,7 +8,7 @@
 use std::collections::BTreeMap;
 
 use llm_core::{
-    CallId, ErrorCode, Id, Item, Protocol, Provenance, StopReason, StreamEvent, ToolCall, ToolName,
+    CallId, Id, Item, Protocol, Provenance, StopReason, StreamEvent, ToolCall, ToolName,
     TurnObservation, TurnOutcome, Usage,
 };
 use llm_responses::{
@@ -115,7 +115,8 @@ fn text(value: &str) -> StreamEvent {
 }
 
 /// Text, a call, then more text: the shape a Messages upstream decodes `text`, `tool_use`, `text`
-/// content blocks into (one `AssistantText` per block, `llm-messages/src/codec.rs`).
+/// content blocks into (one `AssistantText` per block, `llm-messages/src/codec.rs`). The second
+/// text is another block's, so the decoder shows a message boundary before it.
 fn text_call_text() -> (Vec<StreamEvent>, TurnOutcome) {
     let events = vec![
         text("First."),
@@ -127,6 +128,7 @@ fn text_call_text() -> (Vec<StreamEvent>, TurnOutcome) {
             call_id: call_id("call-1"),
             delta: "{}".to_owned(),
         },
+        StreamEvent::MessageBoundary {},
         text("Second."),
     ];
     let encoded = outcome(
@@ -141,9 +143,13 @@ fn text_call_text() -> (Vec<StreamEvent>, TurnOutcome) {
 }
 
 /// Two messages in one turn with no call between them: the shape a Responses upstream with two
-/// `message` output items decodes into.
+/// `message` output items decodes into, a message boundary between their texts.
 fn two_messages() -> (Vec<StreamEvent>, TurnOutcome) {
-    let events = vec![text("Alpha."), text("Beta.")];
+    let events = vec![
+        text("Alpha."),
+        StreamEvent::MessageBoundary {},
+        text("Beta."),
+    ];
     let encoded = outcome(
         StopReason::EndTurn,
         vec![Item::assistant("Alpha."), Item::assistant("Beta.")],
@@ -151,53 +157,29 @@ fn two_messages() -> (Vec<StreamEvent>, TurnOutcome) {
     (events, encoded)
 }
 
-/// The open defect, asserted as it stands so it cannot change unnoticed.
-const TWO_MESSAGES_PENDING: &str = "story:responses-ingress-encoder: two consecutive messages need \
-     a message boundary in StreamEvent (story:ingress-block-boundaries); assert the round trip \
-     when it exists";
-
-/// `two_messages` today: the neutral events carry no boundary between the two texts, so both
-/// deltas went out under one message item, and `close` refuses an outcome that splits them. The
-/// stream stays open and ends with `fail`; the caller keeps the text it was shown.
-fn assert_two_messages_are_refused_until_a_boundary_exists() {
-    let (events, encoded) = two_messages();
-    assert_valid_answer(&encoded);
-    let mut stream = IngressStream::new("resp_gateway_1", CREATED_AT);
-    let mut payloads = Vec::new();
-    for event in &events {
-        payloads.extend(stream.chunk(event));
-    }
-    let refusal = stream.close(&encoded).expect_err(TWO_MESSAGES_PENDING);
-    assert_eq!(refusal.code, ErrorCode::Protocol, "{TWO_MESSAGES_PENDING}");
-    assert_eq!(
-        refusal.message, "model outcome contradicts what was already streamed",
-        "{TWO_MESSAGES_PENDING}"
-    );
-    payloads.extend(stream.fail(&refusal));
-    assert_eq!(
-        payloads.last().map(|payload| &payload["type"]),
-        Some(&json!("response.failed")),
-        "{TWO_MESSAGES_PENDING}"
-    );
-    let decoded = decode_stream(&binding(), &payloads);
-    assert_eq!(decoded.events, events, "{TWO_MESSAGES_PENDING}");
-    assert!(decoded.result.is_err(), "{TWO_MESSAGES_PENDING}");
+/// Every shape of a turn with more than one message, by name.
+fn several_messages() -> [(&'static str, (Vec<StreamEvent>, TurnOutcome)); 2] {
+    [
+        ("text_call_text", text_call_text()),
+        ("two_messages", two_messages()),
+    ]
 }
 
 /// Story Acceptance, "Round trip, streamed": the decoder gives back the same events. A turn with
-/// more than one message must not show the caller any text twice.
+/// more than one message must not show the caller any text twice. `two_messages` was refused at
+/// `close` until `StreamEvent` carried a message boundary (story:ingress-block-boundaries).
 #[test]
 fn a_turn_with_several_messages_reads_back_as_the_events_that_were_encoded() {
-    assert_two_messages_are_refused_until_a_boundary_exists();
-    let (events, encoded) = text_call_text();
-    assert_valid_answer(&encoded);
-    let payloads = encode(&events, &encoded);
-    let decoded = decode_stream(&binding(), &payloads);
-    assert_eq!(
-        decoded.events, events,
-        "the caller is shown the encoded events, each text once"
-    );
-    assert_eq!(decoded.result.expect("decodes"), encoded);
+    for (shape, (events, encoded)) in several_messages() {
+        assert_valid_answer(&encoded);
+        let payloads = encode(&events, &encoded);
+        let decoded = decode_stream(&binding(), &payloads);
+        assert_eq!(
+            decoded.events, events,
+            "{shape}: the caller is shown the encoded events, each text once"
+        );
+        assert_eq!(decoded.result.expect("decodes"), encoded, "{shape}");
+    }
 }
 
 /// On this wire the deltas of one output item add up to the text its `output_text.done` and its
@@ -205,31 +187,32 @@ fn a_turn_with_several_messages_reads_back_as_the_events_that_were_encoded() {
 /// must show the same message.
 #[test]
 fn every_streamed_message_finishes_with_the_text_its_deltas_showed() {
-    assert_two_messages_are_refused_until_a_boundary_exists();
-    let (events, encoded) = text_call_text();
-    let payloads = encode(&events, &encoded);
-    let mut deltas: BTreeMap<String, String> = BTreeMap::new();
-    let mut done: BTreeMap<String, String> = BTreeMap::new();
-    for payload in &payloads {
-        let item_id = payload["item_id"].as_str().unwrap_or_default().to_owned();
-        match payload["type"].as_str() {
-            Some("response.output_text.delta") => deltas
-                .entry(item_id)
-                .or_default()
-                .push_str(payload["delta"].as_str().expect("delta text")),
-            Some("response.output_text.done") => {
-                done.insert(
-                    item_id,
-                    payload["text"].as_str().expect("done text").to_owned(),
-                );
+    for (shape, (events, encoded)) in several_messages() {
+        let payloads = encode(&events, &encoded);
+        let mut deltas: BTreeMap<String, String> = BTreeMap::new();
+        let mut done: BTreeMap<String, String> = BTreeMap::new();
+        for payload in &payloads {
+            let item_id = payload["item_id"].as_str().unwrap_or_default().to_owned();
+            match payload["type"].as_str() {
+                Some("response.output_text.delta") => deltas
+                    .entry(item_id)
+                    .or_default()
+                    .push_str(payload["delta"].as_str().expect("delta text")),
+                Some("response.output_text.done") => {
+                    done.insert(
+                        item_id,
+                        payload["text"].as_str().expect("done text").to_owned(),
+                    );
+                }
+                _ => {}
             }
-            _ => {}
         }
+        assert_eq!(done.len(), 2, "{shape}: two message items");
+        assert_eq!(
+            deltas, done,
+            "{shape}: per message item, streamed deltas versus the finished text"
+        );
     }
-    assert_eq!(
-        deltas, done,
-        "per message item: streamed deltas versus the finished text"
-    );
 }
 
 /// The response a streamed answer opens is the response it ends: one `id` from

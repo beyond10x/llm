@@ -85,6 +85,8 @@ struct Fake<'c> {
     capabilities: Capabilities,
     clock: &'c Scripted,
     before_first_ms: u64,
+    /// Time that passes between two events.
+    between_ms: u64,
     events: Vec<StreamEvent>,
     after_ms: u64,
     items: Vec<Item>,
@@ -105,6 +107,7 @@ impl<'c> Fake<'c> {
             capabilities: binding.capabilities().clone(),
             clock,
             before_first_ms: 0,
+            between_ms: 0,
             events: vec![StreamEvent::TextDelta {
                 text: "done".to_owned(),
             }],
@@ -150,7 +153,10 @@ impl Model for Fake<'_> {
                 .filter(|_| self.fail_times.is_none_or(|times| call < times));
             self.clock.advance(self.before_first_ms);
             if fail.is_none() {
-                for event in &self.events {
+                for (at, event) in self.events.iter().enumerate() {
+                    if at > 0 {
+                        self.clock.advance(self.between_ms);
+                    }
                     sink.emit(event.clone()).await?;
                 }
             }
@@ -522,6 +528,38 @@ fn a_retry_warning_is_not_the_first_event() {
     // Warning at 110 ms; the first text after the second attempt's own 100 ms, at 210 ms.
     assert_eq!(record.time_to_first_event_ms, Some(210));
     assert_eq!(record.latency_ms, Some(220));
+}
+
+/// story:ingress-block-boundaries. A message boundary carries nothing and is not output, so it
+/// starts no first-output clock; an item that arrived whole is output and does.
+#[test]
+fn a_message_boundary_is_not_the_first_event_and_an_opaque_item_is() {
+    let catalog = catalog(false);
+    let opaque = |provenance: &Provenance| StreamEvent::OpaqueItem {
+        provenance: provenance.clone(),
+        payload: serde_json::json!({"type": "redacted_thinking", "data": "AAAA"}),
+    };
+    for (boundary, expected) in [(true, 70), (false, 40)] {
+        let clock = Scripted::at(9_000);
+        let mut answering = Fake::on(&catalog, "local-small", &clock);
+        answering.before_first_ms = 40;
+        answering.between_ms = 30;
+        let leading = if boundary {
+            StreamEvent::MessageBoundary {}
+        } else {
+            opaque(&answering.provenance)
+        };
+        answering.events.insert(0, leading);
+        let models = fleet([("local-small", answering)]);
+        let ran = run(&catalog, &models, &request(), &clock, None);
+        let record = only(&ran.records);
+        assert_eq!(
+            record.time_to_first_event_ms,
+            Some(expected),
+            "first event shown: {:?}",
+            ran.shown.first()
+        );
+    }
 }
 
 #[test]

@@ -3,6 +3,7 @@ use crate::{
     encoded_len,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::{future::Future, pin::Pin, time::Duration};
 
 pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
@@ -59,6 +60,29 @@ pub enum StreamEvent {
     Warning {
         code: String,
         message: String,
+    },
+    /// The assistant message the text deltas so far were shown for has ended: the next
+    /// [`StreamEvent::TextDelta`] begins a new message and never continues one shown before it.
+    /// Without it, text deltas continue one message whatever is shown between them, so a
+    /// consumer re-emitting the stream (an ingress encoder) can place each shown text in the
+    /// [`crate::Item::AssistantText`] it belongs to.
+    ///
+    /// **Not model output.** It carries nothing. A producer emits it only immediately before the
+    /// first text delta of a message when text of an earlier message of the turn was already
+    /// shown, so it never precedes a turn's first output event. Fallback eligibility and the
+    /// first-output clock do not count it. It has braces so that, as every other event, it
+    /// refuses a field it does not have (a unit variant of this enum would read one and drop it).
+    MessageBoundary {},
+    /// An output item that arrived whole, with no delta that could show it, in its place among
+    /// the streamed ones: provider state the turn carries as [`crate::Item::Opaque`] with exactly
+    /// this provenance and payload (a Messages `redacted_thinking` block). A consumer
+    /// re-emitting the wire that produced it places it here; any other consumer ignores it.
+    ///
+    /// It shows the caller no text, but it is model output: it ends fallback eligibility and
+    /// starts the first-output clock as any delta does.
+    OpaqueItem {
+        provenance: Provenance,
+        payload: Value,
     },
 }
 
@@ -252,5 +276,30 @@ mod tests {
         ] {
             assert!(serde_json::from_value::<StreamEvent>(value).is_err());
         }
+    }
+
+    #[test]
+    fn a_message_boundary_and_an_opaque_item_have_their_own_kinds() {
+        let boundary = json!({"kind": "message-boundary"});
+        assert_eq!(
+            serde_json::from_value::<StreamEvent>(boundary.clone()).expect("a boundary"),
+            StreamEvent::MessageBoundary {}
+        );
+        assert_eq!(
+            serde_json::to_value(StreamEvent::MessageBoundary {}).expect("encodable"),
+            boundary
+        );
+        assert!(
+            serde_json::from_value::<StreamEvent>(json!({"kind": "message-boundary", "text": "x"}))
+                .is_err(),
+            "a boundary carries nothing"
+        );
+        let opaque = json!({"kind": "opaque-item", "provenance": {
+            "protocol": "messages", "provider": "p", "account": "a", "endpoint": "e",
+            "model": "m", "binding_revision": "r"},
+            "payload": {"type": "redacted_thinking", "data": "AAAA"}});
+        let event: StreamEvent = serde_json::from_value(opaque.clone()).expect("an opaque item");
+        assert!(matches!(event, StreamEvent::OpaqueItem { .. }));
+        assert_eq!(serde_json::to_value(&event).expect("encodable"), opaque);
     }
 }

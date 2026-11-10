@@ -162,7 +162,8 @@ async fn a_local_reasoning_turn_relayed_from_chat_is_answered_and_reads_back() {
 }
 
 /// Interleaved reasoning and text: two thinking blocks stay open at once while the text blocks
-/// after each open and stop, and both are signed at close.
+/// after each open and stop, and both are signed at close. The second text is another block's,
+/// so the decoder shows a message boundary before it (story:ingress-block-boundaries).
 #[tokio::test]
 async fn interleaved_thinking_and_text_read_back_whole() {
     let events = [
@@ -170,6 +171,7 @@ async fn interleaved_thinking_and_text_read_back_whole() {
         reasoning("thought"),
         text("One."),
         reasoning("second thought"),
+        StreamEvent::MessageBoundary {},
         text("Two."),
     ];
     let answer = outcome(

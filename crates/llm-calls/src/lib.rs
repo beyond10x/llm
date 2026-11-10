@@ -94,8 +94,12 @@ struct Timed<'t> {
 
 impl StreamSink for Timed<'_> {
     fn emit(&mut self, event: StreamEvent) -> BoxFuture<'_, Result<(), Error>> {
-        // A warning is not output of an attempt, so a retry's warning starts no clock.
-        if !matches!(event, StreamEvent::Warning { .. }) {
+        // A warning is not output of an attempt, so a retry's warning starts no clock; nor is a
+        // message boundary, which carries nothing.
+        if !matches!(
+            event,
+            StreamEvent::Warning { .. } | StreamEvent::MessageBoundary {}
+        ) {
             self.stopwatch.first_event(self.clock);
         }
         self.inner.emit(event)

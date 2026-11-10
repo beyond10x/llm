@@ -156,6 +156,42 @@ Only Responses can replace a server's text ([responses.md](responses.md)). Messa
 block's opening text as a delta ([messages.md](messages.md)), and Chat Completions carries text
 only as deltas ([chat.md](chat.md)).
 
+### Where one streamed item ends
+
+Text deltas alone cannot say which message they belong to: a Chat Completions answer of text,
+reasoning and more text is one message, and a Responses answer of two message items, or a Messages
+answer of a text block, a call and a text block, is two. An ingress encoder that relays the stream
+has to put each delta in the item the outcome carries it in, before it knows the outcome. Two
+events say where an item ends without a delta saying so:
+
+- `StreamEvent::MessageBoundary`: the next text delta begins a new assistant message. A decoder
+  emits it only immediately before the first text delta of a message when text of an earlier
+  message of the turn was already shown (Responses: another output item; Messages and Bedrock:
+  another content block). Without it, text deltas continue one message, whatever is shown between
+  them, so Chat Completions never emits it.
+- `StreamEvent::OpaqueItem { provenance, payload }`: an item that arrived whole, with no delta to
+  show it, in its place among the streamed ones, exactly as the turn carries it in `Item::Opaque`.
+  The Messages decoder emits it for a `redacted_thinking` block when the block opens.
+
+The boundary carries nothing and is not model output. Fallback eligibility does not count it
+(`crates/llm-routing/src/fallback.rs`, `Counting`) and the first-output clock does not start on it
+(`crates/llm-calls/src/lib.rs`, `Timed`); because a decoder emits it only after shown text, it
+never precedes a turn's first output either way. The opaque item is model output the caller is
+shown no text of, and ends eligibility and starts the clock as any delta does: a relay has already
+sent it on.
+
+The opaque item carries the block rather than marking where one sits, because a bare marker is not
+enough on Messages: the redacted block's data arrives in its `content_block_start`, and the
+Messages decoder (`crates/llm-messages/src/decode.rs`, `start_block`) refuses a block that starts
+at an index below one already started. An encoder holding a marker could only send the block at
+`close`, after the text that follows it, or hold back every later delta until `close`. Carrying it lets the encoder send it in
+place as it arrives; `close` still checks that the outcome carries exactly that item there.
+
+Both are new variants of an exhaustive `StreamEvent`, a breaking change for every consumer that
+matches it. `StreamEvent` stays exhaustive rather than `#[non_exhaustive]`: a relay that does not
+decide what an event means drops it silently, and that is how this gap went unseen; the compiler
+making each consumer decide is the check.
+
 ### Input into a running turn
 
 llm does not carry input into a turn that is still producing output. A caller with new input

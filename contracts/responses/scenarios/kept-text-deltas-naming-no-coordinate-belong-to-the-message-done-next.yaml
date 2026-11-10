@@ -22,4 +22,5 @@ assert:
     items_json: '[{"kind":"assistant-text","text":"A"},{"kind":"assistant-text","text":"B"}]'
     stream_events:
     - text-delta:A
+    - message-boundary
     - text-delta:B
