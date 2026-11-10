@@ -81,6 +81,8 @@ fn an_encoded_separator_under_opencode_go_is_refused_by_name_before_io() {
         "https://opencode.ai./inference/go/anthropic%2fv1",
         "https://opencode.ai/inference%2fgo/anthropic/v1",
         "https://opencode.ai/inference/go/anthropic%5Cv1",
+        "https://opencode.ai./zen/%2f",
+        "https://opencode.ai/zen/..%2Finference/go/anthropic/v1",
     ] {
         let error = build(url)
             .err()
@@ -97,7 +99,6 @@ fn look_alikes_stay_not_opencode_go() {
     for url in [
         "https://opencode.ai.example/inference/go/anthropic/v1",
         "https://opencode.ai../inference/go/anthropic/v1",
-        "https://opencode.ai./zen/%2f",
         "https://opencode.ai:8443/inference/go/anthropic/v1",
         "http://opencode.ai./inference/go/anthropic/v1",
         "https://opencode.ai/inference/%67ox/anthropic/v1",

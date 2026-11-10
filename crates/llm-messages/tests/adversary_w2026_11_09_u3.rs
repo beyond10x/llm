@@ -133,7 +133,13 @@ fn the_refusal_carries_no_url_or_secret() {
     let url = "https://opencode.ai./inference/go/secret-path%2Fv1";
     let error = build(url).err().expect("refused");
     let text = format!("{error} {error:?}");
-    for leak in ["opencode.ai.", "secret-path", "%2F", "fixture-key", "https://"] {
+    for leak in [
+        "opencode.ai.",
+        "secret-path",
+        "%2F",
+        "fixture-key",
+        "https://",
+    ] {
         assert!(!text.contains(leak), "{leak} in {text}");
     }
 }

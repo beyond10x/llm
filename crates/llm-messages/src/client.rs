@@ -51,8 +51,8 @@ pub const OPENCODE_SESSION_HEADER: &str = "x-opencode-session";
 /// default port dropped, dot segments resolved, no userinfo, and a path ending in `/`. That form is
 /// normalised further before the comparison; `http`, `opencode.ai.example`, `www.opencode.ai`, an
 /// explicit port such as `:8443` and a path such as `/zen/` or `/inference/gox/` all differ from it.
-/// A spelling that hides a path separator as `%2F` or `%5C` under the prefix is neither: the
-/// client constructor refuses it (see `classify_opencode`), and this returns `false`.
+/// A path of an `opencode.ai` base URL that hides a separator as `%2F` or `%5C` anywhere is
+/// neither: the client constructor refuses it (see `classify_opencode`), and this returns `false`.
 pub fn is_opencode_go(base_url: &BaseUrl) -> bool {
     matches!(classify_opencode(base_url), Ok(true))
 }
@@ -66,9 +66,9 @@ const OPENCODE_GO_PATH: &str = "/inference/go/";
 /// (`A-Z a-z 0-9 - . _ ~`) decoded. The request still goes to the URL as written.
 ///
 /// # Errors
-/// Refuses a spelling that reaches `OpenCode` Go's host but whose path hides a `/` or `\` as
-/// `%2F` or `%5C` where the `OpenCode` Go prefix is, which cannot be told from `OpenCode` Go
-/// by any normalisation that keeps path segments apart.
+/// Refuses any base URL on `OpenCode` Go's host (after host normalisation) whose path hides a
+/// `/` or `\` as `%2F` or `%5C` (any case) anywhere, which cannot be told from `OpenCode` Go or
+/// from another endpoint by any normalisation that keeps path segments apart.
 fn classify_opencode(base_url: &BaseUrl) -> Result<bool, Error> {
     let Some(rest) = base_url.as_str().strip_prefix("https://") else {
         return Ok(false);
@@ -90,14 +90,9 @@ fn classify_opencode(base_url: &BaseUrl) -> Result<bool, Error> {
             .map(|(high, low)| u8::try_from(high * 16 + low).unwrap_or(0));
         match escaped {
             Some(b'/' | b'\\') => {
-                if OPENCODE_GO_PATH.starts_with(decoded.as_str())
-                    || decoded.starts_with(OPENCODE_GO_PATH)
-                {
-                    return Err(Error::invalid(
-                        "an OpenCode Go base URL hides a path separator in a percent escape",
-                    ));
-                }
-                return Ok(false);
+                return Err(Error::invalid(
+                    "an OpenCode Go base URL hides a path separator in a percent escape",
+                ));
             }
             Some(byte)
                 if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~') =>
