@@ -164,19 +164,24 @@ answer of a text block, a call and a text block, is two. An ingress encoder that
 has to put each delta in the item the outcome carries it in, before it knows the outcome. Two
 events say where an item ends without a delta saying so:
 
-- `StreamEvent::MessageBoundary`: the next text delta begins a new assistant message. A decoder
-  emits it only immediately before the first text delta of a message when text of an earlier
-  message of the turn was already shown (Responses: another output item; Messages and Bedrock:
-  another content block). Without it, text deltas continue one message, whatever is shown between
-  them, so Chat Completions never emits it.
+- `StreamEvent::MessageBoundary`: the next text delta belongs to another assistant message than
+  the text delta before it. A decoder emits it only immediately before a text delta when text of
+  another message of the turn was shown just before (Responses: another output item; Messages and
+  Bedrock: another content block), so messages streamed one after another are separated by exactly
+  one boundary. Without it, text deltas continue one message, whatever is shown between them, so
+  Chat Completions never emits it. A Responses wire that interleaved the deltas of two items would
+  give one boundary per change, and the text after a boundary would then continue a message shown
+  before it; no server is known to interleave.
 - `StreamEvent::OpaqueItem { provenance, payload }`: an item that arrived whole, with no delta to
   show it, in its place among the streamed ones, exactly as the turn carries it in `Item::Opaque`.
   The Messages decoder emits it for a `redacted_thinking` block when the block opens.
 
 The boundary carries nothing and is not model output. Fallback eligibility does not count it
-(`crates/llm-routing/src/fallback.rs`, `Counting`) and the first-output clock does not start on it
-(`crates/llm-calls/src/lib.rs`, `Timed`); because a decoder emits it only after shown text, it
-never precedes a turn's first output either way. The opaque item is model output the caller is
+(`crates/llm-routing/src/fallback.rs`, `Counting`), the first-output clock does not start on it
+(`crates/llm-calls/src/lib.rs`, `Timed`) and `VecSink` charges it to neither of its bounds; because
+a decoder emits it only after shown text, it never precedes a turn's first output either way.
+`VecSink` counts an opaque item as one event and does not charge its payload to its byte bound,
+which bounds shown text. The opaque item is model output the caller is
 shown no text of, and ends eligibility and starts the clock as any delta does: a relay has already
 sent it on.
 

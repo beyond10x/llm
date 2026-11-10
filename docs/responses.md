@@ -302,7 +302,7 @@ dropped event is a hole in the conversation the next turn cannot see.
 
 | event | effect |
 | --- | --- |
-| `response.output_text.delta` | `StreamEvent::TextDelta`, preceded by `StreamEvent::MessageBoundary` when it is the first text of an output item and another item's text was shown before it |
+| `response.output_text.delta` | `StreamEvent::TextDelta`, preceded by `StreamEvent::MessageBoundary` when another output item's text was shown just before it |
 | `response.reasoning_summary_text.delta` | `StreamEvent::ReasoningDelta` |
 | `response.reasoning_text.delta` | `StreamEvent::ReasoningDelta` |
 | `response.output_item.added` of a `function_call` | `StreamEvent::ToolCallStarted` with its `call_id` and `name`; one without a usable name is not announced, and its argument deltas are not relayed. A repeated opening item, or a second item under a `call_id` already announced, announces nothing. An outcome that does not carry each announced call under the same `call_id` and `name` is refused, with the terminal counters |

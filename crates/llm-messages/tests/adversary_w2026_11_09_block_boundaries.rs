@@ -120,7 +120,13 @@ async fn a_message_boundary_takes_no_event_slot_of_the_callers_sink() {
             "delta":{"type":"text_delta","text":"Second."}}),
         json!({"type":"content_block_stop","index":2}),
     ];
-    upstream.extend(end());
+    // Correction round 1: a turn with a call stops for `tool_use`; `end_turn` was refused as
+    // contradicting its tool obligations whatever the sink held.
+    upstream.extend([
+        json!({"type":"message_delta","delta":{"stop_reason":"tool_use"},
+            "usage":{"output_tokens":9}}),
+        json!({"type":"message_stop"}),
+    ]);
     let mut sink = VecSink::new(4, 64 * 1024);
     let decoded = decode_stream(
         &sse(&upstream),
