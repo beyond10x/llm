@@ -296,3 +296,55 @@ async fn two_concurrent_spawned_refusals_are_both_credential_refusals() {
          has landed: flip this assertion to MissingCredential: {first:?}"
     );
 }
+
+/// Pass 2. Two Codex models of two different logins (two `auth.json` files) and one model id and
+/// endpoint carry one provenance, so they share one refusal slot. Login A is valid: its call is
+/// sent and its stream is cut, a Transport failure. While it is in flight, model B (whose login is
+/// absent) runs a turn directly, outside `call_tool`, the way control-plane's `ProviderPort::turn`
+/// drives a `codex_model`. B's refusal lands in the shared slot, and A's failed call must not take
+/// it: A's login was read, and B's file is not A's.
+#[tokio::test]
+async fn another_logins_refusal_is_not_this_calls_failure() {
+    let valid = valid_login("cross-login-valid");
+    let absent = fixture_dir("cross-login-absent").join("auth.json");
+    let (socket, url) = listener().await;
+    let (arrived, request_arrived) = oneshot::channel::<()>();
+    let (release, released) = oneshot::channel::<()>();
+    let server = tokio::spawn(async move {
+        let mut stream = accept(&socket).await;
+        read_request(&mut stream).await;
+        arrived.send(()).expect("the driver waits");
+        released.await.expect("the driver releases");
+        stream
+            .write_all(&unfinished_answer())
+            .await
+            .expect("reply written");
+        stream.shutdown().await.expect("closed");
+    });
+    let first = codex_model_at(MODEL, &url, &valid).expect("a Codex model on login A");
+    let other = codex_model_at(MODEL, &url, &absent).expect("a Codex model on login B");
+    assert_eq!(
+        first.provenance(),
+        other.provenance(),
+        "the premise: two logins, one provenance"
+    );
+    let sent = call_tool(&first, INSTRUCTIONS, items(), tool());
+    let direct = async {
+        request_arrived.await.expect("the first request arrived");
+        let request = TurnRequest::new(MODEL, items());
+        let refused = other
+            .turn(&request, &mut Discard, &Cancel::new())
+            .await
+            .expect_err("login B is absent");
+        release.send(()).expect("the server waits");
+        refused
+    };
+    let (sent, refused) = tokio::join!(sent, direct);
+    server.await.expect("the fixture server");
+    let _ = refused;
+    let named_b = format!("{sent:?}").contains(&absent.display().to_string());
+    assert!(
+        matches!(sent, Err(ModelError::Transport(_))) && !named_b,
+        "a call on login A whose stream was cut came back as login B's refusal: {sent:?}"
+    );
+}
