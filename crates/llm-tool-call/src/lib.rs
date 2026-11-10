@@ -23,9 +23,13 @@
 
 use std::{
     cell::RefCell,
+    collections::HashMap,
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{
+        Arc, Mutex, PoisonError, Weak,
+        atomic::{AtomicU64, Ordering},
+    },
 };
 
 use llm_core::{
@@ -168,6 +172,7 @@ pub fn codex_model_at(
     let id = |value: &str| {
         Id::new(value).map_err(|_| ModelError::Setup(Error::invalid("invalid identifier")))
     };
+    let (account, refusal) = new_refusal_slot();
     let reference = SecretRef::new(LOGIN_REFERENCE)
         .map_err(|_| ModelError::Setup(Error::invalid("invalid credential reference")))?;
     let binding = BindingDocument::new(
@@ -176,7 +181,7 @@ pub fn codex_model_at(
             category: id("hosted")?,
         },
         Account {
-            id: id("codex-subscription")?,
+            id: id(&account)?,
             provider_id: id("openai")?,
             auth_kind: llm_core::AuthKind::Bearer,
             billing_kind: llm_core::BillingKind::Subscription,
@@ -185,7 +190,7 @@ pub fn codex_model_at(
         },
         Endpoint {
             id: id("codex-backend")?,
-            account_id: id("codex-subscription")?,
+            account_id: id(&account)?,
             base_url: BaseUrl::new(base_url).map_err(ModelError::Setup)?,
         },
         ServedModel {
@@ -207,6 +212,7 @@ pub fn codex_model_at(
     let http = HttpClient::new(Limits::default()).map_err(ModelError::Setup)?;
     let login = CodexLogin {
         file: CodexAuthFile::new(reference, auth_path),
+        refusal,
     };
     ResponsesClient::new(binding, http, Arc::new(login)).map_err(ModelError::Setup)
 }
@@ -221,12 +227,42 @@ tokio::task_local! {
 
 /// llm's `CodexAuthFile`, keeping its typed refusal for the call in progress.
 ///
-/// The slot is task-local: the refusal is kept only when this resolver runs on the task that
-/// awaits [`call_tool`]. A [`Model`] that runs its turn on a spawned task (`tokio::spawn`) resolves
-/// outside the slot, and `call_tool` then sees only llm's untyped `Unauthorized` or `Unavailable`
-/// refusal, returned as [`ModelError::Model`].
+/// The refusal is kept twice. On the task that awaits [`call_tool`] it goes to the task-local slot,
+/// which belongs to that one call. On any other task, such as a [`Model`] that runs its turn on
+/// `tokio::spawn`, the task-local slot is out of reach, so it also goes to this model's own shared
+/// slot, which `call_tool` finds through the model's account identifier (unique per model). Two
+/// concurrent calls on one model share that slot; on the awaiting task the task-local slot wins.
 struct CodexLogin {
     file: CodexAuthFile,
+    refusal: Arc<SharedRefusal>,
+}
+
+/// The refusal slot one Codex model shares with the [`call_tool`] calls made on it.
+type SharedRefusal = Mutex<Option<CodexAuthError>>;
+
+/// Shared slots by the account identifier of the model that owns them; a slot whose model is gone
+/// is dropped on the next registration.
+static REFUSAL_SLOTS: Mutex<Option<HashMap<String, Weak<SharedRefusal>>>> = Mutex::new(None);
+
+/// A new account identifier, unique per model, and the shared slot registered under it.
+fn new_refusal_slot() -> (String, Arc<SharedRefusal>) {
+    static NEXT: AtomicU64 = AtomicU64::new(0);
+    let account = format!(
+        "codex-subscription-{}",
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    );
+    let slot = Arc::new(Mutex::new(None));
+    let mut slots = REFUSAL_SLOTS.lock().unwrap_or_else(PoisonError::into_inner);
+    let slots = slots.get_or_insert_with(HashMap::new);
+    slots.retain(|_, slot| slot.strong_count() > 0);
+    slots.insert(account.clone(), Arc::downgrade(&slot));
+    (account, slot)
+}
+
+/// The shared slot of the Codex model whose account is `account`, if it is one.
+fn refusal_slot(account: &str) -> Option<Arc<SharedRefusal>> {
+    let slots = REFUSAL_SLOTS.lock().unwrap_or_else(PoisonError::into_inner);
+    slots.as_ref()?.get(account)?.upgrade()
 }
 
 impl SecretResolver for CodexLogin {
@@ -238,6 +274,8 @@ impl SecretResolver for CodexLogin {
             self.file.read(reference).await.map_err(|refusal| {
                 let kind = refusal.kind();
                 // Outside `call_tool` there is no slot, and the untyped kind is all there is.
+                let shared = refusal.clone();
+                *self.refusal.lock().unwrap_or_else(PoisonError::into_inner) = Some(shared);
                 let _ = LOGIN_REFUSAL.try_with(|slot| slot.replace(Some(refusal)));
                 kind
             })
@@ -258,9 +296,8 @@ impl SecretResolver for CodexLogin {
 /// when the Codex login cannot be used (before anything is sent), and [`ModelError::Model`] for any
 /// other refusal, including arguments that are not a JSON object.
 ///
-/// A Codex login refusal is typed only when the model resolves its credential on the task that
-/// awaits this call; a model that spawns its turn onto another task gets [`ModelError::Model`]
-/// for it instead (see `CodexLogin`). A refusal kept from a turn that still succeeded, such as a
+/// A Codex login refusal is typed whichever task the model resolves its credential on, a spawned
+/// one included (see `CodexLogin`). A refusal kept from a turn that still succeeded, such as a
 /// model that falls back to another after the login is refused, does not override its answer.
 pub async fn call_tool(
     model: &dyn Model,
@@ -273,15 +310,25 @@ pub async fn call_tool(
     request.instructions = instructions.to_owned();
     request.tools = vec![tool];
     request.tool_choice = ToolChoice::Named(name.clone());
+    let shared = refusal_slot(model.provenance().account.as_str());
+    if let Some(shared) = &shared {
+        shared.lock().unwrap_or_else(PoisonError::into_inner).take();
+    }
     let outcome = LOGIN_REFUSAL
         .scope(RefCell::new(None), async {
             model
                 .turn(&request, &mut Discard, &Cancel::new())
                 .await
                 // The slot is read only for a failed turn.
-                .map_err(|error| match LOGIN_REFUSAL.with(RefCell::take) {
-                    Some(refusal) => credential_error(&refusal),
-                    None => classify(error),
+                .map_err(|error| {
+                    match LOGIN_REFUSAL.with(RefCell::take).or_else(|| {
+                        shared.as_ref().and_then(|slot| {
+                            slot.lock().unwrap_or_else(PoisonError::into_inner).take()
+                        })
+                    }) {
+                        Some(refusal) => credential_error(&refusal),
+                        None => classify(error),
+                    }
                 })
         })
         .await?;

@@ -605,7 +605,6 @@ impl Model for Spawning {
 
 /// A missing login refused on a spawned task is still a missing login.
 #[tokio::test]
-#[ignore = "declined in wave 2026-10-04-w17: a refusal raised on a spawned task is outside the task-local slot; documented on call_tool"]
 async fn a_refusal_on_a_spawned_task_is_still_a_credential_refusal() {
     let (unused, url) = listener().await;
     let absent = fixture_dir("spawned-absent").join("auth.json");
