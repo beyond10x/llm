@@ -819,6 +819,25 @@ fn splice(
         .then_some(out)
 }
 
+/// The file's bytes for the write-back comparison. Opened as the first read opens it, without
+/// blocking, so a FIFO or a device swapped in since the check is refused rather than waited on.
+/// Anything but a regular file within the size limit, or a read that fails, is a change.
+fn read_current(path: &Path) -> Result<Zeroizing<Vec<u8>>, RenewalRefusal> {
+    fn changed<E>(_: E) -> RenewalRefusal {
+        RenewalRefusal::ChangedDuringRenewal
+    }
+    let file = open(path).map_err(changed)?;
+    let metadata = file.metadata().map_err(changed)?;
+    if !metadata.is_file() {
+        return Err(RenewalRefusal::ChangedDuringRenewal);
+    }
+    let size = usize::try_from(metadata.len())
+        .ok()
+        .filter(|size| *size <= MAX_SECRET_BYTES)
+        .ok_or(RenewalRefusal::ChangedDuringRenewal)?;
+    read_exact(&file, size).map_err(changed)
+}
+
 /// Replaces `path` with `contents` only while it still holds `expected`, through a new file in the
 /// same directory with the original's mode, flushed before the rename.
 fn write_if_unchanged(path: &Path, expected: &[u8], contents: &[u8]) -> Result<(), RenewalRefusal> {
@@ -841,7 +860,7 @@ fn write_if_unchanged(path: &Path, expected: &[u8], contents: &[u8]) -> Result<(
     if std::os::unix::fs::MetadataExt::nlink(&link) != 1 {
         return Err(RenewalRefusal::ChangedDuringRenewal);
     }
-    let current = Zeroizing::new(fs::read(path).map_err(|_| RenewalRefusal::ChangedDuringRenewal)?);
+    let current = read_current(path)?;
     if current.as_slice() != expected {
         return Err(RenewalRefusal::ChangedDuringRenewal);
     }
@@ -893,6 +912,36 @@ fn rfc3339(time: SystemTime) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn write_back_reread_of_a_fifo_is_refused_without_blocking() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("auth.json");
+        let status = std::process::Command::new("mkfifo")
+            .arg(&path)
+            .status()
+            .unwrap();
+        assert!(status.success());
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let target = path.clone();
+        std::thread::spawn(move || {
+            let _ = sender.send(read_current(&target).map(|bytes| bytes.len()));
+        });
+        let outcome = receiver.recv_timeout(Duration::from_secs(1));
+        // Release a reader blocked in open, so the thread and the test process can end. Read and
+        // write together never block on a FIFO.
+        drop(
+            std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(&path),
+        );
+        assert_eq!(
+            outcome.expect("the re-read blocked on a FIFO"),
+            Err(RenewalRefusal::ChangedDuringRenewal)
+        );
+    }
 
     #[test]
     fn rfc3339_matches_known_instants() {
