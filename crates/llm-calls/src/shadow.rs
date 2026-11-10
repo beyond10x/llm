@@ -43,26 +43,174 @@ pub const fn utc_day(unix_ms: u64) -> u64 {
 /// Where shadow calls are admitted: one `llm.budget` ledger per shadow and UTC day, its limit the
 /// shadow's daily cap.
 ///
-/// The cap is held in memory, in `llm-cost`'s `BudgetEngine`, which is not a durable permission:
-/// it is per process and lost on restart. A restarted process, a second process, or a second
-/// ledger in the same process each start every day's cap afresh, so one ledger must serve every
-/// shadow of a deployment, for as long as the deployment runs. A durable cap is not built yet.
+/// [`ShadowLedger::new`] holds the cap in memory, in `llm-cost`'s `BudgetEngine`, which is not a
+/// durable permission: it is per process and lost on restart. A restarted process, a second
+/// process, or a second ledger in the same process each start every day's cap afresh, so one
+/// ledger must serve every shadow of a deployment, for as long as the deployment runs.
+///
+/// With the `sqlite` feature, [`ShadowLedger::durable`] keeps each shadow's day on a
+/// `llm-cost` `SqliteLedger` instead, so the day's spend survives a restart and a second ledger
+/// on the same directory is refused while the first is alive.
 #[derive(Debug)]
 pub struct ShadowLedger {
     id: Id,
     currency: Currency,
     max_active: u32,
+    store: Store,
     days: Mutex<Days>,
+}
+
+/// Where a shadow's day ledgers live.
+#[derive(Debug)]
+enum Store {
+    Memory,
+    #[cfg(feature = "sqlite")]
+    Directory(std::path::PathBuf),
+}
+
+/// One shadow's day ledger: in memory, or on a durable `SqliteLedger`.
+enum Day {
+    Memory(BudgetEngine),
+    #[cfg(feature = "sqlite")]
+    Durable(llm_cost::budget::SqliteLedger),
+}
+
+impl std::fmt::Debug for Day {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Day")
+    }
+}
+
+impl Day {
+    fn view(&self) -> Result<llm_cost::budget::BudgetView, BudgetError> {
+        match self {
+            Self::Memory(engine) => engine.view(),
+            #[cfg(feature = "sqlite")]
+            Self::Durable(ledger) => ledger.view(),
+        }
+    }
+
+    #[cfg_attr(
+        not(feature = "sqlite"),
+        expect(
+            clippy::unnecessary_wraps,
+            reason = "a durable day's policy is read from its ledger and can fail"
+        )
+    )]
+    fn policy(&self) -> Result<BudgetPolicy, BudgetError> {
+        match self {
+            Self::Memory(engine) => Ok(engine.policy().clone()),
+            #[cfg(feature = "sqlite")]
+            Self::Durable(_) => self.view().map(|view| view.policy),
+        }
+    }
+
+    fn now_ms(&self) -> u64 {
+        match self {
+            Self::Memory(engine) => engine.now_ms(),
+            #[cfg(feature = "sqlite")]
+            Self::Durable(_) => self.view().map_or(0, |view| view.now_ms),
+        }
+    }
+
+    fn apply(&mut self, now_ms: u64, command: BudgetCommand) -> Result<(), BudgetError> {
+        match self {
+            Self::Memory(engine) => engine.apply(now_ms, command).map(|_| ()),
+            #[cfg(feature = "sqlite")]
+            Self::Durable(ledger) => ledger.apply(now_ms, command).map(|_| ()),
+        }
+    }
+
+    /// A day ledger with nothing unsettled in it.
+    fn idle(&self) -> bool {
+        self.view()
+            .is_ok_and(|view| view.totals.active_count == 0 && view.totals.uncertain_count == 0)
+    }
 }
 
 #[derive(Debug, Default)]
 struct Days {
     /// The latest UTC day a shadow was admitted on; no earlier day opens again.
     latest: Option<u64>,
-    engines: BTreeMap<(Id, u64), BudgetEngine>,
+    engines: BTreeMap<(Id, u64), Day>,
+}
+
+/// A directory name for a shadow id: the id itself when it is only letters, digits, `-` and `_`,
+/// else each other byte as `%xx`, else a digest when that would be too long for a name. The
+/// forms never meet: an escape is `%` and two hex digits, and the digest form starts `%sha256-`.
+#[cfg(feature = "sqlite")]
+fn directory_name(id: &Id) -> String {
+    let mut name = String::new();
+    for byte in id.as_str().bytes() {
+        if byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_' {
+            name.push(char::from(byte));
+        } else {
+            let _ = write!(name, "%{byte:02x}");
+        }
+    }
+    if name.len() <= 200 {
+        return name;
+    }
+    let mut digest = String::from("%sha256-");
+    for byte in Sha256::digest(id.as_str().as_bytes()) {
+        let _ = write!(digest, "{byte:02x}");
+    }
+    digest
 }
 
 impl ShadowLedger {
+    /// A ledger in `currency` whose day ledgers are `SqliteLedger`s under `directory`, one at
+    /// `<directory>/<shadow id>/<utc day>`, created on a shadow's first admission that day and
+    /// opened again after a restart. It holds at most `max_active` unsettled shadow calls per
+    /// shadow and day.
+    ///
+    /// A day ledger has one owner: while one ledger holds it, another on the same directory,
+    /// in this process or another, is refused and its shadows are skipped, never sent. A day
+    /// ledger that cannot be opened (a changed cap or concurrency bound, damaged files, a clock
+    /// before the day's last write) skips that shadow for the day: a cap is never started afresh.
+    /// Keep one durable ledger per directory for as long as the deployment runs.
+    ///
+    /// # Errors
+    /// Refuses a concurrency bound the budget engine refuses.
+    #[cfg(feature = "sqlite")]
+    pub fn durable(
+        directory: impl Into<std::path::PathBuf>,
+        id: Id,
+        currency: Currency,
+        max_active: u32,
+    ) -> Result<Self, BudgetError> {
+        let mut ledger = Self::new(id, currency, max_active)?;
+        ledger.store = Store::Directory(directory.into());
+        Ok(ledger)
+    }
+
+    /// A fresh day ledger for `shadow`, or the durable one already on disk.
+    #[cfg_attr(not(feature = "sqlite"), expect(unused_variables))]
+    fn day_ledger(
+        &self,
+        shadow: &Shadow,
+        day: u64,
+        now_ms: u64,
+        policy: BudgetPolicy,
+    ) -> Result<Day, BudgetError> {
+        match &self.store {
+            Store::Memory => Ok(Day::Memory(BudgetEngine::new(policy)?)),
+            #[cfg(feature = "sqlite")]
+            Store::Directory(directory) => {
+                use llm_cost::budget::SqliteLedger;
+                let parent = directory.join(directory_name(&shadow.id));
+                std::fs::create_dir_all(&parent).map_err(|_| BudgetError::Storage)?;
+                let path = parent.join(day.to_string());
+                let ledger = if std::fs::symlink_metadata(&path).is_ok() {
+                    SqliteLedger::open(&path, &policy, now_ms)?
+                } else {
+                    SqliteLedger::create(&path, policy, now_ms)?
+                };
+                Ok(Day::Durable(ledger))
+            }
+        }
+    }
+
     /// A ledger in `currency` that holds at most `max_active` unsettled shadow calls per shadow
     /// and day.
     ///
@@ -79,6 +227,7 @@ impl ShadowLedger {
             id,
             currency,
             max_active,
+            store: Store::Memory,
             days: Mutex::new(Days::default()),
         })
     }
@@ -112,7 +261,7 @@ impl ShadowLedger {
         }
         days.latest = Some(day);
         days.engines
-            .retain(|(_, opened), engine| opened.saturating_add(1) >= day || !idle(engine));
+            .retain(|(_, opened), engine| opened.saturating_add(1) >= day || !engine.idle());
         let policy = BudgetPolicy {
             id: self.id.clone(),
             currency: self.currency.clone(),
@@ -120,11 +269,11 @@ impl ShadowLedger {
             max_active: self.max_active,
         };
         let engine = match days.engines.entry((shadow.id.clone(), day)) {
-            Entry::Occupied(held) if held.get().policy() != &policy => {
+            Entry::Occupied(held) if held.get().policy().as_ref() != Ok(&policy) => {
                 return Err(BudgetError::PolicyMismatch);
             }
             Entry::Occupied(held) => held.into_mut(),
-            Entry::Vacant(free) => free.insert(BudgetEngine::new(policy)?),
+            Entry::Vacant(free) => free.insert(self.day_ledger(shadow, day, now_ms, policy)?),
         };
         let now = now_ms.max(engine.now_ms());
         let id = request.id.clone();
@@ -145,13 +294,6 @@ impl ShadowLedger {
             let _ = engine.apply(now, BudgetCommand::Settle { id, settlement });
         }
     }
-}
-
-/// A day ledger with nothing unsettled in it.
-fn idle(engine: &BudgetEngine) -> bool {
-    engine
-        .view()
-        .is_ok_and(|view| view.totals.active_count == 0 && view.totals.uncertain_count == 0)
 }
 
 /// A shadow route for a primary route, with its daily cap in its ledger's currency and the
