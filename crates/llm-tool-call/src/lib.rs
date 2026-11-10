@@ -291,7 +291,9 @@ impl SecretResolver for CodexLogin {
 /// one included (see `CodexLogin`). Limit: a call starts by clearing the shared slot its model
 /// uses for spawned-task refusals, so a second call on the same spawning model that starts while
 /// the first is in flight can cost the first its typed refusal, which then comes back as
-/// [`ModelError::Model`] (`story:call-tool-concurrent-spawned-refusals`). A refusal kept from a turn that still succeeded, such as a
+/// [`ModelError::Model`] (`story:call-tool-concurrent-spawned-refusals`). Likewise a concurrent
+/// refusal of another login on a model of equal provenance, of the same untyped class
+/// (`Unauthorized` or `Unavailable`, not sent), can still be read as this call's. A refusal kept from a turn that still succeeded, such as a
 /// model that falls back to another after the login is refused, does not override its answer.
 pub async fn call_tool(
     model: &dyn Model,
@@ -313,10 +315,16 @@ pub async fn call_tool(
                 .await
                 // The slot is read only for a failed turn.
                 .map_err(|error| {
-                    match LOGIN_REFUSAL
-                        .with(RefCell::take)
-                        .or_else(|| shared.lock().unwrap_or_else(PoisonError::into_inner).take())
-                    {
+                    // The shared slot is consulted only for the untyped refusal a resolver's
+                    // failure becomes: `Unauthorized` or `Unavailable`, never sent.
+                    let untyped_refusal =
+                        matches!(error.code, ErrorCode::Unauthorized | ErrorCode::Unavailable)
+                            && error.dispatch == Dispatch::NotSent;
+                    match LOGIN_REFUSAL.with(RefCell::take).or_else(|| {
+                        untyped_refusal
+                            .then(|| shared.lock().unwrap_or_else(PoisonError::into_inner).take())
+                            .flatten()
+                    }) {
                         Some(refusal) => credential_error(&refusal),
                         None => classify(error),
                     }
