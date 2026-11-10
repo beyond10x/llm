@@ -68,7 +68,13 @@ fn every_boundary_a_decoder_emits_fits_an_event_bound_of_the_counted_events() {
         name: llm_core::ToolName::new("lookup").expect("tool name"),
     };
     let sequences: [Vec<StreamEvent>; 3] = [
-        vec![text("Al"), boundary(), text("Beta."), boundary(), text("pha.")],
+        vec![
+            text("Al"),
+            boundary(),
+            text("Beta."),
+            boundary(),
+            text("pha."),
+        ],
         vec![text("A"), opaque(&"Z".repeat(8192)), boundary(), text("B")],
         vec![text("A"), call, boundary(), text("B")],
     ];
@@ -124,7 +130,11 @@ fn a_spent_byte_bound_takes_an_opaque_item_and_still_refuses_text() {
     assert_eq!(emit(&mut sink, text("A")), Ok(()));
     assert_eq!(emit(&mut sink, opaque(&"Z".repeat(4096))), Ok(()));
     assert_eq!(emit(&mut sink, text("B")), Err(ErrorCode::TooLarge));
-    assert_eq!(emit(&mut sink, boundary()), Ok(()), "two counted events before it");
+    assert_eq!(
+        emit(&mut sink, boundary()),
+        Ok(()),
+        "two counted events before it"
+    );
     assert_eq!(emit(&mut sink, text("")), Err(ErrorCode::TooLarge));
     assert_eq!(sink.text(), "A");
 }

@@ -59,14 +59,28 @@ fn a_messages_upstreams_redacted_thinking_is_refused_streamed_and_whole() {
         Item::assistant("B"),
     ]);
     let mut stream = IngressStream::new("resp_gateway_1", 1_772_000_000);
-    assert!(!stream.chunk(&StreamEvent::TextDelta { text: "A".to_owned() }).is_empty());
+    assert!(
+        !stream
+            .chunk(&StreamEvent::TextDelta {
+                text: "A".to_owned()
+            })
+            .is_empty()
+    );
     assert_eq!(stream.chunk(&opaque), Vec::<serde_json::Value>::new());
     assert_eq!(
         stream.chunk(&StreamEvent::MessageBoundary {}),
         Vec::<serde_json::Value>::new()
     );
-    assert!(!stream.chunk(&StreamEvent::TextDelta { text: "B".to_owned() }).is_empty());
-    let streamed = stream.close(&turn).expect_err("opaque state of another binding");
+    assert!(
+        !stream
+            .chunk(&StreamEvent::TextDelta {
+                text: "B".to_owned()
+            })
+            .is_empty()
+    );
+    let streamed = stream
+        .close(&turn)
+        .expect_err("opaque state of another binding");
     assert_eq!(streamed.code, ErrorCode::Unsupported);
     let whole = encode_ingress_response(&turn, "resp_gateway_1", 1_772_000_000)
         .expect_err("the same outcome, not streamed");

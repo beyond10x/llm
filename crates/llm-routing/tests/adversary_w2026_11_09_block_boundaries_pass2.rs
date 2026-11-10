@@ -83,7 +83,9 @@ struct Fleet(BTreeMap<Id, Shown>);
 
 impl Models for Fleet {
     fn model(&self, serving_model_id: &Id) -> Option<&dyn Model> {
-        self.0.get(serving_model_id).map(|model| model as &dyn Model)
+        self.0
+            .get(serving_model_id)
+            .map(|model| model as &dyn Model)
     }
 }
 
@@ -129,7 +131,10 @@ fn an_opaque_item_past_the_byte_bound_is_output_and_ends_fallback() {
     assert_eq!(run.halt, Halt::VisibleOutput);
     assert_eq!(run.attempts.len(), 1);
     assert_eq!(run.attempts[0].visible_events, 1);
-    assert_eq!(run.result.expect_err("no fallback").code, ErrorCode::Transport);
+    assert_eq!(
+        run.result.expect_err("no fallback").code,
+        ErrorCode::Transport
+    );
     assert!(matches!(sink.events(), [StreamEvent::OpaqueItem { .. }]));
     assert_eq!(sink.text(), "");
 }

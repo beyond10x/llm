@@ -3,11 +3,11 @@
 //! The Chat Completions ingress promises a message boundary and an opaque item have no chunk,
 //! and that `close` refuses an outcome carrying opaque state, as the non-streamed encoder does.
 
+use llm_chat::{IngressStream, encode_ingress_completion};
 use llm_core::{
     ErrorCode, Id, Item, Protocol, Provenance, StopReason, StreamEvent, TurnObservation,
     TurnOutcome,
 };
-use llm_chat::{IngressStream, encode_ingress_completion};
 use serde_json::json;
 
 fn id(value: &str) -> Id {
@@ -45,7 +45,9 @@ fn a_relayed_opaque_item_has_no_chunk_and_its_outcome_is_refused_streamed_and_wh
     let mut stream = IngressStream::new("chatcmpl-gw-1", 1_772_000_800);
     assert!(
         stream
-            .chunk(&StreamEvent::TextDelta { text: "A".to_owned() })
+            .chunk(&StreamEvent::TextDelta {
+                text: "A".to_owned()
+            })
             .is_some()
     );
     assert_eq!(
@@ -58,7 +60,9 @@ fn a_relayed_opaque_item_has_no_chunk_and_its_outcome_is_refused_streamed_and_wh
     assert_eq!(stream.chunk(&StreamEvent::MessageBoundary {}), None);
     assert!(
         stream
-            .chunk(&StreamEvent::TextDelta { text: "B".to_owned() })
+            .chunk(&StreamEvent::TextDelta {
+                text: "B".to_owned()
+            })
             .is_some()
     );
     let streamed = stream.close(&turn, false).expect_err("opaque state");
