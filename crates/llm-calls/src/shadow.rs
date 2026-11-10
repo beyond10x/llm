@@ -200,6 +200,18 @@ impl ShadowLedger {
                 use llm_cost::budget::SqliteLedger;
                 let parent = directory.join(directory_name(&shadow.id));
                 std::fs::create_dir_all(&parent).map_err(|_| BudgetError::Storage)?;
+                // A later day on disk means the clock was set back: never open an earlier cap.
+                let later = std::fs::read_dir(&parent)
+                    .map_err(|_| BudgetError::Storage)?
+                    .any(|entry| {
+                        entry
+                            .ok()
+                            .and_then(|entry| entry.file_name().to_str()?.parse::<u64>().ok())
+                            .is_none_or(|held| held > day)
+                    });
+                if later {
+                    return Err(BudgetError::ClockReversed);
+                }
                 let path = parent.join(day.to_string());
                 let ledger = if std::fs::symlink_metadata(&path).is_ok() {
                     SqliteLedger::open(&path, &policy, now_ms)?

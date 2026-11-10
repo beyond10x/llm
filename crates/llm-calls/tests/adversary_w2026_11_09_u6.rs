@@ -306,7 +306,12 @@ impl World {
         calls
     }
 
-    fn shadowed(&self, models: &Fleet<'_>, shadows: &[Shadow], record_id: &str) -> Vec<ShadowResult> {
+    fn shadowed(
+        &self,
+        models: &Fleet<'_>,
+        shadows: &[Shadow],
+        record_id: &str,
+    ) -> Vec<ShadowResult> {
         block_on(self.primary(models, shadows, record_id).run())
     }
 }
@@ -473,7 +478,15 @@ fn escaped_and_digested_shadow_ids_stay_inside_and_never_share_a_cap() {
     let ledger = durable(&dir, 4);
     let long_a = format!("{}a", "/".repeat(255));
     let long_b = format!("{}b", "/".repeat(255));
-    let names = [".", "..", "a/b", "a%2fb", "%2e%2e", long_a.as_str(), long_b.as_str()];
+    let names = [
+        ".",
+        "..",
+        "a/b",
+        "a%2fb",
+        "%2e%2e",
+        long_a.as_str(),
+        long_b.as_str(),
+    ];
     let shadows: Vec<Shadow> = names
         .iter()
         .map(|name| shadow_named(name, "0.3", &ledger))
@@ -493,9 +506,16 @@ fn escaped_and_digested_shadow_ids_stay_inside_and_never_share_a_cap() {
         .collect();
     entries.sort();
     assert_eq!(entries.len(), names.len(), "{entries:?}");
-    assert!(entries.iter().all(|name| !name.is_empty() && !name.contains('/') && name != "." && name != ".."));
+    assert!(
+        entries
+            .iter()
+            .all(|name| !name.is_empty() && !name.contains('/') && name != "." && name != "..")
+    );
     assert_eq!(
-        entries.iter().filter(|name| name.starts_with("%sha256-")).count(),
+        entries
+            .iter()
+            .filter(|name| name.starts_with("%sha256-"))
+            .count(),
         2
     );
     assert_eq!(std::fs::read_dir(outer.path()).unwrap().count(), 1);
