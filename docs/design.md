@@ -638,10 +638,14 @@ settles nothing beyond its known part and stays held at its reservation, never s
 the engine then admits no further shadow that day. A call that costs more than its reserve is
 settled at its cost, so the cap can be passed by at most the excess of the shadows already in
 flight. A call counts against the day it was admitted on; the next UTC day opens a fresh engine.
-The cap is per process and lost on restart: the engine is in memory, and `llm-cost` documents it
-as no durable permission. A restarted process, a second process or a second ledger each start
-every day's cap afresh, so one `ShadowLedger` must serve every shadow of a deployment for as long
-as it runs. A durable cap is a later story.
+The cap of `ShadowLedger::new` is per process and lost on restart: the engine is in memory, and
+`llm-cost` documents it as no durable permission, so one ledger must serve every shadow of a
+deployment for as long as it runs. With the `sqlite` feature, `ShadowLedger::durable(dir, ..)`
+keeps each shadow's day on a `llm-cost` `SqliteLedger` at `<dir>/<shadow id>/<utc day>`: the
+day's spend survives a restart, and a second ledger on the same directory is refused while the
+first is alive, so its shadows are skipped and never sent. A day ledger that cannot be opened
+(changed cap, damaged files, an earlier clock, or a later day already on disk) skips that shadow
+for the day.
 
 ### Typed decisions
 
