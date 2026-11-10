@@ -40,6 +40,7 @@ Every feature is off by default unless the package lists it as a default. A feat
 | Package | Feature | Turns on | Adds dependencies |
 | --- | --- | --- | --- |
 | `llm-bedrock` | `process` | `tokio/process` | — |
+| `llm-calls` | `sqlite` | `llm-cost/sqlite` | — |
 | `llm-cost` | `sqlite` | — | `rusqlite` |
 | `llm-credentials` | `codex-auth-file` | — | `base64`, `rustix`, `serde_json`, `sha2` |
 | `llm-credentials` | `codex-renewal` | `codex-auth-file` | `llm-http`, `tempfile` |
