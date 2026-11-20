@@ -157,14 +157,16 @@ fn a_one_hour_prompt_cache_lifetime_round_trips_onto_every_breakpoint() {
             ttl: Some(CacheTtl::OneHour)
         })
     );
-    // The projection places its own breakpoints, the system block and the rolling tail, and
-    // every one of them takes the lifetime; it does not reproduce the caller's positions.
+    // The caller's marks arrive where the caller placed them, each with the lifetime, and the
+    // projection adds none of its own: no rolling mark on the tail.
     assert_eq!(wire["system"][0]["cache_control"], one_hour, "{wire}");
-    assert_eq!(
-        wire["messages"][0]["content"][0]["cache_control"], one_hour,
+    assert_eq!(wire["tools"][0]["cache_control"], one_hour, "{wire}");
+    assert!(
+        wire["messages"][0]["content"][0]
+            .get("cache_control")
+            .is_none(),
         "{wire}"
     );
-    assert!(wire["tools"][0].get("cache_control").is_none(), "{wire}");
 }
 
 #[test]
