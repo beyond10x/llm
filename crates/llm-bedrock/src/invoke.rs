@@ -388,11 +388,18 @@ fn shown(item: &Item) -> Vec<StreamEvent> {
                 payload: payload.clone(),
             }]
         }
+        // Thinking signed without text is shown by an empty delta, as the stream decoder marks
+        // it, so a re-encoder opens its block in place.
         Item::Opaque { payload, .. } => payload
             .get("thinking")
             .and_then(Value::as_str)
             .filter(|text| {
-                !text.is_empty() && payload.get("type").and_then(Value::as_str) == Some("thinking")
+                payload.get("type").and_then(Value::as_str) == Some("thinking")
+                    && (!text.is_empty()
+                        || payload
+                            .get("signature")
+                            .and_then(Value::as_str)
+                            .is_some_and(|signature| !signature.is_empty()))
             })
             .map(|text| StreamEvent::ReasoningDelta {
                 text: text.to_owned(),

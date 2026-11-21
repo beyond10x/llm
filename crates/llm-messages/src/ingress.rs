@@ -177,7 +177,9 @@ impl IngressStream {
     /// The events for one neutral delta; empty when this wire carries nothing for it.
     ///
     /// An empty delta, a warning and refusal text carry nothing (`close` refuses an outcome
-    /// carrying refusal text). A call announced twice is announced once. A fragment for a call
+    /// carrying refusal text), except an empty reasoning delta, which opens a thinking block when
+    /// reasoning is relayed and the latest block is not thinking: reasoning signed without any
+    /// text shown, which `close` then signs in place. A call announced twice is announced once. A fragment for a call
     /// never announced is held and its call sent complete by `close`. A message boundary stops
     /// the open text block, so the next text opens a block of its own. An opaque item is sent
     /// whole at the next index when this wire reads it back as itself, and sends nothing
@@ -189,9 +191,7 @@ impl IngressStream {
         let mut out = Vec::new();
         match event {
             StreamEvent::TextDelta { text } if !text.is_empty() => self.text(text, &mut out),
-            StreamEvent::ReasoningDelta { text }
-                if self.reasoning_relay == Reasoning::Relayed && !text.is_empty() =>
-            {
+            StreamEvent::ReasoningDelta { text } if self.reasoning_relay == Reasoning::Relayed => {
                 self.reasoning(text, &mut out);
             }
             StreamEvent::ToolCallStarted { call_id, name } => {
@@ -338,7 +338,8 @@ impl IngressStream {
     }
 
     /// Extends the latest block when it is thinking, or opens one. It opens with an empty
-    /// signature, which the decoder accepts and `close` signs.
+    /// signature, which the decoder accepts and `close` signs. Empty text, the mark of reasoning
+    /// signed without any text shown, opens the block and sends no delta.
     fn reasoning(&mut self, text: &str, out: &mut Vec<Value>) {
         let index = match self.blocks.last() {
             Some(Block {
@@ -351,7 +352,9 @@ impl IngressStream {
                 out,
             ),
         };
-        if let Some(index) = index {
+        if let Some(index) = index
+            && !text.is_empty()
+        {
             if let Shown::Thinking(shown) = &mut self.blocks[index].shown {
                 shown.push_str(text);
             }

@@ -195,6 +195,8 @@ impl IngressStream {
                     payloads.push(text_delta(open.output_index, &open.item_id, text));
                 }
             }
+            // Empty, it marks reasoning signed without any text shown: no summary to open.
+            StreamEvent::ReasoningDelta { text } if text.is_empty() => return Vec::new(),
             StreamEvent::ReasoningDelta { text } => {
                 let open = match &mut self.reasoning {
                     Some(open) => open,

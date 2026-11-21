@@ -648,9 +648,6 @@ fn an_identifier_the_decoder_cannot_read_is_refused_before_anything_is_sent() {
     assert!(encode_ingress_message(&answer, "two words").is_err());
 }
 
-/// story:chat-counts-every-output-delta. Messages has no block for refusal text, and sending it
-/// as text would make it the assistant's answer: an answer or a conversation carrying it is
-/// refused by name on both directions, never sent without it.
 /// A model that reasons without showing it (Claude Haiku 5.5 at a low effort, observed on Bedrock
 /// `InvokeModel`) opens its answer with a signed `thinking` block whose text is empty. Its
 /// producer marks the block with an empty reasoning delta; the stream opens the thinking block
@@ -675,9 +672,9 @@ async fn signed_reasoning_with_empty_text_then_text_round_trips() {
             "content_block_start:1",
             "content_block_delta:1",
             "content_block_delta:1",
-            "content_block_stop:1",
             "content_block_delta:0",
             "content_block_stop:0",
+            "content_block_stop:1",
             "message_delta",
             "message_stop",
         ]
@@ -687,7 +684,7 @@ async fn signed_reasoning_with_empty_text_then_text_round_trips() {
         json!({"type":"thinking","thinking":"","signature":""})
     );
     assert_eq!(
-        payloads[6]["delta"],
+        payloads[5]["delta"],
         json!({"type":"signature_delta","signature":"sig-empty"})
     );
 }
@@ -794,6 +791,9 @@ fn without_reasoning_relay_an_empty_reasoning_delta_opens_nothing() {
     assert!(stream.close(&answer).is_err());
 }
 
+/// story:chat-counts-every-output-delta. Messages has no block for refusal text, and sending it
+/// as text would make it the assistant's answer: an answer or a conversation carrying it is
+/// refused by name on both directions, never sent without it.
 #[test]
 fn refusal_text_is_refused_by_name_and_never_dropped() {
     let refusal = Item::AssistantRefusal {

@@ -271,6 +271,16 @@ fn tool_start(api: Api) -> Vec<u8> {
 
 const WIRES: [Api; 2] = [Api::Converse, Api::AnthropicInvoke];
 
+/// An opaque item, or the empty reasoning delta that marks a thinking block signed without any
+/// text: neither shows the caller text, a call or reasoning text.
+fn shows_no_text_call_or_reasoning(event: &StreamEvent) -> bool {
+    match event {
+        StreamEvent::OpaqueItem { .. } => true,
+        StreamEvent::ReasoningDelta { text } => text.is_empty(),
+        _ => false,
+    }
+}
+
 #[tokio::test]
 async fn throttling_after_output_the_caller_was_not_shown_is_final_on_both_wires() {
     for api in WIRES {
@@ -279,9 +289,7 @@ async fn throttling_after_output_the_caller_was_not_shown_is_final_on_both_wires
             body.extend(exception("throttlingException"));
             let (error, events) = failed(api, streamed(), body).await;
             assert!(
-                events
-                    .iter()
-                    .all(|event| matches!(event, StreamEvent::OpaqueItem { .. })),
+                events.iter().all(shows_no_text_call_or_reasoning),
                 "{api:?} {name}: shown no text, call or reasoning: {events:?}"
             );
             assert_eq!(error.code, ErrorCode::RateLimited, "{api:?} {name}");
@@ -300,9 +308,7 @@ async fn a_cut_after_output_the_caller_was_not_shown_is_final_on_both_wires() {
         for (name, body) in unshown(api) {
             let (error, events) = failed(api, cut_short(&body), body).await;
             assert!(
-                events
-                    .iter()
-                    .all(|event| matches!(event, StreamEvent::OpaqueItem { .. })),
+                events.iter().all(shows_no_text_call_or_reasoning),
                 "{api:?} {name}: shown no text, call or reasoning: {events:?}"
             );
             assert_eq!(error.code, ErrorCode::Transport, "{api:?} {name}");

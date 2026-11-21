@@ -751,6 +751,9 @@ impl IngressStream {
     pub fn chunk(&mut self, event: &StreamEvent) -> Option<Value> {
         let delta = match event {
             StreamEvent::TextDelta { text } => json!({"content": text}),
+            // Empty, it marks reasoning signed without any text shown, which this wire cannot
+            // carry: nothing is sent for it.
+            StreamEvent::ReasoningDelta { text } if text.is_empty() => return None,
             StreamEvent::ReasoningDelta { text } => json!({"reasoning_content": text}),
             StreamEvent::RefusalDelta { text } => json!({"refusal": text}),
             StreamEvent::ToolCallStarted { call_id, name } => {
