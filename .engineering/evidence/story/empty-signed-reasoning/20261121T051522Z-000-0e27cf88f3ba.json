@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T05:15:22Z",
+  "actor": "human:timo",
+  "artifact": "story:empty-signed-reasoning",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate on wave/2026-11-21-empty-signed-reasoning (Rust 1.98.0, each step alone): cargo test --workspace 1764 passed 0 failed, the feature-scoped tests and checks, fmt, clippy -D warnings (workspace on stable and 1.98.0, llm-models, llm-bedrock), docs generate --check, ess 0.87.0 validate, conformance 1049/1049 three times, aep validate; red at 4dde1225: llm-messages ingress 4 of 28 failed (exit 101); green 28 of 28",
+    "reference": "wave/2026-11-21-empty-signed-reasoning@60733a4e"
+  }
+}
