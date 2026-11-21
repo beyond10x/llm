@@ -30,6 +30,17 @@ types:
     kind: struct
     fields:
       - {name: ttl, type: Optional<llm.inference.CacheTtl>}
+  # Where a client placed its prompt-cache marks (story:client-cache-marks): the system block
+  # when `instructions`, the block each item of `items` becomes and each tool of `tools`, by
+  # index into the turn, ascending and each once, else the turn is `invalid`. Present, a
+  # Messages or InvokeModel body carries exactly these marks; empty, none; absent, the
+  # projection's own breakpoints.
+  - name: llm.inference.CacheMarks
+    kind: struct
+    fields:
+      - {name: instructions, type: Boolean}
+      - {name: items, type: List<Integer>}
+      - {name: tools, type: List<Integer>}
   - name: llm.inference.Verbosity
     kind: enum
     variants: [Low, Medium, High]
@@ -52,6 +63,7 @@ types:
       # At most 32 distinct names, each 1 to 128 ASCII letters, digits, "-", "_" or ".".
       - {name: anthropic_beta, type: List<String>}
       - {name: unforwarded, type: List<llm.inference.Unforwarded>}
+      - {name: cache_marks, type: Optional<llm.inference.CacheMarks>}
   # The name an omitted hint is reported under, in this order.
   - name: llm.inference.Advisory
     kind: enum

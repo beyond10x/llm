@@ -231,6 +231,12 @@
       "status": "shipped"
     },
     {
+      "area": "Protocols",
+      "detail": "The Messages ingress records the placement of a request's cache_control marks as Hints::cache_marks; Messages and Bedrock InvokeModel send exactly those marks with their lifetime and add no breakpoint of their own, and a request without a mark keeps the system and rolling breakpoints. Checked against encoded bodies; no live call.",
+      "label": "A client's cache marks arrive where it placed them",
+      "status": "shipped"
+    },
+    {
       "area": "Amazon Bedrock",
       "detail": "llm-bedrock signs each request with a signer written on ring, checked against the AWS test suite vendored from aws-c-auth (header signing only); keys come from StaticCredentials through an injected resolver or from ContainerCredentials at the container credentials endpoint. No AWS SDK crate and no aws-lc is a dependency. EKS Pod Identity is described from AWS documentation and unverified.",
       "label": "Bedrock requests are signed with Signature Version 4",

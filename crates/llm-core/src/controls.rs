@@ -88,6 +88,49 @@ pub struct PromptCache {
     pub ttl: Option<CacheTtl>,
 }
 
+/// Where a client placed its prompt-cache marks, for a wire that places marks per block.
+///
+/// Present, the marks a Messages or `InvokeModel` body carries are exactly these and none of the
+/// projection's own: the system block when `instructions` is set (the instructions are one
+/// block on those wires), the block each item of `items` becomes, and each tool of `tools`, all
+/// by index into the turn, ascending and each once. Empty, the body carries no mark at all.
+/// Absent, the projection places its own breakpoints. Each mark has the lifetime
+/// [`PromptCache`] gives it.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CacheMarks {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub instructions: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub items: Vec<usize>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tools: Vec<usize>,
+}
+
+impl CacheMarks {
+    /// Whether no mark is placed at all.
+    pub const fn is_empty(&self) -> bool {
+        !self.instructions && self.items.is_empty() && self.tools.is_empty()
+    }
+
+    /// Refuses an index outside a turn of `items` items and `tools` tools, or one named twice.
+    ///
+    /// # Errors
+    /// `invalid-request`, naming neither index.
+    pub fn validate(&self, items: usize, tools: usize) -> Result<(), Error> {
+        let within = |indexes: &[usize], bound: usize| {
+            indexes.windows(2).all(|pair| pair[0] < pair[1])
+                && indexes.last().is_none_or(|last| *last < bound)
+        };
+        if !within(&self.items, items) || !within(&self.tools, tools) {
+            return Err(Error::invalid(
+                "a cache mark names an item or a tool the turn does not hold, or names it twice",
+            ));
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Verbosity {
@@ -176,6 +219,10 @@ pub struct Hints {
     pub anthropic_beta: Vec<String>,
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     pub unforwarded: BTreeSet<Unforwarded>,
+    /// Where the client placed its prompt-cache marks ([`CacheMarks`]); absent leaves the
+    /// placement to the projection.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache_marks: Option<CacheMarks>,
 }
 
 /// Whether `name` is a beta name a turn may carry: non-empty, at most
@@ -196,6 +243,7 @@ impl Hints {
             && self.reasoning_summary.is_none()
             && self.anthropic_beta.is_empty()
             && self.unforwarded.is_empty()
+            && self.cache_marks.is_none()
     }
 
     /// Every hint this turn carries, in [`Advisory`] order.
@@ -377,6 +425,14 @@ impl Controls {
             format.validate()?;
         }
         self.hints.validate()
+    }
+
+    /// Refuses a [`CacheMarks`] index outside a turn of `items` items and `tools` tools.
+    pub(crate) fn validate_marks(&self, items: usize, tools: usize) -> Result<(), Error> {
+        self.hints
+            .cache_marks
+            .as_ref()
+            .map_or(Ok(()), |marks| marks.validate(items, tools))
     }
 }
 

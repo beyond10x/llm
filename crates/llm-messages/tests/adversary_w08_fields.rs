@@ -70,9 +70,15 @@ fn a_request_without_cache_marks_round_trips_to_an_equal_turn() {
         let mut second = decode(&wire).unwrap_or_else(|error| panic!("{wire}: {error:?}"));
         second.model.clone_from(&first.model);
         // Decided one-way rule (docs/messages.md): the breakpoints the projection always places
-        // read back as the prompt-cache hint, so an unmarked request returns with it set.
+        // read back as the prompt-cache hint, so an unmarked request returns with it set, and with
+        // their placement (the system block and the rolling tail) as the client's marks.
         let mut expected = first.clone();
         expected.controls.hints.prompt_cache = Some(PromptCache::default());
+        expected.controls.hints.cache_marks = Some(llm_core::CacheMarks {
+            instructions: true,
+            items: vec![0],
+            tools: Vec::new(),
+        });
         assert_eq!(expected, second, "{body} came back from {wire}");
     }
 }

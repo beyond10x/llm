@@ -50,7 +50,9 @@ upstream model, so both stay absent.
 The Anthropic body is the Messages body `llm-messages` encodes, plus
 `anthropic_version: "bedrock-2023-05-31"`, minus `model` (the path names it) and `stream` (the
 operation says it). A turn's `anthropic-beta` names, which the Messages route takes as a header,
-travel as the body's `anthropic_beta` array, and no `anthropic-beta` header is sent. An output
+travel as the body's `anthropic_beta` array, and no `anthropic-beta` header is sent. A client's own
+`cache_control` marks arrive where it placed them and none is added (`Hints::cache_marks`,
+[messages.md](messages.md)); a request without a mark gets the Messages breakpoints. An output
 format is the Messages body's `output_config.format`, under the Messages rules, and a user image
 the Messages `image` block with a `base64` source. Anthropic documents only base64 image sources on
 Bedrock and a per-image limit of 5 MB, base64-encoded

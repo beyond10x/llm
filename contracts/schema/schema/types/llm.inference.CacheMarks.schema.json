@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.inference.CacheMarks",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "a76b940e17e9cd343e6abe8faffde22093f49c9f3e7255fc768543114ebc3aa2",
+    "contract_digest": "slice-sha256/2:8dc74e3d208634a98a4fc4e3c43b75d5ca6fc8acfbe2b9514ed4cd54793cd232",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.inference.CacheMarks": {
+      "title": "CacheMarks",
+      "x-ess-name": "llm.inference.CacheMarks",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "instructions": {
+          "type": "boolean"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "instructions",
+        "items",
+        "tools"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

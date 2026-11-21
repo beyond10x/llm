@@ -89,10 +89,10 @@ the streamed items.
 
 - One route, `POST {base}messages`, in streaming mode, with a pinned `anthropic-version: 2023-06-01`
   header.
-- **Prompt caching.** Every request marks two cache breakpoints (`cache_control: ephemeral`): one
-  on the standing instruction, sent as a block list so it can carry one, and one on the last
-  markable block of the conversation's tail, so each turn reads the previous turn's prefix from
-  the cache.
+- **Prompt caching.** A request whose client placed its own `cache_control` marks is sent exactly
+  those. Any other request marks two cache breakpoints (`cache_control: ephemeral`): one on the
+  standing instruction, sent as a block list so it can carry one, and one on the last markable
+  block of the conversation's tail, so each turn reads the previous turn's prefix from the cache.
 - The wire requires `max_tokens`. If the caller sets no limit, the binding's declared maximum is
   sent, because that is the operator's statement and not a guess.
 - A temperature above `1.0` is refused, because this wire's range is narrower than the neutral one.

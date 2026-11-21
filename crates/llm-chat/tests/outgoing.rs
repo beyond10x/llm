@@ -342,6 +342,7 @@ fn omitted_advisories_names_exactly_the_hints_this_wire_does_not_send_in_table_o
         unforwarded: [Unforwarded::ClientMetadata, Unforwarded::InputItemIds]
             .into_iter()
             .collect(),
+        cache_marks: None,
     };
     assert_eq!(
         omitted_advisories(&request),

@@ -67,7 +67,7 @@ whole:
 | --- | --- | --- |
 | `thinking` | `{"type":"adaptive"}`, `{"type":"enabled","budget_tokens":n}` (n positive) or `{"type":"disabled"}` is `controls.thinking`; `budget_tokens` beside `adaptive` or `disabled`, and any other key (`display` included), refused by its path | re-emitted as read |
 | `system` | a string, or text blocks joined by a line feed; an empty array is no instructions; a block of another type is refused (`Messages system block is not text`) | one block (one-way: the joined text comes back as one block) |
-| `cache_control` | `{"type":"ephemeral"}` with an optional `ttl` of `5m` or `1h`, on a `system` block, a `text`, `image`, `tool_use` or `tool_result` block, or a tool, is the `prompt-cache` hint; `5m` is the default and reads as no lifetime; another key refused by its path, another type or lifetime refused; marks of two lifetimes in one request refused (`Messages cache marks carry more than one lifetime`); on a `thinking` or `redacted_thinking` block refused by its path | the breakpoints below, each with `ttl: 1h` when the hint says `1h`; the caller's mark positions are not reproduced |
+| `cache_control` | `{"type":"ephemeral"}` with an optional `ttl` of `5m` or `1h`, on a `system` block, a `text`, `image`, `tool_use` or `tool_result` block, or a tool, is the `prompt-cache` hint; `5m` is the default and reads as no lifetime; another key refused by its path, another type or lifetime refused; marks of two lifetimes in one request refused (`Messages cache marks carry more than one lifetime`); on a `thinking` or `redacted_thinking` block refused by its path | the caller's marks where it placed them (`Hints::cache_marks`), each with `ttl: 1h` when the hint says `1h`, and no breakpoint of the projection's own; a request without a mark gets the breakpoints below |
 | `output_config.effort` | any non-empty name, `max` included; required unless a `format` is present; any other key refused by its path | the same name |
 | `output_config.format` | `{"type":"json_schema","schema":{…}}` (the schema an object) is `controls.output_format`, with no name and no strict flag; `null` is absent; `name`, `strict` and any other key refused by its path; another type refused | `{"type":"json_schema","schema":…}` beside the effort. The route always holds the answer to the schema: `strict` `true` sends nothing more and `false` is refused before I/O; the name, a label this wire has no place for, is not sent. llm does not validate the answer ([design](design.md#structured-output)) |
 | `tool_choice.disable_parallel_tool_use` | a boolean `v` on `auto`, `any` or `tool` is `controls.parallel_tool_calls = !v` | `disable_parallel_tool_use: !b`, writing `{"type":"auto"}` when the choice is automatic |
@@ -108,6 +108,16 @@ sent byte for byte, because its signature covers it as produced, and a tail with
 markable carries no rolling marker. An empty instruction sends no `system` at all; the rolling
 marker already covers the tools. A turn whose `prompt-cache` hint has the lifetime `1h` marks both breakpoints
 `{type: ephemeral, ttl: 1h}`; any other turn marks them as above.
+
+**A client that placed its own marks gets exactly those.** The Messages ingress records where a
+request's marks sit as `Hints::cache_marks` (`CacheMarks`: `instructions`, the indexes of the
+`items` whose blocks were marked, the indexes of the marked `tools`) whenever it carries at least
+one. A turn holding that hint is sent exactly those marks, each with the hint's lifetime, and none
+of the breakpoints above: a mark on the system block alone arrives alone, because a cache write
+is priced above an uncached read and a mark the client did not send changes what it pays. An
+empty `CacheMarks` sends no mark at all; a caller that wants no automatic breakpoint sets it. The
+system blocks are still joined into one, so a mark on any of them marks that one block. Bedrock
+`InvokeModel` sends the same body (`docs/bedrock.md`); Chat, Responses and Converse send no mark.
 
 **A subscription token changes `system`.** Under a `subscription-oauth` account, `system` opens
 with the subscription client preamble ("You are Claude Code, Anthropic's official CLI for

@@ -20,7 +20,7 @@ assert:
     error_code: null
     dispatch: null
     wire_request: null
-    neutral_request: '{"format":"llm.turn/4","request":{"model":"example/Model-Revision","instructions":"Stay terse","items":[{"kind":"user-text","text":"Summarise the log"}],"tools":[],"max_output_tokens":512,"controls":{"thinking":{"mode":"disabled"},"hints":{"prompt_cache":{}}}}}'
+    neutral_request: '{"format":"llm.turn/4","request":{"model":"example/Model-Revision","instructions":"Stay terse","items":[{"kind":"user-text","text":"Summarise the log"}],"tools":[],"max_output_tokens":512,"controls":{"thinking":{"mode":"disabled"},"hints":{"prompt_cache":{},"cache_marks":{"instructions":true,"items":[0]}}}}}'
     stream: true
     items:
       - "user-text:Summarise the log"
