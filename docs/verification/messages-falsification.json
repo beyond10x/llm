@@ -4,7 +4,7 @@
   "case": "cargo test -p b10x-llm-messages --locked --no-fail-fast (and cargo test -p b10x-llm-http --locked --no-fail-fast for a mutation in that crate)",
   "scenario": "ess verify conform synthesize --path spec --suite-format 5 --target ir --scenarios contracts/messages/scenarios --out target/messages-suite.json, then cargo run --locked -p b10x-llm-conformance -- target/messages-suite.json target/messages-baseline.json target/messages-run local"
  },
- "measured": "2026-09-21; 2026-10-05 for the six mutations of wave 2026-10-05-w27; 2026-10-05 for the five subscription-presentation mutations of wave 2026-10-05-w48; 2026-10-05 for the four mutations re-measured in wave 2026-10-05-w53; 2026-10-22 for the two codec.rs mutations re-measured in wave 2026-10-22-w15; 2026-10-23 for the two client.rs oauth-beta mutations re-run on the case lane in wave 2026-10-23-w17; 2026-10-26 for the two usage.rs mutations of wave 2026-10-26-w20; 2026-11-05 for the five codec.rs image mutations of wave 2026-11-05-w26",
+ "measured": "2026-09-21; 2026-10-05 for the six mutations of wave 2026-10-05-w27; 2026-10-05 for the five subscription-presentation mutations of wave 2026-10-05-w48; 2026-10-05 for the four mutations re-measured in wave 2026-10-05-w53; 2026-10-22 for the two codec.rs mutations re-measured in wave 2026-10-22-w15; 2026-10-23 for the two client.rs oauth-beta mutations re-run on the case lane in wave 2026-10-23-w17; 2026-10-26 for the two usage.rs mutations of wave 2026-10-26-w20; 2026-11-05 for the five codec.rs image mutations of wave 2026-11-05-w26; 2026-11-21 for the two codec.rs mutations re-measured in wave 2026-11-21-client-cache-marks, the scenario lane over the whole suite (llm-conformance check)",
  "mutations": [
   {
    "edits": [
@@ -595,12 +595,13 @@
   {
    "edits": [
     {
-     "after": "    let mut messages: Vec<Value> = Vec::new();",
-     "before": "    if request.sampling.temperature.is_some_and(|n| n > 1.0) {\n        return Err(Error::unsupported(\"Messages temperature exceeds one\"));\n    }\n    let mut messages: Vec<Value> = Vec::new();"
+     "before": "    if request.sampling.temperature.is_some_and(|n| n > 1.0) {\n        return Err(Error::unsupported(\"Messages temperature exceeds one\"));\n    }\n    let placed = request.controls.hints.cache_marks.as_ref();",
+     "after": "    let placed = request.controls.hints.cache_marks.as_ref();"
     }
    ],
    "failed_cases": [
-    "a_temperature_above_the_routes_maximum_is_refused_before_any_projection"
+    "a_temperature_above_the_routes_maximum_is_refused_before_any_projection",
+    "every_pre_flight_refusal_is_reached_through_the_client_before_anything_is_sent"
    ],
    "failed_scenarios": [
     "llm.messages/authored/temperature-above-the-route-maximum-refused"
@@ -614,17 +615,17 @@
    ],
    "mutation": "temperature-above-the-route-maximum-sent-anyway",
    "restored": true,
-   "restored_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2",
+   "restored_sha256": "5c75b8f1fcac79042407a2f99a0d3d076f88bf768ab23cd2730779adde8cf55e",
    "scenario_counts": {
     "error": 0,
     "failed": 1,
-    "passed": 40,
+    "passed": 1048,
     "skipped": 0,
-    "total": 41,
+    "total": 1049,
     "unsupported": 0
    },
    "source": "crates/llm-messages/src/codec.rs",
-   "source_before_sha256": "236fc323cabc6359edec55fd547322df64bd547cf5f9e420d1d89e56a6c2c7f2"
+   "source_before_sha256": "5c75b8f1fcac79042407a2f99a0d3d076f88bf768ab23cd2730779adde8cf55e"
   },
   {
    "edits": [
@@ -772,16 +773,24 @@
   {
    "edits": [
     {
-     "after": "fn decode_messages(\n    value: &Value,\n    origin: &Provenance,\n    request: &mut TurnRequest,\n) -> Result<(), Error> {",
-     "before": "fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {"
+     "before": "fn decode_messages(\n    value: &Value,\n    request: &mut TurnRequest,\n    marks: &mut Marks,\n) -> Result<(), Error> {",
+     "after": "fn decode_messages(\n    value: &Value,\n    origin: &Provenance,\n    request: &mut TurnRequest,\n    marks: &mut Marks,\n) -> Result<(), Error> {"
     },
     {
-     "after": "    decode_messages(&value, origin, &mut request)?;",
-     "before": "    decode_messages(&value, &mut request)?;"
+     "before": "    decode_messages(&value, &mut request, &mut marks)?;",
+     "after": "    decode_messages(&value, origin, &mut request, &mut marks)?;"
     },
     {
-     "after": "                request.items.push(decode_block(\n                    block,\n                    role == \"user\",\n                    Some(origin),\n                    \"messages[].content[]\",\n                )?);",
-     "before": "                request.items.push(decode_block(\n                    block,\n                    role == \"user\",\n                    None,\n                    \"messages[].content[]\",\n                )?);"
+     "before": "fn decode_content(\n    message: &Value,\n    at_message: usize,",
+     "after": "fn decode_content(\n    message: &Value,\n    origin: &Provenance,\n    at_message: usize,"
+    },
+    {
+     "before": "        decode_content(message, at_message, role == \"user\", request, marks)?;",
+     "after": "        decode_content(message, origin, at_message, role == \"user\", request, marks)?;"
+    },
+    {
+     "before": "        request.items.push(decode_block(\n            block,\n            from_user,\n            None,\n            \"messages[].content[]\",\n        )?);",
+     "after": "        request.items.push(decode_block(\n            block,\n            from_user,\n            Some(origin),\n            \"messages[].content[]\",\n        )?);"
     }
    ],
    "failed_cases": [
@@ -799,17 +808,17 @@
    ],
    "mutation": "ingress-stamps-the-reading-binding-onto-thinking",
    "restored": true,
-   "restored_sha256": "d201263f1a67a99b8fd0b74b64cd06c893572e481c23df4106c4c9aab324962e",
+   "restored_sha256": "5c75b8f1fcac79042407a2f99a0d3d076f88bf768ab23cd2730779adde8cf55e",
    "scenario_counts": {
     "error": 0,
     "failed": 1,
-    "passed": 690,
+    "passed": 1048,
     "skipped": 0,
-    "total": 691,
+    "total": 1049,
     "unsupported": 0
    },
    "source": "crates/llm-messages/src/codec.rs",
-   "source_before_sha256": "d201263f1a67a99b8fd0b74b64cd06c893572e481c23df4106c4c9aab324962e"
+   "source_before_sha256": "5c75b8f1fcac79042407a2f99a0d3d076f88bf768ab23cd2730779adde8cf55e"
   },
   {
    "edits": [

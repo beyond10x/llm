@@ -388,6 +388,7 @@ pub fn ingest_request(binding: &Binding, body: &Value) -> Result<TurnRequest, Er
             reasoning_summary,
             anthropic_beta: Vec::new(),
             unforwarded,
+            cache_marks: None,
         },
         output_format,
     };

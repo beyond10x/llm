@@ -120,13 +120,22 @@ fn ingress_reads_output_config_format_and_round_trips() {
         assert_eq!(wire["output_config"], config);
         let mut second = decode(&wire).expect("decodes back");
         second.model.clone_from(&first.model);
-        // Every projection places the cache breakpoints, which read back as the cache hint.
+        // Every projection places the cache breakpoints, which read back as the cache hint and,
+        // since a read mark is a placement, as the rolling breakpoint on the one user item.
         second
             .controls
             .hints
             .prompt_cache
             .take()
             .expect("the breakpoints every projection places");
+        assert_eq!(
+            second.controls.hints.cache_marks.take(),
+            Some(llm_core::CacheMarks {
+                items: vec![0],
+                ..Default::default()
+            }),
+            "{config}"
+        );
         assert_eq!(second, first, "{config}");
     }
 }

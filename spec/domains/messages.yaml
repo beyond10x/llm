@@ -11,14 +11,16 @@ entities:
       # The diagnostic itself, so a scenario pins that it is fixed and carries no upstream text.
       - {name: error_message, type: Optional<String>}
       - {name: dispatch, type: Optional<String>}
-      # The projected body. It carries at most two prompt-cache breakpoints, each
+      # The projected body. A turn whose hints carry `cache_marks` (a request that carried at
+      # least one mark) is sent exactly those marks, on the system block, the blocks of the
+      # marked items and the marked tools, each with the hint's lifetime, and no other
+      # (story:client-cache-marks). Otherwise it carries at most two prompt-cache breakpoints, each
       # `cache_control: {type: ephemeral}`: one on the single `system` text block, sent only when
       # the instruction is not empty, and one rolling marker on the last `text` or `tool_result`
       # block of the last message. Only those two block types are ever marked: a block carried
       # through from the model (`thinking`, `redacted_thinking`) is replayed unmodified, and a
       # tail with nothing markable carries no rolling marker. A `prompt-cache` hint with the
-      # lifetime `1h` makes every breakpoint `{type: ephemeral, ttl: 1h}`; the caller's own mark
-      # positions are not reproduced.
+      # lifetime `1h` makes every breakpoint `{type: ephemeral, ttl: 1h}`.
       #
       # Controls on egress: `thinking` is `{type: adaptive}`, `{type: enabled, budget_tokens: n}`
       # or `{type: disabled}` as the turn holds it; `parallel_tool_calls` `b` is
@@ -41,7 +43,9 @@ entities:
       # - `cache_control` `{type: ephemeral}`, with an optional `ttl` of `5m` or `1h`, on a
       #   `system` block, a `text`, `tool_use` or `tool_result` content block, or a tool, is the
       #   `prompt-cache` hint, its lifetime `1h` only when the marks say `1h` (`5m` is the
-      #   default and reads as no lifetime). Marks of two lifetimes in one request are refused;
+      #   default and reads as no lifetime). Where each mark sits is the turn's
+      #   `cache_marks`: the system block, the item a marked content block becomes (a later
+      #   `system` entry's marked user text included), and the tool by its index. Marks of two lifetimes in one request are refused;
       #   a mark of another type is refused; a mark on a `thinking` or `redacted_thinking` block
       #   is refused by its path.
       # - `output_config.effort` takes any non-empty name, `max` included.

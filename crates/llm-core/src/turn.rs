@@ -123,6 +123,8 @@ impl TurnRequest {
         }
         self.validate_tools()?;
         self.controls.validate(&self.tools)?;
+        self.controls
+            .validate_marks(self.items.len(), self.tools.len())?;
         let mut calls = BTreeSet::new();
         let mut results = BTreeSet::new();
         for item in &self.items {

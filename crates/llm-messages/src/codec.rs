@@ -1,12 +1,13 @@
 use crate::{absent, fields, optional, string};
 use llm_core::{
-    Advisory, AuthKind, CacheTtl, CallId, Capabilities, Error, ImageMediaType, ImageSource, Item,
-    MAX_ANTHROPIC_BETAS, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES, OutputFormat, PromptCache,
-    Protocol, Provenance, Sampling, Thinking, ToolCall, ToolChoice, ToolName, ToolSpec,
-    TurnRequest, Unforwarded, anthropic_beta_name, exceeds, wire_effort,
+    Advisory, AuthKind, CacheMarks, CacheTtl, CallId, Capabilities, Error, ImageMediaType,
+    ImageSource, Item, MAX_ANTHROPIC_BETAS, MAX_REQUEST_BYTES, MAX_TOOL_ARGUMENT_BYTES,
+    OutputFormat, PromptCache, Protocol, Provenance, Sampling, Thinking, ToolCall, ToolChoice,
+    ToolName, ToolSpec, TurnRequest, Unforwarded, anthropic_beta_name, exceeds, wire_effort,
 };
 use llm_providers::Binding;
 use serde_json::{Map, Value, json};
+use std::collections::BTreeSet;
 
 /// The block a subscription token's `system` opens with (Harness
 /// `harness-messages/src/project.rs:47`). Sent only for a `subscription-oauth` account.
@@ -125,6 +126,29 @@ fn ephemeral(request: &TurnRequest) -> Value {
 /// write the prefix the next one reads back, so the conversation's growth is paid for once rather
 /// than on every remaining turn. A tail with nothing markable carries no marker: a missing
 /// breakpoint costs money, a modified opaque block costs the turn.
+/// `object` with the turn's [`ephemeral`] mark when `marked`, else as it is.
+fn mark(mut object: Value, marked: bool, request: &TurnRequest) -> Value {
+    if let (true, Some(fields)) = (marked, object.as_object_mut()) {
+        fields.insert("cache_control".to_owned(), ephemeral(request));
+    }
+    object
+}
+
+/// The turn's tools on the wire, each marked where the client's placement names it.
+fn project_tools(request: &TurnRequest, placed: Option<&CacheMarks>) -> Result<Vec<Value>, Error> {
+    let mut tools = Vec::with_capacity(request.tools.len());
+    for (index, tool) in request.tools.iter().enumerate() {
+        name(tool.name.as_str())?;
+        if !tool.input_schema.is_object() {
+            return Err(Error::unsupported("Messages tool schema must be an object"));
+        }
+        let wire = json!({"name":tool.name,"description":tool.description,"input_schema":tool.input_schema});
+        let marked = placed.is_some_and(|marks| marks.tools.contains(&index));
+        tools.push(mark(wire, marked, request));
+    }
+    Ok(tools)
+}
+
 fn mark_rolling_breakpoint(messages: &mut [Value], mark: Value) {
     let tail = messages
         .last_mut()
@@ -209,8 +233,12 @@ fn project(
     if request.sampling.temperature.is_some_and(|n| n > 1.0) {
         return Err(Error::unsupported("Messages temperature exceeds one"));
     }
+    let placed = request.controls.hints.cache_marks.as_ref();
+    if let Some(marks) = placed {
+        marks.validate(request.items.len(), request.tools.len())?;
+    }
     let mut messages: Vec<Value> = Vec::new();
-    for item in &request.items {
+    for (index, item) in request.items.iter().enumerate() {
         let role = if user(item) { "user" } else { "assistant" };
         if messages.last().is_none_or(|m| m["role"] != role) {
             messages.push(json!({"role":role,"content":[]}));
@@ -219,17 +247,18 @@ fn project(
             .last_mut()
             .and_then(|m| m["content"].as_array_mut())
             .ok_or_else(|| Error::protocol("Messages grouping failed"))?
-            .push(block(item)?);
+            .push(mark(
+                block(item)?,
+                placed.is_some_and(|marks| marks.items.contains(&index)),
+                request,
+            ));
     }
-    let mut tools = Vec::new();
-    for tool in &request.tools {
-        name(tool.name.as_str())?;
-        if !tool.input_schema.is_object() {
-            return Err(Error::unsupported("Messages tool schema must be an object"));
-        }
-        tools.push(json!({"name":tool.name,"description":tool.description,"input_schema":tool.input_schema}));
+    let tools = project_tools(request, placed)?;
+    // A client that placed its own marks gets exactly those; only a turn without a placement
+    // gets the projection's breakpoints, the rolling one here and the system one below.
+    if placed.is_none() {
+        mark_rolling_breakpoint(&mut messages, ephemeral(request));
     }
-    mark_rolling_breakpoint(&mut messages, ephemeral(request));
     let mut body = json!({"model":upstream_model,"max_tokens":request.max_output_tokens.unwrap_or(capabilities.max_output_tokens),"messages":messages,"stream":true});
     // A block list rather than a string, so it can carry the breakpoint that caches the constant
     // head (tools, then system) of every turn. An empty instruction sends nothing to mark; the
@@ -244,9 +273,11 @@ fn project(
         system.push(json!({"type":"text","text":SUBSCRIPTION_CLIENT_PREAMBLE}));
     }
     if !request.instructions.is_empty() {
-        system.push(
-            json!({"type":"text","text":request.instructions,"cache_control":ephemeral(request)}),
-        );
+        system.push(mark(
+            json!({"type":"text","text":request.instructions}),
+            placed.is_none_or(|marks| marks.instructions),
+            request,
+        ));
     }
     if !system.is_empty() {
         body["system"] = Value::Array(system);
@@ -348,7 +379,7 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
     let mut marks = Marks::default();
     request.instructions = instructions(&value, &mut marks)?;
     marks.strip_content(&mut value)?;
-    decode_messages(&value, &mut request)?;
+    decode_messages(&value, &mut request, &mut marks)?;
     decode_tools(&value, &mut request, &mut marks)?;
     decode_sampling(&value, &mut request)?;
     decode_tool_choice(&value, &mut request)?;
@@ -361,6 +392,7 @@ pub fn decode_request(bytes: &[u8], origin: &Provenance) -> Result<IngressReques
             .insert(Unforwarded::ClientMetadata);
     }
     request.controls.hints.prompt_cache = marks.prompt_cache();
+    request.controls.hints.cache_marks = marks.placement();
     let stream = match optional(&value, "stream") {
         None => false,
         Some(Value::Bool(b)) => *b,
@@ -433,6 +465,10 @@ fn header_betas(headers: &http::HeaderMap) -> Result<Vec<String>, Error> {
 struct Marks {
     /// `None` until a mark is read; then whether its lifetime is one hour.
     one_hour: Option<bool>,
+    /// Where the marks were read, as [`CacheMarks`] holds them once the items are decoded.
+    placed: CacheMarks,
+    /// The content blocks that carried a mark, by message and block index on the wire.
+    content: BTreeSet<(usize, usize)>,
 }
 
 impl Marks {
@@ -478,11 +514,11 @@ impl Marks {
         let Some(messages) = body.get_mut("messages").and_then(Value::as_array_mut) else {
             return Ok(());
         };
-        for message in messages {
+        for (at_message, message) in messages.iter_mut().enumerate() {
             let Some(blocks) = message.get_mut("content").and_then(Value::as_array_mut) else {
                 continue;
             };
-            for block in blocks {
+            for (at_block, block) in blocks.iter_mut().enumerate() {
                 let markable = block
                     .get("type")
                     .and_then(Value::as_str)
@@ -493,6 +529,7 @@ impl Marks {
                     continue;
                 }
                 self.read(block, "messages[].content[]")?;
+                self.content.insert((at_message, at_block));
                 if let Some(object) = block.as_object_mut() {
                     object.remove("cache_control");
                 }
@@ -505,6 +542,12 @@ impl Marks {
         self.one_hour.map(|one_hour| PromptCache {
             ttl: one_hour.then_some(CacheTtl::OneHour),
         })
+    }
+
+    /// Where the client placed its marks, when it placed any: the projection then sends exactly
+    /// these. A request without a mark leaves the placement to the projection.
+    fn placement(self) -> Option<CacheMarks> {
+        self.one_hour.map(|_| self.placed)
     }
 }
 
@@ -520,6 +563,7 @@ fn instructions(value: &Value, marks: &mut Marks) -> Result<String, Error> {
                     return Err(Error::unsupported("Messages system block is not text"));
                 }
                 fields(block, "system[]", &["type", "text", "cache_control"])?;
+                marks.placed.instructions |= block.get("cache_control").is_some();
                 marks.read(block, "system[]")?;
                 texts.push(string(block, "text")?);
             }
@@ -612,14 +656,58 @@ fn system_message(message: &Value) -> Result<String, Error> {
     Ok(texts.join("\n"))
 }
 
-fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error> {
+/// The items of one user or assistant message, each marked block's item recorded in `marks`.
+fn decode_content(
+    message: &Value,
+    at_message: usize,
+    from_user: bool,
+    request: &mut TurnRequest,
+    marks: &mut Marks,
+) -> Result<(), Error> {
+    let content = message
+        .get("content")
+        .ok_or_else(|| Error::invalid("Messages content is missing"))?;
+    if let Some(text) = content.as_str() {
+        request.items.push(if from_user {
+            Item::user(text)
+        } else {
+            Item::assistant(text)
+        });
+        return Ok(());
+    }
+    for (at_block, block) in content
+        .as_array()
+        .ok_or_else(|| Error::invalid("Messages content must be text or blocks"))?
+        .iter()
+        .enumerate()
+    {
+        if marks.content.contains(&(at_message, at_block)) {
+            marks.placed.items.push(request.items.len());
+        }
+        request.items.push(decode_block(
+            block,
+            from_user,
+            None,
+            "messages[].content[]",
+        )?);
+    }
+    Ok(())
+}
+
+fn decode_messages(
+    value: &Value,
+    request: &mut TurnRequest,
+    marks: &mut Marks,
+) -> Result<(), Error> {
     let messages = value
         .get("messages")
         .and_then(Value::as_array)
         .ok_or_else(|| Error::invalid("Messages messages must be an array"))?;
     let mut opened = false;
     let mut deferred: Vec<Item> = Vec::new();
-    for message in messages {
+    // Which of `deferred` carried a mark, by position in it.
+    let mut deferred_marks: Vec<usize> = Vec::new();
+    for (at_message, message) in messages.iter().enumerate() {
         fields(message, "messages[]", &["role", "content"])?;
         let role = string(message, "role")?;
         if role == "system" {
@@ -627,17 +715,25 @@ fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error
             if text.is_empty() {
                 continue;
             }
+            let marked_entry = marks.content.iter().any(|(at, _)| *at == at_message);
             if opened {
                 let marked =
                     Item::user(format!("{SYSTEM_MESSAGE_OPEN}{text}{SYSTEM_MESSAGE_CLOSE}"));
                 // After a tool call the next user message must open with the results that
                 // answer it, so the marked text waits until those results are placed.
                 if deferred.is_empty() && !matches!(request.items.last(), Some(Item::ToolCall(_))) {
+                    if marked_entry {
+                        marks.placed.items.push(request.items.len());
+                    }
                     request.items.push(marked);
                 } else {
+                    if marked_entry {
+                        deferred_marks.push(deferred.len());
+                    }
                     deferred.push(marked);
                 }
             } else {
+                marks.placed.instructions |= marked_entry;
                 if !request.instructions.is_empty() {
                     request.instructions.push('\n');
                 }
@@ -651,38 +747,33 @@ fn decode_messages(value: &Value, request: &mut TurnRequest) -> Result<(), Error
                 "Messages role is outside the declared subset",
             ));
         }
-        let content = message
-            .get("content")
-            .ok_or_else(|| Error::invalid("Messages content is missing"))?;
         let start = request.items.len();
-        if let Some(text) = content.as_str() {
-            request.items.push(if role == "user" {
-                Item::user(text)
-            } else {
-                Item::assistant(text)
-            });
-        } else {
-            for block in content
-                .as_array()
-                .ok_or_else(|| Error::invalid("Messages content must be text or blocks"))?
-            {
-                request.items.push(decode_block(
-                    block,
-                    role == "user",
-                    None,
-                    "messages[].content[]",
-                )?);
-            }
-        }
+        decode_content(message, at_message, role == "user", request, marks)?;
         if !deferred.is_empty() {
             let results = request.items[start..]
                 .iter()
                 .take_while(|item| matches!(item, Item::ToolResult { .. }))
                 .count();
             let at = start + results;
+            // A marked block after the splice moves with its item.
+            for index in &mut marks.placed.items {
+                if *index >= at {
+                    *index += deferred.len();
+                }
+            }
+            marks
+                .placed
+                .items
+                .extend(deferred_marks.drain(..).map(|position| at + position));
             request.items.splice(at..at, deferred.drain(..));
         }
     }
+    let end = request.items.len();
+    marks
+        .placed
+        .items
+        .extend(deferred_marks.drain(..).map(|position| end + position));
+    marks.placed.items.sort_unstable();
     request.items.append(&mut deferred);
     if request.items.first().is_none_or(|item| !user(item)) {
         return Err(Error::invalid("Messages requires initial user content"));
@@ -694,15 +785,20 @@ fn decode_tools(value: &Value, request: &mut TurnRequest, marks: &mut Marks) -> 
     let Some(tools) = optional(value, "tools") else {
         return Ok(());
     };
-    for tool in tools
+    for (at, tool) in tools
         .as_array()
         .ok_or_else(|| Error::invalid("Messages tools must be an array"))?
+        .iter()
+        .enumerate()
     {
         fields(
             tool,
             "tools[]",
             &["name", "description", "input_schema", "cache_control"],
         )?;
+        if tool.get("cache_control").is_some() {
+            marks.placed.tools.push(at);
+        }
         marks.read(tool, "tools[]")?;
         let schema = tool
             .get("input_schema")

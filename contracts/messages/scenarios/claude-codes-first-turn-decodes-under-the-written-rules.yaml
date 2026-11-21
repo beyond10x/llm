@@ -21,7 +21,7 @@ assert:
     error_message: null
     dispatch: null
     wire_request: null
-    neutral_request: '{"format":"llm.turn/4","request":{"model":"code","instructions":"[attribution block: client version and conversation fingerprint]\nYou are Claude Code, an interactive command line tool.","items":[{"kind":"user-text","text":"What does /tmp/a.txt say?"}],"tools":[{"name":"Read","description":"Reads a file from the local filesystem.","input_schema":{"properties":{"file_path":{"description":"The absolute path to the file to read","type":"string"}},"required":["file_path"],"type":"object"}}],"max_output_tokens":32000,"sampling":{"reasoning_effort":"max"},"controls":{"thinking":{"mode":"adaptive"},"hints":{"prompt_cache":{}}}}}'
+    neutral_request: '{"format":"llm.turn/4","request":{"model":"code","instructions":"[attribution block: client version and conversation fingerprint]\nYou are Claude Code, an interactive command line tool.","items":[{"kind":"user-text","text":"What does /tmp/a.txt say?"}],"tools":[{"name":"Read","description":"Reads a file from the local filesystem.","input_schema":{"properties":{"file_path":{"description":"The absolute path to the file to read","type":"string"}},"required":["file_path"],"type":"object"}}],"max_output_tokens":32000,"sampling":{"reasoning_effort":"max"},"controls":{"thinking":{"mode":"adaptive"},"hints":{"prompt_cache":{},"cache_marks":{"instructions":true,"items":[0]}}}}}'
     stream: true
     items:
       - "user-text:What does /tmp/a.txt say?"

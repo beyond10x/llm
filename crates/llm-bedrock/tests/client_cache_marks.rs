@@ -184,3 +184,43 @@ fn a_request_without_a_mark_keeps_the_projections_own_breakpoints() {
         "{body}"
     );
 }
+
+#[test]
+fn an_empty_placement_sends_no_mark_at_all() {
+    let mut request = decode(&json!({
+        "model": "sonnet", "max_tokens": 4096,
+        "system": "Answer as the order desk",
+        "messages": [{"role": "user", "content": "case-a where is order 7"}],
+    }));
+    request.controls.hints.cache_marks = Some(llm_core::CacheMarks::default());
+    let body = sent(&request);
+    assert_eq!(marks_of(&body), Vec::new(), "{body}");
+}
+
+#[test]
+fn a_mark_outside_the_turn_or_named_twice_is_refused_as_invalid() {
+    let request = decode(&json!({
+        "model": "sonnet", "max_tokens": 4096,
+        "messages": [{"role": "user", "content": "case-a where is order 7"}],
+    }));
+    for marks in [
+        llm_core::CacheMarks {
+            items: vec![1],
+            ..Default::default()
+        },
+        llm_core::CacheMarks {
+            items: vec![0, 0],
+            ..Default::default()
+        },
+        llm_core::CacheMarks {
+            tools: vec![0],
+            ..Default::default()
+        },
+    ] {
+        let mut marked = request.clone();
+        marked.controls.hints.cache_marks = Some(marks.clone());
+        let error = marked.validate().expect_err("an index outside the turn");
+        assert_eq!(error.code, llm_core::ErrorCode::InvalidRequest, "{marks:?}");
+        assert!(encode_request(&marked, &target()).is_err(), "{marks:?}");
+    }
+}

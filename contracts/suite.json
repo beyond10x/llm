@@ -2825,7 +2825,7 @@
         "scenario": "llm.messages/authored/charged-server-tool-use-refused"
       },
       "messages/scenarios/claude-codes-first-turn-decodes-under-the-written-rules.yaml": {
-        "digest": "sha256:a44a275574dd5784bf23a78a28d0950fda9d9ec471e97cb68e63cfea877e3300",
+        "digest": "sha256:3ba36810036e25447372ee38088de8c94d02a097a9242170ad857905b29a9d9f",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/claude-codes-first-turn-decodes-under-the-written-rules"
       },
@@ -2900,7 +2900,7 @@
         "scenario": "llm.messages/authored/ingress-carries-thinking-it-cannot-attribute"
       },
       "messages/scenarios/ingress-joins-system-text-blocks-with-a-line-feed.yaml": {
-        "digest": "sha256:8961c4c69d27fad7b76c171f0852ffc0219b9fde2ede830917352dcc1959ace8",
+        "digest": "sha256:ea024089d87c9751b86de9987718692861278f472d7a0e7781f55b1261cec4c3",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-joins-system-text-blocks-with-a-line-feed"
       },
@@ -2910,12 +2910,12 @@
         "scenario": "llm.messages/authored/ingress-preserves-the-declared-subset"
       },
       "messages/scenarios/ingress-reads-a-one-hour-cache-lifetime.yaml": {
-        "digest": "sha256:496a46ba87d563a9e68577b6dcf5b2214c1fcac8bbff0a64140c5f9c94bcf9f9",
+        "digest": "sha256:eeb1342736335b6d6c499c0f5022c142cdd011188e79837cf3bcd49b30cea801",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-a-one-hour-cache-lifetime"
       },
       "messages/scenarios/ingress-reads-adaptive-thinking.yaml": {
-        "digest": "sha256:f4b1db40d79f237a54be6c3cc8068905e63fd1024757cb5c950eaa03e710f5f4",
+        "digest": "sha256:3619aff60dc99a2223da27010c1f25a39569740f097ac9c8f97fa6c3d332be2b",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-adaptive-thinking"
       },
@@ -2925,17 +2925,17 @@
         "scenario": "llm.messages/authored/ingress-reads-an-explicit-null-as-absent"
       },
       "messages/scenarios/ingress-reads-disable-parallel-tool-use-as-no-parallel-calls.yaml": {
-        "digest": "sha256:2f5648d38c17dd8dbc66a776a31ad50571673940911818fb2e6b82eb4a33f3bd",
+        "digest": "sha256:74d86154cd0c383593377969aafa4768fa6d8c58b744df69c077702a94967f1d",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-disable-parallel-tool-use-as-no-parallel-calls"
       },
       "messages/scenarios/ingress-reads-disabled-thinking.yaml": {
-        "digest": "sha256:425ab14925e92ae92eb27222084b129a6f7fe175238b9f6401a1a77f02dd4b27",
+        "digest": "sha256:f64bd4a4e91884f090962874321c9cf19063c7c5e6dae423b371d10e7dc49618",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-disabled-thinking"
       },
       "messages/scenarios/ingress-reads-effort-max.yaml": {
-        "digest": "sha256:5dde0b067ca3020b02a3203af0e77d2c51e00fa92d3d98b105930b64b948a90f",
+        "digest": "sha256:7c30f37a3582531d8d937cffea5eca747c0d9a37ed29436ec6d174ce14412af6",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-effort-max"
       },
@@ -2945,7 +2945,7 @@
         "scenario": "llm.messages/authored/ingress-reads-metadata-as-client-metadata-and-reports-it-omitted"
       },
       "messages/scenarios/ingress-reads-parallel-tool-use-left-enabled.yaml": {
-        "digest": "sha256:fae70862f6acfcc02b3884907a56787bac93417d2381a22a0fbe41c43a60a86e",
+        "digest": "sha256:f876f5067bb5b16170552da1f94fe22bb1db1b06e4218c5d655b97b4f4ae9d3c",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-parallel-tool-use-left-enabled"
       },
@@ -2965,7 +2965,7 @@
         "scenario": "llm.messages/authored/ingress-reads-the-output-format-beside-the-effort"
       },
       "messages/scenarios/ingress-reads-thinking-with-a-budget.yaml": {
-        "digest": "sha256:99a81c10036454d420bc5e26934d502ec0be1f5b6140d7edb417df08e035cf3f",
+        "digest": "sha256:dfd7f1276964f12cd0c9e7bf6637784bbf80924a09e1b6590947676a412bd444",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/ingress-reads-thinking-with-a-budget"
       },
@@ -6105,9 +6105,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "66eb12c5ad1f16797857a493edc8fea1fcb2fe2d9f43b2fcfa4a473df6d2e2fd",
+    "contract_digest": "4ad846a815de53dbdf38c735b9d18f7851f48e6db7b7f65e8fb1c38d26eb1c00",
     "scenario_initial_state": "empty",
-    "spec_digest": "c34ccddea7f4cc53d92a9b1d5b8b2a32b338f999f9d934ab70de21ac8a1bcc6b",
+    "spec_digest": "a76b940e17e9cd343e6abe8faffde22093f49c9f3e7255fc768543114ebc3aa2",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -59862,7 +59862,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"code\",\"instructions\":\"[attribution block: client version and conversation fingerprint]\\nYou are Claude Code, an interactive command line tool.\",\"items\":[{\"kind\":\"user-text\",\"text\":\"What does /tmp/a.txt say?\"}],\"tools\":[{\"name\":\"Read\",\"description\":\"Reads a file from the local filesystem.\",\"input_schema\":{\"properties\":{\"file_path\":{\"description\":\"The absolute path to the file to read\",\"type\":\"string\"}},\"required\":[\"file_path\"],\"type\":\"object\"}}],\"max_output_tokens\":32000,\"sampling\":{\"reasoning_effort\":\"max\"},\"controls\":{\"thinking\":{\"mode\":\"adaptive\"},\"hints\":{\"prompt_cache\":{}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"code\",\"instructions\":\"[attribution block: client version and conversation fingerprint]\\nYou are Claude Code, an interactive command line tool.\",\"items\":[{\"kind\":\"user-text\",\"text\":\"What does /tmp/a.txt say?\"}],\"tools\":[{\"name\":\"Read\",\"description\":\"Reads a file from the local filesystem.\",\"input_schema\":{\"properties\":{\"file_path\":{\"description\":\"The absolute path to the file to read\",\"type\":\"string\"}},\"required\":[\"file_path\"],\"type\":\"object\"}}],\"max_output_tokens\":32000,\"sampling\":{\"reasoning_effort\":\"max\"},\"controls\":{\"thinking\":{\"mode\":\"adaptive\"},\"hints\":{\"prompt_cache\":{},\"cache_marks\":{\"instructions\":true,\"items\":[0]}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",
@@ -61662,7 +61662,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"Stay terse\\nCite nothing\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hi\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"hints\":{\"prompt_cache\":{}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"caller-alias\",\"instructions\":\"Stay terse\\nCite nothing\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hi\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"hints\":{\"prompt_cache\":{},\"cache_marks\":{\"instructions\":true}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",
@@ -61912,7 +61912,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"hints\":{\"prompt_cache\":{\"ttl\":\"1h\"}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"hints\":{\"prompt_cache\":{\"ttl\":\"1h\"},\"cache_marks\":{\"instructions\":true,\"items\":[0]}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",
@@ -62022,7 +62022,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"thinking\":{\"mode\":\"adaptive\"},\"hints\":{\"prompt_cache\":{}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"thinking\":{\"mode\":\"adaptive\"},\"hints\":{\"prompt_cache\":{},\"cache_marks\":{\"instructions\":true,\"items\":[0]}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",
@@ -62270,7 +62270,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":512,\"controls\":{\"parallel_tool_calls\":false,\"hints\":{\"prompt_cache\":{}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":512,\"controls\":{\"parallel_tool_calls\":false,\"hints\":{\"prompt_cache\":{},\"cache_marks\":{\"instructions\":true,\"items\":[0]}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",
@@ -62380,7 +62380,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"thinking\":{\"mode\":\"disabled\"},\"hints\":{\"prompt_cache\":{}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"thinking\":{\"mode\":\"disabled\"},\"hints\":{\"prompt_cache\":{},\"cache_marks\":{\"instructions\":true,\"items\":[0]}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",
@@ -62490,7 +62490,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Max\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"sampling\":{\"reasoning_effort\":\"max\"},\"controls\":{\"hints\":{\"prompt_cache\":{}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Max\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"sampling\":{\"reasoning_effort\":\"max\"},\"controls\":{\"hints\":{\"prompt_cache\":{},\"cache_marks\":{\"instructions\":true,\"items\":[0]}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",
@@ -62712,7 +62712,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":512,\"tool_choice\":\"required\",\"controls\":{\"parallel_tool_calls\":true,\"hints\":{\"prompt_cache\":{}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}],\"max_output_tokens\":512,\"tool_choice\":\"required\",\"controls\":{\"parallel_tool_calls\":true,\"hints\":{\"prompt_cache\":{},\"cache_marks\":{\"instructions\":true,\"items\":[0]}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",
@@ -63154,7 +63154,7 @@
               },
               "neutral_request": {
                 "kind": "literal",
-                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"thinking\":{\"mode\":\"enabled\",\"budget_tokens\":1024},\"hints\":{\"prompt_cache\":{}}}}}"
+                "value": "{\"format\":\"llm.turn/4\",\"request\":{\"model\":\"example/Model-Revision\",\"instructions\":\"Stay terse\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[],\"max_output_tokens\":512,\"controls\":{\"thinking\":{\"mode\":\"enabled\",\"budget_tokens\":1024},\"hints\":{\"prompt_cache\":{},\"cache_marks\":{\"instructions\":true,\"items\":[0]}}}}}"
               },
               "omitted_advisories": {
                 "kind": "literal",

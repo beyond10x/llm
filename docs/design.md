@@ -908,7 +908,7 @@ writes it back as it was read:
 
 | Hint | Messages | Chat Completions | Responses |
 | --- | --- | --- | --- |
-| `prompt-cache` | carried: the breakpoints this projection places (the system block, the rolling tail) take its lifetime | omitted | omitted |
+| `prompt-cache` | carried: a client's own marks where it placed them (`cache_marks`), else the breakpoints this projection places (the system block, the rolling tail), each with its lifetime | omitted | omitted |
 | `prompt-cache-key` | omitted | `prompt_cache_key` | `prompt_cache_key` |
 | `verbosity` | omitted | `verbosity` | `text.verbosity` |
 | `reasoning-summary` | omitted | omitted | `reasoning.summary` |

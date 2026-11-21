@@ -10,9 +10,12 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 - **Breaking:** `StreamEvent::MessageBoundary` (`message-boundary`) and `StreamEvent::OpaqueItem` (`opaque-item`)
 - `llm-calls`: `ShadowLedger::durable` (`sqlite` feature) keeps each shadow's daily cap on a `SqliteLedger`, surviving a restart; a later day already on disk refuses an earlier one
+- **Breaking:** `Hints::cache_marks` (`CacheMarks`): where a client placed its prompt-cache marks; a `Hints` literal adds `cache_marks: None`
 
 ### Fixed
 
+- `llm-messages`, `llm-bedrock`: a client's `cache_control` marks reach Messages and InvokeModel where it placed them, none added
+- A request without a mark keeps the system and rolling breakpoints; an empty `CacheMarks` sends no mark
 - Responses and Messages ingress relay two messages, an interrupted message and redacted thinking in place
 - `VecSink` charges a `StreamEvent::MessageBoundary` to neither bound, holding at most as many as its event bound, and an `OpaqueItem`'s payload to no byte bound
 - `llm-messages`: an OpenCode Go base URL with a trailing host dot or percent-encoded path sends `x-opencode-session`; an encoded `/` is refused
