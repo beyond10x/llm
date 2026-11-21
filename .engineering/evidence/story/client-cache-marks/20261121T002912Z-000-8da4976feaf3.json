@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T00:29:12Z",
+  "actor": "agent:ai-agent-platform",
+  "artifact": "story:client-cache-marks",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate on wave/2026-11-21-client-cache-marks (Rust 1.98.0, each step alone): cargo test --workspace --no-fail-fast 1759 passed 0 failed, the feature-scoped tests and checks, fmt, clippy -D warnings (workspace, llm-models, llm-bedrock), docs generate --check, ess 0.87.0 validate, conformance 1049/1049, aep validate; red at 1d8edc93: llm-bedrock client_cache_marks 2 of 4 failed, llm-messages client_request_fields 1 of 19 failed; green: 6 of 6 and 19 of 19; two moved codec.rs mutations re-measured, each killed by both lanes",
+    "reference": "wave/2026-11-21-client-cache-marks@6f3608a2"
+  }
+}

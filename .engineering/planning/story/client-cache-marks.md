@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:client-cache-marks
 kind: story
-status: active
+status: implemented
 title: A Messages client's cache marks reach Messages and InvokeModel where the client placed them
 summary: Hints::cache_marks carries the placement; the encoders send exactly those marks and add none
 relations:
@@ -31,10 +31,11 @@ scope:
   path: spec/domains/inference.yaml
 - confidence: cited
   path: spec/domains/messages.yaml
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-20T23:53:17Z", actor: "agent:ai-agent-platform", revision: 3}
 - {from: "proposed", to: "active", at: "2026-11-20T23:53:18Z", actor: "agent:ai-agent-platform", revision: 4}
+- {from: "active", to: "implemented", at: "2026-11-21T00:29:12Z", actor: "agent:ai-agent-platform", revision: 5, decided_on: {"recorded":{"test_result":1},"asserted":{"test_result":1}}}
 ---
 ## Source
 
