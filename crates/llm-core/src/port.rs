@@ -48,6 +48,9 @@ pub enum StreamEvent {
         call_id: CallId,
         delta: String,
     },
+    /// Reasoning text as the model shows it. Empty, it marks reasoning the producer signed
+    /// without showing any of its text (a Messages `thinking` block with no text), emitted once
+    /// where that reasoning stands, so a consumer re-emitting the stream can open it in place.
     ReasoningDelta {
         text: String,
     },

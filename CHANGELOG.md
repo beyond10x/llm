@@ -14,6 +14,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ### Fixed
 
+- `llm-messages`: signed thinking without text streams as a thinking block before the answer, not as a contradiction
+- An empty `StreamEvent::ReasoningDelta` marks it; Chat Completions and Responses ingress send nothing for it
 - `llm-messages`, `llm-bedrock`: a client's `cache_control` marks reach Messages and InvokeModel where it placed them, none added
 - A request without a mark keeps the system and rolling breakpoints; an empty `CacheMarks` sends no mark
 - Responses and Messages ingress relay two messages, an interrupted message and redacted thinking in place

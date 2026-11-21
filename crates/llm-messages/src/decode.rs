@@ -222,6 +222,12 @@ struct Block {
     call: Option<CallId>,
     /// A block type outside the declared subset: kept whole, never interpreted.
     unknown: bool,
+    /// A thinking block whose reasoning the caller was shown: its text, or one empty
+    /// `ReasoningDelta` marking reasoning that shows no text. The mark is sent at the block's
+    /// first signature or when a later block opens, whichever comes first, so a re-encoder opens
+    /// the block in its place, before the blocks after it, instead of meeting it first in the
+    /// outcome.
+    reasoned: bool,
 }
 
 const UNKNOWN_EVENT: &str = "unknown-stream-event";
@@ -535,6 +541,7 @@ impl StreamDecoder {
         let boundary =
             matches!(announcement, Some(StreamEvent::TextDelta { .. })) && self.new_message(index);
         self.next_index = index.saturating_add(1);
+        self.mark_open_thinking(sink, cancel).await?;
         self.blocks.insert(
             index,
             Block {
@@ -542,6 +549,7 @@ impl StreamDecoder {
                 arguments: String::new(),
                 call,
                 unknown,
+                reasoned: false,
             },
         );
         if boundary {
@@ -551,6 +559,32 @@ impl StreamDecoder {
             Some(event) => emit(sink, event, cancel, self.deadline).await,
             None => Ok(()),
         }
+    }
+
+    /// Marks each thinking block still open without having shown anything (`Block::reasoned`):
+    /// it stands before the block about to open.
+    async fn mark_open_thinking(
+        &mut self,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<(), Error> {
+        let mut marks = 0_usize;
+        for open in self.blocks.values_mut() {
+            if !open.unknown
+                && !open.reasoned
+                && open.value.get("type").and_then(Value::as_str) == Some("thinking")
+            {
+                open.reasoned = true;
+                marks += 1;
+            }
+        }
+        for _ in 0..marks {
+            let mark = StreamEvent::ReasoningDelta {
+                text: String::new(),
+            };
+            emit(sink, mark, cancel, self.deadline).await?;
+        }
+        Ok(())
     }
 
     /// Whether text shown for block `index` begins a new message: the caller was last shown
@@ -595,6 +629,7 @@ impl StreamDecoder {
                 fields(delta, DELTA, &["type", "thinking"])?;
                 let text = string(delta, "thinking")?;
                 append(&mut block.value, "thinking", text)?;
+                block.reasoned |= !text.is_empty();
                 (!text.is_empty()).then(|| StreamEvent::ReasoningDelta {
                     text: text.to_owned(),
                 })
@@ -602,17 +637,23 @@ impl StreamDecoder {
             // Never shown: a signature is not reasoning, it is what the route verifies against.
             // A thinking block may open with no `signature` field at all; its first delta begins
             // it. The finished block is still refused unless it carries a signature.
+            //
+            // A thinking block signed before any of its text was shown is marked here (see
+            // `Block::reasoned`).
             "signature_delta" => {
                 fields(delta, DELTA, &["type", "signature"])?;
-                if block.value.get("type").and_then(Value::as_str) == Some("thinking")
-                    && let Some(opened) = block.value.as_object_mut()
-                {
+                let thinking = block.value.get("type").and_then(Value::as_str) == Some("thinking");
+                if thinking && let Some(opened) = block.value.as_object_mut() {
                     opened
                         .entry("signature")
                         .or_insert_with(|| Value::String(String::new()));
                 }
-                append(&mut block.value, "signature", string(delta, "signature")?)?;
-                None
+                let signature = string(delta, "signature")?;
+                append(&mut block.value, "signature", signature)?;
+                (thinking && !signature.is_empty() && !std::mem::replace(&mut block.reasoned, true))
+                    .then(|| StreamEvent::ReasoningDelta {
+                        text: String::new(),
+                    })
             }
             "input_json_delta" => {
                 fields(delta, DELTA, &["type", "partial_json"])?;

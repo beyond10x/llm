@@ -648,6 +648,149 @@ fn an_identifier_the_decoder_cannot_read_is_refused_before_anything_is_sent() {
     assert!(encode_ingress_message(&answer, "two words").is_err());
 }
 
+/// A model that reasons without showing it (Claude Haiku 5.5 at a low effort, observed on Bedrock
+/// `InvokeModel`) opens its answer with a signed `thinking` block whose text is empty. Its
+/// producer marks the block with an empty reasoning delta; the stream opens the thinking block
+/// there, so the answer that follows takes the next index and `close` signs it in place.
+fn empty_signed_items(after: Vec<Item>) -> Vec<Item> {
+    [vec![thinking("", "sig-empty")], after].concat()
+}
+
+#[tokio::test]
+async fn signed_reasoning_with_empty_text_then_text_round_trips() {
+    let events = [reasoning(""), text("Smoke check "), text("passed.")];
+    let answer = outcome(
+        StopReason::EndTurn,
+        empty_signed_items(vec![Item::assistant("Smoke check passed.")]),
+    );
+    let payloads = round_trip(&events, &answer).await;
+    assert_eq!(
+        kinds(&payloads),
+        [
+            "message_start",
+            "content_block_start:0",
+            "content_block_start:1",
+            "content_block_delta:1",
+            "content_block_delta:1",
+            "content_block_delta:0",
+            "content_block_stop:0",
+            "content_block_stop:1",
+            "message_delta",
+            "message_stop",
+        ]
+    );
+    assert_eq!(
+        payloads[1]["content_block"],
+        json!({"type":"thinking","thinking":"","signature":""})
+    );
+    assert_eq!(
+        payloads[5]["delta"],
+        json!({"type":"signature_delta","signature":"sig-empty"})
+    );
+}
+
+#[tokio::test]
+async fn signed_reasoning_with_empty_text_then_a_tool_call_round_trips() {
+    let events = [
+        reasoning(""),
+        started("call-1", "lookup"),
+        fragment("call-1", "{\"q\":\"a\"}"),
+    ];
+    let answer = outcome(
+        StopReason::ToolCalls,
+        empty_signed_items(vec![call("call-1", "lookup", json!({"q":"a"}))]),
+    );
+    let payloads = round_trip(&events, &answer).await;
+    assert_eq!(payloads[1]["content_block"]["type"], json!("thinking"));
+    assert_eq!(payloads[2]["content_block"]["type"], json!("tool_use"));
+}
+
+#[tokio::test]
+async fn signed_reasoning_with_empty_text_alone_ending_by_max_tokens_round_trips() {
+    let answer = outcome(StopReason::MaxOutputTokens, empty_signed_items(Vec::new()));
+    let payloads = round_trip(&[reasoning("")], &answer).await;
+    assert_eq!(
+        kinds(&payloads),
+        [
+            "message_start",
+            "content_block_start:0",
+            "content_block_delta:0",
+            "content_block_stop:0",
+            "message_delta",
+            "message_stop",
+        ]
+    );
+}
+
+/// The whole relay a gateway runs: the upstream's Messages stream (as Bedrock `InvokeModel`
+/// carries it, the signature in one delta and no thinking text) is read by this crate's decoder,
+/// every event it shows is re-emitted by `IngressStream`, and the client reads back the same
+/// answer, its empty thinking block in its place.
+#[tokio::test]
+async fn an_upstream_answer_opening_with_empty_signed_reasoning_is_relayed_in_place() {
+    let upstream = [
+        json!({"type":"message_start","message":{"id":ID,"type":"message","role":"assistant",
+            "model":MODEL,"content":[],"usage":{"input_tokens":4,"output_tokens":1}}}),
+        json!({"type":"content_block_start","index":0,
+            "content_block":{"type":"thinking","thinking":"","signature":""}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"signature_delta","signature":"sig-upstream"}}),
+        json!({"type":"content_block_stop","index":0}),
+        json!({"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}),
+        json!({"type":"content_block_delta","index":1,
+            "delta":{"type":"text_delta","text":"Smoke check passed."}}),
+        json!({"type":"content_block_stop","index":1}),
+        json!({"type":"message_delta","delta":{"stop_reason":"end_turn"},
+            "usage":{"output_tokens":28}}),
+        json!({"type":"message_stop"}),
+    ];
+    let (upstream_outcome, shown) = decode(&upstream).await;
+    let upstream_outcome = upstream_outcome.expect("the upstream answer decodes");
+    assert_eq!(shown, [reasoning(""), text("Smoke check passed.")]);
+    assert_eq!(upstream_outcome.items[0], thinking("", "sig-upstream"));
+
+    let mut stream = IngressStream::new(ID, Some(MODEL)).unwrap();
+    let mut relayed = Vec::new();
+    for event in &shown {
+        relayed.extend(stream.chunk(event));
+    }
+    relayed.extend(
+        stream
+            .close(&upstream_outcome)
+            .expect("the relayed answer does not contradict what was streamed"),
+    );
+    let (decoded, reshown) = decode(&relayed).await;
+    assert_eq!(
+        decoded.expect("the relayed answer decodes"),
+        upstream_outcome
+    );
+    assert_eq!(reshown, shown);
+}
+
+/// A server that cannot sign reasoning relays none: an empty reasoning delta opens nothing, and
+/// text streamed before the signed thinking the outcome places first is still a contradiction,
+/// as before.
+#[test]
+fn without_reasoning_relay_an_empty_reasoning_delta_opens_nothing() {
+    let answer = outcome(
+        StopReason::EndTurn,
+        empty_signed_items(vec![Item::assistant("Checking.")]),
+    );
+    let mut stream = IngressStream::new(ID, Some(MODEL))
+        .unwrap()
+        .without_reasoning_relay();
+    assert!(stream.chunk(&reasoning("")).is_empty());
+    assert_eq!(
+        kinds(&stream.chunk(&text("Checking."))),
+        [
+            "message_start",
+            "content_block_start:0",
+            "content_block_delta:0"
+        ]
+    );
+    assert!(stream.close(&answer).is_err());
+}
+
 /// story:chat-counts-every-output-delta. Messages has no block for refusal text, and sending it
 /// as text would make it the assistant's answer: an answer or a conversation carrying it is
 /// refused by name on both directions, never sent without it.

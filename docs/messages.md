@@ -175,7 +175,11 @@ it, never before the first text shown. A `redacted_thinking` block has no delta:
 
 A `thinking` block may open with `"signature": ""` or with no `signature` field at all, and its
 `signature_delta` signs it either way; a finished thinking block without a non-empty signature is
-still refused.
+still refused. A thinking block signed before any of its text was shown (Claude can open an answer
+with one whose `thinking` is `""`) is shown as one empty `StreamEvent::ReasoningDelta` at its
+first `signature_delta`, or when a later block opens while it is still open, whichever comes
+first, so a re-encoder opens it in its place, before the blocks that follow. Like any shown event
+it is output: it ends fallback eligibility and starts the first-output clock.
 
 **An event, delta or content block this subset does not model is preserved, not refused.** A route
 that adds an event type has not broken its stream, and ending the turn on it would refuse an answer
@@ -433,8 +437,10 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
 - **Blocks.** Text becomes a `text` block with `text_delta`s, a call a `tool_use` block with
   `input_json_delta`s, reasoning a `thinking` block with `thinking_delta`s. A thinking block stays
   open until `close`, which sends the signature the outcome's opaque state holds and then stops it;
-  every other block stops when the next opens. Reasoning with no signature, or signed for another
-  binding, is refused. `StreamEvent::MessageBoundary` stops the open text block, so the next text
+  an empty reasoning delta opens a thinking block with no `thinking_delta`, for reasoning signed
+  without text, and leaves an open thinking block as it is; Chat Completions and Responses ingress
+  send nothing for it. Every other block stops when the next opens. Reasoning with no signature,
+  or signed for another binding, is refused. `StreamEvent::MessageBoundary` stops the open text block, so the next text
   opens its own. `StreamEvent::OpaqueItem` of a block this crate reads back as that same item (the
   redacted thinking a Messages upstream relays) is sent whole at the next index as it arrives, so
   thinking, redacted thinking and text relay in their order. Content the stream never showed (any
