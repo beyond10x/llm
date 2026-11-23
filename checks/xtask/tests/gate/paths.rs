@@ -19,7 +19,9 @@ fn decision_script() -> String {
         .iter()
         .find(|step| step["name"].as_str() == Some(DECIDING_STEP))
         .and_then(|step| step["run"].as_str())
-        .unwrap_or_else(|| panic!("job `{DECIDING_JOB}` has a step `{DECIDING_STEP}` with a script"))
+        .unwrap_or_else(|| {
+            panic!("job `{DECIDING_JOB}` has a step `{DECIDING_STEP}` with a script")
+        })
         .to_owned()
 }
 
@@ -60,7 +62,10 @@ fn decide(script: &str, changed: Option<&[&str]>) -> String {
 fn a_change_of_only_planning_or_prose_files_skips_the_gate() {
     let script = decision_script();
     for (case, changed) in [
-        ("one planning file", &[".engineering/planning/story/x.md"][..]),
+        (
+            "one planning file",
+            &[".engineering/planning/story/x.md"][..],
+        ),
         (
             "an evidence record of the store, which is not Markdown",
             &[".engineering/evidence/story/x/1.json"],

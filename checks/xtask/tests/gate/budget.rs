@@ -84,9 +84,14 @@ fn ci_installs_cargo_nextest_pinned_by_version_and_digest() {
         .iter()
         .find(|step| step["name"].as_str() == Some("Install cargo-nextest"))
         .expect("a step installs cargo-nextest");
-    let version = install["env"]["NEXTEST_VERSION"].as_str().expect("a version");
+    let version = install["env"]["NEXTEST_VERSION"]
+        .as_str()
+        .expect("a version");
     assert_eq!(version.split('.').count(), 3, "{version}");
-    assert!(version.split('.').all(|part| part.parse::<u32>().is_ok()), "{version}");
+    assert!(
+        version.split('.').all(|part| part.parse::<u32>().is_ok()),
+        "{version}"
+    );
     let digest = install["env"]["NEXTEST_SHA256"].as_str().expect("a digest");
     assert!(
         digest.len() == 64 && digest.bytes().all(|byte| byte.is_ascii_hexdigit()),
@@ -94,5 +99,8 @@ fn ci_installs_cargo_nextest_pinned_by_version_and_digest() {
     );
     let run = install["run"].as_str().expect("a script");
     assert!(run.contains("sha256sum --check --strict"), "{run}");
-    assert!(run.contains("--version | grep -F \"cargo-nextest $NEXTEST_VERSION \""), "{run}");
+    assert!(
+        run.contains("--version | grep -F \"cargo-nextest $NEXTEST_VERSION \""),
+        "{run}"
+    );
 }

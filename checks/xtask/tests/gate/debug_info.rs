@@ -13,11 +13,18 @@ fn a_test_binary_carries_no_debug_sections() {
         .arg(&binary)
         .output()
         .expect("readelf runs");
-    assert!(listing.status.success(), "readelf exits {:?}", listing.status);
+    assert!(
+        listing.status.success(),
+        "readelf exits {:?}",
+        listing.status
+    );
     let sections = String::from_utf8_lossy(&listing.stdout);
     let debug: Vec<&str> = sections
         .lines()
-        .filter_map(|line| line.split_whitespace().find(|word| word.starts_with(".debug_")))
+        .filter_map(|line| {
+            line.split_whitespace()
+                .find(|word| word.starts_with(".debug_"))
+        })
         .collect();
     assert!(
         sections.contains(".text") && debug.is_empty(),

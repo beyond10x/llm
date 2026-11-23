@@ -92,16 +92,37 @@ RUSTUP_TOOLCHAIN=1.98.0 task check
 
 | Step | Alone |
 | --- | --- |
-| Workspace tests; `llm-credentials` and `llm-cost` with all features and checked with none; `llm-models` tested and `llm-bedrock` checked with no features, both linted so, because workspace feature unification turns `process` on everywhere else; `cargo fmt --all --check`; Clippy on all targets and features with `-D warnings`, on the default toolchain and on 1.98.0 | `task rust` |
+| `llm-credentials` and `llm-cost` checked with no features and `llm-bedrock` with its defaults; `cargo fmt --all --check`; Clippy on all targets and features with `-D warnings`, on the default toolchain and on 1.98.0, and on `llm-models` and `llm-bedrock` with no features, because workspace feature unification turns `process` on everywhere else | `task rust` |
+| The test phase: the workspace tests, then `llm-credentials`, `llm-cost` and `llm-calls` with all features and `llm-models` with none, each one `cargo nextest run` under `.config/nextest.toml` (a test over 60 s is killed and fails; one run ends at 120 s). The binaries are built first; the runs together may then take 120 s by their own JUnit reports, and the ten slowest tests are printed | `task test` (`cargo xtask test`, `checks/xtask`) |
 | Generated pages and quoted guide programs are current | `task docs` (`cargo run --locked -p llm-docs -- generate --check`) |
 | The ESS specification validates | `ess specify validate --path spec` |
 | Suite and schema projections match `contracts/`, then the suite runs three times against `contracts/baseline.json` | `task conformance` (`cargo run --locked -p llm-conformance -- check`, from the repository root) |
 | The planning store validates | `aep plan artifact validate` |
 
-CI installs `ess` 0.87.0 and `aep` 0.68.0 (pinned by revision in `gate.yml`). A second CI job
+CI installs `ess` 0.87.0 and `aep` 0.68.0 (pinned by revision in `gate.yml`) and cargo-nextest
+0.9.143 (pinned by version and SHA-256), and runs the test phase as its own step, "Rust tests"
+(`cargo xtask test`, as `task test` does). Run the gate on this host as `slot task check` or
+`slot task test`: inside a slot job the runs take no second slot. A second CI job
 tests and lints `llm-credentials` and `llm-cost` with all features on macOS and Windows;
 a native keychain change cannot be checked on Linux alone. `.github/workflows/shared-gates.yml`
 runs the organisation's common Gates checks on pull requests, `main` and tags.
+
+`.cargo/config.toml` builds the dev and test profile without debug information, so a test binary
+carries no `.debug_*` section here or in CI (`checks/xtask/tests/gate/debug_info.rs`), and at
+`opt-level = 1`, with debug assertions and overflow checks still on. Unoptimised, the tests that
+encode a 16 MiB body or parse 2 MiB of YAML spent most of their time in serde_json's and
+unsafe-libyaml's byte loops and their precondition checks (7 to 55 s each); at level 1 they take
+0.1 to 2.7 s. A per-crate level does not reach far enough: under shared generics a test links the
+serde_json instance an unoptimised upstream crate exported.
+
+A pull request whose changed files are all planning or prose passes every Gate job under its
+own name without building or testing: job `changes` (step "Planning or prose only") decides, and
+every step of the other jobs runs only when the decision is not `skip`. Planning or prose is
+everything under `.engineering/` and every `*.md` outside `website/` except
+`docs/implementation-status.md`, which `llm-docs generate --check` reads. That `case` in
+`gate.yml` is the one path list; `checks/xtask/tests/gate/paths.rs` runs it on both sides. A
+file a gate step starts to read leaves the list in the same change. A push to `main` always runs
+the whole gate. Documentation validation (`pages.yml`) still runs on every pull request.
 
 An ESS pin move changes `ESS_VERSION` and `ESS_SHA256` in `gate.yml` together, the digest read from
 the `ess-<version>-x86_64-unknown-linux-gnu.tar.gz` line of that release's `SHA256SUMS`, and moves

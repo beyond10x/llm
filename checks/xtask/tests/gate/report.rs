@@ -85,7 +85,12 @@ fn the_ten_slowest_tests_of_every_run_are_printed_slowest_first() {
     );
     let output = report(&[first, second]);
     let stdout = text(&output.stdout);
-    assert_eq!(output.status.code(), Some(0), "{stdout}{}", text(&output.stderr));
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "{stdout}{}",
+        text(&output.stderr)
+    );
 
     let listed: Vec<&str> = stdout
         .lines()
@@ -143,9 +148,17 @@ fn a_missing_or_unreadable_report_fails_the_phase() {
     let missing = directory.path().join("missing.xml");
     let output = report(std::slice::from_ref(&missing));
     assert_eq!(output.status.code(), Some(1), "{}", text(&output.stdout));
-    assert!(text(&output.stderr).contains("missing.xml"), "{}", text(&output.stderr));
+    assert!(
+        text(&output.stderr).contains("missing.xml"),
+        "{}",
+        text(&output.stderr)
+    );
 
-    let no_run_time = write(directory.path(), "bare.xml", "<testsuites>\n</testsuites>\n");
+    let no_run_time = write(
+        directory.path(),
+        "bare.xml",
+        "<testsuites>\n</testsuites>\n",
+    );
     let output = report(&[no_run_time]);
     assert_eq!(output.status.code(), Some(1), "{}", text(&output.stdout));
 }

@@ -6,34 +6,92 @@ on:
 permissions:
   contents: read
 jobs:
+  changes:
+    name: Changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      decision: ${{ steps.paths.outputs.decision }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: github.event_name == 'pull_request'
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Changed files
+        if: github.event_name == 'pull_request'
+        run: git diff --no-renames --name-only HEAD^1 HEAD > "$RUNNER_TEMP/changed.txt"
+      - name: Planning or prose only
+        id: paths
+        run: |
+          decision=run
+          list="$RUNNER_TEMP/changed.txt"
+          if [ -f "$list" ]; then
+            decision=skip
+            seen=no
+            while IFS= read -r path || [ -n "$path" ]; do
+              [ -n "$path" ] || continue
+              seen=yes
+              case $path in
+                docs/implementation-status.md | website/*) decision=run ;;
+                .engineering/*) ;;
+                *.md) ;;
+                *) decision=run ;;
+              esac
+            done < "$list"
+            [ "$seen" = yes ] || decision=run
+            cat "$list"
+          fi
+          echo "decision=$decision" >> "$GITHUB_OUTPUT"
+          echo "decision: $decision"
   libraries-and-plan:
+    needs: changes
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: needs.changes.outputs.decision != 'skip'
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # action revision; toolchain is pinned below
+        if: needs.changes.outputs.decision != 'skip'
         with:
           toolchain: 1.98.0
           components: rustfmt, clippy
-      - name: Rust libraries
+      - name: Rust checks, formatting and lints
+        if: needs.changes.outputs.decision != 'skip'
         run: |
-          cargo test --workspace --locked
-          cargo test -p llm-credentials --all-features --locked
           cargo check -p llm-credentials --no-default-features --locked
-          cargo test -p llm-cost --all-features --locked
-          cargo test -p llm-calls --all-features --locked
           cargo check -p llm-cost --no-default-features --locked
-          cargo test -p llm-models --locked
           cargo check -p llm-bedrock --locked
           cargo fmt --all --check
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
           cargo clippy -p llm-models --all-targets --locked -- -D warnings
           cargo clippy -p llm-bedrock --all-targets --locked -- -D warnings
+      - name: Install cargo-nextest
+        if: needs.changes.outputs.decision != 'skip'
+        env:
+          NEXTEST_VERSION: "0.9.143"
+          NEXTEST_SHA256: 66786b9abe23920d022a182d1416b1bbc8130dd4872a9553d76985a1708dcd1e
+        run: |
+          set -euo pipefail
+          asset="cargo-nextest-$NEXTEST_VERSION-x86_64-unknown-linux-gnu.tar.gz"
+          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/$asset" \
+            "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-$NEXTEST_VERSION/$asset"
+          echo "$NEXTEST_SHA256  $RUNNER_TEMP/$asset" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/nextest-bin"
+          tar -xzf "$RUNNER_TEMP/$asset" -C "$RUNNER_TEMP/nextest-bin" cargo-nextest
+          echo "$RUNNER_TEMP/nextest-bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/nextest-bin/cargo-nextest" --version | grep -F "cargo-nextest $NEXTEST_VERSION "
+      - name: Rust tests
+        if: needs.changes.outputs.decision != 'skip'
+        run: cargo xtask test
       - name: Generated documentation
+        if: needs.changes.outputs.decision != 'skip'
         run: cargo run --locked -p llm-docs -- generate --check
       - name: Install pinned planning tool
+        if: needs.changes.outputs.decision != 'skip'
         run: |
           cargo install --locked --git https://github.com/beyond10x/aep.git --rev 6d7a44d3607d2d9a6ffdf0a165993c546c43d0db aep-cli --bin aep
       - name: Install ess
+        if: needs.changes.outputs.decision != 'skip'
         env:
           ESS_VERSION: "0.87.0"
           ESS_SHA256: b668a13e0a19a4d6c049499e2a2e3cd745e9454cf5e6dc2d0bcac4b156675cc6
@@ -49,18 +107,21 @@ jobs:
           tar -xzf "$asset"
           echo "$RUNNER_TEMP/ess-$ESS_VERSION-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
       - name: Specification and plan
+        if: needs.changes.outputs.decision != 'skip'
         run: |
           ess specify validate --path spec
           cargo run --locked -p llm-conformance -- check
           aep plan artifact validate
       - name: Conformance reports
-        if: always()
+        if: always() && needs.changes.outputs.decision != 'skip'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: foundation-conformance
           path: target/conformance
           if-no-files-found: error
   native-adapter-builds:
+    needs: changes
+    if: ${{ !cancelled() }}
     strategy:
       fail-fast: false
       matrix:
@@ -72,13 +133,17 @@ jobs:
       CARGO_NET_GIT_FETCH_WITH_CLI: "true"
     steps:
       - name: Allow long paths in Git checkouts
+        if: needs.changes.outputs.decision != 'skip'
         run: git config --global core.longpaths true
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: needs.changes.outputs.decision != 'skip'
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # action revision; toolchain is pinned below
+        if: needs.changes.outputs.decision != 'skip'
         with:
           toolchain: 1.98.0
           components: clippy
       - name: Native credentials and local ledger fixtures
+        if: needs.changes.outputs.decision != 'skip'
         run: |
           cargo test -p llm-credentials --all-features --locked
           cargo clippy -p llm-credentials --all-targets --all-features --locked -- -D warnings
