@@ -5,9 +5,12 @@
 
 use llm_core::{
     CallId, Dispatch, Error, ErrorCode, Id, Item, Protocol, Provenance, Sampling, StopReason,
-    StreamEvent, ToolCall, ToolChoice, ToolName, ToolSpec, TurnRequest, Usage,
+    StreamEvent, ToolCall, ToolChoice, ToolName, ToolSpec, TurnObservation, TurnOutcome,
+    TurnRequest, Usage,
 };
-use llm_responses::{Binding, PATH, decode_stream, ingest_request, project_request};
+use llm_responses::{
+    Binding, PATH, decode_stream, encode_ingress_response, ingest_request, project_request,
+};
 use serde_json::{Value, json};
 
 fn id(value: &str) -> Id {
@@ -925,7 +928,7 @@ fn every_reported_counter_is_independently_optional() {
             }
         }
     }
-    // The fifth has no source on this wire at all, so it is absent even when everything is.
+    // The fifth is not in `full`, so it is absent even when the other four are present.
     let outcome = decode_stream(&binding(), &[completed(&full)])
         .result
         .expect("a terminal response");
@@ -937,6 +940,77 @@ fn every_reported_counter_is_independently_optional() {
             .cache_creation_input_tokens,
         None
     );
+}
+
+/// The cache-write count `details` decodes to, as `input_tokens_details` of a terminal response.
+fn cache_write(details: &Value) -> Option<u64> {
+    let usage = json!({"input_tokens": 20, "output_tokens": 3, "input_tokens_details": details});
+    decode_stream(&binding(), &[completed(&usage)])
+        .result
+        .expect("a terminal response")
+        .observation
+        .usage
+        .expect("counters")
+        .cache_creation_input_tokens
+}
+
+/// Review of 0.24.0, finding 8: missing, zero and four all decoded to unknown. The provider's
+/// `cache_write_tokens` and this crate's own `cache_creation_input_tokens` extension are each
+/// read, a zero included; a missing count stays unknown, and two spellings that disagree name no
+/// count.
+#[test]
+fn a_cache_write_count_is_kept_under_either_spelling_and_a_missing_one_stays_unknown() {
+    for (details, expected) in [
+        (json!({"cache_write_tokens": 4}), Some(4)),
+        (json!({"cache_write_tokens": 0}), Some(0)),
+        (json!({"cache_creation_input_tokens": 4}), Some(4)),
+        (json!({"cache_creation_input_tokens": 0}), Some(0)),
+        (
+            json!({"cache_write_tokens": 4, "cache_creation_input_tokens": 4}),
+            Some(4),
+        ),
+        (
+            json!({"cache_write_tokens": 4, "cache_creation_input_tokens": 5}),
+            None,
+        ),
+        (json!({"cached_tokens": 2}), None),
+        (json!({"cache_write_tokens": null}), None),
+    ] {
+        assert_eq!(cache_write(&details), expected, "{details}");
+    }
+}
+
+/// Finding 8: this crate's ingress encoder writes a reported cache-write count, and its decoder
+/// read it back as unknown. Encoded and decoded again, every counter is what it was.
+#[test]
+fn a_cache_write_count_the_ingress_encoder_wrote_reads_back_as_written() {
+    for written in [Some(4), Some(0)] {
+        let usage = Usage {
+            input_tokens: Some(20),
+            output_tokens: Some(3),
+            cached_input_tokens: Some(8),
+            cache_creation_input_tokens: written,
+            reasoning_output_tokens: None,
+        };
+        let mut observation = TurnObservation::new(provenance());
+        observation.upstream_model = Some(id("example/Small-Model"));
+        observation.usage = Some(usage.clone());
+        observation.final_usage = true;
+        let outcome = TurnOutcome {
+            stop_reason: StopReason::EndTurn,
+            items: vec![Item::assistant("Hi")],
+            observation,
+        };
+        let body = encode_ingress_response(&outcome, "resp_gateway_1", 1_772_000_000)
+            .expect("encodes");
+        let read = decode_stream(
+            &binding(),
+            &[json!({"type": "response.completed", "response": body})],
+        )
+        .result
+        .expect("decodes");
+        assert_eq!(read.observation.usage, Some(usage), "{written:?}");
+    }
 }
 
 /// One wire request body, with named fields overridden. A `null` removes the field.
