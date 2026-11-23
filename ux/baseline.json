@@ -3,7 +3,7 @@
   "scenarios": {
     "page-docs": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -19,11 +19,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 52,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -41,7 +41,7 @@
     },
     "page-docs-concepts-accounting": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -61,7 +61,7 @@
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -79,7 +79,7 @@
     },
     "page-docs-concepts-credentials": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -95,11 +95,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -117,7 +117,7 @@
     },
     "page-docs-concepts-neutral-boundary": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -133,11 +133,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -155,7 +155,7 @@
     },
     "page-docs-concepts-overview": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -171,11 +171,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 8,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -193,7 +193,7 @@
     },
     "page-docs-concepts-protocols": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -209,11 +209,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 24,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -225,13 +225,13 @@
         "tolerance": 0
       },
       "layout_shift.after_ready": {
-        "value": 0,
+        "value": 0.0004,
         "tolerance": 0.01
       }
     },
     "page-docs-concepts-routing": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -247,11 +247,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 8,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -269,7 +269,7 @@
     },
     "page-docs-getting-started": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -285,11 +285,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 32,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -307,7 +307,7 @@
     },
     "page-docs-guides-call-a-local-endpoint": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -323,11 +323,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 12,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -345,7 +345,7 @@
     },
     "page-docs-guides-call-a-model-on-bedrock": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -361,11 +361,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 20,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -383,7 +383,7 @@
     },
     "page-docs-guides-call-a-model-with-one-forced-tool": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -403,7 +403,7 @@
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -421,7 +421,7 @@
     },
     "page-docs-guides-configure-model-routes": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -437,11 +437,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 8,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -459,7 +459,7 @@
     },
     "page-docs-guides-explain-a-route": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -475,11 +475,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -497,7 +497,7 @@
     },
     "page-docs-guides-interrupt-a-turn-with-new-input": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -513,11 +513,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -535,7 +535,7 @@
     },
     "page-docs-guides-price-recorded-usage": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -551,11 +551,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 12,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -567,13 +567,13 @@
         "tolerance": 0
       },
       "layout_shift.after_ready": {
-        "value": 0,
+        "value": 0.0006,
         "tolerance": 0.01
       }
     },
     "page-docs-guides-resolve-a-local-secret": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -589,11 +589,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -611,7 +611,7 @@
     },
     "page-docs-guides-run-a-local-turn": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -627,11 +627,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -649,7 +649,7 @@
     },
     "page-docs-guides-run-the-checks": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -665,11 +665,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 32,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -687,7 +687,7 @@
     },
     "page-docs-guides-use-llm-from-a-synchronous-loop": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -707,7 +707,7 @@
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -725,7 +725,7 @@
     },
     "page-docs-guides-use-the-llm-command": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -741,11 +741,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 8,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -763,7 +763,7 @@
     },
     "page-docs-reference-crates": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -779,11 +779,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -801,7 +801,7 @@
     },
     "page-docs-reference-formats": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -817,11 +817,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -839,7 +839,7 @@
     },
     "page-docs-status": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -855,11 +855,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 8,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -877,7 +877,7 @@
     },
     "page-docs-status-limitations": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -893,11 +893,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 4,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -915,7 +915,7 @@
     },
     "page-docs-status-roadmap": {
       "always_visible.misses": {
-        "value": 14,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -931,11 +931,11 @@
         "tolerance": 0
       },
       "axe.serious": {
-        "value": 12,
+        "value": 0,
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -953,7 +953,7 @@
     },
     "page-home": {
       "always_visible.misses": {
-        "value": 12,
+        "value": 0,
         "tolerance": 0
       },
       "axe.critical": {
@@ -973,7 +973,45 @@
         "tolerance": 0
       },
       "keyboard.misses": {
-        "value": 2,
+        "value": 0,
+        "tolerance": 0
+      },
+      "layout.overflow": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "layout.page_scroll": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "layout_shift.after_ready": {
+        "value": 0,
+        "tolerance": 0.01
+      }
+    },
+    "page-search": {
+      "always_visible.misses": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "axe.critical": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "axe.minor": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "axe.moderate": {
+        "value": 4,
+        "tolerance": 0
+      },
+      "axe.serious": {
+        "value": 0,
+        "tolerance": 0
+      },
+      "keyboard.misses": {
+        "value": 4,
         "tolerance": 0
       },
       "layout.overflow": {
@@ -991,15 +1029,15 @@
     },
     "task-bedrock-endpoint": {
       "screen_only.actions": {
-        "value": 4,
+        "value": 3,
         "tolerance": 0
       },
       "screen_only.looks": {
-        "value": 6,
+        "value": 4,
         "tolerance": 0
       },
       "screen_only.steps": {
-        "value": 5,
+        "value": 4,
         "tolerance": "5%"
       },
       "screen_only.unreached": {
@@ -1009,15 +1047,15 @@
     },
     "task-exit-codes": {
       "screen_only.actions": {
-        "value": 9,
+        "value": 3,
         "tolerance": 0
       },
       "screen_only.looks": {
-        "value": 6,
+        "value": 4,
         "tolerance": 0
       },
       "screen_only.steps": {
-        "value": 10,
+        "value": 4,
         "tolerance": "5%"
       },
       "screen_only.unreached": {
@@ -1027,7 +1065,7 @@
     },
     "task-install": {
       "screen_only.actions": {
-        "value": 8,
+        "value": 4,
         "tolerance": 0
       },
       "screen_only.looks": {
@@ -1035,7 +1073,7 @@
         "tolerance": 0
       },
       "screen_only.steps": {
-        "value": 9,
+        "value": 5,
         "tolerance": "5%"
       },
       "screen_only.unreached": {
@@ -1045,7 +1083,7 @@
     },
     "task-limitations": {
       "screen_only.actions": {
-        "value": 8,
+        "value": 3,
         "tolerance": 0
       },
       "screen_only.looks": {
@@ -1053,7 +1091,7 @@
         "tolerance": 0
       },
       "screen_only.steps": {
-        "value": 9,
+        "value": 4,
         "tolerance": "5%"
       },
       "screen_only.unreached": {
@@ -1063,15 +1101,15 @@
     },
     "task-retry": {
       "screen_only.actions": {
-        "value": 9,
+        "value": 3,
         "tolerance": 0
       },
       "screen_only.looks": {
-        "value": 6,
+        "value": 4,
         "tolerance": 0
       },
       "screen_only.steps": {
-        "value": 10,
+        "value": 4,
         "tolerance": "5%"
       },
       "screen_only.unreached": {

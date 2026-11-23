@@ -42,9 +42,9 @@ jobs:
       - name: Typecheck and the findings rule
         working-directory: ux
         run: npx tsc --noEmit && node cli.ts findings
-      - name: L1 core, L2 layout contract, L3 screen-only user (120 s budget)
+      - name: L1 core, L2 layout contract, L3 screen-only user (120 s budget, one worker per runner CPU)
         working-directory: ux
-        run: timeout 150 npx playwright test --workers=2
+        run: timeout 150 npx playwright test --workers=4
       - name: Ratchet against ux/baseline.json and main's
         working-directory: ux
         run: node cli.ts ratchet

@@ -32,7 +32,23 @@ const config: Config = {
     mermaid: true,
   },
 
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: [
+    '@docusaurus/theme-mermaid',
+    [
+      // A local search index built with the site; no external service (ux/findings/UXF-001.md).
+      '@easyops-cn/docusaurus-search-local',
+      {
+        hashed: true,
+        language: ['en'],
+        indexDocs: true,
+        indexBlog: false,
+        indexPages: true,
+        docsRouteBasePath: 'docs',
+        explicitSearchResultPath: true,
+        highlightSearchTermsOnTargetPage: false,
+      },
+    ],
+  ],
   plugins: [
     [
       '@docusaurus/plugin-client-redirects',
@@ -58,6 +74,9 @@ const config: Config = {
           editUrl: 'https://github.com/beyond10x/llm/tree/main/website/',
         },
         blog: false,
+        theme: {
+          customCss: './src/css/custom.css',
+        },
       } satisfies Preset.Options,
     ],
   ],
