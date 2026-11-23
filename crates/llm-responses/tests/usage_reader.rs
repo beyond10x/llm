@@ -153,6 +153,55 @@ fn a_counter_the_answer_did_not_report_stays_unknown_and_is_never_zero() {
     );
 }
 
+/// Review of 0.24.0, finding 8: the recorded Codex turn reports
+/// `input_tokens_details.cache_write_tokens: 0`, a known zero, and the reader reported it unknown.
+#[test]
+fn the_recorded_codex_stream_reports_its_explicit_zero_cache_write() {
+    assert_eq!(
+        read_usage(RECORDED).usage.cache_creation_input_tokens,
+        Some(0)
+    );
+}
+
+/// Finding 8: each spelling of a cache-write count is read, a zero included, in a body and in a
+/// stream; an answer that reports none keeps it unknown.
+#[test]
+fn a_reported_cache_write_count_is_read_under_either_spelling_and_a_missing_one_stays_unknown() {
+    for (details, expected) in [
+        (r#"{"cached_tokens":8,"cache_write_tokens":4}"#, Some(4)),
+        (r#"{"cached_tokens":8,"cache_write_tokens":0}"#, Some(0)),
+        (
+            r#"{"cached_tokens":8,"cache_creation_input_tokens":4}"#,
+            Some(4),
+        ),
+        (
+            r#"{"cached_tokens":8,"cache_creation_input_tokens":0}"#,
+            Some(0),
+        ),
+        (r#"{"cached_tokens":8}"#, None),
+    ] {
+        let body = format!(
+            r#"{{"id":"resp_4","object":"response","status":"completed","output":[],"usage":{{"input_tokens":20,"output_tokens":3,"input_tokens_details":{details}}}}}"#
+        );
+        let report = every_way(body.as_bytes());
+        assert_eq!(
+            report.usage.cache_creation_input_tokens, expected,
+            "body {details}"
+        );
+        assert_eq!(report.usage.cached_input_tokens, Some(8), "body {details}");
+        let stream = format!(
+            "event: response.completed\ndata: {{\"type\":\"response.completed\",\"response\":{body}}}\n\n"
+        );
+        assert_eq!(
+            read_usage(stream.as_bytes())
+                .usage
+                .cache_creation_input_tokens,
+            expected,
+            "stream {details}"
+        );
+    }
+}
+
 #[test]
 fn a_stream_cut_before_its_terminal_object_names_the_model_and_is_not_final() {
     let text = std::str::from_utf8(RECORDED).expect("a UTF-8 recording");

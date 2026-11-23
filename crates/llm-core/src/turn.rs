@@ -388,7 +388,8 @@ impl TurnOutcome {
 
     /// # Errors
     /// Refuses invalid model output, foreign opaque state, unknown tools (unless the request's
-    /// `controls.return_unpublished_calls` asks for them) and contradictory usage.
+    /// `controls.return_unpublished_calls` asks for them), more than one call when
+    /// `controls.parallel_tool_calls` is `false`, and contradictory usage.
     pub fn validate_for(&self, request: &TurnRequest, target: &Provenance) -> Result<(), Error> {
         self.observation.validate_for(target)?;
         if !self.observation.final_usage {
@@ -442,6 +443,13 @@ impl TurnOutcome {
                 | Item::AssistantRefusal { .. }
                 | Item::Opaque { .. } => {}
             }
+        }
+        // `parallel_tool_calls: false` went out as one proposal at most; more is the model
+        // breaking what the turn asked, like a call other than a named tool choice.
+        if request.controls.parallel_tool_calls == Some(false) && calls.len() > 1 {
+            return Err(Error::protocol(
+                "model proposed more than the one tool call the turn allowed",
+            ));
         }
         if (self.stop_reason == StopReason::ToolCalls && calls.is_empty())
             || (self.stop_reason == StopReason::EndTurn
