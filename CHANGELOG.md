@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-11-23
+
 ### Added
 
 - `UsageReader` and `read_usage` in each protocol crate read an answer's model and counters from its bytes
@@ -596,7 +598,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.24.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.25.0...HEAD
+[0.25.0]: https://github.com/beyond10x/llm/compare/0.24.0...0.25.0
 [0.24.0]: https://github.com/beyond10x/llm/compare/0.23.0...0.24.0
 [0.23.0]: https://github.com/beyond10x/llm/compare/0.22.0...0.23.0
 [0.22.0]: https://github.com/beyond10x/llm/compare/0.21.0...0.22.0
