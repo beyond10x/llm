@@ -37,9 +37,9 @@ impl PendingCall {
 
 /// What one response reported about itself, independently of its content.
 #[derive(Debug, Default)]
-struct Reported {
+pub(crate) struct Reported {
     response_id: Option<Id>,
-    upstream_model: Option<Id>,
+    pub(crate) upstream_model: Option<Id>,
     usage: Option<Usage>,
     /// The counters llama-server's `timings` reports: beside `usage` on a stream's last chunk,
     /// or alone on the chunk carrying the finish reason when the request did not ask for usage.
@@ -50,7 +50,7 @@ struct Reported {
 impl Reported {
     /// The usage report, each counter it leaves unknown taken from `timings` where that names
     /// it. The two never differ on a counter both name: `read_reported` refuses that.
-    fn counters(&self) -> Option<Usage> {
+    pub(crate) fn counters(&self) -> Option<Usage> {
         if self.usage.is_none() && self.timings.is_none() {
             return None;
         }
@@ -508,7 +508,7 @@ fn nonempty(value: Option<&Value>) -> Option<&str> {
 /// counts it so far: it is held to its shape, because a shape the server does not write says the
 /// endpoint is not that server wherever it appears, and then dropped. Kept, it would be the
 /// turn's count when no later report replaces it, and evidence against the `usage` that does.
-fn read_reported(value: &Value, into: &mut Reported, ends: bool) -> Result<(), Error> {
+pub(crate) fn read_reported(value: &Value, into: &mut Reported, ends: bool) -> Result<(), Error> {
     let response_id = nonempty(value.get("id")).map(identifier).transpose()?;
     // An unreported model stays unreported. The configured alias never fills this in.
     let upstream_model = nonempty(value.get("model")).map(identifier).transpose()?;
@@ -545,7 +545,7 @@ fn present(value: Option<&Value>) -> Option<&Value> {
 
 /// Whether a chunk carries a finish reason. Read before the chunk's choices are, so that its
 /// report is read as the one that ends the stream; the reason itself is checked with them.
-fn finishes(chunk: &Value) -> bool {
+pub(crate) fn finishes(chunk: &Value) -> bool {
     chunk
         .get("choices")
         .and_then(Value::as_array)

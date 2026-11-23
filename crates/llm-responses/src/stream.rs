@@ -1010,7 +1010,7 @@ pub(crate) fn is_safe_reason(value: &str) -> bool {
 /// This wire reports no cache-write figure at all, so `cache_creation_input_tokens` stays absent
 /// rather than zero: a zero would be this crate claiming, on the provider's behalf, that nothing
 /// was written to its cache.
-fn usage(response: &Value) -> Option<Usage> {
+pub(crate) fn usage(response: &Value) -> Option<Usage> {
     let reported = response.get("usage")?.as_object()?;
     Some(Usage {
         input_tokens: count(reported.get("input_tokens")),
@@ -1033,7 +1033,7 @@ fn count(value: Option<&Value>) -> Option<u64> {
     value.and_then(Value::as_u64)
 }
 
-fn identifier(value: Option<&Value>) -> Option<Id> {
+pub(crate) fn identifier(value: Option<&Value>) -> Option<Id> {
     string(value).and_then(|value| Id::new(value).ok())
 }
 

@@ -19,6 +19,7 @@ mod codec;
 mod decode;
 mod ingress;
 mod usage;
+mod usage_reader;
 
 pub use client::{
     ANTHROPIC_VERSION, BETA_HEADER, MessagesClient, OAUTH_BETA, OPENCODE_SESSION_HEADER,
@@ -30,6 +31,7 @@ pub use codec::{
 };
 pub use decode::{StreamDecoder, USAGE_EXTENSION, decode_message, decode_stream};
 pub use ingress::{IngressStream, encode_ingress_message};
+pub use usage_reader::{UsageReader, read_usage};
 
 use llm_core::Error;
 use serde_json::{Map, Value};

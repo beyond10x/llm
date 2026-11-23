@@ -691,6 +691,30 @@ first is alive, so its shadows are skipped and never sent. A day ledger that can
 (changed cap, damaged files, an earlier clock, or a later day already on disk) skips that shadow
 for the day.
 
+### Usage read from an answer's bytes
+
+A relay that passes an answer through untouched, such as llm-gateway's, records what the answer
+reported without decoding a turn. Each protocol crate exports `UsageReader` (`new`,
+`feed(&[u8])`, `finish() -> ReportedUsage`) and `read_usage(&[u8])` for a whole body
+(story:usage-reader, asked for by llm-gateway's `dependency-blocker:llm-usage-decoders`).
+`llm_core::ReportedUsage` holds the model the answer named, a `Usage` and `final_usage`.
+
+- One body, streamed or not, in any pieces. `llm_http::AnswerBody` decides from the first byte
+  that is not white space: `{` is one JSON answer, read when the body ends; anything else is an
+  event stream, framed by `SseDecoder` as the bytes arrive. Two pieces split at any byte, or one
+  byte at a time, read the same as the whole body.
+- One reading. The counters and the model come from the functions the turn decoder reads them
+  with: Responses `usage` and `identifier` on each response object, Messages `Header` and its
+  `Snapshot`, Chat Completions `read_reported` and `Reported::counters`. A counter means what it
+  means in `Usage`: input includes cache read and cache write, so a Messages input total is
+  known only when all three parts were reported.
+- Unknown stays unknown. A counter the answer did not report is `None`; a report a decoder would
+  refuse, or counters that contradict each other, are not taken, and the reader keeps what it
+  had. Reading never fails: a cut or malformed answer reports what came before, with
+  `final_usage` false until the terminal event (`response.completed`, `.incomplete` or
+  `.failed`; `message_stop`; `[DONE]`) or the whole JSON body was read. A stream past
+  `SseDecoder`'s bounds stops being read there.
+
 ### Typed decisions
 
 `llm-decide` turns a routed model into a typed decision. It depends on `llm-core`,

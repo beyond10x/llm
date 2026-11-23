@@ -33,6 +33,7 @@ mod client;
 mod incoming;
 mod ingress;
 mod outgoing;
+mod usage_reader;
 
 pub use client::ChatClient;
 pub use incoming::{StreamProjection, decode_completion, project_response_bytes};
@@ -50,3 +51,4 @@ pub use llm_providers::{
     Account, BaseUrl, Binding, BindingDocument, Endpoint, Provider, ServedModel, ServingModel,
 };
 pub use outgoing::{omitted_advisories, project_request};
+pub use usage_reader::{UsageReader, read_usage};
