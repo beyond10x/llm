@@ -7,12 +7,18 @@
 //! runs took by their own reports, failing when that time is over 120 s. The time is read from
 //! the reports, not from a clock around the commands, so a wait for a build slot is not counted.
 //!
+//! Before the runs, `test` checks that every `harness = false` test target answers the list
+//! cargo-nextest asks each binary for, as `list-check` does, so a runner of its own that nextest
+//! cannot list fails here by name, locally as in CI.
+//!
 //! `report <JUnit report>...` does the last part alone, over reports already written.
+//! `list-check <test binary>...` runs each binary with `--list --format terse`, with and without
+//! `--ignored`, and fails unless every line it writes is `<name>: test` or `<name>: benchmark`.
 
 use std::{
     fmt, fs, io,
     path::{Path, PathBuf},
-    process::{Command, ExitCode},
+    process::{Command, ExitCode, Stdio},
 };
 
 /// What every run of the test phase may take together, in seconds.
@@ -36,7 +42,12 @@ const RUNS: [&[&str]; 5] = [
 /// directory (`.config/nextest.toml`).
 const JUNIT: &str = "nextest/default/junit.xml";
 
-const USAGE: &str = "usage: llm-xtask test\n       llm-xtask report <JUnit report>...";
+/// What cargo-nextest asks a test binary for to list its tests; it adds `--ignored` for a second
+/// list.
+const LIST: [&str; 3] = ["--list", "--format", "terse"];
+
+const USAGE: &str = "usage: llm-xtask test\n       llm-xtask report <JUnit report>...\n       \
+                     llm-xtask list-check <test binary>...";
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -47,6 +58,9 @@ fn main() -> ExitCode {
             .map(|report| read(Path::new(report)))
             .collect::<Result<Vec<Run>, Failure>>()
             .and_then(|runs| verdict(&runs)),
+        Some((command, binaries)) if command == "list-check" && !binaries.is_empty() => binaries
+            .iter()
+            .try_for_each(|binary| list_check(Path::new(binary))),
         _ => {
             eprintln!("{USAGE}");
             return ExitCode::from(2);
@@ -65,6 +79,7 @@ fn main() -> ExitCode {
 enum Failure {
     Command(String),
     Report(String),
+    List(String),
     Failed(Vec<String>),
     OverBound(f64),
 }
@@ -72,7 +87,9 @@ enum Failure {
 impl fmt::Display for Failure {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Command(message) | Self::Report(message) => formatter.write_str(message),
+            Self::Command(message) | Self::Report(message) | Self::List(message) => {
+                formatter.write_str(message)
+            }
             Self::Failed(runs) => write!(formatter, "failed: {}", runs.join("; ")),
             Self::OverBound(seconds) => write!(
                 formatter,
@@ -96,13 +113,20 @@ struct Run {
 }
 
 fn test() -> Result<(), Failure> {
-    let report = target_directory()?.join(JUNIT);
+    let metadata = metadata()?;
+    let report = metadata["target_directory"]
+        .as_str()
+        .map(PathBuf::from)
+        .ok_or_else(|| Failure::Command("cargo metadata names no target directory".to_owned()))?
+        .join(JUNIT);
+    let own = custom_harness_targets(&metadata)?;
+    let mut checked: Vec<PathBuf> = Vec::new();
     for run in RUNS {
-        if !nextest(run, true)? {
-            return Err(Failure::Command(format!(
-                "building the tests of `{}` failed",
-                command_line(run)
-            )));
+        for (id, path) in binaries(run)? {
+            if own.contains(&id) && !checked.contains(&path) {
+                list_check(&path)?;
+                checked.push(path);
+            }
         }
     }
     let mut runs = Vec::new();
@@ -114,7 +138,7 @@ fn test() -> Result<(), Failure> {
             }
             _ => {}
         }
-        let passed = nextest(run, false)?;
+        let passed = nextest(run)?;
         let read = read(&report)?;
         println!(
             "tests: `{}`: {} tests in {:.1} s, {}",
@@ -140,22 +164,55 @@ fn command_line(run: &[&str]) -> String {
     format!("cargo nextest run --locked {}", run.join(" "))
 }
 
-/// Runs `cargo nextest run --locked` with `run`'s arguments; with `build_only`, only builds.
-fn nextest(run: &[&str], build_only: bool) -> Result<bool, Failure> {
-    let mut command = Command::new("cargo");
-    command.args(["nextest", "run", "--locked"]);
-    if build_only {
-        command.arg("--no-run");
-    }
-    let status = command
+/// Runs `cargo nextest run --locked` with `run`'s arguments.
+fn nextest(run: &[&str]) -> Result<bool, Failure> {
+    let status = Command::new("cargo")
+        .args(["nextest", "run", "--locked"])
         .args(run)
         .status()
         .map_err(|error| Failure::Command(format!("cargo does not run: {error}")))?;
     Ok(status.success())
 }
 
-/// The target directory cargo builds into, as `cargo metadata` names it.
-fn target_directory() -> Result<PathBuf, Failure> {
+/// Builds the test binaries of `run` and names each, by its cargo-nextest binary id
+/// (`<package>::<target>` for an integration test) and its path. Listing only the binaries runs
+/// none of them, so a binary nextest could not list is still built and named here.
+fn binaries(run: &[&str]) -> Result<Vec<(String, PathBuf)>, Failure> {
+    let output = Command::new("cargo")
+        .args([
+            "nextest",
+            "list",
+            "--locked",
+            "--list-type",
+            "binaries-only",
+        ])
+        .args(["--message-format", "json"])
+        .args(run)
+        .stderr(Stdio::inherit())
+        .output()
+        .map_err(|error| Failure::Command(format!("cargo does not run: {error}")))?;
+    if !output.status.success() {
+        return Err(Failure::Command(format!(
+            "building the tests of `{}` failed",
+            command_line(run)
+        )));
+    }
+    let list: serde_json::Value = serde_json::from_slice(&output.stdout)
+        .map_err(|error| Failure::Command(format!("cargo nextest list wrote no JSON: {error}")))?;
+    Ok(list["rust-binaries"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter_map(|(id, binary)| {
+            binary["binary-path"]
+                .as_str()
+                .map(|path| (id.clone(), PathBuf::from(path)))
+        })
+        .collect())
+}
+
+/// The workspace as `cargo metadata --no-deps` describes it.
+fn metadata() -> Result<serde_json::Value, Failure> {
     let output = Command::new("cargo")
         .args(["metadata", "--format-version", "1", "--no-deps", "--locked"])
         .output()
@@ -166,12 +223,68 @@ fn target_directory() -> Result<PathBuf, Failure> {
             String::from_utf8_lossy(&output.stderr)
         )));
     }
-    let metadata: serde_json::Value = serde_json::from_slice(&output.stdout)
-        .map_err(|error| Failure::Command(format!("cargo metadata wrote no JSON: {error}")))?;
-    metadata["target_directory"]
-        .as_str()
-        .map(PathBuf::from)
-        .ok_or_else(|| Failure::Command("cargo metadata names no target directory".to_owned()))
+    serde_json::from_slice(&output.stdout)
+        .map_err(|error| Failure::Command(format!("cargo metadata wrote no JSON: {error}")))
+}
+
+/// The cargo-nextest binary id of every `[[test]]` target with `harness = false` in a workspace
+/// manifest. `cargo metadata` does not say whether a target has a harness, so each manifest is read.
+fn custom_harness_targets(metadata: &serde_json::Value) -> Result<Vec<String>, Failure> {
+    let mut targets = Vec::new();
+    for package in metadata["packages"].as_array().into_iter().flatten() {
+        let (Some(package), Some(manifest)) =
+            (package["name"].as_str(), package["manifest_path"].as_str())
+        else {
+            return Err(Failure::Command(
+                "cargo metadata names a package without a name or manifest".to_owned(),
+            ));
+        };
+        let text = fs::read_to_string(manifest)
+            .map_err(|error| Failure::Command(format!("{manifest}: {error}")))?;
+        let table: toml::Table = toml::from_str(&text)
+            .map_err(|error| Failure::Command(format!("{manifest}: {error}")))?;
+        let names = table
+            .get("test")
+            .and_then(toml::Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter(|test| test.get("harness").and_then(toml::Value::as_bool) == Some(false))
+            .filter_map(|test| test.get("name").and_then(toml::Value::as_str));
+        targets.extend(names.map(|name| format!("{package}::{name}")));
+    }
+    Ok(targets)
+}
+
+/// Runs `binary` as cargo-nextest does to list its tests, with and without `--ignored`, and fails
+/// unless every line it writes is `<name>: test` or `<name>: benchmark`, the only lines nextest
+/// reads. libtest writes them; a `harness = false` runner has to answer the list itself.
+fn list_check(binary: &Path) -> Result<(), Failure> {
+    for ignored in [false, true] {
+        let mut arguments = LIST.to_vec();
+        if ignored {
+            arguments.push("--ignored");
+        }
+        let shown = format!("{} {}", binary.display(), arguments.join(" "));
+        let output = Command::new(binary)
+            .args(&arguments)
+            .output()
+            .map_err(|error| Failure::List(format!("`{shown}` does not run: {error}")))?;
+        if !output.status.success() {
+            return Err(Failure::List(format!("`{shown}` ended {}", output.status)));
+        }
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        if let Some(line) = stdout
+            .lines()
+            .find(|line| !line.ends_with(": test") && !line.ends_with(": benchmark"))
+        {
+            return Err(Failure::List(format!(
+                "`{shown}` wrote {line:?}: cargo-nextest lists a test binary only when every line \
+                 is `<name>: test` or `<name>: benchmark`, so a `harness = false` runner answers \
+                 libtest's `--list --format terse` and `--ignored` itself"
+            )));
+        }
+    }
+    Ok(())
 }
 
 /// Reads one `JUnit` report cargo-nextest wrote.

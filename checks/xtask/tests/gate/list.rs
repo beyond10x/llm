@@ -19,7 +19,8 @@ fn binary(directory: &Path, name: &str, listed: &str, ignored: &str) -> PathBuf 
         "#!/bin/sh\ncase \" $* \" in\n  *' --ignored '*) printf '%s' '{ignored}' ;;\n  *' --list '*) printf '%s' '{listed}' ;;\n  *) exit 9 ;;\nesac\n"
     );
     fs::write(&path, script).expect("the script is written");
-    fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).expect("the script is executable");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o755))
+        .expect("the script is executable");
     path
 }
 
