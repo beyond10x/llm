@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-23T01:50:10Z",
+  "actor": "human:timo",
+  "artifact": "story:attributed-cost",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test -p llm-models (80 passed) and -p llm-cli (40 passed), exit 0, at 66566552; red at f1e0bc3b",
+    "reference": "crates/llm-models/tests/routes_toml_bedrock.rs::a_turn_is_priced_only_under_the_model_its_provider_reported; crates/llm-cli/tests/command.rs::infer_prices_a_turn_only_under_the_model_the_provider_reported"
+  }
+}

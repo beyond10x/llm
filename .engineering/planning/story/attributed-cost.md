@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:attributed-cost
 kind: story
-status: draft
+status: implemented
 title: A turn's cost is attributed to the model the provider reported
 summary: Routes::cost prices the reported model; a missing or different model leaves the cost unknown
 relations:
@@ -25,7 +25,11 @@ scope:
   path: docs/pricing.md
 - confidence: inferred
   path: website/docs/guides/use-the-llm-command.md
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-23T01:50:11Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-23T01:50:14Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-23T01:50:15Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Context
 
