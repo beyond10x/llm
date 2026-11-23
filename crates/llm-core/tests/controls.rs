@@ -2,9 +2,9 @@
 //! (`docs/design.md` "Client request fields").
 use llm_core::{
     ADVISORY_OMITTED, Advisory, CacheTtl, CallId, Capabilities, Controls, ErrorCode, Hints, Id,
-    Item, PromptCache, Protocol, Provenance, ReasoningSummary, Sampling, StreamEvent, Thinking,
-    ToolCall, ToolChoice, ToolName, ToolSpec, TurnDocument, TurnRequest, Unforwarded, Verbosity,
-    advisory_warning, field_path, wire_effort,
+    Item, PromptCache, Protocol, Provenance, ReasoningSummary, Sampling, StopReason, StreamEvent,
+    Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnDocument, TurnObservation,
+    TurnOutcome, TurnRequest, Unforwarded, Verbosity, advisory_warning, field_path, wire_effort,
 };
 use serde_json::json;
 
@@ -450,5 +450,60 @@ fn a_field_path_copies_only_a_bounded_key_of_the_wires_own_shape() {
         "a\"b",
     ] {
         assert_eq!(field_path("input[]", foreign), "input[].?", "{foreign:?}");
+    }
+}
+
+/// A returned tool-call turn holding `calls` calls to `read`.
+fn calling(calls: usize, target: &Provenance) -> TurnOutcome {
+    let mut observation = TurnObservation::new(target.clone());
+    observation.final_usage = true;
+    TurnOutcome {
+        stop_reason: StopReason::ToolCalls,
+        items: (1..=calls)
+            .map(|n| {
+                Item::ToolCall(ToolCall {
+                    call_id: CallId::new(format!("call_{n}")).unwrap(),
+                    name: ToolName::new("read").unwrap(),
+                    arguments: json!({"path": format!("{n}.txt")}),
+                })
+            })
+            .collect(),
+        observation,
+    }
+}
+
+/// Review of 0.24.0, finding 7: `parallel_tool_calls: Some(false)` is sent as "one proposal at
+/// most" (Responses and Chat `parallel_tool_calls: false`, Messages `disable_parallel_tool_use`)
+/// and was never checked in the result, so two calls came back as a success. A returned turn with
+/// more than one call is refused like every other outcome that breaks what the turn asked, with
+/// or without `return_unpublished_calls` and under any tool choice; one call, `Some(true)` and an
+/// unset control are accepted.
+#[test]
+fn a_turn_allowed_one_tool_call_that_returns_two_is_refused() {
+    let target = binding(Protocol::Responses);
+    for (choice, unpublished) in [
+        (ToolChoice::Auto, false),
+        (ToolChoice::Required, false),
+        (ToolChoice::Named(ToolName::new("read").unwrap()), false),
+        (ToolChoice::Auto, true),
+    ] {
+        let mut request = turn(None, None);
+        request.tools.push(tool("read"));
+        request.tool_choice = choice.clone();
+        request.controls.return_unpublished_calls = unpublished;
+        request.controls.parallel_tool_calls = Some(false);
+        let error = calling(2, &target)
+            .validate_for(&request, &target)
+            .unwrap_err();
+        assert_eq!(error.code, ErrorCode::Protocol, "{choice:?}");
+        assert_eq!(
+            error.message, "model proposed more than the one tool call the turn allowed",
+            "{choice:?}"
+        );
+        calling(1, &target).validate_for(&request, &target).unwrap();
+        for parallel in [Some(true), None] {
+            request.controls.parallel_tool_calls = parallel;
+            calling(2, &target).validate_for(&request, &target).unwrap();
+        }
     }
 }
