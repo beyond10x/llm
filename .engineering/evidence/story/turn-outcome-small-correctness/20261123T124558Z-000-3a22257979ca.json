@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-23T12:45:58Z",
+  "actor": "human:timo",
+  "artifact": "story:turn-outcome-small-correctness",
+  "kind": "story",
+  "revision": 1,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 CARGO_INCREMENTAL=0 cargo test -p llm-core -p llm-responses -p llm-cli (125+312+45 passed, 0 failed; red cases in 23912336, 60796cd5, 10a9e99b green at 53118a8b); llm-conformance check 1049/1049"
+  }
+}
