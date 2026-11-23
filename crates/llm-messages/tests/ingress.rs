@@ -857,7 +857,12 @@ fn upstream_delta(item_id: &str, output_index: u64, delta: &str) -> Value {
 
 /// One upstream Responses turn of two messages, "preamble" then "answer", the messages its
 /// relayed Messages answer reads back as, and the events that answer shows.
-type FinalOnlyCase = (&'static str, Vec<Value>, [&'static str; 2], Vec<StreamEvent>);
+type FinalOnlyCase = (
+    &'static str,
+    Vec<Value>,
+    [&'static str; 2],
+    Vec<StreamEvent>,
+);
 
 /// The four ways the two messages can reach a relay: which of them a delta showed. A streamed
 /// block's index is fixed when it is sent and shown text is final, so a message no delta showed
@@ -890,12 +895,7 @@ fn final_only_cases() -> [FinalOnlyCase; 4] {
                 completed.clone(),
             ],
             ["preamble", "answer"],
-            vec![
-                text("pre"),
-                text("amble"),
-                boundary.clone(),
-                text("answer"),
-            ],
+            vec![text("pre"), text("amble"), boundary.clone(), text("answer")],
         ),
         (
             "every message streamed",
@@ -965,7 +965,10 @@ fn shown_text_no_message_of_the_outcome_carries_is_refused_wherever_the_messages
             "other text, then a final-only message",
             vec!["answer!", "preamble"],
         ),
-        ("the shown text split across two messages", vec!["ans", "wer"]),
+        (
+            "the shown text split across two messages",
+            vec!["ans", "wer"],
+        ),
     ];
     for (case, messages) in cases {
         let refusal = encode(
@@ -978,5 +981,34 @@ fn shown_text_no_message_of_the_outcome_carries_is_refused_wherever_the_messages
         )
         .expect_err(case);
         assert_eq!(refusal.code, ErrorCode::Protocol, "{case}");
+    }
+}
+
+/// An empty message is a message no delta showed too: wherever the turn places it, it is sent
+/// after the streamed blocks and reads back once, and the streamed text is not sent again.
+#[tokio::test]
+async fn an_empty_message_anywhere_in_the_turn_is_sent_after_the_streamed_blocks() {
+    let cases = [
+        (
+            "empty ahead of a streamed message",
+            vec![Item::assistant(""), Item::assistant("Done.")],
+        ),
+        (
+            "empty after a streamed message",
+            vec![Item::assistant("Done."), Item::assistant("")],
+        ),
+    ];
+    for (case, items) in cases {
+        let payloads = encode(&[text("Done.")], &outcome(StopReason::EndTurn, items), None)
+            .unwrap_or_else(|error| panic!("{case}: {error:?}"));
+        let (relayed, shown) = decode(&payloads).await;
+        assert_eq!(
+            relayed
+                .unwrap_or_else(|error| panic!("{case}: {error:?}"))
+                .items,
+            [Item::assistant("Done."), Item::assistant("")],
+            "{case}: {payloads:?}"
+        );
+        assert_eq!(shown, [text("Done.")], "{case}");
     }
 }

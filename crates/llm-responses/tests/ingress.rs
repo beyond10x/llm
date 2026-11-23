@@ -1129,8 +1129,7 @@ fn final_only_cases() -> [FinalOnlyCase; 4] {
 /// showed once after it. Before, the relay paired shown text with the turn's first message and
 /// refused "final-only, then streamed" with a protocol error.
 #[test]
-fn a_final_only_message_anywhere_in_the_turn_is_relayed_once_and_reads_back_as_the_upstream_turn()
-{
+fn a_final_only_message_anywhere_in_the_turn_is_relayed_once_and_reads_back_as_the_upstream_turn() {
     for (case, upstream, relayed_events) in final_only_cases() {
         let decoded = decode_stream(&binding(), &upstream);
         let turn = decoded
@@ -1173,7 +1172,10 @@ fn shown_text_no_message_of_the_outcome_carries_is_refused_wherever_the_messages
             "other text, then a final-only message",
             vec!["answer!", "preamble"],
         ),
-        ("the shown text split across two messages", vec!["ans", "wer"]),
+        (
+            "the shown text split across two messages",
+            vec!["ans", "wer"],
+        ),
     ];
     for (case, messages) in cases {
         let refusal = encode(

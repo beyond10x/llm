@@ -250,8 +250,14 @@
     },
     {
       "area": "Protocols",
-      "detail": "llm_core::ShownText pairs the text deltas a turn showed with its messages; llm infer prints each message no delta showed (a Responses message sent only in the terminal output) after the streamed text, each message on its own line, and the Chat Completions ingress stream sends it in its terminal chunks, joined with a newline as the non-streamed answer joins messages. A shown message is never sent twice. The Responses and Messages relays still refuse such a message placed before a streamed one. Fixture evidence only.",
+      "detail": "llm_core::ShownText pairs the text deltas a turn showed with its messages; llm infer prints each message no delta showed (a Responses message sent only in the terminal output) after the streamed text, each message on its own line, and the Chat Completions ingress stream sends it in its terminal chunks, joined with a newline as the non-streamed answer joins messages. A shown message is never sent twice. Fixture evidence only.",
       "label": "Answer text sent only in the final object reaches the caller once",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "The Responses and Messages ingress streams pair the messages a stream showed with the turn's by llm_core::ShownText, as the Chat Completions one does: a shown message is finished where it streamed and never sent again, and a message no delta showed is sent once, before or after a streamed one. Responses keeps the turn's order; Messages sends it after every streamed block, because a streamed block's index is fixed. Checked by relaying turns the Responses decoder read; no live call.",
+      "label": "A relay sends a final-only message wherever the turn places it",
       "status": "shipped"
     },
     {

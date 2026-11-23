@@ -17,7 +17,10 @@
 //! upstream relayed) is sent whole at the next index as it arrives, so a relayed answer of
 //! thinking, redacted thinking and text keeps its order. Any other opaque item sends nothing;
 //! content the stream never showed is carried only after every streamed block, and `close`
-//! refuses an outcome that places it between them.
+//! refuses an outcome that places it between them, except a message no text delta showed (a
+//! Responses upstream that sent it only in its final object, or an empty one): [`ShownText`]
+//! tells it apart, and `close` sends it after every streamed block wherever the outcome places
+//! it, because a streamed block's index is fixed and shown text is final.
 //!
 //! **Reasoning is relayed live only from an upstream that signs it.** A relayed `thinking` block
 //! is signed by `close` from the outcome's opaque state, and only a Messages upstream carries
@@ -34,10 +37,11 @@
 
 use crate::{codec::decode_block, decode::read_reason, usage::Snapshot};
 use llm_core::{
-    CallId, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Provenance, StopReason,
-    StreamEvent, ToolName, TurnOutcome, Usage,
+    CallId, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Provenance, ShownText,
+    StopReason, StreamEvent, ToolName, TurnOutcome, Usage,
 };
 use serde_json::{Map, Value, json};
+use std::ptr;
 
 const CALLER_OWNED: &str = "Messages answer carries caller-owned content";
 const UNREADABLE: &str = "Messages answer content would not read back as itself";
@@ -124,6 +128,9 @@ pub struct IngressStream {
     /// The model announced in `message_start`, which precedes the outcome.
     model: Option<Id>,
     blocks: Vec<Block>,
+    /// The text the text blocks showed, one message per block, read by the rule every consumer
+    /// of a stream pairs shown text with the outcome's messages by.
+    shown: ShownText,
     /// Calls whose fragments arrived with no announcement, or whose name the decoder would
     /// refuse when the block opens. Nothing of them was relayed; `close` sends them complete, and
     /// refuses an outcome that omits one.
@@ -152,6 +159,7 @@ impl IngressStream {
             id: response_id(id)?,
             model: model.map(model_name).transpose()?,
             blocks: Vec::new(),
+            shown: ShownText::new(),
             held: Vec::new(),
             overflowed: false,
             reasoning_relay: Reasoning::Relayed,
@@ -223,11 +231,15 @@ impl IngressStream {
     /// The terminal events: the signature and stop of each open block, the content the stream
     /// never showed, the terminal reason and the reported counters, and `message_stop`.
     ///
-    /// The outcome's items must begin with exactly the blocks streamed, in order: the same text,
-    /// the same reasoning, the same calls with the arguments relayed. Content the stream never
-    /// showed may only follow them, because the decoder reads content in block order. Every call
-    /// the stream reported is in the outcome: an announced one at its block, a held one among
-    /// the content that follows. A refusal sends nothing and leaves the stream open for `fail`.
+    /// The outcome's items, leaving out each message no text block showed, must begin with
+    /// exactly the blocks streamed, in order: the same text, the same reasoning, the same calls
+    /// with the arguments relayed. A text block is paired with the message carrying exactly its
+    /// text as [`ShownText`] pairs them. Content the stream never showed may only follow the
+    /// streamed blocks, because the decoder reads content in block order; a message no text
+    /// block showed is sent there wherever the outcome places it, in the outcome's order, so the
+    /// caller reads it after the text it was shown. Every call the stream reported is in the
+    /// outcome: an announced one at its block, a held one among the content that follows. A
+    /// refusal sends nothing and leaves the stream open for `fail`.
     ///
     /// # Errors
     /// Refuses everything `encode_ingress_message` refuses, an outcome that contradicts what was
@@ -240,8 +252,23 @@ impl IngressStream {
         let content = content(outcome)?;
         let reason = reason(&outcome.stop_reason)?;
         let usage = usage(outcome.observation.usage.as_ref())?;
+        // The items the streamed blocks finish, in the outcome's order, and the content sent
+        // after them: a message no text block showed, an empty one included, and every item past
+        // the streamed blocks.
+        let mut unshown = self.shown.unshown(&outcome.items).into_iter().peekable();
+        let mut streamed = Vec::with_capacity(self.blocks.len());
+        let mut after = Vec::new();
+        for (item, value) in outcome.items.iter().zip(&content) {
+            let not_shown = unshown.next_if(|other| ptr::eq(*other, item)).is_some()
+                || matches!(item, Item::AssistantText { text } if text.is_empty());
+            if not_shown || streamed.len() == self.blocks.len() {
+                after.push((item, value));
+            } else {
+                streamed.push(item);
+            }
+        }
         if self.overflowed
-            || outcome.items.len() < self.blocks.len()
+            || streamed.len() < self.blocks.len()
             || (self.model.is_some() && self.model != outcome.observation.upstream_model)
             || self
                 .held
@@ -254,17 +281,11 @@ impl IngressStream {
         if !self.started {
             out.push(self.start());
         }
-        for (index, (block, item)) in self.blocks.iter().zip(&outcome.items).enumerate() {
+        for (index, (block, item)) in self.blocks.iter().zip(streamed).enumerate() {
             out.extend(settle(index, block, item)?);
         }
-        for (index, (item, value)) in outcome
-            .items
-            .iter()
-            .zip(&content)
-            .enumerate()
-            .skip(self.blocks.len())
-        {
-            out.extend(complete(index, item, value));
+        for (index, (item, value)) in after.into_iter().enumerate() {
+            out.extend(complete(self.blocks.len() + index, item, value));
         }
         let mut terminal = json!({"type":"message_delta","delta":{"stop_reason":reason}});
         if let Some(usage) = usage {
@@ -316,23 +337,30 @@ impl IngressStream {
         json!({"type":"message_start","message":Value::Object(message)})
     }
 
-    /// Extends the open text block, or opens one.
+    /// Extends the open text block, or opens one. Each text block is one shown message, so a
+    /// block that opens ends the message the last one showed.
     fn text(&mut self, text: &str, out: &mut Vec<Value>) {
-        let index = match self.blocks.last() {
-            Some(Block {
-                shown: Shown::Text(_),
-                open: true,
-            }) => Some(self.blocks.len() - 1),
-            _ => self.open(
+        let index = if let Some(Block {
+            shown: Shown::Text(_),
+            open: true,
+        }) = self.blocks.last()
+        {
+            Some(self.blocks.len() - 1)
+        } else {
+            self.shown.observe(&StreamEvent::MessageBoundary {});
+            self.open(
                 Shown::Text(String::new()),
                 json!({"type":"text","text":""}),
                 out,
-            ),
+            )
         };
         if let Some(index) = index {
             if let Shown::Text(shown) = &mut self.blocks[index].shown {
                 shown.push_str(text);
             }
+            self.shown.observe(&StreamEvent::TextDelta {
+                text: text.to_owned(),
+            });
             out.push(delta(index, json!({"type":"text_delta","text":text})));
         }
     }
