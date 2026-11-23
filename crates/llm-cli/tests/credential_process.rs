@@ -6,7 +6,8 @@
 //! `--credential-process-fixture <directory>`, the binary appends a line to `<directory>/runs`,
 //! then exits with status 3 when `<directory>/exit` exists and otherwise prints
 //! `<directory>/answer`. Run any other way, it runs every case below, or those whose name
-//! contains an argument.
+//! contains an argument. It answers libtest's `--list --format terse`, `--ignored` and `--exact`
+//! as [`Selection`] says, so cargo-nextest lists and runs each case.
 
 use llm_bedrock::eventstream::{HeaderValue, Message, encode_message};
 use serde_json::{Value, json};
@@ -46,17 +47,19 @@ fn main() -> ExitCode {
     if args.get(1).map(String::as_str) == Some(FIXTURE_FLAG) {
         return fixture(Path::new(&args[2]));
     }
-    let filters: Vec<&str> = args[1..]
-        .iter()
-        .map(String::as_str)
-        .filter(|arg| !arg.starts_with('-'))
-        .collect();
+    let selection = Selection::read(&args[1..]);
     let all: Vec<&Case> = CASES.iter().chain(unix_cases::CASES).collect();
     let chosen: Vec<&Case> = all
         .iter()
         .copied()
-        .filter(|(name, _)| filters.is_empty() || filters.iter().any(|f| name.contains(f)))
+        .filter(|(name, _)| selection.chooses(name))
         .collect();
+    if selection.list {
+        for (name, _) in chosen {
+            println!("{name}: test");
+        }
+        return ExitCode::SUCCESS;
+    }
     println!("\nrunning {} tests", chosen.len());
     let mut failed = 0;
     for (name, case) in chosen.iter().copied() {
@@ -458,5 +461,60 @@ mod unix_cases {
         set_permissions(&path, Permissions::from_mode(0o666)).expect("a mode");
         let listed = llm(&["--config", path.to_str().expect("a path"), "model", "list"]);
         assert_eq!(listed.status.code(), Some(0), "{}", text(&listed.stderr));
+    }
+}
+
+/// The libtest arguments this runner honours, as `cargo test` and cargo-nextest pass them:
+/// `--list` (nextest adds `--format terse`) prints one `<name>: test` line per chosen case and
+/// runs nothing; `--ignored` chooses no case, since none here is ignored; `--exact` makes a filter
+/// name a case whole, as nextest runs one case per process; `--skip` leaves a case out. Every
+/// other flag is accepted and changes nothing; those that take a value take it.
+struct Selection {
+    list: bool,
+    ignored: bool,
+    exact: bool,
+    filters: Vec<String>,
+    skips: Vec<String>,
+}
+
+impl Selection {
+    fn read(args: &[String]) -> Self {
+        let mut selection = Self {
+            list: false,
+            ignored: false,
+            exact: false,
+            filters: Vec::new(),
+            skips: Vec::new(),
+        };
+        let mut args = args.iter();
+        while let Some(arg) = args.next() {
+            match arg.as_str() {
+                "--list" => selection.list = true,
+                "--ignored" => selection.ignored = true,
+                "--exact" => selection.exact = true,
+                "--skip" => selection.skips.extend(args.next().cloned()),
+                "--format" | "--test-threads" | "--color" | "--logfile" | "--shuffle-seed"
+                | "-Z" => {
+                    args.next();
+                }
+                flag if flag.starts_with('-') => {}
+                filter => selection.filters.push(filter.to_owned()),
+            }
+        }
+        selection
+    }
+
+    fn names(&self, name: &str, filter: &str) -> bool {
+        if self.exact {
+            name == filter
+        } else {
+            name.contains(filter)
+        }
+    }
+
+    fn chooses(&self, name: &str) -> bool {
+        !self.ignored
+            && (self.filters.is_empty() || self.filters.iter().any(|f| self.names(name, f)))
+            && !self.skips.iter().any(|skip| self.names(name, skip))
     }
 }

@@ -30,9 +30,10 @@ CI runs Clippy on Rust 1.98.0, and the credential and ledger suites again on mac
 
 `cargo xtask test` runs the tests with [cargo-nextest](https://nexte.st/): the workspace, then the
 credential, ledger and call-record crates with all their features. `.config/nextest.toml` kills a
-test that runs over 60 seconds and counts it failed. The test binaries are built first; the runs
-together may then take 120 seconds, and the command prints the ten slowest tests either way. CI
-runs the same command in its "Rust tests" step.
+test that runs over 60 seconds and counts it failed. The test binaries are built first, and a test
+target with a runner of its own (`harness = false`) must list its tests as libtest does, or the
+command fails naming it. The runs together may then take 120 seconds, and the command prints the
+ten slowest tests either way. CI runs the same command in its "Rust tests" step.
 
 `task rust` runs the checks and lints alone and `task test` the tests, neither requiring the
 planning tools.
