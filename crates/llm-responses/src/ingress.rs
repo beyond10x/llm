@@ -56,14 +56,20 @@
 //! reasoning delta or a call interrupts (a Chat Completions upstream) stays one item, and two
 //! messages a Responses or Messages upstream streamed, with or without anything between them,
 //! stay two.
+//!
+//! The close pairs each streamed message with the outcome's message that carries exactly its
+//! text, as [`ShownText`] pairs them, wherever the outcome places it. A message no delta showed
+//! (an upstream that sent it only in its final object) is emitted whole in its place, before or
+//! after a streamed one, and a shown message is never emitted twice.
 
 use llm_core::{
     CallId, Error, ErrorCode, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES, Protocol, RefusalCause,
-    StopReason, StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome, Usage, exceeds,
+    ShownText, StopReason, StreamEvent, ToolCall, ToolName, TurnObservation, TurnOutcome, Usage,
+    exceeds,
 };
 use serde_json::{Map, Value, json};
 use std::iter::Filter;
-use std::slice;
+use std::{ptr, slice};
 
 use crate::stream::is_safe_reason;
 
@@ -122,6 +128,9 @@ pub struct IngressStream {
     /// Whether the next text delta continues the last message: from its first delta until a
     /// message boundary.
     in_message: bool,
+    /// The messages the relayed events showed, by the rule every consumer of a stream pairs
+    /// them with the outcome's messages by.
+    shown: ShownText,
     /// The one reasoning item every reasoning delta continues.
     reasoning: Option<OpenText>,
     /// Announced calls, in announcement order, with the argument text relayed for each.
@@ -158,6 +167,7 @@ impl IngressStream {
             next_index: 0,
             messages: Vec::new(),
             in_message: false,
+            shown: ShownText::new(),
             reasoning: None,
             calls: Vec::new(),
             unannounced: Vec::new(),
@@ -175,6 +185,7 @@ impl IngressStream {
         if self.finished {
             return Vec::new();
         }
+        self.shown.observe(event);
         let mut payloads = Vec::new();
         match event {
             StreamEvent::TextDelta { text } => {
@@ -272,10 +283,12 @@ impl IngressStream {
     /// the whole response object. When nothing was streamed, the opening payloads come first.
     ///
     /// Each streamed message item that showed text is finished as the outcome's assistant message
-    /// in the same position, which must be exactly that text; the streamed reasoning as the first
-    /// reasoning item; and each announced call as the outcome's call under the same identifier.
-    /// What the outcome carries beyond that is emitted whole here: an item opened, filled and
-    /// finished, so a reader sees it as it would any other.
+    /// that carries exactly that text, paired as [`ShownText`] pairs them (equal texts in order),
+    /// wherever the outcome places it; the streamed reasoning as the first reasoning item; and
+    /// each announced call as the outcome's call under the same identifier. What the outcome
+    /// carries beyond that is emitted whole here, in its place: an item opened, filled and
+    /// finished, so a reader sees it as it would any other. A message no delta showed is one of
+    /// these, before a streamed message or after it, and its text is shown once.
     ///
     /// A refusal emits nothing and leaves the stream open, so the server can still end it with
     /// [`IngressStream::fail`].
@@ -290,7 +303,7 @@ impl IngressStream {
             return Err(Error::protocol("the streamed response has already ended"));
         }
         let terminal = check_outcome(outcome)?;
-        self.check_streamed(outcome)?;
+        let pairs = self.check_streamed(outcome)?;
 
         let mut payloads = Vec::new();
         let mut output = Vec::with_capacity(outcome.items.len());
@@ -300,19 +313,13 @@ impl IngressStream {
             next_index += 1;
             (output_index, format!("{kind}_{}_{output_index}", self.id))
         };
-        // `check_streamed` matched these, in order, to the outcome's first shown assistant
-        // messages. An empty one was never shown and is emitted whole.
-        let mut messages = shown_messages(&self.messages);
         let mut reasoning = self.reasoning.as_ref();
         let mut finished_calls = vec![false; self.calls.len()];
-        for item in &outcome.items {
+        // `check_streamed` paired each streamed message with one of the outcome's. One it paired
+        // none with was never shown, an empty one included, and is emitted whole.
+        for (item, shown) in outcome.items.iter().zip(pairs) {
             match item {
                 Item::AssistantText { text } => {
-                    let shown = if is_shown(text) {
-                        messages.next()
-                    } else {
-                        None
-                    };
                     let (output_index, item_id) = if let Some(open) = shown {
                         (open.output_index, open.item_id.clone())
                     } else {
@@ -486,8 +493,9 @@ impl IngressStream {
         self.calls.iter().position(|open| &open.call_id == call_id)
     }
 
-    /// What a reader already assembled must survive into the turn unchanged.
-    fn check_streamed(&self, outcome: &TurnOutcome) -> Result<(), Error> {
+    /// What a reader already assembled must survive into the turn unchanged. Returns, for each of
+    /// the outcome's items, the streamed message item it finishes as, if any.
+    fn check_streamed(&self, outcome: &TurnOutcome) -> Result<Vec<Option<&OpenText>>, Error> {
         for open in &self.calls {
             let Some(call) = outcome
                 .tool_calls()
@@ -499,21 +507,34 @@ impl IngressStream {
                 return Err(streamed_contradiction());
             }
         }
-        // Each message item the caller was shown finishes with exactly the text its deltas
-        // showed, as the outcome's assistant message in the same position. The decoder keeps
-        // shown text the turn carries no message for, so a missing message is a different turn,
-        // and a different text is a message the caller was not shown. An empty message can
-        // never have been shown, so it matches no streamed one, by the same rule on both sides.
-        let mut carried = outcome.items.iter().filter_map(|item| match item {
-            Item::AssistantText { text } if is_shown(text) => Some(text),
-            _ => None,
-        });
-        for open in shown_messages(&self.messages) {
-            if carried.next() != Some(&open.text) {
-                return Err(streamed_contradiction());
-            }
+        // Each message item the caller was shown finishes as the outcome's assistant message
+        // carrying exactly the text its deltas showed, wherever the outcome places it: the one
+        // `ShownText` pairs it with, equal texts in order. The decoder keeps shown text the turn
+        // carries no message for, so a missing message is a different turn, and a different text
+        // is a message the caller was not shown. `ShownText` reads the message items exactly as
+        // `chunk` opens them, and neither side pairs an empty message, so an empty one is never
+        // a streamed one.
+        let mut unshown = self.shown.unshown(&outcome.items).into_iter().peekable();
+        let mut open: Vec<&OpenText> = shown_messages(&self.messages).collect();
+        let mut pairs = Vec::with_capacity(outcome.items.len());
+        for item in &outcome.items {
+            let pair = match item {
+                _ if unshown.next_if(|other| ptr::eq(*other, item)).is_some() => None,
+                Item::AssistantText { text } if is_shown(text) => {
+                    let at = open
+                        .iter()
+                        .position(|open| open.text == *text)
+                        .ok_or_else(streamed_contradiction)?;
+                    Some(open.remove(at))
+                }
+                _ => None,
+            };
+            pairs.push(pair);
         }
-        Ok(())
+        if !open.is_empty() {
+            return Err(streamed_contradiction());
+        }
+        Ok(pairs)
     }
 }
 
@@ -691,8 +712,8 @@ fn encode_usage(usage: &Usage) -> Value {
         input_details.insert("cached_tokens".to_owned(), json!(value));
     }
     if let Some(value) = usage.cache_creation_input_tokens {
-        // This wire has no cache-write counter. A named extension keeps the reported count
-        // readable; dropping it would delete an observation the upstream actually made.
+        // Written under this crate's extension name, as the Chat encoder writes it; the decoder
+        // reads it back as well as the provider's `cache_write_tokens` (`stream::usage`).
         input_details.insert("cache_creation_input_tokens".to_owned(), json!(value));
     }
     if !input_details.is_empty() {

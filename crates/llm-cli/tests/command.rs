@@ -653,6 +653,130 @@ fn infer_prints_a_streamed_message_once_and_a_final_only_message_after_it() {
     assert_eq!(stdout(&output), "First part\nSecond part\n");
 }
 
+/// A Responses turn that streams `Partial answer` and ends with the terminal event `kind`, its
+/// response object carrying `status` and the fields of `extra`.
+fn responses_ending(kind: &str, status: &str, extra: &Value) -> Vec<u8> {
+    let message = final_message("msg_1", "Partial answer");
+    let mut response = json!({"id":"resp_1","model":"gpt-fixture","status":status,
+        "output":[message],"usage":{"input_tokens":20,"output_tokens":3}});
+    for (key, value) in extra.as_object().unwrap() {
+        response[key] = value.clone();
+    }
+    sse(&[
+        (
+            "response.created",
+            json!({"type":"response.created","response":{"id":"resp_1","status":"in_progress"}}),
+        ),
+        (
+            "response.output_item.added",
+            json!({"type":"response.output_item.added","output_index":0,"item":{"type":"message",
+                "id":"msg_1","role":"assistant","status":"in_progress","content":[]}}),
+        ),
+        (
+            "response.output_text.delta",
+            json!({"type":"response.output_text.delta","item_id":"msg_1","output_index":0,
+                "content_index":0,"delta":"Partial answer"}),
+        ),
+        (
+            "response.output_item.done",
+            json!({"type":"response.output_item.done","output_index":0,"item":message}),
+        ),
+        (kind, json!({"type":kind,"response":response})),
+    ])
+}
+
+/// Review of 0.24.0, finding 4: a turn stopped at its output limit printed exactly what a
+/// completed one did and exited 0. The partial answer stays on stdout; stderr says the turn
+/// stopped at the output limit, and the exit status is 3, not the 0 of a completed turn.
+#[test]
+fn infer_says_on_stderr_that_the_turn_stopped_at_the_output_limit_and_exits_3() {
+    let fixture = Fixture::new(vec![responses_ending(
+        "response.incomplete",
+        "incomplete",
+        &json!({"incomplete_details":{"reason":"max_output_tokens"}}),
+    )]);
+    let (_directory, path) = configured(&three_routes(&fixture.origin));
+    let output = llm(
+        &[
+            "--config",
+            &path,
+            "infer",
+            "--model",
+            "gpt",
+            "--max-output-tokens",
+            "3",
+            "hi",
+        ],
+        &KEYS,
+        None,
+    );
+    assert_eq!(stdout(&output), "Partial answer\n");
+    assert_eq!(
+        stderr(&output),
+        "route=gpt protocol=responses input_tokens=20 output_tokens=3\n\
+         llm: route `gpt`: the turn stopped at the output limit; the answer is cut short\n"
+    );
+    assert_eq!(output.status.code(), Some(3));
+}
+
+/// Finding 4, the rest of its class: a turn that stopped for any other reason the provider named
+/// says that reason, keeps its text on stdout and exits 3 too.
+#[test]
+fn infer_names_any_other_reason_a_turn_stopped_before_its_end_and_exits_3() {
+    let fixture = Fixture::new(vec![responses_ending(
+        "response.incomplete",
+        "incomplete",
+        &json!({"incomplete_details":{"reason":"content_filter"}}),
+    )]);
+    let (_directory, path) = configured(&three_routes(&fixture.origin));
+    let output = llm(
+        &["--config", &path, "infer", "--model", "gpt", "hi"],
+        &KEYS,
+        None,
+    );
+    assert_eq!(stdout(&output), "Partial answer\n");
+    assert_eq!(
+        stderr(&output),
+        "route=gpt protocol=responses input_tokens=20 output_tokens=3\n\
+         llm: route `gpt`: the turn stopped before its end: content_filter\n"
+    );
+    assert_eq!(output.status.code(), Some(3));
+}
+
+/// Review of 0.24.0, finding 8: a priced Responses route stayed `cost=unknown` with every counter
+/// reported, because the decoder dropped the cache-write count. With the answer naming the route's
+/// model and reporting all of them, the cost completes: 8 uncached at 1, 8 cached at 0.1, 4
+/// written at 1.25 and 3 output at 5 per million tokens.
+#[test]
+fn infer_prices_a_responses_turn_that_reports_every_counter() {
+    let fixture = Fixture::new(vec![responses_ending(
+        "response.completed",
+        "completed",
+        &json!({"usage":{"input_tokens":20,"output_tokens":3,
+            "input_tokens_details":{"cached_tokens":8,"cache_write_tokens":4}}}),
+    )]);
+    let document = format!(
+        r#"{}
+[routes.gpt-priced]
+model = "openai/gpt-fixture"
+price = {{ currency = "USD", input = "1", cached_input = "0.1", cache_creation_input = "1.25", output = "5" }}
+"#,
+        three_routes(&fixture.origin)
+    );
+    let (_directory, path) = configured(&document);
+    let output = llm(
+        &["--config", &path, "infer", "--model", "gpt-priced", "hi"],
+        &KEYS,
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "Partial answer\n");
+    assert_eq!(
+        stderr(&output),
+        "route=gpt-priced protocol=responses input_tokens=20 output_tokens=3 cost=0.0000288 USD\n"
+    );
+}
+
 #[test]
 fn infer_reads_the_prompt_from_stdin_and_an_unreported_counter_prints_unknown() {
     let fixture = Fixture::new(vec![chat_stream()]);

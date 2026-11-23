@@ -124,6 +124,17 @@ the streamed text. Each message starts on its own line. One line on stderr close
 route=haiku protocol=messages input_tokens=12 output_tokens=4 cost=0.000032 USD
 ```
 
+A turn that stopped before its end keeps the text it produced on stdout, and a second line on stderr
+says why; `llm` then exits with `3` (see [Exit codes](#exit-codes)):
+
+```text
+route=gpt protocol=responses input_tokens=20 output_tokens=3
+llm: route `gpt`: the turn stopped at the output limit; the answer is cut short
+```
+
+The output limit is `--max-output-tokens` or the model's own. Any other reason the provider named,
+such as a content filter, is printed as `the turn stopped before its end: <reason>`.
+
 A counter the provider did not report is `unknown`, not `0`. `cost` appears only for a priced
 route. It is the cost of the model the provider reported serving the turn, priced at the route's
 rates only when that is the route's model: when the answer names another model or none, `cost` is
@@ -135,7 +146,7 @@ cache writes included, so whether it can complete depends on the wire:
 | --- | --- |
 | `messages`, direct or on Bedrock `InvokeModel` | Completes when the answer names the route's model and reports its cache counters |
 | `bedrock-converse` | Always `unknown`: the answer names no model |
-| `responses` | Always `unknown`: the wire reports no cache-write counter |
+| `responses` | Completes when the answer names the route's model and reports its cache counters (`cached_tokens` and `cache_write_tokens`) |
 | `chat-completions` | `unknown` unless the server reports both cache counters, which providers on this wire do not |
 
 For `bedrock-eu`, the container credentials come from the two variables EKS Pod Identity sets,
@@ -186,6 +197,7 @@ not checked. On Windows the check is not made.
 | `0` | The turn completed, or the list was printed; also when the reader closed stdout (`llm infer … \| head -c 1`), which stops the turn and says so on stderr |
 | `1` | The provider failed after the request was sent, or stdout could not be written for another reason; stderr names the route and the error code only |
 | `2` | Refused before anything was sent: no or bad configuration, an unknown model, a missing credential, an invalid request |
+| `3` | The turn stopped before its end: at the output limit or for another reason the provider named. Its text so far is on stdout and stderr says why; the turn is not a whole answer, so it is not `0`, and nothing failed, so it is not `1` |
 | `130` | Interrupted with Ctrl-C; the text shown so far stays on stdout. A second Ctrl-C ends a turn the first did not stop |
 
 A refusal names the field, route or reference and never prints a secret value or a provider's

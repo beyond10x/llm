@@ -1007,26 +1007,36 @@ pub(crate) fn is_safe_reason(value: &str) -> bool {
 
 /// Reported token counts, each independently optional.
 ///
-/// This wire reports no cache-write figure at all, so `cache_creation_input_tokens` stays absent
-/// rather than zero: a zero would be this crate claiming, on the provider's behalf, that nothing
-/// was written to its cache.
+/// A counter the answer does not report stays absent rather than zero: a zero would be this crate
+/// claiming, on the provider's behalf, something it never observed.
 pub(crate) fn usage(response: &Value) -> Option<Usage> {
     let reported = response.get("usage")?.as_object()?;
+    let input_details = reported.get("input_tokens_details");
     Some(Usage {
         input_tokens: count(reported.get("input_tokens")),
         output_tokens: count(reported.get("output_tokens")),
-        cached_input_tokens: count(
-            reported
-                .get("input_tokens_details")
-                .and_then(|details| details.get("cached_tokens")),
-        ),
-        cache_creation_input_tokens: None,
+        cached_input_tokens: count(input_details.and_then(|details| details.get("cached_tokens"))),
+        cache_creation_input_tokens: cache_write(input_details),
         reasoning_output_tokens: count(
             reported
                 .get("output_tokens_details")
                 .and_then(|details| details.get("reasoning_tokens")),
         ),
     })
+}
+
+/// The cache-write count under either spelling: the provider's `cache_write_tokens` or this
+/// crate's ingress extension `cache_creation_input_tokens` (`crate::ingress`). An explicit zero is
+/// a known zero; two spellings that disagree name no count.
+fn cache_write(details: Option<&Value>) -> Option<u64> {
+    let details = details?;
+    match (
+        count(details.get("cache_write_tokens")),
+        count(details.get("cache_creation_input_tokens")),
+    ) {
+        (Some(provider), Some(extension)) if provider != extension => None,
+        (provider, extension) => provider.or(extension),
+    }
 }
 
 fn count(value: Option<&Value>) -> Option<u64> {

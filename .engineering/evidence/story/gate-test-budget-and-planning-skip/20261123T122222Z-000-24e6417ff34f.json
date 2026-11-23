@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-23T12:22:22Z",
+  "actor": "human:timo",
+  "artifact": "story:gate-test-budget-and-planning-skip",
+  "kind": "story",
+  "revision": 1,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "CARGO_INCREMENTAL=0 RUSTUP_TOOLCHAIN=1.98.0 cargo nextest run -p llm-xtask -p llm-models -p llm-responses --locked --no-fail-fast; cargo xtask report: 397 passed in 7.0 s of the 120 s bound, slowest 6.8 s (routes alias bound; base 386 tests 45.8 s, that test 43.9 s)"
+  }
+}

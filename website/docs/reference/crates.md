@@ -9,11 +9,12 @@ custom_edit_url: null
 
 # Crates
 
-The workspace holds 19 packages at version `0.25.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
+The workspace holds 20 packages at version `0.25.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
 
 | Package | Library | Directory | What it is |
 | --- | --- | --- | --- |
 | `llm-conformance` | binary `llm-conformance` | `checks/conformance` | — |
+| `llm-xtask` | binary `llm-xtask` | `checks/xtask` | Runs the gate's test phase with cargo-nextest under its time bound and prints the ten slowest tests. |
 | `llm-bedrock` | `llm_bedrock` | `crates/llm-bedrock` | Amazon Bedrock Runtime behind the model port: Converse and Anthropic InvokeModel, event-stream decoding and hand-written SigV4. |
 | `llm-blocking` | `llm_blocking` | `crates/llm-blocking` | A blocking turn adapter over any asynchronous model port, for a synchronous agent loop. |
 | `llm-calls` | `llm_calls` | `crates/llm-calls` | One text-free record per routed model call: route, target, timings, usage and priced cost, on a sink the caller injects. |

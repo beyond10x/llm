@@ -391,6 +391,7 @@ pub struct Controls {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub thinking: Option<Thinking>,
     /// Whether the model may propose several tool calls in one turn. Needs published tools.
+    /// `false` allows one call at most: `TurnOutcome::validate_for` refuses a turn returning more.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parallel_tool_calls: Option<bool>,
     #[serde(default, skip_serializing_if = "Hints::is_empty")]

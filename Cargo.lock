@@ -1400,6 +1400,7 @@ dependencies = [
  "llm-credentials",
  "llm-http",
  "llm-providers",
+ "llm-responses",
  "serde",
  "serde_json",
  "tokio",
@@ -1483,6 +1484,16 @@ dependencies = [
  "llm-responses",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "llm-xtask"
+version = "0.25.0"
+dependencies = [
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "toml",
 ]
 
 [[package]]

@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-23T18:27:44Z",
+  "actor": "human:timo",
+  "artifact": "story:turn-outcome-small-correctness",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "wave gate on wave/2026-11-23-next after merging impl/gate-test-budget-and-planning-skip (with its list fix 5ffd06dc, 23cc7b95), impl/relay-final-only-message-pairing and impl/turn-outcome-small-correctness (Rust 1.98.0, CARGO_INCREMENTAL=0, each step alone, every step exit 0): cargo fmt --all --check; clippy --all-targets --all-features -D warnings on llm-core, llm-responses, llm-messages, llm-cli, llm-models, llm-xtask, llm-bedrock; cargo xtask test: list check of the three harness = false targets, then 5 nextest runs, 2072 tests passed (workspace 1799, llm-credentials 129, llm-cost 23, llm-calls 43, llm-models 78), 1 skipped, 16.0 s of the 120 s bound by their JUnit reports, slowest 5.3 s; task docs; task conformance on ess 0.87.0 1049 of 1049 three runs; aep plan artifact validate",
+    "reference": "wave/2026-11-23-next@9bc21fbb"
+  }
+}

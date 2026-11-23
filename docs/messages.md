@@ -445,7 +445,10 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
   redacted thinking a Messages upstream relays) is sent whole at the next index as it arrives, so
   thinking, redacted thinking and text relay in their order. Content the stream never showed (any
   other opaque item, a call whose fragments arrived before it was announced) is sent whole at
-  `close`, after the streamed blocks.
+  `close`, after the streamed blocks. A message no text delta showed (a Responses upstream that
+  sent it only in its final object, or an empty one) is sent there too, wherever the turn places
+  it: `llm_core::ShownText` decides which messages the stream showed, a streamed block's index is
+  fixed, and shown text is final.
 - **Reasons.** `end_turn`, `tool_use`, `max_tokens`, and an `Incomplete` reason under its own name;
   a reason the decoder would read as another one is refused.
 - **Usage.** Only reported counters, in `message_delta`; an unknown counter is left out, never zero.

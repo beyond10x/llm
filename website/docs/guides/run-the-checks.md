@@ -3,7 +3,7 @@ title: Run the checks
 sidebar_position: 9
 description: What each stage of the repository gate proves, and what it deliberately does not.
 lede: task check runs Rust, the documentation generator, the specification, conformance and the plan, and none of it makes a paid call.
-source: Taskfile.yml, .github/workflows/gate.yml, crates/llm-docs
+source: Taskfile.yml, .github/workflows/gate.yml, .config/nextest.toml, checks/xtask, crates/llm-docs
 ---
 
 # Run the checks
@@ -17,20 +17,29 @@ It runs five stages. None of them makes a paid provider call or provisions an ex
 ## 1. Rust
 
 ```bash
-cargo test --workspace --locked
-cargo test -p llm-credentials --all-features --locked
 cargo check -p llm-credentials --no-default-features --locked
-cargo test -p llm-cost --all-features --locked
 cargo check -p llm-cost --no-default-features --locked
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo xtask test
 ```
 
 The two `--no-default-features` checks matter: they prove the optional credential adapters and the
 SQLite ledger really are optional, so a consumer that wants none of them pays for none of them.
 CI runs Clippy on Rust 1.98.0, and the credential and ledger suites again on macOS and Windows.
 
-`task rust` runs this stage alone, without requiring the planning tools.
+`cargo xtask test` runs the tests with [cargo-nextest](https://nexte.st/): the workspace, then the
+credential, ledger and call-record crates with all their features. `.config/nextest.toml` kills a
+test that runs over 60 seconds and counts it failed. The test binaries are built first, and a test
+target with a runner of its own (`harness = false`) must list its tests as libtest does, or the
+command fails naming it. The runs together may then take 120 seconds, and the command prints the
+ten slowest tests either way. CI runs the same command in its "Rust tests" step.
+
+`task rust` runs the checks and lints alone and `task test` the tests, neither requiring the
+planning tools.
+
+A pull request that changes only planning files under `.engineering/` or Markdown outside
+`website/` skips the build and test steps of the Gate; its jobs still report under their names.
 
 ## 2. Documentation
 
