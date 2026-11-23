@@ -332,6 +332,61 @@ fn streamed_chunks_carry_text_and_reasoning_as_they_arrive() {
     );
 }
 
+/// The `content` a client assembles from streamed chunks, in order.
+fn streamed_content(chunks: &[Value]) -> String {
+    chunks
+        .iter()
+        .filter_map(|chunk| chunk["choices"][0]["delta"]["content"].as_str())
+        .collect()
+}
+
+/// A message no delta showed (a Responses upstream that sent it only in its final object) is
+/// sent before the finish chunk, so a streaming client assembles the `content` the JSON answer
+/// carries for the same turn; a message the stream showed is not sent again (review of 0.24.0,
+/// finding 2).
+#[test]
+fn a_message_no_delta_showed_is_sent_once_and_the_stream_reads_as_the_json_answer() {
+    let text = |text: &str| StreamEvent::TextDelta {
+        text: text.to_owned(),
+    };
+    let cases: [(&str, Vec<StreamEvent>, Vec<&str>); 3] = [
+        ("only in the final object", vec![], vec!["The answer"]),
+        (
+            "streamed, then one only in the final object",
+            vec![text("First "), text("part")],
+            vec!["First part", "Second part"],
+        ),
+        (
+            "every message streamed",
+            vec![text("First part")],
+            vec!["First part"],
+        ),
+    ];
+    for (case, events, messages) in cases {
+        let mut outcome = outcome_with(None, None);
+        outcome.items = messages.iter().map(|text| Item::assistant(*text)).collect();
+        let mut stream = IngressStream::new("chatcmpl-gw-final", 1_772_000_800);
+        let mut chunks: Vec<Value> = events
+            .iter()
+            .filter_map(|event| stream.chunk(event))
+            .collect();
+        chunks.extend(
+            stream
+                .close(&outcome, false)
+                .unwrap_or_else(|error| panic!("{case}: {error:?}")),
+        );
+        let answer = encode_ingress_completion(&outcome, "chatcmpl-gw-final", 1_772_000_800)
+            .unwrap_or_else(|error| panic!("{case}: {error:?}"));
+        assert_eq!(
+            json!(streamed_content(&chunks)),
+            answer["choices"][0]["message"]["content"],
+            "{case}: {chunks:?}"
+        );
+        let last = chunks.last().expect("a finish chunk");
+        assert_eq!(last["choices"][0]["finish_reason"], json!("stop"), "{case}");
+    }
+}
+
 #[test]
 fn a_streamed_call_is_named_where_it_was_announced_and_not_again_at_the_end() {
     let mut stream = IngressStream::new("chatcmpl-gw-4", 1_772_000_800);
