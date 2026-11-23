@@ -1001,8 +1001,8 @@ fn a_cache_write_count_the_ingress_encoder_wrote_reads_back_as_written() {
             items: vec![Item::assistant("Hi")],
             observation,
         };
-        let body = encode_ingress_response(&outcome, "resp_gateway_1", 1_772_000_000)
-            .expect("encodes");
+        let body =
+            encode_ingress_response(&outcome, "resp_gateway_1", 1_772_000_000).expect("encodes");
         let read = decode_stream(
             &binding(),
             &[json!({"type": "response.completed", "response": body})],

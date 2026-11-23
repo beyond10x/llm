@@ -193,7 +193,9 @@ fn a_reported_cache_write_count_is_read_under_either_spelling_and_a_missing_one_
             "event: response.completed\ndata: {{\"type\":\"response.completed\",\"response\":{body}}}\n\n"
         );
         assert_eq!(
-            read_usage(stream.as_bytes()).usage.cache_creation_input_tokens,
+            read_usage(stream.as_bytes())
+                .usage
+                .cache_creation_input_tokens,
             expected,
             "stream {details}"
         );

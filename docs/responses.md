@@ -330,11 +330,12 @@ Each is independently optional and an **absent one stays absent**.
 | `output_tokens` | `usage.output_tokens` |
 | `cached_input_tokens` | `usage.input_tokens_details.cached_tokens` |
 | `reasoning_output_tokens` | `usage.output_tokens_details.reasoning_tokens` |
-| `cache_creation_input_tokens` | **always absent** — this wire reports no cache-write figure |
+| `cache_creation_input_tokens` | `usage.input_tokens_details.cache_write_tokens`, or this crate's own extension `usage.input_tokens_details.cache_creation_input_tokens` |
 
-A zero for `cache_creation_input_tokens` would be this crate claiming, on the provider's behalf,
-that nothing was written to its cache. Contradictory known counters refuse with `Protocol` rather
-than saturating.
+A cache-write count is read under either spelling, an explicit `0` included; when both are present
+and disagree, the count stays absent. A missing count stays absent: a zero would be this crate
+claiming, on the provider's behalf, that nothing was written to its cache. Contradictory known
+counters refuse with `Protocol` rather than saturating.
 
 `upstream_model` and `response_id` come from the terminal object's own `model` and `id` and are
 absent when it does not report them.
@@ -510,10 +511,10 @@ What the encoder refuses rather than approximates or drops:
 
 Usage carries only reported counters: an unknown counter is left out, never written as zero, and a
 total comes only from two known parts. A reported cache-write count goes out as
-`input_tokens_details.cache_creation_input_tokens`, as the Chat encoder does; this crate's decoder
-does not read that field back, so such an outcome does not round-trip exactly. Reasoning streamed
-without opaque state in the outcome adds no output item. `ingest_request` still refuses
-`stream: false`, so the non-streamed encoder serves callers that accept a request by other means.
+`input_tokens_details.cache_creation_input_tokens`, as the Chat encoder does, and this crate's
+decoder reads it back. Reasoning streamed without opaque state in the outcome adds no output item.
+`ingest_request` still refuses `stream: false`, so the non-streamed encoder serves callers that
+accept a request by other means.
 
 One identifier per answer: every payload, the terminal one included, carries the caller-supplied
 `id`; the upstream's response id belongs to the upstream exchange and is not relayed, so the decoded
