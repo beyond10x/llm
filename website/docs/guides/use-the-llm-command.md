@@ -8,8 +8,8 @@ source: crates/llm-cli (src/lib.rs, tests/command.rs), crates/llm-models/src/rou
 
 # Use the llm command
 
-`llm` is the command-line face of this workspace. It reads an `llm.routes/1` document, the same
-one [Configure model routes](configure-model-routes.md) describes, and does two things:
+`llm` is this workspace's command. It reads an `llm.routes/1` document, the same one
+[Configure model routes](configure-model-routes.md) describes, and has two subcommands:
 
 - `llm model list` prints one row per route. It reads no secret and makes no network call.
 - `llm infer --model <id> "<prompt>"` sends one user turn and streams the assistant text to
@@ -40,10 +40,10 @@ account answered them.
 | 3 | `~/.b10x/llm.toml`, if it exists |
 | 4 | `$XDG_CONFIG_HOME/b10x/llm.toml`, if it exists; `~/.config/b10x/llm.toml` when the variable is unset or not absolute |
 
-A file named by `--config` or `LLM_CONFIG` must exist; `llm` refuses it rather than falling back
-to another place. When no place has a file, the refusal names all four and the paths it tried. A
-file ending in `.yaml` or `.yml` is read as YAML, anything else as TOML. Both forms take the same
-keys and refuse the same mistakes.
+A file named by `--config` or `LLM_CONFIG` must exist. If it does not, `llm` refuses it and does
+not fall back to another place. When no place has a file, the refusal names all four and the paths
+it tried. A file ending in `.yaml` or `.yml` is read as YAML, anything else as TOML. Both forms
+take the same keys and refuse the same mistakes.
 
 This file declares one Anthropic route and two Bedrock routes:
 
@@ -80,12 +80,14 @@ model = "bedrock-invoke/eu.anthropic.claude-sonnet-5-5"
 
 The model ids are example ids, not verified. `bedrock-eu` uses Bedrock's Converse wire and signs
 with the container credentials EKS Pod Identity serves. `bedrock-invoke` sends the Anthropic
-Messages body to `InvokeModel` and signs with keys from the environment. Every secret is a
-reference, never a value; a literal key is refused. The command reads `env:`, `file:` and
-`keychain:` references. A `keychain:` reference reads the platform keychain (the Secret Service
-on Linux, the login keychain on macOS, the Credential Manager on Windows), which `llm` opens only
-when the route you ask for needs it. An endpoint whose reference cannot be read refuses only its
-own routes; the other routes still work.
+Messages body to `InvokeModel` and signs with keys from the environment.
+[Call a model on Bedrock](call-a-model-on-bedrock.md) shows what a Bedrock turn reports.
+
+A secret is written as a reference, not a value. A literal key is refused. The command reads `env:`,
+`file:` and `keychain:` references. A `keychain:` reference reads the platform keychain: the
+Secret Service on Linux, the login keychain on macOS, the Credential Manager on Windows. `llm`
+opens it only when the route you ask for needs it. An endpoint whose reference cannot be read
+refuses only its own routes. The other routes still work.
 
 ## List the models
 
@@ -100,7 +102,7 @@ opus    claude-opus  bedrock-converse  bedrock-eu      bedrock-runtime.eu-centra
 sonnet  -            messages          bedrock-invoke  bedrock-runtime.eu-central-1.amazonaws.com  eu.anthropic.claude-sonnet-5-5  unknown
 ```
 
-`PROVIDER` is the endpoint's name. A route without a `price` shows `unknown`, never `0`.
+`PROVIDER` is the endpoint's name. A route without a `price` shows `unknown`, not `0`.
 `--format json` prints the same rows as a JSON array, with `region` for a Bedrock route and
 `price_per_million` (or `null`).
 
@@ -116,16 +118,17 @@ declares no route for. `--system` sets a system prompt and `--max-output-tokens`
 Without a prompt argument, `llm` reads the prompt from stdin.
 
 The text goes to stdout as it streams. When the model declines, its refusal text is its answer and
-goes to stdout the same way (Chat Completions sends it apart from the text). A message the server
-sent only in its final answer, without streaming it (a Responses server may), is printed once after
-the streamed text. Each message starts on its own line. One line on stderr closes the turn:
+goes to stdout the same way. Chat Completions sends a refusal apart from the text. A Responses
+server may send a message only in its final answer, without streaming it. That message is printed
+once after the streamed text. Each message starts on its own line. One line on stderr closes the
+turn:
 
 ```text
 route=haiku protocol=messages input_tokens=12 output_tokens=4 cost=0.000032 USD
 ```
 
 A turn that stopped before its end keeps the text it produced on stdout, and a second line on stderr
-says why; `llm` then exits with `3` (see [Exit codes](#exit-codes)):
+says why. `llm` then exits with `3` (see [Exit codes](#exit-codes)):
 
 ```text
 route=gpt protocol=responses input_tokens=20 output_tokens=3
@@ -135,12 +138,13 @@ llm: route `gpt`: the turn stopped at the output limit; the answer is cut short
 The output limit is `--max-output-tokens` or the model's own. Any other reason the provider named,
 such as a content filter, is printed as `the turn stopped before its end: <reason>`.
 
-A counter the provider did not report is `unknown`, not `0`. `cost` appears only for a priced
-route. It is the cost of the model the provider reported serving the turn, priced at the route's
-rates only when that is the route's model: when the answer names another model or none, `cost` is
-`unknown`, never the route's rate for a model that may not have served the turn. It is also
-`unknown` when a counter it needs is missing. A cost needs every input counter, cache reads and
-cache writes included, so whether it can complete depends on the wire:
+A counter the provider did not report is `unknown`, not `0`.
+
+`cost` appears only for a priced route. It prices the model the provider reported serving the
+turn, at the route's rates, and only when that is the route's model. When the answer names another
+model or none, `cost` is `unknown`. It is also `unknown` when a counter it needs is missing. A cost
+needs every input counter, cache reads and cache writes included, so whether it can complete
+depends on the wire:
 
 | Wire | Cost of a priced route |
 | --- | --- |
@@ -152,12 +156,15 @@ cache writes included, so whether it can complete depends on the wire:
 For `bedrock-eu`, the container credentials come from the two variables EKS Pod Identity sets,
 `AWS_CONTAINER_CREDENTIALS_FULL_URI` and `AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE`. Without them
 that route is refused and every other route still works. The token file is read again on every
-turn, so a rotated token is picked up. It may be the Kubernetes projected-volume layout (`token`
-linking to `..data/token`, `..data` linking to a timestamped directory, the file mode `0644`).
-That layout is taken from the AWS and Kubernetes documentation and has not been checked on a
-cluster. `llm` follows a link only when it sits in a directory owned by you or root that no one
-else can write. The file it reaches must be a regular file owned by you or root that only its
-owner can write.
+turn, so a rotated token is picked up.
+
+The token file may use the Kubernetes projected-volume layout: `token` links to `..data/token`,
+`..data` links to a timestamped directory, and the file mode is `0644`. That layout is taken from
+the AWS and Kubernetes documentation and has not been checked on a cluster.
+
+`llm` follows a link only when it sits in a directory owned by you or root that no one else can
+write. The file it
+reaches must be a regular file owned by you or root that only its owner can write.
 
 `llm` does not read the IAM roles for service accounts variables (`AWS_ROLE_ARN`,
 `AWS_WEB_IDENTITY_TOKEN_FILE`) yet. It supplies no web identity role, so a route on an
@@ -173,21 +180,26 @@ bedrock = { region = "eu-central-1" }
 auth = { kind = "aws-process", command = ["aws", "configure", "export-credentials", "--profile", "dev"] }
 ```
 
-`command` is the program and then its arguments; `llm` runs it without a shell. It runs at the
-first `llm infer` on the endpoint's routes, and again only when the keys it printed are about to
-expire; `llm model list` never runs it. The command prints the `credential_process` JSON answer
-(`Version` 1, `AccessKeyId`, `SecretAccessKey`, optionally `SessionToken` and `Expiration`). The
-keys stay in the `llm` process's memory and are written nowhere. A command that fails, prints
-something else, prints more than 64 KiB or runs longer than 60 seconds refuses the turn with exit
-code `2`, naming the endpoint and the program and printing none of the command's output. The
-command's stderr is passed through, so its prompts and warnings reach you.
+`command` is the program and then its arguments. `llm` runs it without a shell, at the first
+`llm infer` on the endpoint's routes, and again only when the keys it printed are about to expire.
+`llm model list` does not run it.
 
-Whoever can write the routes file can make `llm` run a program, so a file that declares an
-`aws-process` endpoint is trusted only as far as a `file:` source is. It must be a regular file
-owned by you or root that neither its group nor others can write, every directory on its path must
-be owned by you or root and not writable by others, and a link on that path is followed only from
-such a directory. Otherwise `llm infer` and `llm model list` both refuse the file with exit code
-`2`, naming it and what is wrong, before anything runs. A file without an `aws-process` endpoint is
+The command prints the `credential_process` JSON answer: `Version` 1, `AccessKeyId`,
+`SecretAccessKey`, optionally `SessionToken` and `Expiration`. The keys stay in the `llm`
+process's memory and are written nowhere. A command that fails, prints something else, prints more
+than 64 KiB or runs longer than 60 seconds refuses the turn with exit code `2`. The message names
+the endpoint and the program and prints none of the command's output. The command's stderr is
+passed through, so its prompts and warnings reach you.
+
+Whoever can write the routes file can make `llm` run a program. A file that declares an
+`aws-process` endpoint is therefore trusted only as far as a `file:` source is:
+
+- it must be a regular file owned by you or root that neither its group nor others can write;
+- every directory on its path must be owned by you or root and not writable by others;
+- a link on that path is followed only from such a directory.
+
+Otherwise `llm infer` and `llm model list` both refuse the file with exit code `2` before anything
+runs, and the message names the file and what is wrong. A file without an `aws-process` endpoint is
 not checked. On Windows the check is not made.
 
 ## Exit codes
@@ -200,10 +212,5 @@ not checked. On Windows the check is not made.
 | `3` | The turn stopped before its end: at the output limit or for another reason the provider named. Its text so far is on stdout and stderr says why; the turn is not a whole answer, so it is not `0`, and nothing failed, so it is not `1` |
 | `130` | Interrupted with Ctrl-C; the text shown so far stays on stdout. A second Ctrl-C ends a turn the first did not stop |
 
-A refusal names the field, route or reference and never prints a secret value or a provider's
+A refusal names the field, route or reference. It does not print a secret value or a provider's
 error text.
-
-## Next
-
-- Every key of the file: [Configure model routes](configure-model-routes.md).
-- What a Bedrock turn reports: [Call a model on Bedrock](call-a-model-on-bedrock.md).

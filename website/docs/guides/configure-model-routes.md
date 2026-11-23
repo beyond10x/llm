@@ -8,13 +8,15 @@ source: crates/llm-models/src/routes.rs, crates/llm-models/tests/routes.rs, crat
 
 # Configure model routes
 
-An `llm.routes/1` document is the short form of a catalog. It names endpoints (where, which wire,
-how to authenticate) and routes (a name for one `<endpoint>/<model-id>`). `llm-models` reads it
-with `llm_models::routes::Routes::parse` and expands it into the same `llm.catalog/1` catalog the
-[routing](../concepts/routing.md) concept describes, so ports are built by the unchanged
-`llm_models::port` and `CatalogModels::build`. `Routes::parse_toml` reads the same document
-written in TOML, as the [llm command](use-the-llm-command.md) does; both forms take the same keys,
-refuse the same mistakes and give the same `digest()`.
+An `llm.routes/1` document is the short form of a catalog. It declares endpoints and routes. An
+endpoint says where, which wire and how to authenticate. A route is a name for one
+`<endpoint>/<model-id>`.
+
+`llm-models` reads the document with `llm_models::routes::Routes::parse` and expands it into the
+same `llm.catalog/1` catalog the [routing](../concepts/routing.md) concept describes. Ports are
+then built by the unchanged `llm_models::port` and `CatalogModels::build`. `Routes::parse_toml`
+reads the same document written in TOML, as the [llm command](use-the-llm-command.md) does. Both
+forms take the same keys, refuse the same mistakes and give the same `digest()`.
 
 ```yaml
 format: llm.routes/1
@@ -48,7 +50,8 @@ routes:
 | `auth.secret` | A reference, never a value: `env:<VARIABLE>`, `file:<absolute path or ~/path>` or `keychain:<service>/<entry>`; required for `bearer` and `api-key`, refused for `anonymous` |
 
 A credentialed endpoint is billed `metered` and an anonymous one `self-hosted`. A
-`subscription-oauth` kind is refused by name: subscription tokens stay a catalog account.
+`subscription-oauth` kind is refused, and the error names it. Subscription tokens stay a catalog
+account.
 
 ## Bedrock endpoints
 
@@ -80,17 +83,19 @@ endpoints:
 | `auth.session_token` | A reference, optional for `aws-keys` |
 | `auth.command` | A list of strings: the program (non-empty), then its arguments; required for `aws-process`, refused otherwise |
 
-An `aws-container` endpoint signs with the credentials the container endpoint serves (EKS Pod
-Identity, ECS task roles). The caller supplies that endpoint's URI and its token file with
-`SecretSources::with_container_credentials`; without them the endpoint gets no resolver, so
+An `aws-container` endpoint signs with the credentials the container endpoint serves, as EKS Pod
+Identity and ECS task roles do. The caller supplies that endpoint's URI and its token file with
+`SecretSources::with_container_credentials`. Without them the endpoint gets no resolver, so
 `Routes::port` refuses its routes as `unauthorized` and every other route still builds. The
 endpoint's name is the provider, account and endpoint of its turns' provenance.
 
 An `aws-web-identity` endpoint signs with the credentials STS `AssumeRoleWithWebIdentity` answers,
-as IAM roles for service accounts (IRSA) use it. The document names only the kind. The caller
-supplies the role ARN (`AWS_ROLE_ARN` on IRSA), a session name and its region's STS endpoint as a
-`WebIdentityRole`, and the token file (`AWS_WEB_IDENTITY_TOKEN_FILE`), with
-`SecretSources::with_web_identity`:
+as IAM roles for service accounts (IRSA) use it. The document declares only the kind. The caller
+passes two values to `SecretSources::with_web_identity`:
+
+- a `WebIdentityRole`: the role ARN (`AWS_ROLE_ARN` on IRSA), a session name and its region's STS
+  endpoint;
+- the token file (`AWS_WEB_IDENTITY_TOKEN_FILE`).
 
 ```rust
 let sources = SecretSources::new().with_web_identity(
@@ -99,28 +104,36 @@ let sources = SecretSources::new().with_web_identity(
 );
 ```
 
-The token file is read as a platform-mounted file, the same way as the container token, at
-each fetch and never when the resolvers or the port are built. Any other `auth` field is refused,
-the four values included, so no secret is a document value. Without them the endpoint gets no
-resolver and `Routes::port` refuses its routes as `unauthorized`. So does a role ARN, session name
-or STS endpoint that `WebIdentityCredentials` refuses. Every other route still builds. The `llm`
-command supplies no web identity role yet, so it refuses such a route.
+The token file is read as a platform-mounted file, the same way as the container token. It is read
+at each fetch, not when the resolvers or the port are built. Any other `auth` field is refused,
+the four values included, so no secret is a document value.
+
+Without the role and the token file the endpoint gets no resolver, and `Routes::port` refuses its
+routes as `unauthorized`. So does a role ARN, session name or STS endpoint that
+`WebIdentityCredentials` refuses. Every other route still builds. The `llm` command supplies no
+web identity role yet, so it refuses such a route.
 
 An `aws-process` endpoint runs its `command` without a shell, as an AWS profile's
-`credential_process` does, and signs with the keys it prints: the `credential_process` JSON
-answer, `Version` 1 with a non-empty `AccessKeyId` and `SecretAccessKey`, optionally a
-`SessionToken` and an RFC 3339 `Expiration`. The keys stay in the calling process's memory. The
-command runs at the first turn, not when the document is parsed, the catalog is built or the
-routes are listed, and again only when the keys are within five minutes of expiring; a turn
-inside that window is answered with the kept keys while one further run refreshes them. Its stdin
-is empty, its stderr is the caller's, its stdout is read up to 64 KiB, and it is killed after 60
-seconds. A non-zero exit, a timeout or an unusable answer refuses the turn as `unauthorized`,
-naming the endpoint and the program and carrying none of the output; nothing is sent.
+`credential_process` does, and signs with the keys it prints. The output is the
+`credential_process` JSON answer: `Version` 1 with a non-empty `AccessKeyId` and
+`SecretAccessKey`, optionally a `SessionToken` and an RFC 3339 `Expiration`. The keys stay in the
+calling process's memory.
 
-Running a command is the caller's decision, not the document's. `Routes::port` builds an
-`aws-process` route only with `llm-models` feature `process` and only from resolvers the caller
-marked with `RouteResolvers::allow_credential_process`; otherwise the route is refused as
-`unauthorized`, no command runs and every other route still builds. The `llm` command allows it.
+| When | What happens |
+| --- | --- |
+| The document is parsed, the catalog is built or the routes are listed | The command does not run |
+| The first turn | The command runs |
+| The keys are within five minutes of expiring | A turn is answered with the kept keys while one further run refreshes them |
+
+The command's stdin is empty, its stderr is the caller's, its stdout is read up to 64 KiB, and it
+is killed after 60 seconds. A non-zero exit, a timeout or an unusable answer refuses the turn as
+`unauthorized`. The error names the endpoint and the program and carries none of the output,
+and nothing is sent.
+
+`Routes::port` builds an `aws-process` route only with `llm-models` feature `process`, and only
+from resolvers the caller marked with `RouteResolvers::allow_credential_process`. Otherwise the
+route is refused as `unauthorized`, no command runs and every other route still builds. The `llm`
+command allows it.
 
 ## Routes and names
 
@@ -129,18 +142,29 @@ A route value splits on its **first** `/` only: `openrouter/anthropic/claude-son
 `<declared endpoint>/<model-id>` resolves directly, so `anthropic/claude-opus-4-1` reaches the `anthropic` endpoint
 without a route entry. Any other name is refused as `invalid-request`.
 
-A route written as a string declares the default capabilities: tools, tool choice, temperature and
-`top_p` allowed, reasoning efforts `low`, `medium` and `high`, a 200000-token context window,
-16384 output tokens, streamed output and no input during output. Capabilities decide which requests
-a route admits, and a Messages endpoint sends `max_output_tokens` as its default `max_tokens`, so a
-model that does not fit the default is written as a mapping with its own `capabilities`, as in a
-catalog: the seven settings, plus `output_streaming` (default `true`) and `input_during_output`
-(default `false`), which may be left out. A route claiming input during output, or output that does
-not stream, is refused by name: no protocol here carries input during output, and every one streams
-its output. `structured_output` and `image_input` may also be declared, and are not declared when
-left out: a route declaring one `false` refuses a turn with an output format or a user image
-before I/O, and selection over the route's catalog rejects it
-([Routing](../concepts/routing.md#structured-output-and-image-input)); an undeclared route's wire
+A route written as a string declares the default capabilities:
+
+| Capability | Default |
+| --- | --- |
+| tools, tool choice, temperature, `top_p` | allowed |
+| reasoning efforts | `low`, `medium` and `high` |
+| context window | 200000 tokens |
+| output tokens | 16384 |
+| `output_streaming` | `true` |
+| `input_during_output` | `false` |
+
+Capabilities decide which requests a route admits, and a Messages endpoint sends
+`max_output_tokens` as its default `max_tokens`. A model that does not fit the default is written
+as a mapping with its own `capabilities`, as in a catalog: the seven settings, plus
+`output_streaming` and `input_during_output`, which may be left out.
+
+A route claiming input during output, or output that does not stream, is refused, and the error
+names the setting. No protocol here carries input during output, and every one streams its output.
+
+`structured_output` and `image_input` may also be declared, and are not declared when left out. A
+route declaring one `false` refuses a turn with an output format or a user image before I/O, and
+selection over the route's catalog rejects it
+([Routing](../concepts/routing.md#structured-output-and-image-input)). An undeclared route's wire
 carries the turn or refuses it before I/O. No built-in default declares either.
 
 ## Aliases and prices
@@ -162,11 +186,12 @@ routes:
 ```
 
 `Routes::cost(name, &observation)` prices one turn by the `llm-cost` rules. The price is the
-route's model's, and the turn is attributed to the model in `observation.upstream_model`, the one
-its provider reported: when that is another model or absent, every line is unknown. A counter the
-turn did not report, a rate the price leaves out and usage that is not final each leave a line
-unknown, and the complete total exists only when no line is. A route without a price has no cost,
-never a cost of 0.
+route's model's. The turn is attributed to the model its provider reported, in
+`observation.upstream_model`. When that is another model or absent, every line is unknown.
+
+A counter the turn did not report, a rate the price leaves out and usage that is not final each
+leave a line unknown. The complete total exists only when no line is unknown. A route without a
+price has no cost, not a cost of 0.
 
 ## Expansion
 
@@ -179,20 +204,27 @@ never a cost of 0.
 ## Credentials
 
 `Routes::resolvers(&SecretSources)` builds one resolver per credentialed endpoint, keyed by the
-endpoint's name, from the existing local adapters: features `environment`, `file` and `keychain` of
-`llm-models` (all off by default) forward to the same features of `llm-credentials`.
-`SecretSources::with_home` supplies the directory `file:~/` expands against; nothing reads `HOME` on
-its own. A `keychain:` reference needs a store injected with `SecretSources::with_keychain`.
+endpoint's name, from the existing local adapters. Features `environment`, `file` and `keychain` of
+`llm-models` are off by default and forward to the same features of `llm-credentials`.
+`SecretSources::with_home` supplies the directory `file:~/` expands against. No code reads `HOME`
+on its own. A `keychain:` reference needs a store injected with `SecretSources::with_keychain`.
+
 Building the resolvers reads nothing and refuses only an over-long endpoint name. An endpoint
-whose source cannot be built gets no resolver: a reference whose feature is off, a keychain
-reference without a store, a `file:~/` reference without a home, or a container token file that
-is not an absolute path. A port for one of its routes is then refused as `unauthorized`, naming
-the endpoint, and every other route still builds.
+whose source cannot be built gets no resolver:
+
+- a reference whose feature is off;
+- a keychain reference without a store;
+- a `file:~/` reference without a home;
+- a container token file that is not an absolute path.
+
+A port for one of its routes is then refused as `unauthorized`, and the error names the endpoint. The
+other routes still build.
 
 There is no ambient fallback. An unset variable or a missing file is refused when the turn
-prepares its credential, before any request is sent, as `unauthorized` and by the endpoint's
-reference: ``secret reference `anthropic` refused: secret reference was not found``. The variable
-name, the path and the value never appear in an error, a `Debug` rendering or the expanded catalog.
+prepares its credential, before any request is sent. The refusal is `unauthorized` and cites the
+endpoint's reference: ``secret reference `anthropic` refused: secret reference was not found``.
+The variable name, the path and the value do not appear in an error, a `Debug` rendering or the
+expanded catalog.
 
 ```rust
 use llm_models::routes::{Routes, SecretSources};
@@ -206,15 +238,24 @@ let every_route = CatalogModels::build(routes.catalog(), &http, &resolvers)?; //
 
 ## Refusals
 
-Parsing performs no I/O and is strict. Each of these is refused as `invalid-request`, naming the
-field, endpoint or route and never echoing the refused value: an unknown field at any level, a
-repeated key, a `format` other than `llm.routes/1`, an unknown protocol or authentication kind, a
-secret without a known source prefix, an `api-key` endpoint without `header`, an `anonymous`
-endpoint with a `secret`, a route to an undeclared endpoint, a Bedrock endpoint without a
-Region or with two credential sources, an alias claimed twice, and an invalid price. A malformed
-document is refused by its line and column, and in TOML an unknown key also by its name. The `llm.routes` ESS domain
-(`spec/domains/routes.yaml`) holds these rules, and `contracts/routes/scenarios/` checks them
-against the real crate on every `task check`.
+Parsing performs no I/O and is strict. Each of these is refused as `invalid-request`. The error
+names the field, endpoint or route and does not echo the refused value.
+
+- an unknown field at any level
+- a repeated key
+- a `format` other than `llm.routes/1`
+- an unknown protocol or authentication kind
+- a secret without a known source prefix
+- an `api-key` endpoint without `header`
+- an `anonymous` endpoint with a `secret`
+- a route to an undeclared endpoint
+- a Bedrock endpoint without a Region or with two credential sources
+- an alias claimed twice
+- an invalid price
+
+A malformed document is refused by its line and column, and in TOML an unknown key also by its
+name. The `llm.routes` ESS domain (`spec/domains/routes.yaml`) holds these rules, and
+`contracts/routes/scenarios/` checks them against the real crate on every `task check`.
 
 A document over 2 MiB, one whose YAML aliases would expand it past its bound while it is read, and
 one whose expansion exceeds the catalog's own bound (several thousand routes) are refused as

@@ -11,19 +11,24 @@ source: crates/llm-core (turn.rs, error.rs, item.rs), docs/contract-v1.md
 `llm-core` defines what every caller and every adapter agrees on: a request, a stream of events, an
 outcome, a failure. It performs no I/O and depends on no consumer.
 
-The persisted envelopes are `llm.turn/3` (`llm.turn/4` for a turn carrying thinking, parallel-tool-call or advisory controls) and `llm.outcome/4`; publishing them as a released contract
-with a compatibility policy is planned. The contract supports stateless text and tool turns, and
-images in a user turn: `Item::UserImage` holds inline PNG, JPEG, GIF or WebP bytes (at most 5 MiB)
-or an `https` URL, every wire sends it in the user message beside its text or refuses it before
-I/O, and no image byte or URL reaches an error message or a `Debug` form. Audio input, images
-anywhere but a user turn, vendor-side tools, provider thread management and unrecognized request
-settings are outside this version and adapters must refuse them. Every field a client request
-carries is carried, translated by a written table, reported as an omitted advisory hint, or refused
-by its path; the rules are the design's "Client request fields".
+The persisted envelopes are `llm.turn/3` and `llm.outcome/4`. A turn carrying thinking,
+parallel-tool-call or advisory controls is `llm.turn/4`. Publishing them as a released contract
+with a compatibility policy is planned.
+
+The contract supports stateless text and tool turns, and images in a user turn:
+
+- `Item::UserImage` holds inline PNG, JPEG, GIF or WebP bytes (at most 5 MiB) or an `https` URL.
+- Every wire sends the image in the user message beside its text, or refuses it before I/O.
+- No image byte or URL reaches an error message or a `Debug` form.
+
+Audio input, images anywhere but a user turn, vendor-side tools, provider thread management and
+unrecognized request settings are outside this version, and adapters must refuse them. Every field
+a client request carries is carried, translated by a written table, reported as an omitted advisory
+hint, or refused by its path. The rules are the design's "Client request fields".
 
 `Item` and `Capabilities` may grow, so both are `#[non_exhaustive]`. A caller's `match` on `Item`
-ends in a wildcard arm, as every adapter's does; an adapter's arm refuses a kind it does not carry
-by its `Item::kind` name, and never drops or sends it. `Capabilities` is built with
+ends in a wildcard arm, as every adapter's does. An adapter's arm refuses a kind it does not carry
+by its `Item::kind` name, and does not drop or send it. `Capabilities` is built with
 `Capabilities::text` and its `with_*` setters.
 
 ## Streamed events
@@ -33,17 +38,20 @@ tool call, and fragments of that call's arguments. A tool call is announced once
 identifier and name the provider sent, before any of its argument fragments. The finished
 `TurnOutcome` then carries the complete items, the stop reason and the observation.
 
-Every event is final: nothing later in the turn retracts or replaces it, so a caller can speak or
+Every event is final: no later event in the turn retracts or replaces it, so a caller can speak or
 commit a text delta as it arrives. On a successful turn each assistant message carries exactly the
-text deltas shown for it. Where a server's own final text differed, the shown text is kept and a
-warning with the fixed code `shown-text-kept` says so before the turn is returned. Where shown
-text could belong to more than one message, no message is overwritten: the server's messages are
-kept as sent and `shown-text-unpaired` says so.
+text deltas shown for it.
 
-Text deltas continue one message until a message boundary, which a decoder sends before the first
-text of a later message; it carries nothing and is not output. An item that arrives whole with no
-delta to show it, such as a Messages redacted thinking block, is shown as an opaque item in its
-place. A gateway relaying the stream uses both to put each piece where the finished turn has it.
+| Case | What the turn carries | Warning code |
+| --- | --- | --- |
+| The server's own final text differed from the shown text | the shown text | `shown-text-kept`, before the turn is returned |
+| Shown text could belong to more than one message | the server's messages as sent; no message is overwritten | `shown-text-unpaired` |
+
+Text deltas continue one message until a message boundary. A decoder sends the boundary before the
+first text of a later message. The boundary carries no text and is not output. An item that arrives
+whole with no delta to show it, such as a Messages redacted thinking block, is shown as an opaque
+item in its place. A gateway relaying the stream uses both to put each piece where the finished
+turn has it.
 
 ## One attempt, one port
 
@@ -60,13 +68,13 @@ sink and a cancellation token. Its future borrows those values.
 
 An `Item` is user or assistant text, a tool call, its successful or failed result, or an opaque
 provider item. A tool definition contains only a name, a description and a JSON Schema. It confers
-no execution permission: LLM never executes a tool.
+no execution permission: LLM does not execute tools.
 
 ## Opaque state is bound to six coordinates
 
 Opaque items carry protocol, provider, account, endpoint, model and binding revision. The contract
-requires every adapter to check **all six** against the selected binding before sending —
-including same-protocol cross-model and cross-account requests. There is no implicit exception; a
+requires every adapter to check **all six** against the selected binding before sending. The check
+covers same-protocol cross-model and cross-account requests too. There is no implicit exception. A
 narrower documented exception would need a versioned contract change.
 
 :::note[Enforced by three adapters, against fixtures]
@@ -74,20 +82,20 @@ The Responses, Messages and Chat Completions adapters implement this check and e
 scenarios that assert it. Those scenarios run against fixtures and in-process fakes, so the
 guarantee is verified against what the contract says a wire looks like, not against a live
 provider. `llm-core` validates and refuses foreign binding coordinates on the values an adapter
-hands it; it cannot recover a coordinate an adapter discarded.
+hands it. It cannot recover a coordinate an adapter discarded.
 :::
 
 ### State that arrives without an origin
 
 A request that arrives at an ingress surface, such as a Messages or Responses body a client sends,
-names no binding. Reasoning state inside it therefore has no provable origin. Ingress decoders hold
-it as `Item::UnattributedOpaque`: the payload as a JSON value and the protocol it was read from,
-and nothing else.
+declares no binding. Reasoning state inside it therefore has no provable origin. Ingress decoders
+keep it as `Item::UnattributedOpaque`: the payload as a JSON value and the protocol it was read
+from, and nothing else.
 
 That item cannot be sent. Every egress path refuses it with the fixed message
 `Item::UNATTRIBUTED_REFUSAL` until the caller binds it with `TurnRequest::bind_unattributed`, which
-also refuses a target of a different protocol. No adapter makes that decision for the caller, and
-ingress never stamps the binding that read the state onto it.
+also refuses a target of a different protocol. No adapter makes that decision for the caller.
+Ingress does not stamp the binding that read the state onto it.
 
 The binding revision hashes the complete validated single-binding declaration, including the
 endpoint URL, upstream model, auth reference and capabilities. Repointing an existing id therefore
@@ -98,27 +106,27 @@ same reference does not invalidate a continuation.
 
 Absent sampling fields remain absent. Unsupported settings refuse before any network I/O.
 Identifiers and individual fields are bounded, and so is the whole serialized request. The request
-model must match the selected target, and tool choices must name published tools. A model call to
-a tool the turn did not publish refuses the turn, unless the caller set
-`controls.return_unpublished_calls`; then it is returned as a call for the caller to refuse. A
+model must match the selected target, and tool choices must name published tools.
+
+A model call to a tool the turn did not publish refuses the turn, unless the caller set
+`controls.return_unpublished_calls`. With it set, the call is returned for the caller to refuse. A
 `controls.output_format`, a JSON Schema the answer is held to, is sent by every wire or refused
-before any I/O; llm does not check the answer against it.
+before any I/O. llm does not check the answer against it.
 
 Core validates structure and declared capabilities. It is not a tokenizer, and it cannot check
-whether an operator's capability declaration is true. Context-window admission is the routing and
-token-accounting concern; request byte limits do not prove it.
+whether an operator's capability declaration is true. Context-window admission belongs to routing
+and token accounting. Request byte limits do not prove it.
 
 ## Evidence, not inference
 
 Every successful outcome carries a `TurnObservation` pinned to its selected immutable binding. The
-upstream model and response id are **independently optional** provider observations; the configured
-model and the caller's alias cannot fill absent evidence.
+upstream model and response id are **independently optional** provider observations. The
+configured model and the caller's alias cannot fill absent evidence.
 
-`final_usage` says the reported counters are terminal — not that every count is known, and not that
-an invoice was authenticated. Failures may retain the last valid snapshot, which may be partial or
-final. Validation refuses foreign binding coordinates, contradictory usage, and upstream evidence
-attached to a `not-sent` failure. The core validates these values but cannot recover a fact an
-adapter discarded.
+`final_usage` says the reported counters are terminal. It does not say that every count is known,
+or that an invoice was authenticated. Failures may retain the last valid snapshot, which may be
+partial or final. Validation refuses foreign binding coordinates, contradictory usage, and upstream
+evidence attached to a `not-sent` failure.
 
 ## Failures say what they know
 
@@ -134,14 +142,14 @@ error kind:
 | `accepted` | The upstream accepted the request |
 
 A transport failure after dispatch is `unknown`, not proof that a retry is free. Error diagnostics
-never include authorization headers, request bodies or arbitrary upstream error text.
+do not include authorization headers, request bodies or arbitrary upstream error text.
 
 ## Whether a failure may be retried
 
 Retry is a separate fact from dispatch. The producer of a failure marks it `retriable`, and
 `Error::may_retry` is true only when that mark is set **and** the code is `transport`,
 `rate-limited`, `unavailable` or `protocol`. `unauthorized`, `refused`, `invalid-request`,
-`unsupported`, `too-large`, `cancelled` and `deadline` failures are never retried, whatever the mark
+`unsupported`, `too-large`, `cancelled` and `deadline` failures are not retried, whatever the mark
 says.
 
 The HTTP transport marks these as retriable:
@@ -155,19 +163,20 @@ The HTTP transport marks these as retriable:
 | A stream that ends inside an event | `unknown` |
 
 Any error status whose answer carries `x-should-retry: false` is not retriable, whatever the table
-says; the header never makes another status retriable.
+says. The header does not make another status retriable.
 
-A refusal may also name its cause in `Error::refusal`, read only from an exact code in the far
-side's structured error and never from its prose. Today the one cause is
+A refusal may also name its cause in `Error::refusal`. The cause is read only from an exact code in
+the far side's structured error, not from its prose. Today the one cause is
 `context-length-exceeded`: a Responses or Chat Completions `400`, or a Responses stream failure,
-whose `error.code` is `context_length_exceeded`. Its message names the cause in fixed text; naming it
-changes neither the code, the dispatch nor the retry class, and such a refusal is never retried. Messages states an
-over-long prompt only in prose, so its refusal carries no cause.
+whose `error.code` is `context_length_exceeded`. Its message states the cause in fixed text.
+Naming it changes neither the code, the dispatch nor the retry class, and such a refusal is not
+retried.
 
-A server's `Retry-After` is kept as a hint (`retry_after_ms`); routing honours it, capped, only for
-a failure that is already retriable. A client never retries by itself: one call is one attempt, and
-[routing](routing.md#same-target-retry) decides whether another follows. Because a retried attempt
-may have been billed, it stays in the run's record with its own dispatch evidence.
+Messages states an over-long prompt only in prose, so its refusal carries no cause.
+
+A server's `Retry-After` is kept as a hint (`retry_after_ms`).
+[Routing](routing.md#same-target-retry) honours it, capped, only for a failure that is already
+retriable. A retried attempt may have been billed, so it stays in the run's record with its own dispatch evidence.
 
 The transport bounds each attempt: a connection must open within 15 seconds
 (`llm_http::CONNECT_TIMEOUT`), and a stream that sends nothing for 180 seconds fails
