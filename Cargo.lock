@@ -1400,6 +1400,7 @@ dependencies = [
  "llm-credentials",
  "llm-http",
  "llm-providers",
+ "llm-responses",
  "serde",
  "serde_json",
  "tokio",

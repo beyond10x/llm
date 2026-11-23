@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-23T11:20:59Z",
+  "actor": "human:timo",
+  "artifact": "story:relay-final-only-message-pairing",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo run --locked -p llm-conformance -- check with ess 0.87.0 (exit 0, 1049 of 1049 passed three times)"
+  }
+}

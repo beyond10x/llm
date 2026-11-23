@@ -16,6 +16,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - The Gate skips building and testing for a pull request that changes only planning files or Markdown outside `website/`
 - Test builds carry no debug information and build at `opt-level = 1` (`.cargo/config.toml`): slowest test 55 s to 2.7 s
 
+### Fixed
+
+- Responses and Messages relays send a message no delta showed before a streamed one instead of refusing it (`ShownText`)
+
 ## [0.25.0] - 2026-11-23
 
 ### Added

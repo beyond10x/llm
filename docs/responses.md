@@ -489,6 +489,11 @@ comes with `close` or `fail` when nothing was streamed. `close` ends with exactl
 decoder reads back as the same class of failure, and never carries the error's own message. A
 refused `close` sends nothing and leaves the stream open for `fail`.
 
+`close` finishes each streamed message as the turn's message carrying exactly its text, paired as
+`llm_core::ShownText` pairs them, and never sends that text again. A message no delta showed (an
+upstream that sent it only in its final object) is sent whole once, in its place in the turn,
+before or after a streamed one, so the relayed answer reads back as the upstream turn.
+
 No wire field carries the gateway's retry decision, so a failure relayed inside a stream reads
 back by the receiving decoder's rules. With nothing streamed first, `server_is_overloaded`,
 `server_error` and `rate_limit_exceeded` read back retriable, whatever the gateway decided. That

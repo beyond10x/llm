@@ -1044,3 +1044,148 @@ fn refusal_text_is_refused_by_name_and_never_dropped() {
         )
     );
 }
+
+// ---------------------------------------------------------------------------------------------
+// A final-only message wherever the turn places it (review of 0.24.0, finding 3).
+// ---------------------------------------------------------------------------------------------
+
+/// An upstream assistant message, as a terminal `output` carries it.
+fn upstream_message(item_id: &str, text: &str) -> Value {
+    json!({"type": "message", "id": item_id, "role": "assistant",
+        "content": [{"type": "output_text", "text": text}]})
+}
+
+fn upstream_delta(item_id: &str, output_index: u64, text: &str) -> Value {
+    json!({"type": "response.output_text.delta", "item_id": item_id,
+        "output_index": output_index, "content_index": 0, "delta": text})
+}
+
+fn shown(text: &str) -> StreamEvent {
+    StreamEvent::TextDelta {
+        text: text.to_owned(),
+    }
+}
+
+/// One upstream turn of two messages, "preamble" then "answer", and the events its relayed answer
+/// must show: the upstream's own events, then each message no delta showed, once, after them.
+type FinalOnlyCase = (&'static str, Vec<Value>, Vec<StreamEvent>);
+
+/// The four ways the two messages can reach a relay: which of them a delta showed. The upstream
+/// names the relay's own response id, so the relayed turn compares equal to the upstream one.
+fn final_only_cases() -> [FinalOnlyCase; 4] {
+    let created = json!({"type": "response.created",
+        "response": {"id": "resp_gateway_1", "status": "in_progress", "output": []}});
+    let completed = json!({"type": "response.completed", "response": {
+        "id": "resp_gateway_1", "status": "completed", "model": "example/Small-Model",
+        "output": [upstream_message("msg_a", "preamble"), upstream_message("msg_b", "answer")],
+        "usage": {"input_tokens": 20, "output_tokens": 9}}});
+    let boundary = StreamEvent::MessageBoundary {};
+    [
+        (
+            "final-only, then streamed",
+            vec![
+                created.clone(),
+                upstream_delta("msg_b", 1, "answer"),
+                completed.clone(),
+            ],
+            vec![shown("answer"), boundary.clone(), shown("preamble")],
+        ),
+        (
+            "streamed, then final-only",
+            vec![
+                created.clone(),
+                upstream_delta("msg_a", 0, "pre"),
+                upstream_delta("msg_a", 0, "amble"),
+                completed.clone(),
+            ],
+            vec![
+                shown("pre"),
+                shown("amble"),
+                boundary.clone(),
+                shown("answer"),
+            ],
+        ),
+        (
+            "every message streamed",
+            vec![
+                created.clone(),
+                upstream_delta("msg_a", 0, "preamble"),
+                upstream_delta("msg_b", 1, "answer"),
+                completed.clone(),
+            ],
+            vec![shown("preamble"), boundary.clone(), shown("answer")],
+        ),
+        (
+            "every message final-only",
+            vec![created, completed],
+            vec![shown("preamble"), boundary, shown("answer")],
+        ),
+    ]
+}
+
+/// The decoder accepts a turn whose messages a delta showed in any combination, and the relay
+/// closes on every such turn: the relayed answer reads back as the upstream turn, its caller is
+/// shown the streamed text once and exactly as the upstream showed it, and each message no delta
+/// showed once after it. Before, the relay paired shown text with the turn's first message and
+/// refused "final-only, then streamed" with a protocol error.
+#[test]
+fn a_final_only_message_anywhere_in_the_turn_is_relayed_once_and_reads_back_as_the_upstream_turn() {
+    for (case, upstream, relayed_events) in final_only_cases() {
+        let decoded = decode_stream(&binding(), &upstream);
+        let turn = decoded
+            .result
+            .unwrap_or_else(|error| panic!("{case}: the upstream turn decodes: {error:?}"));
+        assert_eq!(
+            turn.items,
+            [Item::assistant("preamble"), Item::assistant("answer")],
+            "{case}"
+        );
+        let payloads = encode(&decoded.events, &turn).unwrap_or_else(|error| {
+            panic!("{case}: the relay refused a turn its decoder accepted: {error:?}")
+        });
+        assert_well_formed(&payloads);
+        let relayed = decode_stream(&binding(), &payloads);
+        assert_eq!(
+            relayed.result.expect("the relayed answer decodes"),
+            turn,
+            "{case}"
+        );
+        assert!(
+            relayed.events.starts_with(&decoded.events),
+            "{case}: the relay changed what the upstream showed: {:?}",
+            relayed.events
+        );
+        assert_eq!(relayed.events, relayed_events, "{case}");
+    }
+}
+
+/// Pairing by text never lets shown text go unaccounted for: text the outcome carries no message
+/// for, or carries only as part of another message, is still refused wherever the messages stand.
+#[test]
+fn shown_text_no_message_of_the_outcome_carries_is_refused_wherever_the_messages_stand() {
+    let cases = [
+        (
+            "a final-only message, then other text",
+            vec!["preamble", "answer!"],
+        ),
+        (
+            "other text, then a final-only message",
+            vec!["answer!", "preamble"],
+        ),
+        (
+            "the shown text split across two messages",
+            vec!["ans", "wer"],
+        ),
+    ];
+    for (case, messages) in cases {
+        let refusal = encode(
+            &[shown("answer")],
+            &outcome(
+                StopReason::EndTurn,
+                messages.into_iter().map(Item::assistant).collect(),
+            ),
+        )
+        .expect_err(case);
+        assert_eq!(refusal.code, ErrorCode::Protocol, "{case}");
+    }
+}
