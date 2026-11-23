@@ -6,6 +6,15 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `llm infer` exits `3` and says why on stderr when a turn stops before its end, as at the output limit
+
+### Fixed
+
+- `llm-responses`: a reported cache-write count, `0` included, is read from `cache_write_tokens` or the encoder's extension
+- A returned turn with more than one tool call is refused as `Protocol` when `parallel_tool_calls` is `false`
+
 ## [0.25.0] - 2026-11-23
 
 ### Added

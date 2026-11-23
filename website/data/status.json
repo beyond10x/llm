@@ -255,6 +255,12 @@
       "status": "shipped"
     },
     {
+      "area": "Protocols",
+      "detail": "Responses reads a cache-write count, 0 included, from cache_write_tokens or this crate's ingress extension, so a priced llm infer route on Responses completes its cost when every counter is reported; a turn whose parallel_tool_calls is false that returns more than one call is refused as Protocol; llm infer keeps the text of a turn that stopped before its end on stdout, says on stderr why it stopped and exits 3.",
+      "label": "A returned turn reports its cache writes, its call count and an early stop",
+      "status": "shipped"
+    },
+    {
       "area": "Amazon Bedrock",
       "detail": "llm-bedrock signs each request with a signer written on ring, checked against the AWS test suite vendored from aws-c-auth (header signing only); keys come from StaticCredentials through an injected resolver or from ContainerCredentials at the container credentials endpoint. No AWS SDK crate and no aws-lc is a dependency. EKS Pod Identity is described from AWS documentation and unverified.",
       "label": "Bedrock requests are signed with Signature Version 4",
