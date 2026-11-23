@@ -712,8 +712,8 @@ fn encode_usage(usage: &Usage) -> Value {
         input_details.insert("cached_tokens".to_owned(), json!(value));
     }
     if let Some(value) = usage.cache_creation_input_tokens {
-        // This wire has no cache-write counter. A named extension keeps the reported count
-        // readable; dropping it would delete an observation the upstream actually made.
+        // Written under this crate's extension name, as the Chat encoder writes it; the decoder
+        // reads it back as well as the provider's `cache_write_tokens` (`stream::usage`).
         input_details.insert("cache_creation_input_tokens".to_owned(), json!(value));
     }
     if !input_details.is_empty() {
