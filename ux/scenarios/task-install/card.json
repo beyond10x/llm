@@ -1,0 +1,13 @@
+{
+  "kind": "task",
+  "goal": "Find the command that gets the source and builds the workspace.",
+  "persona": "A Rust developer who has just heard of llm and wants to try it.",
+  "card": "anchor",
+  "start": "/llm/",
+  "cues": [
+    { "word": "getting started", "weight": 3 },
+    { "word": "install", "weight": 3 },
+    { "word": "started", "weight": 2 },
+    { "word": "build", "weight": 1 }
+  ]
+}

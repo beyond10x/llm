@@ -1,0 +1,13 @@
+{
+  "kind": "task",
+  "goal": "Find the exit codes of the llm command.",
+  "persona": "An operator who wraps `llm infer` in a shell script and must branch on its exit status.",
+  "card": "anchor",
+  "start": "/llm/",
+  "cues": [
+    { "word": "exit codes", "weight": 3 },
+    { "word": "llm command", "weight": 3 },
+    { "word": "command", "weight": 2 }
+  ],
+  "search": "exit codes"
+}

@@ -17,6 +17,35 @@ tasks:
     desc: Regenerate the crate reference and the status page
     cmds:
       - cargo run --locked -p llm-docs -- generate
+  ux-install:
+    desc: Install the docs UX harness in ux/ (Playwright, axe-core, TypeScript) and its Chromium
+    dir: ux
+    cmds:
+      - npm ci --no-audit --no-fund
+      - npx playwright install chromium
+  ux-check:
+    desc: The every-merge docs UX gate over website/build served locally (typecheck, findings rule, L1, L2, L3, ratchet); not part of task check
+    dir: ux
+    cmds:
+      - npx tsc --noEmit
+      - node cli.ts findings
+      - npx playwright test --workers=2
+      - node cli.ts ratchet
+  ux-ratchet:
+    desc: The ratchet over the last ux-check results; `task ux-ratchet -- --update [--decision <id>]` takes measured values into ux/baseline.json
+    dir: ux
+    cmds:
+      - node cli.ts ratchet {{.CLI_ARGS}}
+  ux-scenarios:
+    desc: Add a page scenario under ux/scenarios for every page in website/build/sitemap.xml that has none
+    dir: ux
+    cmds:
+      - node cli.ts scenarios
+  ux-round:
+    desc: The Measure step of a docs UX round; writes ux/rounds/R-nn/ and ux/rounds/trend.md
+    dir: ux
+    cmds:
+      - node cli.ts round {{.CLI_ARGS}}
   conformance:
     desc: Check ESS projection drift and run behavioral conformance three times
     cmds:

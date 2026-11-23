@@ -1,0 +1,913 @@
+{
+  "id": "R-01",
+  "commit": "f0100980",
+  "date": "2026-11-23",
+  "adapter": "llm docs site",
+  "cards": {
+    "anchors": [
+      "task-exit-codes",
+      "task-install"
+    ],
+    "rotating": "task-bedrock-endpoint",
+    "all_tasks_run": [
+      "task-bedrock-endpoint",
+      "task-exit-codes",
+      "task-install",
+      "task-limitations",
+      "task-retry"
+    ]
+  },
+  "gates": {
+    "gate1": {
+      "checked": 104,
+      "pass": 104,
+      "fail": 0,
+      "waived": 0
+    },
+    "gate2": {
+      "checked": 104,
+      "pass": 0,
+      "fail": 104,
+      "waived": 0
+    },
+    "gate5": {
+      "checked": 104,
+      "pass": 8,
+      "fail": 96,
+      "waived": 0
+    },
+    "gate4": {
+      "checked": 5,
+      "pass": 5,
+      "fail": 0,
+      "waived": 0
+    },
+    "gate3": "n/a: a docs site has no completion control",
+    "gate6": "n/a: no guidance cue, no L0"
+  },
+  "totals": {
+    "layout.page_scroll": 0,
+    "layout.overflow": 0,
+    "always_visible.misses": 362,
+    "keyboard.misses": 52,
+    "axe.critical": 0,
+    "axe.serious": 272,
+    "axe.moderate": 2,
+    "axe.minor": 0,
+    "layout_shift.after_ready_max": 0.0013,
+    "layout_shift.load_max": 0.0013
+  },
+  "measured": {
+    "page-docs-concepts-accounting": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 0,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-concepts-credentials": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-concepts-neutral-boundary": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-concepts-overview": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 8,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-concepts-protocols": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 24,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-concepts-routing": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 8,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-getting-started": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 32,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-call-a-local-endpoint": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 12,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-call-a-model-on-bedrock": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 20,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-call-a-model-with-one-forced-tool": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 0,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-configure-model-routes": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 8,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-explain-a-route": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0.0006,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-interrupt-a-turn-with-new-input": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-price-recorded-usage": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 12,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-resolve-a-local-secret": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-run-a-local-turn": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0.0013,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-run-the-checks": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 32,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-use-llm-from-a-synchronous-loop": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 0,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-guides-use-the-llm-command": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 8,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-reference-crates": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 1,
+      "axe.minor": 0
+    },
+    "page-docs-reference-formats": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 1,
+      "axe.minor": 0
+    },
+    "page-docs-status-limitations": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 4,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-status-roadmap": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 12,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs-status": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 8,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-docs": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 14,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 52,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "page-home": {
+      "layout.page_scroll": 0,
+      "layout.overflow": 0,
+      "always_visible.misses": 12,
+      "keyboard.misses": 2,
+      "layout_shift.after_ready": 0,
+      "axe.critical": 0,
+      "axe.serious": 0,
+      "axe.moderate": 0,
+      "axe.minor": 0
+    },
+    "task-bedrock-endpoint": {
+      "screen_only.actions": 4,
+      "screen_only.looks": 6,
+      "screen_only.steps": 5,
+      "screen_only.unreached": 0
+    },
+    "task-exit-codes": {
+      "screen_only.actions": 9,
+      "screen_only.looks": 6,
+      "screen_only.steps": 10,
+      "screen_only.unreached": 0
+    },
+    "task-install": {
+      "screen_only.actions": 8,
+      "screen_only.looks": 5,
+      "screen_only.steps": 9,
+      "screen_only.unreached": 0
+    },
+    "task-limitations": {
+      "screen_only.actions": 8,
+      "screen_only.looks": 4,
+      "screen_only.steps": 9,
+      "screen_only.unreached": 0
+    },
+    "task-retry": {
+      "screen_only.actions": 9,
+      "screen_only.looks": 6,
+      "screen_only.steps": 10,
+      "screen_only.unreached": 0
+    }
+  },
+  "measured_only": [
+    {
+      "viewport": "1280x800",
+      "checked": 52,
+      "page_scroll": 0,
+      "overflow": 0,
+      "always_visible_misses": 154,
+      "axe_serious_critical": 138,
+      "scroll_containers": 40
+    },
+    {
+      "viewport": "1024x768",
+      "checked": 52,
+      "page_scroll": 0,
+      "overflow": 0,
+      "always_visible_misses": 154,
+      "axe_serious_critical": 134,
+      "scroll_containers": 66
+    },
+    {
+      "viewport": "768x1024",
+      "checked": 52,
+      "page_scroll": 0,
+      "overflow": 0,
+      "always_visible_misses": 208,
+      "axe_serious_critical": 136,
+      "scroll_containers": 38
+    }
+  ],
+  "scroll_containers_gating": 142,
+  "scroll_container_pages": [
+    {
+      "path": "/llm/docs/guides/use-the-llm-command",
+      "count": 18,
+      "widest": "1298 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/getting-started",
+      "count": 16,
+      "widest": "658 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/resolve-a-local-secret",
+      "count": 14,
+      "widest": "818 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/configure-model-routes",
+      "count": 12,
+      "widest": "754 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/call-a-local-endpoint",
+      "count": 10,
+      "widest": "1082 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/call-a-model-with-one-forced-tool",
+      "count": 10,
+      "widest": "786 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/interrupt-a-turn-with-new-input",
+      "count": 10,
+      "widest": "834 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/call-a-model-on-bedrock",
+      "count": 6,
+      "widest": "810 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/run-the-checks",
+      "count": 6,
+      "widest": "642 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/use-llm-from-a-synchronous-loop",
+      "count": 6,
+      "widest": "818 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/concepts/credentials",
+      "count": 4,
+      "widest": "698 in 358 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/concepts/protocols",
+      "count": 4,
+      "widest": "1052 in 358 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/concepts/routing",
+      "count": 4,
+      "widest": "650 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/explain-a-route",
+      "count": 4,
+      "widest": "778 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/price-recorded-usage",
+      "count": 4,
+      "widest": "450 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/guides/run-a-local-turn",
+      "count": 4,
+      "widest": "418 in 356 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/reference/crates",
+      "count": 4,
+      "widest": "613 in 358 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/reference/formats",
+      "count": 4,
+      "widest": "426 in 358 at 390x844",
+      "last": null
+    },
+    {
+      "path": "/llm/docs/concepts/accounting",
+      "count": 2,
+      "widest": "401 in 358 at 390x844",
+      "last": null
+    }
+  ],
+  "failure_kinds": [
+    {
+      "kind": "gate2 search:missing",
+      "count": 104,
+      "waived_by": [],
+      "pages": 26
+    },
+    {
+      "kind": "gate2 sidebar:clipped@bottom",
+      "count": 50,
+      "waived_by": [],
+      "pages": 25
+    },
+    {
+      "kind": "gate5 keyboard:tab-reaches-search",
+      "count": 52,
+      "waived_by": [],
+      "pages": 26
+    },
+    {
+      "kind": "gate2 theme toggle:missing",
+      "count": 52,
+      "waived_by": [],
+      "pages": 26
+    },
+    {
+      "kind": "gate5 axe:link-in-text-block",
+      "count": 88,
+      "waived_by": [],
+      "pages": 22
+    }
+  ],
+  "worst": [
+    {
+      "scenario": "page-docs",
+      "path": "/llm/docs",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "failures": [
+        "gate2|/llm/docs|1440x900|dark|search:missing",
+        "gate2|/llm/docs|1440x900|dark|sidebar:clipped@bottom",
+        "gate5|/llm/docs|1440x900|dark|axe:link-in-text-block",
+        "gate5|/llm/docs|1440x900|dark|keyboard:tab-reaches-search"
+      ],
+      "shot": "shots/fail-page-docs-1440x900-dark.jpg"
+    },
+    {
+      "scenario": "page-docs",
+      "path": "/llm/docs",
+      "viewport": "390x844",
+      "theme": "dark",
+      "failures": [
+        "gate2|/llm/docs|390x844|dark|search:missing",
+        "gate2|/llm/docs|390x844|dark|theme toggle:missing",
+        "gate5|/llm/docs|390x844|dark|axe:link-in-text-block",
+        "gate5|/llm/docs|390x844|dark|keyboard:tab-reaches-search"
+      ],
+      "shot": "shots/fail-page-docs-390x844-dark.jpg"
+    },
+    {
+      "scenario": "page-docs-getting-started",
+      "path": "/llm/docs/getting-started",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "failures": [
+        "gate2|/llm/docs/getting-started|1440x900|dark|search:missing",
+        "gate2|/llm/docs/getting-started|1440x900|dark|sidebar:clipped@bottom",
+        "gate5|/llm/docs/getting-started|1440x900|dark|axe:link-in-text-block",
+        "gate5|/llm/docs/getting-started|1440x900|dark|keyboard:tab-reaches-search"
+      ],
+      "shot": "shots/fail-page-docs-getting-started-1440x900-dark.jpg"
+    },
+    {
+      "scenario": "page-docs-getting-started",
+      "path": "/llm/docs/getting-started",
+      "viewport": "390x844",
+      "theme": "dark",
+      "failures": [
+        "gate2|/llm/docs/getting-started|390x844|dark|search:missing",
+        "gate2|/llm/docs/getting-started|390x844|dark|theme toggle:missing",
+        "gate5|/llm/docs/getting-started|390x844|dark|axe:link-in-text-block",
+        "gate5|/llm/docs/getting-started|390x844|dark|keyboard:tab-reaches-search"
+      ],
+      "shot": "shots/fail-page-docs-getting-started-390x844-dark.jpg"
+    },
+    {
+      "scenario": "page-docs-guides-run-the-checks",
+      "path": "/llm/docs/guides/run-the-checks",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "failures": [
+        "gate2|/llm/docs/guides/run-the-checks|1440x900|dark|search:missing",
+        "gate2|/llm/docs/guides/run-the-checks|1440x900|dark|sidebar:clipped@bottom",
+        "gate5|/llm/docs/guides/run-the-checks|1440x900|dark|axe:link-in-text-block",
+        "gate5|/llm/docs/guides/run-the-checks|1440x900|dark|keyboard:tab-reaches-search"
+      ],
+      "shot": "shots/fail-page-docs-guides-run-the-checks-1440x900-dark.jpg"
+    },
+    {
+      "scenario": "page-docs-guides-run-the-checks",
+      "path": "/llm/docs/guides/run-the-checks",
+      "viewport": "390x844",
+      "theme": "dark",
+      "failures": [
+        "gate2|/llm/docs/guides/run-the-checks|390x844|dark|search:missing",
+        "gate2|/llm/docs/guides/run-the-checks|390x844|dark|theme toggle:missing",
+        "gate5|/llm/docs/guides/run-the-checks|390x844|dark|axe:link-in-text-block",
+        "gate5|/llm/docs/guides/run-the-checks|390x844|dark|keyboard:tab-reaches-search"
+      ],
+      "shot": "shots/fail-page-docs-guides-run-the-checks-390x844-dark.jpg"
+    },
+    {
+      "scenario": "page-docs-concepts-protocols",
+      "path": "/llm/docs/concepts/protocols",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "failures": [
+        "gate2|/llm/docs/concepts/protocols|1440x900|dark|search:missing",
+        "gate2|/llm/docs/concepts/protocols|1440x900|dark|sidebar:clipped@bottom",
+        "gate5|/llm/docs/concepts/protocols|1440x900|dark|axe:link-in-text-block",
+        "gate5|/llm/docs/concepts/protocols|1440x900|dark|keyboard:tab-reaches-search"
+      ],
+      "shot": "shots/fail-page-docs-concepts-protocols-1440x900-dark.jpg"
+    },
+    {
+      "scenario": "page-docs-concepts-protocols",
+      "path": "/llm/docs/concepts/protocols",
+      "viewport": "390x844",
+      "theme": "dark",
+      "failures": [
+        "gate2|/llm/docs/concepts/protocols|390x844|dark|search:missing",
+        "gate2|/llm/docs/concepts/protocols|390x844|dark|theme toggle:missing",
+        "gate5|/llm/docs/concepts/protocols|390x844|dark|axe:link-in-text-block",
+        "gate5|/llm/docs/concepts/protocols|390x844|dark|keyboard:tab-reaches-search"
+      ],
+      "shot": "shots/fail-page-docs-concepts-protocols-390x844-dark.jpg"
+    }
+  ],
+  "screen_only": [
+    {
+      "scenario": "task-bedrock-endpoint",
+      "reached": true,
+      "actions": 4,
+      "looks": 6,
+      "steps": 5,
+      "trace": [
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/docs/concepts/routing",
+          "action": "click link \"Routes you can explain\"",
+          "glance": 3
+        },
+        {
+          "url": "/llm/docs/guides/configure-model-routes",
+          "action": "click link \"Configure model routes\"",
+          "glance": 2
+        },
+        {
+          "url": "/llm/docs/guides/configure-model-routes#bedrock-endpoints",
+          "action": "click link \"Bedrock endpoints\"",
+          "glance": 1
+        }
+      ]
+    },
+    {
+      "scenario": "task-exit-codes",
+      "reached": true,
+      "actions": 9,
+      "looks": 6,
+      "steps": 10,
+      "trace": [
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/docs",
+          "action": "click link \"Documentation\" (hub)",
+          "glance": 3
+        },
+        {
+          "url": "/llm/docs/guides/use-the-llm-command",
+          "action": "click link \"Use the llm command\"",
+          "glance": 2
+        },
+        {
+          "url": "/llm/docs/guides/use-the-llm-command#exit-codes",
+          "action": "click link \"Exit codes\"",
+          "glance": 1
+        }
+      ]
+    },
+    {
+      "scenario": "task-install",
+      "reached": true,
+      "actions": 8,
+      "looks": 5,
+      "steps": 9,
+      "trace": [
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/docs",
+          "action": "click link \"Documentation\" (hub)",
+          "glance": 3
+        },
+        {
+          "url": "/llm/docs/getting-started",
+          "action": "click link \"Getting started\"",
+          "glance": 2
+        }
+      ]
+    },
+    {
+      "scenario": "task-limitations",
+      "reached": true,
+      "actions": 8,
+      "looks": 4,
+      "steps": 9,
+      "trace": [
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/docs",
+          "action": "click link \"Documentation\" (hub)",
+          "glance": 3
+        },
+        {
+          "url": "/llm/docs/status/limitations",
+          "action": "click link \"Limitations\"",
+          "glance": 1
+        }
+      ]
+    },
+    {
+      "scenario": "task-retry",
+      "reached": true,
+      "actions": 9,
+      "looks": 6,
+      "steps": 10,
+      "trace": [
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/",
+          "action": "PageDown",
+          "glance": 0
+        },
+        {
+          "url": "/llm/docs",
+          "action": "click link \"Documentation\" (hub)",
+          "glance": 3
+        },
+        {
+          "url": "/llm/docs/concepts/neutral-boundary",
+          "action": "click link \"The neutral turn\"",
+          "glance": 2
+        },
+        {
+          "url": "/llm/docs/concepts/neutral-boundary#whether-a-failure-may-be-retried",
+          "action": "click link \"Whether a failure may be retried\"",
+          "glance": 1
+        }
+      ]
+    }
+  ],
+  "regression_assets": {
+    "passed": 22,
+    "failed": 0,
+    "failing": [],
+    "findings_tests": []
+  },
+  "findings": [],
+  "missing_inputs": [
+    "L6 trial sessions and their rrweb recordings: none recorded in this round",
+    "questionnaire scores: no sessions, none",
+    "L4 keyed replay and L5 discoverability probe: operator-only, not run",
+    "review-heuristics.md and review-report.md: the two review agents run after this command (§ 8)",
+    "search: no task used search (no visible search box, or a strong link was in view first)"
+  ]
+}

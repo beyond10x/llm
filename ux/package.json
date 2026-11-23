@@ -1,0 +1,21 @@
+{
+  "name": "llm-ux",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "ratchet": "node cli.ts ratchet",
+    "round": "node cli.ts round"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.65.0",
+    "@types/node": "22.20.5",
+    "typescript": "~6.0.2"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "kind": "task",
+  "goal": "Find which failures may be retried.",
+  "persona": "A caller that runs its own retry loop around `Model::turn`.",
+  "card": "rotating",
+  "start": "/llm/",
+  "cues": [
+    { "word": "retried", "weight": 3 },
+    { "word": "retry", "weight": 3 },
+    { "word": "neutral turn", "weight": 2 },
+    { "word": "failure", "weight": 1 }
+  ],
+  "search": "retried"
+}
