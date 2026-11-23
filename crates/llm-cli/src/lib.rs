@@ -22,7 +22,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use keyring_core::CredentialStore;
 use llm_core::{
     BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol, ShownText,
-    StreamEvent, StreamSink, TurnOutcome, TurnRequest, Usage,
+    StopReason, StreamEvent, StreamSink, TurnOutcome, TurnRequest, Usage,
 };
 use llm_http::{HttpClient, Limits};
 use llm_models::routes::{
@@ -617,7 +617,12 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
                     protocol(port.protocol()),
                     usage(outcome.observation.usage.as_ref())
                 ));
-                Ok(())
+                stopped_early(&outcome.stop_reason).map_or(Ok(()), |why| {
+                    Err(Failure {
+                        code: 3,
+                        message: format!("llm: route `{route}`: {why}"),
+                    })
+                })
             }
             Err(error) if error.code == ErrorCode::Cancelled => Err(Failure {
                 code: 130,
@@ -781,6 +786,36 @@ fn before_sending(error: &Error) -> bool {
                 | ErrorCode::Unsupported
                 | ErrorCode::TooLarge
         )
+}
+
+/// Why a returned turn is not a whole answer, or `None` when it ended its turn. A reason the
+/// provider named is printed only when it is shaped like a code (1 to 64 ASCII lowercase letters,
+/// digits, `_` or `-`); any other is `unrecognized`, so no provider text reaches the terminal.
+fn stopped_early(reason: &StopReason) -> Option<String> {
+    match reason {
+        StopReason::EndTurn => None,
+        StopReason::MaxOutputTokens => {
+            Some("the turn stopped at the output limit; the answer is cut short".to_owned())
+        }
+        StopReason::ToolCalls => Some("the turn stopped before its end: tool-calls".to_owned()),
+        StopReason::Incomplete { reason } => {
+            let code = (1..=64).contains(&reason.len())
+                && reason.bytes().all(|byte| {
+                    byte.is_ascii_lowercase()
+                        || byte.is_ascii_digit()
+                        || byte == b'_'
+                        || byte == b'-'
+                });
+            Some(format!(
+                "the turn stopped before its end: {}",
+                if code {
+                    reason.as_str()
+                } else {
+                    "unrecognized"
+                }
+            ))
+        }
+    }
 }
 
 fn usage(usage: Option<&Usage>) -> String {
