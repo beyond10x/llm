@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-23
+
 ### Added
 
 - `task test` (`cargo xtask test`, `llm-xtask`): tests under cargo-nextest, 60 s per test, 120 s per phase, ten slowest shown
@@ -615,7 +617,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.25.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.26.0...HEAD
+[0.26.0]: https://github.com/beyond10x/llm/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/beyond10x/llm/compare/0.24.0...0.25.0
 [0.24.0]: https://github.com/beyond10x/llm/compare/0.23.0...0.24.0
 [0.23.0]: https://github.com/beyond10x/llm/compare/0.22.0...0.23.0
