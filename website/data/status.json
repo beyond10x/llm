@@ -243,6 +243,12 @@
       "status": "shipped"
     },
     {
+      "area": "Protocols",
+      "detail": "llm_core::ShownText pairs the text deltas a turn showed with its messages; llm infer prints each message no delta showed (a Responses message sent only in the terminal output) after the streamed text, each message on its own line, and the Chat Completions ingress stream sends it in its terminal chunks, joined with a newline as the non-streamed answer joins messages. A shown message is never sent twice. The Responses and Messages relays still refuse such a message placed before a streamed one. Fixture evidence only.",
+      "label": "Answer text sent only in the final object reaches the caller once",
+      "status": "shipped"
+    },
+    {
       "area": "Amazon Bedrock",
       "detail": "llm-bedrock signs each request with a signer written on ring, checked against the AWS test suite vendored from aws-c-auth (header signing only); keys come from StaticCredentials through an injected resolver or from ContainerCredentials at the container credentials endpoint. No AWS SDK crate and no aws-lc is a dependency. EKS Pod Identity is described from AWS documentation and unverified.",
       "label": "Bedrock requests are signed with Signature Version 4",

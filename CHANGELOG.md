@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Fixed
+
+- `llm infer` and the Chat ingress stream send a message no delta showed once, after the stream (`llm_core::ShownText`)
+
 ## [0.24.0] - 2026-11-21
 
 ### Added

@@ -1,6 +1,6 @@
 use crate::{
-    CallId, Cancel, Capabilities, Error, Id, Provenance, ToolName, TurnOutcome, TurnRequest, Usage,
-    encoded_len,
+    CallId, Cancel, Capabilities, Error, Id, Item, Provenance, ToolName, TurnOutcome, TurnRequest,
+    Usage, encoded_len,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -22,7 +22,9 @@ pub const SHOWN_TEXT_UNPAIRED: &str = "shown-text-unpaired";
 /// and no variant can: a caller may act on each event as it arrives, speak a text delta or commit
 /// it, and never has to take it back. On a successful turn each assistant message in the
 /// [`TurnOutcome`] carries exactly the concatenation of the [`StreamEvent::TextDelta`]s shown for
-/// it; a message no delta was shown for carries the text the server sent. Where a server's own
+/// it; a message no delta was shown for carries the text the server sent, and a consumer that
+/// writes text as it arrives finds it with [`ShownText`] and writes it after the stream, since
+/// it is no replacement of shown text. Where a server's own
 /// final text for a message differed from its deltas, the shown text is kept and a
 /// [`StreamEvent::Warning`] with the code [`SHOWN_TEXT_KEPT`] says so. A decoder never carries a
 /// message's text twice and never overwrites a message it cannot tell is the one shown: shown
@@ -281,11 +283,225 @@ impl StreamSink for VecSink {
     }
 }
 
+/// The assistant messages a turn's stream showed its caller, read from its [`StreamEvent`]s in
+/// order, so a consumer that writes the answer as it streams can write the rest of it once.
+///
+/// A successful turn may carry a message no delta showed: a server that sends it only in its
+/// final object, as a Responses server may. [`ShownText::unshown`] names those messages of the
+/// outcome, so a consumer that writes text as it arrives (a command's stdout, an ingress
+/// encoder) writes each of them after the stream, and never writes a shown message twice. Such a
+/// message is not a replacement of shown text, and it cannot be written in its place: shown text
+/// is final, so it follows everything shown.
+///
+/// The text deltas between two [`StreamEvent::MessageBoundary`]s are one shown message, and the
+/// refusal deltas likewise. Each shown message is paired with one message of the outcome of the
+/// same kind that carries exactly its text, which on a successful turn one does (see
+/// [`StreamEvent`]); equal texts pair in order. Every other non-empty
+/// [`crate::Item::AssistantText`] and [`crate::Item::AssistantRefusal`] was not shown. Shown text
+/// no message carries (the turn reported it with [`SHOWN_TEXT_UNPAIRED`]) pairs with none, so
+/// none of the server's messages is withheld.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ShownText {
+    texts: Vec<String>,
+    refusals: Vec<String>,
+    text_open: bool,
+    refusal_open: bool,
+}
+
+impl ShownText {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Records one event the caller was shown. Events other than text, refusal text and a
+    /// message boundary show no message text and change nothing.
+    pub fn observe(&mut self, event: &StreamEvent) {
+        match event {
+            StreamEvent::TextDelta { text } => {
+                extend(&mut self.texts, &mut self.text_open, text);
+            }
+            StreamEvent::RefusalDelta { text } => {
+                extend(&mut self.refusals, &mut self.refusal_open, text);
+            }
+            StreamEvent::MessageBoundary {} => {
+                self.text_open = false;
+                self.refusal_open = false;
+            }
+            StreamEvent::ToolCallStarted { .. }
+            | StreamEvent::ToolArgumentsDelta { .. }
+            | StreamEvent::ReasoningDelta { .. }
+            | StreamEvent::Warning { .. }
+            | StreamEvent::OpaqueItem { .. } => {}
+        }
+    }
+
+    /// The non-empty assistant messages and refusals among `items` that no observed delta
+    /// showed, in the order `items` carries them.
+    pub fn unshown<'a>(&self, items: &'a [Item]) -> Vec<&'a Item> {
+        let mut taken = vec![false; items.len()];
+        let shown = self
+            .texts
+            .iter()
+            .map(|text| (text, false))
+            .chain(self.refusals.iter().map(|text| (text, true)));
+        for (shown, refusal) in shown {
+            if shown.is_empty() {
+                continue;
+            }
+            let pair = items.iter().enumerate().position(|(at, item)| {
+                !taken[at] && message_text(item) == Some((shown.as_str(), refusal))
+            });
+            if let Some(at) = pair {
+                taken[at] = true;
+            }
+        }
+        items
+            .iter()
+            .zip(taken)
+            .filter(|(item, taken)| {
+                !taken && message_text(item).is_some_and(|(text, _)| !text.is_empty())
+            })
+            .map(|(item, _)| item)
+            .collect()
+    }
+}
+
+/// The text of an assistant message or refusal, and whether it is a refusal; `None` for every
+/// item a delta of text or refusal text never shows.
+fn message_text(item: &Item) -> Option<(&str, bool)> {
+    match item {
+        Item::AssistantText { text } => Some((text, false)),
+        Item::AssistantRefusal { text } => Some((text, true)),
+        Item::UserText { .. }
+        | Item::UserImage { .. }
+        | Item::ToolCall(_)
+        | Item::ToolResult { .. }
+        | Item::Opaque { .. }
+        | Item::UnattributedOpaque { .. } => None,
+    }
+}
+
+/// Appends `text` to the open shown message of `messages`, opening one when none is open.
+fn extend(messages: &mut Vec<String>, open: &mut bool, text: &str) {
+    if !*open {
+        messages.push(String::new());
+        *open = true;
+    }
+    if let Some(message) = messages.last_mut() {
+        message.push_str(text);
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{StreamEvent, StreamSink, VecSink};
-    use crate::ErrorCode;
+    use super::{ShownText, StreamEvent, StreamSink, VecSink};
+    use crate::{CallId, ErrorCode, Item, ToolCall, ToolName};
     use serde_json::json;
+
+    fn refusal(text: &str) -> StreamEvent {
+        StreamEvent::RefusalDelta {
+            text: text.to_owned(),
+        }
+    }
+
+    fn unshown(events: &[StreamEvent], items: &[Item]) -> Vec<Item> {
+        let mut shown = ShownText::new();
+        for event in events {
+            shown.observe(event);
+        }
+        shown.unshown(items).into_iter().cloned().collect()
+    }
+
+    /// A case's name, the events shown, the turn's items and the items no event showed.
+    type Case = (&'static str, Vec<StreamEvent>, Vec<Item>, Vec<Item>);
+
+    /// Every message of the turn that no delta showed is named once, in the turn's order,
+    /// wherever it stands among the shown ones; a shown message never is.
+    #[test]
+    fn a_message_no_delta_showed_is_unshown_wherever_it_stands() {
+        let a = Item::assistant("preamble");
+        let b = Item::assistant("answer");
+        let boundary = StreamEvent::MessageBoundary {};
+        let cases: [Case; 6] = [
+            ("nothing streamed", vec![], vec![a.clone()], vec![a.clone()]),
+            (
+                "streamed, then final-only",
+                vec![text("pre"), text("amble")],
+                vec![a.clone(), b.clone()],
+                vec![b.clone()],
+            ),
+            (
+                "final-only, then streamed",
+                vec![text("answer")],
+                vec![a.clone(), b.clone()],
+                vec![a.clone()],
+            ),
+            (
+                "both streamed",
+                vec![text("preamble"), boundary.clone(), text("answer")],
+                vec![a.clone(), b.clone()],
+                vec![],
+            ),
+            (
+                "two equal messages, one streamed",
+                vec![text("answer")],
+                vec![b.clone(), b.clone()],
+                vec![b.clone()],
+            ),
+            (
+                "text no message carries pairs with none",
+                vec![text("a draft")],
+                vec![a.clone(), b.clone()],
+                vec![a.clone(), b.clone()],
+            ),
+        ];
+        for (case, events, items, expected) in cases {
+            assert_eq!(unshown(&events, &items), expected, "{case}");
+        }
+    }
+
+    /// Text deltas without a boundary between them are one shown message, whatever is shown
+    /// between them, so two messages streamed without one pair with neither.
+    #[test]
+    fn deltas_without_a_boundary_are_one_message() {
+        let reasoning = StreamEvent::ReasoningDelta {
+            text: "thinking".to_owned(),
+        };
+        let items = [Item::assistant("Hello")];
+        assert_eq!(
+            unshown(&[text("Hel"), reasoning, text("lo")], &items),
+            Vec::<Item>::new()
+        );
+        let two = [Item::assistant("A"), Item::assistant("B")];
+        assert_eq!(unshown(&[text("A"), text("B")], &two), two.to_vec());
+    }
+
+    /// A refusal pairs only with a refusal and text only with text; empty messages, calls and
+    /// opaque state are never named, and an empty delta shows nothing.
+    #[test]
+    fn a_refusal_pairs_only_with_a_refusal_and_nothing_empty_is_named() {
+        let refused = Item::AssistantRefusal {
+            text: "no".to_owned(),
+        };
+        let said = Item::assistant("no");
+        let call = Item::ToolCall(ToolCall {
+            call_id: CallId::new("call-1").unwrap(),
+            name: ToolName::new("lookup").unwrap(),
+            arguments: json!({}),
+        });
+        let items = [
+            refused.clone(),
+            said.clone(),
+            Item::assistant(""),
+            call,
+            Item::AssistantRefusal {
+                text: String::new(),
+            },
+        ];
+        assert_eq!(unshown(&[refusal("no")], &items), vec![said.clone()]);
+        assert_eq!(unshown(&[text("no")], &items), vec![refused.clone()]);
+        assert_eq!(unshown(&[text("")], &items), vec![refused, said]);
+    }
 
     #[test]
     fn a_call_announcement_carries_the_name_the_provider_sent() {

@@ -539,6 +539,86 @@ fn infer_on_a_responses_route_streams_its_text_and_reports_its_usage() {
     );
 }
 
+/// A Responses message the server sent only in the terminal `output`, with no delta for it.
+fn final_message(id: &str, text: &str) -> Value {
+    json!({"type":"message","id":id,"role":"assistant","status":"completed",
+        "content":[{"type":"output_text","text":text,"annotations":[]}]})
+}
+
+/// A Responses stream that shows the text of `streamed` through deltas and then completes with
+/// `output`, which may carry messages no delta showed.
+fn responses_stream_of(streamed: &[(&str, &str)], output: &[Value]) -> Vec<u8> {
+    let mut events = vec![(
+        "response.created",
+        json!({"type":"response.created","response":{"id":"resp_1","status":"in_progress"}}),
+    )];
+    for (index, (id, text)) in streamed.iter().enumerate() {
+        events.push((
+            "response.output_item.added",
+            json!({"type":"response.output_item.added","output_index":index,"item":{
+                "type":"message","id":id,"role":"assistant","status":"in_progress","content":[]}}),
+        ));
+        events.push((
+            "response.output_text.delta",
+            json!({"type":"response.output_text.delta","item_id":id,"output_index":index,
+                "content_index":0,"delta":text}),
+        ));
+        events.push((
+            "response.output_item.done",
+            json!({"type":"response.output_item.done","output_index":index,
+                "item":final_message(id, text)}),
+        ));
+    }
+    events.push((
+        "response.completed",
+        json!({"type":"response.completed","response":{"id":"resp_1","model":"gpt-fixture",
+            "status":"completed","output":output,"usage":{"input_tokens":12,"output_tokens":4}}}),
+    ));
+    sse(&events)
+}
+
+/// Answer text the server sent only in its final object reaches stdout: the turn carries it,
+/// no delta showed it, and the command printed nothing for it before (review of 0.24.0,
+/// finding 2).
+#[test]
+fn infer_prints_answer_text_that_arrived_only_in_the_final_response() {
+    let fixture = Fixture::new(vec![responses_stream_of(
+        &[],
+        &[final_message("msg_1", "The answer")],
+    )]);
+    let (_directory, path) = configured(&three_routes(&fixture.origin));
+    let output = llm(
+        &["--config", &path, "infer", "--model", "gpt", "hi"],
+        &KEYS,
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "The answer\n");
+    let usage = stderr(&output);
+    assert!(usage.contains("input_tokens=12 output_tokens=4"), "{usage}");
+}
+
+/// A streamed message and a second message no delta showed: each text is printed exactly once,
+/// the streamed one as it arrived and the other after it, on its own line.
+#[test]
+fn infer_prints_a_streamed_message_once_and_a_final_only_message_after_it() {
+    let fixture = Fixture::new(vec![responses_stream_of(
+        &[("msg_1", "First part")],
+        &[
+            final_message("msg_1", "First part"),
+            final_message("msg_2", "Second part"),
+        ],
+    )]);
+    let (_directory, path) = configured(&three_routes(&fixture.origin));
+    let output = llm(
+        &["--config", &path, "infer", "--model", "gpt", "hi"],
+        &KEYS,
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "First part\nSecond part\n");
+}
+
 #[test]
 fn infer_reads_the_prompt_from_stdin_and_an_unreported_counter_prints_unknown() {
     let fixture = Fixture::new(vec![chat_stream()]);

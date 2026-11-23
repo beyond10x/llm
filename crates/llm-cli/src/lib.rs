@@ -21,8 +21,8 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use keyring_core::CredentialStore;
 use llm_core::{
-    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol, StreamEvent,
-    StreamSink, TurnOutcome, TurnRequest, Usage,
+    BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol, ShownText,
+    StreamEvent, StreamSink, TurnOutcome, TurnRequest, Usage,
 };
 use llm_http::{HttpClient, Limits};
 use llm_models::routes::{
@@ -632,16 +632,39 @@ fn infer(routes: &Routes, infer: &Infer, environment: &Environment) -> Result<()
     })
 }
 
-/// Runs the turn, writing its text to stdout as it arrives, and ends a shown text with a
-/// newline. Ctrl-C cancels the turn through its [`Cancel`] and the turn then ends as the client
-/// reports it; a second Ctrl-C drops it. A write to stdout that fails stops the turn; its kind
-/// is returned beside the turn's result.
+/// Runs the turn, writing its text to stdout as it arrives, then the text of each message of a
+/// returned turn that no delta showed (a server may send one only in its final object), and ends
+/// a shown text with a newline. Each message starts on its own line. Ctrl-C cancels the turn
+/// through its [`Cancel`] and the turn then ends as the client reports it; a second Ctrl-C drops
+/// it. A write to stdout that fails stops the turn; its kind is returned beside the turn's
+/// result.
 async fn streamed(
     model: &dyn Model,
     request: &TurnRequest,
 ) -> (Result<TurnOutcome, Error>, Option<io::ErrorKind>) {
     let mut sink = Stdout::default();
     let returned = drive(model, request, &mut sink, interrupted).await;
+    if sink.closed.is_none()
+        && let Ok(outcome) = &returned
+    {
+        let unshown: Vec<String> = sink
+            .messages
+            .unshown(&outcome.items)
+            .into_iter()
+            .filter_map(|item| match item {
+                Item::AssistantText { text } | Item::AssistantRefusal { text } => {
+                    Some(text.clone())
+                }
+                _ => None,
+            })
+            .collect();
+        for text in unshown {
+            sink.boundary = true;
+            if sink.write(&text).is_err() {
+                break;
+            }
+        }
+    }
     if sink.closed.is_none() && sink.shown && !sink.ended_with_newline {
         let mut stdout = io::stdout().lock();
         if let Err(error) = writeln!(stdout).and_then(|()| stdout.flush()) {
@@ -772,31 +795,54 @@ fn usage(usage: Option<&Usage>) -> String {
 /// The sink that writes each text delta to stdout as it arrives.
 #[derive(Default)]
 struct Stdout {
+    /// The messages the turn showed, so the ones it did not are written once after it.
+    messages: ShownText,
     shown: bool,
     ended_with_newline: bool,
+    /// The next text starts another message than the text written before it.
+    boundary: bool,
     /// The kind of the first failed write; the turn is stopped on it.
     closed: Option<io::ErrorKind>,
+}
+
+impl Stdout {
+    /// Writes `text`, on a line of its own when it starts another message. A failed write
+    /// records its kind and refuses.
+    fn write(&mut self, text: &str) -> Result<(), Error> {
+        if text.is_empty() {
+            return Ok(());
+        }
+        let separate = std::mem::take(&mut self.boundary) && self.shown && !self.ended_with_newline;
+        let mut stdout = io::stdout().lock();
+        let written = if separate {
+            stdout.write_all(b"\n")
+        } else {
+            Ok(())
+        }
+        .and_then(|()| stdout.write_all(text.as_bytes()))
+        .and_then(|()| stdout.flush());
+        if let Err(error) = written {
+            self.closed = Some(error.kind());
+            return Err(Error::cancelled());
+        }
+        self.shown = true;
+        self.ended_with_newline = text.ends_with('\n');
+        Ok(())
+    }
 }
 
 impl StreamSink for Stdout {
     fn emit(&mut self, event: StreamEvent) -> BoxFuture<'_, Result<(), Error>> {
         Box::pin(async move {
-            // Refusal text is the model's answer to the person running the command, so it is
-            // printed as text is.
-            if let StreamEvent::TextDelta { text } | StreamEvent::RefusalDelta { text } = event {
-                if text.is_empty() {
-                    return Ok(());
+            self.messages.observe(&event);
+            match event {
+                // Refusal text is the model's answer to the person running the command, so it is
+                // printed as text is.
+                StreamEvent::TextDelta { text } | StreamEvent::RefusalDelta { text } => {
+                    self.write(&text)?;
                 }
-                let mut stdout = io::stdout().lock();
-                if let Err(error) = stdout
-                    .write_all(text.as_bytes())
-                    .and_then(|()| stdout.flush())
-                {
-                    self.closed = Some(error.kind());
-                    return Err(Error::cancelled());
-                }
-                self.shown = true;
-                self.ended_with_newline = text.ends_with('\n');
+                StreamEvent::MessageBoundary {} => self.boundary = true,
+                _ => {}
             }
             Ok(())
         })
