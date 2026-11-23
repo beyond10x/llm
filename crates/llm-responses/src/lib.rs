@@ -46,6 +46,7 @@ mod conversation;
 mod ingress;
 mod request;
 mod stream;
+mod usage_reader;
 
 pub use binding::{Binding, PATH, PROTOCOL};
 pub use client::ResponsesClient;
@@ -56,3 +57,4 @@ pub use request::{
     encode_request, ingest_request, omitted_advisories, project_request,
 };
 pub use stream::{ACCEPTED_STREAM_EVENTS, REASONING_DELTA_EVENTS, StreamDecoding, decode_stream};
+pub use usage_reader::{UsageReader, read_usage};
