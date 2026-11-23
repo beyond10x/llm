@@ -1,0 +1,6 @@
+[alias]
+xtask = "run --quiet --locked -p llm-xtask --"
+
+[profile.dev]
+debug = false
+opt-level = 1

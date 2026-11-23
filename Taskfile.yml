@@ -4,6 +4,7 @@ tasks:
     desc: Check the implementation, specification and governed plan
     cmds:
       - task: rust
+      - task: test
       - task: docs
       - ess specify validate --path spec
       - task: conformance
@@ -20,15 +21,15 @@ tasks:
     desc: Check ESS projection drift and run behavioral conformance three times
     cmds:
       - cargo run --locked -p llm-conformance -- check
-  rust:
+  test:
+    desc: 'Run the tests with cargo-nextest (a test over 60 s is killed and fails), fail over 120 s, print the ten slowest'
     cmds:
-      - cargo test --workspace --locked
-      - cargo test -p llm-credentials --all-features --locked
+      - cargo xtask test
+  rust:
+    desc: Check the optional features, formatting and lints
+    cmds:
       - cargo check -p llm-credentials --no-default-features --locked
-      - cargo test -p llm-cost --all-features --locked
-      - cargo test -p llm-calls --all-features --locked
       - cargo check -p llm-cost --no-default-features --locked
-      - cargo test -p llm-models --locked
       - cargo check -p llm-bedrock --locked
       - cargo fmt --all --check
       - cargo clippy --workspace --all-targets --all-features --locked -- -D warnings

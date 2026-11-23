@@ -6,6 +6,16 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `task test` (`cargo xtask test`, `llm-xtask`): tests under cargo-nextest, 60 s per test, 120 s per phase, ten slowest shown
+
+### Changed
+
+- The Gate runs the tests in their own step, "Rust tests", and installs cargo-nextest 0.9.143 pinned by SHA-256
+- The Gate skips building and testing for a pull request that changes only planning files or Markdown outside `website/`
+- Test builds carry no debug information and build at `opt-level = 1` (`.cargo/config.toml`): slowest test 55 s to 2.7 s
+
 ## [0.25.0] - 2026-11-23
 
 ### Added
