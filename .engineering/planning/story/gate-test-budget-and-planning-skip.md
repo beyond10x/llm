@@ -2,12 +2,39 @@
 format: aep.planning-md/3
 id: story:gate-test-budget-and-planning-skip
 kind: story
-status: draft
+status: implemented
 title: The gate's test phase is bounded and measured, and a planning-only pull request skips it
 summary: nextest with a 60 s kill and a 120 s step bound in CI and locally; planning or prose pull requests skip the Rust gate
 relations:
 - serves: vision:portable-model-inference
-revision: 1
+scope:
+- confidence: cited
+  path: .cargo/config.toml
+- confidence: cited
+  path: .config/nextest.toml
+- confidence: cited
+  path: .github/workflows/gate.yml
+- confidence: cited
+  path: AGENTS.md
+- confidence: cited
+  path: CHANGELOG.md
+- confidence: cited
+  path: Cargo.lock
+- confidence: cited
+  path: Cargo.toml
+- confidence: cited
+  path: Taskfile.yml
+- confidence: cited
+  path: checks/xtask
+- confidence: cited
+  path: website/docs/guides/run-the-checks.md
+- confidence: cited
+  path: website/docs/reference/crates.md
+revision: 5
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-23T12:45:05Z", actor: "human:timo", revision: 2, decided_on: {"recorded":{"test_result":2}}}
+- {from: "proposed", to: "active", at: "2026-11-23T12:45:06Z", actor: "human:timo", revision: 3, decided_on: {"recorded":{"test_result":2}}}
+- {from: "active", to: "implemented", at: "2026-11-23T12:45:06Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":2}}}
 ---
 ## Outcome
 
