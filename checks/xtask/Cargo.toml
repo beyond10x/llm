@@ -1,0 +1,24 @@
+[package]
+name = "llm-xtask"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+description = "Runs the gate's test phase with cargo-nextest under its time bound and prints the ten slowest tests."
+
+[lints]
+workspace = true
+
+[dependencies]
+serde_json.workspace = true
+
+[[bin]]
+name = "llm-xtask"
+path = "src/main.rs"
+test = false
+
+[dev-dependencies]
+serde_yaml = "0.9"
+tempfile = "3.27"
+toml.workspace = true
