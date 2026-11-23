@@ -824,3 +824,159 @@ fn refusal_text_is_refused_by_name_and_never_dropped() {
         );
     }
 }
+
+// ---------------------------------------------------------------------------------------------
+// A final-only message wherever the upstream turn places it (review of 0.24.0, finding 3).
+// ---------------------------------------------------------------------------------------------
+
+/// A Responses upstream, the one wire whose turn can carry a message no delta showed.
+fn responses_upstream() -> llm_responses::Binding {
+    let id = |value: &str| Id::new(value).unwrap();
+    llm_responses::Binding::new(
+        Provenance {
+            protocol: Protocol::Responses,
+            provider: id("upstream-lab"),
+            account: id("local"),
+            endpoint: id("upstream"),
+            model: id("small"),
+            binding_revision: id("rev-1"),
+        },
+        id("example/Small-Model"),
+    )
+}
+
+fn upstream_message(item_id: &str, text: &str) -> Value {
+    json!({"type": "message", "id": item_id, "role": "assistant",
+        "content": [{"type": "output_text", "text": text}]})
+}
+
+fn upstream_delta(item_id: &str, output_index: u64, delta: &str) -> Value {
+    json!({"type": "response.output_text.delta", "item_id": item_id,
+        "output_index": output_index, "content_index": 0, "delta": delta})
+}
+
+/// One upstream Responses turn of two messages, "preamble" then "answer", the messages its
+/// relayed Messages answer reads back as, and the events that answer shows.
+type FinalOnlyCase = (&'static str, Vec<Value>, [&'static str; 2], Vec<StreamEvent>);
+
+/// The four ways the two messages can reach a relay: which of them a delta showed. A streamed
+/// block's index is fixed when it is sent and shown text is final, so a message no delta showed
+/// follows every streamed block, whatever place the upstream turn gave it.
+fn final_only_cases() -> [FinalOnlyCase; 4] {
+    let created = json!({"type": "response.created",
+        "response": {"id": "resp_upstream_1", "status": "in_progress", "output": []}});
+    let completed = json!({"type": "response.completed", "response": {
+        "id": "resp_upstream_1", "status": "completed", "model": "example/Small-Model",
+        "output": [upstream_message("msg_a", "preamble"), upstream_message("msg_b", "answer")],
+        "usage": {"input_tokens": 20, "output_tokens": 9}}});
+    let boundary = StreamEvent::MessageBoundary {};
+    [
+        (
+            "final-only, then streamed",
+            vec![
+                created.clone(),
+                upstream_delta("msg_b", 1, "answer"),
+                completed.clone(),
+            ],
+            ["answer", "preamble"],
+            vec![text("answer"), boundary.clone(), text("preamble")],
+        ),
+        (
+            "streamed, then final-only",
+            vec![
+                created.clone(),
+                upstream_delta("msg_a", 0, "pre"),
+                upstream_delta("msg_a", 0, "amble"),
+                completed.clone(),
+            ],
+            ["preamble", "answer"],
+            vec![
+                text("pre"),
+                text("amble"),
+                boundary.clone(),
+                text("answer"),
+            ],
+        ),
+        (
+            "every message streamed",
+            vec![
+                created.clone(),
+                upstream_delta("msg_a", 0, "preamble"),
+                upstream_delta("msg_b", 1, "answer"),
+                completed.clone(),
+            ],
+            ["preamble", "answer"],
+            vec![text("preamble"), boundary.clone(), text("answer")],
+        ),
+        (
+            "every message final-only",
+            vec![created, completed],
+            ["preamble", "answer"],
+            vec![text("preamble"), boundary, text("answer")],
+        ),
+    ]
+}
+
+/// A Responses turn the decoder accepted closes on this relay however its messages reached it:
+/// the relayed answer carries every message once, the streamed text is shown once and exactly as
+/// the upstream showed it, and each message no delta showed once after it. Before, the relay
+/// required the turn to begin with the streamed blocks and refused "final-only, then streamed".
+#[tokio::test]
+async fn a_final_only_message_anywhere_in_a_responses_turn_is_relayed_once() {
+    for (case, upstream, messages, relayed_events) in final_only_cases() {
+        let decoded = llm_responses::decode_stream(&responses_upstream(), &upstream);
+        let turn = decoded
+            .result
+            .unwrap_or_else(|error| panic!("{case}: the upstream turn decodes: {error:?}"));
+        assert_eq!(
+            turn.items,
+            [Item::assistant("preamble"), Item::assistant("answer")],
+            "{case}"
+        );
+        let payloads = encode(&decoded.events, &turn, None).unwrap_or_else(|error| {
+            panic!("{case}: the relay refused a turn the upstream decoder accepted: {error:?}")
+        });
+        let (relayed, shown) = decode(&payloads).await;
+        let relayed = relayed.unwrap_or_else(|error| panic!("{case}: {error:?}"));
+        assert_eq!(
+            relayed.items,
+            messages.map(Item::assistant),
+            "{case}: {payloads:?}"
+        );
+        assert_eq!(relayed.stop_reason, StopReason::EndTurn, "{case}");
+        assert!(
+            shown.starts_with(&decoded.events),
+            "{case}: the relay changed what the upstream showed: {shown:?}"
+        );
+        assert_eq!(shown, relayed_events, "{case}");
+    }
+}
+
+/// Pairing by text never lets shown text go unaccounted for: text the outcome carries no message
+/// for, or carries only as part of another message, is still refused wherever the messages stand.
+#[test]
+fn shown_text_no_message_of_the_outcome_carries_is_refused_wherever_the_messages_stand() {
+    let cases = [
+        (
+            "a final-only message, then other text",
+            vec!["preamble", "answer!"],
+        ),
+        (
+            "other text, then a final-only message",
+            vec!["answer!", "preamble"],
+        ),
+        ("the shown text split across two messages", vec!["ans", "wer"]),
+    ];
+    for (case, messages) in cases {
+        let refusal = encode(
+            &[text("answer")],
+            &outcome(
+                StopReason::EndTurn,
+                messages.into_iter().map(Item::assistant).collect(),
+            ),
+            Some(MODEL),
+        )
+        .expect_err(case);
+        assert_eq!(refusal.code, ErrorCode::Protocol, "{case}");
+    }
+}
