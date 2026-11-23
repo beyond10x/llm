@@ -168,6 +168,16 @@ Keep page paths and heading IDs stable: the organisation Website redirects the f
 routes to them. A Markdown page links an `.mdx` page by route (`/docs/status`), never by file.
 Writing rules and the end-to-end procedure are the workspace `docs` skill.
 
+`ux/` is the site's UX loop (ui-iteration-loop): a Playwright and axe-core harness in TypeScript
+over the built site served locally. `task ux-check` runs the findings rule, L1 core tests, the L2
+layout contract (no horizontal scroll, always-visible navbar, search, theme toggle and sidebar, axe
+0 serious or critical, keyboard reach) at 1440x900 and 390x844 in both themes, the L3 screen-only
+user over `ux/scenarios/task-*`, then the ratchet against `ux/baseline.json` and main's.
+`.github/workflows/docs-ux.yml` runs it on pull requests that touch `website/`, `docs/` or `ux/`.
+A gate failure is fixed, or waived only by an open finding in `ux/findings/`; an improved value is
+taken into the baseline in the same change (`task ux-ratchet -- --update`). `task ux-round` writes
+a round to `ux/rounds/R-nn/`. Build the site first; a new page needs `task ux-scenarios`.
+
 A release or a wave that changes a crate, a command, a default or a capability updates, in the same
 change: `CHANGELOG.md` (under Unreleased), `docs/implementation-status.md` and then
 `task docs-generate`, the hand-written pages it affects, README.md and this file.

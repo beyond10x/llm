@@ -29,10 +29,11 @@ llm calls no cloud control plane. A provider description names one, as data only
 resource *must* be stopped; they cannot turn a GPU off, and they never prove that provider billing
 stopped.
 
-## There is no operator command line
+## The operator command line has two commands
 
-`llm-cli` exports nothing. Validating, inspecting and running one configuration from a
-terminal is not available; the routing example is the closest thing today.
+`llm-cli` builds the `llm` command: `llm model list` prints the routes of one configuration file,
+and `llm infer` runs one turn on a route. [Use the llm command](../guides/use-the-llm-command.md)
+shows both. The command has no other subcommand.
 
 ## What the libraries deliberately do not claim
 

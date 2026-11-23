@@ -8,11 +8,11 @@ source: crates/llm-core (port.rs, vocabulary.rs, turn.rs), crates/llm-docs/examp
 
 # Interrupt a turn with new input
 
-A voice or chat front end can receive new input while the model is still answering. llm cannot
-send that input into the running turn. Each client sends one request over HTTP and reads the answer
-as server-sent events, and over that exchange none of Responses, Messages and Chat Completions
-accepts input into an answer that is still streaming. So every client in llm declares
-`input_during_output: false`; a `Model` built in code keeps its own claim.
+A voice or chat front end can receive new input while the model is still answering. Each client
+sends one request over HTTP and reads the answer as server-sent events. Over that exchange, none of
+Responses, Messages and Chat Completions accepts input into an answer that is still streaming.
+llm therefore declares `input_during_output: false` on every client. A `Model` built in code
+keeps its own claim.
 
 :::note[Not offered: Responses steering]
 OpenAI documents [mid-turn steering](https://developers.openai.com/api/docs/guides/steering) for
@@ -49,11 +49,13 @@ full.
 
 The model streams in-process, so the run sends nothing and reads no credential. The first request
 offers one tool, `forecast`, so a turn can also end in a tool call. Any `Model` that supports
-tools, such as a `ResponsesClient`, a `MessagesClient` or a `ChatClient` whose binding declares
-them, goes in its place; a model whose capabilities declare no tools refuses that request before
-sending it. The sink cancels the turn after
-the third word to stand in for input arriving; in a real program the task that receives the input
-calls `cancel.cancel()`. The tests at the end check each way the first turn can end.
+tools can take the model's place, such as a `ResponsesClient`, a `MessagesClient` or a
+`ChatClient` whose binding declares them. A model whose capabilities declare no tools refuses that
+request before sending it.
+
+The sink cancels the turn after the third word to stand in for input arriving. In a real program
+the task that receives the input calls `cancel.cancel()`. The tests at the end check each way the
+first turn can end.
 
 ```rust title="crates/llm-docs/examples/interrupt_turn.rs"
 //! Interrupt a turn that is still answering: cancel it, keep the text it already showed, and send
@@ -483,32 +485,27 @@ Run its tests with `cargo test --locked -p llm-docs --example interrupt_turn`.
 
 ## How it behaves
 
-- **The declaration.** `capabilities().input_during_output` is `false` for every client in llm,
-  and a binding, catalog or routes document that declares it `true` is refused. A caller that
-  schedules from the declaration reads it and uses this pattern.
-- **What was shown is final.** No stream event is ever retracted, so the text deltas the sink
-  accepted are what the model said. A cancelled turn returns an error with code `cancelled` and
-  dispatch `accepted`, and no outcome: the sink is the only record of what it showed.
-- **Where the cancel lands.** Every client checks the cancel at each read of the stream. The
-  Responses and Messages clients also race it against each `emit`, the cancel first, and drop an
-  `emit` still in progress when it fires; the Chat Completions client hands over the events of the
-  payload it read last. So a delta counts as shown only once its `emit` completes: a sink that
-  shows text across an `.await` records it after that `.await`.
-- **The next request.** The conversation so far, then what the first turn left, then the new input
-  as `Item::user`. What the first turn left depends on how it ended:
-  - **Cancelled:** the shown text as one `Item::assistant`, or nothing when nothing was shown.
-  - **Finished before the cancel reached it:** `outcome.items`. Each assistant message carries the
-    text deltas shown for it, and a message no delta was shown for carries the server's text. On
-    Responses, shown text the client cannot pair with exactly one message is carried in none, and
-    a `shown-text-unpaired` warning on the sink says so.
-  - **Finished in tool calls:** `outcome.items`, then a result for every call, because a request
-    with an unanswered call is refused before it is sent. Run the tool and carry its result, or
-    reject the call with a failed `Item::ToolResult` whose output is your reason, as the program
-    does.
-- **Only text crosses from a cancelled turn.** It returns no outcome, so no tool call, reasoning
-  or opaque state from it reaches the next request.
-- **No retry and no fallback.** A cancelled turn is never retried, and a routed run starts no
-  further attempt after the cancel.
+| Aspect | Behaviour |
+| --- | --- |
+| The declaration | `capabilities().input_during_output` is `false` for every client in llm. A binding, catalog or routes document that declares it `true` is refused. A caller that schedules from the declaration reads it and uses this pattern. |
+| What was shown is final | No stream event is retracted, so the text deltas the sink accepted are what the model said. A cancelled turn returns an error with code `cancelled` and dispatch `accepted`, and no outcome. The sink is the only record of what it showed. |
+| Only text crosses from a cancelled turn | It returns no outcome, so no tool call, reasoning or opaque state from it reaches the next request. |
+| No retry and no fallback | A cancelled turn is not retried, and a routed run starts no further attempt after the cancel. |
+
+All clients check the cancel at each read of the stream. The Responses and Messages clients also
+race it against each `emit`, the cancel first, and drop an `emit` still in progress when it fires.
+The Chat Completions client hands over the events of the payload it read last. A delta therefore
+counts as shown only once its `emit` completes. A sink that shows text across an `.await` records
+it after that `.await`.
+
+The next request carries the conversation so far, then what the first turn left, then the new
+input as `Item::user`. What the first turn left depends on how it ended:
+
+| The first turn | What it left |
+| --- | --- |
+| Cancelled | The shown text as one `Item::assistant`, or nothing when nothing was shown. |
+| Finished before the cancel reached it | `outcome.items`. Each assistant message carries the text deltas shown for it, and a message no delta was shown for carries the server's text. On Responses, shown text the client cannot pair with exactly one message is carried in none, and a `shown-text-unpaired` warning on the sink says so. |
+| Finished in tool calls | `outcome.items`, then a result for every call, because a request with an unanswered call is refused before it is sent. Run the tool and carry its result, or reject the call with a failed `Item::ToolResult` whose output is your reason, as the program does. |
 
 The decision and the code it rests on are in
 [docs/design.md](https://github.com/beyond10x/llm/blob/main/docs/design.md#input-into-a-running-turn).

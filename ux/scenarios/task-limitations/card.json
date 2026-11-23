@@ -1,0 +1,12 @@
+{
+  "kind": "task",
+  "goal": "Find what llm does not do and where its trust boundary is.",
+  "persona": "A reviewer deciding whether llm may carry production traffic.",
+  "card": "rotating",
+  "start": "/llm/",
+  "cues": [
+    { "word": "limitations", "weight": 3 },
+    { "word": "trust boundary", "weight": 3 },
+    { "word": "status", "weight": 1 }
+  ]
+}

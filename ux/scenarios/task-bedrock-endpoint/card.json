@@ -1,0 +1,14 @@
+{
+  "kind": "task",
+  "goal": "Find the fields of a Bedrock endpoint in a routes document.",
+  "persona": "A platform engineer moving a service's model calls to Amazon Bedrock.",
+  "card": "rotating",
+  "start": "/llm/",
+  "cues": [
+    { "word": "bedrock endpoints", "weight": 3 },
+    { "word": "model routes", "weight": 3 },
+    { "word": "routes", "weight": 2 },
+    { "word": "configure", "weight": 1 }
+  ],
+  "search": "bedrock endpoints"
+}
