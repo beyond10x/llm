@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-23T02:01:43Z",
+  "actor": "agent:llm-u1-implementor",
+  "artifact": "story:final-only-answer-text",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test -p llm-core -p llm-chat -p llm-cli (package-scoped), cargo test -p llm-responses --test live_stream, at 5b6d147d",
+    "reference": "5b6d147d"
+  }
+}

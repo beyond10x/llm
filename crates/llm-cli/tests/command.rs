@@ -119,14 +119,20 @@ fn sse(events: &[(&str, Value)]) -> Vec<u8> {
 }
 
 fn messages_stream() -> Vec<u8> {
+    messages_stream_reporting(Some("claude-haiku-5-5"))
+}
+
+/// The Messages fixture turn, its `message_start` reporting `model`, or no model at all.
+fn messages_stream_reporting(model: Option<&str>) -> Vec<u8> {
+    let mut start = json!({"type":"message_start","message":{"id":"msg_fixture","type":"message",
+        "role":"assistant","content":[],"stop_reason":null,
+        "stop_sequence":null,"usage":{"input_tokens":12,"output_tokens":1,
+        "cache_creation_input_tokens":0,"cache_read_input_tokens":0}}});
+    if let Some(model) = model {
+        start["message"]["model"] = json!(model);
+    }
     sse(&[
-        (
-            "message_start",
-            json!({"type":"message_start","message":{"id":"msg_fixture","type":"message",
-                "role":"assistant","model":"claude-haiku-5-5","content":[],"stop_reason":null,
-                "stop_sequence":null,"usage":{"input_tokens":12,"output_tokens":1,
-                "cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}),
-        ),
+        ("message_start", start),
         (
             "content_block_start",
             json!({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}),
@@ -515,6 +521,34 @@ fn infer_on_an_alias_streams_the_messages_text_and_prices_the_turn() {
 }
 
 #[test]
+fn infer_prices_a_turn_only_under_the_model_the_provider_reported() {
+    for (case, model, cost) in [
+        (
+            "the route's model",
+            Some("claude-haiku-5-5"),
+            "0.000032 USD",
+        ),
+        ("a different model", Some("claude-sonnet-5-5"), "unknown"),
+        ("no model", None, "unknown"),
+    ] {
+        let fixture = Fixture::new(vec![messages_stream_reporting(model)]);
+        let (_directory, path) = configured(&three_routes(&fixture.origin));
+        let output = llm(
+            &["--config", &path, "infer", "--model", "haiku", "hi"],
+            &KEYS,
+            None,
+        );
+        assert_eq!(output.status.code(), Some(0), "{case}: {}", stderr(&output));
+        assert_eq!(stdout(&output), "Guten Tag\n", "{case}");
+        assert_eq!(
+            stderr(&output),
+            format!("route=haiku protocol=messages input_tokens=12 output_tokens=4 cost={cost}\n"),
+            "{case}"
+        );
+    }
+}
+
+#[test]
 fn infer_on_a_responses_route_streams_its_text_and_reports_its_usage() {
     let fixture = Fixture::new(vec![responses_stream()]);
     let (_directory, path) = configured(&three_routes(&fixture.origin));
@@ -537,6 +571,86 @@ fn infer_on_a_responses_route_streams_its_text_and_reports_its_usage() {
         received[0].header("authorization"),
         Some(format!("Bearer {API_KEY}").as_str())
     );
+}
+
+/// A Responses message the server sent only in the terminal `output`, with no delta for it.
+fn final_message(id: &str, text: &str) -> Value {
+    json!({"type":"message","id":id,"role":"assistant","status":"completed",
+        "content":[{"type":"output_text","text":text,"annotations":[]}]})
+}
+
+/// A Responses stream that shows the text of `streamed` through deltas and then completes with
+/// `output`, which may carry messages no delta showed.
+fn responses_stream_of(streamed: &[(&str, &str)], output: &[Value]) -> Vec<u8> {
+    let mut events = vec![(
+        "response.created",
+        json!({"type":"response.created","response":{"id":"resp_1","status":"in_progress"}}),
+    )];
+    for (index, (id, text)) in streamed.iter().enumerate() {
+        events.push((
+            "response.output_item.added",
+            json!({"type":"response.output_item.added","output_index":index,"item":{
+                "type":"message","id":id,"role":"assistant","status":"in_progress","content":[]}}),
+        ));
+        events.push((
+            "response.output_text.delta",
+            json!({"type":"response.output_text.delta","item_id":id,"output_index":index,
+                "content_index":0,"delta":text}),
+        ));
+        events.push((
+            "response.output_item.done",
+            json!({"type":"response.output_item.done","output_index":index,
+                "item":final_message(id, text)}),
+        ));
+    }
+    events.push((
+        "response.completed",
+        json!({"type":"response.completed","response":{"id":"resp_1","model":"gpt-fixture",
+            "status":"completed","output":output,"usage":{"input_tokens":12,"output_tokens":4}}}),
+    ));
+    sse(&events)
+}
+
+/// Answer text the server sent only in its final object reaches stdout: the turn carries it,
+/// no delta showed it, and the command printed nothing for it before (review of 0.24.0,
+/// finding 2).
+#[test]
+fn infer_prints_answer_text_that_arrived_only_in_the_final_response() {
+    let fixture = Fixture::new(vec![responses_stream_of(
+        &[],
+        &[final_message("msg_1", "The answer")],
+    )]);
+    let (_directory, path) = configured(&three_routes(&fixture.origin));
+    let output = llm(
+        &["--config", &path, "infer", "--model", "gpt", "hi"],
+        &KEYS,
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "The answer\n");
+    let usage = stderr(&output);
+    assert!(usage.contains("input_tokens=12 output_tokens=4"), "{usage}");
+}
+
+/// A streamed message and a second message no delta showed: each text is printed exactly once,
+/// the streamed one as it arrived and the other after it, on its own line.
+#[test]
+fn infer_prints_a_streamed_message_once_and_a_final_only_message_after_it() {
+    let fixture = Fixture::new(vec![responses_stream_of(
+        &[("msg_1", "First part")],
+        &[
+            final_message("msg_1", "First part"),
+            final_message("msg_2", "Second part"),
+        ],
+    )]);
+    let (_directory, path) = configured(&three_routes(&fixture.origin));
+    let output = llm(
+        &["--config", &path, "infer", "--model", "gpt", "hi"],
+        &KEYS,
+        None,
+    );
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    assert_eq!(stdout(&output), "First part\nSecond part\n");
 }
 
 #[test]

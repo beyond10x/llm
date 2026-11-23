@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-23T02:21:27Z",
+  "actor": "human:timo",
+  "artifact": "story:usage-reader",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 cargo test --locked -p llm-core -p llm-http -p llm-responses -p llm-messages -p llm-chat (one -p per run) at impl/usage-reader 7b3f3ebf: exit 0, 1021 passed 0 failed (base 08289a72: 1006); new tests/usage_reader.rs 5+5+5 passed, red 14 of 15 against stubs at bd6d7b4b; clippy -D warnings on the five crates exit 0; cargo fmt --check exit 0; task docs exit 0; task conformance with ess 0.87.0 exit 0, 1049/1049 x3; aep plan artifact validate exit 0",
+    "reference": "impl/usage-reader@7b3f3ebf"
+  }
+}
