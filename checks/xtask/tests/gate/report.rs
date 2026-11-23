@@ -1,4 +1,4 @@
-//! `llm-xtask report` reads the JUnit reports cargo-nextest wrote, one per run of the test phase,
+//! `llm-xtask report` reads the `JUnit` reports cargo-nextest wrote, one per run of the test phase,
 //! prints the ten slowest tests of all of them, slowest first, and the time the runs took, and
 //! fails when that time is over the 120 s bound. `llm-xtask test` ends with the same report.
 

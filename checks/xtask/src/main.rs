@@ -2,7 +2,7 @@
 //!
 //! `test` builds the test binaries of every run first, outside the bound, then runs each with
 //! `cargo nextest run` under `.config/nextest.toml`, which kills a test at 60 s and counts it
-//! failed, and ends one run at 120 s. After each run it reads the JUnit report that run wrote.
+//! failed, and ends one run at 120 s. After each run it reads the `JUnit` report that run wrote.
 //! It ends as `report` does: the ten slowest tests of all runs, slowest first, and the time the
 //! runs took by their own reports, failing when that time is over 120 s. The time is read from
 //! the reports, not from a clock around the commands, so a wait for a build slot is not counted.
@@ -32,7 +32,7 @@ const RUNS: [&[&str]; 5] = [
     &["-p", "llm-models"],
 ];
 
-/// Where cargo-nextest writes the JUnit report of its default profile, under the target
+/// Where cargo-nextest writes the `JUnit` report of its default profile, under the target
 /// directory (`.config/nextest.toml`).
 const JUNIT: &str = "nextest/default/junit.xml";
 
@@ -174,7 +174,7 @@ fn target_directory() -> Result<PathBuf, Failure> {
         .ok_or_else(|| Failure::Command("cargo metadata names no target directory".to_owned()))
 }
 
-/// Reads one JUnit report cargo-nextest wrote.
+/// Reads one `JUnit` report cargo-nextest wrote.
 fn read(report: &Path) -> Result<Run, Failure> {
     let place = report.display();
     let xml =
@@ -224,7 +224,7 @@ fn attribute<'a>(tag: &'a str, name: &str) -> Option<&'a str> {
         let start = at + key.len();
         let quoted_before = tag[..at].matches('"').count();
         let separated = at == 0 || tag[..at].ends_with(char::is_whitespace);
-        if separated && quoted_before % 2 == 0 {
+        if separated && quoted_before.is_multiple_of(2) {
             return tag[start..].find('"').map(|end| &tag[start..start + end]);
         }
         from = start;
