@@ -332,7 +332,11 @@ an announced call the outcome does not carry, another name, or other arguments �
 read by the projection's own rule, so blank text is `{}`. A call the stream
 never announced — a model that returns its calls only in the outcome — is still emitted once,
 complete, in the terminal chunks under the next wire index, rather than dropped or streamed under
-an invented name.
+an invented name. A message the stream never showed — an upstream that sends it only in its final
+object, as a Responses server may — is sent once in the terminal chunks too, as `content` (a
+refusal as `refusal`), joined to the text already sent with a newline as the non-streamed answer
+joins messages; `llm_core::ShownText` decides which messages were shown, so a shown one is not
+sent twice.
 
 ## A compatible local endpoint
 

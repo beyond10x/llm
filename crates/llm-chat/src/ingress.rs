@@ -6,9 +6,9 @@
 //! That holds at every level: each object of the request is closed, and a key it does not
 //! publish is refused naming its path (`messages[].content[].cache_control`).
 use llm_core::{
-    CallId, Error, ImageSource, Item, MAX_TOOL_RESULT_BYTES, OutputFormat, Sampling, StopReason,
-    StreamEvent, ToolChoice, ToolName, ToolSpec, TurnOutcome, TurnRequest, Usage, Verbosity,
-    field_path,
+    CallId, Error, ImageSource, Item, MAX_TOOL_RESULT_BYTES, OutputFormat, Sampling, ShownText,
+    StopReason, StreamEvent, ToolChoice, ToolName, ToolSpec, TurnOutcome, TurnRequest, Usage,
+    Verbosity, field_path,
 };
 use serde_json::{Map, Value, json};
 
@@ -729,6 +729,11 @@ pub struct IngressStream {
     /// Calls whose arguments arrived before any announcement. Their fragments were not relayed,
     /// so a later announcement cannot be honoured and they are emitted complete at close.
     unannounced: Vec<CallId>,
+    /// The messages the stream showed, so `close` sends the ones it did not, once.
+    shown: ShownText,
+    /// Whether any `content` or `refusal` text was sent, which a later message is joined to.
+    sent_content: bool,
+    sent_refusal: bool,
 }
 
 impl IngressStream {
@@ -738,6 +743,9 @@ impl IngressStream {
             created,
             announced: Vec::new(),
             unannounced: Vec::new(),
+            shown: ShownText::new(),
+            sent_content: false,
+            sent_refusal: false,
         }
     }
 
@@ -749,13 +757,20 @@ impl IngressStream {
     /// inventing a name is not an option. Such a call is emitted once, complete, by
     /// [`IngressStream::close`].
     pub fn chunk(&mut self, event: &StreamEvent) -> Option<Value> {
+        self.shown.observe(event);
         let delta = match event {
-            StreamEvent::TextDelta { text } => json!({"content": text}),
+            StreamEvent::TextDelta { text } => {
+                self.sent_content |= !text.is_empty();
+                json!({"content": text})
+            }
             // Empty, it marks reasoning signed without any text shown, which this wire cannot
             // carry: nothing is sent for it.
             StreamEvent::ReasoningDelta { text } if text.is_empty() => return None,
             StreamEvent::ReasoningDelta { text } => json!({"reasoning_content": text}),
-            StreamEvent::RefusalDelta { text } => json!({"refusal": text}),
+            StreamEvent::RefusalDelta { text } => {
+                self.sent_refusal |= !text.is_empty();
+                json!({"refusal": text})
+            }
             StreamEvent::ToolCallStarted { call_id, name } => {
                 if self.position(call_id).is_some() || self.unannounced.contains(call_id) {
                     return None;
@@ -796,8 +811,13 @@ impl IngressStream {
         ))
     }
 
-    /// The terminal chunks: the calls the stream never announced, the finish reason, and the
-    /// reported counters when the client asked for them.
+    /// The terminal chunks: the text of each message the stream never showed, the calls it never
+    /// announced, the finish reason, and the reported counters when the client asked for them.
+    ///
+    /// A message no delta showed (a Responses upstream that sent it only in its final object) is
+    /// sent once, as `content` (a refusal as `refusal`), after what was shown and joined to it
+    /// with a newline, as [`encode_ingress_completion`] joins messages. A shown message is not
+    /// sent again ([`ShownText`]).
     ///
     /// A call already announced is not repeated. When none of its arguments were relayed, its
     /// arguments are sent here under its own index, so the client never assembles an empty one.
@@ -846,6 +866,26 @@ impl IngressStream {
             return Err(streamed_contradiction());
         }
         let mut chunks = Vec::new();
+        let (mut sent_content, mut sent_refusal) = (self.sent_content, self.sent_refusal);
+        for item in self.shown.unshown(&outcome.items) {
+            let (key, sent, text) = match item {
+                Item::AssistantText { text } => ("content", &mut sent_content, text),
+                Item::AssistantRefusal { text } => ("refusal", &mut sent_refusal, text),
+                _ => continue,
+            };
+            let text = if *sent {
+                format!("\n{text}")
+            } else {
+                text.clone()
+            };
+            *sent = true;
+            let mut delta = Map::new();
+            delta.insert(key.to_owned(), Value::String(text));
+            chunks.push(self.envelope(
+                json!([{"index": 0, "delta": delta, "finish_reason": null}]),
+                model.clone(),
+            ));
+        }
         if !remaining.is_empty() {
             chunks.push(self.envelope(
                 json!([{"index": 0, "delta": {"tool_calls": remaining}, "finish_reason": null}]),

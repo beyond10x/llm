@@ -267,6 +267,8 @@ fn call_id(value: &str) -> CallId {
     CallId::new(value).expect("fixture call")
 }
 
+/// A turn that proposes one call and carries no text, as the streams closed on it show none: a
+/// text message no delta showed would be sent in the terminal chunks.
 fn tool_call_outcome(arguments: Value) -> TurnOutcome {
     let mut outcome = outcome_with(
         Some(Usage {
@@ -279,11 +281,11 @@ fn tool_call_outcome(arguments: Value) -> TurnOutcome {
         Some("Qwen/Qwen3-8B"),
     );
     outcome.stop_reason = StopReason::ToolCalls;
-    outcome.items.push(Item::ToolCall(ToolCall {
+    outcome.items = vec![Item::ToolCall(ToolCall {
         call_id: call_id("call-1"),
         name: ToolName::new("lookup").expect("fixture tool"),
         arguments,
-    }));
+    })];
     outcome
 }
 
