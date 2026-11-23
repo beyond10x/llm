@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `Routes::cost` and `llm infer` price only a turn reporting the route's model; another or none is unknown
+
 ## [0.24.0] - 2026-11-21
 
 ### Added

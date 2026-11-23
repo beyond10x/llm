@@ -55,7 +55,9 @@ A model price names its serving-model ID, immutable binding revision and expecte
 An attempt retains the selected binding and the actual upstream model reported by its producer.
 The price context must match both. A missing reported model, a different model, repointed binding
 or missing price produces named unknown lines. A requested route alias is never substituted for
-an absent observed model.
+an absent observed model, and neither is a route's configured model: `Routes::cost` quotes a
+route's `price` against the model the turn reported, so a turn on a Bedrock Converse route, whose
+answer names no model, has an unknown cost.
 
 `Usage.input_tokens` includes cache reads and cache creation. The uncached quantity is the total
 minus both cache classes, after validating that known subsets fit. Reasoning tokens are already

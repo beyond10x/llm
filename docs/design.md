@@ -411,7 +411,9 @@ is the one credential source that starts a program, so a routes document alone n
 `llm-models` builds its resolver only with feature `process` and only after the caller calls
 `RouteResolvers::allow_credential_process`, and refuses its routes as `unauthorized` otherwise.
 Route aliases are unique names for one route; a route's `price` applies to the model it declares,
-and a turn's cost stays unknown wherever a count or rate is. The `llm` command (`llm-cli`) reads
+and a turn is attributed to the model its provider reported, as `docs/pricing.md` requires: a turn
+that reports another model or none has an unknown cost, never one at the route's configured rate.
+A turn's cost stays unknown wherever a count or rate is. The `llm` command (`llm-cli`) reads
 one such file and is a caller like any other: it injects the environment and file sources and the
 container credentials endpoint from its own environment, and allows credential processes, for a
 routes file that on Unix passes the owner and mode check a `file:` source gets; nothing else.

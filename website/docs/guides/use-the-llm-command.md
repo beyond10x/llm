@@ -124,13 +124,16 @@ route=haiku protocol=messages input_tokens=12 output_tokens=4 cost=0.000032 USD
 ```
 
 A counter the provider did not report is `unknown`, not `0`. `cost` appears only for a priced
-route, and it is `unknown` when a counter it needs is missing. A cost needs every input counter,
-cache reads and cache writes included, so whether it can complete depends on the wire:
+route. It is the cost of the model the provider reported serving the turn, priced at the route's
+rates only when that is the route's model: when the answer names another model or none, `cost` is
+`unknown`, never the route's rate for a model that may not have served the turn. It is also
+`unknown` when a counter it needs is missing. A cost needs every input counter, cache reads and
+cache writes included, so whether it can complete depends on the wire:
 
 | Wire | Cost of a priced route |
 | --- | --- |
-| `messages`, direct or on Bedrock `InvokeModel` | Completes when the answer reports its cache counters |
-| `bedrock-converse` | Completes: `llm` sets no cache point, so an absent cache counter is a known `0` |
+| `messages`, direct or on Bedrock `InvokeModel` | Completes when the answer names the route's model and reports its cache counters |
+| `bedrock-converse` | Always `unknown`: the answer names no model |
 | `responses` | Always `unknown`: the wire reports no cache-write counter |
 | `chat-completions` | `unknown` unless the server reports both cache counters, which providers on this wire do not |
 

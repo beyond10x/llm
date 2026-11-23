@@ -1840,8 +1840,11 @@ impl Routes {
 
     /// What one turn on the route a name reaches cost, by the route's `price`: `None` when the
     /// name is no route or alias, or its route declares no price. The price applies to the
-    /// model the route declares; a count the turn did not report, a rate the price leaves out
-    /// and usage that is not final each leave a line unknown, so the complete total is absent.
+    /// model the route declares, and the turn is attributed to the model its provider reported
+    /// (`observation.upstream_model`): a turn that reports another model or none leaves every
+    /// line unknown, never priced at the route's rate. A count the turn did not report, a rate
+    /// the price leaves out and usage that is not final each leave a line unknown, so the
+    /// complete total is absent.
     ///
     /// # Errors
     /// `invalid-request` for usage whose counters contradict each other.
@@ -1889,7 +1892,9 @@ impl Routes {
             serving_model_id: route.name.clone(),
             price_id: route.name.clone(),
             binding: observation.binding.clone(),
-            upstream_model: Some(route.upstream_model.clone()),
+            // The model the provider reported, never the route's own: `llm-cost` leaves a
+            // missing or different model unknown.
+            upstream_model: observation.upstream_model.clone(),
             billing: BillingKind::Metered,
             dispatch: Dispatch::Accepted,
             failed: false,
