@@ -41,17 +41,22 @@ fn read_in(pieces: &[&[u8]]) -> ReportedUsage {
     reader.finish()
 }
 
-/// What the reader reports for `body` fed whole, after asserting that every split into two
-/// pieces and one byte at a time report exactly the same.
-fn every_way(body: &[u8]) -> ReportedUsage {
+/// What the reader reports for `body` fed whole, after asserting that it reports exactly the same
+/// fed one byte at a time and split into two pieces at each of `cuts`.
+fn alike(body: &[u8], cuts: impl IntoIterator<Item = usize>) -> ReportedUsage {
     let whole = read_usage(body);
-    for cut in 0..=body.len() {
+    for cut in cuts {
         let (left, right) = body.split_at(cut);
         assert_eq!(read_in(&[left, right]), whole, "split at byte {cut}");
     }
     let bytes: Vec<&[u8]> = body.chunks(1).collect();
     assert_eq!(read_in(&bytes), whole, "fed one byte at a time");
     whole
+}
+
+/// [`alike`] at every split point.
+fn every_way(body: &[u8]) -> ReportedUsage {
+    alike(body, 0..=body.len())
 }
 
 async fn decoded(stream: &[u8]) -> TurnOutcome {

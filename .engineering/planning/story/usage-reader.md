@@ -11,7 +11,7 @@ refs:
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-23T01:05:59Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-23T01:05:59Z", actor: "human:timo", revision: 3}
@@ -54,12 +54,17 @@ reader uses the decoder's own usage parsing, so the two cannot drift apart.
 - On both recorded Messages captures the Messages reader reports the model and the counters
   `decode_stream` reports for the same capture.
 - A Chat Completions stream with a usage chunk and a non-streamed Chat Completions body report the
-  model and every counter they carry, reasoning included, and the same counters
-  `decode_completion` and `project_response_bytes` report.
+  model and every counter they carry, reasoning included, and every pinned Chat Completions stream
+  reports the model and counters `project_response_bytes` reports; the body those
+  `decode_completion` reports.
 - A non-streamed Responses body and a non-streamed Messages body report their model and counters.
 - Every counter an answer did not report is `None`, never 0, on all three protocols.
-- Fed whole, in two pieces at every split point, and one byte at a time, each fixture gives the
-  same `ReportedUsage`.
+- Fed whole, split into two pieces, and fed one byte at a time, each fixture gives the same
+  `ReportedUsage`. Every split point is checked for every JSON body, both Messages captures,
+  `openai-text-and-usage.sse` and `openai-partial-usage.sse`. The 15 KB Codex capture is checked at
+  every 61st split and at every split within 128 bytes of its usage report, and the other pinned
+  Chat Completions streams at every 17th split: every split of all of them took 121 s and 34 s in
+  a debug build, past the 60 s test budget (one split is one whole reading).
 - A stream that stops before its terminal event reports what it carried so far with
   `final_usage` false; a terminal event, or a whole JSON body, sets it true.
 - The new tests are named in AGENTS.md's "Unknown usage stays unknown" row; no test makes a network

@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `UsageReader` and `read_usage` in each protocol crate read an answer's model and counters from its bytes
+
 ## [0.24.0] - 2026-11-21
 
 ### Added

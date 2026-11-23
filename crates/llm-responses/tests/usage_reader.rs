@@ -42,17 +42,22 @@ fn read_in(pieces: &[&[u8]]) -> ReportedUsage {
     reader.finish()
 }
 
-/// What the reader reports for `body` fed whole, after asserting that every split into two
-/// pieces and one byte at a time report exactly the same.
-fn every_way(body: &[u8]) -> ReportedUsage {
+/// What the reader reports for `body` fed whole, after asserting that it reports exactly the same
+/// fed one byte at a time and split into two pieces at each of `cuts`.
+fn alike(body: &[u8], cuts: impl IntoIterator<Item = usize>) -> ReportedUsage {
     let whole = read_usage(body);
-    for cut in 0..=body.len() {
+    for cut in cuts {
         let (left, right) = body.split_at(cut);
         assert_eq!(read_in(&[left, right]), whole, "split at byte {cut}");
     }
     let bytes: Vec<&[u8]> = body.chunks(1).collect();
     assert_eq!(read_in(&bytes), whole, "fed one byte at a time");
     whole
+}
+
+/// [`alike`] at every split point.
+fn every_way(body: &[u8]) -> ReportedUsage {
+    alike(body, 0..=body.len())
 }
 
 /// The `data:` payloads of a recorded stream, in order.
@@ -85,8 +90,20 @@ fn the_recorded_codex_stream_reports_its_model_and_every_counter_the_decoder_rea
 }
 
 #[test]
-fn every_split_of_the_recorded_codex_stream_reads_the_same() {
-    assert_eq!(every_way(RECORDED), read_usage(RECORDED));
+fn the_recorded_codex_stream_reads_alike_byte_by_byte_and_split_in_two() {
+    // Each split of the 15 KB capture is one whole reading, about 8 ms in a debug build, so all
+    // 15,000 of them would take two minutes: every 61st split, and every split within 128 bytes
+    // of the usage report, where a cut falls inside the counters the reader takes.
+    let text = std::str::from_utf8(RECORDED).expect("a UTF-8 recording");
+    let usage = text
+        .rfind("\"usage\":{")
+        .expect("the recording reports usage");
+    let around = usage.saturating_sub(128)..(usage + 128).min(RECORDED.len());
+    let cuts = (0..=RECORDED.len())
+        .step_by(61)
+        .chain(around)
+        .chain([RECORDED.len()]);
+    assert_eq!(alike(RECORDED, cuts), read_usage(RECORDED));
 }
 
 #[test]
@@ -106,6 +123,8 @@ fn a_response_body_that_is_not_streamed_reports_its_model_and_counters() {
             final_usage: true,
         }
     );
+    // White space before the body does not make it a stream, split anywhere.
+    assert_eq!(every_way(format!("\r\n  {BODY}\n").as_bytes()), report);
 }
 
 #[test]
@@ -140,7 +159,7 @@ fn a_stream_cut_before_its_terminal_object_names_the_model_and_is_not_final() {
     let cut = text
         .find("event: response.completed")
         .expect("the recording completes");
-    let report = every_way(&RECORDED[..cut]);
+    let report = alike(&RECORDED[..cut], (0..=cut).step_by(61));
     assert_eq!(
         report,
         ReportedUsage {

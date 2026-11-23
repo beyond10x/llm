@@ -2,6 +2,7 @@ use crate::{codec::decode_block, fields, object, path, string, usage::Snapshot};
 use llm_core::{
     CallId, Cancel, Dispatch, Error, ErrorCode, Id, Item, MAX_ITEMS, MAX_TOOL_ARGUMENT_BYTES,
     Provenance, StopReason, StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest,
+    Usage,
 };
 use llm_http::{Framing, SseDecoder, SseEvent, within_tokio_runtime};
 use serde_json::{Value, json};
@@ -26,7 +27,7 @@ const MESSAGE_FIELDS: [&str; 11] = [
 ];
 const MAX_STOP_REASON_BYTES: usize = 64;
 // Where a streamed object sits, as a refusal names it: the event type, then the field path.
-const START: &str = "message_start.message";
+pub(crate) const START: &str = "message_start.message";
 const BLOCK: &str = "content_block_start.content_block";
 const DELTA: &str = "content_block_delta.delta";
 
@@ -55,8 +56,8 @@ fn text<'a>(value: &'a Value, field: &str) -> Result<Option<&'a str>, Error> {
 
 /// What one message reported about itself, independently of its content.
 #[derive(Default)]
-struct Header {
-    upstream_model: Option<Id>,
+pub(crate) struct Header {
+    pub(crate) upstream_model: Option<Id>,
     response_id: Option<Id>,
     usage: Snapshot,
     stop_reason: Option<String>,
@@ -65,7 +66,12 @@ struct Header {
 impl Header {
     /// Reads one message's own fields. A `streamed` message's usage admits the usage extension,
     /// whose warning text is returned for the stream to emit; a complete message refuses it.
-    fn read(&mut self, message: &Value, at: &str, streamed: bool) -> Result<Option<String>, Error> {
+    pub(crate) fn read(
+        &mut self,
+        message: &Value,
+        at: &str,
+        streamed: bool,
+    ) -> Result<Option<String>, Error> {
         if let Some(model) = text(message, "model")? {
             // The route's own name for what served the turn; a configured alias never fills it.
             self.upstream_model =
@@ -88,6 +94,28 @@ impl Header {
         }
         self.reason(text(message, "stop_reason")?)?;
         Ok(extension)
+    }
+
+    /// Reads the cumulative usage a `message_delta` reports, which replaces the counters read
+    /// before it, and returns the warning text of a usage extension it carries. A refused report
+    /// leaves the counters as they were.
+    pub(crate) fn read_delta(&mut self, data: &Value) -> Result<Option<String>, Error> {
+        let Some(usage) = data.get("usage").filter(|value| !value.is_null()) else {
+            return Ok(None);
+        };
+        let (next, extension) = self.usage.update_streamed(usage, "message_delta.usage")?;
+        self.usage = next;
+        Ok(extension)
+    }
+
+    /// The counters read so far, normalized; `None` when the route reported none. An unreported
+    /// counter stays unknown, never zero.
+    pub(crate) fn usage(&self) -> Option<Usage> {
+        if self.usage.is_known() {
+            self.usage.normalized().ok()
+        } else {
+            None
+        }
     }
 
     fn reason(&mut self, reported: Option<&str>) -> Result<(), Error> {
@@ -115,11 +143,7 @@ impl Header {
             binding: target.clone(),
             upstream_model: self.upstream_model.clone(),
             response_id: self.response_id.clone(),
-            usage: if self.usage.is_known() {
-                self.usage.normalized().ok()
-            } else {
-                None
-            },
+            usage: self.usage(),
             final_usage,
         }
     }
@@ -736,15 +760,7 @@ impl StreamDecoder {
             &["stop_reason", "stop_sequence", "container", "stop_details"],
         )?;
         // Cumulative, not incremental: the reported counters replace the previous ones.
-        let mut reported = None;
-        if let Some(usage) = data.get("usage").filter(|value| !value.is_null()) {
-            let (next, extension) = self
-                .header
-                .usage
-                .update_streamed(usage, "message_delta.usage")?;
-            self.header.usage = next;
-            reported = extension;
-        }
+        let reported = self.header.read_delta(data)?;
         self.header.reason(text(delta, "stop_reason")?)?;
         // Shown with the delta that reported it, once the whole delta was accepted.
         match reported {

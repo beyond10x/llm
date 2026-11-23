@@ -68,17 +68,22 @@ fn read_in(pieces: &[&[u8]]) -> ReportedUsage {
     reader.finish()
 }
 
-/// What the reader reports for `body` fed whole, after asserting that every split into two
-/// pieces and one byte at a time report exactly the same.
-fn every_way(body: &[u8]) -> ReportedUsage {
+/// What the reader reports for `body` fed whole, after asserting that it reports exactly the same
+/// fed one byte at a time and split into two pieces at each of `cuts`.
+fn alike(body: &[u8], cuts: impl IntoIterator<Item = usize>) -> ReportedUsage {
     let whole = read_usage(body);
-    for cut in 0..=body.len() {
+    for cut in cuts {
         let (left, right) = body.split_at(cut);
         assert_eq!(read_in(&[left, right]), whole, "split at byte {cut}");
     }
     let bytes: Vec<&[u8]> = body.chunks(1).collect();
     assert_eq!(read_in(&bytes), whole, "fed one byte at a time");
     whole
+}
+
+/// [`alike`] at every split point.
+fn every_way(body: &[u8]) -> ReportedUsage {
+    alike(body, 0..=body.len())
 }
 
 #[test]
@@ -100,10 +105,13 @@ fn a_streamed_answer_reports_its_model_and_every_counter_reasoning_included() {
 }
 
 #[test]
-fn every_pinned_stream_reads_alike_at_every_split_and_as_the_decoder_reports_it() {
+fn every_pinned_stream_reads_alike_split_anywhere_and_as_the_decoder_reports_it() {
+    // Every 17th split of each: all of them, 21 KB of readings of up to 4 KB, take half a minute
+    // in a debug build. `a_streamed_answer_reports_its_model_and_every_counter_reasoning_included`
+    // reads one of them at every split.
     let binding = binding();
     for (name, stream) in STREAMS {
-        let report = every_way(stream);
+        let report = alike(stream, (0..=stream.len()).step_by(17));
         let (_, outcome) = project_response_bytes(stream, binding.provenance());
         let outcome = outcome.unwrap_or_else(|error| panic!("{name} decodes: {error:?}"));
         assert_eq!(
@@ -164,7 +172,7 @@ fn a_counter_a_usage_report_omits_stays_unknown_and_is_never_zero() {
 fn a_stream_cut_before_its_sentinel_keeps_what_it_reported_and_is_not_final() {
     let text = std::str::from_utf8(OPENAI_TEXT).expect("a UTF-8 fixture");
     let cut = text.find("data: [DONE]").expect("the fixture ends");
-    let report = every_way(&OPENAI_TEXT[..cut]);
+    let report = alike(&OPENAI_TEXT[..cut], (0..=cut).step_by(17));
     assert_eq!(report.usage.reasoning_output_tokens, Some(4));
     assert_eq!(report.model, Some(id("gpt-4o-mini-2024-07-18")));
     assert!(!report.final_usage);
