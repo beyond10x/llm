@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-23T02:53:22Z",
+  "actor": "human:timo",
+  "artifact": "story:usage-reader",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "wave gate on wave/2026-11-23-review-findings after merging impl/final-only-answer-text, impl/attributed-cost and impl/usage-reader (Rust 1.98.0, each step alone, every step exit 0): cargo test --locked -p llm-core 124, llm-http 93, llm-responses 308, llm-messages 305, llm-chat 195, llm-models 80, llm-cli 42 passed, 0 failed; cargo fmt --all --check; clippy --all-targets --all-features -D warnings on the same seven crates; task docs; task conformance on ess 0.87.0 1049 of 1049 three runs; aep plan artifact validate",
+    "reference": "wave/2026-11-23-review-findings@e7e824db"
+  }
+}

@@ -5,6 +5,10 @@ kind: approval-record
 status: accepted
 title: 'Wave 2026-11-23-review-findings: review findings 1, 2 and 9 of llm 0.24.0'
 summary: Three implemented units merged into one wave branch, gated once, opened as one bot pull request
+relations:
+- decides: story:final-only-answer-text
+- decides: story:attributed-cost
+- decides: story:usage-reader
 revision: 2
 transitions:
 - {from: "draft", to: "accepted", at: "2026-11-23T02:24:23Z", actor: "human:timo", revision: 2, executor: "agent:llm-wave-review-findings", correlation: "2026-11-23-review-findings"}
