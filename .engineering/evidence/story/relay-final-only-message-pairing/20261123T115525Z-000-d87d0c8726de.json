@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-23T11:55:25Z",
+  "actor": "human:timo",
+  "artifact": "story:relay-final-only-message-pairing",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "RUSTUP_TOOLCHAIN=1.98.0 CARGO_INCREMENTAL=0 cargo test -p llm-responses --locked (exit 0, 45 binaries, 310 passed, 0 failed; ingress 27 passed)"
+  }
+}
