@@ -845,7 +845,8 @@ its path (`messages[].content[].cache_control`), at every level:
 - `thinking`: `adaptive` (the model decides), `enabled` with a positive `budget_tokens`, or
   `disabled`.
 - `parallel_tool_calls`: whether the model may propose several calls in one turn. It needs
-  published tools.
+  published tools. `false` allows one call at most: a returned turn with more is refused as
+  `Protocol`, whatever the tool choice and `return_unpublished_calls`.
 - `hints` (`llm_core::Hints`), all advisory: `prompt_cache` (cache what this turn shares with the
   next, with an optional lifetime `5m` or `1h`), `prompt_cache_key`, `verbosity` (`low`, `medium`,
   `high`), `reasoning_summary` (`auto`, `concise`, `detailed`), `anthropic_beta` (the Anthropic
@@ -857,8 +858,9 @@ its path (`messages[].content[].cache_control`), at every level:
   caller as an ordinary call, for the caller to answer as a refusal, instead of refusing the whole
   turn. Absent (the default) refuses, as before. Only outcome validation reads it; no
   wire sends it and no ingress decoder sets it. Every other outcome check still refuses: a repeated
-  call id, a call other than a named tool choice, oversized arguments. Bedrock Converse also
-  refuses an unpublished name outside `[A-Za-z0-9_-]`, which its next turn could not carry back.
+  call id, a call other than a named tool choice, a second call when `parallel_tool_calls` is
+  `false`, oversized arguments. Bedrock Converse also refuses an unpublished name outside
+  `[A-Za-z0-9_-]`, which its next turn could not carry back.
 - `output_format` (`llm_core::OutputFormat`): a JSON Schema the answer's text is held to, with an
   optional `name` and an optional `strict` flag ("Structured output" below).
 

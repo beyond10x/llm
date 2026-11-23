@@ -3,8 +3,8 @@
 use llm_core::{
     ADVISORY_OMITTED, Advisory, CacheTtl, CallId, Capabilities, Controls, ErrorCode, Hints, Id,
     Item, PromptCache, Protocol, Provenance, ReasoningSummary, Sampling, StopReason, StreamEvent,
-    Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnDocument, TurnObservation,
-    TurnOutcome, TurnRequest, Unforwarded, Verbosity, advisory_warning, field_path, wire_effort,
+    Thinking, ToolCall, ToolChoice, ToolName, ToolSpec, TurnDocument, TurnObservation, TurnOutcome,
+    TurnRequest, Unforwarded, Verbosity, advisory_warning, field_path, wire_effort,
 };
 use serde_json::json;
 
