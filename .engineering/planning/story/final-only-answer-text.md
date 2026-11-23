@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:final-only-answer-text
 kind: story
-status: draft
+status: implemented
 title: Answer text that arrives only in the final object reaches the caller once
 summary: llm infer and the Chat relay dropped an assistant message no text delta showed; each now reaches the caller exactly once
 relations:
@@ -23,7 +23,11 @@ scope:
   path: crates/llm-core/src/port.rs
 - confidence: inferred
   path: crates/llm-core/tests
-revision: 3
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-23T02:01:38Z", actor: "agent:llm-u1-implementor", revision: 4}
+- {from: "proposed", to: "active", at: "2026-11-23T02:01:39Z", actor: "agent:llm-u1-implementor", revision: 5}
+- {from: "active", to: "implemented", at: "2026-11-23T02:01:44Z", actor: "agent:llm-u1-implementor", revision: 6, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Source
 
