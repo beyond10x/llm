@@ -161,10 +161,12 @@ routes:
             output: "5"}
 ```
 
-`Routes::cost(name, &observation)` prices one turn by the `llm-cost` rules. A counter the turn did
-not report, a rate the price leaves out and usage that is not final each leave a line unknown, and
-the complete total exists only when no line is. A route without a price has no cost, never a cost
-of 0.
+`Routes::cost(name, &observation)` prices one turn by the `llm-cost` rules. The price is the
+route's model's, and the turn is attributed to the model in `observation.upstream_model`, the one
+its provider reported: when that is another model or absent, every line is unknown. A counter the
+turn did not report, a rate the price leaves out and usage that is not final each leave a line
+unknown, and the complete total exists only when no line is. A route without a price has no cost,
+never a cost of 0.
 
 ## Expansion
 

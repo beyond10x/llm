@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `Routes::cost` and `llm infer` price only a turn reporting the route's model; another or none is unknown
+
 ### Fixed
 
 - `llm infer` and the Chat ingress stream send a message no delta showed once, after the stream (`llm_core::ShownText`)

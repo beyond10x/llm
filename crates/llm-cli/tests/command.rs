@@ -119,14 +119,20 @@ fn sse(events: &[(&str, Value)]) -> Vec<u8> {
 }
 
 fn messages_stream() -> Vec<u8> {
+    messages_stream_reporting(Some("claude-haiku-5-5"))
+}
+
+/// The Messages fixture turn, its `message_start` reporting `model`, or no model at all.
+fn messages_stream_reporting(model: Option<&str>) -> Vec<u8> {
+    let mut start = json!({"type":"message_start","message":{"id":"msg_fixture","type":"message",
+        "role":"assistant","content":[],"stop_reason":null,
+        "stop_sequence":null,"usage":{"input_tokens":12,"output_tokens":1,
+        "cache_creation_input_tokens":0,"cache_read_input_tokens":0}}});
+    if let Some(model) = model {
+        start["message"]["model"] = json!(model);
+    }
     sse(&[
-        (
-            "message_start",
-            json!({"type":"message_start","message":{"id":"msg_fixture","type":"message",
-                "role":"assistant","model":"claude-haiku-5-5","content":[],"stop_reason":null,
-                "stop_sequence":null,"usage":{"input_tokens":12,"output_tokens":1,
-                "cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}),
-        ),
+        ("message_start", start),
         (
             "content_block_start",
             json!({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}),
@@ -512,6 +518,34 @@ fn infer_on_an_alias_streams_the_messages_text_and_prices_the_turn() {
     assert_eq!(body["max_tokens"], 64);
     assert!(body["system"].to_string().contains("Be brief."));
     assert!(body["messages"].to_string().contains("hi"), "{body}");
+}
+
+#[test]
+fn infer_prices_a_turn_only_under_the_model_the_provider_reported() {
+    for (case, model, cost) in [
+        (
+            "the route's model",
+            Some("claude-haiku-5-5"),
+            "0.000032 USD",
+        ),
+        ("a different model", Some("claude-sonnet-5-5"), "unknown"),
+        ("no model", None, "unknown"),
+    ] {
+        let fixture = Fixture::new(vec![messages_stream_reporting(model)]);
+        let (_directory, path) = configured(&three_routes(&fixture.origin));
+        let output = llm(
+            &["--config", &path, "infer", "--model", "haiku", "hi"],
+            &KEYS,
+            None,
+        );
+        assert_eq!(output.status.code(), Some(0), "{case}: {}", stderr(&output));
+        assert_eq!(stdout(&output), "Guten Tag\n", "{case}");
+        assert_eq!(
+            stderr(&output),
+            format!("route=haiku protocol=messages input_tokens=12 output_tokens=4 cost={cost}\n"),
+            "{case}"
+        );
+    }
 }
 
 #[test]

@@ -3,6 +3,7 @@
 #[cfg(feature = "environment")]
 use llm_core::Model;
 use llm_core::{ErrorCode, Id, Protocol, TurnObservation, Usage};
+use llm_cost::Amount;
 use llm_credentials::SecretResolver;
 use llm_http::{HttpClient, Limits};
 use llm_models::routes::{AwsCredentialKind, Routes, SecretSources};
@@ -227,11 +228,60 @@ fn a_bedrock_source_that_cannot_be_built_refuses_only_its_own_route() {
 }
 
 fn observed(routes: &Routes, usage: Usage, final_usage: bool) -> TurnObservation {
+    reported(routes, Some("claude-haiku-5-5"), usage, final_usage)
+}
+
+/// A turn on `haiku` whose provider reported `model`, or no model.
+fn reported(
+    routes: &Routes,
+    model: Option<&str>,
+    usage: Usage,
+    final_usage: bool,
+) -> TurnObservation {
     let binding = routes.binding("haiku").unwrap();
     TurnObservation {
+        upstream_model: model.map(|model| Id::new(model).unwrap()),
         usage: Some(usage),
         final_usage,
         ..TurnObservation::new(binding.provenance().clone())
+    }
+}
+
+#[test]
+fn a_turn_is_priced_only_under_the_model_its_provider_reported() {
+    let routes = Routes::parse_toml(TOML).unwrap();
+    let usage = Usage {
+        input_tokens: Some(12),
+        output_tokens: Some(4),
+        cached_input_tokens: Some(0),
+        cache_creation_input_tokens: Some(0),
+        reasoning_output_tokens: Some(0),
+    };
+    let cost = |model: Option<&str>| {
+        routes
+            .cost("fast", &reported(&routes, model, usage.clone(), true))
+            .unwrap()
+            .unwrap()
+    };
+
+    let same = cost(Some("claude-haiku-5-5"));
+    assert_eq!(same.currency.as_str(), "USD");
+    assert_eq!(same.total.complete_total.unwrap().to_string(), "0.000032");
+    assert_eq!(same.total.unknown_lines, 0);
+
+    for (case, model) in [
+        ("a different model", Some("claude-sonnet-5-5")),
+        ("no model", None),
+    ] {
+        let other = cost(model);
+        assert_eq!(other.currency.as_str(), "USD", "{case}");
+        assert_eq!(other.total.complete_total, None, "{case}: {other:?}");
+        assert_eq!(
+            other.total.known_subtotal,
+            Amount::ZERO,
+            "{case}: {other:?}"
+        );
+        assert!(other.total.unknown_lines > 0, "{case}: {other:?}");
     }
 }
 
