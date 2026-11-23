@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:usage-reader
 kind: story
-status: active
+status: implemented
 title: A public usage reader per protocol reads model and counters from an answer's bytes
 summary: Gateway asks for a usage reader per wire, for whole bodies and streams fed in pieces (llm-gateway dependency-blocker:llm-usage-decoders)
 refs:
@@ -11,10 +11,11 @@ refs:
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-23T01:05:59Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-23T01:05:59Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-23T02:21:28Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Context
 
