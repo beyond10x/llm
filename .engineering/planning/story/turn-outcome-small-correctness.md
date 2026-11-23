@@ -2,13 +2,17 @@
 format: aep.planning-md/3
 id: story:turn-outcome-small-correctness
 kind: story
-status: draft
+status: implemented
 title: A returned turn reports its cache writes, its call count and its output-limit stop
 summary: 'Review of 0.24.0, findings 4, 7, 8: Responses cache-write count, parallel_tool_calls=false unchecked, llm infer hides max_output_tokens'
 relations:
 - decomposes: epic:inference
 - serves: vision:portable-model-inference
-revision: 1
+revision: 4
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-23T13:37:17Z", actor: "human:timo", revision: 2, decided_on: {"recorded":{"test_result":1}}}
+- {from: "proposed", to: "active", at: "2026-11-23T13:37:18Z", actor: "human:timo", revision: 3, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-11-23T13:37:19Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Context
 
