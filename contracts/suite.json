@@ -2025,7 +2025,7 @@
         "scenario": "llm.chat/authored/ingress-a-stream-option-beside-include-usage-is-refused"
       },
       "chat/scenarios/ingress-a-stream-without-include-usage-reports-no-counters.yaml": {
-        "digest": "sha256:192bc5b629739aa5e8db0141b996ca919799d9fd5f71415cad4a8a718227ff10",
+        "digest": "sha256:6c647af5007b1ebf11614c49b22ec2cf1d76e391c3fc6910a47f4260111a3d52",
         "disposition": "accepted",
         "scenario": "llm.chat/authored/ingress-a-stream-without-include-usage-reports-no-counters"
       },
@@ -37360,6 +37360,10 @@
         {
           "command": "llm.chat.EncodeIngress",
           "input": {
+            "events_json": {
+              "kind": "literal",
+              "value": "[{\"kind\":\"text-delta\",\"text\":\"Hi\"}]"
+            },
             "include_usage": {
               "kind": "literal",
               "value": false
