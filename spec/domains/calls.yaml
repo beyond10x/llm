@@ -41,8 +41,47 @@ domain: llm.calls
 # delays or fails the primary.
 #
 # A ReplayRun sends every case of a recorded corpus to a candidate route offline, under a money
-# cap held on an llm.budget ledger, and compares each answer with the recorded one. Past the cap
-# the run stops and says how many cases it did not send.
+# cap held on an llm.budget ledger, and compares each answer with the recorded one. A run that
+# stops says why and how many cases it did not send.
+#
+# A Corpus is the caller's document, `llm.corpus/1`, in JSON: the cases in the order they are
+# sent, each a turn, a classification or a verdict request with the answer recorded for it. llm
+# reads it and keeps no text of it: no call record and no ReplayRun holds a text of a case. It is
+# taken only whole: bytes that are not one JSON document (cut short, anything but whitespace
+# after it, a member given twice at any depth), a format other than `llm.corpus/1`, a member the
+# format does not declare, a case kind it does not know, a case id given twice, a case id that
+# holds `/`, a rubric id of more than 177 bytes, a recorded label outside the case's label set
+# and a document past a bound (16 MiB, 4096 cases, 64 levels of nesting) are refused naming the
+# member by its path, and no case is sent. The path shows a member's name only where the format
+# defines it and `*` for every other member, so a refusal holds no name the corpus's writer
+# chose. A recorded verdict is taken as given and not held to its rubric's schema; a case whose
+# recorded verdict the schema does not hold is Differs.
+#
+# The run reserves its `reserve` on a ledger of its own (limit `money_cap`, one reservation at a
+# time) before each case and starts it in the same step; amounts are exact decimals of the run's
+# currency with nine fractional digits, never doubles. A case is admitted while settled spend
+# plus the reserve is at most the cap. Afterwards the reservation is settled with the priced cost
+# of every call record the case wrote. The first case the ledger refuses (the cap would be
+# passed, or an earlier case's cost is incomplete and so held at its reserve, never settled as
+# zero) is not sent and writes one record with outcome Skipped; the run stops there, and that
+# case and every case after it count NotSent. Every record of a run has role Replay and names the
+# case's primary record when the corpus gives one.
+#
+# The cap bounds admission, not the spend: the reserve is the caller's upper bound for one case,
+# and a case that costs more than it can take the spend past the cap. The run then stops, at its
+# last case too, so its spend is at most the cap, less the reserve, plus the cost of that one
+# case. A run also stops at a case whose cost is incomplete, whether or not a case follows.
+#
+# No two calls of one run share a record id. A case's request id is `<run id>/<case id>`, or
+# `replay-sha256-<hex>` of both when the longest record id the case writes would be no id; a
+# turn's record and a skipped record have that id, a classification's `<request id>/classify` and
+# a verdict's `<request id>/<rubric id>`.
+#
+# A sent case is Same when the candidate's answer equals the recorded one: the label of a
+# classification (confidences are not compared), the verdict as canonical JSON (keys sorted, no
+# whitespace), or the assistant text of a turn, byte for byte. It is Differs when the call
+# returned another answer, or one that is no label of the set or no verdict the rubric's schema
+# holds; Failed, with the error code, when the call failed or was refused.
 types:
   - name: llm.calls.Role
     kind: enum
@@ -64,8 +103,43 @@ types:
   - name: llm.calls.CaseResult
     kind: enum
     # Same: equal label, equal canonical verdict JSON, or equal text. Differs: not equal.
-    # Failed: the candidate call failed. NotSent: the cap stopped the run first.
+    # Failed: the candidate call failed. NotSent: the run stopped first.
     variants: [Same, Differs, Failed, NotSent]
+  - name: llm.calls.CaseKind
+    kind: enum
+    variants: [Turn, Classification, Verdict]
+  - name: llm.calls.CorpusCase
+    kind: struct
+    fields:
+      # Distinct within the corpus; names the case in every result.
+      - {name: id, type: String}
+      - {name: kind, type: llm.calls.CaseKind}
+      # The caller's estimate of the request's input tokens, which routing admits the candidate
+      # route's target against; llm counts none.
+      - {name: input_tokens, type: Integer}
+      # The record of the call whose answer was recorded; the case's replay records name it.
+      - {name: primary_record_id, type: Optional<String>}
+      # Turn: the `llm.turn` document, a JSON object in the corpus; its model is replaced by the
+      # candidate route's alias.
+      - {name: turn, type: Optional<String>}
+      # Classification: the label set (a JSON object: id, version, labels), the standing
+      # instructions (empty when absent) and the input.
+      - {name: label_set, type: Optional<String>}
+      - {name: instructions, type: Optional<String>}
+      - {name: input, type: Optional<String>}
+      # Verdict: the rubric (a JSON object: id, version, text, schema) and the subject.
+      - {name: rubric, type: Optional<String>}
+      - {name: subject, type: Optional<String>}
+      # The recorded answer, a JSON object with exactly one member for the kind: `text`,
+      # `label` (one of the label set) or `verdict` (any JSON value, compared as canonical JSON).
+      - {name: recorded, type: String}
+  - name: llm.calls.CaseReport
+    kind: struct
+    fields:
+      - {name: case_id, type: String}
+      - {name: result, type: llm.calls.CaseResult}
+      # Set exactly for Failed.
+      - {name: error_code, type: Optional<String>}
 entities:
   - name: llm.calls.CallRecord
     identity: {name: id, type: String}
@@ -111,19 +185,41 @@ entities:
     identity: {name: id, type: String}
     fields:
       - {name: candidate_route_id, type: String}
-      # sha256 of the corpus document, so two runs over one corpus are comparable.
+      # Lowercase hex sha256 of the corpus document's bytes as given, so two runs over one
+      # corpus are comparable; a corpus written with other whitespace or key order is another.
       - {name: corpus_digest, type: String}
+      - {name: currency, type: String}
+      # Exact decimal in the run's currency.
       - {name: money_cap, type: String}
+      # Exact decimal each case holds until its cost settles it; above zero, at most the cap.
+      - {name: reserve, type: String}
       - {name: ledger_id, type: String}
+      # The ledger's exposure when the run ended: settled plus held. With `stopped`
+      # uncertain-spend it counts what is held for the case whose cost is incomplete, a hold and
+      # not a known spend.
+      - {name: spent, type: String}
+      # Why the ledger admits no further case (limit-exceeded, uncertain-spend): set when a case
+      # was not sent, and when the last case took the spend past the cap or has an incomplete
+      # cost. Absent when every case was sent and the spend is known and within the cap.
+      - {name: stopped, type: Optional<String>}
       - {name: cases, type: Integer}
       - {name: same, type: Integer}
       - {name: differs, type: Integer}
       - {name: failed, type: Integer}
       - {name: not_sent, type: Integer}
+      # One per case, in the corpus's order.
+      - {name: results, type: List<llm.calls.CaseReport>}
     relations:
       - {name: candidate, kind: references, target: llm.catalog.Route, cardinality: one, via: candidate_route_id}
       - {name: ledger, kind: references, target: llm.budget.Ledger, cardinality: one, via: ledger_id}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.calls.Corpus
+    # Its identity is the digest of its bytes.
+    identity: {name: digest, type: String}
+    fields:
+      - {name: format, type: String}
+      - {name: cases, type: List<llm.calls.CorpusCase>}
+    lifecycle: {initial: Read, states: [Read], terminal: [Read]}
   - name: llm.calls.CallObservation
     identity: {name: observation_id, type: String}
     fields: &call_facts
@@ -136,10 +232,13 @@ entities:
       # Per shadow and call: shadow-route:outcome, a skip followed by the ledger's refusal
       # (shadow-route:skipped:limit-exceeded) and a refused route by its error code.
       - {name: shadow_results, type: List<String>}
-      # Per replay case: case-id:result.
+      # Per replay case, for every run in order: case-id:result, a failed case followed by its
+      # error code (case-id:failed:unavailable).
       - {name: case_results, type: List<String>}
       # The first shadow's exposure (settled plus held) on its ledger for the clock's UTC day.
       - {name: spent_today, type: Optional<String>}
+      # Every replay run, in order, as JSON without its per-case results.
+      - {name: replay_runs, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
   - name: llm.calls.Call
@@ -160,6 +259,9 @@ commands:
             valid_program: {generated: true}
         summary: Return what the caller received, every record the sink got and each shadow's outcome.
   - name: llm.calls.Replay
+    # A replay of the corpus on the run's candidate route, over in-process scripted models (each
+    # serving model answers its calls in the authored order), a scripted clock and the price
+    # book; no network. The program may repeat the run under other ids on a fresh ledger.
     input:
       - {name: catalog_toml, type: String}
       - {name: corpus_json, type: String}

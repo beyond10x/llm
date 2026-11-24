@@ -7,6 +7,11 @@
 //! primary call has returned. The scripted models only replay the
 //! authored answer or failure and move the clock as the program says; every record field comes
 //! back out of the library. It reads no suite and branches on no scenario name.
+//!
+//! `llm.calls.Replay` drives the real `llm_calls::replay` through `llm_decide::Routed`, the
+//! candidate `llm replay` sends a corpus with, over models that answer each call with the next
+//! authored script, and reports each case's result, each run without its per-case results and
+//! the records the sink received.
 
 use std::{
     collections::BTreeMap,
@@ -19,8 +24,8 @@ use std::{
 
 use ess_conformance::target::TargetError;
 use llm_calls::{
-    CallIdentity, CallLog, Clock, Recording, Shadow, ShadowLedger, ShadowOutcome, ShadowResult,
-    Shadowing, record_turn_shadowed, utc_day,
+    CallIdentity, CallLog, CaseReport, Clock, Corpus, Recording, Replay, ReplayRun, Shadow,
+    ShadowLedger, ShadowOutcome, ShadowResult, Shadowing, record_turn_shadowed, utc_day,
 };
 use llm_core::{
     BoxFuture, CallId, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model,
@@ -28,6 +33,7 @@ use llm_core::{
     TurnOutcome, TurnRequest, Usage, VecSink,
 };
 use llm_cost::{Amount, Currency, PriceBook};
+use llm_decide::Routed;
 use llm_routing::{Catalog, FallbackPolicy, FallbackRun, Models, Ports, Selection};
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -52,10 +58,6 @@ pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetEr
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-#[expect(
-    dead_code,
-    reason = "read only to refuse an input that is not the command's"
-)]
 struct ReplayInput {
     catalog_toml: String,
     corpus_json: String,
@@ -64,19 +66,240 @@ struct ReplayInput {
     program_json: String,
 }
 
-/// No library runs a replay yet: the command is answered, accepts no program and says so.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RunInput {
+    id: String,
+    candidate_route_id: String,
+    ledger_id: String,
+    currency: String,
+    money_cap: Amount,
+    reserve: Amount,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ReplayProgram {
+    /// The wall clock when the first run starts; the monotonic clock starts at zero.
+    #[serde(default)]
+    start_unix_ms: u64,
+    /// What each serving model answers: one script per call, in the order the calls arrive.
+    models: BTreeMap<String, Vec<Script>>,
+    /// The ids of later runs of the same corpus, each on a ledger of its own and with every
+    /// model back at its first script.
+    #[serde(default)]
+    then: Vec<String>,
+}
+
+/// How long a scripted classification may take; no scripted answer waits.
+const CLASSIFICATION_DEADLINE: Duration = Duration::from_secs(60);
+
 fn replay(input: &Value) -> Result<Observed, TargetError> {
-    let _: ReplayInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
+    let request: ReplayInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
+    let mut facts = json!({
+        "valid_program": false, "error_code": null, "delivered_text": null, "records": [],
+        "shadow_results": [], "case_results": [], "replay_runs": [], "spent_today": null
+    });
+    if let Err(error) = replay_runs(&request, &mut facts) {
+        facts["error_code"] = json!(error.code);
+    }
     Ok(Observed {
-        facts: json!({
-            "valid_program": false, "error_code": json!(ErrorCode::Unsupported),
-            "delivered_text": null, "records": [], "shadow_results": [], "case_results": [],
-            "spent_today": null
-        }),
+        facts,
         view: "llm.calls.LastCall",
         event: "llm.calls.Observed",
         field: "valid_program",
     })
+}
+
+/// `case-id:result`, and for a failed case its error code after it.
+fn case_result(report: &CaseReport) -> String {
+    let label = |value: Value| value.as_str().unwrap_or_default().to_owned();
+    let result = label(json!(report.result));
+    match report.error_code {
+        Some(code) => format!("{}:{result}:{}", report.case_id, label(json!(code))),
+        None => format!("{}:{result}", report.case_id),
+    }
+}
+
+/// The run as JSON without its per-case results, which `case_results` carries.
+fn run_summary(run: &ReplayRun) -> Result<String, Error> {
+    let unserialized = |_| Error::new(ErrorCode::Protocol, "a replay run did not serialize");
+    let mut summary = serde_json::to_value(run).map_err(unserialized)?;
+    if let Some(members) = summary.as_object_mut() {
+        members.remove("results");
+    }
+    serde_json::to_string(&summary).map_err(unserialized)
+}
+
+/// Runs the real `llm_calls::replay` once per authored run id, through the candidate `llm replay`
+/// uses, over scripted models.
+fn replay_runs(input: &ReplayInput, facts: &mut Value) -> Result<(), Error> {
+    if input.program_json.len() > MAX_PROGRAM_BYTES {
+        return Err(Error::too_large("replay program exceeds its bound"));
+    }
+    let program: ReplayProgram = serde_json::from_str(&input.program_json)
+        .map_err(|_| Error::invalid("invalid replay program"))?;
+    facts["valid_program"] = json!(true);
+    if program.then.len() >= MAX_CALLS {
+        return Err(Error::too_large("too many runs"));
+    }
+    let declared: RunInput =
+        serde_json::from_str(&input.run_json).map_err(|_| Error::invalid("invalid replay run"))?;
+    let id = |value: &str| Id::new(value).map_err(|_| Error::invalid("invalid replay run id"));
+    let catalog = Catalog::parse(&input.catalog_toml)?;
+    let prices = PriceBook::parse_toml(&input.prices_toml)
+        .map_err(|_| Error::invalid("invalid price book"))?;
+    let corpus = Corpus::parse(input.corpus_json.as_bytes())?;
+    let clock = ScriptedClock {
+        start_unix_ms: program.start_unix_ms,
+        now_ms: AtomicU64::new(0),
+    };
+    let models = lineup(program.models, &catalog, &clock)?;
+    let log = CallLog::new();
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .map_err(|_| Error::new(ErrorCode::Unavailable, "no local runtime"))?;
+    let cancel = Cancel::new();
+    let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(async {}) };
+    let candidate = Routed {
+        catalog: &catalog,
+        models: &models,
+        cancel: &cancel,
+        pause: &pause,
+        classification_deadline: CLASSIFICATION_DEADLINE,
+    };
+    let recording = Recording {
+        sink: &log,
+        clock: &clock,
+        prices: Some(&prices),
+    };
+    let mut case_results = Vec::new();
+    let mut summaries = Vec::new();
+    let mut ended = Ok(());
+    for run_id in std::iter::once(&declared.id).chain(&program.then) {
+        models.restart();
+        let run = match id(run_id) {
+            Ok(run_id) => Replay {
+                id: run_id,
+                candidate_route_id: id(&declared.candidate_route_id)?,
+                ledger_id: id(&declared.ledger_id)?,
+                currency: Currency::new(&declared.currency)
+                    .map_err(|_| Error::invalid("invalid currency"))?,
+                money_cap: declared.money_cap,
+                reserve: declared.reserve,
+            },
+            Err(error) => {
+                ended = Err(error);
+                break;
+            }
+        };
+        match runtime.block_on(llm_calls::replay(
+            &catalog, &corpus, &run, &candidate, recording,
+        )) {
+            Ok(report) => {
+                case_results.extend(report.results.iter().map(case_result));
+                summaries.push(run_summary(&report)?);
+            }
+            Err(error) => {
+                ended = Err(error);
+                break;
+            }
+        }
+    }
+    facts["records"] = json!(
+        log.records()
+            .iter()
+            .map(serde_json::to_string)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| Error::new(ErrorCode::Protocol, "a record did not serialize"))?
+    );
+    facts["case_results"] = json!(case_results);
+    facts["replay_runs"] = json!(summaries);
+    ended
+}
+
+/// Answers each call with the next authored script of its serving model.
+struct Sequenced<'c> {
+    provenance: Provenance,
+    capabilities: Capabilities,
+    clock: &'c ScriptedClock,
+    scripts: Vec<Script>,
+    next: AtomicUsize,
+}
+
+impl Model for Sequenced<'_> {
+    fn provenance(&self) -> &Provenance {
+        &self.provenance
+    }
+    fn capabilities(&self) -> &Capabilities {
+        &self.capabilities
+    }
+    fn turn<'a>(
+        &'a self,
+        request: &'a TurnRequest,
+        sink: &'a mut dyn StreamSink,
+        cancel: &'a Cancel,
+    ) -> BoxFuture<'a, Result<TurnOutcome, Error>> {
+        Box::pin(async move {
+            let script = self
+                .scripts
+                .get(self.next.fetch_add(1, Ordering::SeqCst))
+                .ok_or_else(|| Error::invalid("the program scripts no further call"))?;
+            let step = scripted(
+                script.clone(),
+                self.provenance.clone(),
+                self.capabilities.clone(),
+                request,
+                self.clock,
+            )?;
+            step.turn(request, sink, cancel).await
+        })
+    }
+}
+
+struct Lineup<'c>(BTreeMap<Id, Sequenced<'c>>);
+
+impl Lineup<'_> {
+    /// Puts every model back at its first script.
+    fn restart(&self) {
+        for model in self.0.values() {
+            model.next.store(0, Ordering::SeqCst);
+        }
+    }
+}
+
+impl Models for Lineup<'_> {
+    fn model(&self, serving_model_id: &Id) -> Option<&dyn Model> {
+        self.0
+            .get(serving_model_id)
+            .map(|model| model as &dyn Model)
+    }
+}
+
+/// One sequenced model per authored serving model, each bound to its declared binding.
+fn lineup<'c>(
+    models: BTreeMap<String, Vec<Script>>,
+    catalog: &Catalog,
+    clock: &'c ScriptedClock,
+) -> Result<Lineup<'c>, Error> {
+    let mut lineup = BTreeMap::new();
+    for (serving, scripts) in models {
+        let serving = Id::new(&serving).map_err(|_| Error::invalid("invalid serving model"))?;
+        let binding = catalog
+            .binding(&serving)
+            .ok_or_else(|| Error::invalid("scripted serving model is not declared"))?;
+        lineup.insert(
+            serving,
+            Sequenced {
+                provenance: binding.provenance().clone(),
+                capabilities: binding.capabilities().clone(),
+                clock,
+                scripts,
+                next: AtomicUsize::new(0),
+            },
+        );
+    }
+    Ok(Lineup(lineup))
 }
 
 fn unavailable(error: impl std::fmt::Display) -> TargetError {
@@ -190,7 +413,7 @@ fn shadow_result(result: &ShadowResult) -> String {
     format!("{}:{outcome}", result.shadow_route_id)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 struct Script {
     /// Text shown as one delta and returned as the assistant's message.
@@ -348,7 +571,7 @@ fn exercise(input: &Value) -> Result<Observed, TargetError> {
     let request: CallInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
     let mut facts = json!({
         "valid_program": false, "error_code": null, "delivered_text": null, "records": [],
-        "shadow_results": [], "case_results": [], "spent_today": null
+        "shadow_results": [], "case_results": [], "replay_runs": [], "spent_today": null
     });
     if let Err(error) = execute(&request, &mut facts) {
         facts["error_code"] = json!(error.code);
@@ -407,32 +630,47 @@ fn scripted_fleet<'c>(
         let binding = catalog
             .binding(&serving)
             .ok_or_else(|| Error::invalid("scripted serving model is not declared"))?;
-        let (events, items, stop_reason) = answer(&script, request)?;
-        let upstream_model = script
-            .upstream_model
-            .map(Id::new)
-            .transpose()
-            .map_err(|_| Error::invalid("invalid upstream model"))?;
-        fleet.insert(
-            serving,
-            Scripted {
-                provenance: binding.provenance().clone(),
-                capabilities: binding.capabilities().clone(),
-                clock,
-                events,
-                items,
-                stop_reason,
-                first_event_after_ms: script.first_event_after_ms,
-                ends_after_ms: script.ends_after_ms,
-                fail: script.fail,
-                fail_times: script.fail_times,
-                usage: script.usage,
-                upstream_model,
-                calls: AtomicUsize::new(0),
-            },
-        );
+        let model = scripted(
+            script,
+            binding.provenance().clone(),
+            binding.capabilities().clone(),
+            request,
+            clock,
+        )?;
+        fleet.insert(serving, model);
     }
     Ok(Fleet(fleet))
+}
+
+/// The scripted model that replays `script` for `request`.
+fn scripted<'c>(
+    script: Script,
+    provenance: Provenance,
+    capabilities: Capabilities,
+    request: &TurnRequest,
+    clock: &'c ScriptedClock,
+) -> Result<Scripted<'c>, Error> {
+    let (events, items, stop_reason) = answer(&script, request)?;
+    let upstream_model = script
+        .upstream_model
+        .map(Id::new)
+        .transpose()
+        .map_err(|_| Error::invalid("invalid upstream model"))?;
+    Ok(Scripted {
+        provenance,
+        capabilities,
+        clock,
+        events,
+        items,
+        stop_reason,
+        first_event_after_ms: script.first_event_after_ms,
+        ends_after_ms: script.ends_after_ms,
+        fail: script.fail,
+        fail_times: script.fail_times,
+        usage: script.usage,
+        upstream_model,
+        calls: AtomicUsize::new(0),
+    })
 }
 
 fn execute(input: &CallInput, facts: &mut Value) -> Result<(), Error> {

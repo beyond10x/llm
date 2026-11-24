@@ -17,18 +17,34 @@
 //! `llm_core` error kind only; 130 when Ctrl-C cancelled the turn (a second Ctrl-C drops a turn
 //! the first did not end). A reader that closes stdout (`llm infer … | head -c 1`) stops the turn
 //! and the command exits 0, saying so on stderr; any other failure to write stdout exits 1.
+//!
+//! `llm replay` sends an `llm.corpus/1` file to one priced route with [`llm_calls::replay`] and
+//! prints the run's summary, an `llm.calls.ReplayRun`, as one line of JSON on stdout. The cap
+//! and the reserve are decimal amounts in the currency of the route's `price`, which is the
+//! run's price book. The cap bounds admission (a case is sent only while the spend so far plus
+//! the reserve is at most the cap), so the reserve is the caller's upper bound for one case. It
+//! exits 0 when every case was sent and the spend is known and within the cap, whatever the
+//! cases' results, and 3 when the run stopped: a case was not sent, the last case took the spend
+//! past the cap, or its cost is not known. The summary is printed all the same, and stderr says
+//! how the run stopped and how many cases were not sent. A route without a price, a corpus the
+//! reader refuses and a reserve above the cap exit 2 with nothing sent. The call records of a
+//! run are not kept. The candidate is [`llm_decide::Routed`].
 
 use clap::{Parser, Subcommand, ValueEnum};
 use keyring_core::CredentialStore;
+use llm_calls::{CallRecord, CallSink, Corpus, MAX_CORPUS_BYTES, Recording, SystemClock};
 use llm_core::{
     BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol, ShownText,
     StopReason, StreamEvent, StreamSink, TurnOutcome, TurnRequest, Usage,
 };
+use llm_cost::{Amount, ModelPrice, PriceBook, PriceDocument, Rate, budget::BudgetError};
+use llm_decide::Routed;
 use llm_http::{HttpClient, Limits};
 use llm_models::routes::{
     AwsCredentialKind, BedrockEndpointDeclaration, EndpointDeclaration, RouteDeclaration, Routes,
     SecretKind, SecretSources,
 };
+use llm_routing::Models;
 use serde_json::{Value, json};
 use std::{
     ffi::OsString,
@@ -36,6 +52,7 @@ use std::{
     path::{Path, PathBuf},
     process::ExitCode,
     sync::Arc,
+    time::Duration,
 };
 use url::Url;
 
@@ -67,6 +84,29 @@ enum Command {
     },
     /// Sends one user turn and streams the assistant text to stdout.
     Infer(Infer),
+    /// Sends a recorded corpus to a candidate route under a money cap and prints the summary.
+    Replay(Replay),
+}
+
+#[derive(Debug, clap::Args)]
+struct Replay {
+    /// The candidate route: a route id or one of its aliases. It must declare a price.
+    #[arg(long, value_name = "ID")]
+    route: String,
+    /// The `llm.corpus/1` document to replay.
+    #[arg(long, value_name = "PATH")]
+    corpus: PathBuf,
+    /// What admission is held to, a decimal amount in the currency of the route's price: a case
+    /// is sent only while the spend so far plus the reserve is at most the cap.
+    #[arg(long, value_name = "AMOUNT")]
+    cap: String,
+    /// What each case holds under the cap until its cost is known: set it to the most one case
+    /// can cost. A case that costs more can take the spend past the cap; the run then stops.
+    #[arg(long, value_name = "AMOUNT")]
+    reserve: String,
+    /// The run's id, which starts each case's request id.
+    #[arg(long, value_name = "ID", default_value = "replay")]
+    run: String,
 }
 
 #[derive(Debug, Subcommand)]
@@ -313,7 +353,198 @@ fn execute(cli: &Cli, environment: &Environment) -> Result<(), Failure> {
             command: ModelCommand::List { format },
         } => list(&routes, *format),
         Command::Infer(infer) => self::infer(&routes, infer, environment),
+        Command::Replay(replay) => replayed(&routes, replay, environment),
     }
+}
+
+/// The id of the ledger a `llm replay` run holds its spend on.
+const REPLAY_LEDGER: &str = "replay";
+/// How long one classification call of a replay may take.
+const CLASSIFICATION_DEADLINE: Duration = Duration::from_secs(120);
+/// The units a route's price is per.
+const PER_MILLION: u64 = 1_000_000;
+
+/// Drops every record: `llm replay` prints the run's summary and keeps no call record.
+struct Unrecorded;
+
+impl CallSink for Unrecorded {
+    fn record(&self, _: CallRecord) {}
+}
+
+/// The one port a replay's candidate route reaches.
+struct OnePort<'p> {
+    serving_model: &'p Id,
+    port: &'p llm_models::Port,
+}
+
+impl Models for OnePort<'_> {
+    fn model(&self, serving_model_id: &Id) -> Option<&dyn Model> {
+        (serving_model_id == self.serving_model).then_some(self.port as &dyn Model)
+    }
+}
+
+/// The corpus file, read up to one byte past the bound so that an oversized file is refused by
+/// the corpus reader and never held whole.
+fn corpus(path: &Path) -> Result<Corpus, Failure> {
+    let mut bytes = Vec::new();
+    let limit = u64::try_from(MAX_CORPUS_BYTES).map_or(u64::MAX, |bound| bound.saturating_add(1));
+    std::fs::File::open(path)
+        .and_then(|file| file.take(limit).read_to_end(&mut bytes))
+        .map_err(|error| {
+            Failure::refused(format!(
+                "llm: cannot read the corpus file: {}",
+                error.kind()
+            ))
+        })?;
+    Corpus::parse(&bytes)
+        .map_err(|error| Failure::refused(format!("llm: corpus: {}: {error}", code(error.code))))
+}
+
+/// The route's declared price as the price book of its one serving model.
+fn route_prices(route: &RouteDeclaration, binding_revision: &Id) -> Option<PriceBook> {
+    let price = route.price()?;
+    let rate = |amount: Option<Amount>| {
+        amount.map(|amount| Rate {
+            amount,
+            per_units: PER_MILLION,
+        })
+    };
+    PriceBook::from_document(PriceDocument::new(
+        Id::new("route-price").ok()?,
+        "llm.routes/1 route price",
+        0,
+        price.currency().clone(),
+        vec![ModelPrice {
+            id: route.name().clone(),
+            serving_model_id: route.name().clone(),
+            binding_revision: binding_revision.clone(),
+            upstream_model: route.upstream_model().clone(),
+            input: rate(price.input()),
+            cached_input: rate(price.cached_input()),
+            cache_creation_input: rate(price.cache_creation_input()),
+            output: rate(price.output()),
+        }],
+    ))
+    .ok()
+}
+
+fn replayed(routes: &Routes, replay: &Replay, environment: &Environment) -> Result<(), Failure> {
+    let name = replay.route.as_str();
+    let declared = routes.route(name).ok_or_else(|| {
+        Failure::refused(format!(
+            "llm: `{name}` is no route or alias in the configuration"
+        ))
+    })?;
+    let route = declared.name();
+    let unpriced = || {
+        Failure::refused(format!(
+            "llm: route `{route}` declares no price, so its spend cannot be held under a cap"
+        ))
+    };
+    let price = declared.price().ok_or_else(unpriced)?;
+    let amount = |flag: &str, value: &str| {
+        Amount::parse(value).map_err(|_| {
+            Failure::refused(format!(
+                "llm: `--{flag}` must be a decimal amount with at most nine fractional digits"
+            ))
+        })
+    };
+    let refused = |what: &str, error: &Error| {
+        Failure::refused(format!(
+            "llm: {what}: {}: {}",
+            code(error.code),
+            error.message
+        ))
+    };
+    let on_route = format!("route `{route}`");
+    let run = llm_calls::Replay {
+        id: Id::new(&replay.run).map_err(|_| Failure::refused("llm: `--run` is not an id"))?,
+        candidate_route_id: route.clone(),
+        ledger_id: Id::new(REPLAY_LEDGER).map_err(|_| Failure::refused("llm: invalid ledger"))?,
+        currency: price.currency().clone(),
+        money_cap: amount("cap", &replay.cap)?,
+        reserve: amount("reserve", &replay.reserve)?,
+    };
+    let corpus = corpus(&replay.corpus)?;
+    let binding = routes
+        .binding(name)
+        .map_err(|error| refused(&on_route, &error))?;
+    let prices =
+        route_prices(declared, &binding.provenance().binding_revision).ok_or_else(unpriced)?;
+    let resolvers = routes
+        .resolvers(&sources(environment, routes, declared.endpoint()))
+        .map_err(|error| refused(&on_route, &error))?
+        .allow_credential_process();
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|_| Failure {
+            code: 1,
+            message: "llm: cannot start the runtime".to_owned(),
+        })?;
+    let summary = runtime.block_on(async {
+        let http =
+            HttpClient::new(Limits::default()).map_err(|error| refused(&on_route, &error))?;
+        let port = routes
+            .port(name, http, &resolvers)
+            .map_err(|error| refused(&on_route, &error))?;
+        let models = OnePort {
+            serving_model: route,
+            port: &port,
+        };
+        let cancel = Cancel::new();
+        let pause =
+            |wait: Duration| -> BoxFuture<'static, ()> { Box::pin(tokio::time::sleep(wait)) };
+        let candidate = Routed {
+            catalog: routes.catalog(),
+            models: &models,
+            cancel: &cancel,
+            pause: &pause,
+            classification_deadline: CLASSIFICATION_DEADLINE,
+        };
+        let recording = Recording {
+            sink: &Unrecorded,
+            clock: &SystemClock::new(),
+            prices: Some(&prices),
+        };
+        llm_calls::replay(routes.catalog(), &corpus, &run, &candidate, recording)
+            .await
+            .map_err(|error| refused("replay", &error))
+    })?;
+    printed(&summary)
+}
+
+/// Prints the summary on stdout; a run that stopped exits 3 and says on stderr how: at its cap,
+/// past it, or at a case whose cost is not known, so that `spent` is not read as a known cost.
+fn printed(summary: &llm_calls::ReplayRun) -> Result<(), Failure> {
+    let printed = serde_json::to_string(summary).map_err(|_| Failure {
+        code: 1,
+        message: "llm: the summary did not serialize".to_owned(),
+    })?;
+    writeln!(io::stdout().lock(), "{printed}").map_err(|error| Failure {
+        code: 1,
+        message: format!("llm: cannot write to stdout: {}", error.kind()),
+    })?;
+    summary.stopped.map_or(Ok(()), |cause| {
+        let how = if cause == BudgetError::UncertainSpend {
+            "at a case whose cost is not known, which `spent` counts at what is held for it"
+        } else if summary.spent > summary.money_cap {
+            "past its cap"
+        } else {
+            "at its cap"
+        };
+        let cause = serde_json::to_value(cause)
+            .ok()
+            .and_then(|value| value.as_str().map(str::to_owned))
+            .unwrap_or_else(|| format!("{cause:?}"));
+        Err(Failure {
+            code: 3,
+            message: format!(
+                "llm: replay stopped {how} ({cause}): {} of {} cases not sent",
+                summary.not_sent, summary.cases
+            ),
+        })
+    })
 }
 
 /// One row of `llm model list`.

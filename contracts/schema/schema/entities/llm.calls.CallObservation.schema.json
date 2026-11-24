@@ -38,6 +38,12 @@
     "spent_today": {
       "type": "string"
     },
+    "replay_runs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "state": {
       "$ref": "#/$defs/llm.calls.CallObservation.State"
     }
@@ -48,14 +54,15 @@
     "records",
     "shadow_results",
     "case_results",
+    "replay_runs",
     "state"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "a74dd1d0ce99701bcebf0eaeb13cf0c029f2c66c9363cc7580fb213e6723661c",
-    "contract_digest": "slice-sha256/2:9177914a6999dc73d0e938671bcc5ba2cd2cd8583b2e45a73afa55b0a08144f3",
+    "source_digest": "89d74c10d520a73088c5150f6cd2b78f3822effec12c147e45efa257ec3e3eb4",
+    "contract_digest": "slice-sha256/2:1504c54b1184511cba3df291180ae77317f66e76307771994558f037a3411002",
     "regenerate": "ess generate"
   },
   "$defs": {

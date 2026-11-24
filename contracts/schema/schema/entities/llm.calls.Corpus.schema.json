@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Corpus",
+  "x-ess-name": "llm.calls.Corpus",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "digest": {
+      "type": "string"
+    },
+    "format": {
+      "type": "string"
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/llm.calls.CorpusCase"
+      }
+    },
+    "state": {
+      "$ref": "#/$defs/llm.calls.Corpus.State"
+    }
+  },
+  "required": [
+    "digest",
+    "format",
+    "cases",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "89d74c10d520a73088c5150f6cd2b78f3822effec12c147e45efa257ec3e3eb4",
+    "contract_digest": "slice-sha256/2:7b52a81b9fc13f08c425e31698a0b374b86913674ca2dede20ff33b4330a6d11",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.calls.CaseKind": {
+      "title": "CaseKind",
+      "x-ess-name": "llm.calls.CaseKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Turn",
+        "Classification",
+        "Verdict"
+      ]
+    },
+    "llm.calls.Corpus.State": {
+      "title": "State",
+      "x-ess-name": "llm.calls.Corpus.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Read"
+      ]
+    },
+    "llm.calls.CorpusCase": {
+      "title": "CorpusCase",
+      "x-ess-name": "llm.calls.CorpusCase",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/llm.calls.CaseKind"
+        },
+        "input_tokens": {
+          "type": "integer"
+        },
+        "primary_record_id": {
+          "type": "string"
+        },
+        "turn": {
+          "type": "string"
+        },
+        "label_set": {
+          "type": "string"
+        },
+        "instructions": {
+          "type": "string"
+        },
+        "input": {
+          "type": "string"
+        },
+        "rubric": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "recorded": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "input_tokens",
+        "recorded"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

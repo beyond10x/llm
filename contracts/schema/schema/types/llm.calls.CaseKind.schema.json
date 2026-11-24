@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.calls.CaseKind",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "89d74c10d520a73088c5150f6cd2b78f3822effec12c147e45efa257ec3e3eb4",
+    "contract_digest": "slice-sha256/2:cfc5d73e0005e5e3d2d4c8f26f75231f7c07f9383f683ce4ab944a36afb34b42",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.calls.CaseKind": {
+      "title": "CaseKind",
+      "x-ess-name": "llm.calls.CaseKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Turn",
+        "Classification",
+        "Verdict"
+      ]
+    }
+  }
+}

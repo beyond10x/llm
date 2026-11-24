@@ -19,11 +19,17 @@
 //! target and the upstream model that answered, with the answer as canonical JSON. An answer
 //! that is not the one whole JSON value the model ended on, or is not valid against the schema, is
 //! refused, never repaired.
+//!
+//! [`Routed`] is the candidate of an offline replay (`llm_calls::replay`): it answers each case
+//! of a recorded corpus with one call on the candidate route, a turn through
+//! `llm_calls::record_turn`, a classification through a [`ModelClassifier`] and a verdict through
+//! [`judge`].
 
 mod answer;
 mod chain;
 mod classify;
 mod judge;
+mod replay;
 mod schema;
 
 pub use chain::{Chain, ChainOutcome};
@@ -34,3 +40,4 @@ pub use classify::{
     Path, Ports, SetupError, TOOL_NAME, basis_points,
 };
 pub use judge::{JudgeError, Rubric, RubricError, VERDICT_FORMAT_NAME, Verdict, judge};
+pub use replay::Routed;
