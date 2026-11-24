@@ -138,12 +138,24 @@ struct Ran {
     records: Vec<CallRecord>,
 }
 
-/// One chain run with the caller's admission; a pause moves the scripted clock by its wait.
+/// One chain run with the caller's admission and an estimate of 100 input tokens.
 fn run_admitting(
     chain: &Chain,
     catalog: &Catalog,
     clock: &Arc<Scripted>,
     admit: &(dyn Fn(&Selection<'_>) -> Result<(), Error> + Sync),
+) -> Ran {
+    run_estimating(chain, catalog, clock, admit, Some(100))
+}
+
+/// One chain run with the caller's admission and its estimate of the input's tokens; a pause
+/// moves the scripted clock by its wait.
+fn run_estimating(
+    chain: &Chain,
+    catalog: &Catalog,
+    clock: &Arc<Scripted>,
+    admit: &(dyn Fn(&Selection<'_>) -> Result<(), Error> + Sync),
+    input_tokens: Option<u64>,
 ) -> Ran {
     let log = CallLog::new();
     let cancel = Cancel::new();
@@ -156,7 +168,7 @@ fn run_admitting(
     let outcome = block_on(chain.classify(
         &id("req-1"),
         INPUT,
-        Some(100),
+        input_tokens,
         Ports {
             catalog,
             models: &fleet,
@@ -555,4 +567,34 @@ fn an_unknown_route_or_a_refused_admission_abstains_without_a_call() {
         endpoint.asked().is_empty(),
         "neither refusal reached the endpoint"
     );
+}
+
+/// Every other run estimates 100 input tokens, which every target of the route admits. The
+/// target is selected against the estimate the caller gave: one no target has room for, or
+/// none at all, selects nothing, and the endpoint is not asked.
+#[test]
+fn a_decision_endpoint_target_is_selected_against_the_callers_token_estimate() {
+    let catalog = catalog();
+    for estimate in [Some(u64::MAX), None] {
+        let clock = Scripted::at(1_000);
+        let endpoint = Endpoint::replying(&clock, Ok(chosen("positive", &[])));
+        let ran = run_estimating(
+            &chain(vec![Box::new(asking(&endpoint))]),
+            &catalog,
+            &clock,
+            &|_: &Selection<'_>| Ok(()),
+            estimate,
+        );
+        let [Classification::Abstained(abstention)] = ran.attempts.as_slice() else {
+            panic!("no target is selected for {estimate:?}: {:?}", ran.attempts);
+        };
+        assert_eq!(
+            abstention.cause,
+            AbstentionCause::ProviderError(ErrorCode::Unsupported),
+            "{estimate:?}"
+        );
+        assert_eq!(abstention.call_record_id, None);
+        assert!(endpoint.asked().is_empty(), "{estimate:?}");
+        assert!(ran.records.is_empty());
+    }
 }

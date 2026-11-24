@@ -1024,3 +1024,6 @@ fn a_label_set_with_a_duplicate_or_a_single_label_is_refused() {
 
 #[path = "classify/endpoint.rs"]
 mod endpoint;
+
+#[path = "classify/adversary_w28_endpoint.rs"]
+mod adversary_w28_endpoint;

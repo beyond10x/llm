@@ -19,9 +19,14 @@
 //! `b4cad10d7cff7fc286f2dbf1992569989522c6f0` (path `/decisions`, operation `createDecision`).
 //! A request sends only the reference's members; [`DecisionRequest::from_json`] refuses any
 //! other by its path. An answer body is read whole from the transport, then as one JSON
-//! document: a body cut short, bytes after the document, a member given twice or a nesting
-//! deeper than [`MAX_DEPTH`] is refused `protocol`, and so is an answer type the reference does
-//! not name, by its path. A usage counter the body does not report stays unknown, never zero.
+//! document. A body the transport reports as cut (short of the length it declared, or a chunked
+//! body without its end) is the transport's own failure: `transport`, dispatch `accepted`,
+//! retriable, as for every client over `llm-http`. A body that arrived whole by the transport's
+//! account and is not one JSON document is refused `protocol`, dispatch `accepted`: a document
+//! that ends early (so also a body delimited only by the connection's end and cut there), bytes
+//! after the document, a member given twice or a nesting deeper than [`MAX_DEPTH`]; and so is an
+//! answer type the reference does not name, by its path. A usage counter the body does not
+//! report stays unknown, never zero.
 
 mod request;
 mod response;
@@ -103,7 +108,9 @@ impl OpenAiDecisions {
     /// [`DecisionRequest::validate`]), a target served over another protocol than responses or
     /// chat-completions (`unsupported`), an encoded body over the transport's request bound of
     /// 16 MiB (`too-large`), a cancelled call (`cancelled`). Then the credential's and the
-    /// transport's own errors, and `protocol`, dispatch `accepted`, for a body that is not one
+    /// transport's own errors, unchanged: among them `transport`, dispatch `accepted`,
+    /// retriable, for a body cut short of its declared length or of its last chunk. And
+    /// `protocol`, dispatch `accepted`, for a body the transport delivered whole that is not one
     /// whole JSON document or does not hold exactly one answer per question, each of its
     /// question's type or a refusal and carrying its question's name; the message names the
     /// path of the member refused and never a value.

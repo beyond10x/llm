@@ -28,7 +28,7 @@ use std::{
     net::SocketAddr,
     sync::{
         Arc, Mutex, PoisonError,
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicU64, AtomicUsize, Ordering},
     },
     time::Duration,
 };
@@ -70,6 +70,9 @@ const EXAMPLE_RESPONSE: &str = r#"{
 enum Answer {
     /// These exact bytes as a JSON body.
     Body(String),
+    /// The first half of these bytes under a `content-length` of all of them, then the
+    /// connection's end: a body the transport reports as cut.
+    Cut(String),
     Status(u16),
     Hang,
 }
@@ -172,6 +175,16 @@ async fn serve(answers: Vec<Answer>) -> (SocketAddr, Arc<Seen>) {
             served += 1;
             let (status, body) = match answer {
                 Answer::Body(text) => (200, text.into_bytes()),
+                Answer::Cut(text) => {
+                    let head = format!(
+                        "HTTP/1.1 200 Fixture\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n",
+                        text.len()
+                    );
+                    let _ = socket.write_all(head.as_bytes()).await;
+                    let _ = socket.write_all(&text.as_bytes()[..text.len() / 2]).await;
+                    let _ = socket.shutdown().await;
+                    continue;
+                }
                 Answer::Status(status) => (status, br#"{"error":{"message":"no"}}"#.to_vec()),
                 Answer::Hang => {
                     tokio::spawn(async move {
@@ -359,22 +372,18 @@ async fn decide(
     client().decide(&selection, request, &Cancel::new()).await
 }
 
-/// The refusal of one answer body to `request`: its code, dispatch and message.
-async fn refusal(text: &str, request: &DecisionRequest) -> (ErrorCode, Dispatch, String) {
+/// The message of the refusal of one answer body to `request`, which is `protocol`, dispatch
+/// `accepted` and final.
+async fn protocol_refusal(text: &str, request: &DecisionRequest) -> String {
     let error = decide(vec![Answer::Body(text.to_owned())], request)
         .await
         .expect_err(text);
-    (error.code, error.dispatch, error.message)
-}
-
-async fn protocol_refusal(text: &str, request: &DecisionRequest) -> String {
-    let (code, dispatch, message) = refusal(text, request).await;
     assert_eq!(
-        (code, dispatch),
-        (ErrorCode::Protocol, Dispatch::Accepted),
+        (error.code, error.dispatch, error.retriable),
+        (ErrorCode::Protocol, Dispatch::Accepted, false),
         "{text}"
     );
-    message
+    error.message
 }
 
 /// A clock that never moves: every record starts at `unix_ms` and takes no time.
@@ -649,6 +658,8 @@ async fn every_question_kind_is_sent_and_every_answer_kind_is_read() {
 async fn an_answer_body_is_taken_only_whole() {
     let request = example();
     let whole = "decision answer is not one whole JSON document with every member once, nested at most 16 deep";
+    // The fixture declares the length of what it sends, so `cut` and `half` arrive whole by the
+    // transport's account: the document ends early, the body does not.
     let cut = &EXAMPLE_RESPONSE[..EXAMPLE_RESPONSE.len() - 1];
     let half = &EXAMPLE_RESPONSE[..EXAMPLE_RESPONSE.len() / 2];
     let trailing = format!("{EXAMPLE_RESPONSE}x");
@@ -664,7 +675,10 @@ async fn an_answer_body_is_taken_only_whole() {
         r#""cached_tokens": 0,"#,
         r#""cached_tokens": 0, "cached_tokens": 0,"#,
     );
-    let repeated_escaped = EXAMPLE_RESPONSE.replacen('{', r#"{"model": "gpt-6-luna","#, 1);
+    // The second `model` is written with one letter escaped: the same name, other bytes.
+    let repeated_escaped = EXAMPLE_RESPONSE.replacen('{', "{\"mod\\u0065l\": \"gpt-6-luna\",", 1);
+    assert!(repeated_escaped.contains(r#""model""#));
+    assert!(!repeated_root.contains('\\'));
     for text in [
         "",
         " ",
@@ -1051,6 +1065,25 @@ async fn an_unreported_usage_counter_stays_unknown() {
             json!({"input_tokens": 18_446_744_073_709_551_615_u64}),
             known(Some(u64::MAX), None, None, None, None),
         ),
+        // The reference bounds each counter to -2147483648..=2147483647. That bound is not
+        // enforced: a count on either side of 2147483647 is taken as written, and a negative
+        // counter is unknown beside a known one, at -1 and at the reference's lower bound.
+        (
+            json!({"input_tokens": 2_147_483_647_u64, "output_tokens": 2_147_483_647_u64}),
+            known(Some(2_147_483_647), Some(2_147_483_647), None, None, None),
+        ),
+        (
+            json!({"input_tokens": 2_147_483_648_u64, "output_tokens": 2_147_483_648_u64}),
+            known(Some(2_147_483_648), Some(2_147_483_648), None, None, None),
+        ),
+        (
+            json!({"input_tokens": -1, "output_tokens": 3}),
+            known(None, Some(3), None, None, None),
+        ),
+        (
+            json!({"input_tokens": 7, "output_tokens": -2_147_483_648_i64}),
+            known(Some(7), None, None, None, None),
+        ),
         // Counters that contradict each other are all unknown.
         (
             json!({"input_tokens": 10, "input_tokens_details": {"cached_tokens": 11}}),
@@ -1156,11 +1189,23 @@ async fn a_request_field_outside_the_reference_is_refused_by_name() {
     // A member name is written only when it is short and plain; a value never is.
     let plain = "x".repeat(64);
     assert_eq!(refusal(with(&[], &plain, json!(1))), unnamed(&plain));
+    // Plain is every ASCII letter of either case, every digit, `_` and `-`.
+    for name in ["Top_P-2", "0", "_", "-", "Z9", "aZ09_-"] {
+        assert_eq!(refusal(with(&[], name, json!(1))), unnamed(name));
+    }
     for name in [
         "x".repeat(65),
         "a b".to_owned(),
         "a\nb".to_owned(),
         String::new(),
+        // A letter or a digit outside ASCII is not plain, however short the name.
+        "é".to_owned(),
+        "é".repeat(32),
+        "٣".to_owned(),
+        // Nor is punctuation a path is written with.
+        "a.b".to_owned(),
+        "a[0]".to_owned(),
+        "a\"b".to_owned(),
     ] {
         assert_eq!(
             refusal(with(&[], &name, json!(1))),
@@ -1170,6 +1215,17 @@ async fn a_request_field_outside_the_reference_is_refused_by_name() {
     }
     let (_, message) = refusal(with(&[], "extra", json!("marker-quokka-7731")));
     assert!(!message.contains("marker-quokka-7731"));
+
+    // Of several members the reference does not name, the first in name order is the one
+    // named, wherever the document wrote it; a known member between them changes nothing.
+    let several = r#"{"zeta": 1, "model": "decide", "beta": 2, "input": "x", "alpha": 3,
+        "questions": [{"type": "predicate", "instructions": "Is it so?", "y": 1, "b": 2}]}"#;
+    assert_eq!(refusal(several.to_owned()), unnamed("alpha"));
+    let inner = several
+        .replace(r#""zeta": 1, "#, "")
+        .replace(r#""beta": 2, "#, "")
+        .replace(r#""alpha": 3,"#, "");
+    assert_eq!(refusal(inner), unnamed("questions[0].b"));
 }
 
 #[test]
@@ -1281,6 +1337,19 @@ fn a_request_is_read_from_one_whole_document_of_the_reference_shape() {
         ),
         unsent("questions[0].instructions")
     );
+    // A document of the reference's shape is held to the reference's bounds as well.
+    assert_eq!(
+        refusal(r#"{"model":"decide","input":"x","questions":[]}"#),
+        invalid("decision request is outside the reference's bounds: questions")
+    );
+    assert_eq!(
+        refusal(
+            r#"{"model":"decide","input":"x","questions":[{"type":"choice","instructions":"?","choices":[{"value":"a"},{"value":"a"}]}]}"#
+        ),
+        invalid(
+            "decision request is outside the reference's bounds: questions[0].choices[1].value"
+        )
+    );
     // Nesting: the document is level 1, `input` given as items opens level 2.
     let nested = |arrays: usize| {
         request(&format!(
@@ -1375,6 +1444,21 @@ fn a_request_is_held_to_the_bounds_of_the_reference() {
     assert_eq!(
         outside(&asking(vec![choice(&["a", "b", "a"])])),
         "questions[0].choices[2].value"
+    );
+    // Values are distinct within one question, not across questions: two questions may offer
+    // the same choices, and a repeat in the third is named in the third.
+    assert!(
+        asking(vec![choice(&["a", "b"]), choice(&["a", "b"])])
+            .validate()
+            .is_ok()
+    );
+    assert_eq!(
+        outside(&asking(vec![
+            choice(&["a", "b"]),
+            choice(&["b", "c"]),
+            choice(&["c", "d", "c"])
+        ])),
+        "questions[2].choices[2].value"
     );
     let typed = |values: Vec<ChoiceValue>| {
         asking(vec![Question::Choice {
@@ -1688,6 +1772,17 @@ async fn a_decision_endpoint_call_yields_a_call_record_priced_from_the_cost_tabl
     assert_eq!(records[0].usage.output_tokens, None);
     let cost = records[0].cost.as_ref().unwrap();
     assert!(!cost.complete, "{cost:?}");
+    // No line is known: the input is priced only with its cache split, which is unreported.
+    assert_eq!(cost.known_subtotal, Amount::parse("0").unwrap());
+    // With the split and no output count, the input lines are known and the output line is not.
+    answer["usage"] = json!({
+        "input_tokens": 1000,
+        "input_tokens_details": {"cached_tokens": 400, "cache_write_tokens": 100}
+    });
+    let (_, records, _) = recorded(vec![body(&answer)], &example(), prices).await;
+    let cost = records[0].cost.as_ref().unwrap();
+    assert!(!cost.complete, "{cost:?}");
+    assert_eq!(cost.known_subtotal, Amount::parse("0.8").unwrap());
 
     // Without a price book the record carries usage and no cost.
     let (_, records, _) = recorded(
@@ -1730,6 +1825,7 @@ async fn a_refused_or_failed_call_is_recorded_with_what_the_body_reported() {
     assert_eq!(records.len(), 1);
     assert_eq!(records[0].outcome, Outcome::Failed);
     assert_eq!(records[0].error_code, Some(ErrorCode::RateLimited));
+    assert_eq!(records[0].dispatch, Some(error.dispatch));
     assert_eq!(records[0].attempts, 1);
     assert_eq!(seen.requests().len(), 1);
     let (result, _, _) = recorded(vec![Answer::Status(401)], &example(), no_prices).await;
@@ -1768,6 +1864,10 @@ async fn a_cancelled_call_is_recorded_cancelled() {
     let records = log.records();
     assert_eq!(records.len(), 1);
     assert_eq!(records[0].outcome, Outcome::Cancelled);
+    // The record carries the call's error code and the dispatch the error reports.
+    assert_eq!(records[0].error_code, Some(ErrorCode::Cancelled));
+    assert_eq!(records[0].dispatch, Some(error.dispatch));
+    assert_ne!(error.dispatch, Dispatch::NotSent, "the request had left");
 }
 
 /// Hands out one fixed bearer token.
@@ -1808,6 +1908,166 @@ async fn the_injected_credential_is_sent_as_the_account_declares() {
     );
     // The token is no part of the body.
     assert!(!String::from_utf8_lossy(&seen.requests()[0].body).contains("fixture-token"));
+}
+
+/// A clock that stands where a test put it: the held milliseconds after its start.
+struct Moved(AtomicU64);
+
+impl Clock for Moved {
+    fn unix_ms(&self) -> u64 {
+        1_700_000_000_000 + self.0.load(Ordering::SeqCst)
+    }
+    fn monotonic(&self) -> Duration {
+        Duration::from_millis(self.0.load(Ordering::SeqCst))
+    }
+}
+
+/// Hands out the fixed token and takes 1500 ms of the clock to do it.
+struct Slow(Arc<Moved>);
+
+impl SecretResolver for Slow {
+    fn resolve<'a>(
+        &'a self,
+        _reference: &'a SecretRef,
+    ) -> BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
+        Box::pin(async {
+            self.0.0.fetch_add(1500, Ordering::SeqCst);
+            Ok(ResolvedSecret {
+                secret: Secret::new(b"fixture-token".to_vec())?,
+                version: SecretVersion::new("v1".to_owned())?,
+            })
+        })
+    }
+}
+
+/// Every other fixture's clock is frozen, so its latency is 0 wherever the stopwatch sits.
+#[tokio::test]
+async fn the_record_times_the_whole_call_from_before_its_credential_is_resolved() {
+    let (address, _) = serve(vec![Answer::Body(EXAMPLE_RESPONSE.to_owned())]).await;
+    let catalog = Catalog::parse(&catalog_toml(
+        address,
+        "responses",
+        "auth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"decide-token\"",
+    ))
+    .unwrap();
+    let request = example();
+    let selection = OpenAiDecisions::select(&catalog, &request, Some(100)).unwrap();
+    let clock = Arc::new(Moved(AtomicU64::new(250)));
+    let log = CallLog::new();
+    OpenAiDecisions::new(http(), Arc::new(Slow(clock.clone())))
+        .decide_recorded(
+            &selection,
+            &request,
+            &Cancel::new(),
+            CallIdentity::primary(id("req-1")),
+            Recording {
+                sink: &log,
+                clock: &*clock,
+                prices: None,
+            },
+        )
+        .await
+        .unwrap();
+    let records = log.records();
+    assert_eq!(records.len(), 1);
+    // Started before the credential was asked for, stopped after it: the 1500 ms are the call's.
+    assert_eq!(records[0].started_at_unix_ms, 1_700_000_000_250);
+    assert_eq!(records[0].latency_ms, Some(1500));
+}
+
+/// Every other fixture's base URL ends in `/v1`.
+#[tokio::test]
+async fn the_request_goes_to_the_endpoint_base_url_followed_by_decisions() {
+    for (base, path) in [
+        ("/v1/", "/v1/decisions"),
+        ("/gateway/openai/v1", "/gateway/openai/v1/decisions"),
+        ("/gateway/openai/v1/", "/gateway/openai/v1/decisions"),
+        ("", "/decisions"),
+        ("/", "/decisions"),
+        ("/v2", "/v2/decisions"),
+    ] {
+        let (address, seen) = serve(vec![Answer::Body(EXAMPLE_RESPONSE.to_owned())]).await;
+        let declared = format!("base_url = \"http://{address}{base}\"");
+        let toml = catalog_toml(address, "responses", ANONYMOUS)
+            .replace(&format!("base_url = \"http://{address}/v1\""), &declared);
+        assert!(toml.contains(&declared), "{base:?}");
+        let catalog = Catalog::parse(&toml).unwrap();
+        let request = example();
+        let selection = OpenAiDecisions::select(&catalog, &request, Some(100)).unwrap();
+        client()
+            .decide(&selection, &request, &Cancel::new())
+            .await
+            .unwrap();
+        let requests = seen.requests();
+        assert_eq!(requests.len(), 1, "{base:?}");
+        assert_eq!(requests[0].path, path, "{base:?}");
+    }
+}
+
+/// Every other fixture estimates 100 input tokens. The fixture's serving model has a context
+/// window of 4096 tokens and 1024 of them for output.
+#[test]
+fn a_target_is_selected_against_the_callers_token_estimate() {
+    let catalog = catalog("127.0.0.1:9".parse().unwrap());
+    let request = example();
+    assert!(OpenAiDecisions::select(&catalog, &request, Some(3072)).is_ok());
+    for estimate in [Some(3073), Some(u64::MAX), None] {
+        let error = OpenAiDecisions::select(&catalog, &request, estimate).unwrap_err();
+        assert_eq!(error.code, ErrorCode::Unsupported, "{estimate:?}");
+    }
+    // A model that is no alias at all selects nothing either.
+    let invalid = DecisionRequest::new("not an alias", "x", vec![predicate("p")]);
+    assert_eq!(
+        OpenAiDecisions::select(&catalog, &invalid, Some(100))
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidRequest
+    );
+}
+
+/// A body short of the length it declared is the transport's failure, not the reader's: the
+/// client hands it on unchanged, asks once and records what the error reports.
+#[tokio::test]
+async fn a_body_the_transport_reports_as_cut_is_its_retriable_failure_and_is_recorded_so() {
+    let (result, records, seen) = recorded(
+        vec![Answer::Cut(EXAMPLE_RESPONSE.to_owned())],
+        &example(),
+        no_prices,
+    )
+    .await;
+    let error = result.unwrap_err();
+    assert_eq!(
+        (error.code, error.dispatch, error.retriable),
+        (ErrorCode::Transport, Dispatch::Accepted, true)
+    );
+    assert_eq!(records.len(), 1, "{records:?}");
+    assert_eq!(records[0].outcome, Outcome::Failed);
+    assert_eq!(records[0].error_code, Some(ErrorCode::Transport));
+    assert_eq!(records[0].dispatch, Some(Dispatch::Accepted));
+    assert_eq!(records[0].attempts, 1);
+    // Nothing is read from a body that did not arrive whole.
+    assert_eq!(records[0].usage, Usage::default());
+    assert_eq!(records[0].upstream_model, None);
+    assert_eq!(
+        seen.requests().len(),
+        1,
+        "retrying is the caller's: one request"
+    );
+
+    // The classifier abstains with the transport's code.
+    let classified = classify(
+        vec![Answer::Cut(EXAMPLE_RESPONSE.to_owned())],
+        labels(&["angry", "calm"]),
+        LONG,
+        None,
+    )
+    .await;
+    assert_eq!(
+        cause(&classified),
+        Some(AbstentionCause::ProviderError(ErrorCode::Transport))
+    );
+    assert_eq!(classified.records.len(), 1);
+    assert_eq!(classified.seen.requests().len(), 1);
 }
 
 // The classifier's decision-endpoint path through the real client.
@@ -2133,3 +2393,6 @@ async fn a_label_set_larger_than_the_choice_bound_abstains_without_a_call() {
         255
     );
 }
+
+#[path = "client/adversary_w28_wire.rs"]
+mod adversary_w28_wire;

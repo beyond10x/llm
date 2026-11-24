@@ -869,12 +869,17 @@ request inside every bound above can exceed.
 An answer body is taken only whole. The client reads the transport's stream to its end (the
 transport bounds a body at 32 MiB and refuses an answer that does not name `application/json`),
 and only then reads the bytes as one JSON document with nothing but JSON whitespace around it. A
-body cut short, bytes or a second value after the document, a member given twice in one object
-at any depth and however its name is escaped, and a nesting deeper than 16 (an array or object
-being one level: 16 one inside another are read, the 17th is refused) are refused `protocol`
-with dispatch `accepted`. A member the reference does not name is part of the document, so
-these rules hold for it too, but its presence refuses nothing and its value is not interpreted:
-a later version of the endpoint that adds a member still answers. The body must name
+body the transport reports as cut (short of the `content-length` it declared, or a chunked body
+without its end) is a failure of `llm-http`, handed on unchanged as for every other client in
+this workspace: `transport`, dispatch `accepted`, retriable. A body that arrived whole by the
+transport's account and is not one JSON document is `protocol` with dispatch `accepted` and not
+retriable: a document that ends early (which includes a body delimited only by the connection's
+end and cut there), bytes or a second value after the document, a member given twice in one
+object at any depth and however its name is escaped, and a nesting deeper than 16 (an array or
+object being one level: 16 one inside another are read, the 17th is refused). A member the
+reference does not name is part of the document, so these rules hold for it too, but its
+presence refuses nothing and its value is not interpreted: a later version of the endpoint that
+adds a member still answers. The body must name
 its `model` and hold exactly one answer per question, in question order: each of its question's
 type or a `refusal`, each with the member `name` present and equal to its question's name (`null`
 for a question without one), and each with the members the reference requires for its type. An
@@ -885,9 +890,12 @@ it never carries a value of the body.
 Usage is read apart from the answers, so a body refused for an answer still reports what it
 counted. A counter is taken only when the body writes it as a whole number from 0 to 2^64 - 1
 without a fraction or an exponent; absent, `null`, negative, fractional, of another type or
-larger, it is unknown, never zero. Counters that contradict each other (cached and cache-written
-input together more than the input, more reasoning output than output: `Usage::validate`) are
-all unknown. `total_tokens` is not read.
+larger, it is unknown, never zero. The reference bounds each counter to -2147483648 to
+2147483647 (`ResponseUsageResource`); that bound is not enforced: a whole number in `u64` is a
+count, so 2147483648 is taken as written, and a negative counter is unknown, not an error.
+Counters that contradict each other (cached and cache-written input together more than the
+input, more reasoning output than output: `Usage::validate`) are all unknown. `total_tokens` is
+not read.
 
 `decide_recorded` writes one record of kind `classification` per call that reached its
 credential: the route, the target, the upstream model the body named, one attempt, the usage as

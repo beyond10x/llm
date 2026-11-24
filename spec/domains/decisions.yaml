@@ -73,9 +73,13 @@ domain: llm.decisions
 # does not send (an input given as items, instructions given as content parts) is refused
 # `unsupported` by its path.
 #
-# An answer body is read whole from the transport and then as one JSON document. A body cut
-# short, bytes after the document, a second document, a repeated member at any depth and a
-# nesting deeper than 16 are refused `protocol`, dispatch `accepted`; nothing is read leniently.
+# An answer body is read whole from the transport and then as one JSON document. A body the
+# transport reports as cut (short of its declared length, or a chunked body without its end) is
+# the transport's own failure, handed on unchanged: `transport`, dispatch `accepted`, retriable.
+# A body that arrived whole by the transport's account and is not one JSON document is refused
+# `protocol`, dispatch `accepted`: a document that ends early (so also a body delimited only by
+# the connection's end and cut there), bytes after the document, a second document, a repeated
+# member at any depth and a nesting deeper than 16; nothing is read leniently.
 # The document must name `model` (text) and `answers`: exactly one answer per question, in
 # order, each of its question's type or `refusal`, each carrying its question's name (null when
 # the question has none). A type outside predicate, choice, score and refusal is refused
@@ -85,7 +89,8 @@ domain: llm.decisions
 #
 # Usage is read apart from the answers, so a refused answer still reports its tokens. Each
 # counter is taken only when the body reports it as a non-negative integer; a counter that is
-# absent, null, negative or fractional is unknown, never zero. Counters that contradict each
+# absent, null, negative or fractional is unknown, never zero. The reference's bound of each
+# counter (-2147483648 to 2147483647) is not enforced. Counters that contradict each
 # other (cache tokens above input tokens, reasoning tokens above output tokens) are all unknown.
 #
 # Each call that reached credential resolution yields one llm.calls.CallRecord of kind
