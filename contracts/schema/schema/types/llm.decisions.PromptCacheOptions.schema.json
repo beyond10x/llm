@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.decisions.PromptCacheOptions",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "a74dd1d0ce99701bcebf0eaeb13cf0c029f2c66c9363cc7580fb213e6723661c",
+    "contract_digest": "slice-sha256/2:aef402a003f5174a16f4afa66f409b68862e5e556138635ea70e18aafc306a0c",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.PromptCacheMode": {
+      "title": "PromptCacheMode",
+      "x-ess-name": "llm.decisions.PromptCacheMode",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Implicit",
+        "Explicit"
+      ]
+    },
+    "llm.decisions.PromptCacheOptions": {
+      "title": "PromptCacheOptions",
+      "x-ess-name": "llm.decisions.PromptCacheOptions",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "ttl": {
+          "$ref": "#/$defs/llm.decisions.PromptCacheTtl"
+        },
+        "mode": {
+          "$ref": "#/$defs/llm.decisions.PromptCacheMode"
+        }
+      },
+      "additionalProperties": false
+    },
+    "llm.decisions.PromptCacheTtl": {
+      "title": "PromptCacheTtl",
+      "x-ess-name": "llm.decisions.PromptCacheTtl",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "ThirtyMinutes"
+      ]
+    }
+  }
+}

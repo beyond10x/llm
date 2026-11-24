@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DecisionRequest",
+  "x-ess-name": "llm.decisions.DecisionRequest",
+  "x-ess-kind": "entity",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "route_alias": {
+      "type": "string"
+    },
+    "input": {
+      "type": "string"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/llm.decisions.Question"
+      }
+    },
+    "safety_identifier": {
+      "type": "string"
+    },
+    "prompt_cache_key": {
+      "type": "string"
+    },
+    "prompt_cache_options": {
+      "$ref": "#/$defs/llm.decisions.PromptCacheOptions"
+    },
+    "state": {
+      "$ref": "#/$defs/llm.decisions.DecisionRequest.State"
+    }
+  },
+  "required": [
+    "id",
+    "route_alias",
+    "input",
+    "questions",
+    "state"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "a74dd1d0ce99701bcebf0eaeb13cf0c029f2c66c9363cc7580fb213e6723661c",
+    "contract_digest": "slice-sha256/2:9fb8917a852476634b5c812484a813e380274bfa76dcb538f013f237eed2d694",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.decisions.ChoiceOption": {
+      "title": "ChoiceOption",
+      "x-ess-name": "llm.decisions.ChoiceOption",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/llm.decisions.ChoiceValue"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "llm.decisions.ChoiceValue": {
+      "title": "ChoiceValue",
+      "x-ess-name": "llm.decisions.ChoiceValue",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "flag": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "llm.decisions.DecisionRequest.State": {
+      "title": "State",
+      "x-ess-name": "llm.decisions.DecisionRequest.State",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Observed"
+      ]
+    },
+    "llm.decisions.PromptCacheMode": {
+      "title": "PromptCacheMode",
+      "x-ess-name": "llm.decisions.PromptCacheMode",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Implicit",
+        "Explicit"
+      ]
+    },
+    "llm.decisions.PromptCacheOptions": {
+      "title": "PromptCacheOptions",
+      "x-ess-name": "llm.decisions.PromptCacheOptions",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "ttl": {
+          "$ref": "#/$defs/llm.decisions.PromptCacheTtl"
+        },
+        "mode": {
+          "$ref": "#/$defs/llm.decisions.PromptCacheMode"
+        }
+      },
+      "additionalProperties": false
+    },
+    "llm.decisions.PromptCacheTtl": {
+      "title": "PromptCacheTtl",
+      "x-ess-name": "llm.decisions.PromptCacheTtl",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "ThirtyMinutes"
+      ]
+    },
+    "llm.decisions.Question": {
+      "title": "Question",
+      "x-ess-name": "llm.decisions.Question",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/llm.decisions.QuestionKind"
+        },
+        "name": {
+          "type": "string"
+        },
+        "instructions": {
+          "type": "string"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/llm.decisions.ChoiceOption"
+          }
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/llm.decisions.ScoreLevel"
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "instructions",
+        "choices",
+        "levels"
+      ],
+      "additionalProperties": false
+    },
+    "llm.decisions.QuestionKind": {
+      "title": "QuestionKind",
+      "x-ess-name": "llm.decisions.QuestionKind",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Predicate",
+        "Choice",
+        "Score"
+      ]
+    },
+    "llm.decisions.ScoreLevel": {
+      "title": "ScoreLevel",
+      "x-ess-name": "llm.decisions.ScoreLevel",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

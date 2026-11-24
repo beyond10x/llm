@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Decide input",
+  "x-ess-name": "llm.decisions.Decide",
+  "x-ess-kind": "command-input",
+  "type": "object",
+  "properties": {
+    "catalog_toml": {
+      "type": "string"
+    },
+    "prices_toml": {
+      "type": "string"
+    },
+    "request_json": {
+      "type": "string"
+    },
+    "label_set_json": {
+      "type": "string"
+    },
+    "chain_json": {
+      "type": "string"
+    },
+    "input_text": {
+      "type": "string"
+    },
+    "program_json": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "catalog_toml",
+    "program_json"
+  ],
+  "additionalProperties": false,
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "a74dd1d0ce99701bcebf0eaeb13cf0c029f2c66c9363cc7580fb213e6723661c",
+    "contract_digest": "slice-sha256/2:ad39fa0f8925f6cd55697210415ac3348422109f7da9f5e96909eb13c3272a81",
+    "regenerate": "ess generate"
+  }
+}

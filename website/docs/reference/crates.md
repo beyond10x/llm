@@ -9,7 +9,7 @@ custom_edit_url: null
 
 # Crates
 
-The workspace holds 20 packages at version `0.26.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
+The workspace holds 21 packages at version `0.26.0`. None is published to a registry: a project depends on them from Git at a release tag. A package name is its directory name; its library name uses underscores, so `llm-core` is `use llm_core`. This page is generated from `cargo metadata` by `llm-docs`; [the overview](../concepts/overview.md#which-crate-do-i-need) says which crate to depend on for what.
 
 | Package | Library | Directory | What it is |
 | --- | --- | --- | --- |
@@ -29,6 +29,7 @@ The workspace holds 20 packages at version `0.26.0`. None is published to a regi
 | `llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |
 | `llm-messages` | `llm_messages` | `crates/llm-messages` | Messages protocol projection and gateway ingress for the declared supported subset. |
 | `llm-models` | `llm_models` | `crates/llm-models` | Builds the Chat Completions, Responses or Messages port a catalog serving model declares, with the caller's resolver for its account, and reads llm.routes/1 model routes into a catalog and resolvers. |
+| `llm-openai-decisions` | `llm_openai_decisions` | `crates/llm-openai-decisions` | The OpenAI POST /v1/decisions wire: typed questions about one input, typed answers with probabilities and usage, one call record per call, and the classifier's decision-endpoint path. |
 | `llm-providers` | `llm_providers` | `crates/llm-providers` | Provider/account and authentication bindings independent of protocol selection. |
 | `llm-responses` | `llm_responses` | `crates/llm-responses` | Responses protocol projection, gateway ingress and a single-attempt client for the declared supported subset. |
 | `llm-routing` | `llm_routing` | `crates/llm-routing` | TOML catalogs, capability-aware resolution and explicit ordered fallback. |

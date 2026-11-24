@@ -833,6 +833,89 @@ A judge call publishes no tool. An outcome that holds a tool call, or says it st
 refused by the routed call itself: the judge returns that error, `protocol`, with the call's
 record written as failed, and no verdict.
 
+**Decision endpoint.** `llm-openai-decisions` is the client of OpenAI's `POST /v1/decisions` and
+the classifier's third path, `Path::DecisionEndpoint`. The wire is read from
+`openai/openai-openapi` at commit `b4cad10d7cff7fc286f2dbf1992569989522c6f0` (path `/decisions`,
+operation `createDecision`); the reference names one model for it, `gpt-6-luna`. A decision
+request is not a turn, so the client is not a `Model` and does not go through `record_turn`:
+`OpenAiDecisions::select` picks the first compatible target of the turn route the request's
+`model` names as its alias (admitted against the caller's input-token estimate, as a turn with no
+tools and no controls is), and `decide` sends one request there, to the endpoint's base URL
+followed by `decisions`, with the credential the target's account declares. The body carries the
+target's upstream model in place of the alias. One attempt is made: nothing is retried and
+nothing falls back. A target served over another protocol than `responses` or `chat-completions`
+is refused `unsupported` before any I/O.
+
+`llm-decide` still depends on `llm-core`, `llm-routing` and `llm-calls` only. It holds the port
+`DecisionEndpoint` (`choose(ChoiceCall) -> ChoiceAnswer`) and `EndpointClassifier`, which asks it;
+`llm-openai-decisions` depends on `llm-decide` and implements the port, so the chain takes any
+other implementation as well.
+
+A `DecisionRequest` holds an input text and 1 to 400 questions, each a predicate, a choice (2 to
+255 choices with distinct values, a value being a text or a boolean, the text `"true"` and the
+boolean `true` distinct) or a score (2 to 10 levels). `validate` holds it to the reference's
+bounds before any I/O and refuses `invalid-request` naming the path: 0 and 401 questions, 1 and
+256 choices, 1 and 11 levels, a repeated choice value, an input over 10485760 characters, a name,
+instructions, value, description or label over 1048576, a `safety_identifier` over 128 and a
+`prompt_cache_key` over 64. Lengths count characters (Unicode scalar values), not bytes.
+`DecisionRequest::from_json` reads a request from one whole JSON document and refuses a member
+the reference does not name, at every level, by its path (the name is written only when it is 1
+to 64 bytes of ASCII letters, digits, `_` and `-`), a missing or mistyped member, and the
+reference's forms this client does not send (an input given as a list of items, instructions
+given as a list of parts) as `unsupported`. The encoded body is also held to the transport's
+request bound of 16 MiB (16777216 bytes is sent, one byte more is refused `too-large`), which a
+request inside every bound above can exceed.
+
+An answer body is taken only whole. The client reads the transport's stream to its end (the
+transport bounds a body at 32 MiB and refuses an answer that does not name `application/json`),
+and only then reads the bytes as one JSON document with nothing but JSON whitespace around it. A
+body cut short, bytes or a second value after the document, a member given twice in one object
+at any depth and however its name is escaped, and a nesting deeper than 16 (an array or object
+being one level: 16 one inside another are read, the 17th is refused) are refused `protocol`
+with dispatch `accepted`. A member the reference does not name is part of the document, so
+these rules hold for it too, but its presence refuses nothing and its value is not interpreted:
+a later version of the endpoint that adds a member still answers. The body must name
+its `model` and hold exactly one answer per question, in question order: each of its question's
+type or a `refusal`, each with the member `name` present and equal to its question's name (`null`
+for a question without one), and each with the members the reference requires for its type. An
+answer of any other type, of another type than its question, or of another name is refused
+`protocol` by its path, such as `answers[0].type`. A refusal message is a fixed text and a path;
+it never carries a value of the body.
+
+Usage is read apart from the answers, so a body refused for an answer still reports what it
+counted. A counter is taken only when the body writes it as a whole number from 0 to 2^64 - 1
+without a fraction or an exponent; absent, `null`, negative, fractional, of another type or
+larger, it is unknown, never zero. Counters that contradict each other (cached and cache-written
+input together more than the input, more reasoning output than output: `Usage::validate`) are
+all unknown. `total_tokens` is not read.
+
+`decide_recorded` writes one record of kind `classification` per call that reached its
+credential: the route, the target, the upstream model the body named, one attempt, the usage as
+read and, under a price book, its cost through `Cost::of_attempts`, as `llm-embed` prices a
+batch. An unknown counter leaves its line unknown and the cost incomplete. A call refused before
+that point (an invalid request, another protocol, a body over the bound, a `Cancel` already
+cancelled) writes no record; a failed or cancelled call that got further writes one with its
+error code and dispatch.
+
+`EndpointClassifier` sends the label set as one unnamed choice question, the labels as text
+values in the set's order, with the caller's instructions, and holds the answer to the set
+(`LabelSet::decode_choice`). The chosen value is the label; a refusal answer, a chosen value that
+is no label of the set, a boolean value, a probability for a value outside the set, and one label
+given two probabilities abstain `OffLabel`. A label set of 256 labels is past the endpoint's 255
+choices: the request is refused before any I/O and the classifier abstains `ProviderError`
+(`invalid-request`) with no record. Each probability becomes basis points by one rule
+(`basis_points`): it must be finite and from 0 to 1, minus zero being 0, otherwise the answer
+abstains `OffLabel`; the result is the whole number nearest to the probability times 10000,
+computed exactly on the double with integer arithmetic, and a value exactly halfway rounds up
+(`0.03125` is 313). The probabilities are not normalized and their sum is not checked, so the
+basis points of one answer can sum to more or less than 10000 (`0.03125`, `0.34875` and `0.62`
+give 313, 3488 and 6200). A label the answer gives no probability keeps an unknown confidence
+and meets no floor; the answer's own `confidence` member is not used. The classifier's floor,
+the chain's deadline and its second check of every result apply as for a model classifier: a
+call still open at the deadline is cancelled, awaited so its record is written, and abstains
+`Timeout`. The record id is `<request id>/<classifier id>`, and a decision or abstention names
+it only when that record reached the sink.
+
 ### Embeddings
 
 An embedding is not a turn, so it has its own port and its own route kind. The contract is

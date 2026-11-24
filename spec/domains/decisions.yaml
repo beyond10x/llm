@@ -49,6 +49,63 @@ domain: llm.decisions
 # `protocol` and no JSON. A failed call is its llm error and no verdict, and so is an answer
 # whose far side reported no upstream model (`protocol`): a verdict cannot pin what it was not
 # told.
+#
+# The decision endpoint is a provider's own endpoint for typed questions about one input (crate
+# llm-openai-decisions). Its nouns are read from openai/openai-openapi at commit
+# b4cad10d7cff7fc286f2dbf1992569989522c6f0: path /decisions, schemas DecisionRequest and
+# DecisionResponse. It is not a turn: a request carries an input and 1 to 400 questions and gets
+# one answer per question, in question order, with token usage.
+#
+# The client sends POST <endpoint base URL>decisions over llm-http with the credential the
+# target's account declares, to the route target the caller selected (the first compatible target
+# of a turn route served on a responses or chat-completions endpoint; any other protocol is
+# refused `unsupported` before I/O). The body is {model, input, questions, safety_identifier?,
+# prompt_cache_key?, prompt_cache_options?} and nothing else; its model is the target's upstream
+# model. A request is refused `invalid-request` before I/O, naming the path of the member, when:
+# it has no question or more than 400; a choice question has fewer than 2 or more than 255
+# choices, or one typed value twice (the text "true" and the boolean true are distinct); a score
+# question has fewer than 2 or more than 10 levels; a name, an instruction, a choice value, a
+# description or a level label is longer than 1048576 characters; the input is longer than
+# 10485760 characters; safety_identifier is longer than 128 or prompt_cache_key longer than 64
+# characters. A request read from JSON is one whole document whose members are the reference's:
+# a member the reference does not name is refused `invalid-request` by its path
+# (`questions[0].threshold`), as is a repeated member; a form the reference names and this client
+# does not send (an input given as items, instructions given as content parts) is refused
+# `unsupported` by its path.
+#
+# An answer body is read whole from the transport and then as one JSON document. A body cut
+# short, bytes after the document, a second document, a repeated member at any depth and a
+# nesting deeper than 16 are refused `protocol`, dispatch `accepted`; nothing is read leniently.
+# The document must name `model` (text) and `answers`: exactly one answer per question, in
+# order, each of its question's type or `refusal`, each carrying its question's name (null when
+# the question has none). A type outside predicate, choice, score and refusal is refused
+# `protocol` naming its path (`answers[0].type`), never guessed; so is an answer of another
+# question's type, a missing member and a member of the wrong JSON type. A message names a path
+# and never a value. A member of an answer the reference does not name is left alone.
+#
+# Usage is read apart from the answers, so a refused answer still reports its tokens. Each
+# counter is taken only when the body reports it as a non-negative integer; a counter that is
+# absent, null, negative or fractional is unknown, never zero. Counters that contradict each
+# other (cache tokens above input tokens, reasoning tokens above output tokens) are all unknown.
+#
+# Each call that reached credential resolution yields one llm.calls.CallRecord of kind
+# Classification with the caller's id: the route, the route target, the upstream model the body
+# named, one attempt, the usage as read and, under a price book, its cost from the price declared
+# for the target's serving model and binding revision. An unknown counter leaves that cost
+# incomplete. A request refused before the credential is resolved writes no record.
+#
+# A classifier on the DecisionEndpoint path asks one choice question: the classifier's
+# instructions, and one choice per label of the set, in the set's order, the label as its text
+# value. It makes one call, with no retry and no fallback, to the first compatible target of its
+# route, under the chain's deadline like the other model paths. A refusal answer abstains
+# `OffLabel`. A choice answer decides its `choice` when that is a text and a label of the set.
+# Its `probabilities` become the confidences: a probability p is taken only when it is finite and
+# 0 <= p <= 1, and becomes the whole number of basis points nearest to p * 10000, computed
+# exactly on the binary value the document's number parses to, a tie rounding up (0.03125 is
+# 313). The probabilities are not normalized and their sum is not checked. A label the answer
+# gives no probability has an unknown confidence. A probability outside 0 to 1, a value that is
+# not a text, a value that is no label of the set and a label given twice abstain `OffLabel`. The
+# answer's own `confidence` member is not used.
 types:
   - name: llm.decisions.Path
     kind: enum
@@ -76,7 +133,103 @@ types:
   - name: llm.decisions.AnswerKind
     kind: enum
     variants: [Predicate, Choice, Score, Refusal]
+  - name: llm.decisions.ChoiceValue
+    kind: struct
+    # A typed choice value: exactly one of the two is present.
+    fields:
+      - {name: text, type: Optional<String>}
+      - {name: flag, type: Optional<Boolean>}
+  - name: llm.decisions.ChoiceOption
+    kind: struct
+    fields:
+      - {name: value, type: llm.decisions.ChoiceValue}
+      - {name: description, type: Optional<String>}
+  - name: llm.decisions.ScoreLevel
+    kind: struct
+    fields:
+      - {name: label, type: String}
+      - {name: description, type: Optional<String>}
+  - name: llm.decisions.Question
+    kind: struct
+    fields:
+      - {name: kind, type: llm.decisions.QuestionKind}
+      # The caller's correlation name; the answer carries it back.
+      - {name: name, type: Optional<String>}
+      - {name: instructions, type: String}
+      # 2 to 255 distinct typed values; present exactly for Choice.
+      - {name: choices, type: List<llm.decisions.ChoiceOption>}
+      # 2 to 10 ordered levels; present exactly for Score.
+      - {name: levels, type: List<llm.decisions.ScoreLevel>}
+  - name: llm.decisions.PromptCacheTtl
+    kind: enum
+    # The wire writes `30m`.
+    variants: [ThirtyMinutes]
+  - name: llm.decisions.PromptCacheMode
+    kind: enum
+    variants: [Implicit, Explicit]
+  - name: llm.decisions.PromptCacheOptions
+    kind: struct
+    fields:
+      - {name: ttl, type: Optional<llm.decisions.PromptCacheTtl>}
+      - {name: mode, type: Optional<llm.decisions.PromptCacheMode>}
+  - name: llm.decisions.ChoiceProbability
+    kind: struct
+    fields:
+      - {name: value, type: llm.decisions.ChoiceValue}
+      - {name: probability, type: Decimal}
+  - name: llm.decisions.ScoreProbability
+    kind: struct
+    fields:
+      - {name: value, type: Integer}
+      - {name: label, type: String}
+      - {name: probability, type: Decimal}
+  - name: llm.decisions.QuestionAnswer
+    kind: struct
+    fields:
+      - {name: kind, type: llm.decisions.AnswerKind}
+      - {name: name, type: Optional<String>}
+      # Predicate: how likely the statement is true.
+      - {name: probability, type: Optional<Decimal>}
+      # Choice: the value chosen and a probability per value the answer lists.
+      - {name: choice, type: Optional<llm.decisions.ChoiceValue>}
+      - {name: choice_probabilities, type: List<llm.decisions.ChoiceProbability>}
+      # Score: the score and a probability per level the answer lists.
+      - {name: score, type: Optional<Decimal>}
+      - {name: score_probabilities, type: List<llm.decisions.ScoreProbability>}
+      # Choice and Score: the answer's own confidence, kept as written.
+      - {name: confidence, type: Optional<Decimal>}
 entities:
+  - name: llm.decisions.DecisionRequest
+    identity: {name: id, type: String}
+    fields:
+      # The catalog route alias the request names; the wire body carries the upstream model.
+      - {name: route_alias, type: String}
+      - {name: input, type: String}
+      # 1 to 400, in the caller's order.
+      - {name: questions, type: List<llm.decisions.Question>}
+      - {name: safety_identifier, type: Optional<String>}
+      - {name: prompt_cache_key, type: Optional<String>}
+      - {name: prompt_cache_options, type: Optional<llm.decisions.PromptCacheOptions>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.decisions.DecisionResponse
+    identity: {name: id, type: String}
+    fields:
+      - {name: request_id, type: String}
+      # The model the body named.
+      - {name: upstream_model, type: String}
+      # One per question, in question order.
+      - {name: answers, type: List<llm.decisions.QuestionAnswer>}
+      # Each counter as the body reported it; unknown stays absent, never 0.
+      - {name: input_tokens, type: Optional<Integer>}
+      - {name: output_tokens, type: Optional<Integer>}
+      - {name: cached_input_tokens, type: Optional<Integer>}
+      - {name: cache_creation_input_tokens, type: Optional<Integer>}
+      - {name: reasoning_output_tokens, type: Optional<Integer>}
+      - {name: call_record_id, type: Optional<String>}
+    relations:
+      - {name: request, kind: references, target: llm.decisions.DecisionRequest, cardinality: one, via: request_id}
+      - {name: call, kind: references, target: llm.calls.CallRecord, cardinality: one, via: call_record_id}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
   - name: llm.decisions.LabelSet
     identity: {name: id, type: String}
     fields:
@@ -99,7 +252,8 @@ entities:
       - {name: chain_id, type: String}
       - {name: position, type: Integer}
       - {name: path, type: llm.decisions.Path}
-      # The catalog route alias a model path's turn names; absent exactly for Lexical.
+      # The catalog route alias a model path's turn or decision request names; absent exactly
+      # for Lexical.
       - {name: route_alias, type: Optional<String>}
       # A decision below this confidence is an abstention OffLabel; absent admits every one.
       - {name: min_confidence_bps, type: Optional<Integer>}
@@ -208,7 +362,65 @@ entities:
       # in order.
       - {name: records, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
+  - name: llm.decisions.DecideObservation
+    identity: {name: observation_id, type: String}
+    fields: &decide_facts
+      - {name: valid_program, type: Boolean}
+      # The refusal of the request or the call (an llm error code), a label set or chain refusal,
+      # else the final abstention's llm error code.
+      - {name: error_code, type: Optional<String>}
+      # The refusal's fixed message, which names a path and never a value.
+      - {name: error_message, type: Optional<String>}
+      # A direct request: each answer as canonical JSON in the reference's shape, in order.
+      - {name: answers, type: List<String>}
+      - {name: upstream_model, type: Optional<String>}
+      # A direct request: the usage the client returned.
+      - {name: input_tokens, type: Optional<Integer>}
+      - {name: output_tokens, type: Optional<Integer>}
+      - {name: cached_input_tokens, type: Optional<Integer>}
+      - {name: cache_creation_input_tokens, type: Optional<Integer>}
+      - {name: reasoning_output_tokens, type: Optional<Integer>}
+      # Per request the fixture server received, in order: its request line's path, and its body
+      # as the client wrote it.
+      - {name: request_paths, type: List<String>}
+      - {name: request_bodies, type: List<String>}
+      # A chain: as llm.decisions.ClassificationObservation.
+      - {name: tried, type: List<String>}
+      - {name: results, type: List<String>}
+      - {name: label, type: Optional<String>}
+      - {name: confidences, type: List<llm.decisions.LabelConfidence>}
+      - {name: final_cause, type: Optional<llm.decisions.AbstentionCause>}
+      - {name: call_record_ids, type: List<String>}
+      # Every record the sink received, as canonical JSON (llm.calls.CallRecord), in order.
+      - {name: records, type: List<String>}
+    lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
+  - name: llm.decisions.Decide
+    # Run the real decision endpoint client over a loopback fixture server scripted by
+    # program_json; the catalog's `http://fixture.invalid` is the server's address, and a price
+    # whose binding revision is `fixture-binding-revision` is priced under the revision its
+    # serving model's binding has at that address. A frozen clock stamps the records, and the
+    # last authored answer repeats. request_json is one decision request in the
+    # reference's shape whose model is the route alias; or label_set_json, chain_json and
+    # input_text run a chain of DecisionEndpoint classifiers through the same client.
+    # program_json holds request_id, input_tokens (the caller's estimate routing admits a target
+    # against), start_unix_ms and answers: per request the server receives, in order, its status
+    # and its body as JSON (`body`) or as the exact text to write (`body_text`).
+    input:
+      - {name: catalog_toml, type: String}
+      - {name: prices_toml, type: Optional<String>}
+      - {name: request_json, type: Optional<String>}
+      - {name: label_set_json, type: Optional<String>}
+      - {name: chain_json, type: Optional<String>}
+      - {name: input_text, type: Optional<String>}
+      - {name: program_json, type: String}
+    outcomes:
+      - name: observed
+        emits: [llm.decisions.Decided]
+        payload:
+          llm.decisions.Decided:
+            valid_program: {generated: true}
+        summary: Return the answers, usage, decision or abstention, records and refusal the client reported.
   - name: llm.decisions.Classify
     # Run the real chain over in-process scripted models and an optional scripted lexical
     # classifier, a scripted clock and an optional price book; no network. program_json scripts
@@ -253,7 +465,14 @@ events:
   - name: llm.decisions.Judged
     fields:
       - {name: valid_program, type: Boolean}
+  - name: llm.decisions.Decided
+    fields:
+      - {name: valid_program, type: Boolean}
 views:
+  - name: llm.decisions.LastDecide
+    source: llm.decisions.DecideObservation
+    consistency: read_your_writes
+    fields: *decide_facts
   - name: llm.decisions.LastClassification
     source: llm.decisions.ClassificationObservation
     consistency: read_your_writes

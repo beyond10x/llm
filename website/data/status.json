@@ -454,6 +454,12 @@
     },
     {
       "area": "Helpers for agent loops",
+      "detail": "llm-openai-decisions: OpenAiDecisions sends 1 to 400 typed questions (predicate, choice, score) about one input to OpenAI's POST /v1/decisions at the first compatible target of a turn route, one attempt, and returns one typed answer per question (or a refusal) with probabilities and usage. A request is held to the reference's bounds before I/O and a member outside the reference is refused by its path; an answer body is taken only whole and an answer of an unknown type is refused protocol by its path; a usage counter the body does not report stays unknown; each call writes one classification record priced under the caller's price book. llm-decide: EndpointClassifier (Path::DecisionEndpoint) asks the port DecisionEndpoint one choice question over the label set and turns each probability into basis points by exact rounding; a refusal answer abstains OffLabel. The wire is read from openai/openai-openapi at commit b4cad10d7cff7fc286f2dbf1992569989522c6f0. Fixture evidence only; no live endpoint was asked.",
+      "label": "The provider decision endpoint as the classifier's third path",
+      "status": "shipped"
+    },
+    {
+      "area": "Helpers for agent loops",
       "detail": "A catalog route declares kind = \"embed\" (absent is turn, so older catalogs keep their digest); selection refuses a turn there and an embed request on a turn route as unsupported before I/O. llm-embed: OpenAiEmbedder implements llm_core::Embedder over OpenAI's POST /v1/embeddings, returns one vector per text in input order with input tokens (unknown stays unknown) within the request's timeout (deadline past it), splits a request past the serving model's embed_batch_limit into ordered batches, refuses an answer whose count, indexes or lengths do not fit, and writes one embed-batch record per batch. Fixture evidence only; no live endpoint was asked.",
       "label": "Embeddings over an embed route",
       "status": "shipped"

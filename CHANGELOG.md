@@ -14,6 +14,15 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `judge` takes only a whole answer: a normal end, one text item, no key twice, no integer rounded (`-0` reads `-0.0`)
 - Verdict schemas compare numbers by exact value: `1` equals `1.0` in `enum` and `const`, bounds hold past 2^53
 - ESS: 6 rubric verdict scenarios and 5 more `llm.decisions.LastVerdict` fields; the conformance floor is 1055 (was 1049)
+- `llm-openai-decisions`: `OpenAiDecisions` sends typed questions to OpenAI's `POST /v1/decisions`, one attempt per call
+- A decision request is held to the reference's bounds before I/O; `from_json` refuses a member outside it by its path
+- A decision answer is taken only whole: cut short, trailing bytes, a member twice or nesting past 16 is `protocol`
+- An answer of an unknown type, another type or another name than its question is refused `protocol` by its path
+- A usage counter a decision answer does not report stays unknown; contradictory counters are all unknown
+- `decide_recorded` writes one `classification` record per call, priced under the caller's price book
+- `llm-decide`: `EndpointClassifier` asks a `DecisionEndpoint` one choice question (`Path::DecisionEndpoint`)
+- `basis_points` turns a probability from 0 to 1 into basis points by exact rounding, a half up; sums are not normalized
+- ESS: command `llm.decisions.Decide`, its outcome scenario and 6 authored ones; the conformance floor is 1062 (was 1055)
 
 ### Changed
 

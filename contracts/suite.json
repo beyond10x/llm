@@ -304,18 +304,24 @@
       "llm.chat/authored/round-trip-verbosity-decodes-back-to-the-same-turn",
       "llm.chat/authored/round-trip-verbosity-is-projected-under-its-own-name",
       "llm.decisions/authored/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final",
+      "llm.decisions/authored/a-choice-answer-becomes-a-decision-with-a-confidence-per-label",
       "llm.decisions/authored/a-classifier-past-the-chain-deadline-abstains-with-timeout",
       "llm.decisions/authored/a-confidence-below-the-classifier-floor-abstains-off-label",
+      "llm.decisions/authored/a-decision-endpoint-call-yields-a-call-record-priced-from-the-cost-table",
       "llm.decisions/authored/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label",
       "llm.decisions/authored/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label",
       "llm.decisions/authored/a-label-set-with-a-duplicate-or-a-single-label-is-refused",
       "llm.decisions/authored/a-provider-failure-abstains-with-its-error-code",
+      "llm.decisions/authored/a-refusal-answer-abstains-off-label",
+      "llm.decisions/authored/a-request-field-outside-the-reference-is-refused-by-name",
       "llm.decisions/authored/a-rubric-route-with-more-than-one-target-or-fallback-is-refused",
       "llm.decisions/authored/a-verdict-call-yields-a-call-record-of-kind-verdict",
       "llm.decisions/authored/a-verdict-names-the-rubric-version-digest-and-upstream-model",
       "llm.decisions/authored/an-answer-naming-no-label-of-the-set-abstains-off-label",
       "llm.decisions/authored/an-answer-not-valid-against-the-verdict-schema-is-refused-and-not-repaired",
       "llm.decisions/authored/an-answer-that-does-not-decode-as-the-schema-abstains-off-label",
+      "llm.decisions/authored/an-unknown-answer-type-is-refused-by-its-path",
+      "llm.decisions/authored/an-unreported-usage-counter-stays-unknown",
       "llm.decisions/authored/each-model-classifier-call-yields-a-call-record-with-latency-and-cost",
       "llm.decisions/authored/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier",
       "llm.decisions/authored/the-same-answer-gives-byte-identical-verdict-json-on-two-runs",
@@ -2370,6 +2376,11 @@
         "disposition": "accepted",
         "scenario": "llm.decisions/authored/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final"
       },
+      "decisions/scenarios/a-choice-answer-becomes-a-decision-with-a-confidence-per-label.yaml": {
+        "digest": "sha256:1e8623dc07a8d022983c26aa38adb3e20247248a436df3ff21f89bc0f08de8ce",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-choice-answer-becomes-a-decision-with-a-confidence-per-label"
+      },
       "decisions/scenarios/a-classifier-past-the-chain-deadline-abstains-with-timeout.yaml": {
         "digest": "sha256:7165e6b2fff2d05f0032a65e97f1a9a4e902b6a2370f3cfdc26b532de31ed0b6",
         "disposition": "accepted",
@@ -2379,6 +2390,11 @@
         "digest": "sha256:a2c27b869db61a732adfbf419b1580eb3c9a16af609d9f277ee0863560298b4b",
         "disposition": "accepted",
         "scenario": "llm.decisions/authored/a-confidence-below-the-classifier-floor-abstains-off-label"
+      },
+      "decisions/scenarios/a-decision-endpoint-call-yields-a-call-record-priced-from-the-cost-table.yaml": {
+        "digest": "sha256:8b747e64fc456ea3187e87501d0e6461a455bbbabc4ab2b516d9ac93f71d9005",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-decision-endpoint-call-yields-a-call-record-priced-from-the-cost-table"
       },
       "decisions/scenarios/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label.yaml": {
         "digest": "sha256:372f7cf4bb99d4d1c0e8441ba2af7b7acdc1cfb97f83d6ae567505abe497a056",
@@ -2399,6 +2415,16 @@
         "digest": "sha256:f79feab21f52a2d745cbf1a7fee6e0d522a69d48921e84699141903fee647a24",
         "disposition": "accepted",
         "scenario": "llm.decisions/authored/a-provider-failure-abstains-with-its-error-code"
+      },
+      "decisions/scenarios/a-refusal-answer-abstains-off-label.yaml": {
+        "digest": "sha256:8ff295e1aef8bae7621d2cc82f041ec6c0dfa9c5ffbd2dcba7c7394fba9f8980",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-refusal-answer-abstains-off-label"
+      },
+      "decisions/scenarios/a-request-field-outside-the-reference-is-refused-by-name.yaml": {
+        "digest": "sha256:c146923f2d473f262923a84d1afd0b2cfeac29225694111511425285bb5d3350",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-request-field-outside-the-reference-is-refused-by-name"
       },
       "decisions/scenarios/a-rubric-route-with-more-than-one-target-or-fallback-is-refused.yaml": {
         "digest": "sha256:f7aff5c6259e81def0c1fce8ae99b9df363c36046f9270099dbf6d28d8c34214",
@@ -2429,6 +2455,16 @@
         "digest": "sha256:9205ca0172a1d8736fc3b7cdedd97804d0e820d98e0171934786fa48999a549a",
         "disposition": "accepted",
         "scenario": "llm.decisions/authored/an-answer-that-does-not-decode-as-the-schema-abstains-off-label"
+      },
+      "decisions/scenarios/an-unknown-answer-type-is-refused-by-its-path.yaml": {
+        "digest": "sha256:4e71df9e59a775c9eeb86239e2a668d9197b1e0df0a83adc6096f249f19a8b4a",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/an-unknown-answer-type-is-refused-by-its-path"
+      },
+      "decisions/scenarios/an-unreported-usage-counter-stays-unknown.yaml": {
+        "digest": "sha256:e7602a74b92f7ec25c0c29e1b825f55eec52d57a078d1b24d5b34a7de21a1ad7",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/an-unreported-usage-counter-stays-unknown"
       },
       "decisions/scenarios/each-model-classifier-call-yields-a-call-record-with-latency-and-cost.yaml": {
         "digest": "sha256:668b88e1c385a781630194a76e5157e9a7f41160c65bd4779185957363854444",
@@ -6077,8 +6113,8 @@
       }
     },
     "counts": {
-      "authored": 1012,
-      "generated": 43,
+      "authored": 1018,
+      "generated": 44,
       "outside": 0,
       "refused": 0
     },
@@ -6097,6 +6133,7 @@
       "llm.chat.ProjectRequest/outcome/observed",
       "llm.chat.ProjectResponse/outcome/observed",
       "llm.decisions.Classify/outcome/observed",
+      "llm.decisions.Decide/outcome/observed",
       "llm.decisions.Judge/outcome/observed",
       "llm.embeddings.Embed/outcome/observed",
       "llm.inference.InspectResult/outcome/observed",
@@ -6141,9 +6178,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "19b31e484e42e0d16a58f8060e7c1b259a64db3ea26b66e8b179dec38c573781",
+    "contract_digest": "45d4231012a252b6eda112ed84115af0a8b3e0f8ef33eb4effb97485efeb433f",
     "scenario_initial_state": "empty",
-    "spec_digest": "41b081820941796e0ad44c0d9a1c1e337036965a66df63a5cdacf67dc9594781",
+    "spec_digest": "a74dd1d0ce99701bcebf0eaeb13cf0c029f2c66c9363cc7580fb213e6723661c",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -6202,6 +6239,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -6362,6 +6403,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -13833,6 +13878,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -13989,6 +14038,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -14139,6 +14192,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -14306,6 +14363,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -14456,6 +14517,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -14623,6 +14688,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -14773,6 +14842,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -14952,6 +15025,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -15098,6 +15175,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -15254,6 +15335,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -22458,6 +22543,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -22611,6 +22700,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -29155,6 +29248,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -29319,6 +29416,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -29465,6 +29566,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -29637,6 +29742,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -31172,6 +31281,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -31328,6 +31441,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -31474,6 +31591,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -31641,6 +31762,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -31787,6 +31912,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -31962,6 +32091,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -32108,6 +32241,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -32268,6 +32405,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -44023,6 +44164,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -44195,6 +44340,327 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Judged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.embeddings.Embedded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.inference.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Encoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Inspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.Presented",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.messages.SessionInspected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.Built",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.models.CatalogBuilt",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Described",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.providers.Prepared",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Ingested",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.IngressEncoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.Projected",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.responses.StreamDecoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Authenticated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routes.Loaded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.Evaluated",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.routing.FallbackObserved",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Probed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.secrets.Renewed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.Exchanged",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.transport.JsonPosted",
+          "step": "expect_no_event"
+        }
+      ]
+    },
+    "llm.decisions.Decide/outcome/observed": {
+      "purpose": "`llm.decisions.Decide` answers `observed` for an input no other branch's guard claims",
+      "source": [
+        {
+          "kind": "command",
+          "name": "llm.decisions.Decide"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "event",
+          "name": "llm.accounting.Quoted"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Answered"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Decoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Fetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.Signed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.bedrock.WebIdentityFetched"
+        },
+        {
+          "kind": "event",
+          "name": "llm.budget.Exercised"
+        },
+        {
+          "kind": "event",
+          "name": "llm.calls.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.chat.Observed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Judged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.embeddings.Embedded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.inference.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Encoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Inspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.Presented"
+        },
+        {
+          "kind": "event",
+          "name": "llm.messages.SessionInspected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.Built"
+        },
+        {
+          "kind": "event",
+          "name": "llm.models.CatalogBuilt"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Described"
+        },
+        {
+          "kind": "event",
+          "name": "llm.providers.Prepared"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Ingested"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.IngressEncoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.Projected"
+        },
+        {
+          "kind": "event",
+          "name": "llm.responses.StreamDecoded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Authenticated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routes.Loaded"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.Evaluated"
+        },
+        {
+          "kind": "event",
+          "name": "llm.routing.FallbackObserved"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Probed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.secrets.Renewed"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.Exchanged"
+        },
+        {
+          "kind": "event",
+          "name": "llm.transport.JsonPosted"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Decide",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "catalog_toml"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "program_json"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "event": "llm.decisions.Decided",
+          "shape": {
+            "valid_program": {
+              "holds": "primitive",
+              "kind": "boolean"
+            }
+          },
+          "step": "expect_event"
+        },
+        {
+          "event": "llm.accounting.Quoted",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Answered",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Decoded",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Fetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.Signed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.bedrock.WebIdentityFetched",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.budget.Exercised",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.calls.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.chat.Observed",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -44341,6 +44807,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -44513,6 +44983,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -44744,6 +45218,171 @@
           },
           "step": "expect_view",
           "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-choice-answer-becomes-a-decision-with-a-confidence-per-label": {
+      "purpose": "a decision-endpoint classifier asks one choice question at POST /v1/decisions; the choice becomes the decision and each probability its basis points, a half up, the sum left as it comes (10001)",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Decide"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastDecide"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Decide",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"luna\"\nupstream_name = \"gpt-6-luna\"\n\n[[serving_models]]\nid = \"decider\"\nendpoint_id = \"fixture\"\nmodel_id = \"luna\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"deciding\"\nalias = \"decide\"\n\n[[targets]]\nid = \"decide-primary\"\nroute_id = \"deciding\"\nserving_model_id = \"decider\"\nposition = 0\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"tone-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"endpoint\",\"path\":\"DecisionEndpoint\",\"route_alias\":\"decide\",\"instructions\":\"Which tone does the text have?\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the package arrived a day early"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"tone\",\"version\":\"v1\",\"labels\":[\"angry\",\"calm\",\"glad\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"model\":\"gpt-6-luna\",\"answers\":[{\"type\":\"choice\",\"name\":null,\"choice\":\"glad\",\"probabilities\":[{\"value\":\"angry\",\"probability\":0.03125},{\"value\":\"calm\",\"probability\":0.34875},{\"value\":\"glad\",\"probability\":0.62}],\"confidence\":0.62}],\"usage\":{\"input_tokens\":42,\"input_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":42}}}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/endpoint"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": [
+                  {
+                    "confidence_bps": 313.0,
+                    "label": "angry"
+                  },
+                  {
+                    "confidence_bps": 3488.0,
+                    "label": "calm"
+                  },
+                  {
+                    "confidence_bps": 6200.0,
+                    "label": "glad"
+                  }
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": null
+              },
+              "label": {
+                "kind": "literal",
+                "value": "glad"
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/endpoint\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"deciding\",\"route_target_id\":\"decide-primary\",\"upstream_model\":\"gpt-6-luna\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{\"input_tokens\":42,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0,\"reasoning_output_tokens\":0},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": [
+                  "{\"model\":\"gpt-6-luna\",\"input\":\"the package arrived a day early\",\"questions\":[{\"type\":\"choice\",\"instructions\":\"Which tone does the text have?\",\"choices\":[{\"value\":\"angry\"},{\"value\":\"calm\"},{\"value\":\"glad\"}]}]}"
+                ]
+              },
+              "request_paths": {
+                "kind": "literal",
+                "value": [
+                  "/v1/decisions"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "endpoint:decided"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "endpoint"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
         }
       ]
     },
@@ -45026,6 +45665,154 @@
           },
           "step": "expect_view",
           "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-decision-endpoint-call-yields-a-call-record-priced-from-the-cost-table": {
+      "purpose": "one decision endpoint call writes one classification record with the target, the upstream model the body named, the reported usage and its cost under the caller's price book",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Decide"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastDecide"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Decide",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"luna\"\nupstream_name = \"gpt-6-luna\"\n\n[[serving_models]]\nid = \"decider\"\nendpoint_id = \"fixture\"\nmodel_id = \"luna\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"deciding\"\nalias = \"decide\"\n\n[[targets]]\nid = \"decide-primary\"\nroute_id = \"deciding\"\nserving_model_id = \"decider\"\nposition = 0\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"decider-price\"\nserving_model_id = \"decider\"\n# Replaced by the revision the catalog above has at the fixture server's address.\nbinding_revision = \"fixture-binding-revision\"\nupstream_model = \"gpt-6-luna\"\ninput = { amount = \"1\", per_units = 1000 }\ncached_input = { amount = \"0.5\", per_units = 1000 }\ncache_creation_input = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"model\":\"gpt-6-luna\",\"answers\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"probability\":0.95}],\"usage\":{\"input_tokens\":1000,\"input_tokens_details\":{\"cached_tokens\":200,\"cache_write_tokens\":100},\"output_tokens\":50,\"output_tokens_details\":{\"reasoning_tokens\":10},\"total_tokens\":1050}}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"decide\",\"input\":\"The package arrived with a broken screen.\",\"questions\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"instructions\":\"Does the customer report a damaged item?\"}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "{\"name\":\"damaged\",\"probability\":0.95,\"type\":\"predicate\"}"
+                ]
+              },
+              "cache_creation_input_tokens": {
+                "kind": "literal",
+                "value": 100.0
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": 200.0
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": 1000.0
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": 50.0
+              },
+              "reasoning_output_tokens": {
+                "kind": "literal",
+                "value": 10.0
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"deciding\",\"route_target_id\":\"decide-primary\",\"upstream_model\":\"gpt-6-luna\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{\"input_tokens\":1000,\"output_tokens\":50,\"cached_input_tokens\":200,\"cache_creation_input_tokens\":100,\"reasoning_output_tokens\":10},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"1\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}"
+                ]
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": [
+                  "{\"model\":\"gpt-6-luna\",\"input\":\"The package arrived with a broken screen.\",\"questions\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"instructions\":\"Does the customer report a damaged item?\"}]}"
+                ]
+              },
+              "request_paths": {
+                "kind": "literal",
+                "value": [
+                  "/v1/decisions"
+                ]
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "gpt-6-luna"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
         }
       ]
     },
@@ -45604,6 +46391,268 @@
           },
           "step": "expect_view",
           "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-refusal-answer-abstains-off-label": {
+      "purpose": "the endpoint answers the classifier's choice question with a refusal; the classifier abstains off-label, the call still succeeded and is recorded, and no label is made up",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Decide"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastDecide"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Decide",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"luna\"\nupstream_name = \"gpt-6-luna\"\n\n[[serving_models]]\nid = \"decider\"\nendpoint_id = \"fixture\"\nmodel_id = \"luna\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"deciding\"\nalias = \"decide\"\n\n[[targets]]\nid = \"decide-primary\"\nroute_id = \"deciding\"\nserving_model_id = \"decider\"\nposition = 0\n"
+            },
+            "chain_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"tone-chain\",\"deadline_ms\":30000,\"classifiers\":[{\"id\":\"endpoint\",\"path\":\"DecisionEndpoint\",\"route_alias\":\"decide\",\"instructions\":\"Which tone does the text have?\"}]}"
+            },
+            "input_text": {
+              "kind": "literal",
+              "value": "the package arrived a day early"
+            },
+            "label_set_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"tone\",\"version\":\"v1\",\"labels\":[\"angry\",\"calm\",\"glad\"]}"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"model\":\"gpt-6-luna\",\"answers\":[{\"type\":\"refusal\",\"name\":null}],\"usage\":{\"input_tokens\":42,\"input_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":42}}}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_ids": {
+                "kind": "literal",
+                "value": [
+                  "req-1/endpoint"
+                ]
+              },
+              "confidences": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_cause": {
+                "kind": "literal",
+                "value": "OffLabel"
+              },
+              "label": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/endpoint\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"deciding\",\"route_target_id\":\"decide-primary\",\"upstream_model\":\"gpt-6-luna\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{\"input_tokens\":42,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0,\"reasoning_output_tokens\":0},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "request_paths": {
+                "kind": "literal",
+                "value": [
+                  "/v1/decisions"
+                ]
+              },
+              "results": {
+                "kind": "literal",
+                "value": [
+                  "endpoint:abstained:OffLabel"
+                ]
+              },
+              "tried": {
+                "kind": "literal",
+                "value": [
+                  "endpoint"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-request-field-outside-the-reference-is-refused-by-name": {
+      "purpose": "a decision request carrying a member the reference does not name is refused as an invalid request that names the member; nothing is sent and no record is written",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Decide"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastDecide"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Decide",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"luna\"\nupstream_name = \"gpt-6-luna\"\n\n[[serving_models]]\nid = \"decider\"\nendpoint_id = \"fixture\"\nmodel_id = \"luna\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"deciding\"\nalias = \"decide\"\n\n[[targets]]\nid = \"decide-primary\"\nroute_id = \"deciding\"\nserving_model_id = \"decider\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"model\":\"gpt-6-luna\",\"answers\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"probability\":0.95}],\"usage\":{\"input_tokens\":42,\"input_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":42}}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"decide\",\"input\":\"The package arrived with a broken screen.\",\"questions\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"instructions\":\"Does the customer report a damaged item?\"}],\"temperature\":0}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "invalid-request"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "decision request carries a member the reference does not name: temperature"
+              },
+              "records": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_paths": {
+                "kind": "literal",
+                "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
         }
       ]
     },
@@ -46431,6 +47480,270 @@
         }
       ]
     },
+    "llm.decisions/authored/an-unknown-answer-type-is-refused-by-its-path": {
+      "purpose": "an answer of a type outside predicate, choice, score and refusal is a protocol refusal naming the path answers[0].type, never the value; the call is recorded as failed after acceptance",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Decide"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastDecide"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Decide",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"luna\"\nupstream_name = \"gpt-6-luna\"\n\n[[serving_models]]\nid = \"decider\"\nendpoint_id = \"fixture\"\nmodel_id = \"luna\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"deciding\"\nalias = \"decide\"\n\n[[targets]]\nid = \"decide-primary\"\nroute_id = \"deciding\"\nserving_model_id = \"decider\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"model\":\"gpt-6-luna\",\"answers\":[{\"type\":\"ranking\",\"name\":\"damaged\",\"probability\":0.95}],\"usage\":{\"input_tokens\":42,\"input_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":42}}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"decide\",\"input\":\"The package arrived with a broken screen.\",\"questions\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"instructions\":\"Does the customer report a damaged item?\"}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": []
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "decision answer has a type outside predicate, choice, score and refusal: answers[0].type"
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"deciding\",\"route_target_id\":\"decide-primary\",\"upstream_model\":\"gpt-6-luna\",\"outcome\":\"failed\",\"error_code\":\"protocol\",\"dispatch\":\"accepted\",\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{\"input_tokens\":42,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0,\"reasoning_output_tokens\":0},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "request_bodies": {
+                "kind": "literal",
+                "value": [
+                  "{\"model\":\"gpt-6-luna\",\"input\":\"The package arrived with a broken screen.\",\"questions\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"instructions\":\"Does the customer report a damaged item?\"}]}"
+                ]
+              },
+              "request_paths": {
+                "kind": "literal",
+                "value": [
+                  "/v1/decisions"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        }
+      ]
+    },
+    "llm.decisions/authored/an-unreported-usage-counter-stays-unknown": {
+      "purpose": "the answer reports its input and output tokens and no cache or reasoning count; those stay unknown, never zero, so the record prices the output only and marks its cost incomplete",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.AbstentionCause"
+        },
+        {
+          "kind": "type",
+          "name": "llm.decisions.LabelConfidence"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Decide"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastDecide"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Decide",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"openai-compatible\"\ncategory = \"hosted\"\n\n[[accounts]]\nid = \"main\"\nprovider_id = \"openai-compatible\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[endpoints]]\nid = \"fixture\"\naccount_id = \"main\"\nbase_url = \"http://fixture.invalid/v1\"\n\n[[models]]\nid = \"luna\"\nupstream_name = \"gpt-6-luna\"\n\n[[serving_models]]\nid = \"decider\"\nendpoint_id = \"fixture\"\nmodel_id = \"luna\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[routes]]\nid = \"deciding\"\nalias = \"decide\"\n\n[[targets]]\nid = \"decide-primary\"\nroute_id = \"deciding\"\nserving_model_id = \"decider\"\nposition = 0\n"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"decider-price\"\nserving_model_id = \"decider\"\n# Replaced by the revision the catalog above has at the fixture server's address.\nbinding_revision = \"fixture-binding-revision\"\nupstream_model = \"gpt-6-luna\"\ninput = { amount = \"1\", per_units = 1000 }\ncached_input = { amount = \"0.5\", per_units = 1000 }\ncache_creation_input = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"request_id\":\"req-1\",\"input_tokens\":100,\"start_unix_ms\":1762430400000,\"answers\":[{\"body\":{\"model\":\"gpt-6-luna\",\"answers\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"probability\":0.95}],\"usage\":{\"input_tokens\":42,\"output_tokens\":5}}}]}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"decide\",\"input\":\"The package arrived with a broken screen.\",\"questions\":[{\"type\":\"predicate\",\"name\":\"damaged\",\"instructions\":\"Does the customer report a damaged item?\"}]}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Decide",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastDecide"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "answers": {
+                "kind": "literal",
+                "value": [
+                  "{\"name\":\"damaged\",\"probability\":0.95,\"type\":\"predicate\"}"
+                ]
+              },
+              "cache_creation_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "cached_input_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "input_tokens": {
+                "kind": "literal",
+                "value": 42.0
+              },
+              "output_tokens": {
+                "kind": "literal",
+                "value": 5.0
+              },
+              "reasoning_output_tokens": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1\",\"role\":\"primary\",\"kind\":\"classification\",\"route_id\":\"deciding\",\"route_target_id\":\"decide-primary\",\"upstream_model\":\"gpt-6-luna\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":null,\"usage\":{\"input_tokens\":42,\"output_tokens\":5},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.01\",\"complete\":false,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}"
+                ]
+              },
+              "request_paths": {
+                "kind": "literal",
+                "value": [
+                  "/v1/decisions"
+                ]
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "gpt-6-luna"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastDecide"
+        }
+      ]
+    },
     "llm.decisions/authored/each-model-classifier-call-yields-a-call-record-with-latency-and-cost": {
       "purpose": "two model classifiers each make one call and each call writes one classification record with its latency from the scripted clock and its cost under the caller's price book",
       "source": [
@@ -47089,6 +48402,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -47254,6 +48571,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -48306,6 +49627,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -48467,6 +49792,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -53979,6 +55308,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -54143,6 +55476,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -54285,6 +55622,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -54452,6 +55793,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -54594,6 +55939,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -54765,6 +56114,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -54907,6 +56260,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -55070,6 +56427,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -55212,6 +56573,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -55387,6 +56752,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -55529,6 +56898,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -55693,6 +57066,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -70190,6 +71567,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -70358,6 +71739,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -70500,6 +71885,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -70668,6 +72057,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -71649,6 +73042,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -71803,6 +73200,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -71953,6 +73354,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -72117,6 +73522,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -80704,6 +82113,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -80872,6 +82285,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -81014,6 +82431,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -81185,6 +82606,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -81327,6 +82752,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -81498,6 +82927,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -81640,6 +83073,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -81808,6 +83245,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -98520,6 +99961,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -98688,6 +100133,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -98830,6 +100279,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -98994,6 +100447,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -102954,6 +104411,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -103118,6 +104579,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -103260,6 +104725,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -103428,6 +104897,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -113691,6 +115164,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -113859,6 +115336,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -114009,6 +115490,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -114192,6 +115677,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -114334,6 +115823,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -114513,6 +116006,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -114659,6 +116156,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -114834,6 +116335,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -114980,6 +116485,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -115163,6 +116672,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -115321,6 +116834,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -115509,6 +117026,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
@@ -126509,6 +128030,10 @@
         },
         {
           "kind": "event",
+          "name": "llm.decisions.Decided"
+        },
+        {
+          "kind": "event",
           "name": "llm.decisions.Judged"
         },
         {
@@ -126669,6 +128194,10 @@
           "step": "expect_no_event"
         },
         {
+          "event": "llm.decisions.Decided",
+          "step": "expect_no_event"
+        },
+        {
           "event": "llm.decisions.Judged",
           "step": "expect_no_event"
         },
@@ -126811,6 +128340,10 @@
         {
           "kind": "event",
           "name": "llm.decisions.Classified"
+        },
+        {
+          "kind": "event",
+          "name": "llm.decisions.Decided"
         },
         {
           "kind": "event",
@@ -126971,6 +128504,10 @@
         },
         {
           "event": "llm.decisions.Classified",
+          "step": "expect_no_event"
+        },
+        {
+          "event": "llm.decisions.Decided",
           "step": "expect_no_event"
         },
         {
