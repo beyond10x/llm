@@ -6,8 +6,9 @@
 
 use llm_calls::{CallLog, CallRecord, Clock, Kind, Outcome, Recording};
 use llm_core::{
-    BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model, Provenance,
-    StopReason, StreamEvent, StreamSink, TurnObservation, TurnOutcome, TurnRequest, Usage,
+    BoxFuture, CallId, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model,
+    Provenance, StopReason, StreamEvent, StreamSink, ToolCall, ToolName, TurnObservation,
+    TurnOutcome, TurnRequest, Usage,
 };
 use llm_decide::{JudgeError, Ports, Rubric, RubricError, VERDICT_FORMAT_NAME, Verdict, judge};
 use llm_routing::{Catalog, CatalogDocument, Models, Selection};
@@ -99,6 +100,9 @@ struct Far {
     upstream_model: Option<&'static str>,
     takes_ms: u64,
     usage: Option<Usage>,
+    /// The outcome's items when they are not the one assistant text of `reply`.
+    items: Option<Vec<Item>>,
+    stop_reason: StopReason,
 }
 
 impl Far {
@@ -108,6 +112,8 @@ impl Far {
             upstream_model: Some(REPORTED),
             takes_ms: 0,
             usage: None,
+            items: None,
+            stop_reason: StopReason::EndTurn,
         }
     }
 }
@@ -149,8 +155,9 @@ impl Model for Fake<'_> {
                         .await?;
                     observation.final_usage = true;
                     Ok(TurnOutcome {
-                        stop_reason: StopReason::EndTurn,
-                        items: vec![Item::assistant(text.clone())],
+                        stop_reason: self.far.stop_reason.clone(),
+                        items: (self.far.items.clone())
+                            .unwrap_or_else(|| vec![Item::assistant(text.clone())]),
                         observation,
                     })
                 }
@@ -352,6 +359,385 @@ fn an_answer_not_valid_against_the_schema_is_refused_and_not_repaired() {
         assert_eq!(ran.records[0].kind, Kind::Verdict, "{answer}");
         assert_eq!(ran.records[0].outcome, Outcome::Succeeded, "{answer}");
     }
+}
+
+/// What a judge returns for an answer it does not take as a verdict.
+const REFUSED: (Option<String>, Option<ErrorCode>) = (None, Some(ErrorCode::Protocol));
+
+/// The verdict JSON and error code of `far` judged against `schema`, read from JSON text.
+fn held(schema: &str, far: &Far) -> (Option<String>, Option<ErrorCode>) {
+    let schema: Value = serde_json::from_str(schema).unwrap();
+    let rubric = Rubric::new(id("r"), "v1", TEXT, &schema, "code").unwrap();
+    let ran = run_as(&pinned("remote-large"), &rubric, SUBJECT, "req-1", 0, far);
+    let verdict = ran.verdict();
+    (verdict.verdict_json.clone(), verdict.error_code)
+}
+
+/// The answer's own text, as the verdict a judge returns when it takes it digit for digit.
+fn kept(answer: &str) -> (Option<String>, Option<ErrorCode>) {
+    (Some(answer.to_owned()), None)
+}
+
+#[test]
+fn an_answer_that_repeats_a_key_at_any_depth_is_refused() {
+    for answer in [
+        r#"{"a":1,"a":1}"#,
+        r#"{"a":1,"b":2,"a":3}"#,
+        // One key written two ways is one key.
+        r#"{"a":1,"a":2}"#,
+        r#"{"outer":{"a":1,"a":2}}"#,
+        r#"[{"a":1,"b":2},{"a":1,"a":2}]"#,
+        r#"{"x":[[{"a":null,"a":null}]]}"#,
+        r#"{"":1,"":2}"#,
+    ] {
+        assert_eq!(held("{}", &Far::answers(answer)), REFUSED, "{answer}");
+    }
+    // The same key in two objects is given once in each.
+    for answer in [r#"[{"a":1},{"a":2}]"#, r#"{"a":{"a":{"a":1}}}"#] {
+        assert_eq!(held("{}", &Far::answers(answer)), kept(answer), "{answer}");
+    }
+}
+
+#[test]
+fn an_answer_is_a_verdict_only_when_the_turn_ended_normally() {
+    for stop_reason in [
+        StopReason::MaxOutputTokens,
+        StopReason::Incomplete {
+            reason: "content_filter".into(),
+        },
+    ] {
+        let far = Far {
+            stop_reason: stop_reason.clone(),
+            ..Far::answers(GOOD)
+        };
+        let ran = run(&pinned("remote-large"), &far);
+        let verdict = ran.verdict();
+        assert_eq!(
+            (verdict.verdict_json.clone(), verdict.error_code),
+            REFUSED,
+            "{stop_reason:?}"
+        );
+        // The call itself succeeded, and its record says so.
+        assert_eq!(ran.records.len(), 1, "{stop_reason:?}");
+        assert_eq!(
+            ran.records[0].outcome,
+            Outcome::Succeeded,
+            "{stop_reason:?}"
+        );
+    }
+}
+
+#[test]
+fn an_answer_is_the_one_text_item_of_the_outcome() {
+    let catalog = pinned("remote-large");
+    let provenance = catalog.binding(&id("remote-large")).unwrap().provenance();
+    let state = Item::Opaque {
+        provenance: provenance.clone(),
+        payload: json!({"reasoning": "kept by the provider"}),
+    };
+    let refusal = Item::AssistantRefusal {
+        text: "I cannot judge this.".into(),
+    };
+    let integer = r#"{"type":"integer"}"#;
+    for items in [
+        // Joined, two answers would read as a third: 12.
+        vec![Item::assistant("1"), Item::assistant("2")],
+        // Joined, two halves would read as one value; nothing says they are one answer.
+        vec![Item::assistant("1"), Item::assistant("")],
+        vec![Item::assistant(""), Item::assistant("1")],
+        vec![Item::assistant("1"), refusal.clone()],
+        vec![refusal],
+        vec![state.clone()],
+        vec![],
+    ] {
+        let far = Far {
+            items: Some(items.clone()),
+            ..Far::answers("1")
+        };
+        assert_eq!(held(integer, &far), REFUSED, "{items:?}");
+    }
+    // State the provider keeps beside its answer is not part of the answer.
+    let far = Far {
+        items: Some(vec![state.clone(), Item::assistant("1"), state]),
+        ..Far::answers("1")
+    };
+    assert_eq!(held(integer, &far), kept("1"));
+}
+
+/// A judge call publishes no tool, so an outcome that holds a tool call, or that says it stopped
+/// for one, never becomes an answer: the routed call itself fails as `protocol`, with its
+/// record, and there is no verdict.
+#[test]
+fn a_tool_call_in_the_outcome_fails_the_call_and_is_no_verdict() {
+    let call = Item::ToolCall(ToolCall {
+        call_id: CallId::new("call-1").unwrap(),
+        name: ToolName::new("verdict").unwrap(),
+        arguments: json!({"score": 5, "pass": true}),
+    });
+    let text = Item::assistant(GOOD);
+    for (items, stop_reason) in [
+        (vec![text.clone(), call.clone()], StopReason::EndTurn),
+        (vec![call.clone(), text.clone()], StopReason::EndTurn),
+        (vec![call.clone()], StopReason::EndTurn),
+        (vec![text.clone(), call.clone()], StopReason::ToolCalls),
+        (vec![call], StopReason::ToolCalls),
+        (vec![text], StopReason::ToolCalls),
+    ] {
+        let far = Far {
+            items: Some(items.clone()),
+            stop_reason: stop_reason.clone(),
+            ..Far::answers(GOOD)
+        };
+        let ran = run(&pinned("remote-large"), &far);
+        let Err(JudgeError::Call(error)) = &ran.result else {
+            panic!(
+                "{items:?} {stop_reason:?}: expected the call's error, got {:?}",
+                ran.result
+            );
+        };
+        assert_eq!(error.code, ErrorCode::Protocol, "{items:?} {stop_reason:?}");
+        assert_eq!(ran.records.len(), 1, "{items:?} {stop_reason:?}");
+        assert_eq!(ran.records[0].kind, Kind::Verdict);
+        assert_eq!(ran.records[0].outcome, Outcome::Failed);
+    }
+}
+
+#[test]
+fn an_answer_is_one_json_value_and_nothing_after_it() {
+    for answer in [
+        "1 2",
+        "1,",
+        "1}",
+        "1\u{0}",
+        "\u{feff}1",
+        "[1][2]",
+        r#"{"a":1}{"a":1}"#,
+        "1 // one",
+        "NaN",
+        "Infinity",
+        "01",
+        "+1",
+        "1.",
+        ".5",
+        "0x10",
+    ] {
+        assert_eq!(held("{}", &Far::answers(answer)), REFUSED, "{answer:?}");
+    }
+    // The four whitespace bytes of JSON around the one value are not part of it.
+    assert_eq!(held("{}", &Far::answers(" \t\r\n[1, 2]\n ")), kept("[1,2]"));
+    // An answer nests as deep as the JSON reader goes, 128 levels, and no deeper.
+    let around = |levels: usize| format!("{}{}", "[".repeat(levels), "]".repeat(levels));
+    assert_eq!(held("{}", &Far::answers(&around(100))), kept(&around(100)));
+    assert_eq!(held("{}", &Far::answers(&around(200))), REFUSED);
+}
+
+#[test]
+fn an_integer_of_the_answer_is_exact_or_the_answer_is_refused() {
+    let integer = r#"{"type":"integer"}"#;
+    // From the least `i64` to the greatest `u64`, every digit comes back.
+    for answer in [
+        "0",
+        "9007199254740993",
+        "-9007199254740993",
+        "9223372036854775807",
+        "9223372036854775808",
+        "18446744073709551615",
+        "-9223372036854775808",
+    ] {
+        assert_eq!(
+            held(integer, &Far::answers(answer)),
+            kept(answer),
+            "{answer}"
+        );
+    }
+    // Written without a fraction or an exponent and outside that range, a number has no exact
+    // form here; rounding it to a double would be a coercion.
+    for answer in [
+        "18446744073709551616",
+        "18446744073709551617",
+        "-9223372036854775809",
+        "123456789012345678901234567890",
+        r#"{"a":[1,{"b":18446744073709551616}]}"#,
+        r#"{"a":"x\"","b":-9223372036854775809}"#,
+    ] {
+        assert_eq!(held("{}", &Far::answers(answer)), REFUSED, "{answer}");
+    }
+    // Digits inside a string or a key are text, not a number.
+    for answer in [
+        r#""18446744073709551616""#,
+        r#""\"18446744073709551616""#,
+        r#""\\""#,
+        r#"{"18446744073709551616":1}"#,
+        r#"["a\\",-1]"#,
+    ] {
+        assert_eq!(held("{}", &Far::answers(answer)), kept(answer), "{answer}");
+    }
+}
+
+#[test]
+fn a_number_with_a_fraction_or_an_exponent_is_the_nearest_double_in_its_shortest_form() {
+    let number = r#"{"type":"number"}"#;
+    // (the answer, the canonical JSON of its verdict)
+    for (answer, written) in [
+        ("0.1", "0.1"),
+        ("1e30", "1e+30"),
+        ("1.8446744073709552e19", "1.8446744073709552e+19"),
+        ("5e-324", "5e-324"),
+        ("1.7976931348623157e308", "1.7976931348623157e+308"),
+        ("2.0", "2.0"),
+        ("1E2", "100.0"),
+        ("-0.0", "-0.0"),
+        // The one integer `i64` and `u64` do not tell apart from a double: minus zero.
+        ("-0", "-0.0"),
+        // More digits than a double holds: the nearest double, as every JSON reader has it.
+        ("0.1000000000000000055511151231257827", "0.1"),
+    ] {
+        assert_eq!(
+            held(number, &Far::answers(answer)),
+            kept(written),
+            "{answer}"
+        );
+    }
+    // A number no double holds is no JSON number here.
+    for answer in ["1e400", "-1e400", "1.8e308"] {
+        assert_eq!(held(number, &Far::answers(answer)), REFUSED, "{answer}");
+    }
+}
+
+#[test]
+fn a_bound_and_a_literal_compare_every_number_by_its_exact_value() {
+    // Per schema: the answers it admits, then the answers it refuses.
+    let cases: [(&str, &[&str], &[&str]); 15] = [
+        (
+            // The greatest `u64`: as a double it would be 2^64.
+            r#"{"maximum":18446744073709551615}"#,
+            &["18446744073709551615", "1.8446744073709550e19", "-1"],
+            &["1.8446744073709552e19", "1e30"],
+        ),
+        (
+            // 2^63 as a double, against integers on both sides of it.
+            r#"{"minimum":9223372036854775808.0}"#,
+            &["9223372036854775808", "9223372036854775809", "1e19"],
+            &["9223372036854775807", "9.223372036854775e18", "-1e19"],
+        ),
+        (
+            r#"{"minimum":-9223372036854775808}"#,
+            &["-9223372036854775808", "-9.223372036854775e18", "0"],
+            &["-9.223372036854777e18", "-1e30"],
+        ),
+        (
+            r#"{"maximum":9007199254740993}"#,
+            &["9007199254740993", "9007199254740992.0", "9007199254740992"],
+            &["9007199254740994", "9007199254740994.0"],
+        ),
+        (
+            r#"{"minimum":9007199254740993}"#,
+            &["9007199254740993", "9007199254740994.0"],
+            &["9007199254740992", "9007199254740992.0"],
+        ),
+        (
+            r#"{"maximum":0.1}"#,
+            &["0.1", "0", "-5", "0.09999999999999999"],
+            &["0.10000000000000002", "1"],
+        ),
+        (
+            r#"{"minimum":0.5,"maximum":1.5}"#,
+            &["1", "0.5", "1.5"],
+            &["0", "2", "0.49999999999999994", "1.5000000000000002"],
+        ),
+        (
+            // The smallest double above zero.
+            r#"{"minimum":5e-324}"#,
+            &["5e-324", "1", "1e-323"],
+            &["0", "0.0", "-0.0", "-5e-324", "-1"],
+        ),
+        (
+            // Zero has no sign.
+            r#"{"maximum":-0.0}"#,
+            &["0", "0.0", "-0.0", "-0", "-1", "-5e-324"],
+            &["5e-324", "1"],
+        ),
+        (
+            r#"{"enum":[9007199254740993]}"#,
+            &["9007199254740993"],
+            &["9007199254740992", "9007199254740992.0", "9007199254740994"],
+        ),
+        (
+            r#"{"const":18446744073709551615}"#,
+            &["18446744073709551615"],
+            &["1.8446744073709552e19", "18446744073709551614"],
+        ),
+        (
+            r#"{"const":0}"#,
+            &["0", "0.0", "-0.0", "-0", "0e5"],
+            &["5e-324", "-5e-324", "false", "null", r#""0""#],
+        ),
+        (
+            r#"{"const":1e2}"#,
+            &["100", "100.0", "1e2", "1000e-1"],
+            &["100.00000000000001", "99", r#""100""#],
+        ),
+        (
+            r#"{"enum":[[1,{"a":2.0,"b":[3]}]]}"#,
+            &[r#"[1.0,{"a":2,"b":[3.0]}]"#, r#"[1,{"b":[3],"a":2.0}]"#],
+            &[
+                r#"[1,{"a":2.5,"b":[3]}]"#,
+                r#"[1,{"a":2,"b":[3],"c":3}]"#,
+                r#"[1,{"a":2}]"#,
+                r#"[1,{"a":2,"c":[3]}]"#,
+                "[1]",
+                r#"[{"a":2,"b":[3]},1]"#,
+            ],
+        ),
+        (
+            // Only numbers compare by value: a number is no string and no boolean.
+            r#"{"enum":[1,"1",true,null]}"#,
+            &["1", "1.0", r#""1""#, "true", "null"],
+            &[r#""1.0""#, "false", "0", "[1]"],
+        ),
+    ];
+    for (schema, admitted, refused) in cases {
+        for answer in admitted {
+            let (verdict_json, error_code) = held(schema, &Far::answers(answer));
+            assert_eq!(error_code, None, "{schema} admits {answer}");
+            let back: Value = serde_json::from_str(&verdict_json.unwrap()).unwrap();
+            let sent: Value = serde_json::from_str(answer).unwrap();
+            assert_eq!(back, sent, "{schema} keeps {answer}");
+        }
+        for answer in refused {
+            assert_eq!(
+                held(schema, &Far::answers(answer)),
+                REFUSED,
+                "{schema} refuses {answer}"
+            );
+        }
+    }
+}
+
+/// The digest, the stored schema and the request carry one text of the schema, whatever order
+/// its keys were built in and whatever numbers it holds.
+#[test]
+fn the_schema_is_kept_and_sent_in_the_bytes_the_digest_covers() {
+    let text = r#"{"properties":{"b":{"maximum":18446744073709551615,"minimum":-9223372036854775808},"a":{"enum":[0.1,1e30,-0.0,9007199254740993,{"z":1,"y":2}]}},"type":"object"}"#;
+    let canonical = r#"{"properties":{"a":{"enum":[0.1,1e+30,-0.0,9007199254740993,{"y":2,"z":1}]},"b":{"maximum":18446744073709551615,"minimum":-9223372036854775808}},"type":"object"}"#;
+    let schema: Value = serde_json::from_str(text).unwrap();
+    let rubric = Rubric::new(id("r"), "v1", TEXT, &schema, "code").unwrap();
+    assert_eq!(rubric.schema().to_string(), canonical);
+    let ran = run_as(
+        &pinned("remote-large"),
+        &rubric,
+        SUBJECT,
+        "req-1",
+        0,
+        &Far::answers("{}"),
+    );
+    assert_eq!(ran.seen.len(), 1);
+    assert!(bytes(&ran.seen[0]).contains(canonical));
+    // The digest is over that text: another rubric built from it has the same digest.
+    let again: Value = serde_json::from_str(canonical).unwrap();
+    let rebuilt = Rubric::new(id("r"), "v1", TEXT, &again, "code").unwrap();
+    assert_eq!(rebuilt.digest(), rubric.digest());
+    assert_eq!(rebuilt.schema(), rubric.schema());
 }
 
 #[test]
@@ -644,13 +1030,39 @@ fn a_schema_the_library_cannot_hold_an_answer_to_is_refused_when_the_rubric_is_b
         );
     }
     assert_eq!(RubricError::UnsupportedSchema.code(), "unsupported-schema");
-    // A schema nested deeper than the bound is refused rather than walked.
-    let mut deep = json!({"type": "string"});
-    for _ in 0..200 {
-        deep = json!({"type": "array", "items": deep});
+    // A schema nests 64 levels, and so does a literal inside `const` or `enum` counted from the
+    // schema's root: the bound itself is built, one level more is refused rather than walked.
+    let nest = |levels: usize| {
+        (0..levels).fold(
+            json!({"type": "string"}),
+            |inner, _| json!({"type": "array", "items": inner}),
+        )
+    };
+    let literal = |levels: usize| (0..levels).fold(json!("a"), |inner, _| json!([inner]));
+    for (case, schema, built) in [
+        ("schema at the bound", nest(64), true),
+        ("schema past the bound", nest(65), false),
+        ("const at the bound", json!({"const": literal(64)}), true),
+        ("const past the bound", json!({"const": literal(65)}), false),
+        ("enum at the bound", json!({"enum": [literal(63)]}), true),
+        ("enum past the bound", json!({"enum": [literal(64)]}), false),
+        (
+            "const under a nested schema, at the bound",
+            json!({"type": "array", "items": {"const": literal(63)}}),
+            true,
+        ),
+        (
+            "const under a nested schema, past the bound",
+            json!({"type": "array", "items": {"const": literal(64)}}),
+            false,
+        ),
+    ] {
+        assert_eq!(
+            Rubric::new(id("r"), "v1", TEXT, &schema, "code").err(),
+            (!built).then_some(RubricError::UnsupportedSchema),
+            "{case}"
+        );
     }
-    let refused = Rubric::new(id("r"), "v1", TEXT, &deep, "code");
-    assert_eq!(refused.unwrap_err(), RubricError::UnsupportedSchema);
 }
 
 #[test]

@@ -776,7 +776,13 @@ version, an empty text and a schema the library cannot hold an answer to (`Rubri
 `empty-version`, `empty-text`, `unsupported-schema`). The checked keywords are `type`,
 `properties`, `required`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`
 and `anyOf`, with `title` and `description` as annotations; any other keyword refuses the rubric,
-so no answer is held to less than its schema. llm takes no JSON Schema dependency for this.
+so no answer is held to less than its schema. llm takes no JSON Schema dependency for this. A
+schema nests at most 64 levels, a literal inside `const` or `enum` included. `enum` and `const`
+compare numbers by value, `1` and `1.0` being one number, at every depth of a literal; `minimum`
+and `maximum` compare exact values, so a bound holds for every integer from the least `i64` to
+the greatest `u64` and for every double, with no conversion that rounds. The rubric keeps the
+schema as it was given, with its keys put in canonical order and no number written and read back,
+so the digest, `Rubric::schema` and the request carry the same bytes.
 
 `judge(rubric, subject, request_id, input_tokens, ports)` makes one call. The request is the
 rubric's text as the instructions, the subject as the one user item and the schema, in canonical
@@ -790,10 +796,35 @@ retry of every routed call and writes one record, relabelled kind `verdict`, wit
 
 A `Verdict` names the rubric id, version and digest, the route target, the upstream model the far
 side reported and the call record id. `verdict_json` is the answer as canonical JSON when it is
-JSON and valid against the schema; otherwise it is absent and `error_code` is `protocol`. The
-answer is taken as it arrived: no key is dropped, no value coerced, no second call asked. An
-answer whose far side reports no upstream model is refused `protocol`, because a verdict cannot
-pin what it was not told; Bedrock Converse reports none, so a rubric routed there is refused.
+the one whole JSON value the model ended on and valid against the schema; otherwise it is absent
+and `error_code` is `protocol`. The answer is taken as it arrived: no key is dropped, no value
+coerced, no second call asked. An answer whose far side reports no upstream model is refused
+`protocol`, because a verdict cannot pin what it was not told; Bedrock Converse reports none, so
+a rubric routed there is refused.
+
+An answer is whole and has one reading only when all of this holds; anything else is refused,
+with the call's record written as succeeded:
+
+- the turn ended normally (`StopReason::EndTurn`): an answer cut off at the output limit or
+  reported incomplete is not a verdict, even when what arrived is valid;
+- the outcome holds exactly one assistant text item, and beside it only state the provider keeps
+  (`Item::Opaque`): two text items are not joined, since `1` and `2` would read as `12`, and a
+  refusal beside the text refuses the answer;
+- the text is one JSON value with nothing but JSON whitespace around it, nested no deeper than
+  the JSON reader goes (128 levels);
+- no object gives a key twice, at any depth, however the key is escaped;
+- every number written without a fraction or an exponent is an integer `i64` or `u64` holds, and
+  is kept with every digit; one outside that range is refused rather than rounded.
+
+A number written with a fraction or an exponent is the double nearest to it, as JSON readers have
+it (RFC 8259, section 6), read with correct rounding (`serde_json` feature `float_roundtrip`, so
+the result does not depend on which other crates are linked) and written as the shortest decimal
+that reads back as the same double: `1E2` is written `100.0`, and a number no double holds
+(`1e400`) is refused.
+
+A judge call publishes no tool. An outcome that holds a tool call, or says it stopped for one, is
+refused by the routed call itself: the judge returns that error, `protocol`, with the call's
+record written as failed, and no verdict.
 
 ### Embeddings
 

@@ -2,11 +2,12 @@
 //! rubric.
 
 use crate::{
+    answer,
     classify::{Discard, Ports},
     schema,
 };
 use llm_calls::{CallIdentity, CallRecord, CallSink, Kind, Recording, record_turn};
-use llm_core::{Error, ErrorCode, Id, Item, OutputFormat, TurnOutcome, TurnRequest};
+use llm_core::{Error, ErrorCode, Id, Item, OutputFormat, TurnRequest};
 use llm_routing::{FallbackPolicy, Selection};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -139,7 +140,11 @@ impl Rubric {
         if !schema::supported(schema) {
             return Err(RubricError::UnsupportedSchema);
         }
-        let canonical_schema = canonical(schema);
+        // Kept with its keys in canonical order and every scalar as it was given, so the
+        // stored schema and the request carry the bytes the digest covers, however the
+        // caller built the schema. Nothing is written and read back.
+        let schema = ordered(schema);
+        let canonical_schema = canonical(&schema);
         let mut hasher = Sha256::new();
         hasher.update(u64::try_from(text.len()).unwrap_or(u64::MAX).to_be_bytes());
         hasher.update(text.as_bytes());
@@ -153,10 +158,7 @@ impl Rubric {
             id,
             version,
             text,
-            // Kept with its keys in canonical order, so the request carries the bytes the
-            // digest covers however the caller wrote the schema.
-            schema: serde_json::from_str(&canonical_schema)
-                .map_err(|_| RubricError::UnsupportedSchema)?,
+            schema,
             route: route.into(),
             digest,
         })
@@ -211,11 +213,12 @@ pub struct Verdict {
     pub route_target_id: Id,
     /// The model the far side reported, not the name the catalog declares.
     pub upstream_model: Id,
-    /// The answer as canonical JSON (object keys sorted, no whitespace), valid against the
-    /// rubric's schema; absent exactly when `error_code` is set.
+    /// The answer as canonical JSON, valid against the rubric's schema: object keys sorted, no
+    /// whitespace, an integer with every digit, any other number as the shortest decimal that
+    /// reads back as the same double. Absent exactly when `error_code` is set.
     pub verdict_json: Option<String>,
-    /// `protocol` when the answer was not JSON or not valid against the schema. Such an answer
-    /// is refused as it is, never repaired.
+    /// `protocol` when the answer was not one whole, unambiguous JSON value or not valid against
+    /// the schema. Such an answer is refused as it is, never repaired.
     pub error_code: Option<ErrorCode>,
     /// The call's record in the caller's sink: `<request id>/<rubric id>`, kind `Verdict`.
     pub call_record_id: Id,
@@ -232,8 +235,11 @@ pub struct Verdict {
 /// `<request id>/<rubric id>`. As for every routed turn, `input_tokens` is the caller's estimate
 /// routing admits the target against; llm counts no tokens.
 ///
-/// An answer that is not JSON or is not valid against the schema comes back as a [`Verdict`]
-/// with `error_code` `protocol` and no JSON.
+/// An answer comes back as a [`Verdict`] with `error_code` `protocol` and no JSON when it is not
+/// the one whole JSON value the model ended on (the turn stopped at the output limit or was
+/// reported incomplete, the outcome holds no assistant text or more than one, or a refusal
+/// beside it, an object gives a key twice, an integer is outside what `i64` and `u64` hold), or
+/// when that value is not valid against the schema.
 ///
 /// # Errors
 /// [`JudgeError::Rubric`] for a route that does not pin one model, before any call.
@@ -302,7 +308,7 @@ pub async fn judge(
             "the answer names no upstream model, so its verdict cannot pin one",
         )));
     };
-    let verdict_json = answer(&outcome)
+    let verdict_json = answer::whole(&outcome)
         .filter(|answer| schema::holds(&rubric.schema, answer))
         .map(|answer| canonical(&answer));
     Ok(Verdict {
@@ -317,21 +323,28 @@ pub async fn judge(
     })
 }
 
-/// The outcome's assistant text read as JSON, exactly as it arrived; `None` when it is not JSON.
-fn answer(outcome: &TurnOutcome) -> Option<Value> {
-    let text: String = outcome
-        .items
-        .iter()
-        .filter_map(|item| match item {
-            Item::AssistantText { text } => Some(text.as_str()),
-            _ => None,
-        })
-        .collect();
-    serde_json::from_str(&text).ok()
+/// `value` with the keys of every object in canonical order and every scalar as it is: no number
+/// is written and read back, so none changes.
+fn ordered(value: &Value) -> Value {
+    match value {
+        Value::Array(items) => Value::Array(items.iter().map(ordered).collect()),
+        Value::Object(members) => {
+            let mut members: Vec<(&String, &Value)> = members.iter().collect();
+            members.sort_by_key(|(name, _)| *name);
+            Value::Object(
+                members
+                    .into_iter()
+                    .map(|(name, member)| (name.clone(), ordered(member)))
+                    .collect(),
+            )
+        }
+        scalar => scalar.clone(),
+    }
 }
 
 /// `value` as canonical JSON: the keys of every object sorted, no whitespace, every scalar as
-/// `serde_json` writes it. It does not depend on the order a map was built in.
+/// `serde_json` writes it (an integer with every digit, any other number as the shortest decimal
+/// that reads back as the same double). It does not depend on the order a map was built in.
 fn canonical(value: &Value) -> String {
     let mut out = String::new();
     write_canonical(value, &mut out);

@@ -17,8 +17,10 @@
 //! `llm_calls::record_turn` with the schema as strict output, which writes one call record of
 //! kind `Verdict`, and returns a [`Verdict`] naming the rubric version and digest, the route
 //! target and the upstream model that answered, with the answer as canonical JSON. An answer
-//! that is not valid against the schema is refused, never repaired.
+//! that is not the one whole JSON value the model ended on, or is not valid against the schema, is
+//! refused, never repaired.
 
+mod answer;
 mod chain;
 mod classify;
 mod judge;

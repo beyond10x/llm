@@ -4,7 +4,8 @@
 //! and has a value of the shape [`holds`] reads. So no answer is held to less than its schema
 //! says: a keyword this module does not check refuses the rubric instead of being skipped.
 
-use serde_json::Value;
+use serde_json::{Number, Value};
+use std::cmp::Ordering;
 
 /// The deepest a schema, or a value inside its `const` or `enum`, nests.
 const MAX_DEPTH: usize = 64;
@@ -117,10 +118,10 @@ pub(crate) fn holds(schema: &Value, answer: &Value) -> bool {
             .is_some_and(|options| options.iter().any(|option| holds(option, answer))),
         "enum" => rule
             .as_array()
-            .is_some_and(|allowed| allowed.contains(answer)),
-        "const" => rule == answer,
-        "minimum" => bounded(rule, answer, |limit, given| given >= limit),
-        "maximum" => bounded(rule, answer, |limit, given| given <= limit),
+            .is_some_and(|allowed| allowed.iter().any(|literal| same(literal, answer))),
+        "const" => same(rule, answer),
+        "minimum" => bounded(rule, answer, Ordering::is_ge),
+        "maximum" => bounded(rule, answer, Ordering::is_le),
         "title" | "description" => true,
         _ => false,
     })
@@ -147,10 +148,106 @@ fn is(name: &str, answer: &Value) -> bool {
     }
 }
 
-/// A numeric bound, compared as `f64`; it says nothing about an answer that is not a number.
-fn bounded(limit: &Value, answer: &Value, within: fn(f64, f64) -> bool) -> bool {
-    match (limit.as_f64(), answer.as_f64()) {
-        (Some(limit), Some(given)) => within(limit, given),
+/// A numeric bound: whether the answer, compared with the limit by exact value, is `within` it.
+/// A bound says nothing about an answer that is not a number.
+fn bounded(limit: &Value, answer: &Value, within: fn(Ordering) -> bool) -> bool {
+    match (limit, answer) {
+        (Value::Number(limit), Value::Number(given)) => within(compare(given, limit)),
         _ => true,
+    }
+}
+
+/// Whether two values are equal as JSON Schema compares the literals of `enum` and `const`: two
+/// numbers by their value however they are written (`1` and `1.0` are one number), at every
+/// depth; arrays item by item in order; objects by their keys whatever the order.
+fn same(left: &Value, right: &Value) -> bool {
+    match (left, right) {
+        (Value::Number(left), Value::Number(right)) => compare(left, right) == Ordering::Equal,
+        (Value::Array(left), Value::Array(right)) => {
+            left.len() == right.len() && left.iter().zip(right).all(|(one, other)| same(one, other))
+        }
+        (Value::Object(left), Value::Object(right)) => {
+            left.len() == right.len()
+                && left
+                    .iter()
+                    .all(|(name, member)| right.get(name).is_some_and(|other| same(member, other)))
+        }
+        _ => left == right,
+    }
+}
+
+/// A JSON number as its exact value: `mantissa * 2^exponent`, negated when `negative`. Every
+/// `u64`, `i64` and finite `f64` has one, so no comparison goes through a rounding conversion.
+struct Exact {
+    negative: bool,
+    mantissa: u64,
+    exponent: i32,
+}
+
+impl Exact {
+    fn of(number: &Number) -> Self {
+        if let Some(value) = number.as_u64() {
+            return Self {
+                negative: false,
+                mantissa: value,
+                exponent: 0,
+            };
+        }
+        if let Some(value) = number.as_i64() {
+            return Self {
+                negative: value < 0,
+                mantissa: value.unsigned_abs(),
+                exponent: 0,
+            };
+        }
+        // An IEEE 754 double: one sign bit, eleven exponent bits, 52 fraction bits. JSON holds
+        // no infinity and no NaN.
+        let bits = number.as_f64().unwrap_or_default().to_bits();
+        let fraction = bits & ((1 << 52) - 1);
+        let biased = i32::try_from((bits >> 52) & 0x7ff).unwrap_or_default();
+        let (mantissa, exponent) = if biased == 0 {
+            (fraction, -1074)
+        } else {
+            (fraction | (1 << 52), biased - 1075)
+        };
+        Self {
+            negative: bits >> 63 == 1,
+            mantissa,
+            exponent,
+        }
+    }
+
+    /// -1, 0 or 1. Zero has no sign: `-0.0` is `0`.
+    fn sign(&self) -> i8 {
+        match (self.mantissa, self.negative) {
+            (0, _) => 0,
+            (_, true) => -1,
+            (_, false) => 1,
+        }
+    }
+
+    /// Compares two magnitudes, neither of them zero: first by the place of the highest set
+    /// bit, then by the mantissas shifted to one place. Both steps are exact: the shift is to
+    /// the left inside 128 bits and drops nothing.
+    fn magnitude(&self, other: &Self) -> Ordering {
+        let top =
+            |number: &Self| i64::from(number.exponent) - i64::from(number.mantissa.leading_zeros());
+        let aligned =
+            |number: &Self| u128::from(number.mantissa) << (number.mantissa.leading_zeros() + 64);
+        top(self)
+            .cmp(&top(other))
+            .then_with(|| aligned(self).cmp(&aligned(other)))
+    }
+}
+
+/// Orders two JSON numbers by their exact values, whichever of `u64`, `i64` and `f64` holds
+/// each: 2^53 + 1 is over 2^53, and the greatest `u64` is under 2^64.
+fn compare(left: &Number, right: &Number) -> Ordering {
+    let (left, right) = (Exact::of(left), Exact::of(right));
+    match (left.sign(), right.sign()) {
+        (0, 0) => Ordering::Equal,
+        (1, 1) => left.magnitude(&right),
+        (-1, -1) => right.magnitude(&left),
+        (one, other) => one.cmp(&other),
     }
 }

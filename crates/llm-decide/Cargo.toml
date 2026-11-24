@@ -19,7 +19,7 @@ llm-core.workspace = true
 llm-routing = { path = "../llm-routing" }
 llm-calls = { path = "../llm-calls" }
 serde.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true
 
 [dev-dependencies]
