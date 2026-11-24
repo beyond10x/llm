@@ -1261,7 +1261,6 @@ dependencies = [
  "llm-bedrock",
  "llm-calls",
  "llm-chat",
- "llm-cli",
  "llm-core",
  "llm-cost",
  "llm-credentials",

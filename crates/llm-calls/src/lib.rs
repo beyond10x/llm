@@ -17,7 +17,8 @@ pub use record::{
 };
 pub use replay::{
     CORPUS_FORMAT, Candidate, Case, CaseAsk, CaseCall, CaseReport, CaseResult, Corpus, CorpusError,
-    MAX_CASES, MAX_CORPUS_BYTES, MAX_CORPUS_DEPTH, Replay, ReplayRun, replay,
+    MAX_CASES, MAX_CORPUS_BYTES, MAX_CORPUS_DEPTH, MAX_RUBRIC_ID_BYTES, REPLAY_CLASSIFIER_ID,
+    Replay, ReplayRun, replay,
 };
 pub use shadow::{
     Shadow, ShadowCalls, ShadowLedger, ShadowOutcome, ShadowResult, Shadowing,

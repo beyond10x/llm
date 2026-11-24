@@ -248,11 +248,22 @@ recorded `verdict`. `input_tokens` is your estimate, which route selection reads
 cut file, a member given twice or a member the format does not declare refuses the run before
 anything is sent, as does a file over 16 MiB or with more than 4096 cases.
 
-`--cap` is the most the run may spend and `--reserve` is what each case holds under the cap until
-its cost is known; both are decimal amounts with at most nine fractional digits. A case is sent
-while what the run spent plus the reserve is at most the cap. The first case past the cap is not
-sent, the run stops, and that case and the rest count `not-sent`. A call whose cost is not known,
-because the provider reported no usage, keeps its reserve held and stops the run too.
+A case `id` holds no `/`, and a rubric `id` has at most 177 bytes: the ids of a run's call
+records are built from them, and no two calls of one run share one. A recorded verdict is taken
+as given and is not checked against the rubric's schema; a case whose recorded verdict the schema
+does not hold reports `differs`.
+
+`--cap` is what admission is held to, and `--reserve` is what each case holds under the cap
+until its cost is known; both are decimal amounts with at most nine fractional digits. A case is
+sent only while what the run spent plus the reserve is at most the cap. The first case that does
+not fit is not sent, the run stops, and that case and the rest count `not-sent`.
+
+Set `--reserve` to the most one case can cost: the spend then stays within the cap. The cap
+alone does not bound the spend. A case that costs more than the reserve can take the spend past
+the cap; the run stops there, and it has then spent at most the cap, less the reserve, plus the
+cost of that one case. A call whose cost is not known, because the provider reported no usage,
+keeps its reserve held and stops the run at that case. `spent` then counts that reserve, which
+is a hold and not a known cost.
 
 The summary is one line of JSON on stdout, here for a corpus of two cases:
 
@@ -262,18 +273,21 @@ The summary is one line of JSON on stdout, here for a corpus of two cases:
 
 `same` means the answer equals the recorded one: a turn's text and a label byte for byte, a
 verdict as canonical JSON. `failed` carries the error code of the call that failed. `stopped` is
-`limit-exceeded` or `uncertain-spend` when the run stopped, and `llm` then exits with `3`.
-`corpus_digest` is the SHA-256 of the file's bytes. `--run <id>` names the run; the default is
-`replay`. The summary and stderr carry no text of a case.
+`limit-exceeded` when a case did not fit under the cap or the spend is past it, and
+`uncertain-spend` when a cost is not known. It is set at the last case too, and `llm` then exits
+with `3`. `corpus_digest` is the SHA-256 of the file's bytes. `--run <id>` names the run; the
+default is `replay`. The summary and stderr carry no text of a case: a refusal of the corpus
+names the member by its path, and shows `*` for every member whose name the format does not
+define.
 
 ## Exit codes
 
 | Code | Meaning |
 | --- | --- |
-| `0` | The turn completed, the list was printed, or every case of a replay was sent, whatever its result; also when the reader closed stdout (`llm infer … \| head -c 1`), which stops the turn and says so on stderr |
+| `0` | The turn completed, the list was printed, or a replay sent every case with its spend known and within the cap, whatever the cases' results; also when the reader closed stdout (`llm infer … \| head -c 1`), which stops the turn and says so on stderr |
 | `1` | The provider failed a turn after the request was sent (a replay counts the case `failed` instead), or stdout could not be written for another reason; stderr names the route and the error code only |
 | `2` | Refused before anything was sent: no or bad configuration, an unknown model, a missing credential, an invalid request; for a replay also a route without a price, a corpus that is refused, a reserve above the cap |
-| `3` | The turn stopped before its end: at the output limit or for another reason the provider named. Its text so far is on stdout and stderr says why; the turn is not a whole answer, so it is not `0`, and nothing failed, so it is not `1`. Also a replay that stopped at its cap: the summary is on stdout and stderr says how many cases were not sent |
+| `3` | The turn stopped before its end: at the output limit or for another reason the provider named. Its text so far is on stdout and stderr says why; the turn is not a whole answer, so it is not `0`, and nothing failed, so it is not `1`. Also a replay that stopped: a case was not sent, the last case took the spend past the cap, or a cost is not known. The summary is on stdout, and stderr says how the run stopped and how many cases were not sent |
 | `130` | Interrupted with Ctrl-C; the text shown so far stays on stdout. A second Ctrl-C ends a turn the first did not stop |
 
 A refusal names the field, route or reference. It does not print a secret value or a provider's

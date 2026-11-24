@@ -8,7 +8,7 @@
 //! authored answer or failure and move the clock as the program says; every record field comes
 //! back out of the library. It reads no suite and branches on no scenario name.
 //!
-//! `llm.calls.Replay` drives the real `llm_calls::replay` through `llm_cli::Routed`, the
+//! `llm.calls.Replay` drives the real `llm_calls::replay` through `llm_decide::Routed`, the
 //! candidate `llm replay` sends a corpus with, over models that answer each call with the next
 //! authored script, and reports each case's result, each run without its per-case results and
 //! the records the sink received.
@@ -27,13 +27,13 @@ use llm_calls::{
     CallIdentity, CallLog, CaseReport, Clock, Corpus, Recording, Replay, ReplayRun, Shadow,
     ShadowLedger, ShadowOutcome, ShadowResult, Shadowing, record_turn_shadowed, utc_day,
 };
-use llm_cli::Routed;
 use llm_core::{
     BoxFuture, CallId, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model,
     Provenance, StopReason, StreamEvent, StreamSink, ToolCall, TurnDocument, TurnObservation,
     TurnOutcome, TurnRequest, Usage, VecSink,
 };
 use llm_cost::{Amount, Currency, PriceBook};
+use llm_decide::Routed;
 use llm_routing::{Catalog, FallbackPolicy, FallbackRun, Models, Ports, Selection};
 use serde::Deserialize;
 use serde_json::{Value, json};

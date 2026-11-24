@@ -21,10 +21,14 @@
 //! `llm replay` sends an `llm.corpus/1` file to one priced route with [`llm_calls::replay`] and
 //! prints the run's summary, an `llm.calls.ReplayRun`, as one line of JSON on stdout. The cap
 //! and the reserve are decimal amounts in the currency of the route's `price`, which is the
-//! run's price book. It exits 0 when every case was sent, whatever the cases' results, and 3
-//! when the run stopped at its cap: the summary is printed all the same, and stderr says how
-//! many cases were not sent. A route without a price, a corpus the reader refuses and a reserve
-//! above the cap exit 2 with nothing sent. The call records of a run are not kept.
+//! run's price book. The cap bounds admission (a case is sent only while the spend so far plus
+//! the reserve is at most the cap), so the reserve is the caller's upper bound for one case. It
+//! exits 0 when every case was sent and the spend is known and within the cap, whatever the
+//! cases' results, and 3 when the run stopped: a case was not sent, the last case took the spend
+//! past the cap, or its cost is not known. The summary is printed all the same, and stderr says
+//! how the run stopped and how many cases were not sent. A route without a price, a corpus the
+//! reader refuses and a reserve above the cap exit 2 with nothing sent. The call records of a
+//! run are not kept. The candidate is [`llm_decide::Routed`].
 
 use clap::{Parser, Subcommand, ValueEnum};
 use keyring_core::CredentialStore;
@@ -33,7 +37,8 @@ use llm_core::{
     BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol, ShownText,
     StopReason, StreamEvent, StreamSink, TurnOutcome, TurnRequest, Usage,
 };
-use llm_cost::{Amount, ModelPrice, PriceBook, PriceDocument, Rate};
+use llm_cost::{Amount, ModelPrice, PriceBook, PriceDocument, Rate, budget::BudgetError};
+use llm_decide::Routed;
 use llm_http::{HttpClient, Limits};
 use llm_models::routes::{
     AwsCredentialKind, BedrockEndpointDeclaration, EndpointDeclaration, RouteDeclaration, Routes,
@@ -51,10 +56,7 @@ use std::{
 };
 use url::Url;
 
-mod replay;
 mod trust;
-
-pub use replay::{CLASSIFIER_ID, Routed};
 
 /// The variable that names the configuration file when `--config` is not given.
 pub const CONFIG_VARIABLE: &str = "LLM_CONFIG";
@@ -94,10 +96,12 @@ struct Replay {
     /// The `llm.corpus/1` document to replay.
     #[arg(long, value_name = "PATH")]
     corpus: PathBuf,
-    /// The most the run may spend, a decimal amount in the currency of the route's price.
+    /// What admission is held to, a decimal amount in the currency of the route's price: a case
+    /// is sent only while the spend so far plus the reserve is at most the cap.
     #[arg(long, value_name = "AMOUNT")]
     cap: String,
-    /// What each case holds under the cap until its cost is known.
+    /// What each case holds under the cap until its cost is known: set it to the most one case
+    /// can cost. A case that costs more can take the spend past the cap; the run then stops.
     #[arg(long, value_name = "AMOUNT")]
     reserve: String,
     /// The run's id, which starts each case's request id.
@@ -510,7 +514,8 @@ fn replayed(routes: &Routes, replay: &Replay, environment: &Environment) -> Resu
     printed(&summary)
 }
 
-/// Prints the summary on stdout; a run that stopped at its cap exits 3 and says so on stderr.
+/// Prints the summary on stdout; a run that stopped exits 3 and says on stderr how: at its cap,
+/// past it, or at a case whose cost is not known, so that `spent` is not read as a known cost.
 fn printed(summary: &llm_calls::ReplayRun) -> Result<(), Failure> {
     let printed = serde_json::to_string(summary).map_err(|_| Failure {
         code: 1,
@@ -521,6 +526,13 @@ fn printed(summary: &llm_calls::ReplayRun) -> Result<(), Failure> {
         message: format!("llm: cannot write to stdout: {}", error.kind()),
     })?;
     summary.stopped.map_or(Ok(()), |cause| {
+        let how = if cause == BudgetError::UncertainSpend {
+            "at a case whose cost is not known, which `spent` counts at what is held for it"
+        } else if summary.spent > summary.money_cap {
+            "past its cap"
+        } else {
+            "at its cap"
+        };
         let cause = serde_json::to_value(cause)
             .ok()
             .and_then(|value| value.as_str().map(str::to_owned))
@@ -528,7 +540,7 @@ fn printed(summary: &llm_calls::ReplayRun) -> Result<(), Failure> {
         Err(Failure {
             code: 3,
             message: format!(
-                "llm: replay stopped at its cap ({cause}): {} of {} cases not sent",
+                "llm: replay stopped {how} ({cause}): {} of {} cases not sent",
                 summary.not_sent, summary.cases
             ),
         })

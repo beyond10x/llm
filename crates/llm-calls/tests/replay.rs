@@ -4,8 +4,8 @@
 
 use llm_calls::{
     CallLog, CallRecord, CallSink, Candidate, CaseAsk, CaseCall, CaseResult, Clock, Corpus, Kind,
-    MAX_CASES, MAX_CORPUS_BYTES, MAX_CORPUS_DEPTH, Outcome, Recording, Replay, ReplayRun, Role,
-    replay,
+    MAX_CASES, MAX_CORPUS_BYTES, MAX_CORPUS_DEPTH, MAX_RUBRIC_ID_BYTES, Outcome,
+    REPLAY_CLASSIFIER_ID, Recording, Replay, ReplayRun, Role, replay,
 };
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model, Provenance,
@@ -532,7 +532,7 @@ fn a_corpus_is_refused_whole_naming_the_member_by_its_path() {
         (
             "a member of a turn given twice",
             with(&whole, r#""tools":[]"#, r#""tools":[],"tools":[]"#),
-            "cases[0].turn.request.tools",
+            "cases[0].turn.*.*",
         ),
         (
             "a member of a verdict schema given twice",
@@ -541,7 +541,7 @@ fn a_corpus_is_refused_whole_naming_the_member_by_its_path() {
                 r#"{"type":"object"}"#,
                 r#"{"type":"object","type":"array"}"#,
             ),
-            "cases[2].rubric.schema.type",
+            "cases[2].rubric.schema.*",
         ),
         (
             "a later format version",
@@ -561,7 +561,7 @@ fn a_corpus_is_refused_whole_naming_the_member_by_its_path() {
         (
             "a member the document does not declare",
             with(&whole, "{", r#"{"comment":"x","#),
-            "comment",
+            "*",
         ),
         (
             "a case kind the format does not know",
@@ -617,6 +617,20 @@ fn a_corpus_is_refused_whole_naming_the_member_by_its_path() {
             "cases[1].id",
         ),
         (
+            "a case id that holds a slash",
+            with(&whole, r#""id":"c-2""#, r#""id":"c/2""#),
+            "cases[1].id",
+        ),
+        (
+            "a rubric id one byte past its bound",
+            with(
+                &whole,
+                r#""id":"helpful""#,
+                &format!(r#""id":"{}""#, "r".repeat(MAX_RUBRIC_ID_BYTES + 1)),
+            ),
+            "cases[2].rubric.id",
+        ),
+        (
             "an input-token estimate with a fraction",
             with(&whole, r#""input_tokens":100"#, r#""input_tokens":100.5"#),
             "cases[0].input_tokens",
@@ -667,13 +681,219 @@ fn a_corpus_is_refused_whole_naming_the_member_by_its_path() {
     }
 }
 
+/// A member name the caller chose, where the format defines none.
+const NAME: &str = "caller-name-marker-wren-3391";
+
 #[test]
-fn a_member_name_that_is_no_short_identifier_is_not_echoed_in_a_path() {
-    let text = String::from_utf8(document(&[turn_case("c-1", "one")])).unwrap();
-    let named = with(&text, "{", r#"{"secret text of the caller":1,"#);
-    let error = Corpus::parse(named.as_bytes()).unwrap_err();
-    assert_eq!(error.path, "*");
-    assert!(!error.to_string().contains("secret"));
+#[expect(clippy::too_many_lines, reason = "one table of places")]
+fn a_refusal_path_shows_the_names_the_format_defines_and_no_name_the_caller_chose() {
+    let text = String::from_utf8(document(&[
+        turn_case("c-1", "one"),
+        classification_case("c-2", "other"),
+        verdict_case("c-3", &json!({"score": 4})),
+    ]))
+    .unwrap();
+    assert!(Corpus::parse(text.as_bytes()).is_ok());
+    // `NAME` given twice, so the one-pass reader refuses at it.
+    let twice = format!(r#""{NAME}":1,"{NAME}":2"#);
+    let after = |member: &str| with(&text, member, &format!("{member},{twice}"));
+    let caller: Vec<(&str, String, &str)> = vec![
+        (
+            "in the document",
+            with(&text, "{", &format!("{{{twice},")),
+            "*",
+        ),
+        ("in a case", after(r#""kind":"turn""#), "cases[0].*"),
+        (
+            "in a turn document",
+            after(r#""format":"llm.turn/3""#),
+            "cases[0].turn.*",
+        ),
+        (
+            "in the arguments of a tool of a turn",
+            with(
+                &text,
+                r#""tools":[]"#,
+                &format!(r#""tools":[{{"{NAME}":{{{twice}}}}}]"#),
+            ),
+            "cases[0].turn.*.*[0].*.*",
+        ),
+        (
+            "in a label set",
+            after(r#""version":"3""#),
+            "cases[1].label_set.*",
+        ),
+        (
+            "in a rubric",
+            after(r#""version":"2""#),
+            "cases[2].rubric.*",
+        ),
+        (
+            "in a verdict schema",
+            with(&text, r#"{"type":"object"}"#, &format!("{{{twice}}}")),
+            "cases[2].rubric.schema.*",
+        ),
+        (
+            "deeper in a verdict schema",
+            with(
+                &text,
+                r#"{"type":"object"}"#,
+                &format!(r#"{{"properties":{{"{NAME}":{{{twice}}}}}}}"#),
+            ),
+            "cases[2].rubric.schema.*.*.*",
+        ),
+        (
+            "in a recorded answer",
+            after(r#""verdict":{"score":4}"#),
+            "cases[2].recorded.*",
+        ),
+        (
+            "in a recorded verdict",
+            with(&text, r#"{"score":4}"#, &format!("{{{twice}}}")),
+            "cases[2].recorded.verdict.*",
+        ),
+        (
+            "in an array of a recorded verdict",
+            with(
+                &text,
+                r#"{"score":4}"#,
+                &format!(r#"{{"score":[{{{twice}}}]}}"#),
+            ),
+            "cases[2].recorded.verdict.*[0].*",
+        ),
+        (
+            "given once in the document",
+            with(&text, "{", &format!(r#"{{"{NAME}":1,"#)),
+            "*",
+        ),
+        (
+            "given once in a case",
+            with(
+                &text,
+                r#""kind":"classification""#,
+                &format!(r#""kind":"classification","{NAME}":1"#),
+            ),
+            "cases[1].*",
+        ),
+        (
+            "given once in a recorded answer",
+            with(
+                &text,
+                r#"{"text":"one"}"#,
+                &format!(r#"{{"{NAME}":"one"}}"#),
+            ),
+            "cases[0].recorded.*",
+        ),
+    ];
+    for (name, bytes, path) in caller {
+        let error = Corpus::parse(bytes.as_bytes()).expect_err(name);
+        assert_eq!(error.path, path, "{name}");
+        assert!(!error.to_string().contains(NAME), "{name}: {error}");
+    }
+    // A name the format defines is shown where it defines it, and nowhere else.
+    let format: Vec<(&str, String, &str)> = vec![
+        (
+            "the kind of a case",
+            with(&text, r#""kind":"turn""#, r#""kind":"turn","kind":"turn""#),
+            "cases[0].kind",
+        ),
+        (
+            "the version of a label set",
+            with(&text, r#""version":"3""#, r#""version":"3","version":"3""#),
+            "cases[1].label_set.version",
+        ),
+        (
+            "the version of a rubric",
+            with(&text, r#""version":"2""#, r#""version":"2","version":"2""#),
+            "cases[2].rubric.version",
+        ),
+        (
+            "a recorded verdict",
+            with(
+                &text,
+                r#""verdict":{"score":4}"#,
+                r#""verdict":{"score":4},"verdict":1"#,
+            ),
+            "cases[2].recorded.verdict",
+        ),
+        (
+            "a case's name in the document",
+            with(&text, "{", r#"{"rubric":1,"rubric":2,"#),
+            "*",
+        ),
+        (
+            "a rubric's name in a label set",
+            with(
+                &text,
+                r#""version":"3""#,
+                r#""version":"3","schema":1,"schema":2"#,
+            ),
+            "cases[1].label_set.*",
+        ),
+        (
+            "a case's name in a verdict schema",
+            with(&text, r#"{"type":"object"}"#, r#"{"id":1,"id":2}"#),
+            "cases[2].rubric.schema.*",
+        ),
+        (
+            "a case's name in a recorded verdict",
+            with(&text, r#"{"score":4}"#, r#"{"kind":1,"kind":2}"#),
+            "cases[2].recorded.verdict.*",
+        ),
+    ];
+    for (name, bytes, path) in format {
+        let error = Corpus::parse(bytes.as_bytes()).expect_err(name);
+        assert_eq!(error.path, path, "{name}");
+    }
+}
+
+#[test]
+fn a_case_id_holds_no_slash_and_a_rubric_id_fits_under_the_digest_request_id() {
+    // Other punctuation is taken in a case id.
+    let punctuated = "a.b:c_d-e\\g|h";
+    let taken = corpus(&[turn_case(punctuated, "one")]);
+    assert_eq!(taken.cases()[0].id.as_str(), punctuated);
+    for refused in ["a/classify", "/", "a/", "/a"] {
+        let error = Corpus::parse(&document(&[turn_case(refused, "one")])).unwrap_err();
+        assert_eq!(
+            (error.code, error.path.as_str(), error.reason),
+            (
+                ErrorCode::InvalidRequest,
+                "cases[0].id",
+                "a case id that holds a slash"
+            ),
+            "{refused}"
+        );
+    }
+    // `replay-sha256-<hex>/<rubric id>` is an id up to the bound of the rubric id.
+    let digest_form = "replay-sha256-".len() + 64;
+    assert_eq!(digest_form + 1 + MAX_RUBRIC_ID_BYTES, 256);
+    let rubric = |length: usize| {
+        let mut case = verdict_case("c-1", &json!(true));
+        case["rubric"]["id"] = json!("r".repeat(length));
+        document(&[case])
+    };
+    assert!(Corpus::parse(&rubric(MAX_RUBRIC_ID_BYTES)).is_ok());
+    let over = Corpus::parse(&rubric(MAX_RUBRIC_ID_BYTES + 1)).unwrap_err();
+    assert_eq!(
+        (over.code, over.path.as_str(), over.reason),
+        (
+            ErrorCode::InvalidRequest,
+            "cases[0].rubric.id",
+            "a rubric id of more than 177 bytes"
+        )
+    );
+}
+
+#[test]
+fn a_recorded_verdict_is_taken_as_given_and_not_held_to_its_schema() {
+    let mut case = verdict_case("c-1", &json!("no object"));
+    case["rubric"]["schema"] = json!({
+        "type": "object", "properties": {"score": {"type": "integer"}},
+        "required": ["score"], "additionalProperties": false
+    });
+    let corpus = corpus(&[case]);
+    assert_eq!(corpus.cases()[0].recorded, r#""no object""#);
 }
 
 /// A corpus of one classification case whose input is `fill` repeated until the document is
@@ -743,7 +963,7 @@ fn a_corpus_nests_at_most_the_bound_of_levels() {
     let over = Corpus::parse(&nested(MAX_CORPUS_DEPTH + 1)).unwrap_err();
     assert_eq!(over.code, ErrorCode::TooLarge);
     assert!(
-        over.path.starts_with("cases[0].rubric.schema.a.a"),
+        over.path.starts_with("cases[0].rubric.schema.*.*"),
         "{over}"
     );
 }
@@ -1284,4 +1504,310 @@ fn a_case_id_that_makes_no_record_id_with_the_run_id_gets_a_digest_id() {
     // A short case id keeps the readable form.
     let (_, records, _) = played(&[turn_case("c-1", "one")], &[], "1");
     assert_eq!(records[0].id.as_str(), "run-1/c-1");
+}
+
+#[test]
+fn the_request_id_is_readable_while_the_longest_record_id_of_the_case_is_an_id() {
+    type MakeCase = fn(&str) -> Value;
+    // What each kind adds to `run-1/<case id>` for the longest id of a record it writes.
+    let classify = 1 + REPLAY_CLASSIFIER_ID.len();
+    let rubric = 1 + "helpful".len();
+    let rows: [(&str, MakeCase, usize); 3] = [
+        ("a turn", |case_id| turn_case(case_id, "one"), 0),
+        (
+            "a classification",
+            |case_id| classification_case(case_id, "other"),
+            classify,
+        ),
+        (
+            "a verdict",
+            |case_id| verdict_case(case_id, &json!(true)),
+            rubric,
+        ),
+    ];
+    for (name, case, suffix) in rows {
+        let fits = 256 - "run-1/".len() - suffix;
+        for (length, readable) in [(fits, true), (fits + 1, false), (256, false)] {
+            let case_id = "c".repeat(length);
+            let (run, records, asked) = played(&[case(&case_id)], &[], "1");
+            assert_eq!(
+                (run.same, asked, records.len()),
+                (1, 1, 1),
+                "{name} {length}"
+            );
+            let request_id = records[0].id.as_str();
+            if readable {
+                assert_eq!(request_id, format!("run-1/{case_id}"), "{name} {length}");
+            } else {
+                assert!(request_id.starts_with("replay-sha256-"), "{name} {length}");
+                assert_eq!(request_id.len(), 78, "{name} {length}");
+            }
+        }
+    }
+}
+
+#[test]
+fn a_run_stops_at_its_last_case_when_that_case_takes_the_spend_past_the_cap() {
+    let cases = [turn_case("c-1", "one"), turn_case("c-2", "two")];
+    // Each call costs 0.055 and holds one nanounit. The second is admitted at 0.055 + 0.000000001,
+    // the cap, and settles the spend at 0.11.
+    let catalog = catalog();
+    let candidate = Scripted::new(&catalog, &[]);
+    let (run, records) = adversary_w29_run(
+        &cases,
+        "0.055000001",
+        "0.000000001",
+        &Ticks::new(),
+        &candidate,
+    );
+    assert_eq!((run.same, run.not_sent, candidate.asked()), (2, 0, 2));
+    assert_eq!(run.stopped, Some(BudgetError::LimitExceeded));
+    // The bound is met exactly: the cap, less the reserve, plus the call that passed it.
+    assert_eq!(run.spent, amount("0.11"));
+    assert_eq!(
+        run.spent.nanos(),
+        run.money_cap.nanos() - run.reserve.nanos() + amount("0.055").nanos()
+    );
+    assert_eq!(records.len(), 2);
+    // A cap of what the two calls cost stops nothing.
+    let candidate = Scripted::new(&catalog, &[]);
+    let (within, _) = adversary_w29_run(&cases, "0.11", "0.000000001", &Ticks::new(), &candidate);
+    assert_eq!((within.spent, within.stopped), (amount("0.11"), None));
+}
+
+#[test]
+fn spent_holds_a_reserve_only_when_the_run_stopped_with_uncertain_spend() {
+    let cases = [turn_case("c-1", "one"), turn_case("c-2", "two")];
+    // Every cost known: `spent` is what the calls cost.
+    let (known, _, _) = played(&cases, &[], "1");
+    assert_eq!((known.spent, known.stopped), (amount("0.11"), None));
+    // The last case's cost is not known: `spent` is the first case's cost and the reserve held
+    // for the second, and `stopped` says so.
+    let (held, records, asked) = played(&cases, &[("c-2", Step::Unpriced("two"))], "1");
+    assert_eq!(
+        (held.spent, held.stopped),
+        (amount("0.155"), Some(BudgetError::UncertainSpend))
+    );
+    assert_eq!(
+        (held.same, held.not_sent, asked, records.len()),
+        (2, 0, 2, 2)
+    );
+}
+
+/// One run of `cases` under `cap` with `reserve` held per case, on `clock` and through
+/// `candidate`: the run and every record.
+fn adversary_w29_run(
+    cases: &[Value],
+    cap: &str,
+    reserve: &str,
+    clock: &dyn Clock,
+    candidate: &dyn Candidate,
+) -> (ReplayRun, Vec<CallRecord>) {
+    let catalog = catalog();
+    let prices = prices(&catalog, "USD");
+    let log = CallLog::new();
+    let run = block_on(replay(
+        &catalog,
+        &corpus(cases),
+        &run_of(cap, reserve),
+        candidate,
+        Recording {
+            sink: &log,
+            clock,
+            prices: Some(&prices),
+        },
+    ))
+    .unwrap();
+    (run, log.records())
+}
+
+/// Re-pinned in correction round 1 (it held `spent <= money_cap`, which the documents no longer
+/// say). The cap bounds admission: a case that costs more than its reserve can take the spend
+/// past the cap. Then no later case is sent, and the spend is at most the cap, less the reserve,
+/// plus the cost of the one call that passed it.
+#[test]
+fn adversary_w29_a_run_past_its_cap_stops_within_the_cap_less_a_reserve_plus_one_call() {
+    let catalog = catalog();
+    let candidate = Scripted::new(&catalog, &[]);
+    let cases = [
+        turn_case("c-1", "one"),
+        turn_case("c-2", "two"),
+        turn_case("c-3", "three"),
+    ];
+    // Each call costs 0.055; one nanounit is held for it. The first is admitted at 0.000000001
+    // and the second at 0.055000001, both within the cap; the second settles the spend at 0.11.
+    let (run, records) =
+        adversary_w29_run(&cases, "0.06", "0.000000001", &Ticks::new(), &candidate);
+    assert_eq!(
+        results(&run),
+        [
+            ("c-1", CaseResult::Same, None),
+            ("c-2", CaseResult::Same, None),
+            ("c-3", CaseResult::NotSent, None),
+        ]
+    );
+    assert_eq!((candidate.asked(), run.spent), (2, amount("0.11")));
+    assert_eq!(run.stopped, Some(BudgetError::LimitExceeded));
+    assert_eq!(records[2].outcome, Outcome::Skipped);
+    let call = amount("0.055").nanos();
+    assert!(
+        run.spent.nanos() <= run.money_cap.nanos() - run.reserve.nanos() + call,
+        "the run spent {} under a cap of {} ({} cases asked)",
+        run.spent,
+        run.money_cap,
+        candidate.asked()
+    );
+}
+
+/// "A replayed call whose cost is not known keeps its reserve held and stops the run with
+/// `uncertain-spend`": the last case of a corpus has no case after it to be refused, and the
+/// summary must still say that its `spent` is a hold and not a known spend.
+#[test]
+fn adversary_w29_a_run_whose_last_case_has_no_known_cost_reports_uncertain_spend() {
+    let catalog = catalog();
+    let candidate = Scripted::new(&catalog, &[("c-1", Step::Unpriced("one"))]);
+    let (run, _) = adversary_w29_run(
+        &[turn_case("c-1", "one")],
+        "1",
+        "0.1",
+        &Ticks::new(),
+        &candidate,
+    );
+    assert_eq!(results(&run), [("c-1", CaseResult::Same, None)]);
+    // The reserve is reported as the spend: nothing of it is known to have been spent.
+    assert_eq!(run.spent, amount("0.1"));
+    assert_eq!(run.stopped, Some(BudgetError::UncertainSpend));
+}
+
+/// "No text of the corpus is in a refusal": a member name of a recorded verdict is text of the
+/// case (the unit's own no-text test counts the verdict member `grounds` as such).
+#[test]
+fn adversary_w29_a_refusal_holds_no_member_name_of_a_recorded_verdict() {
+    let text = String::from_utf8(document(&[verdict_case("c-1", &json!({"score": 4}))])).unwrap();
+    let named = with(
+        &text,
+        r#"{"score":4}"#,
+        r#"{"verdict-marker-stoat-8841":true,"verdict-marker-stoat-8841":false}"#,
+    );
+    let error = Corpus::parse(named.as_bytes()).unwrap_err();
+    assert_eq!(error.reason, "a member given twice");
+    assert!(
+        !error.to_string().contains("verdict-marker-stoat-8841"),
+        "{error}"
+    );
+}
+
+/// A clock that steps back one second each time it is read.
+struct Falling(AtomicU64);
+
+impl Clock for Falling {
+    fn unix_ms(&self) -> u64 {
+        1_762_344_000_000 - 1000 * self.0.fetch_add(1, Ordering::SeqCst)
+    }
+    fn monotonic(&self) -> Duration {
+        Duration::ZERO
+    }
+}
+
+/// Guard: a wall clock that steps back between two cases (an adjusted host clock) must not make
+/// the ledger refuse a case.
+#[test]
+fn adversary_w29_a_clock_that_steps_back_stops_no_case() {
+    let catalog = catalog();
+    let candidate = Scripted::new(&catalog, &[]);
+    let cases = [
+        turn_case("c-1", "one"),
+        turn_case("c-2", "two"),
+        turn_case("c-3", "three"),
+    ];
+    let clock = Falling(AtomicU64::new(0));
+    let (run, records) = adversary_w29_run(&cases, "1", "0.1", &clock, &candidate);
+    assert_eq!((run.same, run.not_sent, run.stopped), (3, 0, None));
+    assert_eq!((run.spent, records.len()), (amount("0.165"), 3));
+}
+
+/// Guard, re-pinned in correction round 1 (it held the bound of 64 bytes, which is gone): a
+/// member name is shown in a path when the format defines it there, and a name the caller chose
+/// is not, whatever its length.
+#[test]
+fn adversary_w29_a_member_name_is_shown_when_the_format_defines_it_and_not_for_its_length() {
+    let text = String::from_utf8(document(&[turn_case("c-1", "one")])).unwrap();
+    for length in [1, 64, 65] {
+        let name = "n".repeat(length);
+        let named = with(&text, "{", &format!(r#"{{"{name}":1,"#));
+        let error = Corpus::parse(named.as_bytes()).unwrap_err();
+        assert_eq!(error.path, "*", "{length}");
+    }
+    let named = with(&text, r#""kind":"turn""#, r#""kind":"turn","rubric":1"#);
+    let error = Corpus::parse(named.as_bytes()).unwrap_err();
+    assert_eq!(error.path, "cases[0].rubric");
+}
+
+/// Sends each case as one recorded turn under a token that is already cancelled.
+struct Cancelled<'c>(&'c Catalog);
+
+impl Candidate for Cancelled<'_> {
+    fn answer<'a>(&'a self, call: CaseCall<'a>) -> BoxFuture<'a, Result<Option<String>, Error>> {
+        Box::pin(async move {
+            let binding = self.0.binding(&id("remote-large")).unwrap();
+            let model = OneCall {
+                provenance: binding.provenance().clone(),
+                capabilities: binding.capabilities().clone(),
+                recorded: call.case.recorded.clone(),
+                step: None,
+            };
+            let request = TurnRequest::new(call.route, vec![Item::user("replayed")]);
+            let cancel = Cancel::new();
+            cancel.cancel();
+            let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(async {}) };
+            let mut admit = |_: &Selection<'_>| Ok(());
+            let run = llm_calls::record_turn(
+                self.0,
+                &request,
+                Some(call.case.input_tokens),
+                FallbackPolicy {
+                    max_attempts: 1,
+                    ..FallbackPolicy::default()
+                },
+                Ports {
+                    models: &model,
+                    admit: &mut admit,
+                    sink: &mut Discard,
+                    cancel: &cancel,
+                    pause: &pause,
+                },
+                llm_calls::CallIdentity::primary(call.request_id.clone()),
+                call.recording,
+            )
+            .await?;
+            run.result.map(|_| None)
+        })
+    }
+}
+
+/// Guard: "A call that was not sent and reported no usage cost nothing". A cancelled case
+/// writes a not-sent record without a cost; it settles at zero and the next case is admitted.
+#[test]
+fn adversary_w29_a_record_of_a_call_that_was_not_sent_costs_nothing_and_stops_nothing() {
+    let catalog = catalog();
+    let cases = [turn_case("c-1", "one"), turn_case("c-2", "two")];
+    let (run, records) = adversary_w29_run(&cases, "1", "0.1", &Ticks::new(), &Cancelled(&catalog));
+    assert_eq!(
+        records
+            .iter()
+            .map(|record| (record.dispatch, &record.cost, record.role))
+            .collect::<Vec<_>>(),
+        [
+            (Some(Dispatch::NotSent), &None, Role::Replay),
+            (Some(Dispatch::NotSent), &None, Role::Replay)
+        ]
+    );
+    assert_eq!(
+        results(&run),
+        [
+            ("c-1", CaseResult::Failed, Some(ErrorCode::Cancelled)),
+            ("c-2", CaseResult::Failed, Some(ErrorCode::Cancelled)),
+        ]
+    );
+    assert_eq!((run.spent, run.stopped), (Amount::ZERO, None));
 }

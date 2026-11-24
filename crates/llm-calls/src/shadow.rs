@@ -596,21 +596,26 @@ fn shadow_record_id(primary: &Id, shadow: &Id) -> Option<Id> {
     )
 }
 
-/// `readable` while it fits an id, else `prefix` and the hex SHA-256 of the two parts,
-/// length-prefixed so no two pairs share an input.
-pub(crate) fn pair_id(readable: String, prefix: &str, parts: [&str; 2]) -> Option<Id> {
-    Id::new(readable).ok().or_else(|| {
-        let mut hasher = Sha256::new();
-        for part in parts {
-            hasher.update(u64::try_from(part.len()).unwrap_or(u64::MAX).to_be_bytes());
-            hasher.update(part.as_bytes());
-        }
-        let mut digest = String::from(prefix);
-        for byte in hasher.finalize() {
-            write!(digest, "{byte:02x}").ok()?;
-        }
-        Id::new(digest).ok()
-    })
+/// `readable` while it fits an id, else the digest form of the two parts.
+fn pair_id(readable: String, prefix: &str, parts: [&str; 2]) -> Option<Id> {
+    Id::new(readable)
+        .ok()
+        .or_else(|| pair_digest(prefix, parts))
+}
+
+/// `prefix` and the hex SHA-256 of the two parts, length-prefixed so no two pairs share an
+/// input.
+pub(crate) fn pair_digest(prefix: &str, parts: [&str; 2]) -> Option<Id> {
+    let mut hasher = Sha256::new();
+    for part in parts {
+        hasher.update(u64::try_from(part.len()).unwrap_or(u64::MAX).to_be_bytes());
+        hasher.update(part.as_bytes());
+    }
+    let mut digest = String::from(prefix);
+    for byte in hasher.finalize() {
+        write!(digest, "{byte:02x}").ok()?;
+    }
+    Id::new(digest).ok()
 }
 
 /// The record of a call the ledger did not admit: not sent, no attempt, no latency.

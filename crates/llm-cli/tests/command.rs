@@ -1550,6 +1550,17 @@ fn turn_corpus(cases: &[(&str, &str)]) -> String {
 /// `llm replay` of `corpus` on `route` under `cap`, holding 0.0001 per case, against a server
 /// with `answers` Messages answers ready: the output and what the server received.
 fn replayed(corpus: &str, route: &str, cap: &str, answers: usize) -> (Output, Vec<Received>) {
+    replayed_holding(corpus, route, cap, "0.0001", answers)
+}
+
+/// The same, holding `reserve` per case.
+fn replayed_holding(
+    corpus: &str,
+    route: &str,
+    cap: &str,
+    reserve: &str,
+    answers: usize,
+) -> (Output, Vec<Received>) {
     let fixture = Fixture::new(vec![messages_stream(); answers]);
     let (directory, path) = configured(&three_routes(&fixture.origin));
     let corpus_path = directory.path().join("corpus.json");
@@ -1566,12 +1577,35 @@ fn replayed(corpus: &str, route: &str, cap: &str, answers: usize) -> (Output, Ve
             "--cap",
             cap,
             "--reserve",
-            "0.0001",
+            reserve,
         ],
         &KEYS,
         None,
     );
     (output, fixture.received())
+}
+
+#[test]
+fn replay_exits_nonzero_when_its_last_case_takes_the_spend_past_the_cap() {
+    // A case costs 0.000032 and holds 0.00001. The second is admitted at 0.000042 under a cap of
+    // 0.000045 and settles the spend at 0.000064.
+    let corpus = turn_corpus(&[("greets", "Guten Tag"), ("again", "Guten Tag")]);
+    let (output, received) = replayed_holding(&corpus, "haiku", "0.000045", "0.00001", 2);
+    assert_eq!(output.status.code(), Some(3), "{}", stderr(&output));
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    assert_eq!(
+        (&summary["same"], &summary["not_sent"], &summary["spent"]),
+        (&json!(2), &json!(0), &json!("0.000064"))
+    );
+    assert_eq!(summary["stopped"], json!("limit-exceeded"));
+    assert_eq!(
+        stderr(&output),
+        "llm: replay stopped past its cap (limit-exceeded): 0 of 2 cases not sent\n"
+    );
+    assert_eq!(received.len(), 2);
+    // The same two cases under a cap of what they cost stop nothing.
+    let (output, _) = replayed_holding(&corpus, "haiku", "0.000064", "0.00001", 2);
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
 }
 
 #[test]
@@ -1761,8 +1795,440 @@ fn replay_counts_a_refused_call_failed_and_stops_while_its_cost_is_not_known() {
     );
     assert_eq!(
         stderr(&output),
-        "llm: replay stopped at its cap (uncertain-spend): 1 of 2 cases not sent\n"
+        "llm: replay stopped at a case whose cost is not known, which `spent` counts at what is \
+         held for it (uncertain-spend): 1 of 2 cases not sent\n"
     );
     assert!(!stderr(&output).contains("fixture prose"));
     assert_eq!(fixture.received().len(), 1);
+}
+
+/// The same refused call as above, as the only case of its corpus: no case follows it, so no
+/// case is refused, and the summary must still say that its spend is not known.
+#[test]
+fn adversary_w29_replay_of_one_case_whose_cost_is_not_known_says_uncertain_spend() {
+    let body =
+        br#"{"type":"error","error":{"type":"invalid_request_error","message":"fixture prose"}}"#;
+    let failure = answer(
+        &format!(
+            "HTTP/1.1 400 Bad Request\r\ncontent-type: application/json\r\n\
+             content-length: {}\r\nconnection: close\r\n\r\n",
+            body.len()
+        ),
+        body,
+    );
+    let fixture = Fixture::new(vec![failure]);
+    let (directory, path) = configured(&three_routes(&fixture.origin));
+    let corpus_path = directory.path().join("corpus.json");
+    write(&corpus_path, &turn_corpus(&[("refused", "Guten Tag")]));
+    let output = llm(
+        &[
+            "--config",
+            &path,
+            "replay",
+            "--route",
+            "fast",
+            "--corpus",
+            corpus_path.to_str().unwrap(),
+            "--cap",
+            "1",
+            "--reserve",
+            "0.0001",
+        ],
+        &KEYS,
+        None,
+    );
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    assert_eq!(
+        summary["results"],
+        json!([{"case_id": "refused", "result": "failed", "error_code": "refused"}])
+    );
+    // The reserve is printed as the spend.
+    assert_eq!(summary["spent"], json!("0.0001"));
+    assert_eq!(
+        (&summary["stopped"], output.status.code()),
+        (&json!("uncertain-spend"), Some(3)),
+        "{}",
+        stderr(&output)
+    );
+}
+
+/// Guard: `llm replay` refuses a corpus file one byte past 16 MiB although its first 16 MiB are
+/// a whole corpus, and reads one of exactly 16 MiB.
+#[test]
+fn adversary_w29_replay_refuses_a_corpus_file_one_byte_past_the_bound() {
+    const BOUND: usize = 16 * 1024 * 1024;
+    let whole = turn_corpus(&[("greets", "Guten Tag")]);
+    let padded = |length: usize| format!("{whole}{}", " ".repeat(length - whole.len()));
+    let (at, received) = replayed(&padded(BOUND), "haiku", "1", 1);
+    assert_eq!(at.status.code(), Some(0), "{}", stderr(&at));
+    assert_eq!(received.len(), 1);
+    let (over, received) = replayed(&padded(BOUND + 1), "haiku", "1", 1);
+    assert_eq!(
+        (
+            over.status.code(),
+            stderr(&over).as_str(),
+            stdout(&over).as_str()
+        ),
+        (
+            Some(2),
+            "llm: corpus: too-large: $: longer than 16 MiB\n",
+            ""
+        )
+    );
+    assert!(received.is_empty());
+}
+
+/// A Messages answer whose one text block is `text`, for 12 input and 4 output tokens.
+fn adversary_w29_messages_text(text: &str) -> Vec<u8> {
+    sse(&[
+        (
+            "message_start",
+            json!({"type":"message_start","message":{"id":"msg_fixture","type":"message",
+                "role":"assistant","model":"claude-haiku-5-5","content":[],"stop_reason":null,
+                "stop_sequence":null,"usage":{"input_tokens":12,"output_tokens":1,
+                "cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}),
+        ),
+        (
+            "content_block_start",
+            json!({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}),
+        ),
+        (
+            "content_block_delta",
+            json!({"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":text}}),
+        ),
+        (
+            "content_block_stop",
+            json!({"type":"content_block_stop","index":0}),
+        ),
+        (
+            "message_delta",
+            json!({"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},
+                "usage":{"output_tokens":4}}),
+        ),
+        ("message_stop", json!({"type":"message_stop"})),
+    ])
+}
+
+/// `llm replay` of one `case` on route `haiku` under a cap of 1, the server answering `text`:
+/// the output and how many requests the server received.
+fn adversary_w29_replayed_case(case: &Value, text: &str) -> (Output, usize) {
+    let fixture = Fixture::new(vec![adversary_w29_messages_text(text)]);
+    let (directory, path) = configured(&three_routes(&fixture.origin));
+    let corpus_path = directory.path().join("corpus.json");
+    write(
+        &corpus_path,
+        &json!({"format": "llm.corpus/1", "cases": [case]}).to_string(),
+    );
+    let output = llm(
+        &[
+            "--config",
+            &path,
+            "replay",
+            "--route",
+            "haiku",
+            "--corpus",
+            corpus_path.to_str().unwrap(),
+            "--cap",
+            "1",
+            "--reserve",
+            "0.0001",
+        ],
+        &KEYS,
+        None,
+    );
+    (output, fixture.received().len())
+}
+
+/// The guide documents a case of kind `classification` for `llm replay`: one sent through the
+/// command to a route of a routes file is asked and compared.
+#[test]
+fn adversary_w29_replay_sends_a_classification_case_through_the_command() {
+    let case = json!({
+        "id": "intent-1", "kind": "classification", "input_tokens": 100,
+        "label_set": {"id": "intent", "version": "3", "labels": ["refund", "other"]},
+        "instructions": "Classify the request.", "input": "I want my money back.",
+        "recorded": {"label": "refund"}
+    });
+    let (output, received) = adversary_w29_replayed_case(
+        &case,
+        r#"{"label":"refund","confidences":{"refund":9000,"other":1000}}"#,
+    );
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    assert_eq!(
+        (&summary["results"], received, output.status.code()),
+        (
+            &json!([{"case_id": "intent-1", "result": "same", "error_code": null}]),
+            1,
+            Some(0)
+        ),
+        "{}",
+        stderr(&output)
+    );
+}
+
+/// The guide documents a case of kind `verdict` for `llm replay`: one sent through the command
+/// to a route of a routes file is asked and compared.
+#[test]
+fn adversary_w29_replay_sends_a_verdict_case_through_the_command() {
+    let case = json!({
+        "id": "judged-1", "kind": "verdict", "input_tokens": 100,
+        "rubric": {"id": "helpful", "version": "2", "text": "Score the answer.",
+            "schema": {"type": "object",
+                "properties": {"score": {"type": "integer", "minimum": 1, "maximum": 5}},
+                "required": ["score"], "additionalProperties": false}},
+        "subject": "Question and answer.",
+        "recorded": {"verdict": {"score": 4}}
+    });
+    let (output, received) = adversary_w29_replayed_case(&case, r#"{"score":4}"#);
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    assert_eq!(
+        (&summary["results"], received, output.status.code()),
+        (
+            &json!([{"case_id": "judged-1", "result": "same", "error_code": null}]),
+            1,
+            Some(0)
+        ),
+        "{}",
+        stderr(&output)
+    );
+}
+
+mod adversary_w29_routed {
+    //! `llm_decide::Routed` under the real `llm_calls::replay`, over one scripted model and an
+    //! in-memory record sink. No network.
+
+    use llm_calls::{
+        CallLog, CallRecord, CaseResult, Clock, Corpus, Recording, Replay, ReplayRun, replay,
+    };
+    use llm_core::{
+        BoxFuture, Cancel, Capabilities, Error, Id, Item, Model, Provenance, StopReason,
+        StreamSink, TurnObservation, TurnOutcome, TurnRequest, Usage,
+    };
+    use llm_cost::{Amount, Currency, ModelPrice, PriceBook, PriceDocument, Rate};
+    use llm_decide::Routed;
+    use llm_routing::{Catalog, CatalogDocument, Models, Route, RouteKind, RouteTarget};
+    use serde_json::{Value, json};
+    use std::{collections::BTreeSet, time::Duration};
+
+    const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+    const REFUND: &str = r#"{"label":"refund","confidences":{"refund":9000,"other":1000}}"#;
+
+    fn id(value: &str) -> Id {
+        Id::new(value).unwrap()
+    }
+
+    fn catalog() -> Catalog {
+        let mut doc = CatalogDocument::parse(EXAMPLE).unwrap();
+        doc.routes.push(Route {
+            id: id("coding-candidate"),
+            alias: id("code-candidate"),
+            fallback_enabled: false,
+            kind: RouteKind::Turn,
+        });
+        doc.targets.push(RouteTarget {
+            id: id("candidate-large"),
+            route_id: id("coding-candidate"),
+            serving_model_id: id("remote-large"),
+            position: 0,
+        });
+        doc.validate().unwrap()
+    }
+
+    fn prices(catalog: &Catalog) -> PriceBook {
+        let rate = |amount: &str| {
+            Some(Rate {
+                amount: Amount::parse(amount).unwrap(),
+                per_units: 1000,
+            })
+        };
+        let serving = id("remote-large");
+        let binding_revision = catalog
+            .binding(&serving)
+            .unwrap()
+            .provenance()
+            .binding_revision
+            .clone();
+        PriceBook::from_document(PriceDocument::new(
+            id("prices-r1"),
+            "fixture price list",
+            1,
+            Currency::new("USD").unwrap(),
+            vec![ModelPrice {
+                id: id("price-large"),
+                serving_model_id: serving,
+                binding_revision,
+                upstream_model: id("example/Large-Model"),
+                input: rate("3"),
+                cached_input: None,
+                cache_creation_input: None,
+                output: rate("5"),
+            }],
+        ))
+        .unwrap()
+    }
+
+    struct Still;
+
+    impl Clock for Still {
+        fn unix_ms(&self) -> u64 {
+            1_762_344_000_000
+        }
+        fn monotonic(&self) -> Duration {
+            Duration::ZERO
+        }
+    }
+
+    /// Answers every call with the label `refund` as the classifier's JSON.
+    struct Refunds {
+        provenance: Provenance,
+        capabilities: Capabilities,
+    }
+
+    impl Model for Refunds {
+        fn provenance(&self) -> &Provenance {
+            &self.provenance
+        }
+        fn capabilities(&self) -> &Capabilities {
+            &self.capabilities
+        }
+        fn turn<'a>(
+            &'a self,
+            _: &'a TurnRequest,
+            _: &'a mut dyn StreamSink,
+            _: &'a Cancel,
+        ) -> BoxFuture<'a, Result<TurnOutcome, Error>> {
+            Box::pin(async move {
+                let mut observation = TurnObservation::new(self.provenance.clone());
+                observation.upstream_model = Some(id("example/Large-Model"));
+                observation.final_usage = true;
+                observation.usage = Some(Usage {
+                    input_tokens: Some(10),
+                    output_tokens: Some(5),
+                    cached_input_tokens: Some(0),
+                    cache_creation_input_tokens: Some(0),
+                    reasoning_output_tokens: None,
+                });
+                Ok(TurnOutcome {
+                    stop_reason: StopReason::EndTurn,
+                    items: vec![Item::assistant(REFUND)],
+                    observation,
+                })
+            })
+        }
+    }
+
+    impl Models for Refunds {
+        fn model(&self, _: &Id) -> Option<&dyn Model> {
+            Some(self)
+        }
+    }
+
+    fn classification_case(case_id: &str) -> Value {
+        json!({
+            "id": case_id, "kind": "classification", "input_tokens": 100,
+            "label_set": {"id": "intent", "version": "3", "labels": ["refund", "other"]},
+            "input": "I want my money back.",
+            "recorded": {"label": "refund"}
+        })
+    }
+
+    /// `llm.calls.CallRecord` has the identity `id`: two calls of one run must not write the
+    /// same one. Re-pinned in correction round 1 (it held that a classification case `a` and a
+    /// turn case `a/classify` write two ids): the reader refuses a case id that holds `/`, so
+    /// that corpus is not taken, and the same two cases with a turn id it takes write two ids.
+    #[test]
+    fn adversary_w29_a_case_id_with_a_slash_is_refused_so_two_cases_write_two_record_ids() {
+        let turn = |case_id: &str| {
+            json!({
+                "id": case_id, "kind": "turn", "input_tokens": 100,
+                "turn": {"format": "llm.turn/3", "request": {
+                    "model": "recorded-route", "instructions": "",
+                    "items": [{"kind": "user-text", "text": "hello"}], "tools": []}},
+                "recorded": {"text": REFUND}
+            })
+        };
+        let cases = [classification_case("a"), turn("a/classify")];
+        let document = json!({"format": "llm.corpus/1", "cases": cases}).to_string();
+        let refused = Corpus::parse(document.as_bytes()).unwrap_err();
+        assert_eq!(
+            refused.to_string(),
+            "cases[1].id: a case id that holds a slash"
+        );
+        let (run, records) = played(&[classification_case("a"), turn("a.classify")]);
+        assert_eq!((run.same, run.cases), (2, 2));
+        assert_eq!(records.len(), 2);
+        let ids: BTreeSet<&str> = records.iter().map(|record| record.id.as_str()).collect();
+        assert_eq!(
+            ids.len(),
+            2,
+            "two calls wrote the record ids {:?}",
+            records
+                .iter()
+                .map(|record| record.id.as_str())
+                .collect::<Vec<_>>()
+        );
+    }
+
+    /// "A case's request id is `<run id>/<case id>` (`replay-sha256-<hex>` of the two ids when
+    /// that would pass the id bound)": a case id of any length an id may have is sent. One of
+    /// 256 bytes gets the digest id; one of 245 bytes keeps the readable request id, which is
+    /// 251 bytes with the run id `run-1`.
+    #[test]
+    fn adversary_w29_a_classification_case_is_sent_whatever_the_length_of_its_id() {
+        for length in [256, 245] {
+            let (run, records) = played(&[classification_case(&"c".repeat(length))]);
+            assert_eq!(
+                (
+                    run.results[0].result,
+                    run.results[0].error_code,
+                    records.len()
+                ),
+                (CaseResult::Same, None, 1),
+                "a case id of {length} bytes"
+            );
+        }
+    }
+
+    /// One run of `cases` on the candidate route under a cap of 1 with 0.1 held: the run and
+    /// every record.
+    fn played(cases: &[Value]) -> (ReplayRun, Vec<CallRecord>) {
+        let catalog = catalog();
+        let prices = prices(&catalog);
+        let log = CallLog::new();
+        let binding = catalog.binding(&id("remote-large")).unwrap();
+        let model = Refunds {
+            provenance: binding.provenance().clone(),
+            capabilities: binding.capabilities().clone(),
+        };
+        let cancel = Cancel::new();
+        let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(async {}) };
+        let candidate = Routed {
+            catalog: &catalog,
+            models: &model,
+            cancel: &cancel,
+            pause: &pause,
+            classification_deadline: Duration::from_secs(30),
+        };
+        let document = json!({"format": "llm.corpus/1", "cases": cases}).to_string();
+        let corpus = Corpus::parse(document.as_bytes()).unwrap();
+        let run = Replay {
+            id: id("run-1"),
+            candidate_route_id: id("coding-candidate"),
+            ledger_id: id("replay-spend"),
+            currency: Currency::new("USD").unwrap(),
+            money_cap: Amount::parse("1").unwrap(),
+            reserve: Amount::parse("0.1").unwrap(),
+        };
+        let recording = Recording {
+            sink: &log,
+            clock: &Still,
+            prices: Some(&prices),
+        };
+        let run = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap()
+            .block_on(replay(&catalog, &corpus, &run, &candidate, recording))
+            .unwrap();
+        (run, log.records())
+    }
 }

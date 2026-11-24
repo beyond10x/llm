@@ -5,9 +5,12 @@
 //! one. [`Corpus::parse`] takes it only whole. It refuses, naming the member by its path and
 //! sending nothing: a document that is not one JSON value (cut, followed by more bytes or by a
 //! second value), a member given twice at any depth, a format version or case kind it does not
-//! know, a member the format does not declare, and a document past its bounds of
-//! [`MAX_CORPUS_BYTES`] bytes, [`MAX_CASES`] cases or [`MAX_CORPUS_DEPTH`] levels of nesting.
-//! A refusal holds a path and a fixed reason, no text of the corpus.
+//! know, a member the format does not declare, a case id that holds `/`, and a document past its
+//! bounds of [`MAX_CORPUS_BYTES`] bytes, [`MAX_CASES`] cases or [`MAX_CORPUS_DEPTH`] levels of
+//! nesting. A refusal holds a path and a fixed reason, no text of the corpus: the path shows
+//! only the member names the format defines, and `*` for every other member. A recorded verdict
+//! is taken as given and not held to its rubric's schema; a case whose recorded verdict the
+//! schema does not hold reports [`CaseResult::Differs`].
 //!
 //! [`replay`] sends the cases in the order given, one at a time, through a [`Candidate`]: the
 //! port that turns a case into the candidate route's calls, because the classifier and the judge
@@ -22,6 +25,20 @@
 //! and each one after it count [`CaseResult::NotSent`]. A cost that is not known (a call that
 //! reported no usage, a price the book does not hold) is not settled as zero: the case's reserve
 //! stays held and the ledger admits no further case.
+//!
+//! The cap bounds admission, not the spend: a case that costs more than its reserve is settled
+//! at what it cost and can take the spend past the cap. The run stops there, at its last case
+//! too, so its spend is at most the cap, less the reserve, plus the cost of the one case that
+//! passed it. A reserve no case costs more than keeps the spend within the cap.
+//!
+//! Within one run no two calls share a record id. A case's request id is `<run id>/<case id>`,
+//! or `replay-sha256-<hex>` of both ids when the longest id of a record the case writes would
+//! not be an id; that id is the request id for a turn and for a case not sent,
+//! `<request id>/classify` for a classification and `<request id>/<rubric id>` for a verdict, as
+//! `llm-decide` names its records. No case id holds `/`, so the case id of a readable record id
+//! ends at the first `/` after the run id, and two digest forms differ as their case ids do. A
+//! readable id could equal a digest one only for a run id that is `replay-sha256-` and the
+//! SHA-256 of an input that holds that run id itself.
 //!
 //! The run's own loops are linear in the corpus. The budget engine reads every reservation of
 //! its ledger at each command, so the ledger's work grows with the square of the cases sent,
@@ -58,15 +75,23 @@ pub const MAX_CORPUS_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_CASES: usize = 4096;
 /// The most levels of nesting a corpus may have; the document's own object is the first.
 pub const MAX_CORPUS_DEPTH: usize = 64;
+/// The most bytes the rubric id of a verdict case may have, so that the id of the case's call
+/// record, `replay-sha256-<hex>/<rubric id>` at its longest, is an id.
+pub const MAX_RUBRIC_ID_BYTES: usize = 177;
+/// The id of the one classifier a candidate asks a classification case through, so that the id
+/// of the case's call record is `<request id>/classify`.
+pub const REPLAY_CLASSIFIER_ID: &str = "classify";
 
 const NOT_WHOLE: &str = "not one whole JSON document";
 const TWICE: &str = "a member given twice";
 const TOO_DEEP: &str = "nested deeper than 64 levels";
 
 /// Why a corpus was refused: `invalid-request`, or `too-large` past a bound, the path of the
-/// member (`cases[1].recorded.label`; `$` is the document) and a fixed reason. A member name
-/// that is not at most 64 letters, digits, `-` and `_` is shown as `*`, so no text of the corpus
-/// is in a refusal.
+/// member (`cases[1].recorded.label`; `$` is the document) and a fixed reason. The path shows a
+/// member by its name only where `llm.corpus/1` defines that name. Every other member is shown
+/// as `*`: one the format does not define, and each one inside a turn document, a verdict schema
+/// or a recorded verdict (`cases[0].rubric.schema.*.*`). So no text of the corpus, and no name
+/// its writer chose, is in a refusal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CorpusError {
     pub code: ErrorCode,
@@ -95,23 +120,63 @@ enum Seg<'a> {
     Index(usize),
 }
 
+/// What `llm.corpus/1` holds at one place of a document: which member names it defines there.
+#[derive(Clone, Copy)]
+enum Level {
+    Document,
+    Cases,
+    Case,
+    LabelSet,
+    Rubric,
+    Recorded,
+    /// A value the format defines no member of: a scalar, a turn document, a verdict schema, a
+    /// recorded verdict, and everything below a member the format does not define.
+    Free,
+}
+
+impl Level {
+    /// What the member `name` holds, when the format defines a member of that name here.
+    fn member(self, name: &str) -> Option<Self> {
+        Some(match (self, name) {
+            (Self::Document, "cases") => Self::Cases,
+            (Self::Case, "label_set") => Self::LabelSet,
+            (Self::Case, "rubric") => Self::Rubric,
+            (Self::Case, "recorded") => Self::Recorded,
+            (Self::Document, "format")
+            | (
+                Self::Case,
+                "id" | "kind" | "input_tokens" | "primary_record_id" | "turn" | "instructions"
+                | "input" | "subject",
+            )
+            | (Self::LabelSet, "id" | "version" | "labels")
+            | (Self::Rubric, "id" | "version" | "text" | "schema")
+            | (Self::Recorded, "text" | "label" | "verdict") => Self::Free,
+            _ => return None,
+        })
+    }
+}
+
+/// The path as a refusal shows it: an index as it is, a member by its name where the format
+/// defines that name, and every other member, whose name the caller chose, as `*`.
 fn render<'a>(segments: impl IntoIterator<Item = Seg<'a>>) -> String {
     let mut path = String::new();
+    let mut level = Level::Document;
     for segment in segments {
         match segment {
             Seg::Member(name) => {
                 if !path.is_empty() {
                     path.push('.');
                 }
-                let shown = !name.is_empty()
-                    && name.len() <= 64
-                    && name
-                        .bytes()
-                        .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
-                path.push_str(if shown { name } else { "*" });
+                let defined = level.member(name);
+                path.push_str(if defined.is_some() { name } else { "*" });
+                level = defined.unwrap_or(Level::Free);
             }
             Seg::Index(index) => {
                 let _ = write!(path, "[{index}]");
+                level = match level {
+                    Level::Cases => Level::Case,
+                    _ => Level::Free,
+                };
             }
         }
     }
@@ -520,8 +585,14 @@ fn verdict(at: &Place<'_>, members: &Map<String, Value>) -> Result<(CaseAsk, Str
         at.get(members, "rubric")?,
         &[&["id", "version", "text", "schema"]],
     )?;
+    let rubric_id = place.id(rubric, "id")?;
+    if rubric_id.as_str().len() > MAX_RUBRIC_ID_BYTES {
+        return Err(place
+            .member("id")
+            .refuse("a rubric id of more than 177 bytes"));
+    }
     let ask = CaseAsk::Verdict {
-        rubric_id: place.id(rubric, "id")?,
+        rubric_id,
         rubric_version: place.text(rubric, "version")?.to_owned(),
         rubric_text: place.text(rubric, "text")?.to_owned(),
         schema: place.get(rubric, "schema")?.clone(),
@@ -547,6 +618,10 @@ fn case(at: &Place<'_>, value: &Value) -> Result<Case, CorpusError> {
     };
     at.object(value, &[COMMON, own])?;
     let id = at.id(members, "id")?;
+    // The record ids of a run part the case id from what follows it at a `/`.
+    if id.as_str().contains('/') {
+        return Err(at.member("id").refuse("a case id that holds a slash"));
+    }
     let input_tokens = at.get(members, "input_tokens")?.as_u64().ok_or_else(|| {
         at.member("input_tokens")
             .refuse("not a whole number of tokens")
@@ -648,10 +723,14 @@ pub struct Replay {
     /// The id of the run's budget ledger.
     pub ledger_id: Id,
     pub currency: Currency,
-    /// The most the run may spend, in `currency`.
+    /// What admission is held to, in `currency`: a case is sent only while the run's spend plus
+    /// `reserve` is at most the cap. It is not the most the run can spend: a case that costs
+    /// more than `reserve` can take the spend past it, and the run then stops.
     pub money_cap: Amount,
-    /// What each case holds on the ledger until its priced cost settles it. A case that costs
-    /// more is settled at what it cost, and the cap then admits correspondingly less.
+    /// What each case holds on the ledger until its priced cost settles it: the caller's upper
+    /// bound for the cost of one case. While no case costs more, the spend stays within the cap.
+    /// A case that costs more is settled at what it cost; the spend then ends at most at the
+    /// cap, less the reserve, plus the cost of the one case that passed the cap.
     pub reserve: Amount,
 }
 
@@ -661,8 +740,10 @@ pub struct CaseCall<'a> {
     pub case: &'a Case,
     /// The alias of the candidate route, which a request names to reach it.
     pub route: &'a str,
-    /// `<run id>/<case id>`, or `replay-sha256-<hex>` of both when that is no id: the case's
-    /// reservation, and the id or id prefix of its call records.
+    /// `<run id>/<case id>`, or `replay-sha256-<hex>` of both: the case's reservation, and what
+    /// the candidate names the case's call record by. A turn's record has this id, a
+    /// classification's `<request id>/classify` ([`REPLAY_CLASSIFIER_ID`]) and a verdict's
+    /// `<request id>/<rubric id>`; the form is chosen so that each of them is an id.
     pub request_id: &'a Id,
     /// Where the case's call records go. The run marks each one a replay record and settles the
     /// case with their cost, so every call a candidate makes is recorded here.
@@ -716,11 +797,16 @@ pub struct ReplayRun {
     pub money_cap: Amount,
     pub reserve: Amount,
     pub ledger_id: Id,
-    /// The ledger's exposure when the run ended: what its cases settled, plus the reserve of
-    /// each case whose cost is not known.
+    /// The ledger's exposure when the run ended. With `stopped` absent or `limit-exceeded` it is
+    /// what the run's calls cost. With `stopped` `uncertain-spend` it is the cost of the cases
+    /// before the last one sent, plus what the ledger still holds for that case, whose cost is
+    /// not known: its reserve, or the known part of its cost where that is more. That part is a
+    /// hold, not money known to be spent.
     pub spent: Amount,
-    /// Why the ledger refused the first case that was not sent: `limit-exceeded` past the cap,
-    /// `uncertain-spend` after a case whose cost is not known. Absent when every case was sent.
+    /// Why the ledger admits no further case: `limit-exceeded` when the next case's reserve
+    /// does not fit under the cap or the spend is past it, `uncertain-spend` after a case whose
+    /// cost is not known. Set when a case was not sent, and when the last case left the ledger
+    /// so. Absent when every case was sent and the spend is known and within the cap.
     pub stopped: Option<BudgetError>,
     pub cases: u64,
     pub same: u64,
@@ -761,14 +847,21 @@ impl CallSink for Spend<'_> {
     }
 }
 
-/// The request id of one case, which is its reservation id and the id of its skipped record.
-/// The readable form always holds `/` and the digest form never does, so the two never meet.
-fn request_id(run: &Id, case: &Id) -> Option<Id> {
-    crate::shadow::pair_id(
-        format!("{run}/{case}"),
-        "replay-sha256-",
-        [run.as_str(), case.as_str()],
-    )
+/// The request id of one case, which is its reservation id and the id of its skipped record:
+/// `<run id>/<case id>` while the longest id of a record the case writes is an id, else the
+/// digest form, under which that record id is an id for every case the reader takes. The module
+/// documentation says why no two record ids of a run meet.
+fn request_id(run: &Id, case: &Case) -> Option<Id> {
+    let readable = format!("{run}/{}", case.id);
+    let longest = match &case.ask {
+        CaseAsk::Turn { .. } => readable.clone(),
+        CaseAsk::Classification { .. } => format!("{readable}/{REPLAY_CLASSIFIER_ID}"),
+        CaseAsk::Verdict { rubric_id, .. } => format!("{readable}/{rubric_id}"),
+    };
+    if Id::new(longest).is_ok() {
+        return Id::new(readable).ok();
+    }
+    crate::shadow::pair_digest("replay-sha256-", [run.as_str(), case.id.as_str()])
 }
 
 fn compare(case: &Case, answer: &str) -> CaseResult {
@@ -809,7 +902,9 @@ fn admit(
 /// Every record a case writes reaches `recording.sink` with role `Replay` and the case's
 /// `primary_record_id`. The first case the run's ledger refuses writes one record with outcome
 /// `skipped` under the case's request id and is not sent; it and every later case count
-/// `NotSent`, and no later case writes a record. See the module documentation for the ledger.
+/// `NotSent`, and no later case writes a record. A run whose last case took the spend past the
+/// cap, or has no known cost, reports `stopped` as well, with every case sent. See the module
+/// documentation for the ledger and for the record ids.
 ///
 /// # Errors
 /// `invalid-request`, before any case is sent and any record written, for a reserve of zero or
@@ -849,7 +944,7 @@ pub async fn replay(
         let (result, error_code) = if stopped.is_some() {
             (CaseResult::NotSent, None)
         } else {
-            let request_id = request_id(&run.id, &case.id)
+            let request_id = request_id(&run.id, case)
                 .ok_or_else(|| Error::invalid("the run id and case id make no request id"))?;
             let started = recording.clock.unix_ms();
             let reservation = ReservationRequest {
@@ -950,19 +1045,34 @@ async fn sent(
 }
 
 /// The run's report: its counts, and the ledger's exposure as its spend.
+///
+/// `refused` is why the ledger refused the first case not sent. A run that sent its last case
+/// stops there all the same when that case left the ledger admitting nothing further: its cost
+/// is not known, or the spend is past the cap. The cause is the one a further admission would
+/// be refused with, in the ledger's order.
 fn summary(
     run: &Replay,
     corpus: &Corpus,
     ledger: &BudgetEngine,
-    stopped: Option<BudgetError>,
+    refused: Option<BudgetError>,
     results: Vec<CaseReport>,
 ) -> Result<ReplayRun, Error> {
-    let spent = ledger
+    let totals = ledger
         .view()
-        .ok()
-        .and_then(|view| view.totals.exposure_nanos.parse::<u64>().ok())
+        .map_err(|_| Error::new(ErrorCode::Protocol, "the ledger reports no exposure"))?
+        .totals;
+    let spent = totals
+        .exposure_nanos
+        .parse::<u64>()
         .map(Amount::from_nanos)
-        .ok_or_else(|| Error::new(ErrorCode::Protocol, "the ledger reports no exposure"))?;
+        .map_err(|_| Error::new(ErrorCode::Protocol, "the ledger reports no exposure"))?;
+    let stopped = refused.or(if totals.uncertain_count != 0 {
+        Some(BudgetError::UncertainSpend)
+    } else if totals.above_limit {
+        Some(BudgetError::LimitExceeded)
+    } else {
+        None
+    });
     let count = |result: CaseResult| {
         let cases = results.iter().filter(|case| case.result == result).count();
         u64::try_from(cases).unwrap_or(u64::MAX)
