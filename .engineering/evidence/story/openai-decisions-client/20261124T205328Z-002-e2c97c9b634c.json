@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-24T20:53:28Z",
+  "actor": "human:timo",
+  "artifact": "story:openai-decisions-client",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "the wave gate on wave/2026-11-24-openai-decisions-client at d03e93393, each step run alone: task rust, task test, task docs, ess specify validate, llm-conformance check, aep plan artifact validate, all exit 0",
+    "reference": "docs/plan/wave-2026-11-24-openai-decisions-client.md"
+  }
+}
