@@ -14,6 +14,7 @@ members = [
     "crates/llm-calls",
     "crates/llm-embed",
     "crates/llm-decide",
+    "crates/llm-openai-decisions",
     "crates/llm-cli",
     "crates/llm-tool-call",
     "crates/llm-blocking",

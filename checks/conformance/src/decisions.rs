@@ -28,8 +28,8 @@ use llm_core::{
 };
 use llm_cost::PriceBook;
 use llm_decide::{
-    Answer, Chain, Classification, Classifier, JudgeError, LabelSet, Lexical, LexicalClassifier,
-    ModelClassifier, Path, Ports, Rubric, RubricError, SetupError, Verdict,
+    Answer, Chain, ChainOutcome, Classification, Classifier, JudgeError, LabelSet, Lexical,
+    LexicalClassifier, ModelClassifier, Path, Ports, Rubric, RubricError, SetupError, Verdict,
 };
 use llm_routing::{Catalog, Models, Selection};
 use serde::Deserialize;
@@ -38,10 +38,13 @@ use sha2::{Digest, Sha256};
 
 use crate::target::Observed;
 
+mod endpoint;
+
 /// Every view name this domain answers through `query_view`.
 pub const VIEWS: &[&str] = &[
     "llm.decisions.LastClassification",
     "llm.decisions.LastVerdict",
+    endpoint::VIEW,
 ];
 
 const MAX_PROGRAM_BYTES: usize = 64 * 1024;
@@ -51,6 +54,7 @@ pub fn observe(command: &str, input: &Value) -> Option<Result<Observed, TargetEr
     match command {
         "llm.decisions.Classify" => Some(classify(input)),
         "llm.decisions.Judge" => Some(judge(input)),
+        "llm.decisions.Decide" => Some(endpoint::decide(input)),
         _ => None,
     }
 }
@@ -594,6 +598,10 @@ fn classifier(
             None => classifier,
         }));
     }
+    if path == Path::DecisionEndpoint {
+        // That path answers over HTTP; the command `llm.decisions.Decide` runs it.
+        return Err(Error::invalid("this command runs no decision-endpoint classifier").into());
+    }
     let route = route_alias
         .ok_or_else(|| Refusal::Llm(Error::invalid("a model classifier names a route")))?;
     let classifier = if path == Path::ForcedTool {
@@ -708,6 +716,19 @@ fn execute(input: &ClassifyInput, facts: &mut Value) -> Result<(), Refusal> {
                 },
             },
         ));
+    report(&outcome, facts);
+    facts["records"] = json!(
+        log.records()
+            .iter()
+            .map(serde_json::to_string)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| Error::new(ErrorCode::Protocol, "a record did not serialize"))?
+    );
+    Ok(())
+}
+
+/// Writes what a chain returned into `facts`: each attempt, the decision or the final cause.
+fn report(outcome: &ChainOutcome, facts: &mut Value) {
     facts["tried"] = json!(
         outcome
             .attempts
@@ -734,12 +755,4 @@ fn execute(input: &ClassifyInput, facts: &mut Value) -> Result<(), Refusal> {
         }
         None => {}
     }
-    facts["records"] = json!(
-        log.records()
-            .iter()
-            .map(serde_json::to_string)
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| Error::new(ErrorCode::Protocol, "a record did not serialize"))?
-    );
-    Ok(())
 }

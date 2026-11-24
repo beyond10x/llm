@@ -1005,6 +1005,12 @@ scenarios:
 - decisions/scenarios/two-judge-runs-over-one-rubric-and-subject-send-byte-identical-requests.yaml
 - decisions/scenarios/a-rubric-route-with-more-than-one-target-or-fallback-is-refused.yaml
 - decisions/scenarios/a-verdict-call-yields-a-call-record-of-kind-verdict.yaml
+- decisions/scenarios/a-choice-answer-becomes-a-decision-with-a-confidence-per-label.yaml
+- decisions/scenarios/a-refusal-answer-abstains-off-label.yaml
+- decisions/scenarios/an-unknown-answer-type-is-refused-by-its-path.yaml
+- decisions/scenarios/a-request-field-outside-the-reference-is-refused-by-name.yaml
+- decisions/scenarios/an-unreported-usage-counter-stays-unknown.yaml
+- decisions/scenarios/a-decision-endpoint-call-yields-a-call-record-priced-from-the-cost-table.yaml
 - embeddings/scenarios/embed-returns-one-vector-per-text-in-input-order.yaml
 - embeddings/scenarios/a-request-over-the-batch-limit-is-split-and-returned-in-input-order.yaml
 - embeddings/scenarios/an-unreported-token-count-stays-unknown.yaml

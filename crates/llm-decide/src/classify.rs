@@ -1,5 +1,6 @@
 //! The label set, the two results a classifier returns, and the classifiers: two model paths
-//! through the routed, recorded call of `llm-calls`, and a lexical one the caller supplies.
+//! through the routed, recorded call of `llm-calls`, one through a provider's decision endpoint
+//! behind the [`DecisionEndpoint`] port, and a lexical one the caller supplies.
 
 use llm_calls::{CallIdentity, CallRecord, CallSink, Clock, Kind, Recording, record_turn};
 use llm_core::{
@@ -14,6 +15,7 @@ use std::{
     fmt,
     future::{Future, poll_fn},
     pin::pin,
+    sync::atomic::{AtomicBool, Ordering},
     task::Poll,
     time::{Duration, Instant},
 };
@@ -227,6 +229,73 @@ impl LabelSet {
             confidences_bps,
         })
     }
+
+    /// A decision endpoint's choice answer held to the set; `None` when it is a refusal, chose
+    /// or weighed a value that is no text, chose no label of the set, weighs a value that is no
+    /// label of the set or one label twice, or holds a probability [`basis_points`] does not
+    /// take. A label the answer gives no probability keeps an unknown confidence. The
+    /// probabilities are not normalized and their sum is not checked.
+    pub fn decode_choice(&self, answer: &ChoiceAnswer) -> Option<Answer> {
+        let ChoiceAnswer::Chosen {
+            choice,
+            probabilities,
+        } = answer
+        else {
+            return None;
+        };
+        let known: BTreeSet<&str> = self.labels.iter().map(String::as_str).collect();
+        if !known.contains(choice.as_str()) {
+            return None;
+        }
+        // Ends at the first value outside the set or given twice, so it reads at most one more
+        // probability than the set has labels.
+        let mut confidences_bps = BTreeMap::new();
+        for weighed in probabilities {
+            if !known.contains(weighed.label.as_str()) {
+                return None;
+            }
+            let bps = basis_points(weighed.probability)?;
+            if confidences_bps.insert(weighed.label.clone(), bps).is_some() {
+                return None;
+            }
+        }
+        Some(Answer {
+            label: choice.clone(),
+            confidences_bps,
+        })
+    }
+}
+
+/// A probability as basis points: the whole number nearest to `probability * 10000`, computed
+/// exactly on the double (no floating-point multiplication), a tie rounding up: `0.03125` is 313.
+/// `None` unless the probability is finite and `0 <= probability <= 1`; minus zero is 0.
+pub fn basis_points(probability: f64) -> Option<u16> {
+    const FRACTION_BITS: u32 = 52;
+    if !(0.0..=1.0).contains(&probability) {
+        return None;
+    }
+    let bits = probability.to_bits();
+    let fraction = bits & ((1 << FRACTION_BITS) - 1);
+    let exponent = u32::try_from((bits >> FRACTION_BITS) & 0x7ff).ok()?;
+    // The double is `significand / 2^shift`; at most 1, so `shift` is at least 52.
+    let (significand, shift) = if exponent == 0 {
+        (fraction, 1074)
+    } else {
+        (
+            fraction | (1 << FRACTION_BITS),
+            1075_u32.checked_sub(exponent)?,
+        )
+    };
+    // Below 2^67: a 53-bit significand times a number under 2^14.
+    let scaled = u128::from(significand) * u128::from(MAX_BPS);
+    if shift >= 68 {
+        // Under half a basis point.
+        return Some(0);
+    }
+    let whole = scaled >> shift;
+    let remainder = scaled & ((1_u128 << shift) - 1);
+    let half = 1_u128 << (shift - 1);
+    u16::try_from(whole + u128::from(remainder >= half)).ok()
 }
 
 /// One answer before it is held to a label set: the label named and the confidences known. A
@@ -337,8 +406,68 @@ pub enum Path {
     JsonSchema,
     /// A turn forcing one tool whose parameters are the label set's schema.
     ForcedTool,
+    /// One choice question to a provider's decision endpoint ([`DecisionEndpoint`]).
+    DecisionEndpoint,
     /// A classifier the caller supplies; no model call.
     Lexical,
+}
+
+/// One choice question a classifier puts to a decision endpoint: the route target to ask, the
+/// question, the input, and where the call's record goes.
+pub struct ChoiceCall<'a> {
+    /// The route alias the classifier names.
+    pub route: &'a str,
+    /// The admitted target of that route.
+    pub selection: &'a Selection<'a>,
+    pub instructions: &'a str,
+    /// The label set's labels, in its order: the choices.
+    pub choices: &'a [String],
+    pub input: &'a str,
+    pub cancel: &'a Cancel,
+    /// The id of the one record the call writes.
+    pub identity: CallIdentity,
+    pub recording: Recording<'a>,
+}
+
+/// A text value a choice answer gives a probability, not yet held to a label set.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LabelProbability {
+    pub label: String,
+    pub probability: f64,
+}
+
+/// What a decision endpoint answered one choice question.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ChoiceAnswer {
+    /// The text value chosen and the probabilities the answer lists, as the endpoint wrote them.
+    Chosen {
+        choice: String,
+        probabilities: Vec<LabelProbability>,
+    },
+    /// The endpoint declined to answer the question.
+    Refused,
+    /// The answer chose, or gave a probability to, a value that is no text; labels are texts.
+    NotText,
+}
+
+/// A provider's decision endpoint, as the classifier asks it. An implementation sends the one
+/// choice question to `call.selection`, with no retry and no fallback, and writes one call
+/// record with `call.identity` to `call.recording` for every call it sent or that its
+/// credential refused.
+pub trait DecisionEndpoint: Send + Sync {
+    fn choose<'a>(&'a self, call: ChoiceCall<'a>) -> BoxFuture<'a, Result<ChoiceAnswer, Error>>;
+}
+
+impl<E: DecisionEndpoint + ?Sized> DecisionEndpoint for &E {
+    fn choose<'a>(&'a self, call: ChoiceCall<'a>) -> BoxFuture<'a, Result<ChoiceAnswer, Error>> {
+        (**self).choose(call)
+    }
+}
+
+impl<E: DecisionEndpoint + ?Sized> DecisionEndpoint for std::sync::Arc<E> {
+    fn choose<'a>(&'a self, call: ChoiceCall<'a>) -> BoxFuture<'a, Result<ChoiceAnswer, Error>> {
+        (**self).choose(call)
+    }
 }
 
 /// The caller's side of a classification: the catalog and models a model path routes through,
@@ -760,6 +889,152 @@ impl Classifier for ModelClassifier {
     }
     fn classify<'a>(&'a self, ask: Ask<'a>) -> BoxFuture<'a, Classification> {
         Box::pin(self.ask(ask))
+    }
+}
+
+/// A classifier that asks a provider's decision endpoint one choice question whose choices are
+/// the label set: one call to the first compatible target of its route, with no retry and no
+/// fallback, under the chain's deadline. The endpoint writes the call's record, which reaches the
+/// caller's sink as kind `Classification`.
+pub struct EndpointClassifier<E> {
+    id: Id,
+    route: String,
+    instructions: String,
+    min_confidence_bps: Option<u16>,
+    endpoint: E,
+}
+
+impl<E: DecisionEndpoint> EndpointClassifier<E> {
+    /// Asks `endpoint` at the route alias `route`.
+    pub fn new(id: Id, route: impl Into<String>, endpoint: E) -> Self {
+        Self {
+            id,
+            route: route.into(),
+            instructions: String::new(),
+            min_confidence_bps: None,
+            endpoint,
+        }
+    }
+
+    /// The question's instructions: the caller's prompt.
+    #[must_use]
+    pub fn with_instructions(mut self, instructions: impl Into<String>) -> Self {
+        self.instructions = instructions.into();
+        self
+    }
+
+    /// An answer whose label's confidence is under `bps`, or unknown, abstains `OffLabel`.
+    ///
+    /// # Errors
+    /// Refuses a floor above [`MAX_BPS`].
+    pub fn with_min_confidence_bps(mut self, bps: u16) -> Result<Self, SetupError> {
+        self.min_confidence_bps = Some(floor(bps)?);
+        Ok(self)
+    }
+
+    async fn ask(&self, ask: Ask<'_>) -> Classification {
+        let ports = ask.ports;
+        let clock: &dyn Clock = ports.recording.clock;
+        let start = clock.monotonic();
+        let elapsed = || clock.monotonic().saturating_sub(start);
+        if ask.remaining.is_zero() {
+            return abstain(&self.id, AbstentionCause::Timeout, 0, None);
+        }
+        let failed = |error: &Error| {
+            let cause = AbstentionCause::ProviderError(error.code);
+            abstain(&self.id, cause, millis(elapsed()), None)
+        };
+        let Ok(record_id) = Id::new(format!("{}/{}", ask.request_id, self.id)) else {
+            return failed(&Error::invalid("invalid call record id"));
+        };
+        // Selection reads only the route and the caller's token estimate: a turn with no item.
+        let probe = TurnRequest::new(self.route.clone(), Vec::new());
+        let selection = match ports.catalog.resolve(&probe, ask.input_tokens) {
+            Ok(selection) => selection,
+            Err(error) => return failed(&error),
+        };
+        if ports.cancel.is_cancelled() {
+            return failed(&Error::cancelled());
+        }
+        if let Err(error) = (ports.admit)(&selection) {
+            return failed(&error);
+        }
+        let cancel = ports.cancel.child_token();
+        let noting = Noting {
+            sink: ports.recording.sink,
+            id: &record_id,
+            wrote: AtomicBool::new(false),
+        };
+        let call = self.endpoint.choose(ChoiceCall {
+            route: &self.route,
+            selection: &selection,
+            instructions: &self.instructions,
+            choices: ask.label_set.labels(),
+            input: ask.input,
+            cancel: &cancel,
+            identity: CallIdentity::primary(record_id.clone()),
+            recording: Recording {
+                sink: &noting,
+                ..ports.recording
+            },
+        });
+        let (answered, cancelled) = race(call, (ports.pause)(ask.remaining), &cancel).await;
+        let spent = elapsed();
+        let latency_ms = millis(spent);
+        // Only a call that wrote its record has one to name.
+        let record = noting.wrote.load(Ordering::SeqCst).then_some(record_id);
+        // An answer at or after the deadline is not used, whoever noticed the deadline first.
+        if cancelled || spent >= ask.remaining {
+            return abstain(&self.id, AbstentionCause::Timeout, latency_ms, record);
+        }
+        match answered {
+            Err(error) => abstain(
+                &self.id,
+                AbstentionCause::ProviderError(error.code),
+                latency_ms,
+                record,
+            ),
+            Ok(answer) => settle(
+                &self.id,
+                ask.label_set,
+                ask.label_set.decode_choice(&answer),
+                self.min_confidence_bps,
+                latency_ms,
+                record,
+            ),
+        }
+    }
+}
+
+impl<E: DecisionEndpoint> Classifier for EndpointClassifier<E> {
+    fn id(&self) -> &Id {
+        &self.id
+    }
+    fn path(&self) -> Path {
+        Path::DecisionEndpoint
+    }
+    fn min_confidence_bps(&self) -> Option<u16> {
+        self.min_confidence_bps
+    }
+    fn classify<'a>(&'a self, ask: Ask<'a>) -> BoxFuture<'a, Classification> {
+        Box::pin(self.ask(ask))
+    }
+}
+
+/// Passes each record on as a classification call and notes whether the call's own arrived.
+struct Noting<'s> {
+    sink: &'s dyn CallSink,
+    id: &'s Id,
+    wrote: AtomicBool,
+}
+
+impl CallSink for Noting<'_> {
+    fn record(&self, mut record: CallRecord) {
+        if &record.id == self.id {
+            self.wrote.store(true, Ordering::SeqCst);
+        }
+        record.kind = Kind::Classification;
+        self.sink.record(record);
     }
 }
 
