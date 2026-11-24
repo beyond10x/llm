@@ -10,7 +10,7 @@ relations:
 - decides: story:offline-replay-eval
 revision: 2
 transitions:
-- {from: "draft", to: "accepted", at: "2026-11-24T21:00:46Z", actor: "human:timo", revision: 2}
+- {from: "draft", to: "accepted", at: "2026-11-24T22:00:52Z", actor: "human:operator", revision: 2}
 ---
 ## Decision
 
