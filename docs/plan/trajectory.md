@@ -30,7 +30,7 @@ Read at `main` `c7c2a62cb` (llm 0.26.0). The wave plan below was derived with
 | --- | --- | --- | --- | --- |
 | 1 | `story:rubric-judge` | O6 | `llm-decide` judges a subject against a rubric and returns a verdict that names the rubric version, its digest, the route target and the upstream model; 6 scenarios | delivered: [wave-2026-11-24-rubric-judge](wave-2026-11-24-rubric-judge.md) |
 | 2 | `story:openai-decisions-client` | O3 | the classifier's third model path asks a provider decision endpoint (`POST /v1/decisions`) through llm's credentials, transport and call records; 6 scenarios | delivered: [wave-2026-11-24-openai-decisions-client](wave-2026-11-24-openai-decisions-client.md) |
-| 3 | `story:offline-replay-eval` | O6 | `llm replay` sends a recorded corpus to a candidate route, compares each answer and stops at a money cap; 6 scenarios | planned |
+| 3 | `story:offline-replay-eval` | O6 | `llm replay` sends a recorded corpus to a candidate route, compares each answer and stops at a money cap; 6 scenarios | running: [wave-2026-11-24-offline-replay-eval](wave-2026-11-24-offline-replay-eval.md) |
 
 The verb's order was `story:anthropic-access`, `story:offline-replay-eval`,
 `story:openai-decisions-client`, `story:rubric-judge`. The replay compares turns, classifications and
