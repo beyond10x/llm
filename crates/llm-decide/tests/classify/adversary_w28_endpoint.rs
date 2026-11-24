@@ -128,6 +128,11 @@ struct Ran {
 }
 
 fn run(chain: &Chain, cancel: &Cancel) -> Ran {
+    run_as(chain, cancel, "req-1")
+}
+
+/// One chain run asked under the request id `request`.
+fn run_as(chain: &Chain, cancel: &Cancel, request: &str) -> Ran {
     let catalog = catalog();
     let clock = Scripted::at(1_000);
     let log = CallLog::new();
@@ -139,7 +144,7 @@ fn run(chain: &Chain, cancel: &Cancel) -> Ran {
     };
     let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(std::future::pending()) };
     let outcome = block_on(chain.classify(
-        &id("req-1"),
+        &id(request),
         INPUT,
         Some(100),
         Ports {
@@ -209,4 +214,55 @@ fn adversary_w28_a_chain_cancelled_before_the_call_asks_no_endpoint() {
     assert_eq!(endpoint.asked.load(Ordering::SeqCst), 0);
     assert_eq!(ran.admitted, 0);
     assert!(ran.records.is_empty());
+}
+
+/// An endpoint that answers at once and writes its record under the identity the call gave it.
+struct Own;
+
+impl DecisionEndpoint for Own {
+    fn choose<'a>(&'a self, call: ChoiceCall<'a>) -> BoxFuture<'a, Result<ChoiceAnswer, Error>> {
+        Box::pin(async move {
+            let stopwatch = Stopwatch::start(call.recording.clock);
+            call.recording.sink.record(CallRecord::new(
+                call.identity,
+                Kind::Turn,
+                call.selection.target.route_id.clone(),
+                stopwatch.stop(call.recording.clock),
+                CallFacts {
+                    route_target_id: Some(call.selection.target.id.clone()),
+                    upstream_model: None,
+                    outcome: Outcome::Succeeded,
+                    error_code: None,
+                    dispatch: None,
+                    attempts: 1,
+                    usage: Usage::default(),
+                    cost: None,
+                },
+            ));
+            Ok(ChoiceAnswer::Chosen {
+                choice: "positive".to_owned(),
+                probabilities: Vec::new(),
+            })
+        })
+    }
+}
+
+/// The design: "The record id is `<request id>/<classifier id>`". Every other run asks as
+/// `req-1` through a classifier named `endpoint`, so an id built from either constant passes
+/// there. Two requests through two classifiers give four ids.
+#[test]
+fn adversary_w28_the_record_id_is_this_requests_and_this_classifiers() {
+    for request in ["req-1", "order-7731"] {
+        for classifier in ["endpoint", "second-opinion"] {
+            let asking = EndpointClassifier::new(id(classifier), "code", Arc::new(Own));
+            let ran = run_as(&chain(vec![Box::new(asking)]), &Cancel::new(), request);
+            let [Classification::Decided(decision)] = ran.attempts.as_slice() else {
+                panic!("a choice of the set decides: {:?}", ran.attempts);
+            };
+            let expected = id(&format!("{request}/{classifier}"));
+            assert_eq!(decision.call_record_id, Some(expected.clone()));
+            assert_eq!(ran.records.len(), 1);
+            assert_eq!(ran.records[0].id, expected);
+        }
+    }
 }

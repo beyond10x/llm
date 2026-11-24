@@ -677,7 +677,7 @@ async fn an_answer_body_is_taken_only_whole() {
     );
     // The second `model` is written with one letter escaped: the same name, other bytes.
     let repeated_escaped = EXAMPLE_RESPONSE.replacen('{', "{\"mod\\u0065l\": \"gpt-6-luna\",", 1);
-    assert!(repeated_escaped.contains(r#""model""#));
+    assert!(repeated_escaped.contains('\\'));
     assert!(!repeated_root.contains('\\'));
     for text in [
         "",

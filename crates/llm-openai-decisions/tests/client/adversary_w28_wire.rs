@@ -171,8 +171,10 @@ impl SecretResolver for Counting {
     }
 }
 
-/// The design: "A body cut short ... [is] refused `protocol` with dispatch `accepted`". Where the
-/// end of the connection is the end of the body, the cut is visible only in the document.
+/// The design: a body that arrived whole by the transport's account and is not one JSON document
+/// is `protocol`, dispatch `accepted` and not retriable, "which includes a body delimited only by
+/// the connection's end and cut there". Where the end of the connection is the end of the body,
+/// the cut is visible only in the document.
 #[tokio::test]
 async fn adversary_w28_a_body_cut_where_the_connection_ends_it_is_refused_protocol() {
     let half = &EXAMPLE_RESPONSE[..EXAMPLE_RESPONSE.len() / 2];
@@ -183,6 +185,24 @@ async fn adversary_w28_a_body_cut_where_the_connection_ends_it_is_refused_protoc
     assert_eq!(
         (error.code, error.dispatch),
         (ErrorCode::Protocol, Dispatch::Accepted)
+    );
+    assert!(!error.retriable, "final");
+}
+
+/// The same sentence for the other framing: a chunked body that carries its last chunk arrived
+/// whole by the transport's account, so half a document in it is the reader's refusal, final,
+/// and not the transport's retriable failure.
+#[tokio::test]
+async fn adversary_w28_half_a_document_in_a_chunked_body_with_its_end_is_refused_protocol() {
+    let half = &EXAMPLE_RESPONSE[..EXAMPLE_RESPONSE.len() / 2];
+    let bytes = format!(
+        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ntransfer-encoding: chunked\r\nconnection: close\r\n\r\n{:x}\r\n{half}\r\n0\r\n\r\n",
+        half.len()
+    );
+    let error = decide_raw(bytes.into_bytes()).await.unwrap_err();
+    assert_eq!(
+        (error.code, error.dispatch, error.retriable),
+        (ErrorCode::Protocol, Dispatch::Accepted, false)
     );
 }
 
@@ -581,5 +601,32 @@ async fn adversary_w28_a_probability_is_read_as_the_double_its_text_names() {
             None => Err(cause(&classified).expect("an abstention has a cause")),
         };
         assert_eq!(got, expected, "{text}");
+    }
+}
+
+/// The design: the text `"true"` and the boolean `true` are distinct, and a boolean value
+/// abstains `OffLabel`. The suite gives a boolean only against labels no boolean spells; here
+/// the set has the labels `true` and `false`, so a boolean read as its text would be a label.
+#[tokio::test]
+async fn adversary_w28_a_boolean_value_is_not_the_label_that_spells_it() {
+    let answering = |choice: &str, value: &str| {
+        Answer::Body(format!(
+            r#"{{"model":"gpt-6-luna","answers":[{{"type":"choice","name":null,"choice":{choice},"probabilities":[{{"value":{value},"probability":0.9}}],"confidence":0.5}}],"usage":{{}}}}"#
+        ))
+    };
+    let set = || labels(&["true", "false"]);
+    // The text is the label, with its probability.
+    let classified = classify(vec![answering("\"true\"", "\"true\"")], set(), LONG, None).await;
+    let decision = classified.outcome.decision().expect("the text is a label");
+    assert_eq!(decision.label, "true");
+    assert_eq!(decision.confidences[0].confidence_bps, Some(9000));
+    // A boolean is no label: as the probability's value, as the chosen value, and as both.
+    for (choice, value) in [("\"true\"", "true"), ("true", "\"true\""), ("true", "true")] {
+        let classified = classify(vec![answering(choice, value)], set(), LONG, None).await;
+        assert_eq!(
+            cause(&classified),
+            Some(AbstentionCause::OffLabel),
+            "choice {choice}, value {value}"
+        );
     }
 }
