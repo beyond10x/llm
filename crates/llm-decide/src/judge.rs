@@ -214,8 +214,9 @@ pub struct Verdict {
     /// The model the far side reported, not the name the catalog declares.
     pub upstream_model: Id,
     /// The answer as canonical JSON, valid against the rubric's schema: object keys sorted, no
-    /// whitespace, an integer with every digit, any other number as the shortest decimal that
-    /// reads back as the same double. Absent exactly when `error_code` is set.
+    /// whitespace, an integer digit for digit, any other number with the fewest digits that
+    /// read back as the same double. The answer `-0` is the double minus zero and is written
+    /// `-0.0`. Absent exactly when `error_code` is set.
     pub verdict_json: Option<String>,
     /// `protocol` when the answer was not one whole, unambiguous JSON value or not valid against
     /// the schema. Such an answer is refused as it is, never repaired.
@@ -343,8 +344,8 @@ fn ordered(value: &Value) -> Value {
 }
 
 /// `value` as canonical JSON: the keys of every object sorted, no whitespace, every scalar as
-/// `serde_json` writes it (an integer with every digit, any other number as the shortest decimal
-/// that reads back as the same double). It does not depend on the order a map was built in.
+/// `serde_json` writes it (an integer with every digit, a double with the fewest digits that
+/// read back as the same double). It does not depend on the order a map was built in.
 fn canonical(value: &Value) -> String {
     let mut out = String::new();
     write_canonical(value, &mut out);

@@ -9,20 +9,22 @@ use serde::de::{DeserializeSeed, Deserializer, Error as _, MapAccess, SeqAccess,
 use serde_json::{Map, Number, Value};
 use std::fmt;
 
-/// The outcome's answer as JSON, exactly as it arrived, or `None` when it is not one whole,
-/// unambiguous JSON value:
+/// The outcome's answer as JSON, as it arrived and with nothing repaired, or `None` when it is
+/// not one whole, unambiguous JSON value:
 ///
 /// - the turn did not end normally (the output limit, an incomplete answer);
 /// - the outcome has no assistant text or more than one, or anything else beside it, such as a
 ///   refusal (state the provider keeps, [`Item::Opaque`], is not part of the answer; routing
 ///   has already failed a call whose outcome holds a tool call the request did not publish);
-/// - the text is not one JSON value with nothing but JSON whitespace around it;
+/// - the text is not one JSON value with nothing but JSON whitespace around it, or nests
+///   deeper than [`MAX_DEPTH`];
 /// - an object gives a key twice, at any depth;
 /// - a number written without a fraction or an exponent is outside what `i64` and `u64` hold,
 ///   so it would be rounded to a double.
 ///
-/// Every other number is read as JSON readers read it: an integer exactly, a number with a
-/// fraction or an exponent as the nearest double; one no double holds is not read.
+/// Every other number is read as JSON readers read it: an integer exactly, except `-0`, which
+/// is the double minus zero; a number with a fraction or an exponent as the nearest double; one
+/// no double holds is not read.
 pub(crate) fn whole(outcome: &TurnOutcome) -> Option<Value> {
     if outcome.stop_reason != StopReason::EndTurn {
         return None;
@@ -37,13 +39,32 @@ pub(crate) fn whole(outcome: &TurnOutcome) -> Option<Value> {
     }
     let text = answer?;
     let mut reader = serde_json::Deserializer::from_str(text);
-    let value = Strict.deserialize(&mut reader).ok()?;
+    reader.disable_recursion_limit();
+    let value = Strict(MAX_DEPTH).deserialize(&mut reader).ok()?;
     reader.end().ok()?;
     integers_are_exact(text).then_some(value)
 }
 
-/// Reads any JSON value into a [`Value`], refusing an object that gives a key twice.
-struct Strict;
+/// The deepest an answer nests: an array or an object inside another is one level, a scalar is
+/// none. The bound is this reader's own; the JSON reader's is switched off, so the two cannot
+/// differ.
+const MAX_DEPTH: usize = 128;
+
+/// Reads any JSON value into a [`Value`], refusing an object that gives a key twice and an array
+/// or object opened with no level left. It holds the levels that may still open.
+#[derive(Clone, Copy)]
+struct Strict(usize);
+
+impl Strict {
+    /// The reader for what an array or object holds, or the refusal of one opened past the bound.
+    /// Refusing here, before anything inside is read, is what bounds the recursion.
+    fn inside<E: serde::de::Error>(self) -> Result<Self, E> {
+        self.0
+            .checked_sub(1)
+            .map(Self)
+            .ok_or_else(|| E::custom("nested deeper than the bound"))
+    }
+}
 
 impl<'de> DeserializeSeed<'de> for Strict {
     type Value = Value;
@@ -57,7 +78,8 @@ impl<'de> Visitor<'de> for Strict {
     type Value = Value;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("a JSON value that gives no key twice")
+        formatter
+            .write_str("a JSON value that gives no key twice and nests no deeper than the bound")
     }
     fn visit_bool<E>(self, value: bool) -> Result<Value, E> {
         Ok(Value::Bool(value))
@@ -83,16 +105,18 @@ impl<'de> Visitor<'de> for Strict {
         Ok(Value::Null)
     }
     fn visit_seq<A: SeqAccess<'de>>(self, mut items: A) -> Result<Value, A::Error> {
+        let inside = self.inside()?;
         let mut read = Vec::new();
-        while let Some(item) = items.next_element_seed(Self)? {
+        while let Some(item) = items.next_element_seed(inside)? {
             read.push(item);
         }
         Ok(Value::Array(read))
     }
     fn visit_map<A: MapAccess<'de>>(self, mut members: A) -> Result<Value, A::Error> {
+        let inside = self.inside()?;
         let mut read = Map::new();
         while let Some(name) = members.next_key::<String>()? {
-            let member = members.next_value_seed(Self)?;
+            let member = members.next_value_seed(inside)?;
             if read.insert(name, member).is_some() {
                 return Err(A::Error::custom("an object gives a key twice"));
             }
@@ -128,7 +152,9 @@ fn integers_are_exact(text: &str) -> bool {
             let after = rest.trim_start_matches(|each: char| {
                 matches!(each, '-' | '+' | '.' | 'e' | 'E') || each.is_ascii_digit()
             });
-            let literal = rest.strip_suffix(after).unwrap_or(rest);
+            // The literal is what the trim took off: its length is a subtraction, so each
+            // number costs its own length and the scan the length of the text.
+            let (literal, _) = rest.split_at(rest.len() - after.len());
             let is_integer = !literal.contains(['.', 'e', 'E']);
             if is_integer && literal.parse::<i64>().is_err() && literal.parse::<u64>().is_err() {
                 return false;

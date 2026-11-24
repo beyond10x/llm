@@ -777,12 +777,14 @@ version, an empty text and a schema the library cannot hold an answer to (`Rubri
 `properties`, `required`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`
 and `anyOf`, with `title` and `description` as annotations; any other keyword refuses the rubric,
 so no answer is held to less than its schema. llm takes no JSON Schema dependency for this. A
-schema nests at most 64 levels, a literal inside `const` or `enum` included. `enum` and `const`
-compare numbers by value, `1` and `1.0` being one number, at every depth of a literal; `minimum`
-and `maximum` compare exact values, so a bound holds for every integer from the least `i64` to
-the greatest `u64` and for every double, with no conversion that rounds. The rubric keeps the
-schema as it was given, with its keys put in canonical order and no number written and read back,
-so the digest, `Rubric::schema` and the request carry the same bytes.
+schema nests at most 64 levels below its root: a subschema is one level below the schema that
+holds it, a `const` or `enum` literal starts at its schema's level, and a member of an array or
+object inside the literal is one level below that array or object, the `enum` list being such an
+array. `enum` and `const` compare numbers by value, `1` and `1.0` being one number, at every depth
+of a literal; `minimum` and `maximum` compare exact values, so a bound holds for every integer
+from the least `i64` to the greatest `u64` and for every double, with no conversion that rounds.
+The rubric keeps the schema as it was given, with its keys put in canonical order and no number
+written and read back, so the digest, `Rubric::schema` and the request carry the same bytes.
 
 `judge(rubric, subject, request_id, input_tokens, ports)` makes one call. The request is the
 rubric's text as the instructions, the subject as the one user item and the schema, in canonical
@@ -810,17 +812,22 @@ with the call's record written as succeeded:
 - the outcome holds exactly one assistant text item, and beside it only state the provider keeps
   (`Item::Opaque`): two text items are not joined, since `1` and `2` would read as `12`, and a
   refusal beside the text refuses the answer;
-- the text is one JSON value with nothing but JSON whitespace around it, nested no deeper than
-  the JSON reader goes (128 levels);
+- the text is one JSON value with nothing but JSON whitespace around it;
+- it nests at most 128 levels, an array or object being one level and a scalar none: 128 arrays
+  or objects one inside another are read, and the 129th is refused where it opens. The library
+  counts the levels itself and switches the JSON reader's own limit off (`serde_json` feature
+  `unbounded_depth`), so the bound is this one number;
 - no object gives a key twice, at any depth, however the key is escaped;
 - every number written without a fraction or an exponent is an integer `i64` or `u64` holds, and
-  is kept with every digit; one outside that range is refused rather than rounded.
+  is written back digit for digit; one outside that range is refused rather than rounded. The one
+  exception is `-0`: JSON readers hold it as the double minus zero, so it is written `-0.0`, the
+  same value.
 
 A number written with a fraction or an exponent is the double nearest to it, as JSON readers have
 it (RFC 8259, section 6), read with correct rounding (`serde_json` feature `float_roundtrip`, so
-the result does not depend on which other crates are linked) and written as the shortest decimal
-that reads back as the same double: `1E2` is written `100.0`, and a number no double holds
-(`1e400`) is refused.
+the result does not depend on which other crates are linked) and written with the fewest digits
+that read back as the same double, in the form `serde_json` writes: `1E2` is written `100.0`,
+`1e30` is written `1e+30`, and a number no double holds (`1e400`) is refused.
 
 A judge call publishes no tool. An outcome that holds a tool call, or says it stopped for one, is
 refused by the routed call itself: the judge returns that error, `protocol`, with the call's

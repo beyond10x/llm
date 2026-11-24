@@ -21,7 +21,7 @@ use std::{
         atomic::{AtomicU64, Ordering},
     },
     task::{Context, Poll, Waker},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
@@ -505,6 +505,8 @@ fn a_tool_call_in_the_outcome_fails_the_call_and_is_no_verdict() {
 #[test]
 fn an_answer_is_one_json_value_and_nothing_after_it() {
     for answer in [
+        "",
+        " ",
         "1 2",
         "1,",
         "1}",
@@ -525,10 +527,152 @@ fn an_answer_is_one_json_value_and_nothing_after_it() {
     }
     // The four whitespace bytes of JSON around the one value are not part of it.
     assert_eq!(held("{}", &Far::answers(" \t\r\n[1, 2]\n ")), kept("[1,2]"));
-    // An answer nests as deep as the JSON reader goes, 128 levels, and no deeper.
-    let around = |levels: usize| format!("{}{}", "[".repeat(levels), "]".repeat(levels));
-    assert_eq!(held("{}", &Far::answers(&around(100))), kept(&around(100)));
-    assert_eq!(held("{}", &Far::answers(&around(200))), REFUSED);
+    // The smallest values are whole answers too.
+    for answer in ["{}", "[]", r#""""#, "0", "null", r#"{"":""}"#, "[[],{}]"] {
+        assert_eq!(held("{}", &Far::answers(answer)), kept(answer), "{answer}");
+    }
+}
+
+/// An answer nests 128 levels and no deeper: an array or an object inside another is one level,
+/// and a scalar is none. The bound is the library's own, so the 129th level is refused where it
+/// opens, however deep the text goes on.
+#[test]
+fn an_answer_nests_128_levels_whatever_opens_them_and_no_deeper() {
+    let arrays = |levels: usize| format!("{}{}", "[".repeat(levels), "]".repeat(levels));
+    let objects = |levels: usize| format!("{}1{}", r#"{"a":"#.repeat(levels), "}".repeat(levels));
+    // An object in an array in an object, and so on: two levels a pair.
+    let mixed = |pairs: usize| format!("{}1{}", r#"{"a":["#.repeat(pairs), "]}".repeat(pairs));
+    for (at_the_bound, past_it) in [
+        (arrays(128), arrays(129)),
+        (objects(128), objects(129)),
+        (mixed(64), format!("[{}]", mixed(64))),
+        (
+            format!(r#"{{"a":{},"b":1}}"#, arrays(127)),
+            format!(r#"{{"a":{},"b":1}}"#, arrays(128)),
+        ),
+    ] {
+        assert_eq!(
+            held("{}", &Far::answers(&at_the_bound)),
+            kept(&at_the_bound),
+            "{} bytes at the bound",
+            at_the_bound.len()
+        );
+        assert_eq!(
+            held("{}", &Far::answers(&past_it)),
+            REFUSED,
+            "{} bytes past the bound",
+            past_it.len()
+        );
+    }
+    // Well inside the bound and well past it, as before.
+    assert_eq!(held("{}", &Far::answers(&arrays(100))), kept(&arrays(100)));
+    assert_eq!(held("{}", &Far::answers(&arrays(200))), REFUSED);
+    // Far past the bound, the answer is refused at its 129th level and not walked to its end.
+    for answer in [arrays(100_000), objects(100_000), "[".repeat(100_000)] {
+        assert_eq!(held("{}", &Far::answers(&answer)), REFUSED);
+    }
+}
+
+/// Reading, checking and writing an answer take time proportional to its length, whatever it is
+/// made of: four times the answer must not cost eight times as long. The fastest of five runs
+/// stands for each size, so another test running beside this one does not decide it.
+#[test]
+fn an_answer_of_any_make_is_read_in_time_proportional_to_its_length() {
+    let catalog = pinned("remote-large");
+    // (what the answer is made of, its schema, one member, the canonical form of that member)
+    let makes: [(&str, &str, &str, &str); 7] = [
+        (
+            "integers",
+            r#"{"items":{"type":"integer"}}"#,
+            "-12345",
+            "-12345",
+        ),
+        ("doubles", r#"{"items":{"type":"number"}}"#, "0.5", "0.5"),
+        (
+            "strings with escapes",
+            r#"{"items":{"type":"string"}}"#,
+            r#""a\"b\\""#,
+            r#""a\"b\\""#,
+        ),
+        (
+            "objects",
+            r#"{"items":{"type":"object","required":["a"],"additionalProperties":false,"properties":{"a":{"const":1}}}}"#,
+            r#"{"a":1.0}"#,
+            r#"{"a":1.0}"#,
+        ),
+        ("nested arrays", "{}", "[[[1]]]", "[[[1]]]"),
+        ("whitespace", "{}", " \n\t 7 \r\n ", "7"),
+        (
+            "an enum of literals",
+            r#"{"items":{"enum":["a",2,[3],{"b":4}]}}"#,
+            r#"{"b":4.0}"#,
+            r#"{"b":4.0}"#,
+        ),
+    ];
+    for (make, schema, member, written) in makes {
+        let schema: Value = serde_json::from_str(schema).unwrap();
+        let rubric = Rubric::new(id("r"), "v1", TEXT, &schema, "code").unwrap();
+        let list = |count: usize, member: &str| {
+            format!("[{}{member}]", format!("{member},").repeat(count - 1))
+        };
+        let fastest = |count: usize| {
+            let far = Far::answers(&list(count, member));
+            let expected = list(count, written);
+            (0..5)
+                .map(|_| {
+                    let started = Instant::now();
+                    let ran = run_as(&catalog, &rubric, SUBJECT, "req-1", 0, &far);
+                    let took = started.elapsed();
+                    assert_eq!(
+                        ran.verdict().verdict_json.as_deref(),
+                        Some(expected.as_str())
+                    );
+                    took
+                })
+                .min()
+                .unwrap()
+        };
+        let (short, long) = (fastest(25_000), fastest(100_000));
+        assert!(
+            long < short * 8,
+            "{make}: 25000 members took {short:?}, 100000 members took {long:?}"
+        );
+    }
+    // One long string and one object of many keys, the two answers that are not a list.
+    let any: Value = json!({});
+    let rubric = Rubric::new(id("r"), "v1", TEXT, &any, "code").unwrap();
+    let string = |length: usize| format!(r#""{}""#, r"a\n".repeat(length / 3));
+    let keys = |count: usize| {
+        let members: Vec<String> = (0..count)
+            .map(|index| format!(r#""k{index:07}":{index}"#))
+            .collect();
+        format!("{{{}}}", members.join(","))
+    };
+    for (make, small, large) in [
+        ("one string", string(300_000), string(1_200_000)),
+        ("one object", keys(25_000), keys(100_000)),
+    ] {
+        let fastest = |answer: &str| {
+            let far = Far::answers(answer);
+            (0..5)
+                .map(|_| {
+                    let started = Instant::now();
+                    let ran = run_as(&catalog, &rubric, SUBJECT, "req-1", 0, &far);
+                    let took = started.elapsed();
+                    assert_eq!(ran.verdict().verdict_json.as_deref(), Some(answer));
+                    took
+                })
+                .min()
+                .unwrap()
+        };
+        let (short, long) = (fastest(&small), fastest(&large));
+        assert!(
+            long < short * 8,
+            "{make}: {} bytes took {short:?}, {} bytes took {long:?}",
+            small.len(),
+            large.len()
+        );
+    }
 }
 
 #[test]
@@ -1030,18 +1174,66 @@ fn a_schema_the_library_cannot_hold_an_answer_to_is_refused_when_the_rubric_is_b
         );
     }
     assert_eq!(RubricError::UnsupportedSchema.code(), "unsupported-schema");
-    // A schema nests 64 levels, and so does a literal inside `const` or `enum` counted from the
-    // schema's root: the bound itself is built, one level more is refused rather than walked.
-    let nest = |levels: usize| {
-        (0..levels).fold(
-            json!({"type": "string"}),
-            |inner, _| json!({"type": "array", "items": inner}),
-        )
+}
+
+/// A schema nests 64 levels below its root. A subschema is one level below the schema that
+/// holds it; a literal starts at its schema's level, and a member of an array or object in it
+/// is one level below, the `enum` list being such an array. The bound itself is built, one
+/// level more is refused rather than walked.
+#[test]
+fn a_schema_nests_64_levels_below_its_root_and_no_deeper() {
+    let under = |levels: usize, deepest: Value| {
+        (0..levels).fold(deepest, |inner, _| json!({"type": "array", "items": inner}))
     };
+    let nest = |levels: usize| under(levels, json!({"type": "string"}));
     let literal = |levels: usize| (0..levels).fold(json!("a"), |inner, _| json!([inner]));
+    // The deepest member is an empty array or object: it sits on a level and holds nothing.
+    let hollow =
+        |levels: usize, deepest: Value| (0..levels).fold(deepest, |inner, _| json!({"k": [inner]}));
     for (case, schema, built) in [
         ("schema at the bound", nest(64), true),
         ("schema past the bound", nest(65), false),
+        ("the empty schema at the bound", under(64, json!({})), true),
+        (
+            "the empty schema past the bound",
+            under(65, json!({})),
+            false,
+        ),
+        (
+            "a scalar const in the deepest schema",
+            under(64, json!({"const": "a"})),
+            true,
+        ),
+        (
+            "an empty enum in the deepest schema",
+            under(64, json!({"enum": []})),
+            true,
+        ),
+        (
+            "an enum of one in the deepest schema",
+            under(64, json!({"enum": ["a"]})),
+            false,
+        ),
+        (
+            "an empty array at the bound",
+            json!({"const": hollow(32, json!([]))}),
+            true,
+        ),
+        (
+            "an empty array past the bound",
+            json!({"const": [hollow(32, json!([]))]}),
+            false,
+        ),
+        (
+            "an empty object at the bound",
+            json!({"const": hollow(32, json!({}))}),
+            true,
+        ),
+        (
+            "an empty object past the bound",
+            json!({"const": [hollow(32, json!({}))]}),
+            false,
+        ),
         ("const at the bound", json!({"const": literal(64)}), true),
         ("const past the bound", json!({"const": literal(65)}), false),
         ("enum at the bound", json!({"enum": [literal(63)]}), true),
