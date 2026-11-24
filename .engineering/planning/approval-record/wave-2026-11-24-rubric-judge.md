@@ -10,7 +10,7 @@ relations:
 - decides: story:rubric-judge
 revision: 2
 transitions:
-- {from: "draft", to: "accepted", at: "2026-11-24T16:24:30Z", actor: "human:timo", revision: 2}
+- {from: "draft", to: "accepted", at: "2026-11-24T21:58:59Z", actor: "human:operator", revision: 2}
 ---
 ## Decision
 

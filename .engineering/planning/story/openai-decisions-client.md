@@ -37,7 +37,7 @@ revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-05T18:17:58Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-11-05T18:17:58Z", actor: "human:timo", revision: 6}
-- {from: "active", to: "implemented", at: "2026-11-24T20:53:28Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
+- {from: "active", to: "implemented", at: "2026-11-24T21:59:03Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 

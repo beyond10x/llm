@@ -11,7 +11,7 @@ relations:
 - decides: story:docs-ux-layout-checks-from-ux-browser
 revision: 2
 transitions:
-- {from: "draft", to: "accepted", at: "2026-11-24T16:24:30Z", actor: "human:timo", revision: 2}
+- {from: "draft", to: "accepted", at: "2026-11-24T21:59:00Z", actor: "human:operator", revision: 2}
 ---
 ## Decision
 

@@ -11,8 +11,8 @@ relations:
 - serves: vision:portable-model-inference
 revision: 3
 transitions:
-- {from: "draft", to: "proposed", at: "2026-11-24T16:25:01Z", actor: "human:timo", revision: 2}
-- {from: "proposed", to: "active", at: "2026-11-24T16:25:01Z", actor: "human:timo", revision: 3}
+- {from: "draft", to: "proposed", at: "2026-11-24T21:59:01Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-24T21:59:02Z", actor: "human:operator", revision: 3}
 ---
 ## Context
 
