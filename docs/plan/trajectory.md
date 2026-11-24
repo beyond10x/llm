@@ -28,7 +28,7 @@ Read at `main` `c7c2a62cb` (llm 0.26.0). The wave plan below was derived with
 | Wave | Story | Objective (the coordinator's reading) | Makes true | State |
 | --- | --- | --- | --- | --- |
 | 1 | `story:rubric-judge` | O6 | `llm-decide` judges a subject against a rubric and returns a verdict that names the rubric version, its digest, the route target and the upstream model; 6 scenarios | delivered: [wave-2026-11-24-rubric-judge](wave-2026-11-24-rubric-judge.md) |
-| 2 | `story:openai-decisions-client` | O3 | the classifier's third model path asks a provider decision endpoint (`POST /v1/decisions`) through llm's credentials, transport and call records; 6 scenarios | planned |
+| 2 | `story:openai-decisions-client` | O3 | the classifier's third model path asks a provider decision endpoint (`POST /v1/decisions`) through llm's credentials, transport and call records; 6 scenarios | running: [wave-2026-11-24-openai-decisions-client](wave-2026-11-24-openai-decisions-client.md) |
 | 3 | `story:offline-replay-eval` | O6 | `llm replay` sends a recorded corpus to a candidate route, compares each answer and stops at a money cap; 6 scenarios | planned |
 
 The verb's order was `story:anthropic-access`, `story:offline-replay-eval`,
@@ -40,12 +40,17 @@ held by `credential-blocker:anthropic-live-qualification`.
 ## Releases
 
 - 0.27.0 holds wave 1. Each later wave is one minor release.
-- After the plan: the drafts the owner accepts, first the story for issue 83, then
-  `story:the-neutral-turn-in-ess`, `story:responses-carries-refusal-text` and `story:cli-route-explain`.
+- After the plan: the four stories accepted below, in the order `aep plan artifact waves` derives
+  when wave 3 is delivered. Still drafts: `story:the-neutral-turn-in-ess`,
+  `story:responses-carries-refusal-text` and `story:cli-route-explain`.
 
 ## Backlog filed by this plan
 
-- `story:messages-empty-turn-with-an-unmodelled-stop-reason` (issue 83), `draft`.
-- `story:ess-pin-current-and-local-gate-finds-it`, `draft`: host `ess` 0.98.0 against the pinned 0.87.0.
-- `story:classifier-takes-only-a-whole-answer`, `draft`: the class the judge was corrected for, in the classifier since 0.23.0.
-- `story:docs-ux-layout-checks-from-ux-browser`, `draft`: proposed by the uxui repository on 2026-11-24.
+Accepted on 2026-11-24 (`approval-record:backlog-2026-11-24-four-drafts-accepted`); each is `active`
+and enters the plan after wave 3:
+
+- `story:messages-empty-turn-with-an-unmodelled-stop-reason` (issue 83).
+- `story:ess-pin-current-and-local-gate-finds-it`: host `ess` 0.98.0 against the pinned 0.87.0.
+- `story:classifier-takes-only-a-whole-answer`: the class the judge was corrected for, in the classifier since 0.23.0.
+- `story:docs-ux-layout-checks-from-ux-browser`: proposed by the uxui repository on 2026-11-24; it
+  starts only when a release tag of that repository that carries `ux-browser` exists.

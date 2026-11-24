@@ -2,14 +2,17 @@
 format: aep.planning-md/3
 id: story:ess-pin-current-and-local-gate-finds-it
 kind: story
-status: draft
+status: active
 title: The ESS pin is the current release and the local gate runs the pinned ess
 tags:
 - from-finding
 relations:
 - decomposes: epic:contracts
 - serves: vision:portable-model-inference
-revision: 1
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-24T16:24:31Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-24T16:24:32Z", actor: "human:timo", revision: 3}
 ---
 ## Context
 
