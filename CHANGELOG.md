@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-11-24
+
 ### Added
 
 - `llm-decide`: `judge` asks a `Rubric`'s one pinned route once and returns a `Verdict` with the answer as canonical JSON
@@ -630,7 +632,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.26.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.27.0...HEAD
+[0.27.0]: https://github.com/beyond10x/llm/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/beyond10x/llm/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/beyond10x/llm/compare/0.24.0...0.25.0
 [0.24.0]: https://github.com/beyond10x/llm/compare/0.23.0...0.24.0
