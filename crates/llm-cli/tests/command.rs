@@ -1993,6 +1993,90 @@ fn adversary_w29_replay_sends_a_verdict_case_through_the_command() {
     );
 }
 
+/// Pass 2, guard for the guide's "stderr says whether it stopped at its cap, past it": a run
+/// that spent exactly its cap and sent no further case stopped at its cap, not past it.
+#[test]
+fn adversary_w29_replay_that_spent_exactly_its_cap_says_it_stopped_at_its_cap() {
+    // A case costs 0.000032 and holds as much; the cap is one case.
+    let corpus = turn_corpus(&[("greets", "Guten Tag"), ("again", "Guten Tag")]);
+    let (output, received) = replayed_holding(&corpus, "haiku", "0.000032", "0.000032", 2);
+    assert_eq!(output.status.code(), Some(3), "{}", stderr(&output));
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    assert_eq!(
+        (&summary["spent"], &summary["stopped"], &summary["not_sent"]),
+        (&json!("0.000032"), &json!("limit-exceeded"), &json!(1))
+    );
+    assert_eq!(
+        stderr(&output),
+        "llm: replay stopped at its cap (limit-exceeded): 1 of 2 cases not sent\n"
+    );
+    assert_eq!(received.len(), 1);
+}
+
+/// `llm replay` of one turn case on route `haiku` of `routes`, with one Messages answer ready.
+fn adversary_w29_replayed_on(routes: &str, flags: &[&str]) -> (Output, usize) {
+    let fixture = Fixture::new(vec![messages_stream()]);
+    let routes = routes.replace("ORIGIN", &fixture.origin);
+    let (directory, path) = configured(&routes);
+    let corpus_path = directory.path().join("corpus.json");
+    write(&corpus_path, &turn_corpus(&[("greets", "Guten Tag")]));
+    let mut arguments = vec![
+        "--config",
+        &path,
+        "replay",
+        "--route",
+        "haiku",
+        "--corpus",
+        corpus_path.to_str().unwrap(),
+    ];
+    arguments.extend_from_slice(flags);
+    let output = llm(&arguments, &KEYS, None);
+    (output, fixture.received().len())
+}
+
+/// Pass 2. A route whose price declares the input rate only: the output tokens of a call have
+/// no price, so its cost is known in part. `docs/design.md`: with `stopped` `uncertain-spend`,
+/// `spent` holds "its reserve (or the known part of its cost where that is more)", and stderr
+/// says the cost is not known, also when the known part alone is past the cap.
+#[test]
+fn adversary_w29_replay_on_a_route_priced_for_input_only_says_its_cost_is_not_known() {
+    let priced = three_routes("ORIGIN");
+    let rest = r#", cached_input = "0.1", cache_creation_input = "1.25", output = "5" }"#;
+    assert!(priced.contains(rest));
+    let routes = priced.replace(rest, " }");
+    // 12 input tokens at 1 per million are 0.000012: more than the reserve and the cap.
+    let flags = ["--cap", "0.00001", "--reserve", "0.00001"];
+    let (output, received) = adversary_w29_replayed_on(&routes, &flags);
+    assert_eq!(received, 1);
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    assert_eq!(
+        (&summary["same"], &summary["spent"], &summary["stopped"]),
+        (&json!(1), &json!("0.000012"), &json!("uncertain-spend")),
+        "{}",
+        stderr(&output)
+    );
+    assert_eq!(output.status.code(), Some(3));
+    assert_eq!(
+        stderr(&output),
+        "llm: replay stopped at a case whose cost is not known, which `spent` counts at what is \
+         held for it (uncertain-spend): 0 of 1 cases not sent\n"
+    );
+}
+
+/// Pass 2, guard: a run id that holds `/` is taken, and names the run in the summary.
+#[test]
+fn adversary_w29_replay_takes_a_run_id_that_holds_a_slash() {
+    let flags = ["--cap", "1", "--reserve", "0.0001", "--run", "nightly/2"];
+    let (output, received) = adversary_w29_replayed_on(&three_routes("ORIGIN"), &flags);
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    assert_eq!(
+        (&summary["id"], &summary["same"], &summary["spent"]),
+        (&json!("nightly/2"), &json!(1), &json!("0.000032"))
+    );
+    assert_eq!(received, 1);
+}
+
 mod adversary_w29_routed {
     //! `llm_decide::Routed` under the real `llm_calls::replay`, over one scripted model and an
     //! in-memory record sink. No network.

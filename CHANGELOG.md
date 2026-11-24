@@ -27,7 +27,7 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - A replay holds each case's reserve on an `llm-cost` budget ledger; the first case the cap does not admit is `skipped`
 - A replay's cap bounds admission, not the spend: a case that costs more than its reserve can take the spend past it
 - A replay past its cap stops at once, at its last case too: `stopped` is `limit-exceeded`
-- A replayed call whose cost is not known stops the run there with `uncertain-spend`; `spent` then holds its reserve
+- A replayed call with no known cost stops the run with `uncertain-spend`; `spent` holds its reserve or the larger known part
 - A record of a replay has role `replay`; the run reports the SHA-256 of the corpus bytes, its counts and its spend
 - `llm replay` runs a corpus file on a priced route, prints the summary as JSON and exits 3 when the run stopped
 - `llm_decide::Routed` is the replay candidate over `record_turn`, `ModelClassifier` and `judge`

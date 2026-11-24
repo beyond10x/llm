@@ -1811,3 +1811,320 @@ fn adversary_w29_a_record_of_a_call_that_was_not_sent_costs_nothing_and_stops_no
     );
     assert_eq!((run.spent, run.stopped), (Amount::ZERO, None));
 }
+
+/// Pass 2. One run of `cases` under `cap` with `reserve` held per case, both as amounts.
+fn adversary_w29_run_holding(
+    cases: &[Value],
+    cap: Amount,
+    reserve: Amount,
+    candidate: &dyn Candidate,
+) -> (ReplayRun, Vec<CallRecord>) {
+    let catalog = catalog();
+    let prices = prices(&catalog, "USD");
+    let log = CallLog::new();
+    let run = Replay {
+        money_cap: cap,
+        reserve,
+        ..run_of("1", "1")
+    };
+    let recording = Recording {
+        sink: &log,
+        clock: &Ticks::new(),
+        prices: Some(&prices),
+    };
+    let run = block_on(replay(&catalog, &corpus(cases), &run, candidate, recording)).unwrap();
+    (run, log.records())
+}
+
+/// Pass 2, guard: the stop at every position of the case that ends the run, with the smallest
+/// reserve. A case that takes the spend past the cap, and a case whose cost is not known, is the
+/// last one the candidate is asked: first, in the middle and as the last case. The spend is the
+/// bound the documents state, and the four counts sum to the cases.
+#[test]
+fn adversary_w29_no_case_is_asked_after_the_one_past_the_cap_or_without_a_known_cost() {
+    let catalog = catalog();
+    let ids = ["c-1", "c-2", "c-3"];
+    let cases: Vec<Value> = ids.iter().map(|id| turn_case(id, "one")).collect();
+    let reserve = Amount::from_nanos(1);
+    let call = amount("0.055").nanos();
+    for (position, case_id) in ids.into_iter().enumerate() {
+        let sent = u64::try_from(position).unwrap() + 1;
+        let before = call * (sent - 1);
+        let left = 3 - sent;
+        // The cap that admits this case with nothing to spare: it settles past the cap.
+        let cap = Amount::from_nanos(before + 1);
+        let unknown = [(case_id, Step::Unpriced("one"))];
+        let rows = [
+            (&[][..], cap, BudgetError::LimitExceeded, before + call),
+            (
+                &unknown[..],
+                amount("1"),
+                BudgetError::UncertainSpend,
+                before + 1,
+            ),
+        ];
+        for (steps, cap, cause, spent) in rows {
+            let name = format!("{case_id} {cause:?}");
+            let candidate = Scripted::new(&catalog, steps);
+            let (run, records) = adversary_w29_run_holding(&cases, cap, reserve, &candidate);
+            assert_eq!(
+                u64::try_from(candidate.asked()).unwrap(),
+                sent,
+                "asked {name}"
+            );
+            assert_eq!(
+                (run.stopped, run.spent.nanos()),
+                (Some(cause), spent),
+                "{name}"
+            );
+            assert_eq!((run.same, run.not_sent), (sent, left), "{name}");
+            assert_eq!(
+                run.same + run.differs + run.failed + run.not_sent,
+                run.cases,
+                "{name}"
+            );
+            // One skipped record for the first case not sent, none for the ones after it.
+            let skipped: Vec<&str> = records
+                .iter()
+                .filter(|record| record.outcome == Outcome::Skipped)
+                .map(|record| record.id.as_str())
+                .collect();
+            let expected: Vec<String> = ids
+                .get(position + 1)
+                .map(|next| format!("run-1/{next}"))
+                .into_iter()
+                .collect();
+            assert_eq!(skipped, expected, "{name}");
+            assert_eq!(
+                records.len(),
+                position + 1 + expected.len(),
+                "records {name}"
+            );
+        }
+    }
+}
+
+/// Pass 2. A candidate that makes two recorded calls for a case: one priced, then one that
+/// reports no usage, under a record id of its own. The case's cost is known in part.
+struct AdversaryW29PricedThenUnpriced<'c> {
+    priced: Scripted<'c>,
+    unpriced: Scripted<'c>,
+}
+
+impl Candidate for AdversaryW29PricedThenUnpriced<'_> {
+    fn answer<'a>(&'a self, call: CaseCall<'a>) -> BoxFuture<'a, Result<Option<String>, Error>> {
+        Box::pin(async move {
+            self.priced.answer(call).await?;
+            let second = id(&format!("{}/second", call.request_id));
+            let again: CaseCall<'_> = call;
+            self.unpriced
+                .answer(CaseCall {
+                    request_id: &second,
+                    ..again
+                })
+                .await
+        })
+    }
+}
+
+/// Pass 2, guard for two sentences of `docs/design.md`: with `stopped` `uncertain-spend`, `spent`
+/// holds for the case "its reserve (or the known part of its cost where that is more)", and the
+/// cause is "the one a further admission would be refused with, in the ledger's order", which
+/// names a cost that is not known before a spend past the cap.
+#[test]
+fn adversary_w29_a_last_case_known_in_part_and_past_the_cap_says_uncertain_spend() {
+    let catalog = catalog();
+    let cases = [turn_case("c-1", "one")];
+    let candidate = || AdversaryW29PricedThenUnpriced {
+        priced: Scripted::new(&catalog, &[]),
+        unpriced: Scripted::new(&catalog, &[("c-1", Step::Unpriced("one"))]),
+    };
+    // The known part, 0.055, is more than the reserve of 0.01 and more than the cap of 0.05.
+    let (run, records) =
+        adversary_w29_run_holding(&cases, amount("0.05"), amount("0.01"), &candidate());
+    assert_eq!(records.len(), 2);
+    assert_eq!(results(&run), [("c-1", CaseResult::Same, None)]);
+    assert_eq!(
+        (run.spent, run.stopped),
+        (amount("0.055"), Some(BudgetError::UncertainSpend))
+    );
+    // A reserve above the known part: `spent` is the reserve, the known part and what is held.
+    let (run, _) = adversary_w29_run_holding(&cases, amount("1"), amount("0.1"), &candidate());
+    assert_eq!(
+        (run.spent, run.stopped),
+        (amount("0.1"), Some(BudgetError::UncertainSpend))
+    );
+}
+
+/// Pass 2, guard for "everything below a member the format does not define" is `*`: below an
+/// undefined member, and below an index the format defines no array at, a name the format
+/// defines elsewhere is not shown either.
+#[test]
+fn adversary_w29_no_name_is_shown_below_a_member_or_an_index_the_format_does_not_define() {
+    let text = String::from_utf8(document(&[turn_case("c-1", "one")])).unwrap();
+    let twice = r#"{"id":{"kind":1,"kind":2}}"#;
+    let rows = [
+        (
+            "below an undefined member of the document",
+            with(&text, "{", &format!(r#"{{"other":{{"cases":[{twice}]}},"#)),
+            "*.*[0].*.*",
+        ),
+        (
+            "below an array where a case is expected",
+            with(&text, r#""cases":["#, &format!(r#""cases":[[{twice}],"#)),
+            "cases[0][0].*.*",
+        ),
+    ];
+    // Every row is read, so one run names each place that shows a name.
+    let mut shown = Vec::new();
+    for (name, bytes, path) in rows {
+        let error = Corpus::parse(bytes.as_bytes()).expect_err(name);
+        if error.path != path {
+            shown.push(format!("{name}: {}", error.path));
+        }
+    }
+    assert_eq!(shown, Vec::<String>::new());
+}
+
+/// Pass 2, guard: every member name `llm.corpus/1` defines is shown in a refusal at its place.
+/// The unit's tests pin 17 of the 23 names; a name that is hidden by mistake leaves a refusal
+/// that names only the case (`cases[0].*`).
+#[test]
+#[expect(clippy::too_many_lines, reason = "one table of names")]
+fn adversary_w29_every_member_name_the_format_defines_is_shown_at_its_place() {
+    const NO_ID: &str = "not an identifier of 1 to 256 printable ASCII bytes";
+    let whole = json!({"format": "llm.corpus/1", "cases": [
+        turn_case("c-1", "one"),
+        classification_case("c-2", "other"),
+        verdict_case("c-3", &json!(true)),
+    ]});
+    let no_schema = json!({"id": "helpful", "version": "2", "text": RUBRIC_TEXT});
+    let rows = [
+        ("/format", json!(1), "format", "not a text"),
+        (
+            "/cases",
+            json!([]),
+            "cases",
+            "not an array of at least one case",
+        ),
+        ("/cases/0/id", json!(1), "cases[0].id", "not a text"),
+        ("/cases/0/kind", json!(1), "cases[0].kind", "not a text"),
+        (
+            "/cases/0/input_tokens",
+            json!("x"),
+            "cases[0].input_tokens",
+            "not a whole number of tokens",
+        ),
+        (
+            "/cases/0/primary_record_id",
+            json!(""),
+            "cases[0].primary_record_id",
+            NO_ID,
+        ),
+        (
+            "/cases/0/turn",
+            json!(1),
+            "cases[0].turn",
+            "not an llm.turn/3 or llm.turn/4 document",
+        ),
+        (
+            "/cases/0/recorded",
+            json!(1),
+            "cases[0].recorded",
+            "not an object",
+        ),
+        (
+            "/cases/0/recorded/text",
+            json!(1),
+            "cases[0].recorded.text",
+            "not a text",
+        ),
+        (
+            "/cases/1/label_set",
+            json!(1),
+            "cases[1].label_set",
+            "not an object",
+        ),
+        (
+            "/cases/1/label_set/id",
+            json!(""),
+            "cases[1].label_set.id",
+            NO_ID,
+        ),
+        (
+            "/cases/1/label_set/version",
+            json!(1),
+            "cases[1].label_set.version",
+            "not a text",
+        ),
+        (
+            "/cases/1/label_set/labels",
+            json!([]),
+            "cases[1].label_set.labels",
+            "not an array of at least one label",
+        ),
+        (
+            "/cases/1/instructions",
+            json!(1),
+            "cases[1].instructions",
+            "not a text",
+        ),
+        ("/cases/1/input", json!(1), "cases[1].input", "not a text"),
+        (
+            "/cases/1/recorded/label",
+            json!(1),
+            "cases[1].recorded.label",
+            "not a label of the case's label set",
+        ),
+        (
+            "/cases/2/rubric",
+            json!(1),
+            "cases[2].rubric",
+            "not an object",
+        ),
+        ("/cases/2/rubric/id", json!(""), "cases[2].rubric.id", NO_ID),
+        (
+            "/cases/2/rubric/version",
+            json!(1),
+            "cases[2].rubric.version",
+            "not a text",
+        ),
+        (
+            "/cases/2/rubric/text",
+            json!(1),
+            "cases[2].rubric.text",
+            "not a text",
+        ),
+        (
+            "/cases/2/rubric",
+            no_schema,
+            "cases[2].rubric.schema",
+            "a member that must be given",
+        ),
+        (
+            "/cases/2/subject",
+            json!(1),
+            "cases[2].subject",
+            "not a text",
+        ),
+        (
+            "/cases/2/recorded",
+            json!({}),
+            "cases[2].recorded.verdict",
+            "a member that must be given",
+        ),
+    ];
+    // Every row is read, so one run names each name that is not shown.
+    let mut hidden = Vec::new();
+    for (pointer, value, path, reason) in rows {
+        let mut document = whole.clone();
+        let (parent, member) = pointer.rsplit_once('/').unwrap();
+        let parent = document.pointer_mut(parent).unwrap();
+        parent[member] = value;
+        let error = Corpus::parse(document.to_string().as_bytes()).unwrap_err();
+        if (error.path.as_str(), error.reason) != (path, reason) {
+            hidden.push(format!("{path}: {error}"));
+        }
+    }
+    assert_eq!(hidden, Vec::<String>::new());
+}

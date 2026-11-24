@@ -261,9 +261,10 @@ not fit is not sent, the run stops, and that case and the rest count `not-sent`.
 Set `--reserve` to the most one case can cost: the spend then stays within the cap. The cap
 alone does not bound the spend. A case that costs more than the reserve can take the spend past
 the cap; the run stops there, and it has then spent at most the cap, less the reserve, plus the
-cost of that one case. A call whose cost is not known, because the provider reported no usage,
-keeps its reserve held and stops the run at that case. `spent` then counts that reserve, which
-is a hold and not a known cost.
+cost of that one case. A call whose cost is not known, because the provider reported no usage or
+the route's price covers only part of it, keeps its reserve held and stops the run at that case.
+`spent` then counts that reserve, or the known part of the cost where that is more, which is a
+hold and not a known cost.
 
 The summary is one line of JSON on stdout, here for a corpus of two cases:
 
