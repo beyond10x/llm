@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-24T15:49:34Z",
+  "actor": "human:timo",
+  "artifact": "story:rubric-judge",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "local gate at bcad20939 on Rust 1.98.0, each step alone, each exit 0: task rust (fmt, clippy -D warnings); cargo xtask test, 1839 passed, 1 skipped, 1 leaky, 6.0 s of the 120 s bound, slowest 5.2 s; task docs; ess 0.87.0 specify validate, 18 files valid; task conformance on ess 0.87.0, 1055 of 1055, three runs; aep plan artifact validate. The first conformance run exited 201 (schema drift): the build node used its own ess 0.98.0, and the rerun carried ess 0.87.0",
+    "reference": "wave/2026-11-24-rubric-judge@bcad20939"
+  }
+}

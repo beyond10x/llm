@@ -768,6 +768,71 @@ Option<Answer>`), synchronous and with no model call and no record; `None` absta
 and its answer is held to the set and the floor like a model's. Because it makes no call, it runs
 even past the deadline, so a chain ending in one always ends in its answer or its abstention.
 
+**Verdict.** A `Rubric` is an id, a version, a text, the JSON Schema of the verdict and a route
+alias. Its digest is the lowercase hex sha256 of the text's length in bytes as eight big-endian
+bytes, the text, and the schema as canonical JSON (object keys sorted at every depth, no
+whitespace); the id, the version and the route do not enter it. `Rubric::new` refuses an empty
+version, an empty text and a schema the library cannot hold an answer to (`RubricError`, codes
+`empty-version`, `empty-text`, `unsupported-schema`). The checked keywords are `type`,
+`properties`, `required`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`
+and `anyOf`, with `title` and `description` as annotations; any other keyword refuses the rubric,
+so no answer is held to less than its schema. llm takes no JSON Schema dependency for this. A
+schema nests at most 64 levels below its root: a subschema is one level below the schema that
+holds it, a `const` or `enum` literal starts at its schema's level, and a member of an array or
+object inside the literal is one level below that array or object, the `enum` list being such an
+array. `enum` and `const` compare numbers by value, `1` and `1.0` being one number, at every depth
+of a literal; `minimum` and `maximum` compare exact values, so a bound holds for every integer
+from the least `i64` to the greatest `u64` and for every double, with no conversion that rounds.
+The rubric keeps the schema as it was given, with its keys put in canonical order and no number
+written and read back, so the digest, `Rubric::schema` and the request carry the same bytes.
+
+`judge(rubric, subject, request_id, input_tokens, ports)` makes one call. The request is the
+rubric's text as the instructions, the subject as the one user item and the schema, in canonical
+key order, as the strict `controls.output_format` named `verdict`, with temperature 0 where the
+route's target declares temperature: its bytes are a function of rubric and subject, and the
+request id, the clock and the answer do not enter them. The route must have exactly one target
+and fallback off, otherwise the judge refuses `route-not-pinned` before any call, so the model
+cannot change between runs. The call goes through `llm_calls::record_turn` with the same-target
+retry of every routed call and writes one record, relabelled kind `verdict`, with the id
+`<request id>/<rubric id>`; a failed call is its error and still has its record.
+
+A `Verdict` names the rubric id, version and digest, the route target, the upstream model the far
+side reported and the call record id. `verdict_json` is the answer as canonical JSON when it is
+the one whole JSON value the model ended on and valid against the schema; otherwise it is absent
+and `error_code` is `protocol`. The answer is taken as it arrived: no key is dropped, no value
+coerced, no second call asked. An answer whose far side reports no upstream model is refused
+`protocol`, because a verdict cannot pin what it was not told; Bedrock Converse reports none, so
+a rubric routed there is refused.
+
+An answer is whole and has one reading only when all of this holds; anything else is refused,
+with the call's record written as succeeded:
+
+- the turn ended normally (`StopReason::EndTurn`): an answer cut off at the output limit or
+  reported incomplete is not a verdict, even when what arrived is valid;
+- the outcome holds exactly one assistant text item, and beside it only state the provider keeps
+  (`Item::Opaque`): two text items are not joined, since `1` and `2` would read as `12`, and a
+  refusal beside the text refuses the answer;
+- the text is one JSON value with nothing but JSON whitespace around it;
+- it nests at most 128 levels, an array or object being one level and a scalar none: 128 arrays
+  or objects one inside another are read, and the 129th is refused where it opens. The library
+  counts the levels itself and switches the JSON reader's own limit off (`serde_json` feature
+  `unbounded_depth`), so the bound is this one number;
+- no object gives a key twice, at any depth, however the key is escaped;
+- every number written without a fraction or an exponent is an integer `i64` or `u64` holds, and
+  is written back digit for digit; one outside that range is refused rather than rounded. The one
+  exception is `-0`: JSON readers hold it as the double minus zero, so it is written `-0.0`, the
+  same value.
+
+A number written with a fraction or an exponent is the double nearest to it, as JSON readers have
+it (RFC 8259, section 6), read with correct rounding (`serde_json` feature `float_roundtrip`, so
+the result does not depend on which other crates are linked) and written with the fewest digits
+that read back as the same double, in the form `serde_json` writes: `1E2` is written `100.0`,
+`1e30` is written `1e+30`, and a number no double holds (`1e400`) is refused.
+
+A judge call publishes no tool. An outcome that holds a tool call, or says it stopped for one, is
+refused by the routed call itself: the judge returns that error, `protocol`, with the call's
+record written as failed, and no verdict.
+
 ### Embeddings
 
 An embedding is not a turn, so it has its own port and its own route kind. The contract is

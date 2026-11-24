@@ -23,7 +23,7 @@ The workspace holds 20 packages at version `0.26.0`. None is published to a regi
 | `llm-core` | `llm_core` | `crates/llm-core` | Neutral model requests, results, streaming, capabilities and typed failures; no I/O or execution authority. |
 | `llm-cost` | `llm_cost` | `crates/llm-cost` | Usage accounting, versioned price estimates and explicit admission limits. |
 | `llm-credentials` | `llm_credentials` | `crates/llm-credentials` | Injected secret resolution and caller-managed credential refresh; optional backend adapters. |
-| `llm-decide` | `llm_decide` | `crates/llm-decide` | Typed decisions over a routed model: a closed-label classifier chain returning one label with per-label confidence or an abstention with its cause. |
+| `llm-decide` | `llm_decide` | `crates/llm-decide` | Typed decisions over a routed model: a closed-label classifier chain returning one label with per-label confidence or an abstention with its cause, and a rubric judge returning a strict JSON verdict with its rubric and model pinned. |
 | `llm-docs` | binary `llm-docs` | `crates/llm-docs` | Generates and drift-checks the derived pages of the llm documentation site, and holds the programs its guides quote. |
 | `llm-embed` | `llm_embed` | `crates/llm-embed` | Embeddings over an embed route: the OpenAI POST /v1/embeddings wire, ordered batches, token usage and one call record per batch. |
 | `llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |

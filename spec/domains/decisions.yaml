@@ -1,7 +1,7 @@
 domain: llm.decisions
 
-# Typed decisions over a model: a closed-label classification (crate llm-decide) and a rubric
-# verdict (declared here, not yet implemented).
+# Typed decisions over a model: a closed-label classification and a rubric verdict (crate
+# llm-decide).
 #
 # A classification asks one closed label set: at least two distinct, non-empty labels, versioned.
 # The answer is one label of that set with a confidence per label in basis points (0 to 10000),
@@ -25,6 +25,30 @@ domain: llm.decisions
 #
 # A verdict is one rubric call: the rubric, its version and the pinned model are named in the
 # result, and the answer is strict JSON held to the rubric's verdict schema.
+#
+# A rubric is an id, a version, a text, a verdict JSON Schema and a route alias. Its digest is the
+# lowercase hex sha256 of: the text's length in bytes as eight big-endian bytes, the text, and the
+# schema as canonical JSON (keys sorted, no whitespace). The schema may use only the keywords the
+# library checks an answer against (type, properties, required, additionalProperties, items,
+# enum, const, minimum, maximum, anyOf; title and description are read as annotations); any other
+# keyword is refused when the rubric is built (unsupported-schema), as are an empty version
+# (empty-version) and an empty text (empty-text).
+#
+# Judging sends one turn to the rubric's route: the text as the instructions, the subject as the
+# one user item, the schema as the strict output format named `verdict`, and temperature 0 where
+# the route's target declares temperature. Nothing else enters the request, so its bytes are a
+# function of rubric and subject. The route must have exactly one target and fallback off, else
+# the rubric is refused before any call (route-not-pinned): the model cannot change between runs.
+# The call goes through the routed, recorded call of llm.calls, with no fallback and the
+# same-target retry of every routed call, and yields one llm.calls.CallRecord of kind Verdict
+# with the id `<request id>/<rubric id>`.
+#
+# The verdict names the rubric id, version and digest, the route target and the upstream model
+# the far side reported, and holds the answer as canonical JSON. An answer that is not JSON or is
+# not valid against the schema is refused, never repaired: the verdict then has the error code
+# `protocol` and no JSON. A failed call is its llm error and no verdict, and so is an answer
+# whose far side reported no upstream model (`protocol`): a verdict cannot pin what it was not
+# told.
 types:
   - name: llm.decisions.Path
     kind: enum
@@ -163,13 +187,26 @@ entities:
     identity: {name: observation_id, type: String}
     fields: &verdict_facts
       - {name: valid_program, type: Boolean}
+      # The refusal before any call (an llm error code, or a rubric refusal: route-not-pinned,
+      # unsupported-schema, ...), a failed call's llm error code, or the last verdict's error code.
       - {name: error_code, type: Optional<String>}
+      # The pins and the answer of the last run's verdict.
       - {name: rubric_version, type: Optional<String>}
       - {name: rubric_digest, type: Optional<String>}
+      - {name: route_target_id, type: Optional<String>}
       - {name: upstream_model, type: Optional<String>}
       - {name: verdict_json, type: Optional<String>}
-      # The request body sent, as bytes digest, so two runs can be compared.
+      - {name: call_record_id, type: Optional<String>}
+      # The last request a scripted model received: the lowercase hex sha256 of that turn request
+      # serialized as JSON, so two runs can be compared.
       - {name: request_digest, type: Optional<String>}
+      # That digest for every request a scripted model received, over all runs, in order.
+      - {name: request_digests, type: List<String>}
+      # The canonical JSON of every run's verdict that holds one, in order.
+      - {name: verdict_jsons, type: List<String>}
+      # Every record the sink received over all runs, as canonical JSON (llm.calls.CallRecord),
+      # in order.
+      - {name: records, type: List<String>}
     lifecycle: {initial: Observed, states: [Observed], terminal: [Observed]}
 commands:
   - name: llm.decisions.Classify
@@ -191,6 +228,11 @@ commands:
             valid_program: {generated: true}
         summary: Return the chain's decision or abstention and every attempt; not model quality.
   - name: llm.decisions.Judge
+    # Run the real judge over in-process scripted models, a scripted clock and an in-memory
+    # record sink; no network. rubric_json is the rubric (id, version, text, schema,
+    # route_alias). program_json lists one or more runs over the same rubric and subject, each
+    # with its request id, its clock start and its scripted answer per serving model, so that two
+    # runs can be compared in one observation.
     input:
       - {name: catalog_toml, type: String}
       - {name: rubric_json, type: String}

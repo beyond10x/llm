@@ -1,17 +1,19 @@
-//! Closed-label classification conformance observations.
+//! Closed-label classification and rubric verdict conformance observations.
 //!
-//! This module drives the real `llm_decide::Chain` over the real routed, recorded call
-//! (`llm_calls::record_turn` over `Catalog::run_turn`), with in-process scripted `Model`s, a
-//! scripted clock that a pause moves, the caller's price book and an in-memory record sink, and
-//! reports every attempt and every record. The scripted models only replay the authored answer,
-//! failure, delay or hang; the scripted lexical classifiers only return the authored answer.
-//! Every decision, abstention, cause and record comes back out of the library. It reads no suite
-//! and branches on no scenario name.
+//! This module drives the real `llm_decide::Chain` and the real `llm_decide::judge` over the
+//! real routed, recorded call (`llm_calls::record_turn` over `Catalog::run_turn`), with
+//! in-process scripted `Model`s, a scripted clock that a pause moves, the caller's price book
+//! and an in-memory record sink, and reports every attempt and every record. The scripted models
+//! only replay the authored answer, failure, delay or hang, and keep the digest of each request
+//! they were sent; the scripted lexical classifiers only return the authored answer. Every
+//! decision, abstention, cause, verdict, pin and record comes back out of the library. It reads
+//! no suite and branches on no scenario name.
 
 use std::{
     collections::BTreeMap,
+    fmt::Write as _,
     sync::{
-        Arc,
+        Arc, Mutex,
         atomic::{AtomicU64, AtomicUsize, Ordering},
     },
     time::Duration,
@@ -26,12 +28,13 @@ use llm_core::{
 };
 use llm_cost::PriceBook;
 use llm_decide::{
-    Answer, Chain, Classification, Classifier, LabelSet, Lexical, LexicalClassifier,
-    ModelClassifier, Path, Ports, SetupError,
+    Answer, Chain, Classification, Classifier, JudgeError, LabelSet, Lexical, LexicalClassifier,
+    ModelClassifier, Path, Ports, Rubric, RubricError, SetupError, Verdict,
 };
 use llm_routing::{Catalog, Models, Selection};
 use serde::Deserialize;
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 
 use crate::target::Observed;
 
@@ -58,10 +61,6 @@ fn unavailable(error: impl std::fmt::Display) -> TargetError {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-#[expect(
-    dead_code,
-    reason = "read only to refuse an input that is not the command's"
-)]
 struct JudgeInput {
     catalog_toml: String,
     rubric_json: String,
@@ -69,20 +68,171 @@ struct JudgeInput {
     program_json: String,
 }
 
-/// No library judges against a rubric yet: the command is answered, accepts no program and says
-/// so.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RubricInput {
+    id: String,
+    version: String,
+    text: String,
+    schema: Value,
+    route_alias: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JudgeProgram {
+    /// The caller's input-token estimate, which routing admits the target against.
+    #[serde(default)]
+    input_tokens: Option<u64>,
+    /// One judge run each, over the same rubric and subject, in order.
+    runs: Vec<JudgeRun>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct JudgeRun {
+    request_id: String,
+    /// The wall clock when the run starts; its monotonic clock starts at zero.
+    #[serde(default)]
+    start_unix_ms: u64,
+    #[serde(default)]
+    models: BTreeMap<String, Script>,
+}
+
 fn judge(input: &Value) -> Result<Observed, TargetError> {
-    let _: JudgeInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
+    let request: JudgeInput = serde_json::from_value(input.clone()).map_err(unavailable)?;
+    let mut facts = json!({
+        "valid_program": false, "error_code": null, "rubric_version": null,
+        "rubric_digest": null, "route_target_id": null, "upstream_model": null,
+        "verdict_json": null, "call_record_id": null, "request_digest": null,
+        "request_digests": [], "verdict_jsons": [], "records": []
+    });
+    if let Err(refusal) = judge_runs(&request, &mut facts) {
+        facts["error_code"] = refusal.code();
+    }
     Ok(Observed {
-        facts: json!({
-            "valid_program": false, "error_code": json!(ErrorCode::Unsupported),
-            "rubric_version": null, "rubric_digest": null, "upstream_model": null,
-            "verdict_json": null, "request_digest": null
-        }),
+        facts,
         view: "llm.decisions.LastVerdict",
         event: "llm.decisions.Judged",
         field: "valid_program",
     })
+}
+
+/// Runs the program's judge runs in order, stopping at the first that returns no verdict, and
+/// reports the last verdict, every request digest, every verdict JSON and every record.
+fn judge_runs(input: &JudgeInput, facts: &mut Value) -> Result<(), Refusal> {
+    if input.program_json.len() > MAX_PROGRAM_BYTES {
+        return Err(Error::too_large("judge program exceeds its bound").into());
+    }
+    let program: JudgeProgram =
+        serde_json::from_str(&input.program_json).map_err(invalid("invalid program"))?;
+    facts["valid_program"] = json!(true);
+    let catalog = Catalog::parse(&input.catalog_toml)?;
+    let rubric: RubricInput =
+        serde_json::from_str(&input.rubric_json).map_err(invalid("invalid rubric"))?;
+    let rubric = Rubric::new(
+        identifier(&rubric.id)?,
+        rubric.version,
+        rubric.text,
+        &rubric.schema,
+        rubric.route_alias,
+    )?;
+    let log = CallLog::new();
+    let mut request_digests = Vec::new();
+    let mut verdict_jsons = Vec::new();
+    let mut ended = Ok(());
+    for run in program.runs {
+        let judged = judge_once(
+            &catalog,
+            &rubric,
+            &input.subject_text,
+            program.input_tokens,
+            run,
+            &log,
+            &mut request_digests,
+        );
+        match judged {
+            Ok(verdict) => {
+                facts["error_code"] = json!(verdict.error_code);
+                facts["rubric_version"] = json!(verdict.rubric_version);
+                facts["rubric_digest"] = json!(verdict.rubric_digest);
+                facts["route_target_id"] = json!(verdict.route_target_id);
+                facts["upstream_model"] = json!(verdict.upstream_model);
+                facts["verdict_json"] = json!(verdict.verdict_json);
+                facts["call_record_id"] = json!(verdict.call_record_id);
+                verdict_jsons.extend(verdict.verdict_json);
+            }
+            Err(refusal) => {
+                ended = Err(refusal);
+                break;
+            }
+        }
+    }
+    facts["request_digest"] = json!(request_digests.last());
+    facts["request_digests"] = json!(request_digests);
+    facts["verdict_jsons"] = json!(verdict_jsons);
+    facts["records"] = json!(
+        log.records()
+            .iter()
+            .map(serde_json::to_string)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| Error::new(ErrorCode::Protocol, "a record did not serialize"))?
+    );
+    ended
+}
+
+/// One judge run over its own scripted models and clock; the digest of every request a model
+/// received is added to `request_digests`, whatever the run returned.
+fn judge_once(
+    catalog: &Catalog,
+    rubric: &Rubric,
+    subject: &str,
+    input_tokens: Option<u64>,
+    run: JudgeRun,
+    log: &CallLog,
+    request_digests: &mut Vec<String>,
+) -> Result<Verdict, Refusal> {
+    let request_id = identifier(&run.request_id)?;
+    let clock = Arc::new(ScriptedClock {
+        start_unix_ms: run.start_unix_ms,
+        now_ms: AtomicU64::new(0),
+    });
+    let models = scripted_fleet(run.models, catalog, &clock)?;
+    let cancel = Cancel::new();
+    let admit = |_: &Selection<'_>| Ok(());
+    let moved_by_waits = clock.clone();
+    // A retry wait moves the scripted clock and returns.
+    let pause = move |wait: Duration| -> BoxFuture<'static, ()> {
+        let clock = moved_by_waits.clone();
+        Box::pin(async move { clock.advance(u64::try_from(wait.as_millis()).unwrap_or(u64::MAX)) })
+    };
+    let judged = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .map_err(|_| Error::new(ErrorCode::Unavailable, "no local runtime"))?
+        .block_on(llm_decide::judge(
+            rubric,
+            subject,
+            &request_id,
+            input_tokens,
+            Ports {
+                catalog,
+                models: &models,
+                admit: &admit,
+                cancel: &cancel,
+                pause: &pause,
+                recording: Recording {
+                    sink: log,
+                    clock: &*clock,
+                    prices: None,
+                },
+            },
+        ));
+    for model in models.0.values() {
+        if let Ok(received) = model.requests.lock() {
+            request_digests.extend(received.iter().cloned());
+        }
+    }
+    Ok(judged?)
 }
 
 #[derive(Deserialize)]
@@ -208,6 +358,8 @@ struct Scripted {
     script: Script,
     upstream_model: Option<Id>,
     calls: AtomicUsize,
+    /// The lowercase hex sha256 of each request received, as serialized, in order.
+    requests: Mutex<Vec<String>>,
 }
 
 impl Scripted {
@@ -270,6 +422,18 @@ impl Model for Scripted {
     ) -> BoxFuture<'a, Result<TurnOutcome, Error>> {
         Box::pin(async move {
             let call = self.calls.fetch_add(1, Ordering::SeqCst);
+            let sent = serde_json::to_vec(request)
+                .map_err(|_| Error::new(ErrorCode::Protocol, "a request did not serialize"))?;
+            if let Ok(mut requests) = self.requests.lock() {
+                requests.push(
+                    Sha256::digest(&sent)
+                        .iter()
+                        .fold(String::new(), |mut hex, byte| {
+                            let _ = write!(hex, "{byte:02x}");
+                            hex
+                        }),
+                );
+            }
             let fail = self
                 .script
                 .fail
@@ -346,21 +510,53 @@ fn scripted_fleet(
                 script,
                 upstream_model,
                 calls: AtomicUsize::new(0),
+                requests: Mutex::new(Vec::new()),
             },
         );
     }
     Ok(Fleet(fleet))
 }
 
-/// Why the chain could not be set up: an llm error code, or a setup refusal's own code.
+/// Why the chain or the judge returned no result: an llm error code, or a setup or rubric
+/// refusal's own code.
 enum Refusal {
     Llm(Error),
     Setup(SetupError),
+    Rubric(RubricError),
+}
+
+impl Refusal {
+    fn code(&self) -> Value {
+        match self {
+            Self::Llm(error) => json!(error.code),
+            Self::Setup(error) => json!(error.code()),
+            Self::Rubric(error) => json!(error.code()),
+        }
+    }
 }
 
 impl From<Error> for Refusal {
     fn from(error: Error) -> Self {
         Self::Llm(error)
+    }
+}
+
+impl From<RubricError> for Refusal {
+    fn from(error: RubricError) -> Self {
+        Self::Rubric(error)
+    }
+}
+
+impl From<JudgeError> for Refusal {
+    fn from(error: JudgeError) -> Self {
+        match error {
+            JudgeError::Rubric(error) => Self::Rubric(error),
+            JudgeError::Call(error) => Self::Llm(error),
+            _ => Self::Llm(Error::new(
+                ErrorCode::Unsupported,
+                "a judge refusal this check does not know",
+            )),
+        }
     }
 }
 
@@ -419,10 +615,7 @@ fn classify(input: &Value) -> Result<Observed, TargetError> {
         "confidences": [], "final_cause": null, "call_record_ids": [], "records": []
     });
     if let Err(refusal) = execute(&request, &mut facts) {
-        facts["error_code"] = match refusal {
-            Refusal::Llm(error) => json!(error.code),
-            Refusal::Setup(error) => json!(error.code()),
-        };
+        facts["error_code"] = refusal.code();
     }
     Ok(Observed {
         facts,

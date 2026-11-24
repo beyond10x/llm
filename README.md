@@ -70,7 +70,7 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 | `llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account; reads `llm.routes/1` model routes in YAML or TOML, Bedrock endpoints included ([guide](https://beyond10x.github.io/llm/docs/guides/configure-model-routes)) |
 | `llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |
 | `llm-calls` | One text-free record per routed call (route, target, timings, usage, priced cost) on a sink the caller injects |
-| `llm-decide` | A closed-label classifier chain: one label of a set with per-label confidence, or an abstention with its cause |
+| `llm-decide` | A closed-label classifier chain: one label of a set with per-label confidence, or an abstention with its cause; a rubric judge: one strict JSON verdict with its rubric and model pinned |
 | `llm-embed` | Embeddings over an embed route: the OpenAI `/v1/embeddings` wire, ordered batches, token usage, one record per batch |
 | `llm-tool-call` | `call_tool` (one forced tool, its JSON input back) and the Codex Responses preset |
 | `llm-blocking` | A blocking adapter over any `Model` for a synchronous loop |

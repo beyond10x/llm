@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-24T15:49:34Z",
+  "actor": "human:timo",
+  "artifact": "story:rubric-judge",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "llm-conformance check on ess 0.87.0, Rust 1.98.0: base main 58e27a4bb holds contracts/baseline.json at 1049 and none of the six scenario files; treatment wave/2026-11-24-rubric-judge@bcad20939 answers 1055 of 1055, failed 0, skipped 0, three runs; the six scenarios of the Acceptance are in contracts/decisions/scenarios and contracts/ess-inputs.yaml. VERIFIED",
+    "reference": "wave/2026-11-24-rubric-judge@bcad20939"
+  }
+}
