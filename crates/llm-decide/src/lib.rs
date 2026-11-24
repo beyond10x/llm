@@ -11,9 +11,20 @@
 //! strict output schema or one forced tool, so every model call writes one call record of kind
 //! `Classification` to the caller's sink. [`LexicalClassifier`] wraps the caller's [`Lexical`]
 //! classifier and makes no call.
+//!
+//! A rubric verdict asks one [`Rubric`]: a versioned text, the JSON Schema of the verdict and a
+//! route with exactly one target and fallback off. [`judge`] makes one call through
+//! `llm_calls::record_turn` with the schema as strict output, which writes one call record of
+//! kind `Verdict`, and returns a [`Verdict`] naming the rubric version and digest, the route
+//! target and the upstream model that answered, with the answer as canonical JSON. An answer
+//! that is not the one whole JSON value the model ended on, or is not valid against the schema, is
+//! refused, never repaired.
 
+mod answer;
 mod chain;
 mod classify;
+mod judge;
+mod schema;
 
 pub use chain::{Chain, ChainOutcome};
 pub use classify::{
@@ -21,3 +32,4 @@ pub use classify::{
     LabelConfidence, LabelSet, Lexical, LexicalClassifier, MAX_BPS, MAX_LABEL_BYTES, MAX_LABELS,
     ModelClassifier, Path, Ports, SetupError, TOOL_NAME,
 };
+pub use judge::{JudgeError, Rubric, RubricError, VERDICT_FORMAT_NAME, Verdict, judge};

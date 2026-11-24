@@ -798,8 +798,8 @@ impl CallSink for Classifying<'_> {
     }
 }
 
-/// A classifier reads only the finished outcome.
-struct Discard;
+/// A classifier and a judge read only the finished outcome.
+pub(crate) struct Discard;
 
 impl StreamSink for Discard {
     fn emit(&mut self, _event: StreamEvent) -> BoxFuture<'_, Result<(), Error>> {

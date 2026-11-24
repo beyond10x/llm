@@ -20,14 +20,38 @@
     "rubric_digest": {
       "type": "string"
     },
+    "route_target_id": {
+      "type": "string"
+    },
     "upstream_model": {
       "type": "string"
     },
     "verdict_json": {
       "type": "string"
     },
+    "call_record_id": {
+      "type": "string"
+    },
     "request_digest": {
       "type": "string"
+    },
+    "request_digests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verdict_jsons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "state": {
       "$ref": "#/$defs/llm.decisions.VerdictObservation.State"
@@ -36,14 +60,17 @@
   "required": [
     "observation_id",
     "valid_program",
+    "request_digests",
+    "verdict_jsons",
+    "records",
     "state"
   ],
   "additionalProperties": false,
   "x-ess-provenance": {
     "system": "llm",
     "specification_version": "v1",
-    "source_digest": "a76b940e17e9cd343e6abe8faffde22093f49c9f3e7255fc768543114ebc3aa2",
-    "contract_digest": "slice-sha256/2:8627e41b04188798ed6643578751b0c7b271a8b57a71bc463fe67dbde50cb175",
+    "source_digest": "41b081820941796e0ad44c0d9a1c1e337036965a66df63a5cdacf67dc9594781",
+    "contract_digest": "slice-sha256/2:e34c54054ec40870984734fcab79cd1b72d5884679f371a9c458f1842a6a523b",
     "regenerate": "ess generate"
   },
   "$defs": {

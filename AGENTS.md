@@ -16,7 +16,8 @@ three protocol crates (each with its ingress decoder and encoder, and a usage re
 an answer's model and counters from its bytes), the Amazon Bedrock Runtime
 client (`llm-bedrock`: Converse, Anthropic `InvokeModel`, Signature Version 4, event-stream
 frames, static, container and web identity AWS credentials), credentials, provider bindings,
-routing, per-call records (`llm-calls`), closed-label classification (`llm-decide`), embeddings over
+routing, per-call records (`llm-calls`), closed-label classification and rubric verdicts
+(`llm-decide`), embeddings over
 an embed route (`llm-embed`, the OpenAI `/v1/embeddings` wire), port
 construction from a catalog or an `llm.routes/1` routes document in YAML or TOML, Bedrock
 endpoints included (`llm-models`), pricing,
@@ -75,7 +76,7 @@ story that says so.
 | No crate depends on an AWS SDK crate or on `aws-lc`; `llm-bedrock` signs with `ring` | `crates/llm-core/tests/dependency_boundary.rs::no_package_in_the_lockfile_is_an_aws_sdk_crate_or_aws_lc` |
 | No `unsafe` code | `unsafe_code = "forbid"` in the root `Cargo.toml`; Clippy `all` and `pedantic` deny |
 | No field a client sends is dropped: each ingress decoder carries, translates, reports or refuses it, and refuses an unknown key at every level by its path | `crates/llm-messages/tests/client_request_fields.rs::every_refusal_names_its_field_by_path`, `crates/llm-responses/tests/client_fields.rs::a_key_outside_the_subset_is_refused_by_its_path_at_every_level`, `crates/llm-chat/tests/ingress.rs::an_unknown_key_on_a_content_part_is_refused_by_its_path` and the other `an_unknown_key_on_*` cases there, `crates/llm-chat/tests/every_output_delta.rs::a_refusal_only_message_reads_back_and_a_refusal_that_is_not_a_string_is_refused_by_its_path`; advisory omissions `checks/conformance/tests/client_turns.rs` |
-| The conformance suite answers at least 1049 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
+| The conformance suite answers at least 1055 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.

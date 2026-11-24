@@ -310,10 +310,16 @@
       "llm.decisions/authored/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label",
       "llm.decisions/authored/a-label-set-with-a-duplicate-or-a-single-label-is-refused",
       "llm.decisions/authored/a-provider-failure-abstains-with-its-error-code",
+      "llm.decisions/authored/a-rubric-route-with-more-than-one-target-or-fallback-is-refused",
+      "llm.decisions/authored/a-verdict-call-yields-a-call-record-of-kind-verdict",
+      "llm.decisions/authored/a-verdict-names-the-rubric-version-digest-and-upstream-model",
       "llm.decisions/authored/an-answer-naming-no-label-of-the-set-abstains-off-label",
+      "llm.decisions/authored/an-answer-not-valid-against-the-verdict-schema-is-refused-and-not-repaired",
       "llm.decisions/authored/an-answer-that-does-not-decode-as-the-schema-abstains-off-label",
       "llm.decisions/authored/each-model-classifier-call-yields-a-call-record-with-latency-and-cost",
       "llm.decisions/authored/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier",
+      "llm.decisions/authored/the-same-answer-gives-byte-identical-verdict-json-on-two-runs",
+      "llm.decisions/authored/two-judge-runs-over-one-rubric-and-subject-send-byte-identical-requests",
       "llm.embeddings/authored/a-catalog-without-route-kind-keeps-its-digest",
       "llm.embeddings/authored/a-request-over-the-batch-limit-is-split-and-returned-in-input-order",
       "llm.embeddings/authored/a-turn-to-an-embed-route-is-refused-before-io",
@@ -2394,10 +2400,30 @@
         "disposition": "accepted",
         "scenario": "llm.decisions/authored/a-provider-failure-abstains-with-its-error-code"
       },
+      "decisions/scenarios/a-rubric-route-with-more-than-one-target-or-fallback-is-refused.yaml": {
+        "digest": "sha256:f7aff5c6259e81def0c1fce8ae99b9df363c36046f9270099dbf6d28d8c34214",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-rubric-route-with-more-than-one-target-or-fallback-is-refused"
+      },
+      "decisions/scenarios/a-verdict-call-yields-a-call-record-of-kind-verdict.yaml": {
+        "digest": "sha256:33fb0be632d95083456d2be5d0203405e27a52100c1617f8a30a1259b072b586",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-verdict-call-yields-a-call-record-of-kind-verdict"
+      },
+      "decisions/scenarios/a-verdict-names-the-rubric-version-digest-and-upstream-model.yaml": {
+        "digest": "sha256:c4a6001721b558bc9f50c29a79a67758b82de6a5ec98672e9768267788254406",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/a-verdict-names-the-rubric-version-digest-and-upstream-model"
+      },
       "decisions/scenarios/an-answer-naming-no-label-of-the-set-abstains-off-label.yaml": {
         "digest": "sha256:76580888a9b6fef427ae0662edb499eee6ce4eafa45d07cfdf435f0426bfc800",
         "disposition": "accepted",
         "scenario": "llm.decisions/authored/an-answer-naming-no-label-of-the-set-abstains-off-label"
+      },
+      "decisions/scenarios/an-answer-not-valid-against-the-verdict-schema-is-refused-and-not-repaired.yaml": {
+        "digest": "sha256:1195b0aabbd0e4f01c551bd32946bda60919e2de6d70e106681b6ee57bc5f38b",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/an-answer-not-valid-against-the-verdict-schema-is-refused-and-not-repaired"
       },
       "decisions/scenarios/an-answer-that-does-not-decode-as-the-schema-abstains-off-label.yaml": {
         "digest": "sha256:9205ca0172a1d8736fc3b7cdedd97804d0e820d98e0171934786fa48999a549a",
@@ -2413,6 +2439,16 @@
         "digest": "sha256:95ed9cbad009abab34d2552a6355b19f543f7c9334bae0287eaf03507b48c772",
         "disposition": "accepted",
         "scenario": "llm.decisions/authored/the-chain-falls-back-in-order-and-ends-in-the-caller-lexical-classifier"
+      },
+      "decisions/scenarios/the-same-answer-gives-byte-identical-verdict-json-on-two-runs.yaml": {
+        "digest": "sha256:862ea2e70fdc8ccd10ce58f20f8e63bdf6f9bdbdda42f676b81002aed7abcb1b",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/the-same-answer-gives-byte-identical-verdict-json-on-two-runs"
+      },
+      "decisions/scenarios/two-judge-runs-over-one-rubric-and-subject-send-byte-identical-requests.yaml": {
+        "digest": "sha256:ecf77b73165ba81a788f25fd23836c5e922b4c0dee77229adc2f362bf3d409fe",
+        "disposition": "accepted",
+        "scenario": "llm.decisions/authored/two-judge-runs-over-one-rubric-and-subject-send-byte-identical-requests"
       },
       "embeddings/scenarios/a-catalog-without-route-kind-keeps-its-digest.yaml": {
         "digest": "sha256:7c347e36779b260ab469dde5ade19a435a4efd4056e99c1548f06e5b591e01f5",
@@ -6041,7 +6077,7 @@
       }
     },
     "counts": {
-      "authored": 1006,
+      "authored": 1012,
       "generated": 43,
       "outside": 0,
       "refused": 0
@@ -6105,9 +6141,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "4ad846a815de53dbdf38c735b9d18f7851f48e6db7b7f65e8fb1c38d26eb1c00",
+    "contract_digest": "19b31e484e42e0d16a58f8060e7c1b259a64db3ea26b66e8b179dec38c573781",
     "scenario_initial_state": "empty",
-    "spec_digest": "a76b940e17e9cd343e6abe8faffde22093f49c9f3e7255fc768543114ebc3aa2",
+    "spec_digest": "41b081820941796e0ad44c0d9a1c1e337036965a66df63a5cdacf67dc9594781",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -45571,6 +45607,414 @@
         }
       ]
     },
+    "llm.decisions/authored/a-rubric-route-with-more-than-one-target-or-fallback-is-refused": {
+      "purpose": "a rubric naming a route with two targets and fallback on is refused as route-not-pinned before any call; no request is sent, no record written and no verdict returned",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Judge"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastVerdict"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Judge",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n\n[[routes]]\nid = \"judging\"\nalias = \"judge\"\nfallback_enabled = false\n\n[[targets]]\nid = \"judging-primary\"\nroute_id = \"judging\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"input_tokens\":100,\"runs\":[{\"request_id\":\"req-1\",\"start_unix_ms\":1762430400000,\"models\":{\"local-small\":{\"answer\":\"{\\\"score\\\":5,\\\"pass\\\":true}\",\"upstream_model\":\"example/Small-Model\"},\"remote-large\":{\"answer\":\"{\\\"score\\\":5,\\\"pass\\\":true}\",\"upstream_model\":\"example/Large-Model-2026-09\"}}}]}"
+            },
+            "rubric_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false},\"route_alias\":\"code\"}"
+            },
+            "subject_text": {
+              "kind": "literal",
+              "value": "Question: what is the capital of France? Answer: Paris."
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "route-not-pinned"
+              },
+              "records": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_digest": {
+                "kind": "literal",
+                "value": null
+              },
+              "request_digests": {
+                "kind": "literal",
+                "value": []
+              },
+              "route_target_id": {
+                "kind": "literal",
+                "value": null
+              },
+              "rubric_digest": {
+                "kind": "literal",
+                "value": null
+              },
+              "rubric_version": {
+                "kind": "literal",
+                "value": null
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": null
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "verdict_json": {
+                "kind": "literal",
+                "value": null
+              },
+              "verdict_jsons": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-verdict-call-yields-a-call-record-of-kind-verdict": {
+      "purpose": "the one call of a judge run writes one call record of kind verdict with the request and rubric id, the route and target, the upstream model, the scripted latency and the reported usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Judge"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastVerdict"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Judge",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n\n[[routes]]\nid = \"judging\"\nalias = \"judge\"\nfallback_enabled = false\n\n[[targets]]\nid = \"judging-primary\"\nroute_id = \"judging\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"input_tokens\":100,\"runs\":[{\"request_id\":\"req-7\",\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"answer\":\"{\\\"score\\\":3,\\\"pass\\\":true}\",\"takes_ms\":250,\"usage\":{\"input_tokens\":120,\"output_tokens\":12,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model-2026-09\"}}}]}"
+            },
+            "rubric_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false},\"route_alias\":\"judge\"}"
+            },
+            "subject_text": {
+              "kind": "literal",
+              "value": "Question: what is the capital of France? Answer: Paris."
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_id": {
+                "kind": "literal",
+                "value": "req-7/helpfulness"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-7/helpfulness\",\"role\":\"primary\",\"kind\":\"verdict\",\"route_id\":\"judging\",\"route_target_id\":\"judging-primary\",\"upstream_model\":\"example/Large-Model-2026-09\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":250,\"time_to_first_event_ms\":250,\"usage\":{\"input_tokens\":120,\"output_tokens\":12,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "request_digest": {
+                "kind": "literal",
+                "value": "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+              },
+              "request_digests": {
+                "kind": "literal",
+                "value": [
+                  "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+                ]
+              },
+              "route_target_id": {
+                "kind": "literal",
+                "value": "judging-primary"
+              },
+              "rubric_digest": {
+                "kind": "literal",
+                "value": "020bdd6be2d891b692850e2842dc91ff573492dc260189e2cfd356f66c61840b"
+              },
+              "rubric_version": {
+                "kind": "literal",
+                "value": "v3"
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example/Large-Model-2026-09"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "verdict_json": {
+                "kind": "literal",
+                "value": "{\"pass\":true,\"score\":3}"
+              },
+              "verdict_jsons": {
+                "kind": "literal",
+                "value": [
+                  "{\"pass\":true,\"score\":3}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        }
+      ]
+    },
+    "llm.decisions/authored/a-verdict-names-the-rubric-version-digest-and-upstream-model": {
+      "purpose": "a judge call returns a verdict naming the rubric version, the digest of its text and schema, the route target and the reported upstream model, with the answer as canonical JSON",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Judge"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastVerdict"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Judge",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n\n[[routes]]\nid = \"judging\"\nalias = \"judge\"\nfallback_enabled = false\n\n[[targets]]\nid = \"judging-primary\"\nroute_id = \"judging\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"input_tokens\":100,\"runs\":[{\"request_id\":\"req-1\",\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"answer\":\"{\\\"score\\\":5,\\\"pass\\\":true}\",\"upstream_model\":\"example/Large-Model-2026-09\"}}}]}"
+            },
+            "rubric_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false},\"route_alias\":\"judge\"}"
+            },
+            "subject_text": {
+              "kind": "literal",
+              "value": "Question: what is the capital of France? Answer: Paris."
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_id": {
+                "kind": "literal",
+                "value": "req-1/helpfulness"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/helpfulness\",\"role\":\"primary\",\"kind\":\"verdict\",\"route_id\":\"judging\",\"route_target_id\":\"judging-primary\",\"upstream_model\":\"example/Large-Model-2026-09\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "request_digest": {
+                "kind": "literal",
+                "value": "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+              },
+              "request_digests": {
+                "kind": "literal",
+                "value": [
+                  "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+                ]
+              },
+              "route_target_id": {
+                "kind": "literal",
+                "value": "judging-primary"
+              },
+              "rubric_digest": {
+                "kind": "literal",
+                "value": "020bdd6be2d891b692850e2842dc91ff573492dc260189e2cfd356f66c61840b"
+              },
+              "rubric_version": {
+                "kind": "literal",
+                "value": "v3"
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example/Large-Model-2026-09"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "verdict_json": {
+                "kind": "literal",
+                "value": "{\"pass\":true,\"score\":5}"
+              },
+              "verdict_jsons": {
+                "kind": "literal",
+                "value": [
+                  "{\"pass\":true,\"score\":5}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        }
+      ]
+    },
     "llm.decisions/authored/an-answer-naming-no-label-of-the-set-abstains-off-label": {
       "purpose": "an answer that names a label outside the set is never a decision; the classifier abstains OffLabel and the call still writes its record",
       "source": [
@@ -45708,6 +46152,142 @@
           },
           "step": "expect_view",
           "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/an-answer-not-valid-against-the-verdict-schema-is-refused-and-not-repaired": {
+      "purpose": "an answer giving the score as a string where the schema asks an integer is refused as protocol with no verdict JSON, not coerced; the verdict still names its pins and its call record",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Judge"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastVerdict"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Judge",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n\n[[routes]]\nid = \"judging\"\nalias = \"judge\"\nfallback_enabled = false\n\n[[targets]]\nid = \"judging-primary\"\nroute_id = \"judging\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"input_tokens\":100,\"runs\":[{\"request_id\":\"req-1\",\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"answer\":\"{\\\"score\\\":\\\"5\\\",\\\"pass\\\":true}\",\"upstream_model\":\"example/Large-Model-2026-09\"}}}]}"
+            },
+            "rubric_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false},\"route_alias\":\"judge\"}"
+            },
+            "subject_text": {
+              "kind": "literal",
+              "value": "Question: what is the capital of France? Answer: Paris."
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_id": {
+                "kind": "literal",
+                "value": "req-1/helpfulness"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "protocol"
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/helpfulness\",\"role\":\"primary\",\"kind\":\"verdict\",\"route_id\":\"judging\",\"route_target_id\":\"judging-primary\",\"upstream_model\":\"example/Large-Model-2026-09\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "request_digest": {
+                "kind": "literal",
+                "value": "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+              },
+              "request_digests": {
+                "kind": "literal",
+                "value": [
+                  "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+                ]
+              },
+              "route_target_id": {
+                "kind": "literal",
+                "value": "judging-primary"
+              },
+              "rubric_digest": {
+                "kind": "literal",
+                "value": "020bdd6be2d891b692850e2842dc91ff573492dc260189e2cfd356f66c61840b"
+              },
+              "rubric_version": {
+                "kind": "literal",
+                "value": "v3"
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example/Large-Model-2026-09"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "verdict_json": {
+                "kind": "literal",
+                "value": null
+              },
+              "verdict_jsons": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
         }
       ]
     },
@@ -46168,6 +46748,288 @@
           },
           "step": "expect_view",
           "view": "llm.decisions.LastClassification"
+        }
+      ]
+    },
+    "llm.decisions/authored/the-same-answer-gives-byte-identical-verdict-json-on-two-runs": {
+      "purpose": "two judge runs whose model gives the same answer, the second time with its keys in another order and with spaces, return verdict JSON that is the same bytes, keys sorted and no whitespace",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Judge"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastVerdict"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Judge",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n\n[[routes]]\nid = \"judging\"\nalias = \"judge\"\nfallback_enabled = false\n\n[[targets]]\nid = \"judging-primary\"\nroute_id = \"judging\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"input_tokens\":100,\"runs\":[{\"request_id\":\"req-1\",\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"answer\":\"{\\\"score\\\":4,\\\"pass\\\":false}\",\"upstream_model\":\"example/Large-Model-2026-09\"}}},{\"request_id\":\"req-2\",\"start_unix_ms\":1762434000000,\"models\":{\"remote-large\":{\"answer\":\"{ \\\"pass\\\": false, \\\"score\\\": 4 }\",\"upstream_model\":\"example/Large-Model-2026-09\"}}}]}"
+            },
+            "rubric_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false},\"route_alias\":\"judge\"}"
+            },
+            "subject_text": {
+              "kind": "literal",
+              "value": "Question: what is the capital of France? Answer: Paris."
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_id": {
+                "kind": "literal",
+                "value": "req-2/helpfulness"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/helpfulness\",\"role\":\"primary\",\"kind\":\"verdict\",\"route_id\":\"judging\",\"route_target_id\":\"judging-primary\",\"upstream_model\":\"example/Large-Model-2026-09\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}",
+                  "{\"id\":\"req-2/helpfulness\",\"role\":\"primary\",\"kind\":\"verdict\",\"route_id\":\"judging\",\"route_target_id\":\"judging-primary\",\"upstream_model\":\"example/Large-Model-2026-09\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762434000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "request_digest": {
+                "kind": "literal",
+                "value": "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+              },
+              "request_digests": {
+                "kind": "literal",
+                "value": [
+                  "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6",
+                  "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+                ]
+              },
+              "route_target_id": {
+                "kind": "literal",
+                "value": "judging-primary"
+              },
+              "rubric_digest": {
+                "kind": "literal",
+                "value": "020bdd6be2d891b692850e2842dc91ff573492dc260189e2cfd356f66c61840b"
+              },
+              "rubric_version": {
+                "kind": "literal",
+                "value": "v3"
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example/Large-Model-2026-09"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "verdict_json": {
+                "kind": "literal",
+                "value": "{\"pass\":false,\"score\":4}"
+              },
+              "verdict_jsons": {
+                "kind": "literal",
+                "value": [
+                  "{\"pass\":false,\"score\":4}",
+                  "{\"pass\":false,\"score\":4}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        }
+      ]
+    },
+    "llm.decisions/authored/two-judge-runs-over-one-rubric-and-subject-send-byte-identical-requests": {
+      "purpose": "two judge runs over one rubric and subject, with other request ids, times and answers, send the model the same request bytes, temperature 0 included as the target declares temperature",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.decisions"
+        },
+        {
+          "kind": "command",
+          "name": "llm.decisions.Judge"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.decisions.LastVerdict"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.decisions.Judge",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\nfallback_enabled = true\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[targets]]\nid = \"coding-secondary\"\nroute_id = \"coding\"\nserving_model_id = \"remote-large\"\nposition = 1\n\n[[routes]]\nid = \"judging\"\nalias = \"judge\"\nfallback_enabled = false\n\n[[targets]]\nid = \"judging-primary\"\nroute_id = \"judging\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"input_tokens\":100,\"runs\":[{\"request_id\":\"req-1\",\"start_unix_ms\":1762430400000,\"models\":{\"remote-large\":{\"answer\":\"{\\\"score\\\":5,\\\"pass\\\":true}\",\"upstream_model\":\"example/Large-Model-2026-09\"}}},{\"request_id\":\"req-2\",\"start_unix_ms\":1762516800000,\"models\":{\"remote-large\":{\"answer\":\"{\\\"score\\\":2,\\\"pass\\\":false}\",\"takes_ms\":40,\"upstream_model\":\"example/Large-Model-2026-09\"}}}]}"
+            },
+            "rubric_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false},\"route_alias\":\"judge\"}"
+            },
+            "subject_text": {
+              "kind": "literal",
+              "value": "Question: what is the capital of France? Answer: Paris."
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.decisions.Judge",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.decisions.LastVerdict"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "call_record_id": {
+                "kind": "literal",
+                "value": "req-2/helpfulness"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"req-1/helpfulness\",\"role\":\"primary\",\"kind\":\"verdict\",\"route_id\":\"judging\",\"route_target_id\":\"judging-primary\",\"upstream_model\":\"example/Large-Model-2026-09\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762430400000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{},\"cost\":null,\"primary_record_id\":null}",
+                  "{\"id\":\"req-2/helpfulness\",\"role\":\"primary\",\"kind\":\"verdict\",\"route_id\":\"judging\",\"route_target_id\":\"judging-primary\",\"upstream_model\":\"example/Large-Model-2026-09\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762516800000,\"latency_ms\":40,\"time_to_first_event_ms\":40,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "request_digest": {
+                "kind": "literal",
+                "value": "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+              },
+              "request_digests": {
+                "kind": "literal",
+                "value": [
+                  "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6",
+                  "8e91784434962531acff93252218e174a713c90a8efb584972461f4da5e48eb6"
+                ]
+              },
+              "route_target_id": {
+                "kind": "literal",
+                "value": "judging-primary"
+              },
+              "rubric_digest": {
+                "kind": "literal",
+                "value": "020bdd6be2d891b692850e2842dc91ff573492dc260189e2cfd356f66c61840b"
+              },
+              "rubric_version": {
+                "kind": "literal",
+                "value": "v3"
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example/Large-Model-2026-09"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              },
+              "verdict_json": {
+                "kind": "literal",
+                "value": "{\"pass\":false,\"score\":2}"
+              },
+              "verdict_jsons": {
+                "kind": "literal",
+                "value": [
+                  "{\"pass\":true,\"score\":5}",
+                  "{\"pass\":false,\"score\":2}"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.decisions.LastVerdict"
         }
       ]
     },
