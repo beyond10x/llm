@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-24T20:53:28Z",
+  "actor": "human:operator",
+  "artifact": "story:openai-decisions-client",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "llm-conformance check with ess 0.87.0 at d03e93393: 1062 of 1062 passed, failed 0, skipped 0, three runs; the six scenarios of the Acceptance are among them",
+    "reference": "contracts/baseline.json"
+  }
+}

@@ -28,8 +28,9 @@ mod schema;
 
 pub use chain::{Chain, ChainOutcome};
 pub use classify::{
-    Abstention, AbstentionCause, Answer, Ask, Classification, Classifier, Decision, FORMAT_NAME,
-    LabelConfidence, LabelSet, Lexical, LexicalClassifier, MAX_BPS, MAX_LABEL_BYTES, MAX_LABELS,
-    ModelClassifier, Path, Ports, SetupError, TOOL_NAME,
+    Abstention, AbstentionCause, Answer, Ask, ChoiceAnswer, ChoiceCall, Classification, Classifier,
+    Decision, DecisionEndpoint, EndpointClassifier, FORMAT_NAME, LabelConfidence, LabelProbability,
+    LabelSet, Lexical, LexicalClassifier, MAX_BPS, MAX_LABEL_BYTES, MAX_LABELS, ModelClassifier,
+    Path, Ports, SetupError, TOOL_NAME, basis_points,
 };
 pub use judge::{JudgeError, Rubric, RubricError, VERDICT_FORMAT_NAME, Verdict, judge};

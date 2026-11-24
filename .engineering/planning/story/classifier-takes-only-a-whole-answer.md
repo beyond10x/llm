@@ -2,14 +2,18 @@
 format: aep.planning-md/3
 id: story:classifier-takes-only-a-whole-answer
 kind: story
-status: draft
+status: active
 title: A JSON-schema classifier decides only on a whole, unambiguous answer
 tags:
 - from-finding
 relations:
 - informed_by: review-result:adversary-w27-rubric-judge-pass-1
 - decomposes: epic:inference
-revision: 1
+- serves: vision:portable-model-inference
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-24T21:59:01Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-24T21:59:01Z", actor: "human:operator", revision: 3}
 ---
 ## Context
 

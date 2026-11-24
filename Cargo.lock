@@ -1264,6 +1264,7 @@ dependencies = [
  "llm-http",
  "llm-messages",
  "llm-models",
+ "llm-openai-decisions",
  "llm-providers",
  "llm-responses",
  "llm-routing",
@@ -1430,6 +1431,23 @@ dependencies = [
  "tokio",
  "toml",
  "url",
+]
+
+[[package]]
+name = "llm-openai-decisions"
+version = "0.27.0"
+dependencies = [
+ "llm-calls",
+ "llm-core",
+ "llm-cost",
+ "llm-credentials",
+ "llm-decide",
+ "llm-http",
+ "llm-providers",
+ "llm-routing",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

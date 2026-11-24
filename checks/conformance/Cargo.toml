@@ -24,6 +24,7 @@ llm-routing = { path = "../../crates/llm-routing" }
 llm-calls = { path = "../../crates/llm-calls" }
 llm-decide = { path = "../../crates/llm-decide" }
 llm-embed = { path = "../../crates/llm-embed" }
+llm-openai-decisions = { path = "../../crates/llm-openai-decisions" }
 llm-bedrock = { path = "../../crates/llm-bedrock" }
 llm-messages = { path = "../../crates/llm-messages" }
 llm-responses = { path = "../../crates/llm-responses" }

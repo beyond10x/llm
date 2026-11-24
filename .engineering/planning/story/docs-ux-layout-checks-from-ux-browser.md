@@ -2,13 +2,17 @@
 format: aep.planning-md/3
 id: story:docs-ux-layout-checks-from-ux-browser
 kind: story
-status: draft
+status: active
 title: The docs UX gate takes its five layout checks from a pinned ux-browser release
 tags:
 - from-consumer-proposal
 relations:
 - decomposes: epic:contracts
-revision: 1
+- serves: vision:portable-model-inference
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-24T21:59:01Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-24T21:59:02Z", actor: "human:operator", revision: 3}
 ---
 ## Context
 

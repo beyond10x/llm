@@ -2,13 +2,15 @@
 format: aep.planning-md/3
 id: approval-record:wave-2026-11-24-rubric-judge
 kind: approval-record
-status: draft
+status: accepted
 title: Wave 2026-11-24-rubric-judge authorised by the owner's order to run the next wave from the active stories
 tags:
 - non-interactive
 relations:
 - decides: story:rubric-judge
-revision: 1
+revision: 2
+transitions:
+- {from: "draft", to: "accepted", at: "2026-11-24T21:58:59Z", actor: "human:operator", revision: 2}
 ---
 ## Decision
 
