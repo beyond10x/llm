@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-11-24
+
 ### Added
 
 - `llm-openai-decisions`: `OpenAiDecisions` sends typed questions to OpenAI's `POST /v1/decisions`, one attempt per call
@@ -645,7 +647,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.27.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.28.0...HEAD
+[0.28.0]: https://github.com/beyond10x/llm/compare/0.27.0...0.28.0
 [0.27.0]: https://github.com/beyond10x/llm/compare/0.26.0...0.27.0
 [0.26.0]: https://github.com/beyond10x/llm/compare/0.25.0...0.26.0
 [0.25.0]: https://github.com/beyond10x/llm/compare/0.24.0...0.25.0
