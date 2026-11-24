@@ -691,6 +691,69 @@ first is alive, so its shadows are skipped and never sent. A day ledger that can
 (changed cap, damaged files, an earlier clock, or a later day already on disk) skips that shadow
 for the day.
 
+`replay` sends a recorded corpus to a candidate route and reports, case by case, whether the
+candidate's answer is the recorded one (story:offline-replay-eval). The corpus is the caller's
+document, `llm.corpus/1`: an ordered list of cases, each a turn request, a classification request
+(label set, instructions, input) or a verdict request (rubric with its schema, subject), with its
+id, the caller's input-token estimate, optionally the id of the record it was taken from, and the
+recorded answer: the text, the label or the verdict. A caller that keeps texts assembles it from
+its own store. llm writes no corpus and keeps no text of one: a run, a refusal and a record hold
+identifiers, counts, codes and amounts.
+
+`Corpus::parse` takes the document only whole, in one pass over its bytes. It refuses as
+`invalid-request` a document that is cut or followed by more bytes, a member given twice at any
+depth, another format version, a case kind the format does not have, a member `llm.corpus/1`
+does not declare at that place, a case id given twice and a recorded label outside the case's
+label set; and as `too-large` a document longer than 16 MiB, with more than 4096 cases or nested
+deeper than 64 levels. The refusal names the member by its path (`cases[1].kind`) and a fixed
+reason; a member name that is no short identifier is shown as `*`. A label set and a rubric are
+read for their shape only: what `llm-decide` asks of them is checked when the case is sent. The
+digest a run reports is the lowercase hex SHA-256 of the bytes as given, so the same cases with
+other white space or key order are another corpus.
+
+A `Replay` names the run, the candidate route by its id, a ledger, a currency, a money cap and a
+reserve. `replay` sends the cases in the corpus's order, one at a time, through a `Candidate`:
+the port that turns a case into calls on the candidate route. It is a port because the
+classifier and the judge are in `llm-decide`, which depends on `llm-calls`; `llm_cli::Routed`
+is the candidate `llm replay` and the conformance target use. It sends a turn case with
+`record_turn`, a classification case with `ModelClassifier` on its JSON-schema path and a verdict
+case with `judge`; a turn or a classification that fails is not tried again. A case's request id
+is `<run id>/<case id>` (`replay-sha256-<hex>` of the two ids when that would pass the id
+bound). An answer equal to the recorded one counts `same`: a turn's assistant text and a
+classification's label byte for byte, with confidences not compared, and a verdict as canonical
+JSON, so key order and white space do not count and `1` and `1.0` differ. Any other answer
+counts `differs`, as does one the candidate cannot use: no label of the set, or no verdict the
+rubric's schema holds. A call that failed, a classification answered past its deadline
+(`deadline`) and a label set or rubric `llm-decide` refuses (`invalid-request`, before any call)
+count `failed` with the error code, never `differs`.
+
+Money is exact and held on an `llm-cost` budget ledger of the run's own, whose limit is the cap.
+Cap, reserve and spend are `Amount`s, decimals with nine fractional digits in the run's currency;
+a price becomes spend only through the caller's price book, as for any call record. Before a
+case is sent its reserve is reserved and started; afterwards it is settled with the priced cost
+of the records the case wrote. A case is admitted while the spend so far plus the reserve is at
+most the cap: equal to the cap it is sent, one nanounit past it it is not. The first case the
+ledger refuses is not sent and writes one record with outcome `skipped`; the run stops, and that
+case and each one after it count `not-sent` (`stopped` is `limit-exceeded`). A cost that is not
+known (a call that reported no usage, a price the book does not hold) is not settled as zero: the
+reserve stays held, the ledger admits no further case, and the run stops with `uncertain-spend`.
+A call that was not sent and reported no usage cost nothing. A run is refused as
+`invalid-request` before any case is sent for a reserve of zero or above the cap, a candidate
+route id the catalog does not declare, and no price book in the run's currency; an embed route
+is `unsupported`. Every record written during a run has role `replay` and the case's
+`primary_record_id`. The `ReplayRun` carries the corpus digest, the counts of the four results,
+the spend and one report per case in the corpus's order; two runs of one corpus over the same
+answers report the same digest and counts. The run's own loops are linear in the corpus; the
+budget engine reads every reservation of its ledger at each command, so the ledger's work grows
+with the square of the cases sent, bounded by the 4096 cases a corpus holds.
+
+`llm replay --route <id> --corpus <file> --cap <amount> --reserve <amount>` runs it from files:
+the route's declared `price` is the price book and names the currency, and the summary is printed
+as one line of JSON on stdout. It exits 0 when every case was sent, 3 when the run stopped at its
+cap (the summary is printed, and stderr says how many cases were not sent) and 2, with nothing
+sent, for a route without a price, a corpus the reader refuses or a run `replay` refuses. It
+keeps no call record.
+
 ### Usage read from an answer's bytes
 
 A relay that passes an answer through untouched, such as llm-gateway's, records what the answer

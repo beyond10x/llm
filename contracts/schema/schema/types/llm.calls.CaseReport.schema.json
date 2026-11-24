@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/llm.calls.CaseReport",
+  "x-ess-provenance": {
+    "system": "llm",
+    "specification_version": "v1",
+    "source_digest": "89d74c10d520a73088c5150f6cd2b78f3822effec12c147e45efa257ec3e3eb4",
+    "contract_digest": "slice-sha256/2:539c617a9ecf26237ece81672d69ab482474b4c27c260a3dbcc787612fa5ebf5",
+    "regenerate": "ess generate"
+  },
+  "$defs": {
+    "llm.calls.CaseReport": {
+      "title": "CaseReport",
+      "x-ess-name": "llm.calls.CaseReport",
+      "x-ess-kind": "struct",
+      "type": "object",
+      "properties": {
+        "case_id": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/$defs/llm.calls.CaseResult"
+        },
+        "error_code": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "llm.calls.CaseResult": {
+      "title": "CaseResult",
+      "x-ess-name": "llm.calls.CaseResult",
+      "x-ess-kind": "enum",
+      "type": "string",
+      "enum": [
+        "Same",
+        "Differs",
+        "Failed",
+        "NotSent"
+      ]
+    }
+  }
+}

@@ -4,13 +4,20 @@
 //!
 //! [`record_turn`] runs a routed turn and writes its [`CallRecord`]; [`CallRecord::new`],
 //! [`Stopwatch`] and [`Cost::quote`] build a record for a call that is not a turn.
+//! [`replay`] sends a recorded [`Corpus`] to a candidate route under a money cap and compares
+//! each answer with the recorded one.
 
 mod record;
+mod replay;
 mod shadow;
 
 pub use record::{
     CallFacts, CallIdentity, CallLog, CallRecord, CallSink, Clock, Cost, Kind, Outcome, Role,
     Stopwatch, SystemClock, Timing,
+};
+pub use replay::{
+    CORPUS_FORMAT, Candidate, Case, CaseAsk, CaseCall, CaseReport, CaseResult, Corpus, CorpusError,
+    MAX_CASES, MAX_CORPUS_BYTES, MAX_CORPUS_DEPTH, Replay, ReplayRun, replay,
 };
 pub use shadow::{
     Shadow, ShadowCalls, ShadowLedger, ShadowOutcome, ShadowResult, Shadowing,

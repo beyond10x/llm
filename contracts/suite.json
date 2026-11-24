@@ -177,17 +177,23 @@
       "llm.budget/authored/write-failure-freezes-owner-until-reopen",
       "llm.budget/authored/zero-cap-allows-only-declared-zero",
       "llm.calls/authored/a-call-without-a-price-book-records-usage-and-no-cost",
+      "llm.calls/authored/a-classification-case-compares-labels-not-confidences",
       "llm.calls/authored/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost",
+      "llm.calls/authored/a-failed-candidate-call-counts-failed-not-differs",
       "llm.calls/authored/a-failing-shadow-leaves-the-primary-result-unchanged",
       "llm.calls/authored/a-fallback-run-records-the-target-that-answered-and-its-attempt-count",
       "llm.calls/authored/a-record-carries-latency-and-time-to-first-event-from-the-scripted-clock",
       "llm.calls/authored/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete",
+      "llm.calls/authored/a-replay-compares-each-case-with-its-recorded-answer",
+      "llm.calls/authored/a-replay-stops-at-its-money-cap-and-counts-the-cases-not-sent",
       "llm.calls/authored/a-routed-turn-writes-one-record-with-no-text",
       "llm.calls/authored/a-shadow-answer-never-reaches-the-caller",
       "llm.calls/authored/a-shadow-call-starts-only-after-the-primary-returned",
       "llm.calls/authored/a-shadow-past-its-daily-cap-is-skipped-and-recorded",
       "llm.calls/authored/a-shadow-record-names-its-primary-record",
+      "llm.calls/authored/replay-records-carry-role-replay",
       "llm.calls/authored/the-daily-cap-starts-again-at-utc-midnight",
+      "llm.calls/authored/two-replays-of-one-corpus-report-the-same-digest-and-counts",
       "llm.chat/authored/egress-a-user-image-shares-the-user-message-of-its-text",
       "llm.chat/authored/egress-an-output-format-without-a-name-is-refused",
       "llm.chat/authored/incoming-a-completion-without-a-finish-reason-is-refused",
@@ -1741,10 +1747,20 @@
         "disposition": "accepted",
         "scenario": "llm.calls/authored/a-call-without-a-price-book-records-usage-and-no-cost"
       },
+      "calls/scenarios/a-classification-case-compares-labels-not-confidences.yaml": {
+        "digest": "sha256:a2e7eaa0fa032c4a024914cfd54cd53d29e2e52cd6d5e49dc52b2eb6f169fa02",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-classification-case-compares-labels-not-confidences"
+      },
       "calls/scenarios/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost.yaml": {
         "digest": "sha256:c5d2cf6b23bdd31bb0b5488730528021cfa191f959046595fb00cdfa9a7d1ae0",
         "disposition": "accepted",
         "scenario": "llm.calls/authored/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost"
+      },
+      "calls/scenarios/a-failed-candidate-call-counts-failed-not-differs.yaml": {
+        "digest": "sha256:ade09d95378767f54719ab37e96f612c7cff6a8e783997b95e9632a8b68433dd",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-failed-candidate-call-counts-failed-not-differs"
       },
       "calls/scenarios/a-failing-shadow-leaves-the-primary-result-unchanged.yaml": {
         "digest": "sha256:f14962a4bd7f699340278c2766927a902e8e6aba9dbcb76fececb58e213cff0a",
@@ -1765,6 +1781,16 @@
         "digest": "sha256:b3ffac43f24ff84759822c4f3098247497c56012dc919a25431f02e652d83960",
         "disposition": "accepted",
         "scenario": "llm.calls/authored/a-record-keeps-unknown-usage-unknown-and-its-cost-incomplete"
+      },
+      "calls/scenarios/a-replay-compares-each-case-with-its-recorded-answer.yaml": {
+        "digest": "sha256:ae4c019f51dc6e514995b5d9184fad3609b44aeef45019bc3391564cf727ad66",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-replay-compares-each-case-with-its-recorded-answer"
+      },
+      "calls/scenarios/a-replay-stops-at-its-money-cap-and-counts-the-cases-not-sent.yaml": {
+        "digest": "sha256:926a543bba177f011e0fe7a4fdcbc8ebdd65a6dc15f23539dc238c6679fdb653",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/a-replay-stops-at-its-money-cap-and-counts-the-cases-not-sent"
       },
       "calls/scenarios/a-routed-turn-writes-one-record-with-no-text.yaml": {
         "digest": "sha256:f3f85842c08bbbcfe9b13035f123dd3b128aed30f6d8dedf4b6480bf363c6364",
@@ -1791,10 +1817,20 @@
         "disposition": "accepted",
         "scenario": "llm.calls/authored/a-shadow-record-names-its-primary-record"
       },
+      "calls/scenarios/replay-records-carry-role-replay.yaml": {
+        "digest": "sha256:9f286c86ce9177acbc0b140fafe60ece43c9591a5e41dc1d4112f697555e0741",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/replay-records-carry-role-replay"
+      },
       "calls/scenarios/the-daily-cap-starts-again-at-utc-midnight.yaml": {
         "digest": "sha256:81fdcc00a48aeb592ce91bb92baa2e21f4dbd2cb0655c5cf7b38022d83691b66",
         "disposition": "accepted",
         "scenario": "llm.calls/authored/the-daily-cap-starts-again-at-utc-midnight"
+      },
+      "calls/scenarios/two-replays-of-one-corpus-report-the-same-digest-and-counts.yaml": {
+        "digest": "sha256:255cb2ee81bccbfd6389ea2b47f9345b62509dec274c6ad45f79decc8c4e60d9",
+        "disposition": "accepted",
+        "scenario": "llm.calls/authored/two-replays-of-one-corpus-report-the-same-digest-and-counts"
       },
       "chat/scenarios/egress-a-user-image-shares-the-user-message-of-its-text.yaml": {
         "digest": "sha256:ad728487c51ada6ab72830fc1e6e70b28291e51cfaee1c29d775562a683bfb5b",
@@ -6113,7 +6149,7 @@
       }
     },
     "counts": {
-      "authored": 1018,
+      "authored": 1024,
       "generated": 44,
       "outside": 0,
       "refused": 0
@@ -6178,9 +6214,9 @@
     }
   },
   "provenance": {
-    "contract_digest": "45d4231012a252b6eda112ed84115af0a8b3e0f8ef33eb4effb97485efeb433f",
+    "contract_digest": "8040705170d469fd3a3f7ceddcf0d46fbbca08100f8b8b48bcddb3e7c0230553",
     "scenario_initial_state": "empty",
-    "spec_digest": "a74dd1d0ce99701bcebf0eaeb13cf0c029f2c66c9363cc7580fb213e6723661c",
+    "spec_digest": "89d74c10d520a73088c5150f6cd2b78f3822effec12c147e45efa257ec3e3eb4",
     "specification_version": "v1",
     "suite_version": "ess-conformance/35",
     "system": "llm"
@@ -29948,6 +29984,117 @@
         }
       ]
     },
+    "llm.calls/authored/a-classification-case-compares-labels-not-confidences": {
+      "purpose": "an equal label is the same whatever the confidences; another label differs though the recorded label has the higher confidence; no label of the set differs",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Replay"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Replay",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-candidate\"\nalias = \"code-candidate\"\n\n[[targets]]\nid = \"candidate-large\"\nroute_id = \"coding-candidate\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "corpus_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.corpus/1\",\"cases\":[{\"id\":\"sure-of-the-label\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"instructions\":\"Classify the request.\",\"input\":\"I want my money back.\",\"recorded\":{\"label\":\"refund\"}},{\"id\":\"barely-the-label\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"instructions\":\"Classify the request.\",\"input\":\"Maybe I want my money back.\",\"recorded\":{\"label\":\"refund\"}},{\"id\":\"another-label\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"instructions\":\"Classify the request.\",\"input\":\"Where is my parcel?\",\"recorded\":{\"label\":\"refund\"}},{\"id\":\"no-label-of-the-set\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"input\":\"Refund me.\",\"recorded\":{\"label\":\"refund\"}}]}"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"3\", per_units = 1000 }\noutput = { amount = \"5\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762344000000,\"models\":{\"remote-large\":[{\"answer\":\"{\\\"label\\\":\\\"refund\\\",\\\"confidences\\\":{\\\"refund\\\":10000,\\\"other\\\":0}}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"label\\\":\\\"refund\\\",\\\"confidences\\\":{\\\"refund\\\":5100,\\\"other\\\":4900}}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"label\\\":\\\"other\\\",\\\"confidences\\\":{\\\"refund\\\":9900,\\\"other\\\":100}}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"label\\\":\\\"Refund\\\",\\\"confidences\\\":{\\\"refund\\\":9000,\\\"other\\\":1000}}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}]}}"
+            },
+            "run_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"run-1\",\"candidate_route_id\":\"coding-candidate\",\"ledger_id\":\"replay-spend\",\"currency\":\"USD\",\"money_cap\":\"1\",\"reserve\":\"0.1\"}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": [
+                  "sure-of-the-label:same",
+                  "barely-the-label:same",
+                  "another-label:differs",
+                  "no-label-of-the-set:differs"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "replay_runs": {
+                "kind": "literal",
+                "value": [
+                  "{\"candidate_route_id\":\"coding-candidate\",\"cases\":4,\"corpus_digest\":\"a3aafdde51bc74901fc9f6b74178c18a8a12ecc41448a61db24e2e5b4056b63e\",\"currency\":\"USD\",\"differs\":2,\"failed\":0,\"id\":\"run-1\",\"ledger_id\":\"replay-spend\",\"money_cap\":\"1\",\"not_sent\":0,\"reserve\":\"0.1\",\"same\":2,\"spent\":\"0.22\",\"stopped\":null}"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
     "llm.calls/authored/a-failed-call-records-its-error-code-and-dispatch-without-a-zero-cost": {
       "purpose": "an unauthorized failure the far side rejected is recorded by its code and dispatch, with no message and a cost that is not complete, never a zero total",
       "source": [
@@ -30046,6 +30193,118 @@
               "shadow_results": {
                 "kind": "literal",
                 "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-failed-candidate-call-counts-failed-not-differs": {
+      "purpose": "an unreached call counts failed with its code and costs nothing; a rejected call with no usage counts failed, keeps its reserve held and stops the run",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Replay"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Replay",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-candidate\"\nalias = \"code-candidate\"\n\n[[targets]]\nid = \"candidate-large\"\nroute_id = \"coding-candidate\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "corpus_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.corpus/1\",\"cases\":[{\"id\":\"turn-answers\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"label-unreached\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"instructions\":\"Classify the request.\",\"input\":\"I want my money back.\",\"recorded\":{\"label\":\"refund\"}},{\"id\":\"verdict-differs\",\"kind\":\"verdict\",\"input_tokens\":100,\"rubric\":{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false}},\"subject\":\"Question: what is the capital of France? Answer: Paris.\",\"recorded\":{\"verdict\":{\"score\":4,\"pass\":true}}},{\"id\":\"turn-rejected\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello again\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"turn-after\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"and again\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}}]}"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"3\", per_units = 1000 }\noutput = { amount = \"5\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762344000000,\"models\":{\"remote-large\":[{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\",\"message\":\"no connection to the candidate\"}},{\"answer\":\"{\\\"score\\\":2,\\\"pass\\\":false}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"fail\":{\"code\":\"rate-limited\",\"dispatch\":\"rejected\",\"message\":\"slow down\"}},{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}]}}"
+            },
+            "run_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"run-1\",\"candidate_route_id\":\"coding-candidate\",\"ledger_id\":\"replay-spend\",\"currency\":\"USD\",\"money_cap\":\"1\",\"reserve\":\"0.1\"}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": [
+                  "turn-answers:same",
+                  "label-unreached:failed:unavailable",
+                  "verdict-differs:differs",
+                  "turn-rejected:failed:rate-limited",
+                  "turn-after:not-sent"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "replay_runs": {
+                "kind": "literal",
+                "value": [
+                  "{\"candidate_route_id\":\"coding-candidate\",\"cases\":5,\"corpus_digest\":\"43134337a99eb876a03072cb1219a661bbc52253d88d9a6a34e13364cf0308cb\",\"currency\":\"USD\",\"differs\":1,\"failed\":2,\"id\":\"run-1\",\"ledger_id\":\"replay-spend\",\"money_cap\":\"1\",\"not_sent\":1,\"reserve\":\"0.1\",\"same\":1,\"spent\":\"0.21\",\"stopped\":\"uncertain-spend\"}"
+                ]
               },
               "valid_program": {
                 "kind": "literal",
@@ -30489,6 +30748,250 @@
               "shadow_results": {
                 "kind": "literal",
                 "value": []
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-replay-compares-each-case-with-its-recorded-answer": {
+      "purpose": "of two turns, two classifications and two verdicts the candidate gives the recorded answer once each and another once, so three are the same and three differ",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Replay"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Replay",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-candidate\"\nalias = \"code-candidate\"\n\n[[targets]]\nid = \"candidate-large\"\nroute_id = \"coding-candidate\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "corpus_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.corpus/1\",\"cases\":[{\"id\":\"turn-same\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"turn-differs\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello again\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"label-same\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"instructions\":\"Classify the request.\",\"input\":\"I want my money back.\",\"recorded\":{\"label\":\"refund\"}},{\"id\":\"label-differs\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"instructions\":\"Classify the request.\",\"input\":\"Please return what I paid.\",\"recorded\":{\"label\":\"refund\"}},{\"id\":\"verdict-same\",\"kind\":\"verdict\",\"input_tokens\":100,\"rubric\":{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false}},\"subject\":\"Question: what is the capital of France? Answer: Paris.\",\"recorded\":{\"verdict\":{\"score\":4,\"pass\":true}}},{\"id\":\"verdict-differs\",\"kind\":\"verdict\",\"input_tokens\":100,\"rubric\":{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false}},\"subject\":\"Question: what is the capital of France? Answer: Lyon.\",\"recorded\":{\"verdict\":{\"score\":4,\"pass\":true}}}]}"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"3\", per_units = 1000 }\noutput = { amount = \"5\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762344000000,\"models\":{\"remote-large\":[{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"another answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"label\\\":\\\"refund\\\",\\\"confidences\\\":{\\\"refund\\\":9000,\\\"other\\\":1000}}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"label\\\":\\\"other\\\",\\\"confidences\\\":{\\\"refund\\\":1000,\\\"other\\\":9000}}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{ \\\"score\\\": 4, \\\"pass\\\": true }\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"pass\\\":true,\\\"score\\\":3}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}]}}"
+            },
+            "run_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"run-1\",\"candidate_route_id\":\"coding-candidate\",\"ledger_id\":\"replay-spend\",\"currency\":\"USD\",\"money_cap\":\"1\",\"reserve\":\"0.1\"}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": [
+                  "turn-same:same",
+                  "turn-differs:differs",
+                  "label-same:same",
+                  "label-differs:differs",
+                  "verdict-same:same",
+                  "verdict-differs:differs"
+                ]
+              },
+              "delivered_text": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "replay_runs": {
+                "kind": "literal",
+                "value": [
+                  "{\"candidate_route_id\":\"coding-candidate\",\"cases\":6,\"corpus_digest\":\"9460de9fb136755e230a366afb3412cca9ab3f8f211f31891734e639fec33533\",\"currency\":\"USD\",\"differs\":3,\"failed\":0,\"id\":\"run-1\",\"ledger_id\":\"replay-spend\",\"money_cap\":\"1\",\"not_sent\":0,\"reserve\":\"0.1\",\"same\":3,\"spent\":\"0.33\",\"stopped\":null}"
+                ]
+              },
+              "shadow_results": {
+                "kind": "literal",
+                "value": []
+              },
+              "spent_today": {
+                "kind": "literal",
+                "value": null
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/a-replay-stops-at-its-money-cap-and-counts-the-cases-not-sent": {
+      "purpose": "two cases settle 0.11; the third would need 0.1 more, one nano past the cap, so it is recorded skipped, the run stops, and the fourth counts not sent",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Replay"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Replay",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-candidate\"\nalias = \"code-candidate\"\n\n[[targets]]\nid = \"candidate-large\"\nroute_id = \"coding-candidate\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "corpus_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.corpus/1\",\"cases\":[{\"id\":\"c-1\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"one\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"c-2\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"two\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"c-3\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"three\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"c-4\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"four\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}}]}"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"3\", per_units = 1000 }\noutput = { amount = \"5\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762344000000,\"models\":{\"remote-large\":[{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}]}}"
+            },
+            "run_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"run-1\",\"candidate_route_id\":\"coding-candidate\",\"ledger_id\":\"replay-spend\",\"currency\":\"USD\",\"money_cap\":\"0.209999999\",\"reserve\":\"0.1\"}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": [
+                  "c-1:same",
+                  "c-2:same",
+                  "c-3:not-sent",
+                  "c-4:not-sent"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"run-1/c-1\",\"role\":\"replay\",\"kind\":\"turn\",\"route_id\":\"coding-candidate\",\"route_target_id\":\"candidate-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.055\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"run-1/c-2\",\"role\":\"replay\",\"kind\":\"turn\",\"route_id\":\"coding-candidate\",\"route_target_id\":\"candidate-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.055\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"run-1/c-3\",\"role\":\"replay\",\"kind\":\"turn\",\"route_id\":\"coding-candidate\",\"route_target_id\":null,\"upstream_model\":null,\"outcome\":\"skipped\",\"error_code\":null,\"dispatch\":\"not-sent\",\"attempts\":0,\"started_at_unix_ms\":1762344000000,\"latency_ms\":null,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":null}"
+                ]
+              },
+              "replay_runs": {
+                "kind": "literal",
+                "value": [
+                  "{\"candidate_route_id\":\"coding-candidate\",\"cases\":4,\"corpus_digest\":\"30ec09cd037cc6e45d6fe0bab5e413a4e4a2ce186bc60dfb947d78b60faad795\",\"currency\":\"USD\",\"differs\":0,\"failed\":0,\"id\":\"run-1\",\"ledger_id\":\"replay-spend\",\"money_cap\":\"0.209999999\",\"not_sent\":2,\"reserve\":\"0.1\",\"same\":2,\"spent\":\"0.11\",\"stopped\":\"limit-exceeded\"}"
+                ]
               },
               "valid_program": {
                 "kind": "literal",
@@ -31098,6 +31601,124 @@
         }
       ]
     },
+    "llm.calls/authored/replay-records-carry-role-replay": {
+      "purpose": "a turn, a classification and a verdict case each write one record with role replay and the kind of the case; the case past the cap is recorded skipped",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Replay"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Replay",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-candidate\"\nalias = \"code-candidate\"\n\n[[targets]]\nid = \"candidate-large\"\nroute_id = \"coding-candidate\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "corpus_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.corpus/1\",\"cases\":[{\"id\":\"turn-case\",\"kind\":\"turn\",\"input_tokens\":100,\"primary_record_id\":\"call-77\",\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"label-case\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"instructions\":\"Classify the request.\",\"input\":\"I want my money back.\",\"recorded\":{\"label\":\"refund\"}},{\"id\":\"verdict-case\",\"kind\":\"verdict\",\"input_tokens\":100,\"primary_record_id\":\"call-91\",\"rubric\":{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false}},\"subject\":\"Question: what is the capital of France? Answer: Paris.\",\"recorded\":{\"verdict\":{\"score\":4,\"pass\":true}}}]}"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"3\", per_units = 1000 }\noutput = { amount = \"5\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762344000000,\"models\":{\"remote-large\":[{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"label\\\":\\\"refund\\\",\\\"confidences\\\":{\\\"refund\\\":9000,\\\"other\\\":1000}}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"score\\\":4,\\\"pass\\\":true}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"}]}}"
+            },
+            "run_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"run-1\",\"candidate_route_id\":\"coding-candidate\",\"ledger_id\":\"replay-spend\",\"currency\":\"USD\",\"money_cap\":\"0.2\",\"reserve\":\"0.1\"}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": [
+                  "turn-case:same",
+                  "label-case:same",
+                  "verdict-case:not-sent"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "records": {
+                "kind": "literal",
+                "value": [
+                  "{\"id\":\"run-1/turn-case\",\"role\":\"replay\",\"kind\":\"turn\",\"route_id\":\"coding-candidate\",\"route_target_id\":\"candidate-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.055\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":\"call-77\"}",
+                  "{\"id\":\"run-1/label-case/classify\",\"role\":\"replay\",\"kind\":\"classification\",\"route_id\":\"coding-candidate\",\"route_target_id\":\"candidate-large\",\"upstream_model\":\"example/Large-Model\",\"outcome\":\"succeeded\",\"error_code\":null,\"dispatch\":null,\"attempts\":1,\"started_at_unix_ms\":1762344000000,\"latency_ms\":0,\"time_to_first_event_ms\":0,\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"cost\":{\"currency\":\"USD\",\"known_subtotal\":\"0.055\",\"complete\":true,\"price_revision\":\"lab-prices-r1\"},\"primary_record_id\":null}",
+                  "{\"id\":\"run-1/verdict-case\",\"role\":\"replay\",\"kind\":\"verdict\",\"route_id\":\"coding-candidate\",\"route_target_id\":null,\"upstream_model\":null,\"outcome\":\"skipped\",\"error_code\":null,\"dispatch\":\"not-sent\",\"attempts\":0,\"started_at_unix_ms\":1762344000000,\"latency_ms\":null,\"time_to_first_event_ms\":null,\"usage\":{},\"cost\":null,\"primary_record_id\":\"call-91\"}"
+                ]
+              },
+              "replay_runs": {
+                "kind": "literal",
+                "value": [
+                  "{\"candidate_route_id\":\"coding-candidate\",\"cases\":3,\"corpus_digest\":\"05db6e7de15424cddc22ef1f4e8a2bb39736bd73b871fe06df360bac22424e7e\",\"currency\":\"USD\",\"differs\":0,\"failed\":0,\"id\":\"run-1\",\"ledger_id\":\"replay-spend\",\"money_cap\":\"0.2\",\"not_sent\":1,\"reserve\":\"0.1\",\"same\":2,\"spent\":\"0.11\",\"stopped\":\"limit-exceeded\"}"
+                ]
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
     "llm.calls/authored/the-daily-cap-starts-again-at-utc-midnight": {
       "purpose": "a shadow at 23:59 spends the day's cap and the next one is skipped; after UTC midnight a new day's cap admits the shadow again",
       "source": [
@@ -31213,6 +31834,120 @@
               "spent_today": {
                 "kind": "literal",
                 "value": "0.2"
+              },
+              "valid_program": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        }
+      ]
+    },
+    "llm.calls/authored/two-replays-of-one-corpus-report-the-same-digest-and-counts": {
+      "purpose": "two runs of one corpus, each on a ledger of its own, report the SHA-256 of the corpus bytes and the same counts and spend",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.calls"
+        },
+        {
+          "kind": "command",
+          "name": "llm.calls.Replay"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.calls.LastCall"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.calls.Replay",
+          "input": {
+            "catalog_toml": {
+              "kind": "literal",
+              "value": "# Illustrative declarations, not qualification of a particular model or deployment.\nformat = \"llm.catalog/1\"\n\n[[providers]]\nid = \"my-lab\"\ncategory = \"self-hosted\"\n\n[[accounts]]\nid = \"local\"\nprovider_id = \"my-lab\"\nauth_kind = \"anonymous\"\nbilling_kind = \"self-hosted\"\n\n[[accounts]]\nid = \"remote\"\nprovider_id = \"my-lab\"\nauth_kind = \"bearer\"\nbilling_kind = \"metered\"\nsecret_reference_id = \"lab-llm-token\"\n\n[[endpoints]]\nid = \"local-vllm\"\naccount_id = \"local\"\nbase_url = \"http://127.0.0.1:8000/v1\"\n\n[[endpoints]]\nid = \"remote-models\"\naccount_id = \"remote\"\nbase_url = \"https://models.example.invalid/v1\"\n\n[[models]]\nid = \"small\"\nupstream_name = \"example/Small-Model\"\n\n[[models]]\nid = \"large\"\nupstream_name = \"example/Large-Model\"\n\n[[serving_models]]\nid = \"local-small\"\nendpoint_id = \"local-vllm\"\nmodel_id = \"small\"\nprotocol = \"chat-completions\"\n[serving_models.capabilities]\ntools = false\ntool_choice = false\ntemperature = false\ntop_p = false\nreasoning_efforts = []\ncontext_window = 4096\nmax_output_tokens = 1024\n\n[[serving_models]]\nid = \"remote-large\"\nendpoint_id = \"remote-models\"\nmodel_id = \"large\"\nprotocol = \"responses\"\n[serving_models.capabilities]\ntools = true\ntool_choice = true\ntemperature = true\ntop_p = true\nreasoning_efforts = [\"medium\", \"high\"]\ncontext_window = 32768\nmax_output_tokens = 8192\n\n[[routes]]\nid = \"coding\"\nalias = \"code\"\n\n[[targets]]\nid = \"coding-primary\"\nroute_id = \"coding\"\nserving_model_id = \"local-small\"\nposition = 0\n\n[[routes]]\nid = \"coding-candidate\"\nalias = \"code-candidate\"\n\n[[targets]]\nid = \"candidate-large\"\nroute_id = \"coding-candidate\"\nserving_model_id = \"remote-large\"\nposition = 0\n"
+            },
+            "corpus_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.corpus/1\",\"cases\":[{\"id\":\"turn-same\",\"kind\":\"turn\",\"input_tokens\":100,\"turn\":{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"code\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"hello\"}],\"tools\":[],\"max_output_tokens\":128}},\"recorded\":{\"text\":\"recorded answer\"}},{\"id\":\"label-differs\",\"kind\":\"classification\",\"input_tokens\":100,\"label_set\":{\"id\":\"intent\",\"version\":\"v1\",\"labels\":[\"refund\",\"other\"]},\"instructions\":\"Classify the request.\",\"input\":\"I want my money back.\",\"recorded\":{\"label\":\"refund\"}},{\"id\":\"verdict-unreached\",\"kind\":\"verdict\",\"input_tokens\":100,\"rubric\":{\"id\":\"helpfulness\",\"version\":\"v3\",\"text\":\"Score from 1 to 5 how well the answer addresses the question, and say whether it passes.\",\"schema\":{\"type\":\"object\",\"properties\":{\"score\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":5},\"pass\":{\"type\":\"boolean\"}},\"required\":[\"score\",\"pass\"],\"additionalProperties\":false}},\"subject\":\"Question: what is the capital of France? Answer: Paris.\",\"recorded\":{\"verdict\":{\"score\":4,\"pass\":true}}}]}"
+            },
+            "prices_toml": {
+              "kind": "literal",
+              "value": "# Fictional fixture prices. No vendor, model or resource is qualified by this example.\nformat = \"llm.prices/1\"\nrevision = \"lab-prices-r1\"\nsource = \"fixture price list\"\nas_of_unix_ms = 1762300800000\ncurrency = \"USD\"\n\n[[models]]\nid = \"local-small-price\"\nserving_model_id = \"local-small\"\n# The binding revision the catalog above derives for local-small.\nbinding_revision = \"1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1\"\nupstream_model = \"example/Small-Model\"\ninput = { amount = \"1\", per_units = 1000 }\noutput = { amount = \"2\", per_units = 1000 }\n\n[[models]]\nid = \"remote-large-price\"\nserving_model_id = \"remote-large\"\n# The binding revision the catalog above derives for remote-large.\nbinding_revision = \"5dd662a7d1b9e5280a10e6b691ff04c79326d1562d18d3206e9d1bd141ed9a13\"\nupstream_model = \"example/Large-Model\"\ninput = { amount = \"3\", per_units = 1000 }\noutput = { amount = \"5\", per_units = 1000 }\n"
+            },
+            "program_json": {
+              "kind": "literal",
+              "value": "{\"start_unix_ms\":1762344000000,\"then\":[\"run-2\"],\"models\":{\"remote-large\":[{\"answer\":\"recorded answer\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"answer\":\"{\\\"label\\\":\\\"other\\\",\\\"confidences\\\":{\\\"refund\\\":2000,\\\"other\\\":8000}}\",\"usage\":{\"input_tokens\":10,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0},\"upstream_model\":\"example/Large-Model\"},{\"fail\":{\"code\":\"unavailable\",\"dispatch\":\"not-sent\"}}]}}"
+            },
+            "run_json": {
+              "kind": "literal",
+              "value": "{\"id\":\"run-1\",\"candidate_route_id\":\"coding-candidate\",\"ledger_id\":\"replay-spend\",\"currency\":\"USD\",\"money_cap\":\"1\",\"reserve\":\"0.1\"}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.calls.Replay",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.calls.LastCall"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "case_results": {
+                "kind": "literal",
+                "value": [
+                  "turn-same:same",
+                  "label-differs:differs",
+                  "verdict-unreached:failed:unavailable",
+                  "turn-same:same",
+                  "label-differs:differs",
+                  "verdict-unreached:failed:unavailable"
+                ]
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "replay_runs": {
+                "kind": "literal",
+                "value": [
+                  "{\"candidate_route_id\":\"coding-candidate\",\"cases\":3,\"corpus_digest\":\"2d258ea20b68a495dc58378dfaeae94c202b6bb4f37a1cfc2dc82bf426b96cfd\",\"currency\":\"USD\",\"differs\":1,\"failed\":1,\"id\":\"run-1\",\"ledger_id\":\"replay-spend\",\"money_cap\":\"1\",\"not_sent\":0,\"reserve\":\"0.1\",\"same\":1,\"spent\":\"0.11\",\"stopped\":null}",
+                  "{\"candidate_route_id\":\"coding-candidate\",\"cases\":3,\"corpus_digest\":\"2d258ea20b68a495dc58378dfaeae94c202b6bb4f37a1cfc2dc82bf426b96cfd\",\"currency\":\"USD\",\"differs\":1,\"failed\":1,\"id\":\"run-2\",\"ledger_id\":\"replay-spend\",\"money_cap\":\"1\",\"not_sent\":0,\"reserve\":\"0.1\",\"same\":1,\"spent\":\"0.11\",\"stopped\":null}"
+                ]
               },
               "valid_program": {
                 "kind": "literal",

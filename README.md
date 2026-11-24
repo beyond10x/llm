@@ -69,13 +69,13 @@ examples (a forced tool call, a route explanation, a price quote) and points at 
 | `llm-routing` | TOML catalogs, route explanation, same-target retry and ordered fallback |
 | `llm-models` | Builds the protocol client a catalog serving model declares, with the caller's resolver for its account; reads `llm.routes/1` model routes in YAML or TOML, Bedrock endpoints included ([guide](https://beyond10x.github.io/llm/docs/guides/configure-model-routes)) |
 | `llm-cost` | Usage pricing in exact decimals; a SQLite spending ledger behind feature `sqlite` |
-| `llm-calls` | One text-free record per routed call (route, target, timings, usage, priced cost) on a sink the caller injects |
+| `llm-calls` | One text-free record per routed call (route, target, timings, usage, priced cost) on a sink the caller injects; a recorded corpus replayed on a candidate route under a money cap |
 | `llm-decide` | A closed-label classifier chain: one label of a set with per-label confidence, or an abstention with its cause; a rubric judge: one strict JSON verdict with its rubric and model pinned |
 | `llm-openai-decisions` | The OpenAI `/v1/decisions` wire: typed questions about one input, typed answers with probabilities and usage, one record per call; the classifier's decision-endpoint path. Fixture-checked, no live call |
 | `llm-embed` | Embeddings over an embed route: the OpenAI `/v1/embeddings` wire, ordered batches, token usage, one record per batch |
 | `llm-tool-call` | `call_tool` (one forced tool, its JSON input back) and the Codex Responses preset |
 | `llm-blocking` | A blocking adapter over any `Model` for a synchronous loop |
-| `llm-cli` | The `llm` command: lists the models an `llm.toml` routes file declares and streams one turn on any of them, with its usage and cost ([guide](https://beyond10x.github.io/llm/docs/guides/use-the-llm-command)) |
+| `llm-cli` | The `llm` command: lists the models an `llm.toml` routes file declares, streams one turn on any of them, with its usage and cost, and replays a recorded corpus on a priced route ([guide](https://beyond10x.github.io/llm/docs/guides/use-the-llm-command)) |
 
 The [crate reference](https://beyond10x.github.io/llm/docs/reference/crates) is generated from
 `cargo metadata` and lists each package's library name and features.

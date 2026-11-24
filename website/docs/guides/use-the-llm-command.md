@@ -9,11 +9,13 @@ source: crates/llm-cli (src/lib.rs, tests/command.rs), crates/llm-models/src/rou
 # Use the llm command
 
 `llm` is this workspace's command. It reads an `llm.routes/1` document, the same one
-[Configure model routes](configure-model-routes.md) describes, and has two subcommands:
+[Configure model routes](configure-model-routes.md) describes, and has three subcommands:
 
 - `llm model list` prints one row per route. It reads no secret and makes no network call.
 - `llm infer --model <id> "<prompt>"` sends one user turn and streams the assistant text to
   stdout as it arrives.
+- `llm replay --route <id> --corpus <file> --cap <amount> --reserve <amount>` sends a recorded
+  corpus to a priced route under a money cap and prints which answers are the same.
 
 Build it from a checkout:
 
@@ -202,14 +204,76 @@ Otherwise `llm infer` and `llm model list` both refuse the file with exit code `
 runs, and the message names the file and what is wrong. A file without an `aws-process` endpoint is
 not checked. On Windows the check is not made.
 
+## Replay a recorded corpus
+
+`llm replay` sends recorded requests to a candidate route and says, case by case, whether the
+route answers what was recorded. It needs a route with a `price`: that price is the run's price
+book and names its currency.
+
+```bash
+llm replay --route fast --corpus corpus.json --cap 0.05 --reserve 0.001
+```
+
+The corpus is a JSON file you assemble from your own store; `llm` writes none. It is one
+`llm.corpus/1` document with an ordered list of cases:
+
+```json
+{
+  "format": "llm.corpus/1",
+  "cases": [
+    {
+      "id": "greeting",
+      "kind": "turn",
+      "input_tokens": 100,
+      "turn": {
+        "format": "llm.turn/3",
+        "request": {
+          "model": "recorded-route",
+          "instructions": "",
+          "items": [{ "kind": "user-text", "text": "Say good day in German." }],
+          "tools": []
+        }
+      },
+      "recorded": { "text": "Guten Tag" }
+    }
+  ]
+}
+```
+
+A case of kind `turn` carries a turn document and the recorded text. Kind `classification`
+carries `label_set` (`id`, `version`, `labels`), optional `instructions`, `input` and the recorded
+`label`. Kind `verdict` carries `rubric` (`id`, `version`, `text`, `schema`), `subject` and the
+recorded `verdict`. `input_tokens` is your estimate, which route selection reads, and
+`primary_record_id` may name the record the case was taken from. The file is read only whole: a
+cut file, a member given twice or a member the format does not declare refuses the run before
+anything is sent, as does a file over 16 MiB or with more than 4096 cases.
+
+`--cap` is the most the run may spend and `--reserve` is what each case holds under the cap until
+its cost is known; both are decimal amounts with at most nine fractional digits. A case is sent
+while what the run spent plus the reserve is at most the cap. The first case past the cap is not
+sent, the run stops, and that case and the rest count `not-sent`. A call whose cost is not known,
+because the provider reported no usage, keeps its reserve held and stops the run too.
+
+The summary is one line of JSON on stdout, here for a corpus of two cases:
+
+```json
+{"id":"replay","candidate_route_id":"haiku","corpus_digest":"…","currency":"USD","money_cap":"0.05","reserve":"0.001","ledger_id":"replay","spent":"0.000064","stopped":null,"cases":2,"same":1,"differs":1,"failed":0,"not_sent":0,"results":[{"case_id":"greeting","result":"same","error_code":null},{"case_id":"parting","result":"differs","error_code":null}]}
+```
+
+`same` means the answer equals the recorded one: a turn's text and a label byte for byte, a
+verdict as canonical JSON. `failed` carries the error code of the call that failed. `stopped` is
+`limit-exceeded` or `uncertain-spend` when the run stopped, and `llm` then exits with `3`.
+`corpus_digest` is the SHA-256 of the file's bytes. `--run <id>` names the run; the default is
+`replay`. The summary and stderr carry no text of a case.
+
 ## Exit codes
 
 | Code | Meaning |
 | --- | --- |
-| `0` | The turn completed, or the list was printed; also when the reader closed stdout (`llm infer … \| head -c 1`), which stops the turn and says so on stderr |
-| `1` | The provider failed after the request was sent, or stdout could not be written for another reason; stderr names the route and the error code only |
-| `2` | Refused before anything was sent: no or bad configuration, an unknown model, a missing credential, an invalid request |
-| `3` | The turn stopped before its end: at the output limit or for another reason the provider named. Its text so far is on stdout and stderr says why; the turn is not a whole answer, so it is not `0`, and nothing failed, so it is not `1` |
+| `0` | The turn completed, the list was printed, or every case of a replay was sent, whatever its result; also when the reader closed stdout (`llm infer … \| head -c 1`), which stops the turn and says so on stderr |
+| `1` | The provider failed a turn after the request was sent (a replay counts the case `failed` instead), or stdout could not be written for another reason; stderr names the route and the error code only |
+| `2` | Refused before anything was sent: no or bad configuration, an unknown model, a missing credential, an invalid request; for a replay also a route without a price, a corpus that is refused, a reserve above the cap |
+| `3` | The turn stopped before its end: at the output limit or for another reason the provider named. Its text so far is on stdout and stderr says why; the turn is not a whole answer, so it is not `0`, and nothing failed, so it is not `1`. Also a replay that stopped at its cap: the summary is on stdout and stderr says how many cases were not sent |
 | `130` | Interrupted with Ctrl-C; the text shown so far stays on stdout. A second Ctrl-C ends a turn the first did not stop |
 
 A refusal names the field, route or reference. It does not print a secret value or a provider's

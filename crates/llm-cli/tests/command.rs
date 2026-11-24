@@ -4,6 +4,7 @@
 use base64::{Engine, engine::general_purpose::STANDARD};
 use llm_bedrock::eventstream::{HeaderValue, Message, encode_message};
 use serde_json::{Value, json};
+use sha2::Digest as _;
 use std::{
     fmt::Write as _,
     io::{BufRead, BufReader, Read, Write},
@@ -1525,4 +1526,243 @@ fn a_yaml_file_is_read_as_the_yaml_document() {
         None,
     );
     assert_eq!(listed(&output), ["small"]);
+}
+
+const REPLAY_PROMPT: &str = "replay-prompt-marker-wren-4127";
+
+/// An `llm.corpus/1` document of turn cases, each an id and its recorded answer.
+fn turn_corpus(cases: &[(&str, &str)]) -> String {
+    let cases: Vec<Value> = cases
+        .iter()
+        .map(|(id, recorded)| {
+            json!({
+                "id": id, "kind": "turn", "input_tokens": 100,
+                "turn": {"format": "llm.turn/3", "request": {
+                    "model": "recorded-route", "instructions": "",
+                    "items": [{"kind": "user-text", "text": REPLAY_PROMPT}], "tools": []}},
+                "recorded": {"text": recorded}
+            })
+        })
+        .collect();
+    json!({"format": "llm.corpus/1", "cases": cases}).to_string()
+}
+
+/// `llm replay` of `corpus` on `route` under `cap`, holding 0.0001 per case, against a server
+/// with `answers` Messages answers ready: the output and what the server received.
+fn replayed(corpus: &str, route: &str, cap: &str, answers: usize) -> (Output, Vec<Received>) {
+    let fixture = Fixture::new(vec![messages_stream(); answers]);
+    let (directory, path) = configured(&three_routes(&fixture.origin));
+    let corpus_path = directory.path().join("corpus.json");
+    write(&corpus_path, corpus);
+    let output = llm(
+        &[
+            "--config",
+            &path,
+            "replay",
+            "--route",
+            route,
+            "--corpus",
+            corpus_path.to_str().unwrap(),
+            "--cap",
+            cap,
+            "--reserve",
+            "0.0001",
+        ],
+        &KEYS,
+        None,
+    );
+    (output, fixture.received())
+}
+
+#[test]
+fn replay_prints_the_summary_and_exits_nonzero_past_the_cap() {
+    // The server answers every case "Guten Tag" for 12 input tokens at 1 and 4 output tokens at
+    // 5 per million: 0.000032 a case.
+    let corpus = turn_corpus(&[
+        ("greets", "Guten Tag"),
+        ("parts", "Guten Abend"),
+        ("third", "Guten Tag"),
+    ]);
+    let digest: String =
+        sha2::Sha256::digest(corpus.as_bytes())
+            .iter()
+            .fold(String::new(), |mut hex, byte| {
+                let _ = write!(hex, "{byte:02x}");
+                hex
+            });
+    // Two settled cases are 0.000064; the third needs 0.000164 and this cap is one nano short.
+    let (output, received) = replayed(&corpus, "haiku", "0.000163999", 3);
+    assert_eq!(output.status.code(), Some(3), "{}", stderr(&output));
+    let printed = stdout(&output);
+    assert_eq!(
+        serde_json::from_str::<Value>(&printed).unwrap(),
+        json!({
+            "id": "replay", "candidate_route_id": "haiku", "corpus_digest": digest,
+            "currency": "USD", "money_cap": "0.000163999", "reserve": "0.0001",
+            "ledger_id": "replay", "spent": "0.000064", "stopped": "limit-exceeded",
+            "cases": 3, "same": 1, "differs": 1, "failed": 0, "not_sent": 1,
+            "results": [
+                {"case_id": "greets", "result": "same", "error_code": null},
+                {"case_id": "parts", "result": "differs", "error_code": null},
+                {"case_id": "third", "result": "not-sent", "error_code": null}
+            ]
+        })
+    );
+    // The summary and the notice hold no text of a case.
+    let notice = stderr(&output);
+    assert_eq!(
+        notice,
+        "llm: replay stopped at its cap (limit-exceeded): 1 of 3 cases not sent\n"
+    );
+    for text in ["Guten", REPLAY_PROMPT] {
+        assert!(!printed.contains(text) && !notice.contains(text), "{text}");
+    }
+    // Each sent case went to the candidate route's model, not the one its turn was recorded on.
+    assert_eq!(received.len(), 2);
+    for request in &received {
+        let body = request.json();
+        assert_eq!(body["model"], "claude-haiku-5-5");
+        assert!(body["messages"].to_string().contains(REPLAY_PROMPT));
+    }
+    // At a cap the third case's admission equals, every case is sent and the command exits 0.
+    let (output, received) = replayed(&corpus, "haiku", "0.000164", 3);
+    assert_eq!(output.status.code(), Some(0), "{}", stderr(&output));
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    assert_eq!(
+        (&summary["same"], &summary["differs"], &summary["not_sent"]),
+        (&json!(2), &json!(1), &json!(0))
+    );
+    assert_eq!(
+        (&summary["spent"], &summary["stopped"]),
+        (&json!("0.000096"), &json!(null))
+    );
+    assert_eq!((received.len(), stderr(&output).as_str()), (3, ""));
+}
+
+#[test]
+fn replay_refuses_a_run_it_cannot_start_and_sends_nothing() {
+    let whole = turn_corpus(&[("greets", "Guten Tag")]);
+    let other_kind = whole.replace(r#""kind":"turn""#, r#""kind":"embed-batch""#);
+    assert_ne!(other_kind, whole);
+    let cut = &whole[..whole.len() - 1];
+    let rows: [(&str, &str, &str, &str, &str); 6] = [
+        (
+            "a route without a price",
+            &whole,
+            "gpt",
+            "1",
+            "llm: route `gpt` declares no price, so its spend cannot be held under a cap\n",
+        ),
+        (
+            "a name that is no route",
+            &whole,
+            "absent",
+            "1",
+            "llm: `absent` is no route or alias in the configuration\n",
+        ),
+        (
+            "a corpus with a case kind the format does not know",
+            &other_kind,
+            "haiku",
+            "1",
+            "llm: corpus: invalid-request: cases[0].kind: not a case kind of llm.corpus/1\n",
+        ),
+        (
+            "a corpus cut before its last byte",
+            cut,
+            "haiku",
+            "1",
+            "llm: corpus: invalid-request: $: not one whole JSON document\n",
+        ),
+        (
+            "a cap under the reserve",
+            &whole,
+            "haiku",
+            "0.000099999",
+            "llm: replay: invalid-request: a case must not reserve more than the money cap\n",
+        ),
+        (
+            "a cap that is no decimal amount",
+            &whole,
+            "haiku",
+            "1e-3",
+            "llm: `--cap` must be a decimal amount with at most nine fractional digits\n",
+        ),
+    ];
+    for (name, corpus, route, cap, message) in rows {
+        let (output, received) = replayed(corpus, route, cap, 1);
+        assert_eq!(output.status.code(), Some(2), "{name}");
+        assert_eq!(
+            (stderr(&output).as_str(), stdout(&output).as_str()),
+            (message, ""),
+            "{name}"
+        );
+        assert!(received.is_empty(), "{name}");
+    }
+}
+
+#[test]
+fn replay_counts_a_refused_call_failed_and_stops_while_its_cost_is_not_known() {
+    let body =
+        br#"{"type":"error","error":{"type":"invalid_request_error","message":"fixture prose"}}"#;
+    let failure = answer(
+        &format!(
+            "HTTP/1.1 400 Bad Request\r\ncontent-type: application/json\r\n\
+             content-length: {}\r\nconnection: close\r\n\r\n",
+            body.len()
+        ),
+        body,
+    );
+    let fixture = Fixture::new(vec![failure, messages_stream()]);
+    let (directory, path) = configured(&three_routes(&fixture.origin));
+    let corpus_path = directory.path().join("corpus.json");
+    write(
+        &corpus_path,
+        &turn_corpus(&[("refused", "Guten Tag"), ("greets", "Guten Tag")]),
+    );
+    let output = llm(
+        &[
+            "--config",
+            &path,
+            "replay",
+            "--route",
+            "fast",
+            "--corpus",
+            corpus_path.to_str().unwrap(),
+            "--cap",
+            "1",
+            "--reserve",
+            "0.0001",
+            "--run",
+            "nightly",
+        ],
+        &KEYS,
+        None,
+    );
+    assert_eq!(output.status.code(), Some(3), "{}", stderr(&output));
+    let summary: Value = serde_json::from_str(&stdout(&output)).unwrap();
+    // The far side reported no usage for the call it refused, so the case's whole reserve stays
+    // held and no further case is admitted.
+    assert_eq!(
+        summary["results"],
+        json!([
+            {"case_id": "refused", "result": "failed", "error_code": "refused"},
+            {"case_id": "greets", "result": "not-sent", "error_code": null}
+        ])
+    );
+    assert_eq!(
+        (&summary["stopped"], &summary["spent"]),
+        (&json!("uncertain-spend"), &json!("0.0001"))
+    );
+    // An alias names its route in the summary; the run id is the one given.
+    assert_eq!(
+        (&summary["candidate_route_id"], &summary["id"]),
+        (&json!("haiku"), &json!("nightly"))
+    );
+    assert_eq!(
+        stderr(&output),
+        "llm: replay stopped at its cap (uncertain-spend): 1 of 2 cases not sent\n"
+    );
+    assert!(!stderr(&output).contains("fixture prose"));
+    assert_eq!(fixture.received().len(), 1);
 }

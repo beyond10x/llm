@@ -19,6 +19,7 @@ explicit envelope, and an old or unknown version refuses rather than being coerc
 | `llm.routes/1` | YAML model routes: endpoints by base URL, protocol and secret reference, routes as `<endpoint>/<model-id>`; expands into `llm.catalog/1` ([guide](../guides/configure-model-routes.md)) |
 | `llm.provider-description/1` | TOML provider descriptions: inference URL template, wires, authentication and pinned control-plane operations |
 | `llm.prices/1` | Price books, TOML or JSON |
+| `llm.corpus/1` | A replay corpus, JSON: recorded turn, classification and verdict cases with their answers, assembled by the caller ([guide](../guides/use-the-llm-command.md#replay-a-recorded-corpus)) |
 | `llm.usage/2` | Attributed usage observations; refuses v1 |
 | `llm.cost/2` | Derived accounting reports |
 | `llm.budget/1` | The SQLite budget journal |

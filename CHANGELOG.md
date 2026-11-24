@@ -18,6 +18,15 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `llm-decide`: `EndpointClassifier` asks a `DecisionEndpoint` one choice question (`Path::DecisionEndpoint`)
 - `basis_points` turns a probability from 0 to 1 into basis points by exact rounding, a half up; sums are not normalized
 - ESS: command `llm.decisions.Decide`, its outcome scenario and 6 authored ones; the conformance floor is 1062 (was 1055)
+- `llm-calls`: `replay` sends a `Corpus` to a candidate route case by case: `same`, `differs`, `failed` or `not-sent`
+- `Corpus::parse` takes `llm.corpus/1` only whole: a cut file, a member twice or an undeclared one is refused by its path
+- A corpus is bounded at 16 MiB, 4096 cases and 64 levels of nesting; past a bound it is refused `too-large`
+- A replay holds each case's reserve on an `llm-cost` budget ledger; the first case past the cap is recorded `skipped`
+- A replayed call whose cost is not known keeps its reserve held and stops the run with `uncertain-spend`
+- A record of a replay has role `replay`; the run reports the SHA-256 of the corpus bytes, its counts and its spend
+- `llm replay` runs a corpus file on a priced route, prints the summary as JSON and exits 3 when the run stopped
+- `llm_cli::Routed` is the replay candidate over `record_turn`, `ModelClassifier` and `judge`
+- ESS: `llm.calls.Replay` runs the real `replay`; entity `llm.calls.Corpus`, 6 scenarios; the floor is 1068 (was 1062)
 
 ## [0.27.0] - 2026-11-24
 
