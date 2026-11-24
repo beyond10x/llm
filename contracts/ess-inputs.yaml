@@ -999,6 +999,12 @@ scenarios:
 - decisions/scenarios/a-chain-where-every-classifier-abstains-returns-the-last-abstention-as-final.yaml
 - decisions/scenarios/each-model-classifier-call-yields-a-call-record-with-latency-and-cost.yaml
 - decisions/scenarios/a-label-set-with-a-duplicate-or-a-single-label-is-refused.yaml
+- decisions/scenarios/a-verdict-names-the-rubric-version-digest-and-upstream-model.yaml
+- decisions/scenarios/an-answer-not-valid-against-the-verdict-schema-is-refused-and-not-repaired.yaml
+- decisions/scenarios/the-same-answer-gives-byte-identical-verdict-json-on-two-runs.yaml
+- decisions/scenarios/two-judge-runs-over-one-rubric-and-subject-send-byte-identical-requests.yaml
+- decisions/scenarios/a-rubric-route-with-more-than-one-target-or-fallback-is-refused.yaml
+- decisions/scenarios/a-verdict-call-yields-a-call-record-of-kind-verdict.yaml
 - embeddings/scenarios/embed-returns-one-vector-per-text-in-input-order.yaml
 - embeddings/scenarios/a-request-over-the-batch-limit-is-split-and-returned-in-input-order.yaml
 - embeddings/scenarios/an-unreported-token-count-stays-unknown.yaml

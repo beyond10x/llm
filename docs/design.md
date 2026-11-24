@@ -768,6 +768,33 @@ Option<Answer>`), synchronous and with no model call and no record; `None` absta
 and its answer is held to the set and the floor like a model's. Because it makes no call, it runs
 even past the deadline, so a chain ending in one always ends in its answer or its abstention.
 
+**Verdict.** A `Rubric` is an id, a version, a text, the JSON Schema of the verdict and a route
+alias. Its digest is the lowercase hex sha256 of the text's length in bytes as eight big-endian
+bytes, the text, and the schema as canonical JSON (object keys sorted at every depth, no
+whitespace); the id, the version and the route do not enter it. `Rubric::new` refuses an empty
+version, an empty text and a schema the library cannot hold an answer to (`RubricError`, codes
+`empty-version`, `empty-text`, `unsupported-schema`). The checked keywords are `type`,
+`properties`, `required`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`
+and `anyOf`, with `title` and `description` as annotations; any other keyword refuses the rubric,
+so no answer is held to less than its schema. llm takes no JSON Schema dependency for this.
+
+`judge(rubric, subject, request_id, input_tokens, ports)` makes one call. The request is the
+rubric's text as the instructions, the subject as the one user item and the schema, in canonical
+key order, as the strict `controls.output_format` named `verdict`, with temperature 0 where the
+route's target declares temperature: its bytes are a function of rubric and subject, and the
+request id, the clock and the answer do not enter them. The route must have exactly one target
+and fallback off, otherwise the judge refuses `route-not-pinned` before any call, so the model
+cannot change between runs. The call goes through `llm_calls::record_turn` with the same-target
+retry of every routed call and writes one record, relabelled kind `verdict`, with the id
+`<request id>/<rubric id>`; a failed call is its error and still has its record.
+
+A `Verdict` names the rubric id, version and digest, the route target, the upstream model the far
+side reported and the call record id. `verdict_json` is the answer as canonical JSON when it is
+JSON and valid against the schema; otherwise it is absent and `error_code` is `protocol`. The
+answer is taken as it arrived: no key is dropped, no value coerced, no second call asked. An
+answer whose far side reports no upstream model is refused `protocol`, because a verdict cannot
+pin what it was not told; Bedrock Converse reports none, so a rubric routed there is refused.
+
 ### Embeddings
 
 An embedding is not a turn, so it has its own port and its own route kind. The contract is

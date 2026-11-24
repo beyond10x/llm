@@ -6,6 +6,13 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-decide`: `judge` asks a `Rubric`'s one pinned route once and returns a `Verdict` with the answer as canonical JSON
+- A `Verdict` names the rubric version and digest, the route target, the upstream model and its `verdict` call record
+- An answer not valid against the rubric's schema is refused `protocol`, never repaired; an unpinned route is refused
+- ESS: 6 rubric verdict scenarios and 5 more `llm.decisions.LastVerdict` fields; the conformance floor is 1055 (was 1049)
+
 ## [0.26.0] - 2026-11-23
 
 ### Added
