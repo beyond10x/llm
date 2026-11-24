@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-24T23:13:36Z",
+  "actor": "human:operator",
+  "artifact": "story:offline-replay-eval",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "the wave gate on wave/2026-11-24-offline-replay-eval at 2daa20b11, each step run alone: task rust, task test, task docs, ess specify validate, llm-conformance check, aep plan artifact validate, all exit 0",
+    "reference": "docs/plan/wave-2026-11-24-offline-replay-eval.md"
+  }
+}
