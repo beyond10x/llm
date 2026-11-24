@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- The documentation site builds on `@beyond10x/docs-system` 0.15.1 (pinned by commit in `website/package.json`)
+
 ## [0.26.0] - 2026-11-23
 
 ### Added
