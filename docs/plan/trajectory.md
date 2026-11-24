@@ -27,7 +27,7 @@ Read at `main` `c7c2a62cb` (llm 0.26.0). The wave plan below was derived with
 
 | Wave | Story | Objective (the coordinator's reading) | Makes true | State |
 | --- | --- | --- | --- | --- |
-| 1 | `story:rubric-judge` | O6 | `llm-decide` judges a subject against a rubric and returns a verdict that names the rubric version, its digest, the route target and the upstream model; 6 scenarios | [wave-2026-11-24-rubric-judge](wave-2026-11-24-rubric-judge.md) |
+| 1 | `story:rubric-judge` | O6 | `llm-decide` judges a subject against a rubric and returns a verdict that names the rubric version, its digest, the route target and the upstream model; 6 scenarios | delivered: [wave-2026-11-24-rubric-judge](wave-2026-11-24-rubric-judge.md) |
 | 2 | `story:openai-decisions-client` | O3 | the classifier's third model path asks a provider decision endpoint (`POST /v1/decisions`) through llm's credentials, transport and call records; 6 scenarios | planned |
 | 3 | `story:offline-replay-eval` | O6 | `llm replay` sends a recorded corpus to a candidate route, compares each answer and stops at a money cap; 6 scenarios | planned |
 
@@ -46,3 +46,6 @@ held by `credential-blocker:anthropic-live-qualification`.
 ## Backlog filed by this plan
 
 - `story:messages-empty-turn-with-an-unmodelled-stop-reason` (issue 83), `draft`.
+- `story:ess-pin-current-and-local-gate-finds-it`, `draft`: host `ess` 0.98.0 against the pinned 0.87.0.
+- `story:classifier-takes-only-a-whole-answer`, `draft`: the class the judge was corrected for, in the classifier since 0.23.0.
+- `story:docs-ux-layout-checks-from-ux-browser`, `draft`: proposed by the uxui repository on 2026-11-24.
