@@ -6,6 +6,23 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Added
+
+- `llm-calls`: `replay` sends a `Corpus` to a candidate route case by case: `same`, `differs`, `failed` or `not-sent`
+- `Corpus::parse` takes `llm.corpus/1` only whole: a cut file, a member twice or an undeclared one is refused by its path
+- A corpus refusal shows a member's name only where `llm.corpus/1` defines it; every other member of the path is `*`
+- A corpus is bounded at 16 MiB, 4096 cases and 64 levels of nesting; past a bound it is refused `too-large`
+- A case id that holds `/` and a rubric id over 177 bytes are refused, so no two calls of one run share a record id
+- A recorded verdict is taken as given, not held to its rubric's schema; such a case reports `differs`
+- A replay holds each case's reserve on an `llm-cost` budget ledger; the first case the cap does not admit is `skipped`
+- A replay's cap bounds admission, not the spend: a case that costs more than its reserve can take the spend past it
+- A replay past its cap stops at once, at its last case too: `stopped` is `limit-exceeded`
+- A replayed call with no known cost stops the run with `uncertain-spend`; `spent` holds its reserve or the larger known part
+- A record of a replay has role `replay`; the run reports the SHA-256 of the corpus bytes, its counts and its spend
+- `llm replay` runs a corpus file on a priced route, prints the summary as JSON and exits 3 when the run stopped
+- `llm_decide::Routed` is the replay candidate over `record_turn`, `ModelClassifier` and `judge`
+- ESS: `llm.calls.Replay` runs the real `replay`; entity `llm.calls.Corpus`, 6 scenarios; the floor is 1068 (was 1062)
+
 ## [0.28.0] - 2026-11-24
 
 ### Added

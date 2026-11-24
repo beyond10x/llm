@@ -6,7 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish.workspace = true
-description = "One text-free record per routed model call: route, target, timings, usage and priced cost, on a sink the caller injects."
+description = "One text-free record per routed model call: route, target, timings, usage and priced cost, on a sink the caller injects; a recorded corpus replayed on a candidate route under a money cap."
 
 [lints]
 workspace = true
@@ -19,6 +19,7 @@ llm-core.workspace = true
 llm-routing = { path = "../llm-routing" }
 llm-cost = { path = "../llm-cost" }
 serde.workspace = true
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 sha2.workspace = true
 
 [features]
@@ -26,4 +27,3 @@ sqlite = ["llm-cost/sqlite"]
 
 [dev-dependencies]
 tempfile = "3"
-serde_json.workspace = true

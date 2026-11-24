@@ -988,6 +988,12 @@ scenarios:
 - calls/scenarios/the-daily-cap-starts-again-at-utc-midnight.yaml
 - calls/scenarios/a-failing-shadow-leaves-the-primary-result-unchanged.yaml
 - calls/scenarios/a-shadow-record-names-its-primary-record.yaml
+- calls/scenarios/a-replay-compares-each-case-with-its-recorded-answer.yaml
+- calls/scenarios/a-replay-stops-at-its-money-cap-and-counts-the-cases-not-sent.yaml
+- calls/scenarios/a-failed-candidate-call-counts-failed-not-differs.yaml
+- calls/scenarios/two-replays-of-one-corpus-report-the-same-digest-and-counts.yaml
+- calls/scenarios/replay-records-carry-role-replay.yaml
+- calls/scenarios/a-classification-case-compares-labels-not-confidences.yaml
 - decisions/scenarios/a-json-schema-classifier-returns-one-label-with-a-confidence-per-label.yaml
 - decisions/scenarios/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label.yaml
 - decisions/scenarios/an-answer-naming-no-label-of-the-set-abstains-off-label.yaml

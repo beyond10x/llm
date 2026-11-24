@@ -17,13 +17,13 @@ The workspace holds 21 packages at version `0.28.0`. None is published to a regi
 | `llm-xtask` | binary `llm-xtask` | `checks/xtask` | Runs the gate's test phase with cargo-nextest under its time bound and prints the ten slowest tests. |
 | `llm-bedrock` | `llm_bedrock` | `crates/llm-bedrock` | Amazon Bedrock Runtime behind the model port: Converse and Anthropic InvokeModel, event-stream decoding and hand-written SigV4. |
 | `llm-blocking` | `llm_blocking` | `crates/llm-blocking` | A blocking turn adapter over any asynchronous model port, for a synchronous agent loop. |
-| `llm-calls` | `llm_calls` | `crates/llm-calls` | One text-free record per routed model call: route, target, timings, usage and priced cost, on a sink the caller injects. |
+| `llm-calls` | `llm_calls` | `crates/llm-calls` | One text-free record per routed model call: route, target, timings, usage and priced cost, on a sink the caller injects; a recorded corpus replayed on a candidate route under a money cap. |
 | `llm-chat` | `llm_chat` | `crates/llm-chat` | Chat Completions protocol projection and gateway ingress for the declared supported subset. |
-| `llm-cli` | `llm_cli` | `crates/llm-cli` | The llm command: lists the models an llm.routes/1 configuration file declares and runs one streamed turn on any of them. |
+| `llm-cli` | `llm_cli` | `crates/llm-cli` | The llm command: lists the models an llm.routes/1 configuration file declares, runs one streamed turn on any of them and replays a recorded corpus under a money cap. |
 | `llm-core` | `llm_core` | `crates/llm-core` | Neutral model requests, results, streaming, capabilities and typed failures; no I/O or execution authority. |
 | `llm-cost` | `llm_cost` | `crates/llm-cost` | Usage accounting, versioned price estimates and explicit admission limits. |
 | `llm-credentials` | `llm_credentials` | `crates/llm-credentials` | Injected secret resolution and caller-managed credential refresh; optional backend adapters. |
-| `llm-decide` | `llm_decide` | `crates/llm-decide` | Typed decisions over a routed model: a closed-label classifier chain returning one label with per-label confidence or an abstention with its cause, and a rubric judge returning a strict JSON verdict with its rubric and model pinned. |
+| `llm-decide` | `llm_decide` | `crates/llm-decide` | Typed decisions over a routed model: a closed-label classifier chain returning one label with per-label confidence or an abstention with its cause, and a rubric judge returning a strict JSON verdict with its rubric and model pinned; the candidate an offline replay sends its cases through. |
 | `llm-docs` | binary `llm-docs` | `crates/llm-docs` | Generates and drift-checks the derived pages of the llm documentation site, and holds the programs its guides quote. |
 | `llm-embed` | `llm_embed` | `crates/llm-embed` | Embeddings over an embed route: the OpenAI POST /v1/embeddings wire, ordered batches, token usage and one call record per batch. |
 | `llm-http` | `llm_http` | `crates/llm-http` | Shared bounded HTTP and SSE transport; no vendor fields or credential acquisition. |

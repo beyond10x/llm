@@ -504,7 +504,7 @@ impl ShadowCalls<'_> {
         if let Err(cause) = shadow.ledger.open(shadow, day, now, reservation) {
             self.recording
                 .sink
-                .record(skipped(identity, &shadow.route_id, now));
+                .record(skipped(identity, Kind::Turn, &shadow.route_id, now));
             return result(Some(record_id), ShadowOutcome::Skipped(cause));
         }
         let mut admit = |_: &Selection<'_>| Ok(());
@@ -589,27 +589,40 @@ impl ShadowCalls<'_> {
 /// pairs share an input. The readable form always holds `/shadow/` and the digest form never
 /// does, so the two never meet.
 fn shadow_record_id(primary: &Id, shadow: &Id) -> Option<Id> {
-    Id::new(format!("{primary}/shadow/{shadow}"))
-        .ok()
-        .or_else(|| {
-            let mut hasher = Sha256::new();
-            for part in [primary.as_str(), shadow.as_str()] {
-                hasher.update(u64::try_from(part.len()).unwrap_or(u64::MAX).to_be_bytes());
-                hasher.update(part.as_bytes());
-            }
-            let mut digest = String::from("shadow-sha256-");
-            for byte in hasher.finalize() {
-                write!(digest, "{byte:02x}").ok()?;
-            }
-            Id::new(digest).ok()
-        })
+    pair_id(
+        format!("{primary}/shadow/{shadow}"),
+        "shadow-sha256-",
+        [primary.as_str(), shadow.as_str()],
+    )
 }
 
-/// The record of a shadow the ledger did not admit: not sent, no attempt, no latency.
-fn skipped(identity: CallIdentity, route_id: &Id, now: u64) -> CallRecord {
+/// `readable` while it fits an id, else the digest form of the two parts.
+fn pair_id(readable: String, prefix: &str, parts: [&str; 2]) -> Option<Id> {
+    Id::new(readable)
+        .ok()
+        .or_else(|| pair_digest(prefix, parts))
+}
+
+/// `prefix` and the hex SHA-256 of the two parts, length-prefixed so no two pairs share an
+/// input.
+pub(crate) fn pair_digest(prefix: &str, parts: [&str; 2]) -> Option<Id> {
+    let mut hasher = Sha256::new();
+    for part in parts {
+        hasher.update(u64::try_from(part.len()).unwrap_or(u64::MAX).to_be_bytes());
+        hasher.update(part.as_bytes());
+    }
+    let mut digest = String::from(prefix);
+    for byte in hasher.finalize() {
+        write!(digest, "{byte:02x}").ok()?;
+    }
+    Id::new(digest).ok()
+}
+
+/// The record of a call the ledger did not admit: not sent, no attempt, no latency.
+pub(crate) fn skipped(identity: CallIdentity, kind: Kind, route_id: &Id, now: u64) -> CallRecord {
     CallRecord::new(
         identity,
-        Kind::Turn,
+        kind,
         route_id.clone(),
         Timing {
             started_at_unix_ms: now,

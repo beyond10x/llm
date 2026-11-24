@@ -6,7 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish.workspace = true
-description = "Typed decisions over a routed model: a closed-label classifier chain returning one label with per-label confidence or an abstention with its cause, and a rubric judge returning a strict JSON verdict with its rubric and model pinned."
+description = "Typed decisions over a routed model: a closed-label classifier chain returning one label with per-label confidence or an abstention with its cause, and a rubric judge returning a strict JSON verdict with its rubric and model pinned; the candidate an offline replay sends its cases through."
 
 [lints]
 workspace = true
