@@ -6,6 +6,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFi
 import { basename, join } from 'node:path';
 import type { Adapter } from './types.ts';
 import type { Baseline } from './ratchet.ts';
+import { pageCheckFiles, pageValuesOf, readPageChecks, withPageChecks, type PageChecks } from './page-checks.ts';
 import { gateCounts, readResults, toMeasured, type PageResult, type TaskResult } from './results.ts';
 import { loadScenarios } from './scenarios.ts';
 import { loadFindings } from './findings.ts';
@@ -30,7 +31,7 @@ export interface ScrollPage {
   last: number | null;
 }
 
-type ScrollUnit = Pick<PageResult, 'path' | 'viewport'> & { overflow: Pick<PageResult['overflow'], 'scrollContainers'> };
+type ScrollUnit = Pick<PageResult, 'path' | 'viewport' | 'scrollContainers'>;
 
 /** Scroll containers per page over the given units, the widest of each page, and the last round's
  * count (0 for a page it did not list; null without a last round). Pages of the last round that
@@ -38,7 +39,7 @@ type ScrollUnit = Pick<PageResult, 'path' | 'viewport'> & { overflow: Pick<PageR
 export function scrollContainerPages(units: ScrollUnit[], last: { path: string; count: number }[] | null): ScrollPage[] {
   const by = new Map<string, { count: number; widest: string; over: number }>();
   for (const u of units) {
-    for (const c of u.overflow.scrollContainers) {
+    for (const c of u.scrollContainers) {
       const e = by.get(u.path) ?? { count: 0, widest: '', over: -1 };
       e.count++;
       if (c.scrollWidth - c.clientWidth > e.over) {
@@ -62,6 +63,19 @@ export function scrollContainerLines(pages: ScrollPage[]): string[] {
   ];
 }
 
+/**
+ * A page check's number at one viewport over all pages, from the `viewports` of ux-browser's values
+ * file (the round's configuration declares `values.gating`, so the file has it). A viewport or a
+ * number the file does not have is an error, never 0.
+ */
+export function viewportValue(pc: Pick<PageChecks, 'viewports'>, viewport: string, key: string): number {
+  const at = pc.viewports?.[viewport];
+  if (!at) throw new Error(`the values file has no viewport ${viewport}; it has ${Object.keys(pc.viewports ?? {}).join(', ') || 'none'}`);
+  const v = at[key];
+  if (typeof v !== 'number') throw new Error(`the values file has no number ${key} at ${viewport}; it has ${Object.keys(at).join(', ')}`);
+  return v;
+}
+
 export interface RoundInput {
   adapter: Adapter;
   ux: string;
@@ -83,11 +97,15 @@ function git(repo: string, ...a: string[]): string {
 export function writeRound(i: RoundInput): void {
   const { adapter, id, dir } = i;
   mkdirSync(join(dir, 'shots'), { recursive: true });
-  const results = readResults(i.out);
+  // The five page checks are ux-browser's: the failures per unit and the numbers per viewport from its
+  // values file, the ratchet's numbers per page scenario from its evidence, as `cli.ts ratchet` reads them.
+  const scenarios = loadScenarios(join(i.ux, adapter.dirs.scenarios));
+  const pageChecks = readPageChecks(pageCheckFiles(i.out).values);
+  const results = withPageChecks(readResults(i.out), pageChecks);
   const pages = results.filter((r): r is PageResult => r.kind === 'page');
   const gating = pages.filter((r) => r.gating);
   const tasks = results.filter((r): r is TaskResult => r.kind === 'task');
-  const measured = toMeasured(results);
+  const measured = toMeasured(results, pageValuesOf(i.out, i.repo, scenarios, adapter.viewports.gating.map((v) => v.name)));
   const gates = gateCounts(results);
   const baseline: Baseline | null = existsSync(i.baselineFile) ? JSON.parse(readFileSync(i.baselineFile, 'utf8')) : null;
   const roundsDir = join(dir, '..');
@@ -98,7 +116,6 @@ export function writeRound(i: RoundInput): void {
   const prev = prevId ? JSON.parse(readFileSync(join(roundsDir, prevId, 'round.json'), 'utf8')) : null;
   const commit = git(i.repo, 'rev-parse', '--short', 'HEAD');
   const date = git(i.repo, 'log', '-1', '--format=%cs');
-  const scenarios = loadScenarios(join(i.ux, adapter.dirs.scenarios));
   const taskCards = scenarios.filter((s) => s.task);
   const anchors = taskCards.filter((s) => s.task!.card.card === 'anchor').map((s) => s.name);
   const rotating = taskCards.filter((s) => s.task!.card.card === 'rotating').map((s) => s.name);
@@ -127,19 +144,20 @@ export function writeRound(i: RoundInput): void {
   const pageKeys = ['layout.page_scroll', 'layout.overflow', 'always_visible.misses', 'keyboard.misses', 'axe.critical', 'axe.serious', 'axe.moderate', 'axe.minor'];
   const baseTotal = (key: string) =>
     baseline ? sum(Object.entries(baseline.scenarios).filter(([s]) => s.startsWith('page-')).map(([, v]) => v[key]?.value ?? 0)) : null;
-  const maxLoad = Math.max(0, ...gating.map((r) => r.shift.load));
-  const maxReady = Math.max(0, ...gating.map((r) => r.shift.afterReady));
+  const vpValue = (vp: string, key: string) => viewportValue(pageChecks, vp, key);
+  const maxLoad = Math.max(0, ...adapter.viewports.gating.map((vp) => vpValue(vp.name, 'layout_shift.load')));
+  const maxReady = Math.max(0, ...Object.values(measured).map((v) => v['layout_shift.after_ready'] ?? 0));
 
   const measuredOnly = adapter.viewports.measured.map((vp) => {
     const rs = pages.filter((r) => r.viewport === vp.name);
     return {
       viewport: vp.name,
       checked: rs.length,
-      page_scroll: rs.filter((r) => r.overflow.docScroll > 0).length,
-      overflow: sum(rs.map((r) => r.overflow.overflow.length)),
-      always_visible_misses: sum(rs.map((r) => [...r.visible.top, ...r.visible.bottom].filter((v) => v.status !== 'ok' && v.status !== 'n/a').length)),
+      page_scroll: vpValue(vp.name, 'layout.page_scroll'),
+      overflow: vpValue(vp.name, 'layout.overflow'),
+      always_visible_misses: vpValue(vp.name, 'always_visible.misses'),
       axe_serious_critical: sum(rs.map((r) => (r.axe.counts.serious ?? 0) + (r.axe.counts.critical ?? 0))),
-      scroll_containers: sum(rs.map((r) => r.overflow.scrollContainers.length)),
+      scroll_containers: sum(rs.map((r) => r.scrollContainers.length)),
     };
   });
 
@@ -165,7 +183,7 @@ export function writeRound(i: RoundInput): void {
     totals: { ...Object.fromEntries(pageKeys.map((k) => [k, totals(k)])), 'layout_shift.after_ready_max': maxReady, 'layout_shift.load_max': maxLoad },
     measured,
     measured_only: measuredOnly,
-    scroll_containers_gating: sum(gating.map((r) => r.overflow.scrollContainers.length)),
+    scroll_containers_gating: sum(gating.map((r) => r.scrollContainers.length)),
     scroll_container_pages: scrollContainerPages(gating, prev?.scroll_container_pages ?? null),
     failure_kinds: [...failureKinds.entries()].map(([k, v]) => ({ kind: k, count: v.count, waived_by: [...v.waivedBy].sort(), pages: v.pages.size })),
     worst: worstOut,

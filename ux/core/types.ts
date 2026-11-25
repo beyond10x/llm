@@ -6,22 +6,6 @@ export interface Viewport {
   height: number;
 }
 
-export type Role = 'link' | 'button' | 'navigation' | 'searchbox' | 'combobox' | 'complementary';
-
-export interface Locate {
-  role: Role;
-  name?: string | RegExp;
-  css?: string;
-  scope?: string;
-}
-
-export interface AlwaysVisible {
-  name: string;
-  locate: Locate;
-  minWidth?: number;
-  pathPrefix?: string;
-}
-
 export interface Adapter {
   name: string;
   site: {
@@ -33,7 +17,6 @@ export interface Adapter {
   viewports: { gating: Viewport[]; measured: Viewport[] };
   themes: string[];
   themeAttribute: string;
-  alwaysVisible: AlwaysVisible[];
   primaryRegion: string;
   scrollContainersAllowed: string;
   guidanceCue: null;
@@ -47,11 +30,6 @@ export interface Adapter {
   axeThemeRules?: string[];
   /** Wait after load in the every-merge check; a round waits `settleMs`. */
   checkSettleMs?: number;
-  keyboard: {
-    skipLink: RegExp;
-    mustReach: string[];
-    maxTabs: number;
-  };
   hubWords: string[];
   screenOnly: { maxActions: number; maxScrolls: number; viewport: string; theme: string };
   settleMs: number;

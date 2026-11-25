@@ -1,24 +1,35 @@
-//! The `ess` the gate runs: the one release `gate.yml` pins, and no other.
+//! The released tools the gates run: of each, the one release a workflow step pins, and no other.
 //!
-//! The pin has one source, `ESS_VERSION` and `ESS_SHA256` of the "Install ess" step in
-//! `.github/workflows/gate.yml`. [`resolve`] looks for an `ess` that reports that version, in
+//! A [`Tool`] says where its pin is and where its releases are. Two are described here:
+//!
+//! - [`ESS`]: `ESS_VERSION` and `ESS_SHA256` of the "Install ess" step in
+//!   `.github/workflows/gate.yml`, store `target/ess`;
+//! - [`UX_BROWSER`]: `UX_BROWSER_VERSION` and `UX_BROWSER_SHA256` of the "Install ux-browser" step
+//!   in `.github/workflows/docs-ux.yml`, store `target/ux-browser`.
+//!
+//! A pin has that one source. [`resolve`] looks for the tool's binary of the pinned release in
 //! this order:
 //!
-//! 1. the stored one, `<store>/ess-<version>-x86_64-unknown-linux-gnu/ess`, where the store is
-//!    `target/ess` under the repository root;
-//! 2. the first `ess` on `PATH`;
+//! 1. the stored one, `<store>/<name>-<version>-x86_64-unknown-linux-gnu/<name>`;
+//! 2. the first one on `PATH`, for a tool that reports its version ([`Proof::Version`]);
 //! 3. the release asset, fetched into the store when nothing is in the stored one's place, with
 //!    the digest check the workflow step makes: the asset's line in the release's `SHA256SUMS`
 //!    is the pinned digest, and the downloaded bytes have that digest.
 //!
 //! `PATH` comes before the fetch so that a host which already carries the pinned release (CI
-//! after its install step, a build node) makes no network request. When none of the three gives
-//! the pinned version, the [`Refusal`] names the version needed and what each place held, and
-//! the caller runs no `ess` at all.
+//! after its install step, a build node) makes no network request. When no place gives the
+//! pinned release, the [`Refusal`] names the version needed and what each place held, and the
+//! caller runs nothing.
 //!
-//! The digest is checked on what is fetched and nowhere else: a stored `ess` and one on `PATH`
-//! are started on their `--version` answer alone. Whoever can write the store or a directory of
-//! `PATH` runs code in the gate.
+//! The digest is checked on what is fetched and nowhere else. What else proves a binary is the
+//! tool's [`Proof`]:
+//!
+//! - `ess` reports its version: a stored `ess` and one on `PATH` are started on their
+//!   `--version` answer alone;
+//! - `ux-browser` has no `--version`: a stored `ux-browser` is taken on its place in the store
+//!   alone, the resolver starts none, and one on `PATH` is never used.
+//!
+//! Whoever can write a store, or a directory of `PATH` for `ess`, runs code in the gate.
 
 use sha2::{Digest, Sha256};
 use std::{
@@ -31,52 +42,126 @@ use std::{
     process::{Command, ExitCode, Stdio},
 };
 
-/// The workflow that holds the pin, from the repository root.
-const WORKFLOW: &str = ".github/workflows/gate.yml";
-
-/// The step of the workflow whose `env` is the pin.
-const STEP: &str = "Install ess";
-
-/// Where a release's assets are, before `/<version>/<asset>`.
+/// Where ESS's assets are, before `/<version>/<asset>`.
 const RELEASES: &str = "https://github.com/beyond10x/ess/releases/download";
 
 /// The one platform an asset is fetched for; its digest is the one the workflow pins.
 const TRIPLE: &str = "x86_64-unknown-linux-gnu";
 
-/// Names another place for the store than `target/ess`.
+/// Names another place for ESS's store than `target/ess`.
 pub const STORE_VARIABLE: &str = "LLM_ESS_STORE";
 
-/// Names another address for the releases than GitHub's. The pinned digest still decides.
+/// Names another address for ESS's releases than GitHub's. The pinned digest still decides.
 pub const RELEASES_VARIABLE: &str = "LLM_ESS_RELEASES";
 
-/// The ESS release the gate runs.
+/// What shows that a binary which was not fetched just now is the pinned release.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Proof {
+    /// `<binary> --version` writes exactly `<name> <version>`: a stored binary and one on `PATH`
+    /// are started to ask.
+    Version,
+    /// The binary reports no version. Only the digest of a fetched asset proves a release: a
+    /// stored binary is taken on its place in the store alone and is not started to ask, and
+    /// `PATH` is not searched.
+    Digest,
+}
+
+/// A released tool a gate runs, and where its pin is.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Tool {
+    /// The binary's name, and the start of its asset's: `<name>-<version>-<triple>.tar.gz`
+    /// unpacks to `<name>-<version>-<triple>/<name>`.
+    pub name: &'static str,
+    /// The workflow that holds the pin, from the repository root.
+    pub workflow: &'static str,
+    /// The job of the workflow that installs the tool.
+    pub job: &'static str,
+    /// The step of the job whose `env` is the pin.
+    pub step: &'static str,
+    /// The name of the version in the step's `env`.
+    pub version_variable: &'static str,
+    /// The name of the asset's digest in the step's `env`.
+    pub digest_variable: &'static str,
+    /// Where a release's assets are, before `/<version>/<asset>`.
+    pub releases: &'static str,
+    /// The directory that keeps fetched releases, from the repository root.
+    pub store: &'static str,
+    /// The environment variable that names another store.
+    pub store_variable: &'static str,
+    /// The environment variable that names another address for the releases.
+    pub releases_variable: &'static str,
+    /// What proves a stored or installed binary.
+    pub proof: Proof,
+}
+
+/// ESS, as `gate.yml` installs it.
+pub static ESS: Tool = Tool {
+    name: "ess",
+    workflow: ".github/workflows/gate.yml",
+    job: "libraries-and-plan",
+    step: "Install ess",
+    version_variable: "ESS_VERSION",
+    digest_variable: "ESS_SHA256",
+    releases: RELEASES,
+    store: "target/ess",
+    store_variable: STORE_VARIABLE,
+    releases_variable: RELEASES_VARIABLE,
+    proof: Proof::Version,
+};
+
+/// `ux-browser` of the uxui repository, as `docs-ux.yml` installs it.
+pub static UX_BROWSER: Tool = Tool {
+    name: "ux-browser",
+    workflow: ".github/workflows/docs-ux.yml",
+    job: "ux",
+    step: "Install ux-browser",
+    version_variable: "UX_BROWSER_VERSION",
+    digest_variable: "UX_BROWSER_SHA256",
+    releases: "https://github.com/beyond10x/uxui/releases/download",
+    store: "target/ux-browser",
+    store_variable: "LLM_UX_BROWSER_STORE",
+    releases_variable: "LLM_UX_BROWSER_RELEASES",
+    proof: Proof::Digest,
+};
+
+/// The release of a tool a gate runs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pin {
-    /// `ESS_VERSION`: three numbers.
+    /// The tool the release is of.
+    pub tool: &'static Tool,
+    /// The step's version: three numbers.
     pub version: String,
-    /// `ESS_SHA256`: the digest of the `x86_64-unknown-linux-gnu` asset, 64 lowercase hex digits.
+    /// The step's digest, of the `x86_64-unknown-linux-gnu` asset: 64 lowercase hex digits.
     pub sha256: String,
 }
 
 impl Pin {
-    /// Reads the pin from the workflow under `root`.
-    pub fn read(root: &Path) -> Result<Self, String> {
-        let text = fs::read_to_string(root.join(WORKFLOW))
-            .map_err(|error| format!("{WORKFLOW}: {error}"))?;
-        Self::parse(&text).map_err(|why| format!("{WORKFLOW}: {why}"))
+    /// Reads the tool's pin from its workflow under `root`.
+    pub fn read(tool: &'static Tool, root: &Path) -> Result<Self, String> {
+        let workflow = tool.workflow;
+        let text = fs::read_to_string(root.join(workflow))
+            .map_err(|error| format!("{workflow}: {error}"))?;
+        Self::parse(tool, &text).map_err(|why| format!("{workflow}: {why}"))
     }
 
-    /// Reads the pin from the workflow's text.
-    pub fn parse(text: &str) -> Result<Self, String> {
+    /// Reads the tool's pin from its workflow's text.
+    pub fn parse(tool: &'static Tool, text: &str) -> Result<Self, String> {
+        let Tool {
+            job,
+            step: name,
+            version_variable,
+            digest_variable,
+            ..
+        } = *tool;
         let workflow: serde_yaml::Value =
             serde_yaml::from_str(text).map_err(|error| format!("not YAML: {error}"))?;
-        let step = workflow["jobs"]["libraries-and-plan"]["steps"]
+        let step = workflow["jobs"][job]["steps"]
             .as_sequence()
             .into_iter()
             .flatten()
-            .find(|step| step["name"].as_str() == Some(STEP))
-            .ok_or_else(|| format!("no step \"{STEP}\" in job libraries-and-plan"))?;
-        let version = step["env"]["ESS_VERSION"]
+            .find(|step| step["name"].as_str() == Some(name))
+            .ok_or_else(|| format!("no step \"{name}\" in job {job}"))?;
+        let version = step["env"][version_variable]
             .as_str()
             .filter(|version| {
                 let parts: Vec<&str> = version.split('.').collect();
@@ -86,9 +171,11 @@ impl Pin {
                     })
             })
             .ok_or_else(|| {
-                format!("ESS_VERSION of the step \"{STEP}\" is not three numbers in a string")
+                format!(
+                    "{version_variable} of the step \"{name}\" is not three numbers in a string"
+                )
             })?;
-        let sha256 = step["env"]["ESS_SHA256"]
+        let sha256 = step["env"][digest_variable]
             .as_str()
             .filter(|digest| {
                 digest.len() == 64
@@ -97,9 +184,10 @@ impl Pin {
                         .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
             })
             .ok_or_else(|| {
-                format!("ESS_SHA256 of the step \"{STEP}\" is not 64 lowercase hex digits")
+                format!("{digest_variable} of the step \"{name}\" is not 64 lowercase hex digits")
             })?;
         Ok(Self {
+            tool,
             version: version.to_owned(),
             sha256: sha256.to_owned(),
         })
@@ -107,7 +195,7 @@ impl Pin {
 
     /// The directory a release asset unpacks to, and the stored one's name.
     fn directory(&self) -> String {
-        format!("ess-{}-{TRIPLE}", self.version)
+        format!("{}-{}-{TRIPLE}", self.tool.name, self.version)
     }
 }
 
@@ -115,7 +203,7 @@ impl Pin {
 pub struct Host {
     /// The directory that keeps fetched releases.
     pub store: PathBuf,
-    /// The search path for an installed `ess`.
+    /// The search path for an installed binary.
     pub path: Option<OsString>,
     /// Where a release's assets are, before `/<version>/<asset>`.
     pub releases: String,
@@ -124,22 +212,23 @@ pub struct Host {
 }
 
 impl Host {
-    /// This process's host for the repository at `root`, read through `variable`.
-    pub fn of(root: &Path, variable: impl Fn(&str) -> Option<OsString>) -> Self {
+    /// This process's host for `tool` and the repository at `root`, read through `variable`.
+    pub fn of(tool: &Tool, root: &Path, variable: impl Fn(&str) -> Option<OsString>) -> Self {
         let set = |name: &str| variable(name).filter(|value| !value.is_empty());
         Self {
-            store: set(STORE_VARIABLE).map_or_else(|| root.join("target/ess"), PathBuf::from),
+            store: set(tool.store_variable).map_or_else(|| root.join(tool.store), PathBuf::from),
             path: variable("PATH"),
-            releases: set(RELEASES_VARIABLE)
+            releases: set(tool.releases_variable)
                 .and_then(|value| value.into_string().ok())
-                .unwrap_or_else(|| RELEASES.to_owned()),
+                .unwrap_or_else(|| tool.releases.to_owned()),
             fetches: cfg!(all(target_os = "linux", target_arch = "x86_64")),
         }
     }
 }
 
-/// No place gave an `ess` of the pinned version.
+/// No place gave the tool's binary of the pinned version.
 pub struct Refusal {
+    tool: &'static Tool,
     needed: String,
     tried: Vec<String>,
 }
@@ -153,9 +242,16 @@ impl fmt::Debug for Refusal {
 
 impl fmt::Display for Refusal {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Tool {
+            name,
+            workflow,
+            step,
+            version_variable,
+            ..
+        } = *self.tool;
         write!(
             formatter,
-            "ess {} is needed (ESS_VERSION of the step \"{STEP}\" in {WORKFLOW}) and none was found",
+            "{name} {} is needed ({version_variable} of the step \"{step}\" in {workflow}) and none was found",
             self.needed
         )?;
         for place in &self.tried {
@@ -167,9 +263,9 @@ impl fmt::Display for Refusal {
 
 impl std::error::Error for Refusal {}
 
-/// The first executable `ess` on `path`, as a shell finds it.
-fn on_path(path: Option<&OsStr>) -> Option<PathBuf> {
-    let name = format!("ess{}", env::consts::EXE_SUFFIX);
+/// The first executable `name` on `path`, as a shell finds it.
+fn on_path(name: &str, path: Option<&OsStr>) -> Option<PathBuf> {
+    let name = format!("{name}{}", env::consts::EXE_SUFFIX);
     env::split_paths(path?)
         .map(|directory| directory.join(&name))
         .find(|candidate| executable(candidate))
@@ -187,9 +283,9 @@ fn executable(path: &Path) -> bool {
     path.is_file()
 }
 
-/// Whether `binary --version` ends successfully and writes exactly `ess <version>`, with or
+/// Whether `binary --version` ends successfully and writes exactly `<name> <version>`, with or
 /// without the end of the line. A longer version that starts like the pinned one is another.
-fn reports(binary: &Path, version: &str) -> Result<(), String> {
+fn reports(name: &str, binary: &Path, version: &str) -> Result<(), String> {
     let output = Command::new(binary)
         .arg("--version")
         .stdin(Stdio::null())
@@ -200,11 +296,22 @@ fn reports(binary: &Path, version: &str) -> Result<(), String> {
         return Err(format!("`--version` ended with {}", output.status));
     }
     let said = String::from_utf8_lossy(&output.stdout);
-    if said.strip_suffix('\n').unwrap_or(&said) == format!("ess {version}") {
+    if said.strip_suffix('\n').unwrap_or(&said) == format!("{name} {version}") {
         Ok(())
     } else {
         let shown: String = said.chars().take(200).collect();
         Err(format!("reports {shown:?}"))
+    }
+}
+
+/// Whether `binary`, stored, installed or just unpacked, is the pinned release as far as the
+/// tool's [`Proof`] says.
+fn proves(pin: &Pin, binary: &Path) -> Result<(), String> {
+    match pin.tool.proof {
+        Proof::Version => reports(pin.tool.name, binary, &pin.version),
+        // Nothing is started: the binary has no answer that would tell one release from another.
+        Proof::Digest if executable(binary) => Ok(()),
+        Proof::Digest => Err("is not an executable file".to_owned()),
     }
 }
 
@@ -237,17 +344,19 @@ fn download(url: &str, file: &Path) -> Result<(), String> {
     }
 }
 
-/// Fetches the pinned release's asset into the store and returns its `ess`.
+/// Fetches the pinned release's asset into the store and returns its binary.
 ///
 /// Everything happens in a directory of its own inside the store, `.fetch-*`, which is removed
 /// when the fetch returns, whatever it returns; only an unpacked release whose asset has the
-/// pinned digest and whose `ess` reports the pinned version is moved to its place. A run that
+/// pinned digest and whose binary its tool's [`Proof`] accepts is moved to its place. A run that
 /// a signal ends during the fetch does not return and leaves its `.fetch-*` directory. No run
 /// reads a `.fetch-*` directory as stored, and no run starts anything in a `.fetch-*` directory
-/// another run left: a fetch starts the `ess` it unpacked into its own, to ask its version, and
-/// that one only. No fetch removes another's, so two runs may fetch into one store at once.
-/// Removing the store is safe: the next run fetches again.
+/// another run left: a fetch of a tool that reports its version starts the binary it unpacked
+/// into its own, to ask, and that one only; a fetch of any other tool starts nothing. No fetch
+/// removes another's, so two runs may fetch into one store at once. Removing the store is safe:
+/// the next run fetches again.
 fn fetch(pin: &Pin, host: &Host) -> Result<PathBuf, String> {
+    let name = pin.tool.name;
     let directory = pin.directory();
     let asset = format!("{directory}.tar.gz");
     let release = format!("{}/{}", host.releases.trim_end_matches('/'), pin.version);
@@ -258,7 +367,7 @@ fn fetch(pin: &Pin, host: &Host) -> Result<PathBuf, String> {
         .tempdir_in(&host.store)
         .map_err(|error| format!("{}: {error}", host.store.display()))?;
     eprintln!(
-        "ess {}: fetching {release}/{asset} into {}",
+        "{name} {}: fetching {release}/{asset} into {}",
         pin.version,
         host.store.display()
     );
@@ -281,7 +390,7 @@ fn fetch(pin: &Pin, host: &Host) -> Result<PathBuf, String> {
         ));
     }
 
-    let member = format!("{directory}/ess");
+    let member = format!("{directory}/{name}");
     let unpacked = Command::new("tar")
         .arg("-xzf")
         .arg(&archive)
@@ -298,29 +407,30 @@ fn fetch(pin: &Pin, host: &Host) -> Result<PathBuf, String> {
             String::from_utf8_lossy(&unpacked.stderr).trim()
         ));
     }
-    reports(&staging.path().join(&member), &pin.version)
-        .map_err(|why| format!("the `ess` in {asset} {why}"))?;
+    proves(pin, &staging.path().join(&member))
+        .map_err(|why| format!("the `{name}` in {asset} {why}"))?;
 
     let place = host.store.join(&directory);
-    let stored = place.join("ess");
+    let stored = place.join(name);
     if let Err(error) = fs::rename(staging.path().join(&directory), &place) {
         // Another run of the gate may have stored the same release in the meantime.
-        reports(&stored, &pin.version).map_err(|_| format!("{}: {error}", place.display()))?;
+        proves(pin, &stored).map_err(|_| format!("{}: {error}", place.display()))?;
     }
     Ok(stored)
 }
 
-/// The `ess` of the pinned version, or why there is none.
+/// The tool's binary of the pinned version, or why there is none.
 pub fn resolve(pin: &Pin, host: &Host) -> Result<PathBuf, Refusal> {
+    let name = pin.tool.name;
     let mut tried = Vec::new();
 
     let place = host.store.join(pin.directory());
-    let stored = place.join("ess");
+    let stored = place.join(name);
     let absent = fs::symlink_metadata(&stored).is_err();
     if absent {
         tried.push(format!("{}: absent", stored.display()));
     } else {
-        match reports(&stored, &pin.version) {
+        match proves(pin, &stored) {
             Ok(()) => return Ok(stored),
             // A file that is there and is not the pinned release was not put there by a fetch,
             // so no fetch writes over it.
@@ -331,34 +441,40 @@ pub fn resolve(pin: &Pin, host: &Host) -> Result<PathBuf, Refusal> {
         }
     }
 
-    match on_path(host.path.as_deref()) {
-        Some(installed) => match reports(&installed, &pin.version) {
-            Ok(()) => return Ok(installed),
-            Err(why) => tried.push(format!("{} (PATH): {why}", installed.display())),
+    match pin.tool.proof {
+        Proof::Version => match on_path(name, host.path.as_deref()) {
+            Some(installed) => match proves(pin, &installed) {
+                Ok(()) => return Ok(installed),
+                Err(why) => tried.push(format!("{} (PATH): {why}", installed.display())),
+            },
+            None => tried.push(format!("PATH: no `{name}`")),
         },
-        None => tried.push("PATH: no `ess`".to_owned()),
+        // Being on `PATH` proves nothing, and there is no answer to ask for.
+        Proof::Digest => tried.push(format!(
+            "PATH: not searched; `{name}` reports no version, so only a release fetched with the pinned digest is used"
+        )),
     }
 
     // A stored file was named above, and no fetch writes over it.
     if absent && host.fetches {
-        // The place is looked at again, and before its `ess`: another run moves a whole release
-        // there at once, so a place that came to be since the first look has its `ess`.
+        // The place is looked at again, and before its binary: another run moves a whole release
+        // there at once, so a place that came to be since the first look has its binary.
         if fs::symlink_metadata(&place).is_err() {
             match fetch(pin, host) {
                 Ok(fetched) => return Ok(fetched),
                 Err(why) => tried.push(format!("fetch: {why}")),
             }
         } else if fs::symlink_metadata(&stored).is_err() {
-            // A fetch moves a whole release to its place, so what is there without an `ess` is
+            // A fetch moves a whole release to its place, so what is there without the binary is
             // not a fetch's. The move would take the place of an empty directory and fail on
             // anything else, both after the download; it is refused before one and stays.
             tried.push(format!(
-                "fetch: {}: is there and holds no `ess`; remove it and the release is fetched again",
+                "fetch: {}: is there and holds no `{name}`; remove it and the release is fetched again",
                 place.display()
             ));
         } else {
             // Another run stored a release while `PATH` was asked.
-            match reports(&stored, &pin.version) {
+            match proves(pin, &stored) {
                 Ok(()) => return Ok(stored),
                 Err(why) => tried.push(format!(
                     "{}: {why}; remove it and the release is fetched again",
@@ -373,17 +489,24 @@ pub fn resolve(pin: &Pin, host: &Host) -> Result<PathBuf, Refusal> {
     }
 
     Err(Refusal {
+        tool: pin.tool,
         needed: pin.version.clone(),
         tried,
     })
 }
 
+/// The pinned binary of `tool` for the repository at `root`, as [`resolve`] finds it on this
+/// host.
+pub fn find(tool: &'static Tool, root: &Path) -> Result<PathBuf, Box<dyn Error>> {
+    let pin = Pin::read(tool, root)?;
+    let found = resolve(&pin, &Host::of(tool, root, |name| env::var_os(name)))?;
+    eprintln!("{} {}: {}", tool.name, pin.version, found.display());
+    Ok(found)
+}
+
 /// The pinned `ess` for the repository at `root`, as [`resolve`] finds it on this host.
 pub fn pinned(root: &Path) -> Result<PathBuf, Box<dyn Error>> {
-    let pin = Pin::read(root)?;
-    let found = resolve(&pin, &Host::of(root, |name| env::var_os(name)))?;
-    eprintln!("ess {}: {}", pin.version, found.display());
-    Ok(found)
+    find(&ESS, root)
 }
 
 /// Runs the pinned `ess` with `arguments` and gives back its exit status.
@@ -397,7 +520,7 @@ pub fn run(root: &Path, arguments: &[OsString]) -> Result<ExitCode, Box<dyn Erro
 
 #[cfg(all(test, unix))]
 mod tests {
-    use super::{Host, Pin, RELEASES, RELEASES_VARIABLE, STORE_VARIABLE, resolve};
+    use super::{ESS, Host, Pin, RELEASES, RELEASES_VARIABLE, STORE_VARIABLE, resolve};
     use sha2::{Digest, Sha256};
     use std::{
         ffi::OsString,
@@ -528,6 +651,7 @@ mod tests {
 
     fn pin(sha256: &str) -> Pin {
         Pin {
+            tool: &ESS,
             version: VERSION.to_owned(),
             sha256: sha256.to_owned(),
         }
@@ -843,7 +967,7 @@ mod tests {
     #[test]
     fn the_pin_is_the_version_and_digest_of_the_install_step() {
         assert_eq!(
-            Pin::parse(&workflow("\"7.8.9\"", OTHER_DIGEST)),
+            Pin::parse(&ESS, &workflow("\"7.8.9\"", OTHER_DIGEST)),
             Ok(pin(OTHER_DIGEST))
         );
         let other_step =
@@ -868,7 +992,7 @@ mod tests {
             ),
             ("jobs: [", "YAML"),
         ] {
-            let refused = Pin::parse(text).expect_err(why);
+            let refused = Pin::parse(&ESS, text).expect_err(why);
             assert!(refused.contains(why), "{why}: {refused}");
         }
     }
@@ -876,24 +1000,24 @@ mod tests {
     #[test]
     fn the_repositorys_workflow_holds_a_pin() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let pin = Pin::read(&root).expect("gate.yml pins ess");
+        let pin = Pin::read(&ESS, &root).expect("gate.yml pins ess");
         assert_eq!(pin.version.split('.').count(), 3, "{pin:?}");
         assert_eq!(pin.sha256.len(), 64, "{pin:?}");
-        let missing = Pin::read(&root.join("checks")).expect_err("no workflow there");
+        let missing = Pin::read(&ESS, &root.join("checks")).expect_err("no workflow there");
         assert!(missing.contains(".github/workflows/gate.yml"), "{missing}");
     }
 
     #[test]
     fn the_store_is_under_target_and_the_releases_are_githubs_unless_a_variable_says_otherwise() {
         let root = Path::new("/repository");
-        let host = Host::of(root, |name| {
+        let host = Host::of(&ESS, root, |name| {
             (name == "PATH").then(|| OsString::from("/usr/bin"))
         });
         assert_eq!(host.store, Path::new("/repository/target/ess"));
         assert_eq!(host.releases, RELEASES);
         assert_eq!(host.path, Some(OsString::from("/usr/bin")));
 
-        let host = Host::of(root, |name| match name {
+        let host = Host::of(&ESS, root, |name| match name {
             STORE_VARIABLE => Some(OsString::from("/elsewhere")),
             RELEASES_VARIABLE => Some(OsString::from("file:///releases")),
             _ => None,
@@ -902,7 +1026,7 @@ mod tests {
         assert_eq!(host.releases, "file:///releases");
         assert_eq!(host.path, None);
 
-        let host = Host::of(root, |_| Some(OsString::new()));
+        let host = Host::of(&ESS, root, |_| Some(OsString::new()));
         assert_eq!(host.store, Path::new("/repository/target/ess"));
         assert_eq!(host.releases, RELEASES);
     }
@@ -1238,5 +1362,312 @@ mod tests {
             ["path --version", "fetched --version"],
             "nothing of another run's `.fetch-*` directory was started"
         );
+    }
+
+    /// The second tool: `ux-browser` reports no version, so only a fetched asset's digest proves
+    /// a release, the resolver starts nothing and `PATH` is never searched.
+    mod ux_browser {
+        use super::{Fixture, OTHER_DIGEST, VERSION, refusal};
+        use crate::ess::{ESS, Host, Pin, Proof, UX_BROWSER, resolve};
+        use sha2::{Digest, Sha256};
+        use std::{
+            ffi::OsString,
+            fmt::Write,
+            fs,
+            os::unix::fs::PermissionsExt,
+            path::{Path, PathBuf},
+            process::Command,
+        };
+
+        const DIRECTORY: &str = "ux-browser-7.8.9-x86_64-unknown-linux-gnu";
+        const ASSET: &str = "ux-browser-7.8.9-x86_64-unknown-linux-gnu.tar.gz";
+        const NEEDED: &str = "ux-browser 7.8.9 is needed (UX_BROWSER_VERSION of the step \"Install ux-browser\" in .github/workflows/docs-ux.yml) and none was found";
+
+        fn pin(sha256: &str) -> Pin {
+            Pin {
+                tool: &UX_BROWSER,
+                version: VERSION.to_owned(),
+                sha256: sha256.to_owned(),
+            }
+        }
+
+        fn stored(fixture: &Fixture) -> PathBuf {
+            fixture.at("store").join(DIRECTORY).join("ux-browser")
+        }
+
+        /// Publishes the asset of the release, holding a `ux-browser` with `mode` that notes
+        /// every call, writes the release's `SHA256SUMS` with `line` for it, or with the asset's
+        /// own digest when `line` is `None`, and returns that digest.
+        fn release(fixture: &Fixture, mode: u32, line: Option<&str>) -> String {
+            let tree = fixture.at("tree");
+            let member = tree.join(DIRECTORY).join("ux-browser");
+            fixture.stand_in(&member, "fetched", "ux-browser 7.8.9", 0);
+            fs::set_permissions(&member, fs::Permissions::from_mode(mode)).expect("its mode");
+            let release = fixture.at("release").join(VERSION);
+            fs::create_dir_all(&release).expect("the release directory");
+            let packed = Command::new("tar")
+                .arg("-czf")
+                .arg(release.join(ASSET))
+                .arg("-C")
+                .arg(&tree)
+                .arg(DIRECTORY)
+                .status()
+                .expect("tar runs");
+            assert!(packed.success(), "tar packs the asset");
+            let mut digest = String::new();
+            for byte in Sha256::digest(fs::read(release.join(ASSET)).expect("the asset")) {
+                write!(digest, "{byte:02x}").expect("a string takes text");
+            }
+            sums(
+                fixture,
+                &line.map_or_else(|| format!("{digest}  {ASSET}"), str::to_owned),
+            );
+            digest
+        }
+
+        /// Writes the release's `SHA256SUMS` with `line` after the line of another asset.
+        fn sums(fixture: &Fixture, line: &str) {
+            fs::write(
+                fixture.at("release").join(VERSION).join("SHA256SUMS"),
+                format!("{OTHER_DIGEST}  ux-0.0.0.tar.gz\n{line}\n"),
+            )
+            .expect("SHA256SUMS is written");
+        }
+
+        fn workflow(version: &str, digest: &str) -> String {
+            format!(
+                "jobs:\n  libraries-and-plan:\n    steps:\n      - name: Install ess\n        env:\n          ESS_VERSION: \"1.2.3\"\n          ESS_SHA256: {OTHER_DIGEST}\n  ux:\n    steps:\n      - name: Install the UX harness and Chromium\n        run: npm ci\n      - name: Install ux-browser\n        env:\n          UX_BROWSER_VERSION: {version}\n          UX_BROWSER_SHA256: {digest}\n        run: echo\n"
+            )
+        }
+
+        #[test]
+        fn the_pin_is_the_version_and_digest_of_the_install_step_of_the_docs_ux_workflow() {
+            assert_eq!(
+                Pin::parse(&UX_BROWSER, &workflow("\"7.8.9\"", OTHER_DIGEST)),
+                Ok(pin(OTHER_DIGEST))
+            );
+            // Each tool reads its own step: the other's pin in the same text is not its own.
+            let ess = Pin::parse(&ESS, &workflow("\"7.8.9\"", OTHER_DIGEST)).expect("the ess pin");
+            assert_eq!((ess.tool, ess.version.as_str()), (&ESS, "1.2.3"));
+            let other_job = workflow("\"7.8.9\"", OTHER_DIGEST).replace("  ux:\n", "  docs:\n");
+            let other_step = workflow("\"7.8.9\"", OTHER_DIGEST)
+                .replace("Install ux-browser", "Install ux-browser 2");
+            for (text, why) in [
+                (
+                    other_job.as_str(),
+                    "no step \"Install ux-browser\" in job ux",
+                ),
+                (
+                    other_step.as_str(),
+                    "no step \"Install ux-browser\" in job ux",
+                ),
+                (
+                    &workflow("\"7.8\"", OTHER_DIGEST),
+                    "UX_BROWSER_VERSION of the step \"Install ux-browser\" is not three numbers in a string",
+                ),
+                (
+                    &workflow("7.8", OTHER_DIGEST),
+                    "UX_BROWSER_VERSION of the step \"Install ux-browser\" is not three numbers in a string",
+                ),
+                (
+                    &workflow("\"7.8.9-rc1\"", OTHER_DIGEST),
+                    "UX_BROWSER_VERSION",
+                ),
+                (
+                    &workflow("\"7.8.9\"", "00aa"),
+                    "UX_BROWSER_SHA256 of the step \"Install ux-browser\" is not 64 lowercase hex digits",
+                ),
+                (
+                    &workflow("\"7.8.9\"", &OTHER_DIGEST.to_uppercase()),
+                    "UX_BROWSER_SHA256",
+                ),
+            ] {
+                let refused = Pin::parse(&UX_BROWSER, text).expect_err(why);
+                assert!(refused.contains(why), "{why}: {refused}");
+            }
+        }
+
+        #[test]
+        fn the_repositorys_docs_ux_workflow_holds_the_pin() {
+            let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+            let pin = Pin::read(&UX_BROWSER, &root).expect("docs-ux.yml pins ux-browser");
+            assert_eq!(pin.tool, &UX_BROWSER);
+            assert_eq!(pin.version.split('.').count(), 3, "{pin:?}");
+            assert_eq!(pin.sha256.len(), 64, "{pin:?}");
+            let missing = Pin::read(&UX_BROWSER, &root.join("checks")).expect_err("no workflow");
+            assert!(
+                missing.contains(".github/workflows/docs-ux.yml"),
+                "{missing}"
+            );
+        }
+
+        #[test]
+        fn ux_browser_is_proved_by_its_digest_and_ess_by_its_version() {
+            assert_eq!(UX_BROWSER.proof, Proof::Digest);
+            assert_eq!(ESS.proof, Proof::Version);
+        }
+
+        #[test]
+        fn a_missing_ux_browser_is_fetched_checked_and_stored_and_none_is_started() {
+            let fixture = Fixture::new();
+            let digest = release(&fixture, 0o755, None);
+            let stored = stored(&fixture);
+            assert_eq!(
+                resolve(&pin(&digest), &fixture.host()).ok(),
+                Some(stored.clone())
+            );
+            assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+            assert_eq!(fixture.store(), [DIRECTORY], "no download is left behind");
+
+            // The second resolution needs no release, and starts nothing either.
+            fs::remove_dir_all(fixture.at("release")).expect("the release goes away");
+            assert_eq!(resolve(&pin(&digest), &fixture.host()).ok(), Some(stored));
+            assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+        }
+
+        #[test]
+        fn fetched_bytes_with_another_digest_start_nothing_and_are_not_kept() {
+            let fixture = Fixture::new();
+            // The release's own list agrees with the pin; only the bytes do not.
+            let digest = release(&fixture, 0o755, Some(&format!("{OTHER_DIGEST}  {ASSET}")));
+            let refusal = refusal(&pin(OTHER_DIGEST), &fixture.host());
+            assert!(refusal.starts_with(NEEDED), "{refusal}");
+            assert!(
+                refusal.contains(&format!(
+                    "fetch: {ASSET} has SHA-256 {digest}, the pin is {OTHER_DIGEST}"
+                )),
+                "{refusal}"
+            );
+            assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+            assert!(fixture.store().is_empty(), "{:?}", fixture.store());
+        }
+
+        #[test]
+        fn a_release_whose_line_for_the_asset_is_not_the_pinned_digest_starts_nothing() {
+            let fixture = Fixture::new();
+            let digest = release(&fixture, 0o755, Some(&format!("{OTHER_DIGEST}  {ASSET}")));
+            for line in [
+                format!("{OTHER_DIGEST}  {ASSET}\n{digest}  other.tar.gz"),
+                format!("{digest}  {ASSET}.sig"),
+                format!("{digest} {ASSET}"),
+            ] {
+                sums(&fixture, &line);
+                let refusal = refusal(&pin(&digest), &fixture.host());
+                assert!(refusal.starts_with(NEEDED), "{refusal}");
+                assert!(
+                    refusal.contains(&format!(
+                        "fetch: SHA256SUMS of the release has no line `{digest}  {ASSET}`"
+                    )),
+                    "{line:?}: {refusal}"
+                );
+                assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+                assert!(fixture.store().is_empty(), "{:?}", fixture.store());
+            }
+        }
+
+        #[test]
+        fn a_ux_browser_on_path_is_never_used_and_never_started() {
+            let fixture = Fixture::new();
+            fixture.stand_in(
+                &fixture.at("bin/ux-browser"),
+                "path",
+                "ux-browser 7.8.9\n",
+                0,
+            );
+            // With nothing to fetch, the one on PATH is not the answer.
+            let mut host = fixture.host();
+            host.fetches = false;
+            let refusal = refusal(&pin(OTHER_DIGEST), &host);
+            assert!(refusal.starts_with(NEEDED), "{refusal}");
+            assert!(
+                refusal.contains("PATH: not searched; `ux-browser` reports no version, so only a release fetched with the pinned digest is used"),
+                "{refusal}"
+            );
+            assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+
+            // With a release, the fetched one is the answer.
+            let digest = release(&fixture, 0o755, None);
+            assert_eq!(
+                resolve(&pin(&digest), &fixture.host()).ok(),
+                Some(stored(&fixture))
+            );
+            assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+        }
+
+        #[test]
+        fn a_stored_ux_browser_is_taken_on_its_place_and_not_started() {
+            let fixture = Fixture::new();
+            let stored = stored(&fixture);
+            fixture.stand_in(&stored, "stored", "anything", 0);
+            assert_eq!(
+                resolve(&pin(OTHER_DIGEST), &fixture.host()).ok(),
+                Some(stored)
+            );
+            assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+        }
+
+        #[test]
+        fn a_stored_thing_that_is_no_executable_file_is_refused_and_not_replaced() {
+            let fixture = Fixture::new();
+            let digest = release(&fixture, 0o755, None);
+            let stored = stored(&fixture);
+            fs::create_dir_all(stored.parent().expect("a parent")).expect("the place");
+            fs::write(&stored, "not a program").expect("a file");
+            fs::set_permissions(&stored, fs::Permissions::from_mode(0o644)).expect("its mode");
+            let refusal = refusal(&pin(&digest), &fixture.host());
+            assert!(refusal.starts_with(NEEDED), "{refusal}");
+            assert!(
+                refusal.contains(&format!(
+                    "{}: is not an executable file; remove it and the release is fetched again",
+                    stored.display()
+                )),
+                "{refusal}"
+            );
+            assert_eq!(
+                fs::read_to_string(&stored).expect("the file stays"),
+                "not a program"
+            );
+            assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+        }
+
+        #[test]
+        fn a_fetched_asset_whose_ux_browser_is_not_executable_is_not_stored() {
+            let fixture = Fixture::new();
+            let digest = release(&fixture, 0o644, None);
+            let refusal = refusal(&pin(&digest), &fixture.host());
+            assert!(
+                refusal.contains(&format!(
+                    "fetch: the `ux-browser` in {ASSET} is not an executable file"
+                )),
+                "{refusal}"
+            );
+            assert!(fixture.calls().is_empty(), "{:?}", fixture.calls());
+            assert!(fixture.store().is_empty(), "{:?}", fixture.store());
+        }
+
+        #[test]
+        fn the_store_is_target_ux_browser_and_the_releases_are_uxuis_unless_its_variables_say_otherwise()
+         {
+            let root = Path::new("/repository");
+            let host = Host::of(&UX_BROWSER, root, |name| match name {
+                // The other tool's variables move nothing of this one.
+                "LLM_ESS_STORE" => Some(OsString::from("/ess-store")),
+                "LLM_ESS_RELEASES" => Some(OsString::from("file:///ess-releases")),
+                _ => None,
+            });
+            assert_eq!(host.store, Path::new("/repository/target/ux-browser"));
+            assert_eq!(
+                host.releases,
+                "https://github.com/beyond10x/uxui/releases/download"
+            );
+
+            let host = Host::of(&UX_BROWSER, root, |name| match name {
+                "LLM_UX_BROWSER_STORE" => Some(OsString::from("/elsewhere")),
+                "LLM_UX_BROWSER_RELEASES" => Some(OsString::from("file:///releases")),
+                _ => None,
+            });
+            assert_eq!(host.store, Path::new("/elsewhere"));
+            assert_eq!(host.releases, "file:///releases");
+        }
     }
 }

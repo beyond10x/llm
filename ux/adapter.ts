@@ -1,4 +1,6 @@
-// The llm docs site (Docusaurus, website/) as the ui-iteration-loop sees it.
+// The llm docs site (Docusaurus, website/) as the ui-iteration-loop sees it. What must stay visible
+// and what the keyboard must reach is declared for ux-browser, in `ux-browser.checks.yaml` and
+// `ux-browser.round.checks.yaml`.
 
 import type { Adapter } from './core/types.ts';
 
@@ -23,12 +25,6 @@ export const adapter: Adapter = {
   },
   themes: ['light', 'dark'],
   themeAttribute: 'data-theme',
-  alwaysVisible: [
-    { name: 'navbar', locate: { role: 'navigation', name: 'Main' } },
-    { name: 'search', locate: { role: 'searchbox', name: /search/i, css: '.navbar__search-input, .navbar__search, .DocSearch-Button, [role="search"]', scope: '.navbar' } },
-    { name: 'theme toggle', locate: { role: 'button', name: /dark and light mode/i } },
-    { name: 'sidebar', locate: { role: 'navigation', name: 'Docs sidebar' }, minWidth: 997, pathPrefix: '/llm/docs' },
-  ],
   primaryRegion: 'main',
   scrollContainersAllowed: 'pre, table, .theme-code-block, [class*="codeBlock"], .table-wrapper, .mermaid, svg',
   guidanceCue: null,
@@ -38,7 +34,6 @@ export const adapter: Adapter = {
   axeSample: '/llm/docs/getting-started',
   axeThemeRules: ['color-contrast', 'link-in-text-block'],
   checkSettleMs: 250,
-  keyboard: { skipLink: /skip to (main )?content/i, mustReach: ['search', 'navbar'], maxTabs: 40 },
   hubWords: ['documentation', 'docs', 'overview', 'reference', 'guides'],
   screenOnly: { maxActions: 15, maxScrolls: 6, viewport: '1440x900', theme: 'light' },
   settleMs: 750,
