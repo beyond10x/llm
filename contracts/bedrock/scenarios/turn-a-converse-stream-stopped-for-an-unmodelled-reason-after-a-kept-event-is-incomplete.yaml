@@ -1,0 +1,36 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-a-kept-event-is-incomplete
+summary: "an event of an unknown type the stream decoder kept is an item: a stop for a reason in no list after it, with no content block, is the incomplete turn with that item, not a failure to retry"
+timeline:
+- at: '2026-11-25T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "us.amazon.nova-micro-v1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+    recording: "pydantic-test_bedrock_model_stream.bin"
+    keep_frames: 1
+    frames_json: "[{\"event\":\"futureEvent\",\"payload\":{\"detail\":2}},{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"a_reason_in_no_list\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":7,\"outputTokens\":0,\"totalTokens\":7}}}]"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    items:
+    - "opaque:{\"protocol\":\"bedrock-converse\",\"provider\":\"bedrock\",\"account\":\"fixture-account\",\"endpoint\":\"loopback\",\"model\":\"us.amazon.nova-micro-v1:0\",\"binding_revision\":\"fixture-revision\"}:{\"detail\":2}"
+    text: ""
+    warnings:
+    - "unknown-stream-event:a stream event outside the pinned subset was preserved, not interpreted"
+    stop_reason: "incomplete:a_reason_in_no_list"
+    final_usage: true
+    usage_json: "{\"input_tokens\":7,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"

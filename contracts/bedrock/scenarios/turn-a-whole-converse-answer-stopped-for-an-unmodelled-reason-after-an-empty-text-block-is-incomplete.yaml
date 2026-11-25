@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-whole-converse-answer-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete
+summary: "a whole Converse answer that stopped for an unmodelled reason after an empty text block is incomplete: the block is a content block, so the turn holds no item and is no failure"
+timeline:
+- at: '2026-11-25T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: false
+    model_id: "us.amazon.nova-micro-v1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+    recording: "synthetic-converse_unlisted_reason_after_an_empty_text_block.json"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    request_line: "POST /model/us.amazon.nova-micro-v1%3A0/converse"
+    items: []
+    text: ""
+    warnings: []
+    stop_reason: "incomplete:a_reason_in_no_list"
+    final_usage: true
+    usage_json: "{\"input_tokens\":7,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"

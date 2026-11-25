@@ -12,8 +12,8 @@ use llm_bedrock::{
     eventstream::{HeaderValue, Message, encode_message},
 };
 use llm_core::{
-    BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol,
-    Provenance, StopReason, StreamEvent, TurnOutcome, TurnRequest, Usage, VecSink,
+    ADVISORY_OMITTED, BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model,
+    Protocol, Provenance, StopReason, StreamEvent, TurnOutcome, TurnRequest, Usage, VecSink,
 };
 use llm_http::{HttpClient, Limits};
 use serde_json::{Value, json};
@@ -1139,10 +1139,17 @@ fn invoke_usage() -> Usage {
     }
 }
 
-fn assert_stop_without_content(
+fn assert_stop_without_content(error: &Error, wire: &str, row: (&str, ErrorCode, bool, &str)) {
+    assert_stop_without_content_with(error, wire, row, &invoke_usage());
+}
+
+/// The failure is `row`'s: its code, its retry class, its fixed text, dispatch `accepted`, no
+/// cause named, and `usage` kept as final.
+fn assert_stop_without_content_with(
     error: &Error,
     wire: &str,
     (reason, code, retriable, message): (&str, ErrorCode, bool, &str),
+    usage: &Usage,
 ) {
     assert_eq!(
         (error.code, error.dispatch, error.refusal),
@@ -1159,7 +1166,7 @@ fn assert_stop_without_content(
         .observation
         .as_ref()
         .unwrap_or_else(|| panic!("{wire} `{reason}`: the failure keeps what was reported"));
-    assert_eq!(observation.usage, Some(invoke_usage()), "{wire} `{reason}`");
+    assert_eq!(observation.usage.as_ref(), Some(usage), "{wire} `{reason}`");
     assert!(observation.final_usage, "{wire} `{reason}`");
 }
 
@@ -1329,4 +1336,510 @@ async fn adversary_w30_a_whole_invoke_answer_that_stops_without_content_is_final
              the retry table makes every failure of one final: {error:?}"
         );
     }
+}
+
+// ---------------------------------------------------------------------------------------------
+// story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason on Converse, whose stream and
+// whole answer both finish through `Header::outcome` of `src/converse.rs`: a turn that stops
+// without content for a reason that decoder does not model is a classified failure with its
+// final usage. The stream keeps the retriable row; a whole answer is final on every row.
+// "Without content" is: no content block and no kept event. `tests/converse.rs` holds every
+// reason by its name and that edge.
+// ---------------------------------------------------------------------------------------------
+
+/// Each row of the rule on Converse (`docs/bedrock.md`, "Retry classes"): the stop reason, the
+/// code a turn without content fails as, whether another attempt at the stream may answer, and
+/// the fixed diagnostic.
+const CONVERSE_STOPS_WITHOUT_CONTENT: [(&str, ErrorCode, bool, &str); 5] = [
+    (
+        "model_context_window_exceeded",
+        ErrorCode::TooLarge,
+        false,
+        "the Bedrock Converse turn stopped at the model context window without content",
+    ),
+    (
+        "guardrail_intervened",
+        ErrorCode::Refused,
+        false,
+        "the Bedrock Converse turn was refused without content",
+    ),
+    (
+        "content_filtered",
+        ErrorCode::Refused,
+        false,
+        "the Bedrock Converse turn was refused without content",
+    ),
+    (
+        "stop_sequence",
+        ErrorCode::Unavailable,
+        true,
+        "the Bedrock Converse turn stopped without content for a reason this projection does \
+         not model",
+    ),
+    (
+        "a_reason_in_no_list",
+        ErrorCode::Unavailable,
+        true,
+        "the Bedrock Converse turn stopped without content for a reason this projection does \
+         not model",
+    ),
+];
+
+/// One Converse turn, streamed or whole, answered with `head` and `body`: its result, what the
+/// sink was shown and the request line the server read.
+async fn conversed(
+    stream: bool,
+    head: String,
+    body: Vec<u8>,
+) -> (Result<TurnOutcome, Error>, Vec<StreamEvent>, String) {
+    let (origin, server) = serve(head, body).await;
+    let target = target(Api::Converse, stream, "us-east-1", NOVA, origin.as_str());
+    let (result, events) = attempt(&client(target, Keys::new(None))).await;
+    (result, events, server.await.unwrap().line)
+}
+
+/// What both Converse fixtures report: two fresh input tokens and five read from the cache, one
+/// out. `trace` is a field the decoder admits and never reads.
+fn converse_report(trace: Option<&Value>) -> Value {
+    let mut report = json!({"usage": {"inputTokens": 2, "outputTokens": 1,
+        "cacheReadInputTokens": 5, "totalTokens": 8}});
+    if let Some(trace) = trace {
+        report["trace"] = trace.clone();
+    }
+    report
+}
+
+fn converse_usage() -> Usage {
+    Usage {
+        input_tokens: Some(7),
+        output_tokens: Some(1),
+        cached_input_tokens: Some(5),
+        cache_creation_input_tokens: Some(0),
+        reasoning_output_tokens: None,
+    }
+}
+
+/// Synthetic: a streamed Converse answer that opens, carries `content`, stops for `reason` and
+/// reports its usage, with `trace` when given.
+fn converse_stream(reason: &str, content: &[u8], trace: Option<&Value>) -> Vec<u8> {
+    let mut body = opening();
+    body.extend_from_slice(content);
+    body.extend(event("messageStop", &json!({"stopReason": reason})));
+    body.extend(event("metadata", &converse_report(trace)));
+    body
+}
+
+/// Synthetic: one closed text block, without the `messageStart` before it.
+fn converse_text() -> Vec<u8> {
+    let mut block = partial().split_off(opening().len());
+    block.extend(event("contentBlockStop", &json!({"contentBlockIndex": 0})));
+    block
+}
+
+/// Synthetic: a whole Converse answer with `content` that stops for `reason`.
+fn converse_message(reason: &str, content: &Value, trace: Option<&Value>) -> Vec<u8> {
+    let mut answer = converse_report(trace);
+    answer["output"] = json!({"message": {"role": "assistant", "content": content}});
+    answer["stopReason"] = json!(reason);
+    answer.to_string().into_bytes()
+}
+
+/// The decoder marks only the row without a name of its own retriable, and the mark reaches the
+/// caller: the stream ended at its terminal events, so the client cut nothing and strips nothing.
+#[tokio::test]
+async fn a_converse_stream_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row() {
+    for row in CONVERSE_STOPS_WITHOUT_CONTENT {
+        let body = converse_stream(row.0, &[], None);
+        let (result, events, line) = conversed(true, streamed(), body).await;
+        let error = result.expect_err("an answer without content is no answer");
+        assert_stop_without_content_with(&error, "stream", row, &converse_usage());
+        assert_eq!(events, [] as [StreamEvent; 0], "`{}`", row.0);
+        assert_eq!(
+            line, "POST /model/us.amazon.nova-micro-v1%3A0/converse-stream HTTP/1.1",
+            "`{}`",
+            row.0
+        );
+    }
+}
+
+/// The whole answer keeps each row's code, text and final usage, and is never retried
+/// (`docs/bedrock.md`, "Retry classes": any failure while a whole answer is read is final).
+#[tokio::test]
+async fn a_whole_converse_answer_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row()
+ {
+    for row in CONVERSE_STOPS_WITHOUT_CONTENT {
+        let body = converse_message(row.0, &json!([]), None);
+        let (result, events, line) = conversed(false, whole_answer(&body), body).await;
+        let error = result.expect_err("an answer without content is no answer");
+        // A whole answer was generated, and billed, before its first byte: every row is final.
+        let last = (row.0, row.1, false, row.3);
+        assert_stop_without_content_with(&error, "whole", last, &converse_usage());
+        assert_eq!(events, [] as [StreamEvent; 0], "`{}`", row.0);
+        assert_eq!(
+            line, "POST /model/us.amazon.nova-micro-v1%3A0/converse HTTP/1.1",
+            "`{}`",
+            row.0
+        );
+    }
+}
+
+/// With a text block the same answers are the incomplete turn under the reason's own name, on
+/// the stream and whole, and the text the caller was shown stays the turn's text.
+#[tokio::test]
+async fn a_converse_answer_that_stops_after_content_for_an_unmodelled_reason_is_incomplete() {
+    for (reason, ..) in CONVERSE_STOPS_WITHOUT_CONTENT {
+        let whole = converse_message(reason, &json!([{"text": "Partial"}]), None);
+        for (wire, answered) in [
+            (
+                "stream",
+                conversed(
+                    true,
+                    streamed(),
+                    converse_stream(reason, &converse_text(), None),
+                )
+                .await,
+            ),
+            (
+                "whole",
+                conversed(false, whole_answer(&whole), whole.clone()).await,
+            ),
+        ] {
+            let (result, events, _) = answered;
+            let outcome = result.unwrap_or_else(|error| panic!("{wire} `{reason}`: {error:?}"));
+            assert_eq!(
+                outcome.stop_reason,
+                StopReason::Incomplete {
+                    reason: reason.to_owned()
+                },
+                "{wire}"
+            );
+            assert_eq!(
+                outcome.items,
+                [Item::assistant("Partial")],
+                "{wire} `{reason}`"
+            );
+            assert_eq!(
+                outcome.observation.usage,
+                Some(converse_usage()),
+                "{wire} `{reason}`"
+            );
+            assert_eq!(events, shown_partial(), "{wire} `{reason}`");
+        }
+    }
+}
+
+/// The stop without content is the one failure after `messageStop` that may be retried. Every
+/// other failure after that event is final as it was: the stream has answered, whatever reason
+/// the stop named and although no content came before it.
+#[tokio::test]
+async fn any_other_failure_after_a_converse_stop_without_content_is_final() {
+    let mut stopped = opening();
+    stopped.extend(event(
+        "messageStop",
+        &json!({"stopReason": "a_reason_in_no_list"}),
+    ));
+    let report = event("metadata", &converse_report(None));
+    let failures = [
+        ("a cut", cut_short(EVENT_STREAM, &stopped), stopped.clone()),
+        (
+            "an exception",
+            streamed(),
+            [stopped.clone(), exception("throttlingException")].concat(),
+        ),
+        ("a body that ends", streamed(), stopped.clone()),
+        (
+            "a frame left half read",
+            streamed(),
+            [&stopped[..], &report[..7]].concat(),
+        ),
+        (
+            "metadata outside the subset",
+            streamed(),
+            [
+                stopped.clone(),
+                event("metadata", &json!({"undeclared": 1})),
+            ]
+            .concat(),
+        ),
+    ];
+    for (failure, head, body) in failures {
+        let (error, events, _) = failed(head, body).await;
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "{failure}: {error:?}"
+        );
+        assert_ne!(error.code, ErrorCode::Unavailable, "{failure}: {error:?}");
+        assert_eq!(events, [] as [StreamEvent; 0], "{failure}");
+    }
+}
+
+/// A guardrail or a content filter that stopped the turn before any content: `refused`, final,
+/// no cause named, and nothing of the trace the answer carried in the failure. After text the
+/// same stop keeps the text and reads as the incomplete turn.
+#[tokio::test]
+async fn a_guardrail_stop_without_content_names_no_cause_and_quotes_none_of_its_trace() {
+    const TRACE: &str = "fixture-guardrail-trace-text";
+    let trace = json!({"guardrail": {"actionReason": TRACE, "modelOutput": [TRACE]}});
+    for reason in ["guardrail_intervened", "content_filtered"] {
+        let whole = converse_message(reason, &json!([]), Some(&trace));
+        for (wire, answered) in [
+            (
+                "stream",
+                conversed(true, streamed(), converse_stream(reason, &[], Some(&trace))).await,
+            ),
+            (
+                "whole",
+                conversed(false, whole_answer(&whole), whole.clone()).await,
+            ),
+        ] {
+            let (result, events, _) = answered;
+            let error = result.expect_err("an answer without content is no answer");
+            assert_eq!(
+                (error.code, error.refusal, error.may_retry()),
+                (ErrorCode::Refused, None, false),
+                "{wire} `{reason}`: {error:?}"
+            );
+            let shown = format!("{error:?}").to_ascii_lowercase();
+            assert!(
+                !shown.contains(TRACE) && !shown.contains("guardrail") && !shown.contains(reason),
+                "{wire} `{reason}`: {error:?}"
+            );
+            assert_eq!(events, [] as [StreamEvent; 0], "{wire} `{reason}`");
+        }
+
+        let after_text = converse_stream(reason, &converse_text(), Some(&trace));
+        let (result, events, _) = conversed(true, streamed(), after_text).await;
+        let outcome = result.unwrap_or_else(|error| panic!("`{reason}`: {error:?}"));
+        assert_eq!(
+            outcome.stop_reason,
+            StopReason::Incomplete {
+                reason: reason.to_owned()
+            }
+        );
+        assert_eq!(outcome.items, [Item::assistant("Partial")], "`{reason}`");
+        assert_eq!(events, shown_partial(), "`{reason}`");
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// The two cases an adversary pass wrote for story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason,
+// kept as written but for their names.
+//
+// `docs/design.md`, "Provider failures retried before output", says of the Messages rule: "A
+// block that opens empty shows nothing, but the attempt has started answering, and a second
+// attempt would bill again" and "After a content block, visible or silent, there is no failure
+// to retry: the turn is the incomplete turn it was", and that Bedrock Converse counts as
+// Messages does. The two cases below feed both wires of `BedrockClient` a text block that
+// carried no text and closed, then the stop.
+// ---------------------------------------------------------------------------------------------
+
+/// Recorded, not synthetic: the first three frames of
+/// `pydantic-test_bedrock_model_stream_empty_text_delta.bin`, a `/converse-stream` answer of
+/// `openai.gpt-oss-120b-1:0` (`tests/data/frames/uris.txt`): `messageStart`, a text delta of
+/// block 0 that carries no text, and that block's stop. The recorded answer goes on to reasoning
+/// and text; here it is cut after the block that shows the caller nothing.
+fn recorded_silent_text_block() -> Vec<u8> {
+    let recorded: &[u8] =
+        include_bytes!("data/frames/pydantic-test_bedrock_model_stream_empty_text_delta.bin");
+    let mut at = 0;
+    let mut read = Vec::new();
+    for _ in 0..3 {
+        let (message, consumed) =
+            llm_bedrock::eventstream::decode_message(&recorded[at..]).unwrap();
+        let mut payload: Value = serde_json::from_slice(&message.payload).unwrap();
+        // `p` is padding that hides the event's length.
+        payload.as_object_mut().unwrap().remove("p");
+        let kind = message.string_header(":event-type").unwrap().to_owned();
+        read.push((kind, payload));
+        at += consumed;
+    }
+    assert_eq!(
+        read,
+        [
+            ("messageStart".to_owned(), json!({"role": "assistant"})),
+            (
+                "contentBlockDelta".to_owned(),
+                json!({"contentBlockIndex": 0, "delta": {"text": ""}})
+            ),
+            (
+                "contentBlockStop".to_owned(),
+                json!({"contentBlockIndex": 0})
+            ),
+        ]
+    );
+    recorded[..at].to_vec()
+}
+
+/// The recorded silent block, then a stop for `reason` and the usage report.
+fn stop_after_the_recorded_silent_block(reason: &str) -> Vec<u8> {
+    let mut body = recorded_silent_text_block();
+    body.extend(event("messageStop", &json!({"stopReason": reason})));
+    body.extend(event("metadata", &converse_report(None)));
+    body
+}
+
+/// What a caller can tell a result by: the stop reason of a turn, or the code and the retry
+/// class of a failure.
+fn class(result: &Result<TurnOutcome, Error>) -> Result<StopReason, (ErrorCode, bool)> {
+    match result {
+        Ok(outcome) => Ok(outcome.stop_reason.clone()),
+        Err(error) => Err((error.code, error.may_retry())),
+    }
+}
+
+/// After a content block, visible or silent, there is no failure to retry. A Converse stream
+/// whose model opened and closed a text block without text, as the recorded answer does, and
+/// then stopped for a reason with no row of its own, is an incomplete turn or a final failure;
+/// it is not a failure marked for another attempt.
+#[tokio::test]
+async fn an_unlisted_stop_after_a_recorded_silent_text_block_is_not_marked_retriable() {
+    for reason in ["stop_sequence", "a_reason_in_no_list"] {
+        let body = stop_after_the_recorded_silent_block(reason);
+        let (result, events, _) = conversed(true, streamed(), body).await;
+        assert_eq!(events, [] as [StreamEvent; 0], "`{reason}`");
+        if let Err(error) = &result {
+            assert!(
+                !error.retriable && !error.may_retry(),
+                "`{reason}`: a content block opened and closed before the stop, and the failure \
+                 is marked for another attempt: {error:?}"
+            );
+        }
+    }
+}
+
+/// Converse counts a content block as Messages does: the same answer, a text block without text
+/// and then a stop both tables name alike, is a turn on both wires of this client or a failure
+/// of one class on both, streamed and whole.
+#[tokio::test]
+async fn a_stop_after_an_empty_text_block_reads_alike_on_both_wires() {
+    let invoke_block = [
+        json!({"type": "content_block_start", "index": 0,
+            "content_block": {"type": "text", "text": ""}}),
+        json!({"type": "content_block_stop", "index": 0}),
+    ];
+    for reason in ["a_reason_in_no_list", "model_context_window_exceeded"] {
+        let (messages, _) = invoked(true, streamed(), invoke_stream(reason, &invoke_block)).await;
+        let body = stop_after_the_recorded_silent_block(reason);
+        let (converse, _, _) = conversed(true, streamed(), body).await;
+        assert_eq!(
+            class(&converse),
+            class(&messages),
+            "stream `{reason}`: Converse (left) and InvokeModel (right)"
+        );
+
+        let whole = invoke_message(reason, &json!([{"type": "text", "text": ""}]));
+        let (messages, _) = invoked(false, whole_answer(&whole), whole.clone()).await;
+        let whole = converse_message(reason, &json!([{"text": ""}]), None);
+        let (converse, _, _) = conversed(false, whole_answer(&whole), whole.clone()).await;
+        assert_eq!(
+            class(&converse),
+            class(&messages),
+            "whole `{reason}`: Converse (left) and InvokeModel (right)"
+        );
+    }
+}
+
+/// One Converse turn that carries a hint this wire omits (`prompt_cache_key`), streamed or
+/// whole, answered with `head` and `body`: its result and what the sink was shown.
+async fn hinted(
+    stream: bool,
+    head: String,
+    body: Vec<u8>,
+) -> (Result<TurnOutcome, Error>, Vec<StreamEvent>) {
+    let (origin, server) = serve(head, body).await;
+    let target = target(Api::Converse, stream, "us-east-1", NOVA, origin.as_str());
+    let mut request = hello();
+    request.controls.hints.prompt_cache_key = Some("fixture-cache-key".to_owned());
+    let mut sink = VecSink::new(1_000, 1 << 20);
+    let result = client(target, Keys::new(None))
+        .turn(&request, &mut sink, &Cancel::new())
+        .await;
+    server.await.unwrap();
+    (result, sink.into_events())
+}
+
+/// The client holds an `advisory-omitted` warning for a hint the wire omits and shows it only
+/// after the turn succeeded: a warning on the sink is visible output. A Converse turn that fails
+/// shows none and keeps its class. The rows: the stop without content, streamed and whole, and
+/// the two older failures before content. The last lines hold the premise, that the same
+/// request shows the warning once its turn succeeded.
+#[tokio::test]
+async fn a_converse_turn_that_fails_shows_no_advisory_for_a_hint_it_omitted() {
+    let window = converse_message("model_context_window_exceeded", &json!([]), None);
+    let no_row = converse_message("a_reason_in_no_list", &json!([]), None);
+    let stopped = |reason| converse_stream(reason, &[], None);
+    let failures = [
+        (
+            "a streamed stop at the context window",
+            true,
+            streamed(),
+            stopped("model_context_window_exceeded"),
+            (ErrorCode::TooLarge, false),
+        ),
+        (
+            "a streamed guardrail stop",
+            true,
+            streamed(),
+            stopped("guardrail_intervened"),
+            (ErrorCode::Refused, false),
+        ),
+        (
+            "a streamed stop for a reason in no list",
+            true,
+            streamed(),
+            stopped("a_reason_in_no_list"),
+            (ErrorCode::Unavailable, true),
+        ),
+        (
+            "a whole stop at the context window",
+            false,
+            whole_answer(&window),
+            window.clone(),
+            (ErrorCode::TooLarge, false),
+        ),
+        (
+            "a whole stop for a reason in no list",
+            false,
+            whole_answer(&no_row),
+            no_row.clone(),
+            (ErrorCode::Unavailable, false),
+        ),
+        (
+            "a cut before content",
+            true,
+            cut_short(EVENT_STREAM, &opening()),
+            opening(),
+            (ErrorCode::Transport, true),
+        ),
+        (
+            "a throttling exception before content",
+            true,
+            streamed(),
+            [opening(), exception("throttlingException")].concat(),
+            (ErrorCode::RateLimited, true),
+        ),
+    ];
+    // Every row is run before the one assertion, so a failure names each row that showed output.
+    let mut shown = Vec::new();
+    for (failure, stream, head, body, class) in failures {
+        let (result, events) = hinted(stream, head, body).await;
+        let error = result.expect_err(failure);
+        assert_eq!(
+            (error.code, error.may_retry()),
+            class,
+            "{failure}: {error:?}"
+        );
+        if !events.is_empty() {
+            shown.push((failure, events));
+        }
+    }
+    assert_eq!(shown, [] as [(&str, Vec<StreamEvent>); 0]);
+
+    let (result, events) = hinted(true, streamed(), complete()).await;
+    result.expect("a complete answer is a turn");
+    assert_eq!(events.len(), 2, "{events:?}");
+    assert!(
+        matches!(&events[1], StreamEvent::Warning { code, .. } if code == ADVISORY_OMITTED),
+        "{events:?}"
+    );
 }

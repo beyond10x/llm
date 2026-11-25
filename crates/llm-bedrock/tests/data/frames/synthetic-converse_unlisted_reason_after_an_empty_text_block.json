@@ -1,0 +1,1 @@
+{"metrics":{"latencyMs":40},"output":{"message":{"content":[{"text":""}],"role":"assistant"}},"stopReason":"a_reason_in_no_list","usage":{"inputTokens":7,"outputTokens":1,"totalTokens":8}}

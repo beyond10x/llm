@@ -6,6 +6,15 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Fixed
+
+- **Breaking:** `llm-bedrock`: a Converse turn that stops unmodelled with no content block is an error, not `Ok`
+- With no content block `model_context_window_exceeded` is `too-large`; a guardrail or content filter stop is `refused`
+- With no content block any other reason not modelled is `unavailable`: retriable on a stream, final on a whole answer
+- After a content block, an empty text block included, such a reason is still `StopReason::Incomplete` under its name
+- The error carries the final usage and no byte of the reason: a counter left out is unknown, a cache counter a known 0
+- ESS: 10 scenarios for the rule in `llm.bedrock`; the floor is 1090 (was 1080)
+
 ## [0.32.0] - 2026-11-25
 
 ### Changed

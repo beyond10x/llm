@@ -85,7 +85,14 @@
       "llm.bedrock/authored/sigv4-query-parameters-are-signed-in-byte-order",
       "llm.bedrock/authored/turn-a-429-service-quota-answer-is-final",
       "llm.bedrock/authored/turn-a-429-throttling-answer-stays-a-retriable-rate-limit",
+      "llm.bedrock/authored/turn-a-converse-stream-a-content-filter-stopped-without-content-is-refused",
+      "llm.bedrock/authored/turn-a-converse-stream-a-guardrail-stopped-without-content-is-refused",
       "llm.bedrock/authored/turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call",
+      "llm.bedrock/authored/turn-a-converse-stream-stopped-at-the-context-window-without-content-is-too-large",
+      "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-a-kept-event-is-incomplete",
+      "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete",
+      "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-text-is-incomplete",
+      "llm.bedrock/authored/turn-a-converse-stream-stopped-without-content-for-an-unlisted-reason-may-be-retried",
       "llm.bedrock/authored/turn-a-converse-turn-sends-a-user-image-as-inline-bytes",
       "llm.bedrock/authored/turn-a-converse-turn-sends-its-output-format-as-text-format",
       "llm.bedrock/authored/turn-a-cut-after-content-is-final",
@@ -94,6 +101,9 @@
       "llm.bedrock/authored/turn-a-throttling-exception-before-any-content-may-be-retried",
       "llm.bedrock/authored/turn-a-validation-exception-in-the-stream-is-final",
       "llm.bedrock/authored/turn-a-whole-converse-answer-is-shown-as-the-stream-would-show-it",
+      "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-at-the-context-window-without-content-is-too-large",
+      "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete",
+      "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-without-content-for-an-unlisted-reason-is-final",
       "llm.bedrock/authored/turn-a-whole-invoke-answer-is-the-messages-answer",
       "llm.bedrock/authored/turn-an-anthropic-invoke-stream-sends-the-messages-body-with-the-bedrock-version",
       "llm.bedrock/authored/turn-an-anthropic-invoke-turn-sends-the-messages-output-format",
@@ -1299,10 +1309,45 @@
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-a-429-throttling-answer-stays-a-retriable-rate-limit"
       },
+      "bedrock/scenarios/turn-a-converse-stream-a-content-filter-stopped-without-content-is-refused.yaml": {
+        "digest": "sha256:31d4a0cc9ca6c347e1aa89b66516446ea7b41849f2aa16e5fc5aa78b230df95b",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-stream-a-content-filter-stopped-without-content-is-refused"
+      },
+      "bedrock/scenarios/turn-a-converse-stream-a-guardrail-stopped-without-content-is-refused.yaml": {
+        "digest": "sha256:c662b629129c22014190e6af015d734e29d658fe90de4dfd2924df37b370e361",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-stream-a-guardrail-stopped-without-content-is-refused"
+      },
       "bedrock/scenarios/turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call.yaml": {
         "digest": "sha256:2f3ca5bc3bc68c605e1034a4acdc928a258299cf263fd6028908a8f3dbaa0cb8",
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call"
+      },
+      "bedrock/scenarios/turn-a-converse-stream-stopped-at-the-context-window-without-content-is-too-large.yaml": {
+        "digest": "sha256:72f065315813f3d5e9a19b4e1aa316dda73368dfcf763c2302320ba220241c3c",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-stream-stopped-at-the-context-window-without-content-is-too-large"
+      },
+      "bedrock/scenarios/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-a-kept-event-is-incomplete.yaml": {
+        "digest": "sha256:e28147ada02b63a10289b1c3f8fd2e7bbece8c88e0b564c05f87c1592cb56d15",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-a-kept-event-is-incomplete"
+      },
+      "bedrock/scenarios/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete.yaml": {
+        "digest": "sha256:87eb83cbb463055a78c0997540d4a8998df0cffa72bb25bbdd6f45e9c94dee48",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete"
+      },
+      "bedrock/scenarios/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-text-is-incomplete.yaml": {
+        "digest": "sha256:cb3bfbbdfdd3e57f37cdbf3b4ad49cdff08cc7a7697c77193f8ed4905d7ef806",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-text-is-incomplete"
+      },
+      "bedrock/scenarios/turn-a-converse-stream-stopped-without-content-for-an-unlisted-reason-may-be-retried.yaml": {
+        "digest": "sha256:6095695dd7c37fefee859ed2dfc1c810fd804f117abb6c3dd68cec5c62f2ae1a",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-converse-stream-stopped-without-content-for-an-unlisted-reason-may-be-retried"
       },
       "bedrock/scenarios/turn-a-converse-turn-sends-a-user-image-as-inline-bytes.yaml": {
         "digest": "sha256:c10ded4c75435b75ec3998a6febd258cfe72cec5d5776979051c72c8fd5c50c8",
@@ -1343,6 +1388,21 @@
         "digest": "sha256:a5ccafd64593c6dc50798f15e59ffe1b006f790db27069b009abadef339b2b58",
         "disposition": "accepted",
         "scenario": "llm.bedrock/authored/turn-a-whole-converse-answer-is-shown-as-the-stream-would-show-it"
+      },
+      "bedrock/scenarios/turn-a-whole-converse-answer-stopped-at-the-context-window-without-content-is-too-large.yaml": {
+        "digest": "sha256:524f81c9cd741f1c51acb672829ebe780156d6db24b3dcf2eab11c0c1e7ad795",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-at-the-context-window-without-content-is-too-large"
+      },
+      "bedrock/scenarios/turn-a-whole-converse-answer-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete.yaml": {
+        "digest": "sha256:d8a070ee5a25cced0faa4150c298f3a5e0081f67a4af3848a4459da240a0e86f",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete"
+      },
+      "bedrock/scenarios/turn-a-whole-converse-answer-stopped-without-content-for-an-unlisted-reason-is-final.yaml": {
+        "digest": "sha256:9dd00919973b36f1fa9507091a51e230ce798f4023b093ebe92a2524d53ff3be",
+        "disposition": "accepted",
+        "scenario": "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-without-content-for-an-unlisted-reason-is-final"
       },
       "bedrock/scenarios/turn-a-whole-invoke-answer-is-the-messages-answer.yaml": {
         "digest": "sha256:38c1ec35e36c3b4a39c26b119e0bff351f0960cf12e5af1cc82455316f200085",
@@ -6221,7 +6281,7 @@
       }
     },
     "counts": {
-      "authored": 1036,
+      "authored": 1046,
       "generated": 44,
       "outside": 0,
       "refused": 0
@@ -18835,6 +18895,318 @@
         }
       ]
     },
+    "llm.bedrock/authored/turn-a-converse-stream-a-content-filter-stopped-without-content-is-refused": {
+      "purpose": "a Converse stream a content filter stopped with no content block is refused and final; usage its metadata left out stays unknown",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "frames_json": {
+              "kind": "literal",
+              "value": "[{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"content_filtered\"}},{\"event\":\"metadata\",\"payload\":{\"metrics\":{\"latencyMs\":5}}}]"
+            },
+            "keep_frames": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "pydantic-test_bedrock_model_stream.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": null
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-converse-stream-a-guardrail-stopped-without-content-is-refused": {
+      "purpose": "a Converse stream a guardrail stopped with no content block is refused and final, with its usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "frames_json": {
+              "kind": "literal",
+              "value": "[{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"guardrail_intervened\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":12,\"outputTokens\":0,\"totalTokens\":12}}}]"
+            },
+            "keep_frames": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "pydantic-test_bedrock_model_stream.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":12,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
     "llm.bedrock/authored/turn-a-converse-stream-is-signed-replayed-and-carries-text-and-a-tool-call": {
       "purpose": "a recorded ConverseStream answer gives the shown text, the streamed tool input and the tool call, from a signed request",
       "source": [
@@ -19001,6 +19373,756 @@
               "usage_json": {
                 "kind": "literal",
                 "value": "{\"input_tokens\":259,\"output_tokens\":64,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-converse-stream-stopped-at-the-context-window-without-content-is-too-large": {
+      "purpose": "a Converse stream that stops at the model context window with no content block is too-large and final, with its usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "frames_json": {
+              "kind": "literal",
+              "value": "[{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"model_context_window_exceeded\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":200000,\"outputTokens\":0,\"totalTokens\":200000}}}]"
+            },
+            "keep_frames": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "pydantic-test_bedrock_model_stream.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "too-large"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "tool_stream": {
+                "kind": "literal",
+                "value": []
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":200000,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-a-kept-event-is-incomplete": {
+      "purpose": "an event of an unknown type the stream decoder kept is an item: a stop for a reason in no list after it, with no content block, is the incomplete turn with that item, not a failure to retry",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "frames_json": {
+              "kind": "literal",
+              "value": "[{\"event\":\"futureEvent\",\"payload\":{\"detail\":2}},{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"a_reason_in_no_list\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":7,\"outputTokens\":0,\"totalTokens\":7}}}]"
+            },
+            "keep_frames": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "pydantic-test_bedrock_model_stream.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "opaque:{\"protocol\":\"bedrock-converse\",\"provider\":\"bedrock\",\"account\":\"fixture-account\",\"endpoint\":\"loopback\",\"model\":\"us.amazon.nova-micro-v1:0\",\"binding_revision\":\"fixture-revision\"}:{\"detail\":2}"
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "incomplete:a_reason_in_no_list"
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":7,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": [
+                  "unknown-stream-event:a stream event outside the pinned subset was preserved, not interpreted"
+                ]
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete": {
+      "purpose": "a recorded text block that carried no text is a content block: a stop for a reason in no list after it is the incomplete turn with no item, not a failure to retry",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "frames_json": {
+              "kind": "literal",
+              "value": "[{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"a_reason_in_no_list\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":7,\"outputTokens\":1,\"totalTokens\":8}}}]"
+            },
+            "keep_frames": {
+              "kind": "literal",
+              "value": 3.0
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "openai.gpt-oss-120b-1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "pydantic-test_bedrock_model_stream_empty_text_delta.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"openai.gpt-oss-120b-1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "incomplete:a_reason_in_no_list"
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":7,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-text-is-incomplete": {
+      "purpose": "the same stop at the model context window after a text block is the incomplete turn under the reason's own name",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "frames_json": {
+              "kind": "literal",
+              "value": "[{\"event\":\"contentBlockDelta\",\"payload\":{\"contentBlockIndex\":0,\"delta\":{\"text\":\"Partial\"}}},{\"event\":\"contentBlockStop\",\"payload\":{\"contentBlockIndex\":0}},{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"model_context_window_exceeded\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":199998,\"outputTokens\":2,\"totalTokens\":200000}}}]"
+            },
+            "keep_frames": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "pydantic-test_bedrock_model_stream.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "assistant-text:Partial"
+                ]
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "incomplete:model_context_window_exceeded"
+              },
+              "text": {
+                "kind": "literal",
+                "value": "Partial"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":199998,\"output_tokens\":2,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-converse-stream-stopped-without-content-for-an-unlisted-reason-may-be-retried": {
+      "purpose": "a Converse stream that stops with no content block for a reason with no row of its own is unavailable and may be retried, with its usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "frames_json": {
+              "kind": "literal",
+              "value": "[{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"stop_sequence\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":9,\"outputTokens\":0,\"totalTokens\":9}}}]"
+            },
+            "keep_frames": {
+              "kind": "literal",
+              "value": 1.0
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "pydantic-test_bedrock_model_stream.bin"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": true
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":9,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
               },
               "warnings": {
                 "kind": "literal",
@@ -20043,6 +21165,450 @@
               "usage_json": {
                 "kind": "literal",
                 "value": "{\"input_tokens\":269,\"output_tokens\":77,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-at-the-context-window-without-content-is-too-large": {
+      "purpose": "a /converse answer that stops at the model context window with no content block is too-large and final, with its usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "synthetic-converse_context_window_without_content.json"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "too-large"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_line": {
+                "kind": "literal",
+                "value": "POST /model/us.amazon.nova-micro-v1%3A0/converse"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":200000,\"output_tokens\":0,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete": {
+      "purpose": "a whole Converse answer that stopped for an unmodelled reason after an empty text block is incomplete: the block is a content block, so the turn holds no item and is no failure",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "synthetic-converse_unlisted_reason_after_an_empty_text_block.json"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_line": {
+                "kind": "literal",
+                "value": "POST /model/us.amazon.nova-micro-v1%3A0/converse"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "incomplete:a_reason_in_no_list"
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":7,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        }
+      ]
+    },
+    "llm.bedrock/authored/turn-a-whole-converse-answer-stopped-without-content-for-an-unlisted-reason-is-final": {
+      "purpose": "a /converse answer that stops with no content block for a reason in no list is unavailable and final, as every failure of a whole answer is",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.bedrock"
+        },
+        {
+          "kind": "type",
+          "name": "llm.bedrock.Api"
+        },
+        {
+          "kind": "command",
+          "name": "llm.bedrock.RunTurn"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.bedrock.LastTurn"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.bedrock.RunTurn",
+          "input": {
+            "api": {
+              "kind": "literal",
+              "value": "Converse"
+            },
+            "cut": {
+              "kind": "literal",
+              "value": false
+            },
+            "model_id": {
+              "kind": "literal",
+              "value": "us.amazon.nova-micro-v1:0"
+            },
+            "recording": {
+              "kind": "literal",
+              "value": "synthetic-converse_unlisted_reason_without_content.json"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+            },
+            "session_token": {
+              "kind": "literal",
+              "value": false
+            },
+            "stream": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.bedrock.RunTurn",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.bedrock.LastTurn"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "diagnostics_safe": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "request_line": {
+                "kind": "literal",
+                "value": "POST /model/us.amazon.nova-micro-v1%3A0/converse"
+              },
+              "requests": {
+                "kind": "literal",
+                "value": 1.0
+              },
+              "retriable": {
+                "kind": "literal",
+                "value": false
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":12,\"output_tokens\":0,\"cached_input_tokens\":5,\"cache_creation_input_tokens\":0}"
+              },
+              "warnings": {
+                "kind": "literal",
+                "value": []
               }
             }
           },
