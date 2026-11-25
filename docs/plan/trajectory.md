@@ -23,6 +23,8 @@ Read at `main` `c7c2a62cb` (llm 0.26.0). The wave plan below was derived with
   `draft`.
 - Issue 83 (a Messages turn that stops for an unmodelled reason without content decodes as a success)
   is the one gap a caller of the library reported; its story is wave 4.
+- Read again on 2026-11-25 at `main` `831c21d95`: the same five pins and no open blocker on llm. No
+  consumer names a gap, so the plan after wave 8 is ordered by the kind of story.
 
 ## Wave plan
 
@@ -65,6 +67,79 @@ Settled at the opening of wave 5: a repeated key in a forced tool call's argumen
 uxui repository leaves `ux/baseline.json` and `ux/core/layout.ts` as they are and commits no
 planted-defect test; the story asks for all three.
 
+## Wave plan after wave 8
+
+The seven stories accepted on 2026-11-25
+(`approval-record:backlog-2026-11-25-seven-drafts-accepted`), read at `main` `831c21d95` after each
+got its Scope section from one `story-scoper`. `aep plan artifact waves --kind story --status active`
+(aep 0.80.0) over the nine active stories: 6 waves, 133 collisions, 0 unassessed. Of the seven, one
+pair does not collide: the `llm-decide` story and the cancellation story. They share wave 9; each
+later wave holds one story.
+
+| Wave | Story | Objective (the coordinator's reading) | Makes true | State |
+| --- | --- | --- | --- | --- |
+| 9 | `story:llm-decide-tests-read-no-clock-and-build-one-binary`, `story:messages-cancellation-case-waits-on-a-signal` | none: the organisation's test rule | no test of `llm-decide` reads the clock and the crate links one integration-test binary; the cancellation case of `llm-messages` waits on a signal and holds no `sleep` | planned |
+| 10 | `story:test-binaries-one-per-crate` | none: the organisation's test rule | every crate with integration tests links one test binary, with the same number of tests | planned |
+| 11 | `story:replay-stops-at-the-last-case-have-scenarios` | O6 | two scenarios hold the stop of a replay at its last case; the conformance floor is 1092 | planned |
+| 12 | `story:tool-arguments-with-a-repeated-key` | O6 | tool-call arguments that give a key twice are a protocol error on every wire, and the classifier abstains on them | planned |
+| 13 | `story:responses-carries-refusal-text` | O3 | a Responses answer, request and ingress carry refusal text as its own item, and selection admits a Responses target for it | planned |
+| 14 | `story:cli-route-explain` | O1 | `llm route explain <route>` prints each target with its rejection names and the chosen target, without a network call | planned |
+
+The verb's order was the `llm-decide` story, then `story:cli-route-explain` with the cancellation
+story, the replay story, the refusal story, the workspace story, the repeated-key story. The order
+above is the acceptance's: test defects first, correctness second, features last. Inside each
+kind it is the coordinator's:
+
+- The two one-crate test stories run before the workspace story, which moves the files they edit
+  (`crates/llm-decide/tests`, `crates/llm-messages/tests/client.rs`).
+- The replay story adds data only and runs before the repeated-key story, which changes nine parse
+  sites and is breaking.
+- The refusal story runs before `story:cli-route-explain`, so the command's guide is written
+  against the final condition of the `refusal-text` rejection.
+- No `depends_on` is crossed: `story:cli-route-explain` depends on
+  `story:output-and-image-capabilities`, which is `implemented`.
+
+Wave 7 keeps its number and is not in this order: its pull request stays open until a `ux-browser`
+release lets the docs UX gate end within its 120 s budget. `story:anthropic-access` stays out of the
+plan under its credential blocker.
+
+What the scopers found, each in its story's Scope section, and the reading the coordinator takes
+into the wave's proposal:
+
+- Wave 9, `llm-decide`: two cases compare durations (`tests/judge.rs`,
+  `tests/adversary_w27_judge_pass2.rs`). A counter under `#[cfg(test)]` cannot be read from
+  `tests/`, so the two cases become unit tests beside the reader in `src/answer.rs` and count the
+  reader's work. The same unit makes the crate's five test binaries one, and wave 10 leaves the
+  crate alone.
+- Wave 9, cancellation: a signal the server gives after it wrote the head does not prove that the
+  client is blocked in its sink, so the case would still race. The case waits on the server's
+  signal and on the sink's `emit` being entered, as `AcceptingSink` in `tests/live_connection.rs`
+  does. `the_turn_deadline_bounds_a_sink_that_never_accepts` in the same file has the same shape and
+  goes into the list the story's third acceptance line asks for.
+- Wave 10: 247 `tests/*.rs` files in 20 crates, 17 crates with more than one. Three targets with
+  `harness = false` (`llm-bedrock` `process_credentials`, `llm-models` `process_routes`, `llm-cli`
+  `credential_process`) are programs and cannot become modules: the first acceptance line needs a
+  word on them, asked with the wave's proposal. Nine tests start their own binary with
+  `--exact <bare name>`; three of them would pass without running a test after the move, so each
+  gets its module path and an assertion that the child ran one test. The unit is split by crate,
+  two parts at a time, the documents last. `story:llm-calls-builds-one-integration-test-binary`
+  stays a draft: this story covers its crate.
+- Wave 11: two scenario files, each asserting `"not_sent":0`; the floor moves from 1090 to 1092.
+- Wave 12: decided on 2026-11-25 (the story's section Open): a repeated key is a protocol error,
+  like arguments that are not JSON, and the CHANGELOG line is marked breaking. Nine parse sites
+  on five wires; one strict reader in `llm-core` replaces the two copies in `llm-decide` and
+  `llm-openai-decisions`.
+- Wave 13: a `refusal` content part fails a Responses turn as `unsupported` today, and only Chat
+  Completions carries refusal text; Messages and Bedrock Converse keep refusing it. The wire names
+  (`response.refusal.delta`, the `refusal` part) are in no recorded fixture of this repository, and
+  the wave makes no live call. An answer that was an error becomes a returned turn: the CHANGELOG
+  line names it.
+- Wave 14: a route of `llm.toml` expands to one target, so the command prints one candidate there;
+  a Bedrock route and a direct `<endpoint>/<model-id>` name have no catalog entry and are refused by
+  name; without an input-token bound every target is rejected `input-tokens-unknown`, so the
+  command takes an optional `--input-tokens` and prints that rejection without it. No domain
+  describes the `llm` command, so the wave adds no scenario and the floor does not move.
+
 ## Releases
 
 - 0.27.0 holds wave 1, 0.28.0 wave 2 and 0.29.0 wave 3. Each later wave is one minor release.
@@ -76,8 +151,11 @@ planted-defect test; the story asks for all three.
   `ess`; its release is 0.32.0.
 - Wave 8 makes a Bedrock Converse turn that stops for an unmodelled reason without content an error
   where it was a success before (one line marked breaking in the CHANGELOG); its release is 0.33.0.
-- Still drafts: `story:the-neutral-turn-in-ess`, `story:responses-carries-refusal-text` and
-  `story:cli-route-explain`.
+- Each wave after wave 8 is one minor release, numbered in the order the waves merge; wave 7 takes
+  the next number when its gate is green. Wave 12 carries one line marked breaking; wave 13 names
+  the answer that was an error and becomes a returned turn.
+- Still drafts: `story:the-neutral-turn-in-ess` and
+  `story:llm-calls-builds-one-integration-test-binary`.
 
 ## Backlog filed by this plan
 
@@ -90,24 +168,29 @@ and is in the wave plan of 2026-11-25 above:
 - `story:docs-ux-layout-checks-from-ux-browser`: proposed by the uxui repository on 2026-11-24; it
   starts only when a release tag of that repository that carries `ux-browser` exists.
 
-Filed by wave 2 and still a draft (accepting it is the owner's act):
+Accepted on 2026-11-25 (`approval-record:backlog-2026-11-25-seven-drafts-accepted`): the five
+stories below that name a wave, with `story:test-binaries-one-per-crate` (wave 10),
+`story:responses-carries-refusal-text` (wave 13) and `story:cli-route-explain` (wave 14), which were
+filed before this plan.
+
+Filed by wave 2, now wave 9:
 
 - `story:llm-decide-tests-read-no-clock-and-build-one-binary`: a wall-time case of wave 1 failed once
   under load; the crate builds five integration-test binaries.
 
-Filed by wave 3 and still drafts:
+Filed by wave 3, the first now wave 11, the second still a draft that wave 10 covers:
 
 - `story:replay-stops-at-the-last-case-have-scenarios`: the stop of a replay at its last case is held
   by Rust tests only.
 - `story:llm-calls-builds-one-integration-test-binary`: the crate builds seven; the wave added the
   seventh.
 
-Filed by wave 4 and still a draft (its other draft is wave 8):
+Filed by wave 4, now wave 9 (its other draft was wave 8):
 
 - `story:messages-cancellation-case-waits-on-a-signal`: one case of `llm-messages` cancels after a
   fixed 100 ms and failed once of 42 runs under load.
 
-Filed at the opening of wave 5 and still a draft:
+Filed at the opening of wave 5, now wave 12:
 
 - `story:tool-arguments-with-a-repeated-key`: tool-call arguments that give a key twice reach a
   caller with the last value chosen.
