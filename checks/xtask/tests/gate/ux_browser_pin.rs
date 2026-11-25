@@ -16,8 +16,13 @@ const INSTALL: &str = "Install ux-browser";
 /// The runner's command up to the `ux-browser` it is handed: the one way a task names it.
 const RUNNER: [&str; 6] = ["cargo", "run", "--locked", "-p", "llm-conformance", "--"];
 
-/// What the install step's script has to hold, each with what it is for.
-const SCRIPT: [(&str, &str); 8] = [
+/// The line of the install step's script that goes to the directory the release is unpacked in.
+/// It stands once, before the first download; the hand-over names the path under that directory.
+const CD: &str = "cd \"$RUNNER_TEMP\"";
+
+/// The lines of the install step's script after `set -euo pipefail`, in their order and each with
+/// what it is for. Beside them the script holds [`CD`] and no other line.
+const SCRIPT: [(&str, &str); 9] = [
     (
         "asset=\"ux-browser-$UX_BROWSER_VERSION-x86_64-unknown-linux-gnu.tar.gz\"",
         "the asset is named by the pinned version",
@@ -42,6 +47,7 @@ const SCRIPT: [(&str, &str); 8] = [
         "grep -F \"  $asset\" SHA256SUMS | sha256sum --check --strict",
         "the downloaded file has that digest",
     ),
+    ("tar -xzf \"$asset\"", "the checked asset is unpacked"),
     (
         "echo \"$RUNNER_TEMP/ux-browser-$UX_BROWSER_VERSION-x86_64-unknown-linux-gnu\" >> \"$GITHUB_PATH\"",
         "the unpacked directory is on PATH",
@@ -106,21 +112,92 @@ fn pin(text: &str) -> Result<(String, String), Vec<String>> {
             "no line is `{line}`, the form ux/core/pin.ts reads"
         ));
     }
-    let script = step["run"].as_str().unwrap_or("");
-    let lines: Vec<&str> = script.lines().map(str::trim).collect();
-    if lines.first() != Some(&"set -euo pipefail") {
-        wrong.push("the script does not start with `set -euo pipefail`".to_owned());
-    }
-    for (line, purpose) in SCRIPT {
-        if !lines.contains(&line) {
-            wrong.push(format!("the script has no line `{line}`: {purpose}"));
-        }
-    }
+    wrong.extend(members_wrong(step));
+    wrong.extend(script_wrong(step["run"].as_str().unwrap_or("")));
     if wrong.is_empty() {
         Ok((version.to_owned(), digest.to_owned()))
     } else {
         Err(wrong)
     }
+}
+
+/// The members of the install step that are not the ones this file reads: the step is its `name`,
+/// its `env` with the two members of the pin, and its `run`. Another member (a shell, a condition,
+/// a third variable) changes what the script does without a line of it changing.
+fn members_wrong(step: &Value) -> Vec<String> {
+    let keys = |value: &Value| -> Vec<String> {
+        value
+            .as_mapping()
+            .into_iter()
+            .flatten()
+            .map(|(key, _)| key.as_str().unwrap_or("a key that is no string").to_owned())
+            .collect()
+    };
+    let mut wrong = Vec::new();
+    for key in keys(step) {
+        if !["name", "env", "run"].contains(&key.as_str()) {
+            wrong.push(format!(
+                "the step has a member `{key}`; this guard reads `name`, `env` and `run`"
+            ));
+        }
+    }
+    for key in keys(&step["env"]) {
+        if !["UX_BROWSER_VERSION", "UX_BROWSER_SHA256"].contains(&key.as_str()) {
+            wrong.push(format!(
+                "the step's `env` has a member `{key}`; it holds the pin and nothing else"
+            ));
+        }
+    }
+    wrong
+}
+
+/// Everything in which the install step's script is not the one this file reads: it starts with
+/// `set -euo pipefail`, holds each line of [`SCRIPT`] once and in that order, [`CD`] once before
+/// the first download, and no other line. So a second download, a second line to `GITHUB_ENV`
+/// and a hand-over of another path are each a line it does not read.
+fn script_wrong(script: &str) -> Vec<String> {
+    let lines: Vec<&str> = script
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect();
+    let mut wrong = Vec::new();
+    if lines.first() != Some(&"set -euo pipefail") {
+        wrong.push("the script does not start with `set -euo pipefail`".to_owned());
+    }
+    for (line, purpose) in SCRIPT {
+        match lines.iter().filter(|found| **found == line).count() {
+            1 => {}
+            0 => wrong.push(format!("the script has no line `{line}`: {purpose}")),
+            times => wrong.push(format!(
+                "the script has the line `{line}` {times} times, not once: {purpose}"
+            )),
+        }
+    }
+    let read = |line: &str| SCRIPT.iter().any(|(wanted, _)| *wanted == line);
+    for line in lines.iter().skip(1) {
+        if !(read(line) || *line == CD) {
+            wrong.push(format!(
+                "the script has a line this guard does not read: `{line}`"
+            ));
+        }
+    }
+    let order: Vec<&str> = lines.iter().copied().filter(|line| read(line)).collect();
+    if wrong.is_empty() && order != SCRIPT.map(|(line, _)| line) {
+        wrong.push(
+            "the script's lines are not in their order: the names, both downloads, both digest checks, the unpacking, the two hand-overs"
+                .to_owned(),
+        );
+    }
+    let download = lines.iter().position(|line| *line == SCRIPT[2].0);
+    let changes: Vec<usize> = (0..lines.len()).filter(|at| lines[*at] == CD).collect();
+    if changes.len() != 1 || download.is_some_and(|download| changes[0] > download) {
+        wrong.push(format!(
+            "the script has `{CD}` {} times or after the first download; it stands once, before it",
+            changes.len()
+        ));
+    }
+    wrong
 }
 
 /// The pin of this repository's workflow.
@@ -135,19 +212,29 @@ fn ci_installs_ux_browser_pinned_by_version_and_digest() {
     assert_eq!(digest.len(), 64, "{digest}");
 }
 
+/// The digest of the workflow texts the tests of this file build.
+const DIGEST: &str = "00000000000000000000000000000000000000000000000000000000000000aa";
+
+/// A workflow whose job `ux` is the install step in the form this file reads, pinned to 7.8.9
+/// and [`DIGEST`]. A step appended to it is a later step of that job, a line appended a line of
+/// the install step's script.
+fn install_step() -> String {
+    let mut text = format!(
+        "jobs:\n  ux:\n    steps:\n      - name: Install ux-browser\n        env:\n          UX_BROWSER_VERSION: \"7.8.9\"\n          UX_BROWSER_SHA256: {DIGEST}\n        run: |\n          set -euo pipefail\n          cd \"$RUNNER_TEMP\"\n"
+    );
+    for (line, _) in SCRIPT {
+        text.push_str("          ");
+        text.push_str(line);
+        text.push('\n');
+    }
+    text
+}
+
 /// The step the reader takes, and each change of it that the reader refuses, with what it says.
 #[test]
 fn an_install_step_of_another_form_is_refused_with_what_is_wrong() {
-    let digest = "00000000000000000000000000000000000000000000000000000000000000aa";
-    let mut script = String::from("          set -euo pipefail\n          cd \"$RUNNER_TEMP\"\n");
-    for (line, _) in SCRIPT {
-        script.push_str("          ");
-        script.push_str(line);
-        script.push('\n');
-    }
-    let good = format!(
-        "jobs:\n  ux:\n    steps:\n      - name: Install ux-browser\n        env:\n          UX_BROWSER_VERSION: \"7.8.9\"\n          UX_BROWSER_SHA256: {digest}\n        run: |\n{script}"
-    );
+    let digest = DIGEST;
+    let good = install_step();
     assert_eq!(pin(&good), Ok(("7.8.9".to_owned(), digest.to_owned())));
 
     let unquoted = good.replace("UX_BROWSER_VERSION: \"7.8.9\"", "UX_BROWSER_VERSION: 7.8.9");
@@ -200,6 +287,82 @@ fn an_install_step_of_another_form_is_refused_with_what_is_wrong() {
         (
             good.replace(">> \"$GITHUB_ENV\"", ">> /dev/null"),
             "the harness is handed the unpacked binary by its path",
+        ),
+    ] {
+        let wrong = pin(&text).expect_err(why);
+        assert!(
+            wrong.iter().any(|found| found.contains(why)),
+            "{why}: {wrong:#?}"
+        );
+    }
+}
+
+/// The script and the members of the install step are read whole: a second hand-over, a second
+/// download, a line twice, another path, another order and a member beside `name`, `env` and
+/// `run` are each refused with what was found.
+#[test]
+fn an_install_step_with_a_line_or_a_member_the_guard_does_not_read_is_refused() {
+    let good = install_step();
+    assert_eq!(pin(&good), Ok(("7.8.9".to_owned(), DIGEST.to_owned())));
+    let handed = "          echo \"UX_BROWSER=$RUNNER_TEMP/ux-browser-$UX_BROWSER_VERSION-x86_64-unknown-linux-gnu/ux-browser\" >> \"$GITHUB_ENV\"\n";
+    assert!(good.ends_with(handed), "the hand-over is the last line");
+    let early = good.replace(handed, "").replace(
+        "          cd \"$RUNNER_TEMP\"\n",
+        &format!("          cd \"$RUNNER_TEMP\"\n{handed}"),
+    );
+    for (text, why) in [
+        (
+            format!(
+                "{good}          echo \"UX_BROWSER=$RUNNER_TEMP/other/checks\" >> \"$GITHUB_ENV\"\n"
+            ),
+            "the script has a line this guard does not read: `echo \"UX_BROWSER=$RUNNER_TEMP/other/checks\" >> \"$GITHUB_ENV\"`",
+        ),
+        (
+            format!(
+                "{good}          curl --location --output other.tar.gz https://releases.test/other.tar.gz\n"
+            ),
+            "the script has a line this guard does not read: `curl --location --output other.tar.gz https://releases.test/other.tar.gz`",
+        ),
+        (
+            format!("{good}{handed}"),
+            "2 times, not once: the harness is handed the unpacked binary by its path",
+        ),
+        (
+            good.replace(
+                "/ux-browser\" >> \"$GITHUB_ENV\"",
+                "/checks\" >> \"$GITHUB_ENV\"",
+            ),
+            "the harness is handed the unpacked binary by its path",
+        ),
+        (early, "the script's lines are not in their order"),
+        (
+            good.replace("          cd \"$RUNNER_TEMP\"\n", ""),
+            "the script has `cd \"$RUNNER_TEMP\"` 0 times or after the first download",
+        ),
+        (
+            good.replace("          cd \"$RUNNER_TEMP\"\n", "").replace(
+                "\"$release/$asset\"\n",
+                "\"$release/$asset\"\n          cd \"$RUNNER_TEMP\"\n",
+            ),
+            "the script has `cd \"$RUNNER_TEMP\"` 1 times or after the first download",
+        ),
+        (
+            good.replace("          tar -xzf \"$asset\"\n", ""),
+            "the checked asset is unpacked",
+        ),
+        (
+            good.replace(
+                "        env:\n",
+                "        continue-on-error: true\n        env:\n",
+            ),
+            "the step has a member `continue-on-error`",
+        ),
+        (
+            good.replace(
+                "        run: |\n",
+                "          UX_BROWSER: /other/checks\n        run: |\n",
+            ),
+            "the step's `env` has a member `UX_BROWSER`",
         ),
     ] {
         let wrong = pin(&text).expect_err(why);
@@ -475,38 +638,156 @@ fn the_docs_ux_workflow_builds_no_rust_and_its_ux_step_takes_what_the_install_st
     );
 }
 
-/// Each string of a step of the workflow `file` that names a `ux-browser` to start, and how
-/// many steps have the install step's name. The install step of job `ux` of `docs-ux.yml` is the
-/// one step that may name it; a step's `name` and `uses` are not commands and are not read.
+/// Whether `text` holds `name` as a whole name: what stands around it is no letter, no digit and
+/// no `_`. So `UX_BROWSER` is found in `$UX_BROWSER` and in `UX_BROWSER=`, and not in
+/// `UX_BROWSER_VERSION`.
+fn names(text: &str, name: &str) -> bool {
+    text.match_indices(name).any(|(at, _)| {
+        let around = [
+            text[..at].chars().next_back(),
+            text[at + name.len()..].chars().next(),
+        ];
+        !around
+            .iter()
+            .flatten()
+            .any(|character| character.is_ascii_alphanumeric() || *character == '_')
+    })
+}
+
+/// What a string outside the install step does that the install step alone may: each way to a
+/// `ux-browser` that step did not hand over. It errs on the side of reading too much: a string
+/// that only mentions one of the names is found, and a rewording mends it.
+fn foreign(text: &str) -> Vec<&'static str> {
+    let lower = text.to_ascii_lowercase();
+    let mut found = Vec::new();
+    if bare_ux_browser(text) > 0 {
+        found.push("names a `ux-browser` to start");
+    }
+    if lower.contains("ux-browser-") || names(&lower, "uxui") {
+        found.push("names a release of `ux-browser` or the uxui repository");
+    }
+    if names(text, "UX_BROWSER") {
+        found.push("names `UX_BROWSER`, which the install step alone hands over");
+    }
+    found
+}
+
+/// The place of every mapping member named `UX_BROWSER` in `value`, at any depth: in an `env` of
+/// the workflow, of a job, of a step or of a container.
+fn members(value: &Value, place: &str, found: &mut Vec<String>) {
+    match value {
+        Value::Mapping(entries) => {
+            for (key, entry) in entries {
+                let key = key.as_str().unwrap_or("?");
+                let place = format!("{place}.{key}");
+                if key == "UX_BROWSER" {
+                    found.push(place.clone());
+                }
+                members(entry, &place, found);
+            }
+        }
+        Value::Sequence(items) => {
+            for (at, item) in items.iter().enumerate() {
+                members(item, &format!("{place}[{at}]"), found);
+            }
+        }
+        Value::Tagged(tagged) => members(&tagged.value, place, found),
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+    }
+}
+
+/// Every string of `value` but the ones under its members `left`.
+fn rest(value: &Value, left: &[&str]) -> Vec<String> {
+    let mut read = value.clone();
+    if let Some(entries) = read.as_mapping_mut() {
+        for key in left {
+            entries.remove(*key);
+        }
+    }
+    let mut texts = Vec::new();
+    strings(&read, &mut texts);
+    texts
+}
+
+/// Adds to `found` what each of `texts`, the strings at `place` of the workflow `file`, does that
+/// the install step alone may.
+fn note(found: &mut Vec<String>, file: &str, place: &str, texts: Vec<String>) {
+    for text in texts {
+        for what in foreign(&text) {
+            found.push(format!("{file}: {place} {what}: {text}"));
+        }
+    }
+}
+
+/// How many steps of the workflow `file` have the install step's name, and everything in it that
+/// gets the harness a `ux-browser` the install step did not hand over.
+///
+/// The install step of job `ux` of `docs-ux.yml` is read by [`pin`]. Everything else is read
+/// here: every string of every other step, of every job and of the workflow outside its jobs,
+/// but a `name`, is found when it names a `ux-browser` to start, a release of it or the uxui
+/// repository, or the variable `UX_BROWSER` ([`foreign`]); a member `UX_BROWSER` is found at any
+/// depth, the install step included ([`members`]). A workflow without a mapping `jobs`, a job
+/// with neither a list `steps` nor a `uses`, and a step that is no mapping are found too: this
+/// guard does not read them, and it does not pass what it does not read.
 fn steps(file: &str, text: &str) -> (usize, Vec<String>) {
     let workflow: Value =
         serde_yaml::from_str(text).unwrap_or_else(|error| panic!("{file}: {error}"));
     let mut installs = 0;
-    let mut bare = Vec::new();
-    for (job, body) in workflow["jobs"].as_mapping().into_iter().flatten() {
-        for step in body["steps"].as_sequence().into_iter().flatten() {
+    let mut found = Vec::new();
+    let mut set = Vec::new();
+    members(&workflow, "", &mut set);
+    for place in set {
+        found.push(format!(
+            "{file}: `{}` is a member `UX_BROWSER`; the install step alone hands the binary over, by its line to `GITHUB_ENV`",
+            place.trim_start_matches('.')
+        ));
+    }
+    let outside = rest(&workflow, &["jobs", "name"]);
+    note(&mut found, file, "the workflow outside its jobs", outside);
+    let Some(jobs) = workflow["jobs"].as_mapping() else {
+        found.push(format!(
+            "{file}: no mapping `jobs`; this guard reads the jobs of a workflow"
+        ));
+        return (installs, found);
+    };
+    let mut unread = Vec::new();
+    for (job, body) in jobs {
+        let job = job.as_str().unwrap_or("?");
+        let outside = rest(body, &["steps", "name"]);
+        note(
+            &mut found,
+            file,
+            &format!("job `{job}` outside its steps"),
+            outside,
+        );
+        let Some(listed) = body["steps"].as_sequence() else {
+            if body.get("steps").is_some() || body["uses"].as_str().is_none() {
+                unread.push(format!(
+                    "{file}: job `{job}` has neither a list `steps` nor a `uses`; this guard reads no other job"
+                ));
+            }
+            continue;
+        };
+        for (at, step) in listed.iter().enumerate() {
             let name = step["name"].as_str();
             if name == Some(INSTALL) {
                 installs += 1;
-                if file == "docs-ux.yml" && job.as_str() == Some("ux") {
+                if file == "docs-ux.yml" && job == "ux" {
                     continue;
                 }
             }
-            let mut read = step.clone();
-            if let Some(entries) = read.as_mapping_mut() {
-                entries.remove("name");
-                entries.remove("uses");
+            if !step.is_mapping() {
+                unread.push(format!(
+                    "{file}: step {at} of job `{job}` is no mapping; this guard reads no other step"
+                ));
             }
-            let mut texts = Vec::new();
-            strings(&read, &mut texts);
-            for text in texts {
-                if bare_ux_browser(&text) > 0 {
-                    bare.push(format!("{file}: step {name:?} of job {job:?}: {text}"));
-                }
-            }
+            let name = name.unwrap_or("without a name");
+            let place = format!("step `{name}` of job `{job}`");
+            note(&mut found, file, &place, rest(step, &["name"]));
         }
     }
-    (installs, bare)
+    found.extend(unread);
+    (installs, found)
 }
 
 #[test]
@@ -527,8 +808,9 @@ jobs:
     assert_eq!((installs, bare.len()), (1, 1), "{bare:?}");
 }
 
-/// No step of any workflow but the install step names a `ux-browser` to start: the UX step
-/// starts the one the install step handed it as `UX_BROWSER`. There is one install step.
+/// No workflow gets the harness a `ux-browser` the install step did not hand over: nothing but
+/// that step names one to start, a release of it or the variable `UX_BROWSER`, and the UX step
+/// starts the one that step handed it. There is one install step.
 #[test]
 fn no_workflow_step_starts_a_ux_browser_the_install_step_did_not_hand_over() {
     let directory = repository().join(".github/workflows");
@@ -538,10 +820,226 @@ fn no_workflow_step_starts_a_ux_browser_the_install_step_did_not_hand_over() {
         let file = entry.expect("an entry").file_name();
         let file = file.to_str().expect("a workflow file name");
         let (found, bare) = steps(file, &read(&format!(".github/workflows/{file}")));
-        assert!(bare.is_empty(), "a `ux-browser` from PATH: {bare:#?}");
+        assert!(
+            bare.is_empty(),
+            "a `ux-browser` the install step did not hand over: {bare:#?}"
+        );
         installs += found;
         files += 1;
     }
     assert_eq!(installs, 1, "one step of one workflow is named {INSTALL:?}");
     assert!(files > 1, "{files} workflows");
+}
+
+#[test]
+fn a_name_is_found_as_a_whole_name_only() {
+    for text in [
+        "\"$UX_BROWSER\" checks",
+        "UX_BROWSER=/other/checks npx playwright test",
+        "UX_BROWSER<<EOF",
+        "${UX_BROWSER}",
+    ] {
+        assert!(names(text, "UX_BROWSER"), "{text}");
+    }
+    for text in [
+        "$UX_BROWSER_VERSION",
+        "LLM_UX_BROWSER_STORE",
+        "UX_BROWSERS",
+        "ux_browser",
+    ] {
+        assert!(!names(text, "UX_BROWSER"), "{text}");
+    }
+    assert!(names("github.com/beyond10x/uxui/releases", "uxui"));
+    assert!(!names("fluxuity", "uxui"));
+}
+
+/// Each way a workflow gets the harness a `ux-browser` the install step did not hand over, on a
+/// text, with what the guard says: a step or a job that names a release, a step that names the
+/// variable, and a member `UX_BROWSER` at each level.
+#[test]
+fn a_step_or_a_job_that_fetches_a_release_or_sets_ux_browser_itself_is_found() {
+    let good = install_step();
+    assert_eq!(steps("docs-ux.yml", &good), (1, Vec::new()));
+    let release = "names a release of `ux-browser` or the uxui repository";
+    let variable = "names `UX_BROWSER`, which the install step alone hands over";
+    for (text, found) in [
+        (
+            format!(
+                "{good}      - name: Another release\n        run: gh release download 7.9.0 --repo beyond10x/uxui\n"
+            ),
+            format!(
+                "docs-ux.yml: step `Another release` of job `ux` {release}: gh release download 7.9.0 --repo beyond10x/uxui"
+            ),
+        ),
+        (
+            format!(
+                "{good}      - name: A mirror\n        run: curl --location --remote-name https://mirror.test/ux-browser-7.9.0-x86_64-unknown-linux-gnu.tar.gz\n"
+            ),
+            format!(
+                "docs-ux.yml: step `A mirror` of job `ux` {release}: curl --location --remote-name https://mirror.test/ux-browser-7.9.0-x86_64-unknown-linux-gnu.tar.gz"
+            ),
+        ),
+        (
+            format!(
+                "{good}      - uses: beyond10x/uxui/.github/actions/install@0123456789abcdef0123456789abcdef01234567\n"
+            ),
+            format!(
+                "docs-ux.yml: step `without a name` of job `ux` {release}: beyond10x/uxui/.github/actions/install@0123456789abcdef0123456789abcdef01234567"
+            ),
+        ),
+        (
+            format!(
+                "{good}  other:\n    uses: beyond10x/uxui/.github/workflows/install.yml@0123456789abcdef0123456789abcdef01234567\n"
+            ),
+            format!(
+                "docs-ux.yml: job `other` outside its steps {release}: beyond10x/uxui/.github/workflows/install.yml@0123456789abcdef0123456789abcdef01234567"
+            ),
+        ),
+        (
+            format!(
+                "{good}      - name: Hand over\n        run: echo \"UX_BROWSER=$RUNNER_TEMP/other/checks\" >> \"$GITHUB_ENV\"\n"
+            ),
+            format!(
+                "docs-ux.yml: step `Hand over` of job `ux` {variable}: echo \"UX_BROWSER=$RUNNER_TEMP/other/checks\" >> \"$GITHUB_ENV\""
+            ),
+        ),
+        (
+            format!(
+                "{good}      - name: The UX step\n        run: UX_BROWSER=/other/checks npx playwright test\n"
+            ),
+            format!(
+                "docs-ux.yml: step `The UX step` of job `ux` {variable}: UX_BROWSER=/other/checks npx playwright test"
+            ),
+        ),
+        (
+            format!(
+                "{good}      - name: The UX step\n        env:\n          UX_BROWSER: /other/checks\n        run: npx playwright test\n"
+            ),
+            "docs-ux.yml: `jobs.ux.steps[1].env.UX_BROWSER` is a member `UX_BROWSER`".to_owned(),
+        ),
+        (
+            good.replace(
+                "  ux:\n",
+                "  ux:\n    env:\n      UX_BROWSER: /other/checks\n",
+            ),
+            "docs-ux.yml: `jobs.ux.env.UX_BROWSER` is a member `UX_BROWSER`".to_owned(),
+        ),
+        (
+            format!("env:\n  UX_BROWSER: /other/checks\n{good}"),
+            "docs-ux.yml: `env.UX_BROWSER` is a member `UX_BROWSER`".to_owned(),
+        ),
+        (
+            good.replace(
+                "        run: |\n",
+                "          UX_BROWSER: /other/checks\n        run: |\n",
+            ),
+            "docs-ux.yml: `jobs.ux.steps[0].env.UX_BROWSER` is a member `UX_BROWSER`".to_owned(),
+        ),
+    ] {
+        let (installs, wrong) = steps("docs-ux.yml", &text);
+        assert_eq!(installs, 1, "{text}");
+        assert!(
+            wrong.iter().any(|said| said.starts_with(&found)),
+            "{found}: {wrong:#?}"
+        );
+    }
+}
+
+/// The guard reads every workflow file, and a form it does not read is found, not passed.
+#[test]
+fn another_workflow_file_is_read_as_well_and_a_form_the_guard_does_not_read_is_found() {
+    let hand_over = "jobs:\n  check:\n    steps:\n      - run: echo \"UX_BROWSER=/other/checks\" >> \"$GITHUB_ENV\"\n";
+    assert_eq!(
+        steps("gate.yml", hand_over),
+        (
+            0,
+            vec![
+                "gate.yml: step `without a name` of job `check` names `UX_BROWSER`, which the install step alone hands over: echo \"UX_BROWSER=/other/checks\" >> \"$GITHUB_ENV\""
+                    .to_owned()
+            ]
+        )
+    );
+    // The install step's form in another file, or in another job, is a step like any other there.
+    let (installs, wrong) = steps("gate.yml", &install_step());
+    assert_eq!((installs, wrong.is_empty()), (1, false), "{wrong:#?}");
+    let (installs, wrong) = steps(
+        "docs-ux.yml",
+        &install_step().replace("  ux:\n", "  docs:\n"),
+    );
+    assert_eq!((installs, wrong.is_empty()), (1, false), "{wrong:#?}");
+    for (text, found) in [
+        (
+            "name: A workflow\n",
+            "other.yml: no mapping `jobs`; this guard reads the jobs of a workflow",
+        ),
+        (
+            "jobs:\n  build:\n    runs-on: ubuntu-24.04\n",
+            "other.yml: job `build` has neither a list `steps` nor a `uses`; this guard reads no other job",
+        ),
+        (
+            "jobs:\n  build:\n    uses: ./.github/workflows/other.yml\n    steps: none\n",
+            "other.yml: job `build` has neither a list `steps` nor a `uses`; this guard reads no other job",
+        ),
+        (
+            "jobs:\n  build:\n    steps:\n      - echo\n",
+            "other.yml: step 0 of job `build` is no mapping; this guard reads no other step",
+        ),
+    ] {
+        assert_eq!(
+            steps("other.yml", text),
+            (0, vec![found.to_owned()]),
+            "{text}"
+        );
+    }
+    assert_eq!(
+        steps(
+            "other.yml",
+            "jobs:\n  build:\n    uses: ./.github/workflows/other.yml\n"
+        ),
+        (0, Vec::new())
+    );
+}
+
+/// The invariant of `AGENTS.md` says that no workflow step starts or fetches a `ux-browser`
+/// of its own, and names this file's guards for it. Three workflows that hand the harness
+/// another binary than the pinned one, each read by the guards as they read `docs-ux.yml`:
+/// [`pin`] for the install step, [`steps`] for every other step.
+#[test]
+fn a_workflow_that_fetches_or_hands_over_another_ux_browser_is_found() {
+    let digest = "00000000000000000000000000000000000000000000000000000000000000aa";
+    let mut install = format!(
+        "jobs:\n  ux:\n    steps:\n      - name: Install ux-browser\n        env:\n          UX_BROWSER_VERSION: \"7.8.9\"\n          UX_BROWSER_SHA256: {digest}\n        run: |\n          set -euo pipefail\n          cd \"$RUNNER_TEMP\"\n"
+    );
+    for (line, _) in SCRIPT {
+        install.push_str("          ");
+        install.push_str(line);
+        install.push('\n');
+    }
+    assert_eq!(pin(&install), Ok(("7.8.9".to_owned(), digest.to_owned())));
+    assert_eq!(steps("docs-ux.yml", &install), (1, Vec::new()));
+
+    let found = |text: &str| pin(text).is_err() || !steps("docs-ux.yml", text).1.is_empty();
+    let mut missed = Vec::new();
+    for (what, added) in [
+        (
+            "a second step downloads the asset of another release",
+            "      - name: Another release\n        run: |\n          curl --fail --location --output \"$RUNNER_TEMP/other.tar.gz\" https://github.com/beyond10x/uxui/releases/download/7.9.0/ux-browser-7.9.0-x86_64-unknown-linux-gnu.tar.gz\n          tar -xzf \"$RUNNER_TEMP/other.tar.gz\" -C \"$RUNNER_TEMP\" --strip-components=1\n",
+        ),
+        (
+            "a later step hands the harness another binary as UX_BROWSER",
+            "      - name: Hand over\n        run: echo \"UX_BROWSER=$RUNNER_TEMP/other/checks\" >> \"$GITHUB_ENV\"\n",
+        ),
+        (
+            "the install step itself hands another binary over after the pinned one",
+            "          echo \"UX_BROWSER=$RUNNER_TEMP/other/checks\" >> \"$GITHUB_ENV\"\n",
+        ),
+    ] {
+        if !found(&format!("{install}{added}")) {
+            missed.push(what);
+        }
+    }
+    assert!(
+        missed.is_empty(),
+        "neither `pin` nor `steps` finds: {missed:#?}"
+    );
 }

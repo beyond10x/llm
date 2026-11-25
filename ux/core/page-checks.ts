@@ -4,7 +4,7 @@
 // as `UX_BROWSER`; none is looked for on `PATH`.
 
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { pageValues, readEvidence, type PageValues } from './evidence.ts';
 import { PIN_WORKFLOW, pinnedVersion } from './pin.ts';
@@ -56,19 +56,40 @@ export function pageCheckArgs(run: PageCheckRun, files: PageCheckFiles): string[
   ];
 }
 
-/** The `ux-browser` the caller was handed: `UX_BROWSER`, an absolute path to a file. Anything else is refused. */
+/** Whether `path` names a regular file. A symlink counts as what it names; a directory and a name that leads nowhere are no file. */
+function isFile(path: string): boolean {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/** The `ux-browser` the caller was handed: `UX_BROWSER`, an absolute path to a regular file. Anything else is refused. */
 export function uxBrowser(env: Record<string, string | undefined>): string {
   const handed = env.UX_BROWSER;
   const needed =
     'the pinned ux-browser is handed over as an absolute path in UX_BROWSER: run the gate as `task ux-check` (a round as `task ux-round`), ' +
     'or set it to what `cargo run --locked -p llm-conformance -- ux-browser` prints at the repository root';
   if (!handed) throw new Error(`UX_BROWSER is unset; ${needed}`);
-  if (!isAbsolute(handed) || !existsSync(handed)) throw new Error(`UX_BROWSER is ${JSON.stringify(handed)}, which is no absolute path to a file; ${needed}`);
+  if (!isAbsolute(handed) || !isFile(handed)) throw new Error(`UX_BROWSER is ${JSON.stringify(handed)}, which is no absolute path to a file; ${needed}`);
   return handed;
 }
 
+/** The name the exit status is written under, beside `files.exit`, before it is renamed to it. */
+const exitDraft = (files: PageCheckFiles): string => files.exit + '.tmp';
+
+/**
+ * Writes the exit status of a run: under a temporary name in the same directory, then renamed. A
+ * reader finds no exit file or the whole one, never a part of it.
+ */
+export function writePageChecksExit(files: PageCheckFiles, exit: PageCheckExit): void {
+  writeFileSync(exitDraft(files), JSON.stringify(exit) + '\n');
+  renameSync(exitDraft(files), files.exit);
+}
+
 function clear(files: PageCheckFiles): void {
-  for (const f of [files.evidence, files.values, files.log, files.exit]) rmSync(f, { force: true });
+  for (const f of [files.evidence, files.values, files.log, files.exit, exitDraft(files)]) rmSync(f, { force: true });
   rmSync(files.profile, { recursive: true, force: true });
   for (const f of [files.evidence, files.values, files.log, files.exit, files.profile]) mkdirSync(join(f, '..'), { recursive: true });
 }
@@ -83,8 +104,8 @@ export function startPageChecks(binary: string, run: PageCheckRun, files: PageCh
   const log = openSync(files.log, 'w');
   const child = spawn(binary, pageCheckArgs(run, files), { detached: true, stdio: ['ignore', log, log] });
   closeSync(log);
-  child.on('error', (e) => writeFileSync(files.exit, JSON.stringify({ code: null, signal: null, error: e.message }) + '\n'));
-  child.on('exit', (code, signal) => writeFileSync(files.exit, JSON.stringify({ code, signal }) + '\n'));
+  child.on('error', (e) => writePageChecksExit(files, { code: null, signal: null, error: e.message }));
+  child.on('exit', (code, signal) => writePageChecksExit(files, { code, signal }));
   return child;
 }
 
@@ -102,7 +123,7 @@ export function stopPageChecks(child: ChildProcess | null): void {
 export function runPageChecks(binary: string, run: PageCheckRun, files: PageCheckFiles): number | null {
   clear(files);
   const done = spawnSync(binary, pageCheckArgs(run, files), { stdio: 'inherit' });
-  writeFileSync(files.exit, JSON.stringify({ code: done.status, signal: done.signal }) + '\n');
+  writePageChecksExit(files, { code: done.status, signal: done.signal });
   return done.status;
 }
 
@@ -112,12 +133,39 @@ export interface PageCheckExit {
   error?: string;
 }
 
-/** The exit status of the run, waiting for it up to `withinMs`; null when it has not ended by then. */
+/** What the exit file holds: the exit status when it is a whole one, else its text, and neither when there is no file. */
+function exitFile(file: string): { exit: PageCheckExit | null; text: string | null } {
+  let text: string;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return { exit: null, text: null };
+    throw e;
+  }
+  try {
+    const doc = JSON.parse(text) as PageCheckExit | null;
+    if (doc && typeof doc === 'object' && 'code' in doc && 'signal' in doc) return { exit: doc, text };
+  } catch {
+    // Not JSON, or not all of it yet.
+  }
+  return { exit: null, text };
+}
+
+/**
+ * The exit status of the run, waiting for it up to `withinMs`; null when it has not ended by then.
+ * A file that is there and holds no whole exit status is not the end of the run: it is read again,
+ * and one that still holds none at the deadline is refused with what it holds. This module's own
+ * writers rename a whole file into place (`writePageChecksExit`).
+ */
 export async function pageChecksEnded(files: PageCheckFiles, withinMs: number): Promise<PageCheckExit | null> {
   const until = Date.now() + withinMs;
   for (;;) {
-    if (existsSync(files.exit)) return JSON.parse(readFileSync(files.exit, 'utf8')) as PageCheckExit;
-    if (Date.now() >= until) return null;
+    const found = exitFile(files.exit);
+    if (found.exit) return found.exit;
+    if (Date.now() >= until) {
+      if (found.text === null) return null;
+      throw new Error(`${files.exit}: holds ${JSON.stringify(found.text)} after ${withinMs} ms, which is no exit status; needed is {"code", "signal"} as a run writes it when it ends`);
+    }
     await new Promise((r) => setTimeout(r, 200));
   }
 }
