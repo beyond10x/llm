@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T10:44:12Z",
+  "actor": "human:operator",
+  "artifact": "story:docs-ux-layout-checks-from-ux-browser",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "at 218b38634: task test: 2445 tests in 5 runs, all passed, 16.6 s of the 120 s bound; llm-conformance check 1080 of 1080 passed, failed 0, skipped 0. The docs UX step with the pinned ux-browser 0.8.1: task ux-check exit 0; 113 passed, 83.0 s of the 120 s bound at 2 workers, slowest case 8.1 s; the ratchet compared 32 scenarios and found no value worse and no improvement left untaken. The implementor compared 135 of 135 values of the five checks between the removed harness and the 0.8.1 evidence on one build; the planted-defect case of ux/tests/l1-page-checks.spec.ts is red for each of the five checks on its fixture page",
+    "reference": "ux/baseline.json"
+  }
+}

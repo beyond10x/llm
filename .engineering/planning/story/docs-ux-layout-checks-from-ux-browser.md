@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:docs-ux-layout-checks-from-ux-browser
 kind: story
-status: active
+status: implemented
 title: The docs UX gate takes its five layout checks from a pinned ux-browser release
 tags:
 - from-consumer-proposal
@@ -20,10 +20,11 @@ scope:
   path: Taskfile.yml
 - confidence: cited
   path: ux
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-24T21:59:01Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-24T21:59:02Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-25T10:44:12Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 
@@ -68,24 +69,26 @@ Whether a uxui release that carries `ux-browser` exists; this story waits for it
 
 ## Scope
 
-Derived 2026-11-25 by `story-scoper` at `87bc16f16`. Every line is **cited** (read from the story or the tree) or **inferred** (a reading that could be wrong).
+Read by the coordinator from `git diff --stat` of the unit branch `impl/docs-ux-browser` (head
+`37cc90f42`) against the integration branch before the unit merged (`aecef6e94`), at the close of
+wave 2026-11-25-docs-ux-browser: 31 files. No `story-scoper` ran for this story; the section before
+this one named `docs-ux.yml`, `Taskfile.yml`, `ux`, `AGENTS.md` and `CHANGELOG.md`, and did not
+foresee the resolver of `checks/conformance` or the guard tests.
 
-- **Primary surface:** `ux/` (the docs UX harness) — cited
-- **Files:** `ux/core/layout.ts` — cited, high: the five checks are removed (story names the file)
-- **Files:** `ux/tests/l2-layout.spec.ts:14` — cited, high: drops the five checks, keeps axe; imports `layout.ts`
-- **Files:** `ux/tests/l1-core.spec.ts:8` — cited, high: the break-tests of `checkAlwaysVisible`, `keyboardWalk`, `measureOverflow` go
-- **Files:** `ux/core/results.ts:5` — cited, high: `toMeasured` takes the five values from ux-browser's output, not from `layout.ts` types
-- **Files:** `ux/cli.ts` (`ratchet()`) — cited, high: the ratchet reads what ux-browser wrote
-- **Files:** `ux/baseline.json` — cited, high: layout-shift values re-measured (lines 494, 570, 646 hold 0.0006, 0.0006, 0.0013)
-- **Files:** `Taskfile.yml:20-48` — cited, high: `ux-install`, `ux-check` gain the pinned download and the ux-browser step
-- **Files:** `.github/workflows/docs-ux.yml` — cited, high: the "Docs UX gate" job installs the pinned binary and runs the step
-- **Files:** `AGENTS.md:173-181` — cited, high: the paragraph that describes the gate and the L2 layout contract
-- **Also likely:** a new pin file under `ux/` (tag and SHA-256) and a new ux-browser checks config under `ux/` — inferred, medium: the story asks for a pin, names no file
-- **Also likely:** `ux/adapter.ts:26,41` and `ux/core/types.ts:36,50` — inferred, medium: `alwaysVisible` and `keyboard` declarations serve only the removed code
-- **Also likely:** `ux/core/round.ts:33-41,142,168` — inferred, medium: reads `overflow.scrollContainers` and the five values from L2 results
-- **Also likely:** `ux/findings/UXF-001.md`, `UXF-002.md`, `UXF-004.md`, `UXF-005.md` line 12 — inferred, low: `regression_asset` names an L2 layout case
-- **Documents:** `CHANGELOG.md` (Unreleased) — inferred, medium
-- **Symbols:** `measureOverflow`, `checkAlwaysVisible`, `keyboardWalk`, `readShift`, `CLS_INIT`, `readyTime` — cited
-- **Confidence:** high — the story names `ux/core/layout.ts`, `task ux-check`, `ux/baseline.json` and the CI job; file names of pin and config are guessed
-- **Would collide with:** any unit touching `ux/`, the `ux-*` tasks or a top-level `vars:` of `Taskfile.yml`, `docs-ux.yml`, the docs paragraph of `AGENTS.md`, `CHANGELOG.md` Unreleased
-- **Safety fact:** `layout.ts` is imported only by `results.ts:5`, `l1-core.spec.ts:8`, `l2-layout.spec.ts:14`, but `round.ts` reads its scroll containers through `PageResult`, and the ratchet compares the key names of `ux/baseline.json` with main's, so both must survive the swap — unproven
+| Path | Scoped | What the unit did |
+| --- | --- | --- |
+| `.github/workflows/docs-ux.yml` | cited | the step "Install ux-browser" with `UX_BROWSER_VERSION` "0.8.1" and its `UX_BROWSER_SHA256`; the step hands the binary to the harness as `UX_BROWSER` |
+| `Taskfile.yml` | cited | `ux-install`, `ux-check` and `ux-round` take the path from `llm-conformance ux-browser` and pass it as `UX_BROWSER` |
+| `checks/conformance/src/ess.rs`, `src/main.rs`, `tests/pinned_ess/mod.rs` | not scoped | the resolver of the ESS pin made general over a tool; the subcommand `ux-browser` prints the pinned binary's path; process-level cases for the second tool |
+| `checks/xtask/tests/gate/ux_browser_pin.rs`, `main.rs` | not scoped | new guards: one pin, both readers agree, no task and no workflow step with a `ux-browser` of its own in the forms the guard reads |
+| `ux/core/layout.ts`, `ux/core/types.ts` | cited (`ux`) | `layout.ts` removed with the five page checks; `types.ts` loses the types only they used |
+| `ux/core/page-checks.ts`, `evidence.ts`, `pin.ts`, `scroll-containers.ts` | cited (`ux`) | new: start and stop of `ux-browser`, the parser of `ratchet-evidence/1`, the pin's reader, what the round kept of `layout.ts` |
+| `ux/core/results.ts`, `round.ts`, `ux/cli.ts`, `ux/adapter.ts` | cited (`ux`) | the ratchet takes the five numbers of a page from the evidence; the round runs `ux-browser` before its specs |
+| `ux/tests/global-setup.ts`, `l2-layout.spec.ts`, `l1-core.spec.ts`, `l1-page-checks.spec.ts`, `page-checks-fixture.ts` | cited (`ux`) | `ux-browser` starts in the global setup; the last L2 case awaits its exit and its evidence; a planted defect per check on a fixture site |
+| `ux/ux-browser.checks.yaml`, `ux/ux-browser.round.checks.yaml` | cited (`ux`) | new: the two checks configurations, Chrome build 1254 in both |
+| `ux/baseline.json` | cited (`ux`) | three `layout_shift.after_ready` values moved to 0 |
+| `ux/findings/UXF-001.md`, `UXF-002.md`, `UXF-004.md`, `UXF-005.md` | cited (`ux`) | each names where its value is measured now |
+| `AGENTS.md` | cited | the invariants row, two paragraphs of "Gate", the `ux/` paragraph of "Documentation", the pin-move rule for `ux-browser` |
+| `CHANGELOG.md` | inferred | five lines under `### Changed` |
+
+Not touched: every library crate, `spec/`, `contracts/`, `website/docs/` and `README.md`.

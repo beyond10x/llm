@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T10:44:12Z",
+  "actor": "human:operator",
+  "artifact": "story:docs-ux-layout-checks-from-ux-browser",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "the wave gate on wave/2026-11-25-docs-ux-browser at 218b38634, each step run alone as a pool job on the build node: task rust, task test, task docs, llm-conformance ess specify validate --path spec, llm-conformance check, aep plan artifact validate, all exit 0; and the docs UX gate in one pool job on a site built in that job: task ux-check exit 0; 113 passed, 83.0 s of the 120 s bound at 2 workers, slowest case 8.1 s; the ratchet compared 32 scenarios and found no value worse and no improvement left untaken",
+    "reference": "docs/plan/wave-2026-11-25-docs-ux-browser.md"
+  }
+}
