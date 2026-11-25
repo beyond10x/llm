@@ -2394,5 +2394,4 @@ async fn a_label_set_larger_than_the_choice_bound_abstains_without_a_call() {
     );
 }
 
-#[path = "client/adversary_w28_wire.rs"]
 mod adversary_w28_wire;

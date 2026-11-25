@@ -9,7 +9,7 @@ fn id(value: &str) -> Id {
     Id::new(value).unwrap()
 }
 fn prices() -> PriceBook {
-    PriceBook::parse_toml(include_str!("../../../examples/prices.toml")).unwrap()
+    PriceBook::parse_toml(include_str!("../../../../examples/prices.toml")).unwrap()
 }
 fn attempt(name: &str) -> AttemptUsage {
     AttemptUsage {

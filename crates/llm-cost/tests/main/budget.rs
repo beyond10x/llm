@@ -544,13 +544,29 @@ fn sqlite_process_fixture() {
 #[test]
 fn process_lock_and_abrupt_exit_are_observed_at_the_real_storage_edge() {
     fn child(mode: &str, path: &std::path::Path) {
-        let status = std::process::Command::new(std::env::current_exe().unwrap())
-            .args(["--exact", "sqlite_process_fixture", "--nocapture"])
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "budget::sqlite_process_fixture", "--nocapture"])
             .env("LLM_BUDGET_FIXTURE_MODE", mode)
             .env("LLM_BUDGET_FIXTURE_PATH", path)
-            .status()
+            .output()
             .unwrap();
-        assert!(status.success(), "child process fixture failed");
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            output.status.success(),
+            "child process fixture failed: {stdout}{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        // A filter that selected nothing exits 0 too, so the runner's own lines decide.
+        if mode == "crash" {
+            // The fixture leaves from inside the case, before the runner writes a summary line.
+            assert!(stdout.lines().any(|line| line == "running 1 test"), "{stdout}");
+        } else {
+            let summary = stdout
+                .lines()
+                .rfind(|line| line.starts_with("test result:"))
+                .unwrap();
+            assert!(summary.contains(" 1 passed;"), "{summary}");
+        }
     }
     let temp = tempfile::tempdir().unwrap();
     let held = temp.path().join("held");

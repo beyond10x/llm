@@ -25,7 +25,7 @@ use std::{
     time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 /// 2025-11-05T23:59:00Z.
 const LAST_MINUTE: u64 = 1_762_387_140_000;

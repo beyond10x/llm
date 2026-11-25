@@ -12,7 +12,7 @@
 use llm_core::{Id, Item, Protocol, TurnRequest};
 use llm_routing::CatalogDocument;
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 /// A target routing selects for a conversation is one whose wire can send that conversation.
 #[test]

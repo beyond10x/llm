@@ -24,7 +24,7 @@ use std::{
     time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 const PRIMARY_ANSWER: &str = "primary-answer-marker-wren-1180";
 const SHADOW_ANSWER: &str = "shadow-answer-marker-stoat-7243";

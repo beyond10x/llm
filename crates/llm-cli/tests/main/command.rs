@@ -2094,7 +2094,7 @@ mod adversary_w29_routed {
     use serde_json::{Value, json};
     use std::{collections::BTreeSet, time::Duration};
 
-    const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+    const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
     const REFUND: &str = r#"{"label":"refund","confidences":{"refund":9000,"other":1000}}"#;
 
     fn id(value: &str) -> Id {

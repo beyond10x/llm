@@ -25,7 +25,7 @@ use std::{
     time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 /// 2025-11-05T00:00:00Z.
 const DAY_START: u64 = 1_762_300_800_000;

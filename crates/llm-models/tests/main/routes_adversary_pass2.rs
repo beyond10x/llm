@@ -36,7 +36,7 @@ fn peak_resident_bytes() -> usize {
 #[test]
 fn aliases_to_a_sequence_cannot_make_a_small_document_cost_more_than_a_small_multiple_of_its_bound()
 {
-    let name = "aliases_to_a_sequence_cannot_make_a_small_document_cost_more_than_a_small_multiple_of_its_bound";
+    let name = "routes_adversary_pass2::aliases_to_a_sequence_cannot_make_a_small_document_cost_more_than_a_small_multiple_of_its_bound";
     if std::env::var_os(CHILD).is_none() {
         let output = std::process::Command::new(std::env::current_exe().unwrap())
             .args(["--exact", name, "--nocapture", "--test-threads=1"])

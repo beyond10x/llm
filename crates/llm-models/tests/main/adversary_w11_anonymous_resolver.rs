@@ -30,7 +30,7 @@ use tokio::{
     task::JoinHandle,
 };
 
-const VLLM_TEXT: &[u8] = include_bytes!("../../llm-chat/fixtures/vllm-text-no-usage.sse");
+const VLLM_TEXT: &[u8] = include_bytes!("../../../llm-chat/fixtures/vllm-text-no-usage.sse");
 
 /// Headers that carry a credential or a credential's presentation on any of the three wires.
 const CREDENTIAL_HEADERS: [&str; 5] = [

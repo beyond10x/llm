@@ -43,7 +43,7 @@ const fn is_true(value: &bool) -> bool {
     *value
 }
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 /// The example catalog's configuration digest and binding revisions, as
 /// `website/docs/guides/explain-a-route.md` prints them.

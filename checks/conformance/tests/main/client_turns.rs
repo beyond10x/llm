@@ -12,10 +12,10 @@ mod pinned_ess;
 
 /// Claude Code 2.1.293's first turn as llm-gateway authored it from published sources.
 const CLAUDE_CODE: &str =
-    include_str!("../../../crates/llm-messages/tests/fixtures/claude-code-first-turn.json");
+    include_str!("../../../../crates/llm-messages/tests/fixtures/claude-code-first-turn.json");
 /// Codex 0.160.0's first turn, captured against a loopback recorder and sanitized.
 const CODEX: &str =
-    include_str!("../../../crates/llm-responses/tests/fixtures/codex/first-turn.json");
+    include_str!("../../../../crates/llm-responses/tests/fixtures/codex/first-turn.json");
 
 /// One model, `code`, served on each of the three wires. Capabilities name `high`, `xhigh` and
 /// `max`, so effort is never what refuses a projection here.

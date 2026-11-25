@@ -31,7 +31,7 @@ use std::{
     time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 const DAY_MS: u64 = 86_400_000;
 /// 2025-11-05T22:00:00Z, two hours before a UTC midnight.

@@ -37,7 +37,7 @@ fn yaml_aliases_cannot_expand_a_document_past_its_byte_bound_while_it_is_parsed(
         let output = std::process::Command::new(std::env::current_exe().unwrap())
             .args([
                 "--exact",
-                "yaml_aliases_cannot_expand_a_document_past_its_byte_bound_while_it_is_parsed",
+                "routes_adversary::yaml_aliases_cannot_expand_a_document_past_its_byte_bound_while_it_is_parsed",
                 "--nocapture",
                 "--test-threads=1",
             ])

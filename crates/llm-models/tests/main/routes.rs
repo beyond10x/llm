@@ -1031,7 +1031,7 @@ fn no_secret_material_leaves_the_document() {
         let output = std::process::Command::new(std::env::current_exe().unwrap())
             .args([
                 "--exact",
-                "no_secret_material_leaves_the_document",
+                "routes::no_secret_material_leaves_the_document",
                 "--nocapture",
                 "--test-threads=1",
             ])

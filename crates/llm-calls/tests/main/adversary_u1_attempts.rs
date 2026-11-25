@@ -20,7 +20,7 @@ use std::{
     time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 fn id(value: &str) -> Id {
     Id::new(value).unwrap()

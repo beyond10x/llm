@@ -366,7 +366,7 @@ async fn an_unreported_token_count_stays_unknown() {
         Answer::Json(answer(&[1], &[0], None)),
     ])
     .await;
-    let catalog = crate::catalog(address, "embed_batch_limit = 1");
+    let catalog = self::catalog(address, "embed_batch_limit = 1");
     let log = CallLog::new();
     let clock = Frozen(1_762_430_400_000);
     let embeddings = embedder(&catalog)
@@ -639,7 +639,7 @@ async fn asked_dimensions_are_sent_and_a_vector_of_another_length_is_refused() {
     assert_eq!(seen.bodies()[0]["dimensions"], json!(3));
 
     let (address, _) = serve(vec![Answer::Json(answer(&[0], &[0], Some(1)))]).await;
-    let catalog = crate::catalog(address, "");
+    let catalog = self::catalog(address, "");
     asked.dimensions = Some(256);
     let error = embedder(&catalog)
         .embed(&asked, &Cancel::new())
