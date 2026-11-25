@@ -1,0 +1,33 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete
+summary: "a recorded text block that carried no text is a content block: a stop for a reason in no list after it is the incomplete turn with no item, not a failure to retry"
+timeline:
+- at: '2026-11-25T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "openai.gpt-oss-120b-1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"openai.gpt-oss-120b-1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hi\"}],\"tools\":[]}}"
+    recording: "pydantic-test_bedrock_model_stream_empty_text_delta.bin"
+    keep_frames: 3
+    frames_json: "[{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"a_reason_in_no_list\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":7,\"outputTokens\":1,\"totalTokens\":8}}}]"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    items: []
+    text: ""
+    stop_reason: "incomplete:a_reason_in_no_list"
+    final_usage: true
+    usage_json: "{\"input_tokens\":7,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"

@@ -500,6 +500,31 @@ This is the rule of a streamed answer. A whole (unstreamed) Bedrock `InvokeModel
 stops this way keeps its code and its usage and is final, as every failure of a whole answer is
 ([bedrock.md](bedrock.md#retry-classes)).
 
+Bedrock Converse counts the same way (`story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason`).
+Its decoder models `end_turn`, `tool_use` and `max_tokens`. An answer that stops for another
+reason and holds no content block and no kept event is a failure with its final usage:
+`too-large` for `model_context_window_exceeded`, `refused` with no cause named for
+`guardrail_intervened` and `content_filtered`, and `unavailable` for every other reason, marked
+retriable on a streamed answer because only `messageStop` and `metadata` follow `messageStart`:
+the answer held no content block and no kept event, so the caller was shown nothing. No row
+reads a counter: the failure carries the usage the answer reported as final, and that may name
+output tokens, so each attempt of a caller that retries may be billed, as on the Messages wire
+after a header that reported a cost
+(`crates/llm-messages/tests/retry_class.rs::adversary_w30_a_stop_without_content_after_a_costed_header_is_retried_as_an_overloaded_error_is`).
+After a content block, visible
+or silent, a text block that carried no text included, there is no failure to retry: the turn
+is the incomplete turn it was
+(`crates/llm-bedrock/tests/client.rs::an_unlisted_stop_after_a_recorded_silent_text_block_is_not_marked_retriable`).
+The rows differ from the Messages ones in their reason names only; each decoder holds its own
+(`stopped_without_content` in `crates/llm-bedrock/src/converse.rs` and in
+`crates/llm-messages/src/decode.rs`). A text block without text and then a stop both tables
+name alike is the incomplete turn on both wires, streamed and whole
+(`crates/llm-bedrock/tests/client.rs::a_stop_after_an_empty_text_block_reads_alike_on_both_wires`);
+what the turn holds differs in one place, as it did before the rule: a text block that carried
+no text is an empty text item in a Messages turn and no item in a Converse turn. What counts as
+a content block on that wire, the tests and who retries a Converse turn are in
+[bedrock.md](bedrock.md#a-converse-answer-that-stops-without-content).
+
 A connection cut mid-stream follows the same count (`story:messages-cut-after-silent-output-is-final`).
 The transport marks a cut retriable: a body that ends inside an event, or fails in transit. Each
 client keeps that mark until its decoder has answered and drops it after, in its stream loop:

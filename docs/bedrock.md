@@ -1,8 +1,9 @@
 # Amazon Bedrock
 
 `llm-bedrock` runs a neutral turn on Amazon Bedrock Runtime behind `Model::turn`. A caller builds
-`BedrockClient` directly from a `BedrockTarget` and a `CredentialSource`; no catalog, binding
-document or `llm.routes/1` document can name Bedrock yet.
+`BedrockClient` directly from a `BedrockTarget` and a `CredentialSource`, or `Routes::port` builds
+it for a Bedrock endpoint of an `llm.routes/1` document; no catalog or binding document can name
+Bedrock.
 
 No live Bedrock call was made for this crate. Everything below is checked against vendored test
 data and loopback fixture servers (`crates/llm-bedrock/tests/data/`, sources and licences in its
@@ -269,7 +270,16 @@ known 0 when the answer leaves it out.
 
 ## Retry classes
 
-`BedrockClient` makes one attempt; retry and fallback belong to routing.
+`BedrockClient` makes one attempt a turn and retries nothing itself. No code in this repository
+retries its failure or falls back from it, on either wire: a Bedrock route has no catalog entry
+(`Routes::binding` refuses it), `Routes::port` hands out the bare client, and the `llm` command
+calls `turn` once (`llm infer`) or refuses the route before any request (`llm replay`). A caller
+that retries a failure marked retriable does so in its own loop, bounds it and may be billed for
+each attempt. Routing's loop (`Catalog::run_turn`) runs a model only under a catalog target whose
+binding has the model's provenance. No catalog names `bedrock-converse`, so it refuses a Converse
+client ([Who retries](#a-converse-answer-that-stops-without-content)). An `InvokeModel` client's
+protocol is `messages`, which a catalog target can name: routing retries and falls back for one
+only when the caller declares such a target and hands the client to `run_turn` itself.
 
 | Failure | Before the turn answered | After |
 | --- | --- | --- |
@@ -284,12 +294,95 @@ known 0 when the answer leaves it out.
 | Any other HTTP 429 | `rate-limited`, retriable | not applicable |
 | Any other HTTP error status | the transport's class for the status | not applicable |
 | A streamed `InvokeModel` answer that stops without content for a reason `llm-messages` does not model ([messages.md](messages.md#what-the-decoder-requires-of-a-stream)) | `unavailable`, retriable although its terminal `message_delta` answered: that delta follows no content and the caller was shown nothing, so this one failure after an answer may be retried. `too-large` for `model_context_window_exceeded` and `refused` for `refusal`, both final | not applicable: with content it is an incomplete turn |
-| Any failure while a whole (unstreamed) answer is read or decoded, an `InvokeModel` answer that stops without content included | final | not applicable |
+| A streamed Converse answer that stops with no content block and no kept event for a reason the Converse decoder does not model: any reason but `end_turn`, `tool_use` and `max_tokens` | `unavailable`, retriable: only `messageStop` and `metadata` follow `messageStart`, so the answer held no content block and no kept event and the caller was shown nothing. The failure carries the usage the answer reported as final, which may name output tokens, so each attempt of a caller that retries may be billed. `too-large` for `model_context_window_exceeded`; `refused`, with no cause named, for `guardrail_intervened` and `content_filtered`. These three are final | not applicable: after a content block, an empty text block included, or a kept event it is an incomplete turn |
+| Any failure while a whole (unstreamed) answer is read or decoded, an `InvokeModel` or a Converse answer that stops without content included | final | not applicable |
 
 "Answered" means any event after the message header (`messageStart` on Converse,
 `message_start` on InvokeModel), shown to the caller or not. An exception frame has dispatch
 `accepted`. The class is read from `:exception-type` (or `:error-code`) and `x-amzn-errortype`; no
 diagnostic quotes Bedrock's own message.
+
+### A Converse answer that stops without content
+
+`story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason`. The Converse decoder models
+`end_turn`, `tool_use` and `max_tokens`. A stream and a whole answer end in one function
+(`Header::outcome` in `crates/llm-bedrock/src/converse.rs`), so the rule is the same for both:
+
+| Stop reason, no content block and no kept event | Error code | Retried |
+| --- | --- | --- |
+| `model_context_window_exceeded` | `too-large` | never |
+| `guardrail_intervened`, `content_filtered` | `refused`, no `RefusalCause` named | never |
+| every other reason not modelled (`stop_sequence`, a name in no list) | `unavailable`, marked retriable | a streamed answer only; a whole answer is final |
+
+The rule counts as the Messages decoder counts ([messages.md](messages.md#what-the-decoder-requires-of-a-stream)):
+it applies only to an answer that held no content block and no kept event. On the stream that
+is `messageStart`, then `messageStop` and `metadata`, with no content block event and no event
+of an unknown type; on a whole answer it is an empty `content`. A content block ends the rule
+even when it leaves no item. A text block that carried no text is one: it took a delta without
+text, or it only stopped, which is how this wire may end a text block that took no delta. The
+attempt has started answering then, and the answer is the incomplete turn it was before this
+rule: `StopReason::Incomplete` under the reason's own name, with no item for that block and
+nothing shown. The Messages decoder keeps such a block as an empty text item and the Converse
+decoder keeps none; both return the incomplete turn. Every other closed block leaves an item:
+text, a tool call, a reasoning block even without text, and a block or an event kept whole as
+opaque state. A `contentBlockStart` whose `start` is not a kind the decoder knows (it knows
+`toolUse` only, so `{"text": ""}` is not one) opens such an unknown block, which is a content
+block for the rule: it is kept as an opaque item, the caller is shown `unknown-output-item`, and
+the answer is the incomplete turn with that item. `end_turn` and `max_tokens` without content are
+the outcome they were, and `tool_use` with no call the final `protocol` refusal it was. A block
+left open at `messageStop`, and a reason that is not 1 to 64 visible ASCII bytes (a space is not
+one), stay the final `protocol` refusal.
+
+The failure has dispatch `accepted` and carries the usage the answer reported as final, whether
+`metadata` came before `messageStop` or after it. No row reads a counter: that usage may name
+output tokens, on the retriable row too, so each attempt of a caller that retries may be billed;
+the Messages decoder marks the same answer retriable after a header that reported a cost
+(`crates/llm-messages/tests/retry_class.rs::adversary_w30_a_stop_without_content_after_a_costed_header_is_retried_as_an_overloaded_error_is`).
+A counter the answer left out stays unknown; a
+Converse cache counter the answer left out is the known 0 it is on every Converse answer
+([Usage](#usage)). An answer that reports no counter at all carries no usage. Its text is fixed
+for each row and carries no byte of the reason and nothing of a guardrail trace. Any other
+failure after a `messageStop` that follows no content is final as the table above says. A hint
+the wire omits adds no `advisory-omitted` warning to a turn that fails: the caller is shown
+nothing.
+
+| Sentence | Test |
+| --- | --- |
+| Each row on the stream, fed whole, in parts and one byte at a time; a reason of 1 and of 64 bytes | `tests/converse.rs::every_unmodelled_reason_without_a_content_block_fails_the_stream_as_its_row_however_it_is_fed` |
+| Each row on a whole answer, final | `tests/converse.rs::every_unmodelled_reason_without_a_content_block_fails_a_whole_answer_as_its_row_and_final` |
+| With an item, of every kind, it is the incomplete turn | `tests/converse.rs::every_unmodelled_reason_with_an_item_is_still_the_incomplete_turn` |
+| After an empty text block it is the incomplete turn with no item | `tests/converse.rs::after_an_empty_text_block_the_turn_is_incomplete_with_no_item_and_shows_nothing` |
+| A start that names `text` opens an unknown block: the incomplete turn with its opaque item, and `unknown-output-item` shown | `tests/converse.rs::a_start_that_names_text_opens_an_unknown_block_and_the_turn_is_incomplete_with_its_item` |
+| The retriable row whatever output tokens the answer reports, carried as final usage | `tests/converse.rs::a_stop_without_content_is_retriable_whatever_output_it_reports_and_carries_it_as_final` |
+| A recorded empty text block, then the stop, is not marked retriable | `tests/client.rs::an_unlisted_stop_after_a_recorded_silent_text_block_is_not_marked_retriable` |
+| The same answer reads alike on Converse and `InvokeModel` | `tests/client.rs::a_stop_after_an_empty_text_block_reads_alike_on_both_wires` |
+| Usage left out is unknown, a cache counter left out a known 0 | `tests/converse.rs::usage_on_the_failure_is_unknown_where_the_answer_left_it_out_and_a_cache_counter_a_known_zero` |
+| `metadata` before or after the stop | `tests/converse.rs::metadata_before_the_stop_gives_the_same_failure_as_metadata_after_it` |
+| The three modelled reasons | `tests/converse.rs::a_modelled_reason_without_an_item_is_what_it_was` |
+| What stays the `protocol` refusal | `tests/converse.rs::a_block_left_open_or_a_reason_that_is_no_bounded_name_is_still_the_protocol_refusal` |
+| The retriable mark reaches the caller of a streamed turn | `tests/client.rs::a_converse_stream_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row` |
+| A whole answer is final through the client | `tests/client.rs::a_whole_converse_answer_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row` |
+| Any other failure after that stop is final | `tests/client.rs::any_other_failure_after_a_converse_stop_without_content_is_final` |
+| No cause named, nothing of the trace quoted | `tests/client.rs::a_guardrail_stop_without_content_names_no_cause_and_quotes_none_of_its_trace` |
+| A failed turn shows no advisory for a hint it omitted | `tests/client.rs::a_converse_turn_that_fails_shows_no_advisory_for_a_hint_it_omitted` |
+
+The conformance suite holds the rule in ten scenarios of `contracts/bedrock/scenarios/`, named
+`turn-a-converse-stream-*stopped-*` (seven) and `turn-a-whole-converse-answer-stopped-*` (three).
+Two of them hold one condition of `Header::outcome` each: a whole answer whose `content` is one
+text block without text is the incomplete turn with no item
+(`turn-a-whole-converse-answer-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete.yaml`),
+and a stream that held no content block and kept an event of an unknown type is the incomplete
+turn with that event as its item
+(`turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-a-kept-event-is-incomplete.yaml`).
+
+Who retries. `BedrockClient` asks once a turn and hands the retriable failure to its caller
+(`crates/llm-models/tests/relayed_failure.rs::the_converse_client_asks_once_a_turn_and_routing_takes_it_under_no_catalog_target`).
+No code in this repository puts a Converse client under the retry policy: a Bedrock route has no
+catalog entry, no catalog names `bedrock-converse`, `Routes::port` hands out the bare client and
+the `llm` command calls `turn` once. Routing's loop (`Catalog::run_turn`) refuses a Converse
+client given to it under a catalog target before any request (the same test). A caller that
+retries bounds the retry itself and pays for each attempt: the stop without content carries the
+usage its attempt reported, output tokens included when the answer names them.
 
 A streamed `InvokeModel` answer holds a reported `usage.cost` as `llm-messages` does
 ([messages.md](messages.md#what-the-decoder-requires-of-a-stream)): a failure after the stream
@@ -312,7 +405,8 @@ An inference profile id such as the one above goes where the model id goes.
 
 ## Not supported
 
-- Catalog, binding document and `llm.routes/1` support: they refuse `bedrock-converse` by name.
+- Catalog and binding document support: they refuse `bedrock-converse` by name. An `llm.routes/1`
+  document names a Bedrock endpoint, and its routes stay out of the catalog.
 - A live qualification: no turn has been sent to Bedrock.
 - The credential sources listed under Credentials as not supported.
 - Query-string (presigned) signing and SigV4a.

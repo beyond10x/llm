@@ -1,0 +1,36 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-whole-converse-answer-stopped-without-content-for-an-unlisted-reason-is-final
+summary: "a /converse answer that stops with no content block for a reason in no list is unavailable and final, as every failure of a whole answer is"
+timeline:
+- at: '2026-11-25T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: false
+    model_id: "us.amazon.nova-micro-v1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+    recording: "synthetic-converse_unlisted_reason_without_content.json"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: false
+    error_code: "unavailable"
+    dispatch: "accepted"
+    retriable: false
+    diagnostics_safe: true
+    requests: 1
+    request_line: "POST /model/us.amazon.nova-micro-v1%3A0/converse"
+    items: []
+    text: ""
+    warnings: []
+    stop_reason: null
+    final_usage: true
+    usage_json: "{\"input_tokens\":12,\"output_tokens\":0,\"cached_input_tokens\":5,\"cache_creation_input_tokens\":0}"

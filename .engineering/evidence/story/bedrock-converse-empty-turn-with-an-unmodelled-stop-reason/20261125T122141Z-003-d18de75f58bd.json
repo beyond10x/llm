@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T12:21:41Z",
+  "actor": "human:operator",
+  "artifact": "story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "at a66287d35: task test: 2435 tests in 5 runs, all passed, 18.3 s of the 120 s bound; llm-conformance check 1090 of 1090 passed, failed 0, skipped 0, ten of them the scenarios of this rule. llm-bedrock 185 to 203 cases, llm-models 84 to 85. With either condition of Header::outcome removed the conformance check is red on its scenario and the crate's tests are red (adversary pass 2, 9 mutants; correction 2's red-first run)",
+    "reference": "contracts/baseline.json"
+  }
+}

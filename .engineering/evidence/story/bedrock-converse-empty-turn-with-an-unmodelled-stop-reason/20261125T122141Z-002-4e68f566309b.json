@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T12:21:41Z",
+  "actor": "human:operator",
+  "artifact": "story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "the wave gate on wave/2026-11-25-converse-empty-turn at a66287d35, each step run alone as a pool job on the build node: task rust, task test, task docs, llm-conformance ess specify validate --path spec, llm-conformance check, aep plan artifact validate, all exit 0. No live Bedrock call: recorded frames, frames built by tests and three whole answers written by hand",
+    "reference": "docs/plan/wave-2026-11-25-converse-empty-turn.md"
+  }
+}

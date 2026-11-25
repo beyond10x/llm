@@ -4,12 +4,20 @@
 //! is attempted once, on every wire; without it the same 502 is retried on the target until the
 //! retry policy is spent. Local sockets only; nothing waits on a real clock between attempts.
 
-use llm_core::{BoxFuture, Cancel, Dispatch, Error, ErrorCode, Id, Item, TurnRequest, VecSink};
+use llm_bedrock::{
+    Api, AwsCredentials, BedrockClient, BedrockTarget, CredentialSource,
+    eventstream::{HeaderValue, Message, encode_message},
+};
+use llm_core::{
+    BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol,
+    Provenance, TurnRequest, VecSink,
+};
 use llm_credentials::SecretResolver;
 use llm_http::{HttpClient, Limits};
 use llm_models::CatalogModels;
 use llm_routing::{
-    Catalog, CatalogDocument, FallbackPolicy, FallbackRun, Halt, Ports, RetryPolicy, Selection,
+    Catalog, CatalogDocument, FallbackPolicy, FallbackRun, Halt, Models, Ports, RetryPolicy,
+    Selection,
 };
 use std::{
     collections::BTreeMap,
@@ -127,6 +135,13 @@ async fn gateway(signal: bool) -> (String, Arc<AtomicUsize>, tokio::task::JoinHa
 
 /// Answers every request with `answer`, head and body, closes, and counts the requests.
 async fn answering(answer: String) -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
+    answering_bytes(answer.into_bytes()).await
+}
+
+/// As [`answering`], for an answer whose body is not text.
+async fn answering_bytes(
+    answer: Vec<u8>,
+) -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0")
         .await
         .expect("a local port");
@@ -138,10 +153,7 @@ async fn answering(answer: String) -> (String, Arc<AtomicUsize>, tokio::task::Jo
             let (mut socket, _) = listener.accept().await.expect("an accepted connection");
             read_request(&mut socket).await;
             seen.fetch_add(1, Ordering::SeqCst);
-            socket
-                .write_all(answer.as_bytes())
-                .await
-                .expect("answer written");
+            socket.write_all(&answer).await.expect("answer written");
             let _ = socket.shutdown().await;
         }
     });
@@ -339,6 +351,164 @@ async fn a_messages_stop_without_content_on_a_route_that_reports_a_cost_is_retri
         .expect_err("every attempt stopped without content");
     assert_eq!(error.code, ErrorCode::Unavailable);
     assert!(!error.may_retry(), "{error:?}");
+}
+
+// ---------------------------------------------------------------------------------------------
+// story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason: a Bedrock Converse far side
+// whose answer stops without content for a reason with no row of its own.
+//
+// `BedrockClient` asks once a turn and hands the retriable failure to its caller. No code in
+// this repository puts a Converse client under the retry policy: a Bedrock route has no catalog
+// entry, no catalog can name `bedrock-converse`, `Routes::port` hands out the bare client and
+// the `llm` command calls `turn` once. A caller that retries bounds the retry itself. The one
+// test here holds the two facts that can be held: one request a turn, and routing's loop
+// refusing the client under a catalog target.
+// ---------------------------------------------------------------------------------------------
+
+/// Fixed AWS keys for a far side that checks no signature.
+struct FixtureKeys;
+
+impl CredentialSource for FixtureKeys {
+    fn credentials<'a>(&'a self, _: &'a Cancel) -> BoxFuture<'a, Result<AwsCredentials, Error>> {
+        Box::pin(async {
+            Ok(AwsCredentials::new(
+                "AKIDFIXTURE",
+                "fixture-secret",
+                None,
+                None,
+            ))
+        })
+    }
+}
+
+/// The bare Converse client as the one model a run is given, whatever serving model it asks
+/// for.
+struct Bare(BedrockClient);
+
+impl Models for Bare {
+    fn model(&self, _: &Id) -> Option<&dyn Model> {
+        Some(&self.0)
+    }
+}
+
+/// One Converse event-stream frame.
+fn converse_event(kind: &str, payload: &serde_json::Value) -> Vec<u8> {
+    let header = |name: &str, value: &str| (name.to_owned(), HeaderValue::String(value.to_owned()));
+    encode_message(&Message {
+        headers: vec![
+            header(":event-type", kind),
+            header(":content-type", "application/json"),
+            header(":message-type", "event"),
+        ],
+        payload: serde_json::to_vec(payload).expect("a payload"),
+    })
+}
+
+/// A whole Converse stream answered with status 200: the message opens, no content block, the
+/// stop `reason`, the usage report.
+fn converse_stop_without_content(reason: &str) -> Vec<u8> {
+    let mut answer = b"HTTP/1.1 200 OK\r\ncontent-type: application/vnd.amazon.eventstream\r\n\
+        connection: close\r\n\r\n"
+        .to_vec();
+    answer.extend(converse_event(
+        "messageStart",
+        &serde_json::json!({"role": "assistant"}),
+    ));
+    answer.extend(converse_event(
+        "messageStop",
+        &serde_json::json!({"stopReason": reason}),
+    ));
+    answer.extend(converse_event(
+        "metadata",
+        &serde_json::json!({"usage": {"inputTokens": 11, "outputTokens": 0, "totalTokens": 11}}),
+    ));
+    answer
+}
+
+/// A catalog with one target, and a streamed Converse client for the far side at `url` whose
+/// provenance is that target's but for the protocol, which no catalog target can have.
+fn converse_beside_a_catalog_target(url: &str) -> (Catalog, BedrockClient) {
+    let catalog = catalog("messages", url);
+    let binding = catalog
+        .bindings()
+        .next()
+        .expect("one serving model")
+        .1
+        .provenance()
+        .clone();
+    let origin = url.strip_suffix("v1").expect("the fixture's base URL");
+    let target = BedrockTarget::new(
+        Provenance {
+            protocol: Protocol::BedrockConverse,
+            ..binding
+        },
+        Capabilities::text(4096, 1024).with_output_streaming(true),
+        "us-east-1",
+        "us.amazon.nova-micro-v1:0",
+        Api::Converse,
+        true,
+        Some(url::Url::parse(origin).expect("an origin")),
+    )
+    .expect("a Converse target");
+    let http = HttpClient::new(Limits {
+        response_headers: Duration::from_secs(20),
+        idle: Duration::from_secs(20),
+        total: Duration::from_secs(30),
+    })
+    .expect("bounded transport");
+    let client = BedrockClient::new(target, http, Arc::new(FixtureKeys)).expect("a client");
+    (catalog, client)
+}
+
+/// The client itself asks once a turn and hands the retriable failure up: the retry is the
+/// caller's. And routing's loop takes the same client under no catalog target, because no
+/// catalog names `bedrock-converse`: it refuses the run before any request is sent.
+#[tokio::test]
+async fn the_converse_client_asks_once_a_turn_and_routing_takes_it_under_no_catalog_target() {
+    let answer = converse_stop_without_content("a_reason_in_no_list");
+    let (url, requests, server) = answering_bytes(answer.clone()).await;
+    let (_, client) = converse_beside_a_catalog_target(&url);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let request = TurnRequest::new("small", vec![Item::user("Say hello")]);
+    let error = client
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect_err("the turn stopped without content");
+    server.abort();
+    assert_eq!(requests.load(Ordering::SeqCst), 1);
+    assert_eq!(
+        (error.code, error.dispatch, error.may_retry()),
+        (ErrorCode::Unavailable, Dispatch::Accepted, true),
+        "{error:?}"
+    );
+    assert_eq!(sink.events().len(), 0, "{:?}", sink.events());
+
+    let (url, requests, server) = answering_bytes(answer).await;
+    let (catalog, client) = converse_beside_a_catalog_target(&url);
+    let mut request = TurnRequest::new("code", vec![Item::user("Say hello")]);
+    request.max_output_tokens = Some(64);
+    let mut admit = |_: &Selection<'_>| -> Result<(), Error> { Ok(()) };
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let cancel = Cancel::new();
+    let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(std::future::ready(())) };
+    let run = catalog
+        .run_turn(
+            &request,
+            Some(16),
+            FallbackPolicy::default(),
+            Ports {
+                models: &Bare(client),
+                admit: &mut admit,
+                sink: &mut sink,
+                cancel: &cancel,
+                pause: &pause,
+            },
+        )
+        .await;
+    server.abort();
+    let refused = run.expect_err("a Converse client serves no catalog target");
+    assert_eq!(refused.code, ErrorCode::InvalidRequest, "{refused:?}");
+    assert_eq!(requests.load(Ordering::SeqCst), 0);
 }
 
 // ---------------------------------------------------------------------------------------------
