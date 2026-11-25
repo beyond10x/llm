@@ -7,7 +7,7 @@ use llm_providers::BindingDocument;
 use llm_routing::Catalog;
 use serde_json::Value;
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 const MARKER: &str = "zq-marker-7f3";
 const BEFORE_DIGEST: &str = "1365b05fe63542f8211e21a9a2566c71f2a6d44ec9bdc564ba46c592a861825f";
 const BEFORE_REVISION: &str = "1a6ea40f98c8eef26ff66e7c753dda816f45a1aa3488bb31f62ef25a89c328a1";

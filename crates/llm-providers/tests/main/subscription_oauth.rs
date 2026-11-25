@@ -5,8 +5,8 @@
 //! reference. llm offers no login and reads no login file: the token is whatever the caller's
 //! resolver answers for the declared reference. At this layer it is one sensitive
 //! `authorization: Bearer` header; the Messages-specific presentation (the OAuth beta header and
-//! the client preamble) is llm-messages' (tests/subscription.rs there). `bind` refuses every
-//! declaration that would send the token anywhere else or bill it as metered API use.
+//! the client preamble) is llm-messages' (tests/main/subscription.rs there). `bind` refuses
+//! every declaration that would send the token anywhere else or bill it as metered API use.
 //!
 //! The documents are parsed from JSON on purpose: the spelling `subscription-oauth` is the
 //! declaration vocabulary under test. No credential store, file or network is involved.

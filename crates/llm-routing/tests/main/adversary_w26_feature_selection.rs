@@ -28,9 +28,10 @@ use std::{
     task::{Context, Poll, Waker},
 };
 
-const SPEC_CATALOG: &str = include_str!("../../../spec/domains/catalog.yaml");
-const SCHEMA_ROUTE_REJECTION: &str =
-    include_str!("../../../contracts/schema/schema/types/llm.catalog.RouteRejection.schema.json");
+const SPEC_CATALOG: &str = include_str!("../../../../spec/domains/catalog.yaml");
+const SCHEMA_ROUTE_REJECTION: &str = include_str!(
+    "../../../../contracts/schema/schema/types/llm.catalog.RouteRejection.schema.json"
+);
 
 fn id(value: &str) -> Id {
     Id::new(value).unwrap()

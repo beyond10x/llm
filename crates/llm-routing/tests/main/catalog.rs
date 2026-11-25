@@ -8,7 +8,7 @@ use llm_routing::{
 };
 use serde_json::json;
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 fn document() -> CatalogDocument {
     CatalogDocument::parse(EXAMPLE).unwrap()
 }

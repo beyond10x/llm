@@ -19,16 +19,18 @@ fn resolver() -> EnvironmentResolver {
     EnvironmentResolver::new(BTreeMap::from([(reference(), VARIABLE.to_owned())])).unwrap()
 }
 
-/// In the parent: runs `name` again in a child whose environment holds `value` under
-/// [`VARIABLE`] (or lacks it), requires that one case ran and passed there, and returns false.
-/// In the child: returns true, and the caller runs the case.
+/// In the parent: runs the case `name` of this module again in a child whose environment holds
+/// `value` under [`VARIABLE`] (or lacks it), requires that one case ran and passed there, and
+/// returns false. In the child: returns true, and the caller runs the case.
 fn in_child(name: &str, value: Option<&[u8]>) -> bool {
     if std::env::var_os(CHILD).is_some() {
         return true;
     }
+    // The test binary names a case by its module path.
+    let case = format!("environment::{name}");
     let mut command = Command::new(std::env::current_exe().unwrap());
     command
-        .args([name, "--exact", "--test-threads=1"])
+        .args([case.as_str(), "--exact", "--test-threads=1"])
         .env(CHILD, "1")
         .env_remove(VARIABLE);
     if let Some(value) = value {

@@ -5,7 +5,7 @@ use llm_core::{Id, Item, Protocol, TurnRequest};
 use llm_routing::{Catalog, CatalogDocument, Rejection};
 use serde_json::json;
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 fn request_with(item: Item) -> TurnRequest {
     let mut request = TurnRequest::new("code", vec![Item::user("hello"), item]);

@@ -60,7 +60,7 @@ fn a_client_that_honours_proxy_variables_sends_a_loopback_request_to_the_proxy()
     child
         .args([
             "--exact",
-            "a_client_that_honours_proxy_variables_sends_a_loopback_request_to_the_proxy",
+            "adversary_w25_form_exchange::a_client_that_honours_proxy_variables_sends_a_loopback_request_to_the_proxy",
         ])
         .env(CHILD, &target)
         .env_remove("NO_PROXY")
@@ -76,8 +76,20 @@ fn a_client_that_honours_proxy_variables_sends_a_loopback_request_to_the_proxy()
     ] {
         child.env(variable, &proxy_url);
     }
-    let status = child.status().expect("the child runs");
-    assert!(status.success(), "the child failed: {status}");
+    let output = child.output().expect("the child runs");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        output.status.success(),
+        "the child failed: {}: {stdout}{}",
+        output.status,
+        String::from_utf8_lossy(&output.stderr)
+    );
+    // The runner's own summary line, the last one: a filter that selected nothing exits 0 too.
+    let summary = stdout
+        .lines()
+        .rfind(|line| line.starts_with("test result:"))
+        .expect("the child printed its summary line");
+    assert!(summary.contains(" 1 passed;"), "{summary}");
     let mut proxied = false;
     while let Ok(bytes) = heard.recv_timeout(Duration::from_millis(500)) {
         proxied |= String::from_utf8_lossy(&bytes).contains(&target);

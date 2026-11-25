@@ -85,7 +85,7 @@ fn every_kind() -> TurnRequest {
 
 /// What llm 0.6.0 (`5657d2f5`) wrote for [`every_kind`], captured by serializing the same turn
 /// with that revision's `TurnDocument::new`.
-const LLM_0_6_0_BYTES: &str = include_str!("fixtures/llm-0.6.0-turn.json");
+const LLM_0_6_0_BYTES: &str = include_str!("../fixtures/llm-0.6.0-turn.json");
 
 #[test]
 fn a_turn_without_controls_is_written_as_llm_0_6_0_wrote_it() {

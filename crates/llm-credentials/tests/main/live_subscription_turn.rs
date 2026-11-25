@@ -8,7 +8,7 @@
 //! provider is contacted.
 #![cfg(feature = "secrets")]
 
-#[path = "../examples/live_subscription_turn/turn.rs"]
+#[path = "../../examples/live_subscription_turn/turn.rs"]
 mod turn;
 
 use clap::Parser;

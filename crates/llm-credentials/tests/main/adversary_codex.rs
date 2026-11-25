@@ -12,6 +12,8 @@ use std::{
 /// The caller's clock in every case: 2026-10-03T00:00:00Z.
 const NOW: u64 = 1_790_985_600;
 const MIB: usize = 1024 * 1024;
+/// Set in the child process that runs the one case that changes the working directory.
+const CHILD: &str = "LLM_CREDENTIALS_ADVERSARY_CODEX_CHILD";
 
 fn reference() -> SecretRef {
     SecretRef::new("codex-login").unwrap()
@@ -76,8 +78,36 @@ fn fixture_dir() -> (tempfile::TempDir, std::path::PathBuf) {
 /// The spec names the field `absolute_path`, the docs say the crate "performs no ambient
 /// lookup", and the sibling `file` adapter refuses a relative path as `UnsafeSource`. A relative
 /// path must therefore not be resolved against the process working directory.
+///
+/// The case changes the working directory, which every module of this test binary shares under
+/// `cargo test`. It therefore runs in a child of this executable: the parent starts the child,
+/// requires that exactly this case ran and passed there, and leaves its own directory alone.
 #[tokio::test]
 async fn a_relative_path_is_not_resolved_against_the_working_directory() {
+    if std::env::var_os(CHILD).is_none() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "adversary_codex::a_relative_path_is_not_resolved_against_the_working_directory",
+                "--exact",
+                "--test-threads=1",
+            ])
+            .env(CHILD, "1")
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            output.status.success(),
+            "{stdout}{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        // The runner's own summary line, the last one: a filter that selected nothing exits 0 too.
+        let summary = stdout
+            .lines()
+            .rfind(|line| line.starts_with("test result:"))
+            .unwrap();
+        assert!(summary.contains(" 1 passed;"), "{summary}");
+        return;
+    }
     let (temp, path) = fixture_dir();
     write_fixture(&path, &login(&jwt(&format!(r#"{{"exp":{}}}"#, NOW + 3600))));
     std::env::set_current_dir(path.parent().unwrap()).unwrap();

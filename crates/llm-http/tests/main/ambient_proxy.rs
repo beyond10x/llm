@@ -34,10 +34,10 @@ fn ambient_proxy_environment_does_not_receive_caller_credentials() {
             }
         }
     });
-    let status = Command::new(std::env::current_exe().unwrap())
+    let output = Command::new(std::env::current_exe().unwrap())
         .args([
             "--exact",
-            "child_sends_one_authenticated_request",
+            "ambient_proxy::child_sends_one_authenticated_request",
             "--include-ignored",
         ])
         .env(CHILD, "1")
@@ -45,9 +45,21 @@ fn ambient_proxy_environment_does_not_receive_caller_credentials() {
         .env("http_proxy", &proxy_url)
         .env_remove("NO_PROXY")
         .env_remove("no_proxy")
-        .status()
+        .output()
         .unwrap();
-    assert!(status.success(), "child fixture failed to run");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        output.status.success(),
+        "child fixture failed to run: {stdout}{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    // The runner's own summary line, the last one: a filter that selected nothing exits 0 too,
+    // and a proxy that heard nothing from a child that sent nothing would prove nothing.
+    let summary = stdout
+        .lines()
+        .rfind(|line| line.starts_with("test result:"))
+        .expect("the child printed its summary line");
+    assert!(summary.contains(" 1 passed;"), "{summary}");
     while let Ok(bytes) = seen_rx.recv_timeout(Duration::from_secs(3)) {
         let text = String::from_utf8_lossy(&bytes).to_ascii_lowercase();
         if !text.contains("/v1/stream") && !text.contains(CREDENTIAL) {
