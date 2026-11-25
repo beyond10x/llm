@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-11-25
+
 ### Fixed
 
 - **Breaking:** `llm-decide`: a model classifier takes an answer only whole; one it took before abstains `OffLabel`
@@ -699,7 +701,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.30.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.31.0...HEAD
+[0.31.0]: https://github.com/beyond10x/llm/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/beyond10x/llm/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/beyond10x/llm/compare/0.28.0...0.29.0
 [0.28.0]: https://github.com/beyond10x/llm/compare/0.27.0...0.28.0
