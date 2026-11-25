@@ -51,8 +51,13 @@ fn the_file_pins_one_exact_release_with_clippy_and_rustfmt() {
     let least = manifest["workspace"]["package"]["rust-version"]
         .as_str()
         .expect("the workspace names its rust-version");
-    let mut least = least.split('.').map(|part| part.parse::<u64>().expect("a number"));
-    let least = (least.next().expect("a major"), least.next().expect("a minor"));
+    let mut least = least
+        .split('.')
+        .map(|part| part.parse::<u64>().expect("a number"));
+    let least = (
+        least.next().expect("a major"),
+        least.next().expect("a minor"),
+    );
     assert!(
         (major, minor) >= least,
         "{FILE} pins {channel}, older than the manifest's rust-version {least:?}"
@@ -176,8 +181,15 @@ fn workflows() -> Vec<(String, String)> {
     let directory = repository().join(".github/workflows");
     for entry in std::fs::read_dir(&directory).expect("the workflows are listed") {
         let name = entry.expect("a directory entry").file_name();
-        let name = name.to_str().expect("a workflow's name is UTF-8").to_owned();
-        if name.ends_with(".yml") || name.ends_with(".yaml") {
+        let name = name
+            .to_str()
+            .expect("a workflow's name is UTF-8")
+            .to_owned();
+        let extension = std::path::Path::new(&name)
+            .extension()
+            .and_then(std::ffi::OsStr::to_str);
+        // GitHub reads a workflow only from a file with one of these two extensions, as written.
+        if matches!(extension, Some("yml" | "yaml")) {
             let text = read(&format!(".github/workflows/{name}"));
             workflows.push((name, text));
         }
@@ -220,7 +232,9 @@ fn cargo_before_the_install(text: &str) -> Vec<String> {
             .iter()
             .any(|step| step["run"].as_str().map(str::trim) == Some(INSTALL));
         if !installed {
-            let step = steps[first]["name"].as_str().unwrap_or("a step without a name");
+            let step = steps[first]["name"]
+                .as_str()
+                .unwrap_or("a step without a name");
             found.push(format!("job {job}: `{step}` runs cargo before `{INSTALL}`"));
         }
     }
@@ -231,14 +245,21 @@ fn cargo_before_the_install(text: &str) -> Vec<String> {
 fn every_job_that_runs_cargo_installs_the_files_toolchain_first() {
     let mut jobs_with_the_install = 0;
     for (name, text) in workflows() {
-        assert_eq!(cargo_before_the_install(&text), Vec::<String>::new(), "{name}");
+        assert_eq!(
+            cargo_before_the_install(&text),
+            Vec::<String>::new(),
+            "{name}"
+        );
         jobs_with_the_install += text
             .lines()
             .filter(|line| line.trim() == format!("run: {INSTALL}"))
             .count();
     }
     // The gate's two jobs that compile and the job that publishes the pages.
-    assert_eq!(jobs_with_the_install, 3, "steps `{INSTALL}` over all workflows");
+    assert_eq!(
+        jobs_with_the_install, 3,
+        "steps `{INSTALL}` over all workflows"
+    );
 }
 
 #[test]
@@ -255,7 +276,10 @@ fn a_job_that_runs_cargo_without_the_install_before_it_is_found() {
         cargo_before_the_install(after),
         ["job build: `Tests` runs cargo before `rustup toolchain install`"]
     );
-    let other = with.replace("rustup toolchain install", "rustup toolchain install 1.98.0");
+    let other = with.replace(
+        "rustup toolchain install",
+        "rustup toolchain install 1.98.0",
+    );
     assert_eq!(
         cargo_before_the_install(&other),
         ["job build: `Tests` runs cargo before `rustup toolchain install`"]
