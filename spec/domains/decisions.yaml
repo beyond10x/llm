@@ -12,6 +12,23 @@ domain: llm.decisions
 # not decode as that schema is `OffLabel`, and so is a decision whose label's confidence is under
 # the classifier's floor (an unknown confidence meets no floor).
 #
+# A model path takes an answer only whole; what follows is `OffLabel` even when what arrived would
+# decode as the schema, and the call's record is written as succeeded. On JsonSchema the answer is
+# the one assistant text of a turn that ended normally, read as one JSON value. `OffLabel` are: a
+# turn that stopped at the output limit, a turn reported incomplete, an outcome with no assistant
+# text, an outcome with two assistant texts (they are not joined; an empty or whitespace-only text
+# beside the answer counts as a second text), a refusal beside the text, and a text in which an
+# object gives a key twice (`label`, `confidences`, or a label inside `confidences`). State the
+# provider keeps beside its answer is not part of the answer.
+#
+# On ForcedTool the answer is the arguments of the one call to the forced tool of a turn that
+# stopped for its tool call. `OffLabel` are: a call of a turn that stopped at the output limit, a
+# call of a turn reported incomplete, two calls, and a refusal beside the call. Assistant text and
+# provider state beside the call are not part of the answer. A key given twice in a call's
+# arguments is not seen: the arguments reach the classifier already parsed. An outcome the routed
+# call itself refuses (a call to another tool, a call of a turn that says it ended normally, a
+# stop for a tool call without a call) is a failed call: `ProviderError` with `protocol`.
+#
 # A chain is an ordered fallback over classifiers for one label set under one deadline. The
 # first classifier that decides ends the chain; every earlier one left an abstention, and when
 # every classifier abstains the last abstention is final. A model call still open at the
@@ -123,7 +140,9 @@ types:
     kind: enum
     # Timeout: the classifier's deadline passed. ProviderError: the call failed with a typed
     # llm error (its code is kept in `error_code`). OffLabel: the answer named no label of the
-    # set, or did not decode as the path's schema.
+    # set, did not decode as the path's schema, was not the one whole answer of its turn (cut,
+    # split, a key given twice, a refusal beside it), or its label's confidence was under the
+    # classifier's floor.
     variants: [Timeout, ProviderError, OffLabel]
   - name: llm.decisions.LabelConfidence
     kind: struct
@@ -430,6 +449,11 @@ commands:
     # Run the real chain over in-process scripted models and an optional scripted lexical
     # classifier, a scripted clock and an optional price book; no network. program_json scripts
     # each serving model's answer, failure, delay or hang, and each lexical classifier's answer.
+    # A model's answer is its assistant texts (`answer`, then each of `answers`, one item each)
+    # followed by its calls to the turn's first tool (`tool_arguments`, then each of `tool_calls`)
+    # under `stop_reason`; without one the turn stops for its tool call when it has a call and
+    # ends normally when it has none. A call's arguments are JSON text: a program in which they
+    # are not one JSON value is not a valid program, and no call is made.
     input:
       - {name: catalog_toml, type: String}
       - {name: label_set_json, type: String}

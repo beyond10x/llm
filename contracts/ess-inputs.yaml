@@ -998,6 +998,11 @@ scenarios:
 - decisions/scenarios/a-forced-tool-classifier-returns-one-label-with-a-confidence-per-label.yaml
 - decisions/scenarios/an-answer-naming-no-label-of-the-set-abstains-off-label.yaml
 - decisions/scenarios/an-answer-that-does-not-decode-as-the-schema-abstains-off-label.yaml
+- decisions/scenarios/an-answer-that-repeats-label-abstains-off-label.yaml
+- decisions/scenarios/an-answer-cut-at-the-output-limit-abstains-off-label.yaml
+- decisions/scenarios/an-answer-in-two-text-items-abstains-off-label.yaml
+- decisions/scenarios/a-tool-call-of-a-turn-cut-at-the-output-limit-abstains-off-label.yaml
+- decisions/scenarios/two-tool-calls-abstain-off-label.yaml
 - decisions/scenarios/a-classifier-past-the-chain-deadline-abstains-with-timeout.yaml
 - decisions/scenarios/a-provider-failure-abstains-with-its-error-code.yaml
 - decisions/scenarios/a-confidence-below-the-classifier-floor-abstains-off-label.yaml

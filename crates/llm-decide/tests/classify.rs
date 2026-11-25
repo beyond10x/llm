@@ -92,6 +92,8 @@ impl Clock for Scripted {
 enum Reply {
     Text(String),
     Tool(Value),
+    /// Returns these items under this stop reason, as given, and shows nothing.
+    Outcome(StopReason, Vec<Item>),
     Fail(Error),
     /// Waits until the call is cancelled, then reports the cancellation.
     Hang,
@@ -175,6 +177,14 @@ impl Model for Fake {
                     Ok(TurnOutcome {
                         stop_reason: StopReason::EndTurn,
                         items: vec![Item::assistant(text.clone())],
+                        observation,
+                    })
+                }
+                Reply::Outcome(stop_reason, items) => {
+                    observation.final_usage = true;
+                    Ok(TurnOutcome {
+                        stop_reason: stop_reason.clone(),
+                        items: items.clone(),
                         observation,
                     })
                 }
@@ -1030,3 +1040,6 @@ mod adversary_w28_endpoint;
 
 #[path = "classify/replay.rs"]
 mod replay;
+
+#[path = "classify/whole_answer.rs"]
+mod whole_answer;
