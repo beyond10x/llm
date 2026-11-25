@@ -1,6 +1,6 @@
 # Wave 2026-11-25-replay-last-case-scenarios
 
-Status: **open**. Wave 11 of the [wave plan](trajectory.md). Approval:
+Status: **parked** on 2026-11-25 (section Parked). Wave 11 of the [wave plan](trajectory.md). Approval:
 `approval-record:wave-2026-11-25-replay-last-case-scenarios` (the owner's order of 2026-11-24 to run
 the next wave from the active stories, relayed by the operator session). Opened on wave 10's opening
 commit `94db8e841` with `main` at LLM 0.33.0 merged; the wave takes `main` again before its gate and
@@ -55,3 +55,10 @@ scenario fails on a mutant that reads the stop only on a later case's refusal.
 | What makes a scenario fail on the mutant? | It asserts every case sent and none `not-sent` inside the run it reads. |
 | Where is the mutant built? | In a managed worktree of its own; it is never committed. |
 | CHANGELOG | One line under `### Added` that names the floor 1092 (was 1090). No release of the wave's own. |
+
+## Parked
+
+The owner stopped every wave of this repository on 2026-11-25 for another goal. The wave is open
+and holds no change beside its opening commit: the unit was not dispatched, and its branch
+`impl/replay-last-case-scenarios` has no commit of its own. To go on: take `main`, dispatch the
+unit, then the adversary, the gate and the close, after wave 10.
