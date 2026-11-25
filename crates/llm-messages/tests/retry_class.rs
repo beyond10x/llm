@@ -801,3 +801,134 @@ async fn adversary_w30_a_stop_without_content_whose_terminal_delta_reports_a_cos
         );
     }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, second pass, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). The correction holds a reported
+// `cost` while the turn holds no content and names no modelled reason, so that the turn that
+// then stops without content shows nothing and stays retriable. `docs/messages.md` on the same
+// warning: the header's cost is "held until the stream answers (the first payload other than
+// `ping` and `message_start`)", "a stream that fails before answering drops it and stays as
+// retriable as it was", and "a turn that answers loses none". Read here on the streams that hold
+// a cost at a `message_delta` and then fail some other way than at `message_stop`: each is final
+// because that delta answered (`StreamDecoder::has_answered`), so each must have shown what it
+// held, or else it has not answered and keeps the retry class of a failure before output.
+// ---------------------------------------------------------------------------------------------
+
+const ADVERSARY_W30B_HEADER_COST: &str = "message_start.message.usage.cost: {\"total\":0.5}";
+const ADVERSARY_W30B_DELTA_COST: &str = "message_delta.usage.cost: 0.25";
+
+/// The message header of a route that reports a `cost` with its first counters.
+fn adversary_w30b_costed_header() -> String {
+    let header = serde_json::json!({"type": "message_start", "message": {"id": "msg_014a",
+        "type": "message", "role": "assistant", "model": "example-model-20260201",
+        "content": [], "usage": {"input_tokens": 11, "output_tokens": 1, "cost": {"total": 0.5}}}});
+    format!("event: message_start\ndata: {header}\n\n")
+}
+
+/// A `message_delta` that follows no content block and reports a cost of its own. It names
+/// `reason`, or no reason when `reason` is `None`.
+fn adversary_w30b_costed_delta(reason: Option<&str>) -> String {
+    let delta = serde_json::json!({"type": "message_delta",
+        "delta": {"stop_reason": reason, "stop_sequence": null},
+        "usage": {"output_tokens": 3, "cost": 0.25}});
+    format!("event: message_delta\ndata: {delta}\n\n")
+}
+
+/// The `usage-extension` warnings the caller was shown, in order.
+fn adversary_w30b_costs(sink: &VecSink) -> Vec<String> {
+    sink.events()
+        .iter()
+        .filter_map(|event| match event {
+            llm_core::StreamEvent::Warning { code, message } if code == "usage-extension" => {
+                Some(message.clone())
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// One line for a failure that is final and showed none of the two costs the stream reported.
+fn adversary_w30b_final_and_silent(label: &str, error: &Error, sink: &VecSink) -> Option<String> {
+    let shown = adversary_w30b_costs(sink);
+    let both = [ADVERSARY_W30B_HEADER_COST, ADVERSARY_W30B_DELTA_COST];
+    (!error.may_retry() && shown != both).then(|| {
+        format!(
+            "{label}: {:?} retriable {} shown {shown:?}",
+            error.code, error.retriable
+        )
+    })
+}
+
+/// A connection cut, or a body that ends, right after a `message_delta` that followed no
+/// content block. With `end_turn` the delta shows both costs and the failure is final: the
+/// control. With a reason this projection does not model, or none yet, the failure is as final
+/// and the caller was shown neither cost.
+#[tokio::test]
+async fn adversary_w30b_a_cut_after_a_delta_without_content_is_final_only_with_its_costs_shown() {
+    let mut silent = Vec::new();
+    for reason in [Some("end_turn"), Some("pause_turn"), Some("refusal"), None] {
+        let before = format!(
+            "{}{}",
+            adversary_w30b_costed_header(),
+            adversary_w30b_costed_delta(reason)
+        );
+        for cut in Cut::ALL {
+            let (error, sink) = cut.turn(&before).await;
+            assert_eq!(
+                (error.code, error.dispatch),
+                (cut.code(), Dispatch::Accepted),
+                "{cut:?} after {reason:?}"
+            );
+            silent.extend(adversary_w30b_final_and_silent(
+                &format!("{cut:?} after {reason:?}"),
+                &error,
+                &sink,
+            ));
+        }
+        // The body ends between events, before `message_stop`: the `protocol` refusal.
+        let (error, sink) = stream_turn(before.clone()).await;
+        assert_eq!(
+            error.message, "the Messages stream ended before its terminal event",
+            "a clean end after {reason:?}"
+        );
+        silent.extend(adversary_w30b_final_and_silent(
+            &format!("a clean end after {reason:?}"),
+            &error,
+            &sink,
+        ));
+    }
+    assert!(
+        silent.is_empty(),
+        "final for having answered, and the reported costs were dropped:\n{}",
+        silent.join("\n")
+    );
+}
+
+/// The same for the route's own `overloaded_error` after such a delta: before the delta it drops
+/// the held cost and is retriable; after it, it is final, and the cost is dropped all the same.
+#[tokio::test]
+async fn adversary_w30b_an_overload_after_a_delta_without_content_is_final_only_with_its_costs_shown()
+ {
+    let mut silent = Vec::new();
+    for reason in [Some("end_turn"), Some("pause_turn"), None] {
+        let body = format!(
+            "{}{}{}",
+            adversary_w30b_costed_header(),
+            adversary_w30b_costed_delta(reason),
+            error_event("overloaded_error")
+        );
+        let (error, sink) = stream_turn(body).await;
+        assert_eq!(error.code, ErrorCode::Unavailable, "after {reason:?}");
+        silent.extend(adversary_w30b_final_and_silent(
+            &format!("overloaded_error after {reason:?}"),
+            &error,
+            &sink,
+        ));
+    }
+    assert!(
+        silent.is_empty(),
+        "final for having answered, and the reported costs were dropped:\n{}",
+        silent.join("\n")
+    );
+}

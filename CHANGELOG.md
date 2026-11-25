@@ -6,6 +6,13 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- `llm-messages`: with no content before a `message_delta`, a `usage-extension` warning is no longer shown at that delta
+- It is shown at a delta naming `end_turn`, `tool_use` or `max_tokens`, before later content, or before a final failure
+- At most 4096 such reports are held; one more is refused as `too-large`, after the held ones are shown
+- `StreamDecoder::fail` and `StreamDecoder::end` show what is held before a cut or an early end; `finish` shows nothing
+
 ### Fixed
 
 - **Breaking:** `llm-messages`: a turn that stops unmodelled without content is an error with its final usage, not `Ok`

@@ -350,25 +350,26 @@ impl MessagesClient {
                     .apply(&event, sink, cancel)
                     .await
                     .map_err(|error| decoder.attach(error))?,
-                // End of body. `finish` refuses unless the terminal event actually arrived.
+                // End of body. `end` refuses unless the terminal event actually arrived.
                 Ok(None) => break,
                 // A cut. Once the decoder has answered, shown to the caller or not (a block that
                 // opened empty), it is final: another attempt would answer, and bill, again. As
                 // on Responses, this is stricter than routing's rule, which sees only events.
+                // `fail` shows a usage extension the decoder still holds ahead of a final cut.
                 Err(error) => {
                     let error = if decoder.has_answered() {
                         error.with_retriable(false)
                     } else {
                         error
                     };
-                    return Err(decoder.attach(error));
+                    return Err(decoder.fail(error, sink, cancel).await);
                 }
             }
             if decoder.is_complete() {
                 break;
             }
         }
-        let outcome = decoder.finish(request)?;
+        let outcome = decoder.end(request, sink, cancel).await?;
         // Only now: a warning on the sink is visible output, and an attempt that showed output
         // before it failed would no longer be eligible for fallback.
         if let Some(warning) = advisory_warning(WIRE, &omitted_advisories(request)) {

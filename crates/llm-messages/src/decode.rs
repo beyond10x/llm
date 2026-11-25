@@ -193,8 +193,8 @@ impl Header {
 /// on what the decoder requires of a stream). The text is fixed and carries no byte of the reason.
 ///
 /// A reason with no row of its own is the route's failure to answer, marked retriable: no item
-/// means no content block closed and no event was kept, so nothing answered the turn, and the
-/// stream showed the caller nothing ([`StreamDecoder::may_stop_without_content`]).
+/// means no content block closed and no event was kept, so the route produced no content, and
+/// the stream showed the caller nothing ([`StreamDecoder::may_stop_without_content`]).
 fn stopped_without_content(reason: &str) -> Error {
     match reason {
         "model_context_window_exceeded" => Error::too_large(
@@ -328,10 +328,10 @@ pub struct StreamDecoder {
     /// have started next when it arrived: it sits after every block that had already started.
     preserved: Vec<(u64, Item)>,
     /// The usage extensions reported and not yet shown, in the order the route reported them:
-    /// `message_start`'s until the stream answers, and a `message_delta`'s while the turn may
-    /// still stop without content. A warning is output to fallback, so showing one earlier
-    /// would make a stream that fails before answering final; held, it is dropped with that
-    /// attempt.
+    /// `message_start`'s until the stream answers, and both events' while the turn may still
+    /// stop without content. A warning is output to fallback, so showing one earlier would make
+    /// a stream that fails before answering, or by that stop, final; held, it is dropped with
+    /// that attempt. Every other failure after the stream answered shows them first.
     held: Vec<String>,
     /// The index of the text block whose text the caller was last shown. Text of another block
     /// after it is a new message, preceded by [`StreamEvent::MessageBoundary`].
@@ -386,10 +386,55 @@ impl StreamDecoder {
 
     /// Apply one framed event, emitting the neutral deltas a caller watches.
     ///
+    /// A refusal after the stream answered is preceded by the usage extensions still held, as
+    /// [`Self::fail`] shows them.
+    ///
     /// # Errors
     /// Refuses unsupported, contradictory, duplicate and out-of-order events, and a sink or
     /// cancellation failure raised while the caller was being told.
     pub async fn apply(
+        &mut self,
+        event: &SseEvent,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<(), Error> {
+        match self.read(event, sink, cancel).await {
+            Ok(()) => Ok(()),
+            Err(error) => Err(self.settle(error, sink, cancel).await),
+        }
+    }
+
+    /// A failure this decoder did not raise, a cut or a broken frame, with the dispatch evidence
+    /// and the last valid usage snapshot.
+    ///
+    /// Once the stream has answered, a client makes such a failure final ([`Self::has_answered`]),
+    /// and it is not the stop without content, so the usage extensions still held are shown
+    /// before it is returned: the caller of a final failure sees every cost the route reported.
+    /// Before the stream answered nothing is shown, and what is held is dropped with the
+    /// attempt. A sink, cancellation or deadline failure raised while they are shown is returned
+    /// in its place. The class of `error` is the caller's: this changes none.
+    pub async fn fail(
+        &mut self,
+        error: Error,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Error {
+        let error = self.settle(error, sink, cancel).await;
+        self.attach(error)
+    }
+
+    /// Shows what is still held ahead of `error`, once the stream has answered.
+    async fn settle(&mut self, error: Error, sink: &mut dyn StreamSink, cancel: &Cancel) -> Error {
+        if !self.answered {
+            return error;
+        }
+        match self.show_held(sink, cancel).await {
+            Ok(()) => error,
+            Err(unshown) => unshown,
+        }
+    }
+
+    async fn read(
         &mut self,
         event: &SseEvent,
         sink: &mut dyn StreamSink,
@@ -410,9 +455,10 @@ impl StreamDecoder {
             ));
         }
         // The first payload that answers shows what was held first. An `error` answers nothing:
-        // the stream fails, and what was held is dropped with the attempt. A `message_delta`
-        // shows it once it is read, and the terminal event of a turn that stops without content
-        // shows nothing: that turn fails too.
+        // the stream fails, and before it answered what was held is dropped with the attempt. A
+        // `message_delta` shows it once it is read, unless the turn may still stop without
+        // content, and the terminal event of a turn that stops that way shows nothing: that turn
+        // fails too. Any other failure after the stream answered shows it (`settle`).
         let shows_held = match kind {
             "error" | "message_delta" => false,
             "message_stop" => !self.stops_without_content(),
@@ -431,7 +477,13 @@ impl StreamDecoder {
             "content_block_stop" => self.stop_block(data),
             "message_delta" => self.apply_message_delta(data, sink, cancel).await,
             "message_stop" => self.stop_message(data),
-            "error" => Err(stream_error(data.get("error"), self.answered)),
+            "error" => {
+                // Before the stream answered this failure may be retried, and shows nothing.
+                if !self.answered {
+                    self.held.clear();
+                }
+                Err(stream_error(data.get("error"), self.answered))
+            }
             // A route that adds an event type is not a broken stream: the event is kept whole
             // and the caller told it was not interpreted. Dropping it would hide it; refusing it
             // would end a turn the route is still answering.
@@ -845,8 +897,8 @@ impl StreamDecoder {
             self.held.push(reported);
         }
         // Shown with the delta that reported it, once the whole delta was accepted, unless the
-        // turn may still stop without content: then it stays held until content or the
-        // terminal event settles that.
+        // turn may still stop without content: then it stays held until content, the terminal
+        // event or another failure settles that.
         if self.may_stop_without_content() {
             return Ok(());
         }
@@ -865,7 +917,28 @@ impl StreamDecoder {
         Ok(())
     }
 
-    /// The terminal outcome.
+    /// The terminal outcome, for a caller with a sink: [`Self::finish`], after the usage
+    /// extensions still held by a stream that answered and then ended before its terminal event
+    /// were shown. That failure is final, and it is neither the stop without content nor a
+    /// failure before the stream answered, the two that drop them.
+    ///
+    /// # Errors
+    /// As [`Self::finish`], and a sink or cancellation failure raised while they were shown.
+    pub async fn end(
+        mut self,
+        request: &TurnRequest,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<TurnOutcome, Error> {
+        if self.answered && !self.complete {
+            self.show_held(sink, cancel)
+                .await
+                .map_err(|error| self.attach(error))?;
+        }
+        self.finish(request)
+    }
+
+    /// The terminal outcome. It shows nothing: a caller with a sink ends with [`Self::end`].
     ///
     /// # Errors
     /// Refuses a stream that never reached its terminal event, retaining the last snapshot.
@@ -923,15 +996,20 @@ pub async fn decode_stream(
     // Chunked so that the framing is exercised across arbitrary network splits.
     for chunk in bytes.chunks(64) {
         for event in framing.push(chunk) {
-            let event = event.map_err(|error| decoder.attach(error))?;
+            let event = match event {
+                Ok(event) => event,
+                Err(error) => return Err(decoder.fail(error, sink, cancel).await),
+            };
             decoder
                 .apply(&event, sink, cancel)
                 .await
                 .map_err(|error| decoder.attach(error))?;
         }
     }
-    framing.finish().map_err(|error| decoder.attach(error))?;
-    decoder.finish(request)
+    if let Err(error) = framing.finish() {
+        return Err(decoder.fail(error, sink, cancel).await);
+    }
+    decoder.end(request, sink, cancel).await
 }
 
 fn index(data: &Value) -> Result<u64, Error> {

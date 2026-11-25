@@ -1228,6 +1228,72 @@ async fn an_invoke_answer_that_stops_after_content_for_an_unmodelled_reason_is_i
     }
 }
 
+/// A streamed `InvokeModel` answer holds a reported cost as the Messages wire does. After a
+/// `message_delta` that followed no content the stream has answered, so a failure is final, and
+/// one that is not the stop without content shows what was held before it is returned.
+#[tokio::test]
+async fn an_invoke_stream_that_fails_after_a_held_cost_answered_shows_what_was_held() {
+    let mut held = chunk(&json!({
+        "type": "message_start",
+        "message": {"id": "msg_fixture", "type": "message", "role": "assistant",
+            "content": [], "model": "claude-fixture", "stop_reason": null,
+            "stop_sequence": null,
+            "usage": {"input_tokens": 1, "output_tokens": 0, "cost": {"total": 0.5}}}
+    }));
+    held.extend(chunk(&json!({"type": "message_delta",
+        "delta": {"stop_reason": "pause_turn", "stop_sequence": null},
+        "usage": {"output_tokens": 2, "cost": 0.25}})));
+    let half = chunk(&json!({"type": "message_stop"}));
+    let failures = [
+        ("a cut", cut_short(EVENT_STREAM, &held), held.clone()),
+        (
+            "an exception",
+            streamed(),
+            [held.clone(), exception("throttlingException")].concat(),
+        ),
+        ("a body that ends", streamed(), held.clone()),
+        (
+            "a frame left half read",
+            streamed(),
+            [&held[..], &half[..7]].concat(),
+        ),
+        (
+            "metrics outside the subset",
+            streamed(),
+            [
+                held.clone(),
+                chunk(&json!({"type": "message_stop",
+                    "amazon-bedrock-invocationMetrics": {"undeclared": 1}})),
+            ]
+            .concat(),
+        ),
+    ];
+    for (failure, head, body) in failures {
+        let (error, events, _) = failed_on(Api::AnthropicInvoke, head, body).await;
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "{failure}: {error:?}"
+        );
+        let costs: Vec<&str> = events
+            .iter()
+            .filter_map(|event| match event {
+                StreamEvent::Warning { code, message } if code == "usage-extension" => {
+                    Some(message.as_str())
+                }
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            costs,
+            [
+                "message_start.message.usage.cost: {\"total\":0.5}",
+                "message_delta.usage.cost: 0.25"
+            ],
+            "{failure}: {error:?}"
+        );
+    }
+}
+
 // ---------------------------------------------------------------------------------------------
 // Adversary, wave 2026-11-25-messages-empty-turn, unit 1
 // (story:messages-empty-turn-with-an-unmodelled-stop-reason). `docs/bedrock.md`, "Retry classes",

@@ -2248,9 +2248,167 @@ async fn a_cost_is_still_shown_when_the_turn_does_not_fail_by_this_rule() {
     assert_eq!(extensions(sink.events()), both);
 }
 
+/// A stream that held its costs at a `message_delta` after no content has answered. A failure
+/// after that delta is final, and it is not the stop without content, so what was held is shown
+/// before the failure is returned: the two costs, in the order the route reported them. The
+/// delta names a reason this projection does not model, or none yet.
+#[tokio::test]
+async fn a_failure_after_a_held_cost_answered_shows_what_was_held() {
+    let both = [
+        "message_start.message.usage.cost: {\"total\":0.5}",
+        "message_delta.usage.cost: 0.25",
+    ];
+    let endings = [
+        ("a body that ends", vec![]),
+        (
+            "an `overloaded_error`",
+            vec![json!({"type":"error","error":{"type":"overloaded_error","message":"busy"}})],
+        ),
+        (
+            "a keep-alive outside the subset",
+            vec![json!({"type":"ping","extra":1})],
+        ),
+        (
+            "a terminal event outside the subset",
+            vec![json!({"type":"message_stop","extra":1})],
+        ),
+        (
+            "a second header",
+            vec![message_start(json!({"input_tokens":11}))],
+        ),
+        (
+            "a payload after the terminal event",
+            vec![json!({"type":"message_stop"}), json!({"type":"ping"})],
+        ),
+    ];
+    for reason in [
+        json!("pause_turn"),
+        json!("refusal"),
+        json!("model_context_window_exceeded"),
+        Value::Null,
+    ] {
+        let held = [
+            message_start(costed_start()),
+            message_delta(reason.clone(), costed_end()),
+        ];
+        for (ending, after) in &endings {
+            let (outcome, sink) = decode(&[&held[..], &after[..]].concat()).await;
+            let error = outcome.expect_err("the stream fails");
+            assert!(!error.may_retry(), "{ending} after {reason}: {error:?}");
+            assert_eq!(
+                extensions(sink.events()),
+                both,
+                "{ending} after {reason}: {error:?}"
+            );
+        }
+        // The body ends inside an event. The framing's class is not changed here: the client
+        // makes a cut after an answer final (`tests/retry_class.rs`).
+        let mut cut = sse(&held);
+        cut.extend_from_slice(b"event: content_block_delta\ndata: {\"type\"");
+        let (outcome, sink) = decode_bytes(&cut).await;
+        let error = outcome.expect_err("the stream is cut");
+        assert_eq!(error.code, ErrorCode::Protocol, "a cut after {reason}");
+        assert_eq!(
+            extensions(sink.events()),
+            both,
+            "a cut after {reason}: {error:?}"
+        );
+    }
+}
+
+/// The other side: a stream that fails before it answered shows nothing, whatever the failure.
+/// The cost its header reported is dropped with the attempt.
+#[tokio::test]
+async fn a_failure_before_the_stream_answered_shows_no_held_cost() {
+    let header = [message_start(costed_start())];
+    let endings = [
+        ("a body that ends", vec![]),
+        (
+            "a keep-alive outside the subset",
+            vec![json!({"type":"ping","extra":1})],
+        ),
+        ("a second header", vec![message_start(costed_start())]),
+        (
+            "an `invalid_request_error`",
+            vec![json!({"type":"error","error":{"type":"invalid_request_error","message":"no"}})],
+        ),
+    ];
+    for (ending, after) in &endings {
+        let (outcome, sink) = decode(&[&header[..], &after[..]].concat()).await;
+        outcome.expect_err("the stream fails");
+        assert_eq!(sink.events(), [], "{ending}");
+    }
+    let mut cut = sse(&header);
+    cut.extend_from_slice(b"event: ping\ndata: {\"type\"");
+    let (outcome, sink) = decode_bytes(&cut).await;
+    outcome.expect_err("the stream is cut");
+    assert_eq!(sink.events(), [], "a cut");
+}
+
+/// A `message_delta` that is refused is the first payload that answers all the same: the cost
+/// the header reported is shown before the refusal, and the refused delta's own is not.
+#[tokio::test]
+async fn a_refused_delta_shows_the_cost_held_before_it_and_not_its_own() {
+    let events = [
+        message_start(costed_start()),
+        message_delta(json!(7), costed_end()),
+    ];
+    let (outcome, sink) = decode(&events).await;
+    let error = outcome.expect_err("a reason that is no name");
+    assert!(!error.may_retry(), "{error:?}");
+    assert_eq!(
+        extensions(sink.events()),
+        ["message_start.message.usage.cost: {\"total\":0.5}"]
+    );
+}
+
+/// What is held is shown through the caller's sink like any other event: a sink that refuses
+/// one, or a caller that cancelled, ends the turn with that failure and the rest stays unshown.
+#[tokio::test]
+async fn a_held_cost_the_caller_does_not_take_ends_the_turn_as_that_failure() {
+    let events = sse(&[
+        message_start(costed_start()),
+        message_delta(json!("pause_turn"), costed_end()),
+        json!({"type":"error","error":{"type":"overloaded_error","message":"busy"}}),
+    ]);
+    let mut sink = VecSink::new(1, 64 * 1024);
+    let outcome = decode_stream(
+        &events,
+        &request(),
+        binding().provenance(),
+        &mut sink,
+        &Cancel::new(),
+    )
+    .await;
+    let error = outcome.expect_err("the sink takes one event");
+    assert_eq!(
+        (error.code, error.message.as_str()),
+        (ErrorCode::TooLarge, "stream sink event bound reached")
+    );
+    assert_eq!(
+        extensions(sink.events()),
+        ["message_start.message.usage.cost: {\"total\":0.5}"]
+    );
+
+    let cancel = Cancel::new();
+    cancel.cancel();
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let outcome = decode_stream(
+        &events,
+        &request(),
+        binding().provenance(),
+        &mut sink,
+        &cancel,
+    )
+    .await;
+    let error = outcome.expect_err("the caller cancelled");
+    assert_eq!(error.code, ErrorCode::Cancelled);
+    assert_eq!(sink.events(), []);
+}
+
 /// Held reports are bounded like kept events. As many as a turn may carry items are held and
 /// dropped with a turn that then stops without content; one more is refused as `too-large`,
-/// with nothing shown either way.
+/// which is not that stop, so the reports held until then are shown before it.
 #[tokio::test]
 async fn held_usage_extensions_are_bounded_by_the_content_bound() {
     let costed = json!({"type":"message_delta","delta":{},
@@ -2274,7 +2432,15 @@ async fn held_usage_extensions_are_bounded_by_the_content_bound() {
     assert_eq!(sink.events(), []);
 
     events.push(costed);
-    let (outcome, sink) = decode(&events).await;
+    let mut sink = VecSink::new(llm_core::MAX_ITEMS, 1 << 20);
+    let outcome = decode_stream(
+        &sse(&events),
+        &request(),
+        binding().provenance(),
+        &mut sink,
+        &Cancel::new(),
+    )
+    .await;
     let error = outcome.expect_err("one report past the bound");
     assert_eq!(
         (error.code, error.message.as_str(), error.may_retry()),
@@ -2284,7 +2450,11 @@ async fn held_usage_extensions_are_bounded_by_the_content_bound() {
             false
         )
     );
-    assert_eq!(sink.events(), []);
+    assert_eq!(
+        extensions(sink.events()),
+        vec!["message_delta.usage.cost: 0.125"; llm_core::MAX_ITEMS]
+    );
+    assert_eq!(sink.events().len(), llm_core::MAX_ITEMS);
 }
 
 /// A complete (non-streamed) message finishes through the same function: without content each
@@ -2411,6 +2581,118 @@ async fn adversary_w30_the_refusal_row_is_chosen_by_its_whole_name() {
             ErrorCode::Unavailable,
             true,
             UNMODELLED_WITHOUT_CONTENT,
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, second pass, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). Guards for when a held cost is
+// shown. Every case above reads the sink after the whole stream was decoded, and the order of
+// the warnings among the other events is the same whether a cost is shown at its delta or held
+// to the next content or to `message_stop`. So a decoder that holds every delta's cost, or holds
+// one although the turn has content or a modelled reason, passes them; it differs only for the
+// caller that watches the stream, and for the stream that is cut before `message_stop`.
+// `docs/messages.md`: a `message_delta`'s cost is "shown with that delta, once the whole delta
+// was accepted", and one held is shown "at the delta that names `end_turn`, `tool_use` or
+// `max_tokens`".
+// ---------------------------------------------------------------------------------------------
+
+/// How many `usage-extension` warnings the caller has been shown after each of `events`, applied
+/// one at a time.
+async fn adversary_w30b_costs_shown_after_each(events: &[Value]) -> Vec<usize> {
+    let mut decoder = StreamDecoder::new(binding().provenance().clone());
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let cancel = Cancel::new();
+    let mut shown = Vec::new();
+    for event in events {
+        let payload = llm_http::SseEvent::Payload {
+            event: event["type"].as_str().map(str::to_owned),
+            data: event.clone(),
+        };
+        decoder
+            .apply(&payload, &mut sink, &cancel)
+            .await
+            .unwrap_or_else(|error| panic!("{event}: {error}"));
+        shown.push(extensions(sink.events()).len());
+    }
+    shown
+}
+
+/// A turn that holds content shows a delta's cost with that delta, whatever reason it names:
+/// after a closed block, while a block is open, and after a kept event.
+#[tokio::test]
+async fn adversary_w30b_a_delta_after_content_shows_its_cost_with_that_delta() {
+    let open = json!({"type":"content_block_start","index":0,
+        "content_block":{"type":"text","text":""}});
+    for reason in [
+        "end_turn",
+        "max_tokens",
+        "pause_turn",
+        "stop_sequence",
+        "refusal",
+        "model_context_window_exceeded",
+    ] {
+        let closed = [
+            message_start(costed_start()),
+            open.clone(),
+            json!({"type":"content_block_delta","index":0,
+                "delta":{"type":"text_delta","text":"Partial"}}),
+            json!({"type":"content_block_stop","index":0}),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&closed).await,
+            [0, 1, 1, 1, 2],
+            "`{reason}` after a closed block"
+        );
+        let still_open = [
+            message_start(costed_start()),
+            open.clone(),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&still_open).await,
+            [0, 1, 2],
+            "`{reason}` while a block is open"
+        );
+        let kept = [
+            message_start(costed_start()),
+            json!({"type":"an_event_in_no_list"}),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&kept).await,
+            [0, 1, 2],
+            "`{reason}` after a kept event"
+        );
+    }
+}
+
+/// A turn without content shows what it held at the delta that names a modelled reason, each
+/// of the three, and not later: the header's cost, a cost of an earlier delta that named no
+/// reason, and that delta's own.
+#[tokio::test]
+async fn adversary_w30b_a_modelled_reason_without_content_shows_the_held_costs_at_its_delta() {
+    for reason in ["end_turn", "tool_use", "max_tokens"] {
+        let settled = [
+            message_start(costed_start()),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&settled).await,
+            [0, 2],
+            "`{reason}`"
+        );
+        let after_an_earlier_report = [
+            message_start(costed_start()),
+            json!({"type":"message_delta","delta":{},"usage":{"output_tokens":1,"cost":0.125}}),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&after_an_earlier_report).await,
+            [0, 0, 3],
+            "`{reason}` after a delta that named no reason"
         );
     }
 }
