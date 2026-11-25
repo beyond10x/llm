@@ -6,6 +6,14 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- Docs UX gate: the five page checks run in `ux-browser` 0.8.1 of the uxui repository; `ux/core/layout.ts` is removed
+- `ux-browser` is pinned by version and SHA-256 in the step "Install ux-browser" of `docs-ux.yml`, its one place
+- `llm-conformance ux-browser` prints the pinned binary: stored under `target/ux-browser/` or fetched by digest
+- `task ux-ratchet` reads the five values from ux-browser's `ratchet-evidence/1` document and refuses any other
+- `task ux-round` runs `ux-browser` before its specs; `ux/baseline.json` holds values measured through `ux-browser`
+
 ## [0.32.0] - 2026-11-25
 
 ### Changed

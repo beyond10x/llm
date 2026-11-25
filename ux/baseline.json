@@ -1,5 +1,5 @@
 {
-  "about": "llm docs site (website/) ratchet, ui-iteration-loop § 6. Lower is better. Page scenarios: sums over the gating viewports 1440x900 and 390x844 × light and dark; layout_shift.after_ready is the max of the shifts after load and fonts. Task scenarios: the screen-only user at 1440x900 light. Update with `task ux-ratchet -- --update [--decision <id>]`.",
+  "about": "llm docs site (website/) ratchet, ui-iteration-loop § 6. Lower is better. Page scenarios: sums over the gating viewports 1440x900 and 390x844 × light and dark; layout_shift.after_ready is the max of the shifts after load and fonts; the layout, always-visible, keyboard and layout-shift values are read from the evidence of the pinned ux-browser, the axe values from the L2 results. Task scenarios: the screen-only user at 1440x900 light. Update with `task ux-ratchet -- --update [--decision <id>]`.",
   "scenarios": {
     "page-docs": {
       "always_visible.misses": {
@@ -491,7 +491,7 @@
         "tolerance": 0
       },
       "layout_shift.after_ready": {
-        "value": 0.0006,
+        "value": 0,
         "tolerance": 0.01
       }
     },
@@ -567,7 +567,7 @@
         "tolerance": 0
       },
       "layout_shift.after_ready": {
-        "value": 0.0006,
+        "value": 0,
         "tolerance": 0.01
       }
     },
@@ -643,7 +643,7 @@
         "tolerance": 0
       },
       "layout_shift.after_ready": {
-        "value": 0.0013,
+        "value": 0,
         "tolerance": 0.01
       }
     },

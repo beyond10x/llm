@@ -79,6 +79,7 @@ story that says so.
 | No field a client sends is dropped: each ingress decoder carries, translates, reports or refuses it, and refuses an unknown key at every level by its path | `crates/llm-messages/tests/client_request_fields.rs::every_refusal_names_its_field_by_path`, `crates/llm-responses/tests/client_fields.rs::a_key_outside_the_subset_is_refused_by_its_path_at_every_level`, `crates/llm-chat/tests/ingress.rs::an_unknown_key_on_a_content_part_is_refused_by_its_path` and the other `an_unknown_key_on_*` cases there, `crates/llm-chat/tests/every_output_delta.rs::a_refusal_only_message_reads_back_and_a_refusal_that_is_not_a_string_is_refused_by_its_path`; advisory omissions `checks/conformance/tests/client_turns.rs` |
 | The conformance suite answers at least 1080 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
 | The gate runs only the `ess` release `gate.yml` pins: another version is refused, naming both, before a projection is made; fetched bytes with another digest are not started; the manifest, the lockfile and the documents name that one version; no task and no workflow step names an `ess` of its own | `checks/conformance/tests/client_turns.rs::pinned_ess::another_ess_on_path_is_refused_with_both_versions_before_a_projection_is_made`, `checks/conformance/tests/client_turns.rs::pinned_ess::validating_the_specification_refuses_another_ess_the_same_way`, `checks/conformance/tests/client_turns.rs::pinned_ess::with_another_ess_on_path_the_stored_one_projects`, `checks/conformance/src/ess.rs::tests::fetched_bytes_with_another_digest_are_not_started_and_not_kept`; `checks/xtask/tests/gate/ess_pin.rs::the_manifest_and_the_lockfile_are_on_the_version_ci_installs`, `checks/xtask/tests/gate/ess_pin.rs::the_documents_name_the_version_ci_installs`, `checks/xtask/tests/gate/ess_pin.rs::no_task_runs_an_ess_the_runner_did_not_resolve`, `checks/xtask/tests/gate/ess_pin.rs::no_workflow_step_runs_an_ess_the_runner_did_not_resolve` |
+| The docs UX gate takes its five page checks from the `ux-browser` release `docs-ux.yml` pins and from no other: fetched bytes with another digest are not started; a `ux-browser` on `PATH` is not used; evidence another version wrote is refused, naming both, before a value is compared; the ratchet takes those five numbers from the evidence alone; no task text names a `ux-browser` to start or a download; the install step of `docs-ux.yml` is read whole, and no workflow text outside it names a `ux-browser`, a release of it, the uxui repository or `UX_BROWSER`; no step uses an action of this repository; in `docs-ux.yml` no other step names the runner's environment or path file (`GITHUB_ENV`, `GITHUB_PATH`), the workflow and its jobs have no `defaults`, and no member is named `BASH_ENV`. A step that hides the name (a name built from parts, a script file it runs, an action of another repository) is not found: the evidence's version check and the digest the install step checks are what hold then | `checks/conformance/src/ess.rs::tests::ux_browser::fetched_bytes_with_another_digest_start_nothing_and_are_not_kept`, `checks/conformance/src/ess.rs::tests::ux_browser::a_ux_browser_on_path_is_never_used_and_never_started`, `checks/conformance/tests/client_turns.rs::pinned_ess::ux_browser::a_release_with_other_bytes_is_refused_naming_the_version_needed_and_nothing_is_started`; in `ux/tests/l1-page-checks.spec.ts` the cases "a document that is not the evidence of the pinned ux-browser is refused with what was found and what is needed", "toMeasured takes the five numbers from the evidence and axe from the L2 results, whatever else a result file holds", "`cli.ts ratchet` refuses a missing document, another format and another ux-browser before it compares anything" and "one page per defect goes red by its key or its value, and the clean page stays green"; `checks/xtask/tests/gate/ux_browser_pin.rs::the_tasks_take_ux_browser_from_the_runner_and_fetch_nothing_themselves`, `checks/xtask/tests/gate/ux_browser_pin.rs::an_install_step_with_a_line_or_a_member_the_guard_does_not_read_is_refused`, `checks/xtask/tests/gate/ux_browser_pin.rs::no_workflow_step_starts_a_ux_browser_the_install_step_did_not_hand_over`, `checks/xtask/tests/gate/ux_browser_pin.rs::a_workflow_that_fetches_or_hands_over_another_ux_browser_is_found`, `checks/xtask/tests/gate/ux_browser_pin.rs::a_step_that_uses_an_action_of_this_repository_is_found`, `checks/xtask/tests/gate/ux_browser_pin.rs::in_docs_ux_another_writer_of_the_runners_files_a_defaults_and_a_bash_env_are_found`, `checks/xtask/tests/gate/ux_browser_pin.rs::the_documents_name_the_version_ci_installs` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.
@@ -178,6 +179,52 @@ these names another version), and `contracts/suite.json` and `contracts/schema/`
 line in `CHANGELOG.md`. A version moved without its digest fails the "Install ess" step of CI,
 which runs after the step "Rust tests", and the local fetch.
 
+The docs UX gate ("Documentation") takes its `ux-browser` through the same resolver
+(`ess::UX_BROWSER` in `checks/conformance/src/ess.rs`):
+`cargo run --locked -p llm-conformance -- ux-browser`, from the repository root, prints the path
+of the pinned one, and `task ux-install`, `task ux-check` and `task ux-round` get it there and
+hand it to the harness as `UX_BROWSER`. The pin has one source, `UX_BROWSER_VERSION` and
+`UX_BROWSER_SHA256` of the "Install ux-browser" step in `docs-ux.yml`. CI installs `ux-browser`
+0.8.1, a release of the uxui repository, in that step and hands its path on as `UX_BROWSER`; that
+workflow runs no `cargo`. This release answers no `--version`, so the places differ from the
+ones of `ess`:
+
+1. the stored `target/ux-browser/ux-browser-<version>-x86_64-unknown-linux-gnu/ux-browser` is
+   taken on its place in the store alone: an executable file there is the pinned release without
+   a digest check, and the resolver starts nothing to ask it;
+2. `PATH` is not searched, so a `ux-browser` there is not used;
+3. the release asset is fetched into `target/ux-browser/` as the one of `ess` is, and kept only
+   when its line in the release's `SHA256SUMS` is the pinned digest and the downloaded bytes
+   have that digest.
+
+Whoever can write the store runs code in the docs UX gate. A stored one's place that holds
+something else than an executable file is refused and not replaced: remove it.
+`LLM_UX_BROWSER_STORE` names another store than `target/ux-browser` and `LLM_UX_BROWSER_RELEASES`
+another address than GitHub's releases; the tests set both. What a run measured with is checked
+after it: the evidence names its tool (`evidence.conditions.tools.ux-browser`), and the L2 case of
+the page checks and `cli.ts ratchet` refuse a document that names another version than the pin,
+with both, before a value of it is compared (`ux/core/evidence.ts`). The harness refuses to start
+without `UX_BROWSER` as an absolute path to a file. `checks/xtask/tests/gate/ux_browser_pin.rs`
+holds what a search of the texts holds: no task text names a `ux-browser` to start or a download;
+the install step of `docs-ux.yml` is read whole; no workflow text outside it names a
+`ux-browser`, a release of it, the uxui repository or `UX_BROWSER`; no step uses an action of this
+repository; and in `docs-ux.yml` no other step names `GITHUB_ENV` or `GITHUB_PATH`, the workflow
+and its jobs have no `defaults`, and no member is named `BASH_ENV`. A step that hides the name (a
+name built from parts, a script file it runs, an action of another repository) is not found: the
+evidence's version check and the digest the install step checks are what hold then.
+
+A `ux-browser` pin move changes `UX_BROWSER_VERSION` and `UX_BROWSER_SHA256` in `docs-ux.yml`
+together, the digest read from the `ux-browser-<version>-x86_64-unknown-linux-gnu.tar.gz` line of
+that release's `SHA256SUMS`. With them move the version this file names in the paragraph above
+(`ux_browser_pin.rs` fails while it, README.md or `website/docs/getting-started.md` names
+another), `ux/ux-browser.checks.yaml` and `ux/ux-browser.round.checks.yaml` where the release
+reads another configuration, and `ux/baseline.json` where a value moved
+(`task ux-ratchet -- --update` after a green `task ux-check`). The move gets a `### Changed` line
+in `CHANGELOG.md`. A version moved without its digest fails the "Install ux-browser" step of CI
+and the local fetch. The Chromium both configurations pin with `chrome: {build: <n>}` is the
+`chromium-<n>` that the `@playwright/test` of `ux/package-lock.json` installs: it moves with that
+package, in both files (`ux/tests/l1-page-checks.spec.ts` fails while one of them differs).
+
 Build into the worktree's own `target/` and never set `CARGO_TARGET_DIR`. Let cargo create
 `target/`: one made by hand before the first build has no `CACHEDIR.TAG`, and
 `worktree discard-cache` then keeps the whole build as unrecognised. End every tree with
@@ -219,14 +266,29 @@ routes to them. A Markdown page links an `.mdx` page by route (`/docs/status`), 
 Writing rules and the end-to-end procedure are the workspace `docs` skill.
 
 `ux/` is the site's UX loop (ui-iteration-loop): a Playwright and axe-core harness in TypeScript
-over the built site served locally. `task ux-check` runs the findings rule, L1 core tests, the L2
-layout contract (no horizontal scroll, always-visible navbar, search, theme toggle and sidebar, axe
-0 serious or critical, keyboard reach) at 1440x900 and 390x844 in both themes, the L3 screen-only
-user over `ux/scenarios/task-*`, then the ratchet against `ux/baseline.json` and main's.
-`.github/workflows/docs-ux.yml` runs it on pull requests that touch `website/`, `docs/` or `ux/`.
-A gate failure is fixed, or waived only by an open finding in `ux/findings/`; an improved value is
-taken into the baseline in the same change (`task ux-ratchet -- --update`). `task ux-round` writes
-a round to `ux/rounds/R-nn/`. Build the site first; a new page needs `task ux-scenarios`.
+over the built site served locally, and the five page checks of the pinned `ux-browser` ("Gate")
+over the same build. `task ux-check` runs the findings rule, the L1 core tests, L2 at 1440x900 and
+390x844 in both themes, the L3 screen-only user over `ux/scenarios/task-*`, then the ratchet
+against `ux/baseline.json` and main's. L2 has two parts. The page checks (no page scroll, no
+overflow, always-visible navbar, search, theme toggle and sidebar, keyboard reach, layout shift)
+are measured by `ux-browser` as `ux/ux-browser.checks.yaml` declares them; the harness measures
+axe (0 serious or critical) and the scroll containers. `ux-browser` is started by the global setup
+of the Playwright run, beside the specs, and the last case of `ux/tests/l2-layout.spec.ts` awaits
+it and fails on a hard-gate failure no open finding waives and on a page it could not measure. So
+the one bound of the step, Playwright's `globalTimeout` of 120 s, covers it: a run over the bound
+ends with exit 1, and the `ux-browser` it started is killed with its Chromium. A runner ended by
+SIGKILL ends nothing: the `ux-browser` it started runs on until its own run ends. The ratchet
+takes the five page-check numbers of a page from the `ratchet-evidence/1` document `ux-browser`
+wrote (`ux/.out/check/page-checks.evidence.json`), the axe numbers from the L2 results, and refuses a
+missing document, one of another format and one of another `ux-browser` version before it
+compares anything. The break-tests of the page checks run the pinned binary over a small site
+with one clean page and one page per defect (`ux/tests/l1-page-checks.spec.ts`).
+`.github/workflows/docs-ux.yml` runs the gate on pull requests that touch `website/`, `docs/` or
+`ux/`. A gate failure is fixed, or waived only by an open finding in `ux/findings/`; an improved
+value is taken into the baseline in the same change (`task ux-ratchet -- --update`).
+`task ux-round` writes a round to `ux/rounds/R-nn/`: it runs `ux-browser` over the round's five
+viewports first (`ux/ux-browser.round.checks.yaml`), then the specs. Build the site and run
+`task ux-install` first; a new page needs `task ux-scenarios`.
 
 A release or a wave that changes a crate, a command, a default or a capability updates, in the same
 change: `CHANGELOG.md` (under Unreleased), `docs/implementation-status.md` and then

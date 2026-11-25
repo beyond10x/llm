@@ -445,3 +445,155 @@ fn adversary_w32b_an_argument_that_is_not_utf8_reaches_the_pinned_ess_as_written
     );
     assert_eq!(output.status.code(), Some(7), "{stderr}");
 }
+
+/// `llm-conformance ux-browser` prints the `ux-browser` `docs-ux.yml` pins and starts none
+/// (`story:docs-ux-layout-checks-from-ux-browser`).
+mod ux_browser {
+    use super::{repository, stand_in};
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        process::{Command, Output, Stdio},
+    };
+
+    /// The version and digest the "Install ux-browser" step of `docs-ux.yml` names.
+    fn pinned() -> (String, String) {
+        let text = fs::read_to_string(repository().join(".github/workflows/docs-ux.yml"))
+            .expect("docs-ux.yml is read");
+        let workflow: serde_yaml::Value = serde_yaml::from_str(&text).expect("docs-ux.yml is YAML");
+        let step = workflow["jobs"]["ux"]["steps"]
+            .as_sequence()
+            .expect("steps")
+            .iter()
+            .find(|step| step["name"].as_str() == Some("Install ux-browser"))
+            .expect("the job ux has a step \"Install ux-browser\"");
+        let variable = |name: &str| {
+            step["env"][name]
+                .as_str()
+                .unwrap_or_else(|| panic!("the step names {name}"))
+                .to_owned()
+        };
+        (
+            variable("UX_BROWSER_VERSION"),
+            variable("UX_BROWSER_SHA256"),
+        )
+    }
+
+    /// Runs `llm-conformance ux-browser` at the repository root with the store and the release
+    /// address under `directory`. A `ux-browser` stand-in is the first program on its `PATH`,
+    /// before the programs a fetch needs.
+    fn run(directory: &Path) -> (Output, Vec<String>) {
+        let log = directory.join("calls");
+        stand_in(
+            &directory.join("bin/ux-browser"),
+            "path",
+            "ux-browser",
+            &log,
+        );
+        let mut path = vec![directory.join("bin")];
+        path.extend(std::env::split_paths(
+            &std::env::var_os("PATH").expect("a PATH"),
+        ));
+        let output = Command::new(env!("CARGO_BIN_EXE_llm-conformance"))
+            .arg("ux-browser")
+            .current_dir(repository())
+            .env("PATH", std::env::join_paths(path).expect("a PATH"))
+            .env("LLM_UX_BROWSER_STORE", directory.join("store"))
+            .env(
+                "LLM_UX_BROWSER_RELEASES",
+                format!("file://{}/release", directory.display()),
+            )
+            .stdin(Stdio::null())
+            .output()
+            .expect("llm-conformance runs");
+        let calls = fs::read_to_string(&log)
+            .unwrap_or_default()
+            .lines()
+            .map(str::to_owned)
+            .collect();
+        (output, calls)
+    }
+
+    fn stored(directory: &Path, version: &str) -> PathBuf {
+        directory
+            .join("store")
+            .join(format!("ux-browser-{version}-x86_64-unknown-linux-gnu"))
+            .join("ux-browser")
+    }
+
+    #[test]
+    fn the_stored_ux_browser_is_printed_and_none_is_started() {
+        let (version, _) = pinned();
+        let directory = tempfile::tempdir().expect("a temporary directory");
+        let stored = stored(directory.path(), &version);
+        stand_in(
+            &stored,
+            "stored",
+            "ux-browser",
+            &directory.path().join("calls"),
+        );
+        let (output, calls) = run(directory.path());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert_eq!(output.status.code(), Some(0), "{stderr}");
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout),
+            format!("{}\n", stored.display()),
+            "the path is the whole of standard output: {stderr}"
+        );
+        assert!(calls.is_empty(), "nothing was started: {calls:?}");
+    }
+
+    #[test]
+    fn a_release_with_other_bytes_is_refused_naming_the_version_needed_and_nothing_is_started() {
+        let (version, digest) = pinned();
+        let directory = tempfile::tempdir().expect("a temporary directory");
+        let name = format!("ux-browser-{version}-x86_64-unknown-linux-gnu");
+        let asset = format!("{name}.tar.gz");
+        let log = directory.path().join("calls");
+        stand_in(
+            &directory.path().join("tree").join(&name).join("ux-browser"),
+            "fetched",
+            "ux-browser",
+            &log,
+        );
+        let release = directory.path().join("release").join(&version);
+        fs::create_dir_all(&release).expect("the release directory");
+        let packed = Command::new("tar")
+            .arg("-czf")
+            .arg(release.join(&asset))
+            .arg("-C")
+            .arg(directory.path().join("tree"))
+            .arg(&name)
+            .status()
+            .expect("tar runs");
+        assert!(packed.success(), "tar packs the asset");
+        // The release's own list agrees with the pin; only the bytes do not.
+        fs::write(release.join("SHA256SUMS"), format!("{digest}  {asset}\n"))
+            .expect("SHA256SUMS is written");
+
+        let (output, calls) = run(directory.path());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert_eq!(output.status.code(), Some(1), "{stderr}");
+        assert!(output.stdout.is_empty(), "no path is printed: {stderr}");
+        assert!(
+            stderr.contains(&format!(
+                "ux-browser {version} is needed (UX_BROWSER_VERSION of the step \"Install ux-browser\" in .github/workflows/docs-ux.yml) and none was found"
+            )),
+            "the version needed: {stderr}"
+        );
+        assert!(
+            stderr.contains(&format!("fetch: {asset} has SHA-256 "))
+                && stderr.contains(&format!(", the pin is {digest}")),
+            "the digest found and the pin: {stderr}"
+        );
+        assert!(
+            stderr.contains("PATH: not searched"),
+            "the one on PATH was not asked: {stderr}"
+        );
+        assert!(calls.is_empty(), "nothing was started: {calls:?}");
+        assert!(
+            !stored(directory.path(), &version).exists(),
+            "nothing was stored: {stderr}"
+        );
+    }
+}
