@@ -14,7 +14,7 @@ source: crates/*/examples, crates/llm-docs/examples, Cargo.toml, .github/workflo
 | --- | --- | --- |
 | Rust | 1.98, edition 2024 | The workspace |
 | [Task](https://taskfile.dev) | v3 | `task check` and `task rust` |
-| [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) | 0.56.0 in CI | The specification and conformance stages of `task check` |
+| [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) | 0.99.1 in CI; the gate fetches it on x86_64 Linux when it is not installed | The specification and conformance stages of `task check` |
 | [AEP](https://beyond10x.github.io/ecosystem/aep/) ([GitHub](https://github.com/beyond10x/aep)) | 0.68.0 in CI | The planning stage of `task check` |
 
 Rust alone is enough to build, test and run the examples.

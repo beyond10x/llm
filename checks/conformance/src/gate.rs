@@ -8,8 +8,18 @@ use std::{
     process::Command,
 };
 
-fn ess(args: &[&str]) -> Result<(), Box<dyn Error>> {
-    if !Command::new("ess").args(args).status()?.success() {
+/// The repository root this runner was built in, which every command must be started from:
+/// success is never inferred from a suite beside another checkout.
+pub fn root() -> Result<PathBuf, Box<dyn Error>> {
+    let root = fs::canonicalize(Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."))?;
+    if fs::canonicalize(".")? != root {
+        return Err("run conformance from this build's repository root".into());
+    }
+    Ok(root)
+}
+
+fn project(ess: &Path, args: &[&str]) -> Result<(), Box<dyn Error>> {
+    if !Command::new(ess).args(args).status()?.success() {
         return Err("ESS projection refused; see diagnostics above".into());
     }
     Ok(())
@@ -102,12 +112,11 @@ fn every_authored_scenario_is_declared() -> Result<(), Box<dyn Error>> {
 }
 
 pub fn check() -> Result<(), Box<dyn Error>> {
-    // Require the repository root; never infer success from a suite beside another checkout.
-    if fs::canonicalize(".")?
-        != fs::canonicalize(Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."))?
-    {
-        return Err("run conformance from this build's repository root".into());
-    }
+    let root = root()?;
+    // The `ess` gate.yml pins, or a refusal naming the version found, before anything is
+    // projected or compared: another version projects other bytes.
+    let pinned = crate::ess::pinned(&root)?;
+    let ess = |args: &[&str]| project(&pinned, args);
     every_authored_scenario_is_declared()?;
     // Unique projection directory prevents stale generated files from masking drift.
     let projection = format!("target/conformance/projection-{}", std::process::id());

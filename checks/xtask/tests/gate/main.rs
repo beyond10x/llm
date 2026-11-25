@@ -6,6 +6,7 @@
 
 mod budget;
 mod debug_info;
+mod ess_pin;
 #[cfg(unix)]
 mod list;
 mod paths;

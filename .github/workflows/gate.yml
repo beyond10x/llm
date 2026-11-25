@@ -32,7 +32,7 @@ jobs:
               [ -n "$path" ] || continue
               seen=yes
               case $path in
-                docs/implementation-status.md | website/*) decision=run ;;
+                AGENTS.md | README.md | docs/implementation-status.md | website/*) decision=run ;;
                 .engineering/*) ;;
                 *.md) ;;
                 *) decision=run ;;
@@ -93,8 +93,8 @@ jobs:
       - name: Install ess
         if: needs.changes.outputs.decision != 'skip'
         env:
-          ESS_VERSION: "0.87.0"
-          ESS_SHA256: b668a13e0a19a4d6c049499e2a2e3cd745e9454cf5e6dc2d0bcac4b156675cc6
+          ESS_VERSION: "0.99.1"
+          ESS_SHA256: f69916ede161ef991fc96895ee2cc18f7e24cabac7e1de88f4bb85440fa6991d
         run: |
           set -euo pipefail
           asset="ess-$ESS_VERSION-x86_64-unknown-linux-gnu.tar.gz"
@@ -109,7 +109,7 @@ jobs:
       - name: Specification and plan
         if: needs.changes.outputs.decision != 'skip'
         run: |
-          ess specify validate --path spec
+          cargo run --locked -p llm-conformance -- ess specify validate --path spec
           cargo run --locked -p llm-conformance -- check
           aep plan artifact validate
       - name: Conformance reports

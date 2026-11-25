@@ -6,6 +6,13 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- ESS 0.99.1 (was 0.87.0) in CI and `llm-conformance`; the suite is byte-identical, 314 schema files lose `source_digest`
+- `task check` runs only the pinned `ess`: stored under `target/ess/`, on `PATH` at that version, or fetched by digest
+- `llm-conformance check` refuses another `ess` version, naming both, before it projects or compares anything
+- `llm-conformance ess <arguments>` runs the pinned `ess`; `task check` and CI validate the specification through it
+
 ### Fixed
 
 - **Breaking:** `llm-decide`: a model classifier takes an answer only whole; one it took before abstains `OffLabel`
