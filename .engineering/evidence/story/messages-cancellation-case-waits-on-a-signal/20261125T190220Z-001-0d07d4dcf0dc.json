@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T19:02:20Z",
+  "actor": "human:operator",
+  "artifact": "story:messages-cancellation-case-waits-on-a-signal",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "at becdb9a1d: task test: 2442 tests in 5 runs, all passed, 8.4 s of the 120 s bound. cargo test -p llm-messages --test client 12 cases before the unit, 13 after. The cancellation case of the commit before the unit is red with the response head 400 ms or 150 ms late (left: Unknown, right: Accepted) and the unit's case passes; each of the two changed cases passed 100 of 100 runs beside a Clippy build and 100 of 100 beside four looping copies of the test executable",
+    "reference": "crates/llm-messages/tests/client.rs"
+  }
+}

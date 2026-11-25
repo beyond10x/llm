@@ -62,7 +62,7 @@ scope:
 - confidence: inferred
   path: crates/llm-decide/src/classify.rs
 - confidence: inferred
-  path: crates/llm-decide/tests/classify/whole_answer.rs
+  path: crates/llm-decide/tests/main/classify/whole_answer.rs
 - confidence: cited
   path: crates/llm-messages/src/codec.rs
 - confidence: cited
@@ -93,7 +93,7 @@ scope:
   path: spec/domains/decisions.yaml
 - confidence: inferred
   path: website/docs/guides/call-a-model-with-one-forced-tool.md
-revision: 46
+revision: 47
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-25T14:06:40Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-25T14:06:41Z", actor: "human:operator", revision: 3}

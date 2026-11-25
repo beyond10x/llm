@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T19:02:20Z",
+  "actor": "human:operator",
+  "artifact": "story:messages-cancellation-case-waits-on-a-signal",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "the wave gate on wave/2026-11-25-tests-without-a-clock at becdb9a1d, each step run alone with its own exit status, its compile and test jobs on the pool's build node: task rust, task test, task docs, llm-conformance ess specify validate --path spec, llm-conformance check, aep plan artifact validate, all exit 0. No live call",
+    "reference": "docs/plan/wave-2026-11-25-tests-without-a-clock.md"
+  }
+}

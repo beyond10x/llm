@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T19:02:33Z",
+  "actor": "human:operator",
+  "artifact": "story:rust-toolchain-file-pins-the-gate",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "pull request 111 at 209fafe80, merged into main as b7be02632: the forge's Gate run 45653098301 (jobs libraries-and-plan on Linux, native-adapter-builds on macos-latest and windows-latest), Documentation validation run 45653098127 and Shared source gates ended success on the pull request head; Gate, Shared source gates and Documentation validation ended success on main at b7be02632. Each job that compiles installs the release rust-toolchain.toml names with a bare rustup toolchain install. rustc --version in the repository prints 1.98.0 on the host. The forge has no Docs UX gate run yet: that check arrives with wave 7",
+    "reference": "rust-toolchain.toml"
+  }
+}
