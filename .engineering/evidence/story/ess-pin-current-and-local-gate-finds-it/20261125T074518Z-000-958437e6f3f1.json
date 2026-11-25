@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T07:45:18Z",
+  "actor": "human:operator",
+  "artifact": "story:ess-pin-current-and-local-gate-finds-it",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "llm-conformance check with the pinned ess 0.99.1 at e64d66e6e: 1080 of 1080 passed, failed 0, skipped 0, three runs; contracts/baseline.json and contracts/suite.json untouched. 2415 tests in 5 runs, all passed (the workspace run 2101); the runs took 9.9 s of the 120 s bound; slowest 4.7 s (`llm-bedrock::process_credentials an_expired_answer_makes_every_caller_wait_for_the_one_run`), a test this wave did not touch. pinned_ess::another_ess_on_path_is_refused_with_both_versions_before_a_projection_is_made and pinned_ess::validating_the_specification_refuses_another_ess_the_same_way passed in task test; the fourteen cases of the two adversary passes passed",
+    "reference": "contracts/baseline.json"
+  }
+}

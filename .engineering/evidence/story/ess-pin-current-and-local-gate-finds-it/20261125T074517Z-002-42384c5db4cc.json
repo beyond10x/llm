@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T07:45:17Z",
+  "actor": "human:operator",
+  "artifact": "story:ess-pin-current-and-local-gate-finds-it",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "the wave gate on wave/2026-11-25-ess-pin at e64d66e6e, each step run alone as a pool job on the build node with no ess carried in: task rust, task test, task docs, llm-conformance ess specify validate --path spec (ess 0.99.1), llm-conformance check, aep plan artifact validate, all exit 0",
+    "reference": "docs/plan/wave-2026-11-25-ess-pin.md"
+  }
+}

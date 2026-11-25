@@ -2,14 +2,18 @@
 format: aep.planning-md/3
 id: story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason
 kind: story
-status: draft
+status: active
 title: A Bedrock Converse turn that stops for an unmodelled reason without content is a classified failure
 tags:
 - from-finding
 relations:
 - informed_by: review-result:adversary-w30-messages-empty-turn-pass-1
 - decomposes: epic:bedrock
-revision: 1
+- serves: vision:portable-model-inference
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-25T07:45:27Z", actor: "human:operator", revision: 2}
+- {from: "proposed", to: "active", at: "2026-11-25T07:45:27Z", actor: "human:operator", revision: 3}
 ---
 ## Context
 

@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T07:45:18Z",
+  "actor": "human:operator",
+  "artifact": "story:messages-empty-turn-with-an-unmodelled-stop-reason",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "issue 83 was closed as completed by the bot on 2026-11-25 04:26 CET (closed_at 2026-11-25T03:26:29Z) with one comment naming release 0.30.0: https://github.com/beyond10x/llm/issues/83#issuecomment-7151916429",
+    "reference": "CHANGELOG.md"
+  }
+}
