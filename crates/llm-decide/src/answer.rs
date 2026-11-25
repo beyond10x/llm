@@ -1,8 +1,11 @@
-//! Reading a model's answer as the one JSON value it ended on.
+//! Reading a model's answer as the one JSON value it ended on: the judge's verdict and the
+//! classifier's label on its two model paths.
 //!
-//! An answer is taken only when it is whole and has one reading. [`whole`] returns `None` for
-//! every answer that is cut off, split, mixed with something else, or that a JSON reader would
-//! have to choose a reading of.
+//! An answer is taken only when it is whole and has one reading. [`whole`] reads an answer given
+//! as text and returns `None` for every answer that is cut off, split, mixed with something
+//! else, or that a JSON reader would have to choose a reading of. [`call`] reads an answer given
+//! as the arguments of a tool call and returns `None` for a call of a turn that did not stop for
+//! it, for more than one call and for a call beside a refusal.
 
 use llm_core::{Item, StopReason, TurnOutcome};
 use serde::de::{DeserializeSeed, Deserializer, Error as _, MapAccess, SeqAccess, Visitor};
@@ -43,6 +46,33 @@ pub(crate) fn whole(outcome: &TurnOutcome) -> Option<Value> {
     let value = Strict(MAX_DEPTH).deserialize(&mut reader).ok()?;
     reader.end().ok()?;
     integers_are_exact(text).then_some(value)
+}
+
+/// The arguments of the outcome's one call to the tool `name`, as the protocol decoder parsed
+/// them, or `None` when the outcome does not carry exactly that:
+///
+/// - the turn did not stop for its tool call (the output limit, an incomplete answer), so the
+///   call may not be all the model meant to say;
+/// - the outcome has no tool call, more than one, or one to another tool;
+/// - a refusal stands beside the call.
+///
+/// Assistant text and state the provider keeps ([`Item::Opaque`]) beside the call are not part of
+/// the answer. A key the model gave twice in the arguments is not seen here: they arrive parsed.
+pub(crate) fn call<'a>(outcome: &'a TurnOutcome, name: &str) -> Option<&'a Value> {
+    if outcome.stop_reason != StopReason::ToolCalls {
+        return None;
+    }
+    let mut arguments = None;
+    for item in &outcome.items {
+        match item {
+            Item::ToolCall(call) if arguments.is_none() && call.name.as_str() == name => {
+                arguments = Some(&call.arguments);
+            }
+            Item::ToolCall(_) | Item::AssistantRefusal { .. } => return None,
+            _ => {}
+        }
+    }
+    arguments
 }
 
 /// The deepest an answer nests: an array or an object inside another is one level, a scalar is
@@ -161,5 +191,40 @@ fn integers_are_exact(text: &str) -> bool {
             }
             rest = after;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::call;
+    use llm_core::{
+        CallId, Id, Item, StopReason, ToolCall, ToolName, TurnObservation, TurnOutcome,
+    };
+    use llm_routing::Catalog;
+    use serde_json::json;
+
+    /// The routed call fails a turn that calls a tool other than the one it forced, so no
+    /// classifier is handed such an outcome; only a direct reading shows that [`call`] holds the
+    /// name itself.
+    #[test]
+    fn a_call_to_another_tool_is_not_the_answer() {
+        let catalog = Catalog::parse(include_str!("../../../examples/catalog.toml")).unwrap();
+        let serving = Id::new("remote-large").unwrap();
+        let provenance = catalog.binding(&serving).unwrap().provenance();
+        let arguments = json!({"label": "positive"});
+        let outcome_calling = |name: &str| TurnOutcome {
+            stop_reason: StopReason::ToolCalls,
+            items: vec![Item::ToolCall(ToolCall {
+                call_id: CallId::new("call-1").unwrap(),
+                name: ToolName::new(name).unwrap(),
+                arguments: arguments.clone(),
+            })],
+            observation: TurnObservation::new(provenance.clone()),
+        };
+        assert_eq!(
+            call(&outcome_calling("classify"), "classify"),
+            Some(&arguments)
+        );
+        assert_eq!(call(&outcome_calling("label"), "classify"), None);
     }
 }

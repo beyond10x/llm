@@ -98,6 +98,8 @@ impl Clock for Hand {
 enum Step {
     /// Answers with these assistant messages, in order.
     Answer(Vec<&'static str>),
+    /// Answers with this one assistant message of a turn that stopped at the output limit.
+    Cut(&'static str),
     /// Answers after the whole classification deadline has passed on the clock.
     Late(&'static str),
     /// Fails as rejected and retriable.
@@ -137,8 +139,13 @@ impl Model for Stepped<'_> {
                 cache_creation_input_tokens: Some(0),
                 reasoning_output_tokens: None,
             });
+            let mut stop_reason = StopReason::EndTurn;
             let texts: Vec<&str> = match &self.step {
                 Step::Answer(texts) => texts.clone(),
+                Step::Cut(text) => {
+                    stop_reason = StopReason::MaxOutputTokens;
+                    vec![*text]
+                }
                 Step::Late(text) => {
                     let late = u64::try_from(DEADLINE.as_millis()).unwrap();
                     self.clock.0.fetch_add(late, Ordering::SeqCst);
@@ -152,7 +159,7 @@ impl Model for Stepped<'_> {
                 }
             };
             Ok(TurnOutcome {
-                stop_reason: StopReason::EndTurn,
+                stop_reason,
                 items: texts.iter().map(|text| Item::assistant(*text)).collect(),
                 observation,
             })
@@ -316,6 +323,45 @@ fn a_classification_answered_past_its_deadline_fails_with_deadline() {
     // The late call was made and is paid for.
     assert_eq!((records, asked), (1, 1));
     assert_eq!(late.spent, Amount::parse("0.055").unwrap());
+}
+
+/// `Routed::label` asks the JSON-schema classifier, so a recorded classification is `same` only
+/// on a whole answer: one that is cut, split or gives a key twice names no label and differs.
+#[test]
+fn a_classification_answered_cut_split_or_with_a_repeated_key_names_no_label_and_differs() {
+    const HEAD: &str = r#"{"label":"refund","confiden"#;
+    const TAIL: &str = r#"ces":{"refund":9000,"other":1000}}"#;
+    const TWICE: &str =
+        r#"{"label":"other","label":"refund","confidences":{"refund":9000,"other":1000}}"#;
+    assert_eq!([HEAD, TAIL].concat(), REFUND);
+    let case = classification_case("c-1", &["refund", "other"]);
+    let rows = [
+        (
+            "the whole recorded answer",
+            Step::Answer(vec![REFUND]),
+            CaseResult::Same,
+        ),
+        (
+            "the same text of a turn cut at the output limit",
+            Step::Cut(REFUND),
+            CaseResult::Differs,
+        ),
+        (
+            "the same text in two assistant messages",
+            Step::Answer(vec![HEAD, TAIL]),
+            CaseResult::Differs,
+        ),
+        (
+            "the recorded label as the second of two",
+            Step::Answer(vec![TWICE]),
+            CaseResult::Differs,
+        ),
+    ];
+    for (name, step, expected) in rows {
+        let (run, records, asked) = played("coding-candidate", &case, step);
+        assert_eq!(result(&run), (expected, None), "{name}");
+        assert_eq!((records, asked), (1, 1), "{name}");
+    }
 }
 
 #[test]

@@ -851,11 +851,13 @@ never a decision.
 
 A model classifier asks for `{"label": <one of the labels>, "confidences": {<every label>:
 <integer basis points>}}` with no other key, on one of two paths. `JsonSchema` sends that schema
-as the turn's strict `controls.output_format` and decodes the assistant text; `ForcedTool`
-publishes one tool, `classify`, whose parameters are the same schema, forces it with
-`ToolChoice::Named` and reads that call's arguments from `TurnOutcome::tool_calls`, as
-`llm-tool-call` does (`call_tool` itself sends one unrouted attempt and so cannot be reused). An
-answer that does not decode as the schema, names no label of the set, or whose label's confidence
+as the turn's strict `controls.output_format` and takes the answer with the reader the judge
+uses (`answer::whole`): the one assistant text of a turn that ended normally, read as one JSON
+value. `ForcedTool` publishes one tool, `classify`, whose parameters are the same schema, forces
+it with `ToolChoice::Named` and takes the arguments of the one call to it, of a turn that stopped
+for its tool call (`answer::call`; `call_tool` of `llm-tool-call` sends one unrouted attempt and
+so cannot be reused). An answer that is not whole on its path (the Verdict part below lists what
+that is), does not decode as the schema, names no label of the set, or whose label's confidence
 is under the classifier's `min_confidence_bps` abstains `OffLabel`; an unknown confidence meets
 no floor. The caller owns the prompt (`with_instructions`) and the label set.
 
@@ -924,11 +926,12 @@ coerced, no second call asked. An answer whose far side reports no upstream mode
 `protocol`, because a verdict cannot pin what it was not told; Bedrock Converse reports none, so
 a rubric routed there is refused.
 
-An answer is whole and has one reading only when all of this holds; anything else is refused,
-with the call's record written as succeeded:
+One reader, `answer::whole`, serves the judge and the `JsonSchema` classifier. An answer is whole
+and has one reading only when all of this holds; the judge refuses anything else and the
+classifier abstains `OffLabel` on it, both with the call's record written as succeeded:
 
 - the turn ended normally (`StopReason::EndTurn`): an answer cut off at the output limit or
-  reported incomplete is not a verdict, even when what arrived is valid;
+  reported incomplete is not taken, even when what arrived is valid;
 - the outcome holds exactly one assistant text item, and beside it only state the provider keeps
   (`Item::Opaque`): two text items are not joined, since `1` and `2` would read as `12`, and a
   refusal beside the text refuses the answer;
@@ -952,6 +955,25 @@ that read back as the same double, in the form `serde_json` writes: `1E2` is wri
 A judge call publishes no tool. An outcome that holds a tool call, or says it stopped for one, is
 refused by the routed call itself: the judge returns that error, `protocol`, with the call's
 record written as failed, and no verdict.
+
+For a classifier the points on the turn's end, the one text item, the one JSON value and the
+repeated key decide. A label set's schema nests two levels, so a repeated key is `label`,
+`confidences` or a label inside `confidences`, and its integers run from 0 to 10000, inside both
+bounds of the list. A replayed classification (`Routed::label`) is read by the same classifier,
+so a recorded case answered cut, split or with a repeated key names no label and `differs`.
+
+A `ForcedTool` classifier reads no text. It takes a call's arguments when the turn stopped for
+its tool call (`StopReason::ToolCalls`) and the outcome holds one call to `classify` and no
+refusal. A call of a turn cut off at the output limit, a call of a turn reported incomplete, two
+calls, and a refusal beside the call each abstain `OffLabel`, with the call's record written as
+succeeded, even when the arguments would decode as a decision. Assistant text beside the call,
+and state the provider keeps (`Item::Opaque`, which is how reasoning arrives), are not part of the
+answer: the call is taken. The arguments reach the classifier as a parsed value, so a key the
+model gave twice in them is not seen here; that reading belongs to the protocol decoders
+(`story:tool-arguments-with-a-repeated-key`). An outcome the routed call refuses is a failed
+call, `ProviderError` with `protocol` and the record written as failed: a call to a tool other
+than `classify`, a call of a turn that says it ended normally, a stop for a tool call with no
+call, and two calls under one call id.
 
 **Decision endpoint.** `llm-openai-decisions` is the client of OpenAI's `POST /v1/decisions` and
 the classifier's third path, `Path::DecisionEndpoint`. The wire is read from

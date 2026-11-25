@@ -303,9 +303,21 @@ struct Script {
     /// Text shown as one delta and returned as the assistant's message.
     #[serde(default)]
     answer: Option<String>,
+    /// Further texts, each shown as one delta and returned as an assistant message of its own,
+    /// in order, after `answer`'s.
+    #[serde(default)]
+    answers: Vec<String>,
     /// Arguments, as JSON text, of a call to the turn's first published tool.
     #[serde(default)]
     tool_arguments: Option<String>,
+    /// Arguments of further calls to that tool, one call each, in order, after
+    /// `tool_arguments`'s; the calls are `call-1`, `call-2` and so on.
+    #[serde(default)]
+    tool_calls: Vec<String>,
+    /// The stop reason the turn reports. Absent: `tool-calls` for a turn with a call, `end-turn`
+    /// for one without.
+    #[serde(default)]
+    stop_reason: Option<StopReason>,
     /// Milliseconds that pass on the scripted clock before the attempt returns.
     #[serde(default)]
     takes_ms: u64,
@@ -372,39 +384,54 @@ impl Scripted {
         observation.usage.clone_from(&self.script.usage);
         observation.upstream_model.clone_from(&self.upstream_model);
         observation.final_usage = true;
-        let Some(arguments) = &self.script.tool_arguments else {
-            let text = self.script.answer.clone().unwrap_or_default();
-            let events = vec![StreamEvent::TextDelta { text: text.clone() }];
-            let outcome = TurnOutcome {
-                stop_reason: StopReason::EndTurn,
-                items: vec![Item::assistant(text)],
-                observation,
+        let script = &self.script;
+        let mut texts: Vec<&String> = script.answer.iter().chain(&script.answers).collect();
+        let calls: Vec<&String> = script
+            .tool_arguments
+            .iter()
+            .chain(&script.tool_calls)
+            .collect();
+        // A script that authors neither a text nor a call answers with one empty text.
+        let empty = String::new();
+        if texts.is_empty() && calls.is_empty() {
+            texts.push(&empty);
+        }
+        let mut events = Vec::new();
+        let mut items = Vec::new();
+        for text in texts {
+            events.push(StreamEvent::TextDelta { text: text.clone() });
+            items.push(Item::assistant(text.clone()));
+        }
+        for (index, arguments) in calls.iter().enumerate() {
+            let tool = request
+                .tools
+                .first()
+                .ok_or_else(|| Error::invalid("a scripted tool call needs a published tool"))?;
+            let call = ToolCall {
+                call_id: CallId::new(format!("call-{}", index + 1))
+                    .map_err(|_| Error::invalid("invalid call id"))?,
+                name: tool.name.clone(),
+                arguments: serde_json::from_str(arguments)
+                    .map_err(|_| Error::invalid("scripted tool arguments are not JSON"))?,
             };
-            return Ok((events, outcome));
-        };
-        let tool = request
-            .tools
-            .first()
-            .ok_or_else(|| Error::invalid("a scripted tool call needs a published tool"))?;
-        let call = ToolCall {
-            call_id: CallId::new("call-1").map_err(|_| Error::invalid("invalid call id"))?,
-            name: tool.name.clone(),
-            arguments: serde_json::from_str(arguments)
-                .map_err(|_| Error::invalid("scripted tool arguments are not JSON"))?,
-        };
-        let events = vec![
-            StreamEvent::ToolCallStarted {
+            events.push(StreamEvent::ToolCallStarted {
                 call_id: call.call_id.clone(),
                 name: call.name.clone(),
-            },
-            StreamEvent::ToolArgumentsDelta {
+            });
+            events.push(StreamEvent::ToolArgumentsDelta {
                 call_id: call.call_id.clone(),
-                delta: arguments.clone(),
-            },
-        ];
+                delta: (*arguments).clone(),
+            });
+            items.push(Item::ToolCall(call));
+        }
+        let stop_reason = script.stop_reason.clone().unwrap_or(if calls.is_empty() {
+            StopReason::EndTurn
+        } else {
+            StopReason::ToolCalls
+        });
         let outcome = TurnOutcome {
-            stop_reason: StopReason::ToolCalls,
-            items: vec![Item::ToolCall(call)],
+            stop_reason,
+            items,
             observation,
         };
         Ok((events, outcome))

@@ -23,6 +23,11 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - The error text carries no byte of the reason; no `usage-extension` warning is shown for a turn that fails this way
 - **Breaking:** Messages ingress refuses an `Incomplete` answer with no item as `unsupported`; nothing is sent
 - ESS: 7 scenarios for the rule in `llm.messages`; the floor is 1075 (was 1068)
+- **Breaking:** `llm-decide`: a model classifier takes an answer only whole; one it took before abstains `OffLabel`
+- JSON-schema path: a turn cut at the output limit or incomplete, two texts, a refusal beside the text, a key twice
+- Forced-tool path: a call of a turn cut at the output limit or incomplete, and a refusal beside the call
+- `Routed::label` (replay): a classification answered cut, split or with a key given twice names no label and `differs`
+- ESS: 5 scenarios for the rule in `llm.decisions`; the floor is 1080 (was 1075)
 
 ## [0.29.0] - 2026-11-25
 
