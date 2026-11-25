@@ -1,5 +1,6 @@
 format: ux-browser-checks/1
 chrome: {build: 1254}
+chrome_args: [--no-sandbox]
 base_path: /llm/
 pages: {sitemap: sitemap.xml}
 viewports:
