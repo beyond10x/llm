@@ -391,3 +391,57 @@ fn every_argument_after_ess_reaches_the_pinned_ess_as_written() {
     assert_eq!(ran.calls, ["path --version", "path "], "{}", ran.stderr());
     assert_eq!(ran.output.status.code(), Some(7), "{}", ran.stderr());
 }
+
+/// The runner's own help for `ess` (`llm-conformance help ess`) lists no flag as the runner's:
+/// every flag after `ess` is the pinned ess's, so a line `-h, --help  Print help` under
+/// "Options:" names a flag the runner does not answer.
+#[test]
+fn adversary_w32b_the_runners_help_for_ess_lists_no_flag_of_its_own() {
+    let ran = run(&["help", "ess"], &format!("ess {}", pinned()), None);
+    let stdout = String::from_utf8_lossy(&ran.output.stdout).into_owned();
+    assert_eq!(ran.output.status.code(), Some(0), "{}", ran.stderr());
+    assert!(
+        stdout.contains("Usage: llm-conformance ess"),
+        "the runner's help for `ess`: {stdout}"
+    );
+    assert!(ran.calls.is_empty(), "no `ess` is started: {:?}", ran.calls);
+    let flags: Vec<&str> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('-'))
+        .collect();
+    assert!(
+        flags.is_empty(),
+        "listed as flags of `llm-conformance ess`: {flags:#?}"
+    );
+}
+
+/// An argument that is not UTF-8 reaches the pinned `ess` byte for byte.
+#[test]
+fn adversary_w32b_an_argument_that_is_not_utf8_reaches_the_pinned_ess_as_written() {
+    use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
+
+    let directory = tempfile::tempdir().expect("a temporary directory");
+    let bin = directory.path().join("bin");
+    let log = directory.path().join("calls");
+    stand_in(&bin.join("ess"), "path", &format!("ess {}", pinned()), &log);
+    let output = Command::new(env!("CARGO_BIN_EXE_llm-conformance"))
+        .arg("ess")
+        .arg(OsStr::from_bytes(b"caf\xe9"))
+        .current_dir(repository())
+        .env("PATH", &bin)
+        .env("LLM_ESS_STORE", directory.path().join("store"))
+        .env(
+            "LLM_ESS_RELEASES",
+            format!("file://{}/no-release", directory.path().display()),
+        )
+        .stdin(Stdio::null())
+        .output()
+        .expect("llm-conformance runs");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(
+        fs::read(&log).expect("the calls"),
+        b"path --version\npath caf\xe9\n",
+        "{stderr}"
+    );
+    assert_eq!(output.status.code(), Some(7), "{stderr}");
+}

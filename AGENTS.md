@@ -136,9 +136,10 @@ there (`checks/conformance/src/ess.rs`) and both steps of `task check` that run 
 it: `llm-conformance ess <arguments>` and `llm-conformance check`. Every argument after `ess`
 reaches the pinned `ess` as written, `--help`, `--version` and `--` among them. CI's step
 "Specification and plan" runs the same two commands, and no task and no workflow step names an
-`ess` of its own (`checks/xtask/tests/gate/ess_pin.rs`: every string of `Taskfile.yml` and every
-`run:` of every workflow is read; one step, "Install ess", is exempt). The runner takes the first
-of these whose `--version` ends 0 and writes exactly `ess <version>`:
+`ess` of its own (`checks/xtask/tests/gate/ess_pin.rs` reads every string of `Taskfile.yml` but a
+task's `desc` and `summary`, and in every workflow every string of a step but its `name` and
+`uses`, and every `defaults:` of a job and of the workflow; one step, "Install ess", is exempt).
+The runner takes the first of these whose `--version` ends 0 and writes exactly `ess <version>`:
 
 1. the stored `target/ess/ess-<version>-x86_64-unknown-linux-gnu/ess`;
 2. the first executable `ess` on `PATH`;
@@ -156,8 +157,9 @@ elsewhere install the pinned release on `PATH`. A stored file that is not the pi
 not written over, and a stored one's place that holds no `ess` is refused before any download:
 remove it. The fetch works in a `.fetch-*` directory inside the store and removes it when it
 returns; a run that a signal ends during the fetch leaves it. No run reads a `.fetch-*` directory
-as stored or starts anything in one, and removing `target/ess/` is safe: the next run fetches
-again.
+as stored, and no run starts anything in a `.fetch-*` directory another run left: a fetch starts
+only the `ess` it unpacked into its own, to ask its version. Removing `target/ess/` is safe: the
+next run fetches again.
 
 `LLM_ESS_STORE` names another store than `target/ess` and `LLM_ESS_RELEASES` another address than
 GitHub's releases; the tests set both. The digest is checked on what is fetched and nowhere else: a

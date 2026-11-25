@@ -255,30 +255,39 @@ const RUNNER: [&str; 6] = ["cargo", "run", "--locked", "-p", "llm-conformance", 
 /// letter, no digit and none of `_`, `.` and `-`. So `ess`, `"ess"`, `'ess'`, `$(ess`, `./ess`,
 /// `/usr/bin/ess` and `X=ess` are bare wherever they stand in a line, after `sh -c`, `env --`,
 /// `command`, `exec` or `time` as well, and `ess-conformance`, `ess_pin.rs` and `ess-$V.tar.gz`
-/// are not. The one word `ess` that is not bare is the argument right after [`RUNNER`].
+/// are not. The one word `ess` that is not bare is the argument right after [`RUNNER`] on the
+/// same line, where a line that ends with `\` goes on in the next: the runner's words at the end
+/// of one line hand over nothing to an `ess` that starts another.
 ///
 /// It errs on the side of counting: a harmless mention of `ess` in a script (`echo ess`, a path
 /// through `target/ess/`) is counted and has to be worded another way. What it cannot count is a
 /// name that is not written in the script: one put together when the script runs (`e"s"s`,
-/// `$(printf ess)`, a variable set elsewhere) and one a program the script calls starts.
+/// `$(printf 'e%s' ss)`, a variable set elsewhere) and one a program the script calls starts.
 fn bare_ess(script: &str) -> usize {
-    let words: Vec<&str> = script.split_whitespace().collect();
-    words
-        .iter()
-        .enumerate()
-        .filter(|&(at, word)| {
-            let named = word
-                .split(|character: char| {
-                    !(character.is_ascii_alphanumeric() || "_.-".contains(character))
+    script
+        .replace("\\\n", " ")
+        .lines()
+        .map(|line| {
+            let words: Vec<&str> = line.split_whitespace().collect();
+            words
+                .iter()
+                .enumerate()
+                .filter(|&(at, word)| {
+                    let named = word
+                        .split(|character: char| {
+                            !(character.is_ascii_alphanumeric() || "_.-".contains(character))
+                        })
+                        .any(|name| {
+                            name.eq_ignore_ascii_case("ess") || name.eq_ignore_ascii_case("ess.exe")
+                        });
+                    let handed = *word == "ess"
+                        && at >= RUNNER.len()
+                        && words[at - RUNNER.len()..at] == RUNNER;
+                    named && !handed
                 })
-                .any(|name| {
-                    name.eq_ignore_ascii_case("ess") || name.eq_ignore_ascii_case("ess.exe")
-                });
-            let handed =
-                *word == "ess" && at >= RUNNER.len() && words[at - RUNNER.len()..at] == RUNNER;
-            named && !handed
+                .count()
         })
-        .count()
+        .sum()
 }
 
 #[test]
@@ -316,6 +325,14 @@ fn an_ess_is_bare_unless_the_runner_is_handed_it_as_an_argument() {
         ("X=ess; $X y\nenv -- ess y\ncargo run -p other -- ess y", 3),
         ("cargo run --locked -p llm-conformance -- \"ess\" y", 1),
         ("cargo run --locked -p llm-conformance -- ess y && ess y", 1),
+        // A line that ends with `\` goes on in the next, and only such a line does.
+        (
+            "cargo run --locked -p llm-conformance -- \\\n  ess specify validate",
+            0,
+        ),
+        ("cargo run --locked \\\n  -p llm-conformance --\n  ess y", 1),
+        // Names that are not written in the script are not counted.
+        ("e\"s\"s x\n$(printf 'e%s' ss) x\n$X x", 0),
     ] {
         assert_eq!(bare_ess(script), bare, "{script}");
     }
@@ -452,8 +469,16 @@ struct Steps {
     scripts: usize,
     /// How many `run:` scripts stand elsewhere in the file, where they are not read.
     unread: usize,
-    /// Each step whose script names an `ess` the runner did not resolve.
+    /// Each string of a step or of a `defaults:` that names an `ess` the runner did not resolve.
     bare: Vec<String>,
+}
+
+/// The strings in `value`, at any depth, that name an `ess` the runner did not resolve.
+fn bare_strings(value: &Value) -> Vec<String> {
+    let mut texts = Vec::new();
+    strings(value, &mut texts);
+    texts.retain(|text| bare_ess(text) > 0);
+    texts
 }
 
 /// How many `run:` keys with a script `value` holds, at any depth.
@@ -471,10 +496,15 @@ fn run_keys(value: &Value) -> usize {
     }
 }
 
-/// Reads the steps of the workflow `file`. One step may start `ess` itself: the step named
-/// [`INSTALL`] in job `libraries-and-plan` of `gate.yml`, which puts the pinned release on
-/// `PATH`. A step of that name in another job or another file is a step like any other, and
-/// every step of that name is counted, so that the caller can hold their number to one.
+/// Reads the steps of the workflow `file`: every string of a step, wherever it stands in it (its
+/// `run:`, its `shell:`, the inputs under `with:`, the values under `env:`), but its `name` and
+/// its `uses`, which are not commands; and every string under a `defaults:` of a job or of the
+/// workflow, where the shell of every script is named.
+///
+/// One step may start `ess` itself: the step named [`INSTALL`] in job `libraries-and-plan` of
+/// `gate.yml`, which puts the pinned release on `PATH`. A step of that name in another job or
+/// another file is a step like any other, and every step of that name is counted, so that the
+/// caller can hold their number to one.
 fn steps(file: &str, text: &str) -> Steps {
     let workflow: Value =
         serde_yaml::from_str(text).unwrap_or_else(|error| panic!("{file}: {error}"));
@@ -484,23 +514,36 @@ fn steps(file: &str, text: &str) -> Steps {
         unread: 0,
         bare: Vec::new(),
     };
+    for text in bare_strings(&workflow["defaults"]) {
+        found.bare.push(format!("{file}: defaults: {text}"));
+    }
     for (job, body) in workflow["jobs"].as_mapping().into_iter().flatten() {
+        for text in bare_strings(&body["defaults"]) {
+            found
+                .bare
+                .push(format!("{file}: defaults of job {job:?}: {text}"));
+        }
         for step in body["steps"].as_sequence().into_iter().flatten() {
             let name = step["name"].as_str();
             if name == Some(INSTALL) {
                 found.installs += 1;
             }
-            let Some(script) = step["run"].as_str() else {
-                continue;
-            };
-            found.scripts += 1;
+            found.scripts += usize::from(step["run"].is_string());
             let exempt = file == "gate.yml"
                 && job.as_str() == Some("libraries-and-plan")
                 && name == Some(INSTALL);
-            if !exempt && bare_ess(script) > 0 {
+            if exempt {
+                continue;
+            }
+            let mut read = step.clone();
+            if let Some(entries) = read.as_mapping_mut() {
+                entries.remove("name");
+                entries.remove("uses");
+            }
+            for text in bare_strings(&read) {
                 found
                     .bare
-                    .push(format!("{file}: step {name:?} of job {job:?}: {script}"));
+                    .push(format!("{file}: step {name:?} of job {job:?}: {text}"));
             }
         }
     }
@@ -546,17 +589,50 @@ jobs:
     assert_eq!(steps("gate.yml", &outside).unread, 1);
 }
 
+/// How many steps of all `workflows`, each a file name and its text, have the name of the step
+/// that installs `ess`: one exempt step in `gate.yml` and another of the name elsewhere are two.
+fn installs(workflows: &[(String, String)]) -> usize {
+    workflows
+        .iter()
+        .map(|(file, text)| steps(file, text).installs)
+        .sum()
+}
+
+#[test]
+fn the_steps_that_install_ess_are_counted_over_every_workflow() {
+    let workflows = [
+        (
+            "gate.yml".to_owned(),
+            "jobs:\n  libraries-and-plan:\n    steps:\n      - name: Install ess\n        run: ess --version\n"
+                .to_owned(),
+        ),
+        (
+            "release.yml".to_owned(),
+            "jobs:\n  publish:\n    steps:\n      - name: Install ess\n        uses: an/action@v1\n"
+                .to_owned(),
+        ),
+    ];
+    assert_eq!(installs(&workflows[..1]), 1);
+    assert_eq!(
+        installs(&workflows),
+        2,
+        "a step of the name in another file"
+    );
+}
+
 /// CI validates the specification with the command `task check` has, so the forge and the local
 /// gate go through one resolution, and no step of any workflow starts an `ess` the runner did
 /// not resolve. The step that installs it is the one place that may, and there is one such step.
 #[test]
 fn no_workflow_step_runs_an_ess_the_runner_did_not_resolve() {
     let directory = repository().join(".github/workflows");
-    let (mut installs, mut scripts) = (0, 0);
+    let mut workflows = Vec::new();
+    let mut scripts = 0;
     for entry in std::fs::read_dir(&directory).expect("the workflows are listed") {
         let file = entry.expect("an entry").file_name();
         let file = file.to_str().expect("a workflow file name");
-        let found = steps(file, &read(&format!(".github/workflows/{file}")));
+        let text = read(&format!(".github/workflows/{file}"));
+        let found = steps(file, &text);
         assert!(
             found.bare.is_empty(),
             "an `ess` the runner did not resolve: {:#?}",
@@ -566,10 +642,14 @@ fn no_workflow_step_runs_an_ess_the_runner_did_not_resolve() {
             found.unread, 0,
             "{file} has a `run:` outside the steps of its jobs"
         );
-        installs += found.installs;
         scripts += found.scripts;
+        workflows.push((file.to_owned(), text));
     }
-    assert_eq!(installs, 1, "one step of one workflow is named {INSTALL:?}");
+    assert_eq!(
+        installs(&workflows),
+        1,
+        "one step of one workflow is named {INSTALL:?}"
+    );
     assert!(scripts > 10, "{scripts} scripts");
 
     let workflow = workflow();
@@ -598,4 +678,61 @@ fn adversary_w32_an_ess_in_quotes_or_after_another_commands_dashes_is_bare() {
     .filter(|script| bare_ess(script) == 0)
     .collect();
     assert!(missed.is_empty(), "not counted as bare: {missed:#?}");
+}
+
+/// The runner's words at the end of one line hand nothing to the next line: an `ess` that
+/// starts a line is started by the shell, from `PATH`, whatever the line before it ends with.
+#[test]
+fn adversary_w32b_an_ess_that_starts_the_line_after_the_runners_words_is_bare() {
+    let missed: Vec<&str> = [
+        "echo cargo run --locked -p llm-conformance --\ness specify validate --path spec",
+        "# as in cargo run --locked -p llm-conformance --\ness specify validate --path spec",
+        "cargo run --locked -p llm-conformance --\n  ess specify validate --path spec",
+    ]
+    .into_iter()
+    .filter(|script| bare_ess(script) == 0)
+    .collect();
+    assert!(missed.is_empty(), "not counted as bare: {missed:#?}");
+}
+
+/// A step starts a program without naming it in a `run:` too: as the input of an action that
+/// runs a command, and as the shell its script is handed to, its own or the job's default.
+/// Each is either found as an `ess` the runner did not resolve or counted as unread.
+#[test]
+fn adversary_w32b_an_ess_a_step_starts_outside_its_run_is_found() {
+    let missed: Vec<&str> = [
+        (
+            "the input of an action",
+            "jobs:\n  validate:\n    steps:\n      - name: Validate\n        uses: an/action@v1\n        with:\n          command: ess specify validate --path spec\n",
+        ),
+        (
+            "the shell of a step",
+            "jobs:\n  validate:\n    steps:\n      - name: Validate\n        shell: ess specify validate --path {0}\n        run: spec\n",
+        ),
+        (
+            "the default shell of a job",
+            "jobs:\n  validate:\n    defaults:\n      run:\n        shell: ess specify validate --path {0}\n    steps:\n      - name: Validate\n        run: spec\n",
+        ),
+    ]
+    .into_iter()
+    .filter(|(_, text)| {
+        let found = steps("gate.yml", text);
+        found.bare.is_empty() && found.unread == 0
+    })
+    .map(|(form, _)| form)
+    .collect();
+    assert!(missed.is_empty(), "an `ess` passed unseen in: {missed:#?}");
+}
+
+/// The third word that may stand between the name and its version, and a version joined to the
+/// name in a word whose first `ess-` carries none.
+#[test]
+fn adversary_w32b_a_tag_and_a_second_joined_name_give_their_versions() {
+    for (text, versions) in [
+        ("on the ESS tag 0.87.0", &["0.87.0"][..]),
+        ("`ess-src/ess-0.87.0/ess`", &["0.87.0"]),
+        ("ess-conformance/target/ess-0.87.0", &["0.87.0"]),
+    ] {
+        assert_eq!(ess_versions(text), versions, "{text}");
+    }
 }
