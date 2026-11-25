@@ -213,6 +213,22 @@ and its jobs have no `defaults`, and no member is named `BASH_ENV`. A step that 
 name built from parts, a script file it runs, an action of another repository) is not found: the
 evidence's version check and the digest the install step checks are what hold then.
 
+Both checks configurations, `ux/ux-browser.checks.yaml` and `ux/ux-browser.round.checks.yaml`,
+start the Chromium of `ux-browser` without its sandbox, by their one line
+`chrome_args: [--no-sandbox]`, so a run here and a run on the forge start the same command line.
+What the forge's runner does differently: on it the Chromium `ux-browser` started with its sandbox
+ended before it listened (`signal: 6 (SIGABRT)`), while the Chromium Playwright started in the
+same job ran. The cause is read from the tool's source and not reproduced: `ux-browser` adds no
+`--no-sandbox` of its own, Playwright starts its Chromium without the sandbox, and that the
+runner's image refuses the sandbox is inferred from that difference. On the build node of the
+local gate Chromium starts with the switch and without it. `ux/tests/l1-page-checks.spec.ts`
+holds the line: "every checks configuration starts Chromium with --no-sandbox and adds no other
+switch" fails while a `*.checks.yaml` of `ux/` has no such line, another list or a second line,
+and the planted-defect case fails while its fixture's configuration, a copy of the gate's, differs
+or the evidence of its run names other added switches (`run.local_inputs.chrome-arg`). The pages
+measured are this repository's own site, built in the same run and served on the loopback
+address.
+
 A `ux-browser` pin move changes `UX_BROWSER_VERSION` and `UX_BROWSER_SHA256` in `docs-ux.yml`
 together, the digest read from the `ux-browser-<version>-x86_64-unknown-linux-gnu.tar.gz` line of
 that release's `SHA256SUMS`. With them move the version this file names in the paragraph above

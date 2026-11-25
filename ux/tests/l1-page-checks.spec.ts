@@ -4,7 +4,7 @@
 // the pinned binary reports each planted defect of a small site and none on its clean page.
 
 import { execFile, spawn, spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { promisify } from 'node:util';
 import { test, expect } from '@playwright/test';
@@ -24,7 +24,7 @@ import {
   writePageChecksExit,
   type PageChecks,
 } from '../core/page-checks.ts';
-import { PIN_WORKFLOW, chromeBuild, pinnedVersion, playwrightChromium } from '../core/pin.ts';
+import { PIN_WORKFLOW, chromeArgs, chromeBuild, pinnedVersion, playwrightChromium } from '../core/pin.ts';
 import { compare, type Baseline } from '../core/ratchet.ts';
 import { gateCounts, toMeasured, type Failure, type PageResult } from '../core/results.ts';
 import { viewportValue } from '../core/round.ts';
@@ -40,6 +40,14 @@ const message = (f: () => unknown): string => {
     return (e as Error).message;
   }
   return 'nothing was refused';
+};
+/** The Chromium switches the checks configuration `file` adds, or why it is refused. */
+const switchesOf = (file: string): string[] | string => {
+  try {
+    return chromeArgs(readFileSync(file, 'utf8'));
+  } catch (e) {
+    return (e as Error).message;
+  }
 };
 
 test.describe('the pin has one place', () => {
@@ -86,6 +94,34 @@ test.describe('the pin has one place', () => {
   test('both checks configurations pin the Chromium build the installed Playwright carries', () => {
     const installed = playwrightChromium(readFileSync(join(UX, 'node_modules/playwright-core/browsers.json'), 'utf8'));
     for (const config of ['ux-browser.checks.yaml', 'ux-browser.round.checks.yaml']) expect(chromeBuild(readFileSync(join(UX, config), 'utf8')), config).toBe(installed);
+  });
+
+  test('the Chromium switches are the one line of a checks configuration, and any other form is refused', () => {
+    expect(chromeArgs('format: ux-browser-checks/1\nchrome_args: [--no-sandbox]\nbase_path: /llm/\n')).toEqual(['--no-sandbox']);
+    expect(chromeArgs('chrome_args: [--no-sandbox, --use-gl=egl]  \n')).toEqual(['--no-sandbox', '--use-gl=egl']);
+    for (const [text, named, formed] of [
+      ['format: ux-browser-checks/1\nbase_path: /llm/\n', 0, 0],
+      ['chrome_args: []\n', 1, 0],
+      ["chrome_args: ['--no-sandbox']\n", 1, 0],
+      ['chrome_args: [no-sandbox]\n', 1, 0],
+      ['chrome_args: --no-sandbox\n', 1, 0],
+      ['chrome_args:\n  - --no-sandbox\n', 1, 0],
+      ['values:\n  chrome_args: [--no-sandbox]\n', 1, 0],
+      ['chrome_args: [--no-sandbox] # the forge\n', 1, 0],
+      ['chrome_args: [--no-sandbox]\nchrome_args: [--enable-gpu]\n', 2, 2],
+      ['chrome_args: [--no-sandbox]\n"chrome_args":\n  - --enable-gpu\n', 2, 1],
+    ] as const)
+      expect(message(() => chromeArgs(text)), text).toBe(
+        `${named} lines name \`chrome_args\` in the checks configuration and ${formed} of them have the form \`chrome_args: [--<switch>, ...]\`, needed exactly one line, of that form`,
+      );
+  });
+
+  // The forge's runner refuses Chromium its sandbox, and ux-browser's Chromium then ends before it listens.
+  // So every configuration declares the switch, and a run here starts the command line a run on the forge starts.
+  test('every checks configuration starts Chromium with --no-sandbox and adds no other switch', () => {
+    const configs = readdirSync(UX).filter((name) => name.endsWith('.checks.yaml')).sort();
+    expect(configs).toEqual(['ux-browser.checks.yaml', 'ux-browser.round.checks.yaml']);
+    for (const config of configs) expect(switchesOf(join(UX, config)), config).toEqual(['--no-sandbox']);
   });
 
   test('a ux-browser that was not handed over as an absolute path is refused', () => {
@@ -312,11 +348,14 @@ test.describe('the pinned ux-browser reports each planted defect', () => {
     const files = pageCheckFiles(join(root, 'out'));
     mkdirSync(join(root, 'out'), { recursive: true });
     const run = { config: join(root, 'ux/ux-browser.checks.yaml'), build: site, root, project: 'llm-docs', assessment: 'l1-page-checks', jobs: 2 };
+    expect(switchesOf(run.config), "the fixture's configuration starts Chromium as the gate's does").toEqual(['--no-sandbox']);
     const ended = await promisify(execFile)(uxBrowser(process.env), pageCheckArgs(run, files), { timeout: 50_000 }).then(
       (ok) => ({ code: 0 as number | string | null | undefined, text: ok.stdout + ok.stderr }),
       (e: { code?: number | string | null; stdout?: string; stderr?: string }) => ({ code: e.code, text: `${e.stdout}${e.stderr}` }),
     );
     expect(ended.code, `ux-browser reports a problem with exit 1:\n${ended.text}`).toBe(1);
+    const started = JSON.parse(readFileSync(files.evidence, 'utf8')) as { run?: { local_inputs?: Record<string, string> } };
+    expect(JSON.parse(started.run?.local_inputs?.['chrome-arg'] ?? 'null'), 'the switches ux-browser says it added to its own').toEqual(['--no-sandbox']);
 
     const checks = readPageChecks(files.values);
     expect(checks.incomplete, 'every page was measured').toEqual([]);
