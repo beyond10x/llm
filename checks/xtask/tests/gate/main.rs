@@ -9,6 +9,8 @@ mod debug_info;
 #[cfg(unix)]
 mod list;
 mod paths;
+#[cfg(unix)]
+mod release;
 mod report;
 
 use std::path::{Path, PathBuf};
