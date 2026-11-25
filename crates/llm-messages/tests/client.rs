@@ -14,12 +14,13 @@ use std::{
         Arc,
         atomic::{AtomicUsize, Ordering},
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 use support::{StaticResolver, binding_with, capabilities};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
+    sync::oneshot,
 };
 
 const STREAM: &[u8] = b"event: message_start\n\
@@ -401,18 +402,42 @@ async fn every_pre_flight_refusal_is_reached_through_the_client_before_anything_
     assert_eq!(calls.load(Ordering::SeqCst), 1, "the control resolved once");
 }
 
-struct BlockedSink;
+/// A sink that never accepts an event, and says when the first one was offered. From then on the
+/// client has read the response head and the turn is waiting on its caller.
+struct BlockedSink {
+    offered: Option<oneshot::Sender<()>>,
+}
+
+impl BlockedSink {
+    fn new() -> (Self, oneshot::Receiver<()>) {
+        let (offered, receiver) = oneshot::channel();
+        let offered = Some(offered);
+        (Self { offered }, receiver)
+    }
+}
+
 impl StreamSink for BlockedSink {
     fn emit(&mut self, _event: StreamEvent) -> BoxFuture<'_, Result<(), Error>> {
+        if let Some(offered) = self.offered.take() {
+            // Nobody may be waiting for it any more.
+            let _ = offered.send(());
+        }
         Box::pin(std::future::pending())
     }
 }
 
+/// The caller cancels on two signals and on no clock. The server says when it wrote the response
+/// head, which alone proves only that the bytes left the server: a cancel before the client read
+/// them ends the turn with dispatch `unknown`. The sink says when it was offered an event, which
+/// is the client having read the head and waiting on its caller, the wait this case is about.
 #[tokio::test]
 async fn cancellation_reaches_a_caller_whose_sink_never_accepts() {
     let (listener, url) = listener().await;
+    let (head_written, head) = oneshot::channel();
     let server = tokio::spawn(async move {
-        let (mut socket, _) = accept(&listener).await;
+        // Not bounded here: a client that never connects ends the turn on its own limits, and
+        // the case then fails on what the turn ended as.
+        let (mut socket, _) = listener.accept().await.unwrap();
         read_request(&mut socket).await;
         socket
             .write_all(
@@ -420,20 +445,29 @@ async fn cancellation_reaches_a_caller_whose_sink_never_accepts() {
             )
             .await
             .unwrap();
+        // Nobody may be waiting for it any more.
+        let _ = head_written.send(());
         socket.write_all(STREAM).await.unwrap();
         // Hold the response open; the turn must end because the caller cancelled.
         tokio::time::sleep(Duration::from_secs(30)).await;
     });
     let client = client(&url, StaticResolver::new("fixture-key"));
     let cancel = Cancel::new();
-    let mut sink = BlockedSink;
+    let (mut sink, offered) = BlockedSink::new();
     let request = request();
     let turn = client.turn(&request, &mut sink, &cancel);
     let stop = async {
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        head.await.expect("the server wrote the response head");
+        offered.await.expect("the sink was offered an event");
         cancel.cancel();
     };
-    let (result, ()) = tokio::join!(turn, stop);
+    tokio::pin!(turn, stop);
+    let result = tokio::select! {
+        biased;
+        // The turn ended before it was cancelled: the assertions below say what it ended as.
+        result = &mut turn => result,
+        () = &mut stop => turn.await,
+    };
     server.abort();
     let error = result.expect_err("the blocked sink was cancelled");
     assert_eq!(error.code, ErrorCode::Cancelled);
@@ -483,8 +517,18 @@ async fn the_turn_deadline_bounds_credential_resolution() {
     );
 }
 
-#[tokio::test]
-async fn the_turn_deadline_bounds_a_sink_that_never_accepts() {
+/// The transport's own bound in the deadline case below. Every turn limit the case states is
+/// shorter, so the turn's deadline is what ends the turn.
+const TRANSPORT_TOTAL: Duration = Duration::from_secs(10);
+
+/// How long past its limit a turn may run before the case calls it unbounded. With the first
+/// limit of 300 ms this is a bound of 3 s.
+const OVERRUN: Duration = Duration::from_millis(2_700);
+
+/// One turn with a turn limit of `limit` and a sink that never accepts, against a server that
+/// sends the whole stream and then holds the response open. Returns how the turn ended, and
+/// whether the sink was offered an event before it ended.
+async fn turn_into_a_blocked_sink(limit: Duration) -> (Error, bool) {
     let (listener, url) = listener().await;
     let server = tokio::spawn(async move {
         let (mut socket, _) = accept(&listener).await;
@@ -502,19 +546,53 @@ async fn the_turn_deadline_bounds_a_sink_that_never_accepts() {
     let client = bounded_client(
         &url,
         StaticResolver::new("fixture-key"),
-        Duration::from_secs(10),
-        Some(Duration::from_millis(300)),
+        TRANSPORT_TOTAL,
+        Some(limit),
     );
-    let mut sink = BlockedSink;
+    let (mut sink, mut offered) = BlockedSink::new();
     let request = request();
+    let started = Instant::now();
     let error = tokio::time::timeout(
-        Duration::from_secs(3),
+        limit + OVERRUN,
         client.turn(&request, &mut sink, &Cancel::new()),
     )
     .await
     .expect("the turn deadline ended a wait on a sink that never accepted")
     .expect_err("a turn whose caller never accepted a delta");
+    let lasted = started.elapsed();
     server.abort();
+    assert!(
+        lasted >= limit,
+        "the turn ended after {lasted:?}, before its limit of {limit:?}"
+    );
+    (error, offered.try_recv().is_ok())
+}
+
+/// The deadline has to pass while the sink holds an event, and the client takes it from the
+/// clock when the turn starts, so no signal can place it. A turn whose deadline passed before the
+/// sink was offered an event bounded another wait (the one for the response head ends with
+/// dispatch `unknown`) and decides nothing here: the case asks again with twice the limit. The
+/// three assertions are made on the turn whose sink was offered an event.
+#[tokio::test]
+async fn the_turn_deadline_bounds_a_sink_that_never_accepts() {
+    let mut limit = Duration::from_millis(300);
+    let error = loop {
+        let (error, offered) = turn_into_a_blocked_sink(limit).await;
+        if offered {
+            break error;
+        }
+        assert_eq!(
+            error.code,
+            ErrorCode::Deadline,
+            "a turn that never reached the sink still ends on its deadline"
+        );
+        limit *= 2;
+        assert!(
+            limit < TRANSPORT_TOTAL,
+            "the sink was offered no event before any turn deadline below the transport's \
+             {TRANSPORT_TOTAL:?}"
+        );
+    };
     assert_eq!(error.code, ErrorCode::Deadline);
     assert_eq!(error.dispatch, Dispatch::Accepted);
     assert!(
@@ -640,4 +718,69 @@ async fn a_sink_that_refuses_the_warning_fails_the_turn_with_its_own_error() {
     server.await.unwrap();
     assert_eq!(error.code, ErrorCode::TooLarge);
     assert_eq!(error.message, "stream sink event bound reached");
+}
+
+/// Adversary, wave 36. A waker that counts how often it was woken.
+struct AdversaryW36Woken(AtomicUsize);
+
+impl std::task::Wake for AdversaryW36Woken {
+    fn wake(self: Arc<Self>) {
+        self.0.fetch_add(1, Ordering::SeqCst);
+    }
+}
+
+/// Adversary, wave 36. The cancel has to wake a turn that is parked in the sink, not only be
+/// seen by a turn somebody polls again. `cancellation_reaches_a_caller_whose_sink_never_accepts`
+/// awaits the turn after the cancel, and that poll is one the caller of a parked turn does not
+/// give: a client that reads the token only when it is polled passes it. Here the turn is polled
+/// with a waker that counts, the cancel follows with no poll between, and the case asserts the
+/// wake before it lets the turn finish. No clock is read.
+#[tokio::test]
+async fn adversary_w36_a_cancel_wakes_a_turn_parked_in_the_sink() {
+    let (listener, url) = listener().await;
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = accept(&listener).await;
+        read_request(&mut socket).await;
+        socket
+            .write_all(
+                b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n",
+            )
+            .await
+            .unwrap();
+        socket.write_all(STREAM).await.unwrap();
+        tokio::time::sleep(Duration::from_secs(30)).await;
+    });
+    let client = client(&url, StaticResolver::new("fixture-key"));
+    let cancel = Cancel::new();
+    let (mut sink, mut offered) = BlockedSink::new();
+    let request = request();
+    let turn = client.turn(&request, &mut sink, &cancel);
+    tokio::pin!(turn);
+    tokio::select! {
+        biased;
+        result = &mut turn => panic!(
+            "the turn ended before its sink was offered an event: {:?}",
+            result.err()
+        ),
+        signal = &mut offered => signal.expect("the sink was offered an event"),
+    }
+    let woken = Arc::new(AdversaryW36Woken(AtomicUsize::new(0)));
+    let waker = std::task::Waker::from(Arc::clone(&woken));
+    let mut context = std::task::Context::from_waker(&waker);
+    assert!(
+        turn.as_mut().poll(&mut context).is_pending(),
+        "the turn is parked in the sink"
+    );
+    let before = woken.0.load(Ordering::SeqCst);
+    cancel.cancel();
+    let after = woken.0.load(Ordering::SeqCst);
+    assert!(
+        after > before,
+        "the cancel did not wake the turn parked in the sink"
+    );
+    let error = turn.await.expect_err("the blocked sink was cancelled");
+    server.abort();
+    assert_eq!(error.code, ErrorCode::Cancelled);
+    assert_eq!(error.dispatch, Dispatch::Accepted);
+    assert!(error.observation.is_some(), "the snapshot is retained");
 }
