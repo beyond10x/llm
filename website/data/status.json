@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-11-24",
+  "asOf": "2026-11-25",
   "format": "b10x-status/1",
   "items": [
     {
@@ -519,5 +519,5 @@
       "status": "planned"
     }
   ],
-  "source": "docs/implementation-status.md in the llm repository, at 0.28.0"
+  "source": "docs/implementation-status.md in the llm repository, at 0.29.0"
 }
