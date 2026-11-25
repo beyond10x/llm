@@ -25,6 +25,7 @@ use ess_primitives::time::Timestamp;
 use serde::Deserialize;
 use std::{
     error::Error,
+    ffi::OsString,
     fs,
     path::Path,
     process::ExitCode,
@@ -68,10 +69,11 @@ enum Cmd {
     Check,
     /// Run the `ess` that `gate.yml` pins with these arguments, from the repository root: the
     /// stored one under `target/ess`, the one on `PATH` when it reports the pinned version, or
-    /// the release fetched into the store. Any other `ess` is refused and nothing is run.
+    /// the release fetched into the store. Any other `ess` is refused and nothing is run. Every
+    /// argument after `ess` goes to it as written, `--help`, `--version` and `--` among them.
     Ess {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-        arguments: Vec<String>,
+        arguments: Vec<OsString>,
     },
     /// Run one suite against a baseline and write its report.
     Run {
@@ -92,6 +94,13 @@ enum Cmd {
 }
 
 fn main() -> Result<ExitCode, Box<dyn Error>> {
+    // Every argument after `ess` is the pinned ess's own, so the parser never sees them: it
+    // would answer `--help` and `-h` itself and take a leading `--` away.
+    let mut arguments = std::env::args_os().skip(1);
+    if arguments.next().is_some_and(|first| first == "ess") {
+        let arguments: Vec<OsString> = arguments.collect();
+        return ess::run(&gate::root()?, &arguments);
+    }
     match <Cli as clap::Parser>::parse().command {
         Cmd::Check => gate::check()?,
         Cmd::Ess { arguments } => return ess::run(&gate::root()?, &arguments),

@@ -78,7 +78,7 @@ story that says so.
 | No `unsafe` code | `unsafe_code = "forbid"` in the root `Cargo.toml`; Clippy `all` and `pedantic` deny |
 | No field a client sends is dropped: each ingress decoder carries, translates, reports or refuses it, and refuses an unknown key at every level by its path | `crates/llm-messages/tests/client_request_fields.rs::every_refusal_names_its_field_by_path`, `crates/llm-responses/tests/client_fields.rs::a_key_outside_the_subset_is_refused_by_its_path_at_every_level`, `crates/llm-chat/tests/ingress.rs::an_unknown_key_on_a_content_part_is_refused_by_its_path` and the other `an_unknown_key_on_*` cases there, `crates/llm-chat/tests/every_output_delta.rs::a_refusal_only_message_reads_back_and_a_refusal_that_is_not_a_string_is_refused_by_its_path`; advisory omissions `checks/conformance/tests/client_turns.rs` |
 | The conformance suite answers at least 1080 scenarios and skips none | `contracts/baseline.json`, enforced by `llm-conformance check` |
-| The gate runs only the `ess` release `gate.yml` pins: another version is refused, naming both, before a projection is made; fetched bytes with another digest are not started; the manifest, the lockfile and the documents name that one version; no task and no workflow step starts the `ess` on `PATH` | `checks/conformance/tests/client_turns.rs::pinned_ess::another_ess_on_path_is_refused_with_both_versions_before_a_projection_is_made`, `checks/conformance/tests/client_turns.rs::pinned_ess::validating_the_specification_refuses_another_ess_the_same_way`, `checks/conformance/tests/client_turns.rs::pinned_ess::with_another_ess_on_path_the_stored_one_projects`, `checks/conformance/src/ess.rs::tests::fetched_bytes_with_another_digest_are_not_started_and_not_kept`; `checks/xtask/tests/gate/ess_pin.rs::the_manifest_and_the_lockfile_are_on_the_version_ci_installs`, `checks/xtask/tests/gate/ess_pin.rs::the_documents_name_the_version_ci_installs`, `checks/xtask/tests/gate/ess_pin.rs::no_task_runs_an_ess_the_runner_did_not_resolve`, `checks/xtask/tests/gate/ess_pin.rs::no_workflow_step_runs_an_ess_the_runner_did_not_resolve` |
+| The gate runs only the `ess` release `gate.yml` pins: another version is refused, naming both, before a projection is made; fetched bytes with another digest are not started; the manifest, the lockfile and the documents name that one version; no task and no workflow step names an `ess` of its own | `checks/conformance/tests/client_turns.rs::pinned_ess::another_ess_on_path_is_refused_with_both_versions_before_a_projection_is_made`, `checks/conformance/tests/client_turns.rs::pinned_ess::validating_the_specification_refuses_another_ess_the_same_way`, `checks/conformance/tests/client_turns.rs::pinned_ess::with_another_ess_on_path_the_stored_one_projects`, `checks/conformance/src/ess.rs::tests::fetched_bytes_with_another_digest_are_not_started_and_not_kept`; `checks/xtask/tests/gate/ess_pin.rs::the_manifest_and_the_lockfile_are_on_the_version_ci_installs`, `checks/xtask/tests/gate/ess_pin.rs::the_documents_name_the_version_ci_installs`, `checks/xtask/tests/gate/ess_pin.rs::no_task_runs_an_ess_the_runner_did_not_resolve`, `checks/xtask/tests/gate/ess_pin.rs::no_workflow_step_runs_an_ess_the_runner_did_not_resolve` |
 
 The default gate makes no paid provider call and provisions nothing. Fixture evidence is not
 provider or hosting qualification; `docs/implementation-status.md` keeps that distinction.
@@ -133,16 +133,19 @@ the whole gate. Documentation validation (`pages.yml`) still runs on every pull 
 The local gate runs the `ess` release CI installs and no other. The pin has one source,
 `ESS_VERSION` and `ESS_SHA256` of the "Install ess" step in `gate.yml`; `llm-conformance` reads it
 there (`checks/conformance/src/ess.rs`) and both steps of `task check` that run `ess` go through
-it: `llm-conformance ess <arguments>` and `llm-conformance check`. CI's step "Specification and
-plan" runs the same two commands, and no task and no workflow step starts `ess` itself
-(`checks/xtask/tests/gate/ess_pin.rs`). The runner takes the first of these whose `--version` ends
-0 and writes exactly `ess <version>`:
+it: `llm-conformance ess <arguments>` and `llm-conformance check`. Every argument after `ess`
+reaches the pinned `ess` as written, `--help`, `--version` and `--` among them. CI's step
+"Specification and plan" runs the same two commands, and no task and no workflow step names an
+`ess` of its own (`checks/xtask/tests/gate/ess_pin.rs`: every string of `Taskfile.yml` and every
+`run:` of every workflow is read; one step, "Install ess", is exempt). The runner takes the first
+of these whose `--version` ends 0 and writes exactly `ess <version>`:
 
 1. the stored `target/ess/ess-<version>-x86_64-unknown-linux-gnu/ess`;
 2. the first executable `ess` on `PATH`;
-3. the release asset, fetched with `curl` and `tar` into `target/ess/` when nothing is stored, and
-   kept only after the checks the "Install ess" step makes: the asset's line in the release's
-   `SHA256SUMS` is the pinned digest, and the downloaded bytes have that digest.
+3. the release asset, fetched with `curl` and `tar` into `target/ess/` when nothing is in the
+   stored one's place, and kept only after the checks the "Install ess" step makes: the asset's
+   line in the release's `SHA256SUMS` is the pinned digest, and the downloaded bytes have that
+   digest.
 
 `PATH` comes before the fetch, so a host that carries the pinned release (CI after its install
 step, a build node) makes no network request. When none of the three is the pinned release the
@@ -150,9 +153,17 @@ step prints the version it needs and what each place held (the version another `
 among them), exits 1 and starts no other `ess` command: `llm-conformance check` projects and
 compares nothing. The fetch is for `x86_64-unknown-linux-gnu`, the asset the digest is of;
 elsewhere install the pinned release on `PATH`. A stored file that is not the pinned release is
-not written over: remove it. `LLM_ESS_STORE` names another store than `target/ess` and
-`LLM_ESS_RELEASES` another address than GitHub's releases; the tests set both, and the pinned
-digest decides under either.
+not written over, and a stored one's place that holds no `ess` is refused before any download:
+remove it. The fetch works in a `.fetch-*` directory inside the store and removes it when it
+returns; a run that a signal ends during the fetch leaves it. No run reads a `.fetch-*` directory
+as stored or starts anything in one, and removing `target/ess/` is safe: the next run fetches
+again.
+
+`LLM_ESS_STORE` names another store than `target/ess` and `LLM_ESS_RELEASES` another address than
+GitHub's releases; the tests set both. The digest is checked on what is fetched and nowhere else: a
+fetched asset is kept only with the pinned digest, under either variable, and a stored file and
+one on `PATH` are started on their `--version` answer alone, their digest not checked again.
+Whoever can write the store or a directory of `PATH` runs code in the gate.
 
 An ESS pin move changes `ESS_VERSION` and `ESS_SHA256` in `gate.yml` together, the digest read from
 the `ess-<version>-x86_64-unknown-linux-gnu.tar.gz` line of that release's `SHA256SUMS`. With them
@@ -162,8 +173,8 @@ and nothing else), the version this file ("CI installs" above), README.md and
 `website/docs/getting-started.md` name (`checks/xtask/tests/gate/ess_pin.rs` fails while one of
 these names another version), and `contracts/suite.json` and `contracts/schema/`, regenerated as
 "Generated files" says, which may leave their bytes as they were. The move gets a `### Changed`
-line in `CHANGELOG.md`. A version moved without its digest fails the "Install ess" step before any
-test runs, and the local fetch.
+line in `CHANGELOG.md`. A version moved without its digest fails the "Install ess" step of CI,
+which runs after the step "Rust tests", and the local fetch.
 
 Build into the worktree's own `target/` and never set `CARGO_TARGET_DIR`. Let cargo create
 `target/`: one made by hand before the first build has no `CACHEDIR.TAG`, and

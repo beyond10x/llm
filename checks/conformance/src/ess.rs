@@ -7,14 +7,18 @@
 //! 1. the stored one, `<store>/ess-<version>-x86_64-unknown-linux-gnu/ess`, where the store is
 //!    `target/ess` under the repository root;
 //! 2. the first `ess` on `PATH`;
-//! 3. the release asset, fetched into the store when the stored one is absent, with the digest
-//!    check the workflow step makes: the asset's line in the release's `SHA256SUMS` is the pinned
-//!    digest, and the downloaded bytes have that digest.
+//! 3. the release asset, fetched into the store when nothing is in the stored one's place, with
+//!    the digest check the workflow step makes: the asset's line in the release's `SHA256SUMS`
+//!    is the pinned digest, and the downloaded bytes have that digest.
 //!
 //! `PATH` comes before the fetch so that a host which already carries the pinned release (CI
 //! after its install step, a build node) makes no network request. When none of the three gives
 //! the pinned version, the [`Refusal`] names the version needed and what each place held, and
 //! the caller runs no `ess` at all.
+//!
+//! The digest is checked on what is fetched and nowhere else: a stored `ess` and one on `PATH`
+//! are started on their `--version` answer alone. Whoever can write the store or a directory of
+//! `PATH` runs code in the gate.
 
 use sha2::{Digest, Sha256};
 use std::{
@@ -235,9 +239,13 @@ fn download(url: &str, file: &Path) -> Result<(), String> {
 
 /// Fetches the pinned release's asset into the store and returns its `ess`.
 ///
-/// Everything happens in a directory of its own inside the store, which is removed again
-/// whatever the outcome; only an unpacked release whose asset has the pinned digest and whose
-/// `ess` reports the pinned version is moved to its place.
+/// Everything happens in a directory of its own inside the store, `.fetch-*`, which is removed
+/// when the fetch returns, whatever it returns; only an unpacked release whose asset has the
+/// pinned digest and whose `ess` reports the pinned version is moved to its place. A run that
+/// a signal ends during the fetch does not return and leaves its `.fetch-*` directory. No run
+/// reads a `.fetch-*` directory as stored or starts anything in one, and no fetch removes
+/// another's, so two runs may fetch into one store at once. Removing the store is safe: the next
+/// run fetches again.
 fn fetch(pin: &Pin, host: &Host) -> Result<PathBuf, String> {
     let directory = pin.directory();
     let asset = format!("{directory}.tar.gz");
@@ -305,7 +313,8 @@ fn fetch(pin: &Pin, host: &Host) -> Result<PathBuf, String> {
 pub fn resolve(pin: &Pin, host: &Host) -> Result<PathBuf, Refusal> {
     let mut tried = Vec::new();
 
-    let stored = host.store.join(pin.directory()).join("ess");
+    let place = host.store.join(pin.directory());
+    let stored = place.join("ess");
     let absent = fs::symlink_metadata(&stored).is_err();
     if absent {
         tried.push(format!("{}: absent", stored.display()));
@@ -329,10 +338,32 @@ pub fn resolve(pin: &Pin, host: &Host) -> Result<PathBuf, Refusal> {
         None => tried.push("PATH: no `ess`".to_owned()),
     }
 
+    // A stored file was named above, and no fetch writes over it.
     if absent && host.fetches {
-        match fetch(pin, host) {
-            Ok(fetched) => return Ok(fetched),
-            Err(why) => tried.push(format!("fetch: {why}")),
+        // The place is looked at again, and before its `ess`: another run moves a whole release
+        // there at once, so a place that came to be since the first look has its `ess`.
+        if fs::symlink_metadata(&place).is_err() {
+            match fetch(pin, host) {
+                Ok(fetched) => return Ok(fetched),
+                Err(why) => tried.push(format!("fetch: {why}")),
+            }
+        } else if fs::symlink_metadata(&stored).is_err() {
+            // A fetch moves a whole release to its place and never into something that is
+            // there: what is there without an `ess` is not a fetch's, and nothing is downloaded
+            // only to find that the move fails.
+            tried.push(format!(
+                "fetch: {}: is there and holds no `ess`; remove it and the release is fetched again",
+                place.display()
+            ));
+        } else {
+            // Another run stored a release while `PATH` was asked.
+            match reports(&stored, &pin.version) {
+                Ok(()) => return Ok(stored),
+                Err(why) => tried.push(format!(
+                    "{}: {why}; remove it and the release is fetched again",
+                    stored.display()
+                )),
+            }
         }
     } else if absent {
         tried.push(format!(
@@ -355,7 +386,7 @@ pub fn pinned(root: &Path) -> Result<PathBuf, Box<dyn Error>> {
 }
 
 /// Runs the pinned `ess` with `arguments` and gives back its exit status.
-pub fn run(root: &Path, arguments: &[String]) -> Result<ExitCode, Box<dyn Error>> {
+pub fn run(root: &Path, arguments: &[OsString]) -> Result<ExitCode, Box<dyn Error>> {
     let status = Command::new(pinned(root)?).args(arguments).status()?;
     Ok(status
         .code()
@@ -873,5 +904,286 @@ mod tests {
         let host = Host::of(root, |_| Some(OsString::new()));
         assert_eq!(host.store, Path::new("/repository/target/ess"));
         assert_eq!(host.releases, RELEASES);
+    }
+
+    /// Publishes a release whose `ess` notes its call, runs `first` and then writes the pinned
+    /// version, and returns the asset's digest.
+    fn adversary_w32_release_that_first_runs(fixture: &Fixture, first: &str) -> String {
+        fixture.release("ess 7.8.9\n");
+        let script = format!(
+            "#!/bin/sh\nprintf '%s\\n' \"fetched $*\" >> '{}'\n{first}\nprintf '%s\\n' 'ess 7.8.9'\n",
+            fixture.at("calls").display()
+        );
+        let member = fixture.at("tree").join(DIRECTORY).join("ess");
+        fs::write(&member, script).expect("the member is written");
+        fixture.release_again()
+    }
+
+    impl Fixture {
+        /// Packs `tree/` again as the release's asset and returns its digest.
+        fn release_again(&self) -> String {
+            let release = self.at("release").join(VERSION);
+            let packed = Command::new("tar")
+                .arg("-czf")
+                .arg(release.join(ASSET))
+                .arg("-C")
+                .arg(self.at("tree"))
+                .arg(DIRECTORY)
+                .status()
+                .expect("tar runs");
+            assert!(packed.success(), "tar packs the asset");
+            let mut digest = String::new();
+            for byte in Sha256::digest(fs::read(release.join(ASSET)).expect("the asset")) {
+                write!(digest, "{byte:02x}").expect("a string takes text");
+            }
+            digest
+        }
+    }
+
+    /// Two runs of the gate fetch at once and the other one stores the release first: this run
+    /// uses the stored one and leaves no download behind. The other run is played by the fetched
+    /// `ess` itself, which stores a copy of itself when it is asked for its version.
+    #[test]
+    fn adversary_w32_a_release_another_run_stored_during_the_fetch_is_used() {
+        let fixture = Fixture::new();
+        let place = fixture.at("store").join(DIRECTORY);
+        let stored = place.join("ess");
+        let digest = adversary_w32_release_that_first_runs(
+            &fixture,
+            &format!(
+                "[ -e '{0}' ] || {{ mkdir -p '{1}' && cp \"$0\" '{0}'; }}",
+                stored.display(),
+                place.display()
+            ),
+        );
+        fixture.sums(&format!("{digest}  {ASSET}"));
+        assert_eq!(
+            resolve(&pin(&digest), &fixture.host()).ok(),
+            Some(stored.clone())
+        );
+        assert_eq!(
+            fixture.calls(),
+            ["fetched --version", "fetched --version"],
+            "the unpacked one, then the one the other run stored"
+        );
+        assert_eq!(fixture.store(), [DIRECTORY], "no download is left behind");
+        assert_eq!(
+            fs::read_dir(&place).expect("the stored release").count(),
+            1,
+            "the stored release is the other run's, whole"
+        );
+    }
+
+    /// A directory in the stored release's place that holds no `ess` is not a stored release:
+    /// the fetch cannot move its own there, so the resolution is a refusal that names the place,
+    /// the directory keeps what it held and no download is left behind.
+    #[test]
+    fn adversary_w32_a_directory_without_an_ess_in_the_stored_place_is_a_refusal() {
+        let fixture = Fixture::new();
+        let place = fixture.at("store").join(DIRECTORY);
+        fs::create_dir_all(&place).expect("the place");
+        fs::write(place.join("kept"), "not an ess").expect("a file that is not an ess");
+        let digest = fixture.release("ess 7.8.9\n");
+        fixture.sums(&format!("{digest}  {ASSET}"));
+        let refusal = refusal(&pin(&digest), &fixture.host());
+        assert!(
+            refusal.contains(&format!("fetch: {}: ", place.display())),
+            "{refusal}"
+        );
+        assert_eq!(fixture.store(), [DIRECTORY], "no download is left behind");
+        assert_eq!(
+            fs::read(place.join("kept")).expect("the file is still there"),
+            b"not an ess"
+        );
+        assert!(!place.join("ess").exists(), "nothing was moved into it");
+        assert!(refusal.contains("remove it"), "{refusal}");
+        assert!(
+            fixture.calls().is_empty(),
+            "nothing was fetched, so no fetched `ess` was started: {:?}",
+            fixture.calls()
+        );
+    }
+
+    /// What a shell does not start is passed over wherever it comes before an `ess` it does
+    /// start: a directory named `ess` and a link named `ess` that leads nowhere.
+    #[test]
+    fn adversary_w32_a_directory_and_a_dangling_link_named_ess_are_passed_over() {
+        let fixture = Fixture::new();
+        fs::create_dir_all(fixture.at("bin/ess")).expect("a directory named ess");
+        fs::create_dir_all(fixture.at("links")).expect("a second PATH directory");
+        std::os::unix::fs::symlink(fixture.at("nowhere"), fixture.at("links/ess"))
+            .expect("a link that leads nowhere");
+        let third = fixture.at("third/ess");
+        fixture.stand_in(&third, "third", "ess 7.8.9\n", 0);
+        let mut host = fixture.host();
+        host.path = Some(
+            std::env::join_paths([fixture.at("bin"), fixture.at("links"), fixture.at("third")])
+                .expect("three entries"),
+        );
+        assert_eq!(resolve(&pin(OTHER_DIGEST), &host).ok(), Some(third));
+        assert_eq!(fixture.calls(), ["third --version"]);
+    }
+
+    /// An `ess` on `PATH` that is a link to an executable is taken, as a shell takes it.
+    #[test]
+    fn adversary_w32_a_link_named_ess_to_an_executable_is_taken() {
+        let fixture = Fixture::new();
+        let linked = fixture.at("elsewhere/ess-7.8.9");
+        fixture.stand_in(&linked, "linked", "ess 7.8.9\n", 0);
+        std::os::unix::fs::symlink(&linked, fixture.at("bin/ess")).expect("a link named ess");
+        assert_eq!(
+            resolve(&pin(OTHER_DIGEST), &fixture.host()).ok(),
+            Some(fixture.at("bin/ess"))
+        );
+        assert_eq!(fixture.calls(), ["linked --version"]);
+    }
+
+    /// Only the `ess` of the asset is stored: whatever else the archive holds beside it stays
+    /// in the download that is removed.
+    #[test]
+    fn adversary_w32_only_the_ess_of_the_asset_is_stored() {
+        let fixture = Fixture::new();
+        fixture.release("ess 7.8.9\n");
+        fs::write(fixture.at("tree").join(DIRECTORY).join("beside"), "x").expect("beside");
+        let digest = fixture.release_again();
+        fixture.sums(&format!("{digest}  {ASSET}"));
+        let stored = fixture.at("store").join(DIRECTORY).join("ess");
+        assert_eq!(
+            resolve(&pin(&digest), &fixture.host()).ok(),
+            Some(stored.clone())
+        );
+        let held: Vec<PathBuf> = fs::read_dir(fixture.at("store").join(DIRECTORY))
+            .expect("the stored release")
+            .map(|entry| entry.expect("an entry").path())
+            .collect();
+        assert_eq!(held, [stored]);
+    }
+
+    /// Whatever is in the stored release's place without an `ess` in it is refused before any
+    /// download, an empty directory and a file as well: the release is not asked for, so the
+    /// refusal is the same with none published, and with one published nothing of it is started.
+    #[test]
+    fn whatever_is_in_the_stored_place_without_an_ess_is_refused_before_any_download() {
+        for shape in ["an empty directory", "a file"] {
+            let fixture = Fixture::new();
+            let place = fixture.at("store").join(DIRECTORY);
+            fs::create_dir_all(fixture.at("store")).expect("the store");
+            if shape == "a file" {
+                fs::write(&place, "not a release").expect("a file in the place");
+            } else {
+                fs::create_dir(&place).expect("an empty directory in the place");
+            }
+            let words = format!(
+                "fetch: {}: is there and holds no `ess`; remove it and the release is fetched again",
+                place.display()
+            );
+
+            // No release is published: a download would be a refusal that names `curl`.
+            let unpublished = refusal(&pin(OTHER_DIGEST), &fixture.host());
+            assert!(unpublished.contains(&words), "{shape}: {unpublished}");
+            assert!(!unpublished.contains("curl"), "{shape}: {unpublished}");
+
+            let digest = fixture.release("ess 7.8.9\n");
+            fixture.sums(&format!("{digest}  {ASSET}"));
+            let published = refusal(&pin(&digest), &fixture.host());
+            assert!(published.contains(&words), "{shape}: {published}");
+            assert!(fixture.calls().is_empty(), "{shape}: {:?}", fixture.calls());
+            assert_eq!(fixture.store(), [DIRECTORY], "{shape}: nothing was added");
+            assert!(
+                !place.join("ess").exists(),
+                "{shape}: nothing was moved there"
+            );
+        }
+    }
+
+    /// Another run of the gate stores the release after this one found the stored place empty
+    /// and before it comes to fetch: what is stored then is looked at again, used when it reports
+    /// the pinned version and named when it does not, and nothing is downloaded either way. The
+    /// other run is played by the `ess` on `PATH`, which moves a release to the stored place
+    /// when it is asked for its version.
+    #[test]
+    fn a_release_another_run_stored_while_path_was_asked_is_looked_at_again() {
+        for (reply, used) in [("ess 7.8.9\n", true), ("ess 7.8.8\n", false)] {
+            let fixture = Fixture::new();
+            let ready = fixture.at("ready").join(DIRECTORY);
+            fixture.stand_in(&ready.join("ess"), "stored", reply, 0);
+            let place = fixture.at("store").join(DIRECTORY);
+            let script = format!(
+                "#!/bin/sh\nprintf '%s\\n' \"path $*\" >> '{}'\nmkdir -p '{}' && mv '{}' '{}'\nprintf '%s\\n' 'ess 0.98.0'\n",
+                fixture.at("calls").display(),
+                fixture.at("store").display(),
+                ready.display(),
+                place.display()
+            );
+            fs::write(fixture.at("bin/ess"), script).expect("the `ess` on PATH is written");
+            fs::set_permissions(fixture.at("bin/ess"), fs::Permissions::from_mode(0o755))
+                .expect("the `ess` on PATH is executable");
+
+            // No release is published: a download would be a refusal that names `curl`.
+            let found = resolve(&pin(OTHER_DIGEST), &fixture.host());
+            if used {
+                assert_eq!(
+                    found.map_err(|refusal| refusal.to_string()),
+                    Ok(place.join("ess"))
+                );
+            } else {
+                let said = found.expect_err("another version is not used").to_string();
+                assert!(
+                    said.contains(&format!(
+                        "{}: reports \"ess 7.8.8\\n\"; remove it and the release is fetched again",
+                        place.join("ess").display()
+                    )),
+                    "{said}"
+                );
+                assert!(!said.contains("holds no `ess`"), "{said}");
+                assert!(!said.contains("curl"), "{said}");
+            }
+            assert_eq!(fixture.calls(), ["path --version", "stored --version"]);
+            assert_eq!(fixture.store(), [DIRECTORY], "nothing was downloaded");
+        }
+    }
+
+    /// What a run that a signal ended left in the store is never read. With a `.fetch-*`
+    /// directory that holds an `ess` wherever a release has one, the next run fetches the
+    /// release, stores it and uses it, starts nothing of the leftover and leaves it where it is.
+    #[test]
+    fn a_leftover_of_an_interrupted_fetch_is_never_read_and_the_release_is_fetched() {
+        let fixture = Fixture::new();
+        let leftover = fixture.at("store").join(".fetch-left");
+        fixture.stand_in(&leftover.join("ess"), "leftover", "ess 7.8.9\n", 0);
+        fixture.stand_in(
+            &leftover.join(DIRECTORY).join("ess"),
+            "leftover",
+            "ess 7.8.9\n",
+            0,
+        );
+        fs::write(leftover.join(ASSET), "half a download").expect("a cut download");
+        fixture.on_path("ess 0.98.0\n");
+        let digest = fixture.release("ess 7.8.9\n");
+        fixture.sums(&format!("{digest}  {ASSET}"));
+        let stored = fixture.at("store").join(DIRECTORY).join("ess");
+        assert_eq!(
+            resolve(&pin(&digest), &fixture.host()).ok(),
+            Some(stored.clone())
+        );
+        assert_eq!(fixture.calls(), ["path --version", "fetched --version"]);
+        let mut held = fixture.store();
+        held.sort();
+        assert_eq!(
+            held,
+            [".fetch-left", DIRECTORY],
+            "the leftover stays and the release is stored beside it"
+        );
+        assert_eq!(
+            fs::read(leftover.join(ASSET)).expect("the cut download"),
+            b"half a download"
+        );
+
+        // From then on the stored release is used, and the leftover still is not.
+        assert_eq!(resolve(&pin(&digest), &fixture.host()).ok(), Some(stored));
+        assert_eq!(
+            fixture.calls(),
+            ["path --version", "fetched --version", "fetched --version"]
+        );
     }
 }
