@@ -220,8 +220,12 @@ is the model:
    fast-forwarded to the release commit by a bot push. A wave's pull request lands on `main` by
    the same merge.
 3. Tag `<version>` on the commit of `main` that carries the release (since 0.29.0 the merge
-   commit, whose tree equals the release commit's) and publish the GitHub Release `LLM <version>`,
-   both as the bot.
+   commit, whose tree equals the release commit's), only after every run of `Gate`,
+   `Shared source gates` and `Documentation validation` on that commit ended `success`:
+   `task release-tag -- <version> <sha>` (`cargo xtask release-tag`, `checks/xtask`; `<sha>` is
+   the full commit id) makes and pushes the tag as the bot and refuses it while one of those runs
+   is absent, pending or red. No other command makes a release tag. `b10x-gates` reads its policy
+   file from `B10X_GATES_POLICY`. Then publish the GitHub Release `LLM <version>` as the bot.
 4. Verify the tag's commit, `Gate`, `Shared source gates` and `Documentation validation` on it, and
    the Release; only then report it released.
 5. Delete the remote `release/<version>` with

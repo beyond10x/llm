@@ -15,6 +15,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `Routed::label` (replay): a classification answered cut, split or with a key given twice names no label and `differs`
 - ESS: 5 scenarios for the rule in `llm.decisions`; the floor is 1080 (was 1075)
 
+### Changed
+
+- `task release-tag -- <version> <sha>` (`llm-xtask`): no release tag while a required run is absent, pending or red
+
 ## [0.30.0] - 2026-11-25
 
 ### Changed
