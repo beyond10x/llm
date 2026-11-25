@@ -199,15 +199,23 @@ fn integers_are_exact(mut scanner: scan::Scanner<'_>) -> bool {
 /// The one way the scan of an answer's text reads it.
 ///
 /// The rule: the text of an answer is read through a [`Scanner`] only, and the scanner charges
-/// every char it visits. The scanner keeps the text it has not passed in a field private to this
-/// module and no method hands that text out, so its user sees a char or a slice only once the
-/// scanner has passed and charged it. The charge is made in test builds, to the counter `work`.
-/// `whole` builds the one scanner of an answer and hands it to `integers_are_exact`, which is
-/// given no other reference to the text.
+/// every char it visits. The charge is made in test builds, to the counter `work`.
 ///
-/// A slice a skip returns was charged once, when it was skipped. Reading it again is its user's
-/// cost and is not charged: it is of the same order as long as the user reads each slice a fixed
-/// number of times and keeps none for a later turn of its loop.
+/// What the types hold:
+///
+/// - The scanner keeps the text it has not passed in a field private to this module and no
+///   method hands that text out, so its user sees a char or a slice only once the scanner has
+///   passed and charged it.
+/// - `whole` builds the one scanner of an answer and hands it to `integers_are_exact`, which is
+///   given no other reference to the text.
+/// - A slice a skip returns borrows from the scanner and not from the text, so the next call on
+///   the scanner ends it: its user cannot keep a slice for a later skip or a later turn of its
+///   loop and read it again there.
+///
+/// What stays a rule in prose: a slice was charged once, when it was skipped, and reading it
+/// again before the next call on the scanner is its user's cost and is not charged. That cost is
+/// of the same order as long as the user reads each slice a fixed number of times and copies
+/// none into a value of its own, which would outlive the borrow.
 mod scan {
     /// The text of an answer from where the scan stands to its end.
     pub(super) struct Scanner<'a> {
@@ -222,8 +230,9 @@ mod scan {
 
         /// Passes the chars from here on that `holds` is true of and returns them. It charges
         /// one unit for each byte it passes and one for the look that ends it, at the first
-        /// char `holds` is false of or at the end of the text.
-        pub(super) fn skip_while(&mut self, holds: impl Fn(char) -> bool) -> &'a str {
+        /// char `holds` is false of or at the end of the text. What it returns borrows from the
+        /// scanner, so it cannot be read after the next call on the scanner.
+        pub(super) fn skip_while(&mut self, holds: impl Fn(char) -> bool) -> &str {
             let after = self.rest.trim_start_matches(holds);
             // What was passed is cut off by its length, a subtraction: a skip costs what it
             // passes and never the length of the text that follows.
@@ -254,9 +263,16 @@ mod scan {
 /// - [`scan::Scanner`], for every char it visits, as each of its methods says.
 ///
 /// [`integers_are_exact`] charges nothing itself. It is handed the scanner [`whole`] builds and
-/// no other reference to the text (the rule is written at [`scan`]), so its count leaves out no
-/// read of the text. What `serde_json` does between two calls of the visitor is not counted.
-/// The count is kept per thread, so a case reads what its own calls were charged.
+/// no other reference to the text (the rule is written at [`scan`]), so it sees no char the
+/// scanner has not charged. The count is kept per thread, so a case reads what its own calls
+/// were charged.
+///
+/// What the count sees: how often the visitor takes an element or a member, and every char the
+/// scanner passes. What it does not see: work inside one visit of the visitor that grows with
+/// what was read before (the array so far read again, a key compared with every key read so
+/// far), work inside the scanner's two methods, a slice read again after its skip, and what
+/// `serde_json` does between two calls of the visitor. A reader that is slow in one of these
+/// ways gives the two cases below the same counts as one that is not.
 #[cfg(test)]
 mod work {
     use std::cell::Cell;
@@ -377,9 +393,9 @@ mod tests {
     /// the answer must cost less than eight times the work, counted as in the case above.
     #[test]
     fn an_answer_of_any_make_is_read_in_time_proportional_to_its_length() {
-        // (what the answer is made of, one member as the answer writes it). The last one is the
-        // literal of an `enum` where the judge holds it to a schema; to the reader it is one
-        // more object.
+        // (what the answer is made of, one member as the answer writes it). The literal of an
+        // `enum` is no row: only a schema tells `{"b":4.0}` from the row "objects", and this
+        // case checks none.
         let makes = [
             ("integers", "-12345"),
             ("doubles", "0.5"),
@@ -387,7 +403,6 @@ mod tests {
             ("objects", r#"{"a":1.0}"#),
             ("nested arrays", "[[[1]]]"),
             ("whitespace", " \n\t 7 \r\n "),
-            ("the literal of an enum", r#"{"b":4.0}"#),
         ];
         for (make, member) in makes {
             let one: Value = serde_json::from_str(member).unwrap();
