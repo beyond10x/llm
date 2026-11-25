@@ -6,7 +6,7 @@ tasks:
       - task: rust
       - task: test
       - task: docs
-      - ess specify validate --path spec
+      - cargo run --locked -p llm-conformance -- ess specify validate --path spec
       - task: conformance
       - aep plan artifact validate
   docs:

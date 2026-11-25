@@ -7,6 +7,9 @@ use llm_providers::Binding;
 use llm_routing::Catalog;
 use serde_json::{Value, json};
 
+#[cfg(unix)]
+mod pinned_ess;
+
 /// Claude Code 2.1.293's first turn as llm-gateway authored it from published sources.
 const CLAUDE_CODE: &str =
     include_str!("../../../crates/llm-messages/tests/fixtures/claude-code-first-turn.json");
