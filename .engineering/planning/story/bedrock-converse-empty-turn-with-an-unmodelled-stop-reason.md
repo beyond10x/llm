@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason
 kind: story
-status: active
+status: implemented
 title: A Bedrock Converse turn that stops for an unmodelled reason without content is a classified failure
 tags:
 - from-finding
@@ -14,9 +14,13 @@ scope:
 - confidence: cited
   path: AGENTS.md
 - confidence: inferred
+  path: CHANGELOG.md
+- confidence: inferred
   path: contracts/baseline.json
 - confidence: inferred
   path: contracts/bedrock/scenarios
+- confidence: inferred
+  path: contracts/ess-inputs.yaml
 - confidence: inferred
   path: contracts/suite.json
 - confidence: inferred
@@ -28,6 +32,8 @@ scope:
 - confidence: inferred
   path: crates/llm-bedrock/tests/converse.rs
 - confidence: inferred
+  path: crates/llm-bedrock/tests/data/README.md
+- confidence: inferred
   path: crates/llm-bedrock/tests/data/frames
 - confidence: inferred
   path: crates/llm-models/tests/relayed_failure.rs
@@ -37,10 +43,13 @@ scope:
   path: docs/design.md
 - confidence: inferred
   path: spec/domains/bedrock.yaml
-revision: 6
+- confidence: inferred
+  path: website/docs/guides/call-a-model-on-bedrock.md
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-25T07:45:27Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-25T07:45:27Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-25T12:21:41Z", actor: "human:operator", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 
@@ -83,19 +92,25 @@ Targeted: `-p llm-bedrock` named test targets and the conformance check. No live
 
 ## Scope
 
-Derived 2026-11-25 by `story-scoper`. Every line is **cited** (read from the story or the tree) or
-**inferred** (a reading that could be wrong).
+Read by the coordinator from `git diff --stat` of the integration branch against the wave's opening
+commit (`7ddbd1d6d`) at the close of wave 2026-11-25-converse-empty-turn: 28 files. The section
+before this one was derived by `story-scoper` on 2026-11-25; it named every path below except the
+Bedrock guide, the test data README and `contracts/ess-inputs.yaml`.
 
-- **Primary surface:** `crates/llm-bedrock` — cited
-- **Files:** `crates/llm-bedrock/src/converse.rs:466-510` — cited
-- **Symbols:** `Header::outcome` (466-492, builds the outcome, calls `stop_reason` at 473), `stop_reason` (498-510, doc comment 495-497), `Header::attach` (452-464), `Header::observation` (441-449), `StreamDecoder::finish` (1206-1224), `read_answer` (1310-1354), `decode_response` (1292-1308) — cited
-- **Also likely:** `crates/llm-bedrock/src/client.rs:483-487` — inferred; `whole` strips `retriable` from every whole-answer error and its comment names only the Messages case
-- **Tests today:** `crates/llm-bedrock/tests/converse.rs::every_terminal_reason_is_carried_and_none_reads_as_completion` (897-919; streamed only, always after one text block; `max_tokens`, `guardrail_intervened`, `content_filtered`; helpers `event` 860, `synthetic_answer` 881). No test has an unmodelled reason with no item, and none on a whole Converse answer — cited
-- **Tests land in:** `crates/llm-bedrock/tests/converse.rs` and `crates/llm-bedrock/tests/client.rs` (the InvokeModel sibling cases are at `client.rs:1030-1332`, table `STOPS_WITHOUT_CONTENT` 1040-1065) — inferred. `crates/llm-bedrock/tests/` holds 18 top-level `.rs` files, each its own test binary, and no `tests/main.rs`; `process_credentials` is a `[[test]]` with `harness = false`. A new file would add a binary
-- **Also likely:** `crates/llm-models/tests/relayed_failure.rs` — inferred; "bounded by the retry policy" is held there for Messages (line 265) and `BedrockClient` makes one attempt (`docs/bedrock.md:272`)
-- **Specification first:** `spec/domains/bedrock.yaml:122-131` (the "Failures" comment above `llm.bedrock.TurnObservation`, fields `error_code` 136, `retriable` 139, `stop_reason` 164) — inferred as the file that changes first. No file under `spec/` or `contracts/bedrock/` names a Converse stop reason today; line 117 says only that InvokeModel's stop reasons are the Messages wire's — cited
-- **Scenarios:** new `contracts/bedrock/scenarios/turn-*.yaml`, `contracts/suite.json`, `contracts/baseline.json` (`AGENTS.md:80`, at least 1080) — inferred. `llm.bedrock.RunTurn` (`spec/domains/bedrock.yaml:281-314`) scripts the stream case as is: `keep_frames: 1` plus `frames_json` events (adapter `checks/conformance/src/bedrock.rs:663-690`). The whole case needs a new `.json` answer under `crates/llm-bedrock/tests/data/frames/` (adapter 711-717)
-- **Documents:** `docs/design.md:447-501` ("Provider failures retried before output"; Messages paragraph 476-501, whole-answer sentence 499-501) — cited. `AGENTS.md:76` (the Bedrock retry row) and `AGENTS.md:65` (the provider-failure row that names the Messages case) — cited. `docs/bedrock.md:270-299` (Retry classes; rows 286-287 name only InvokeModel) — inferred
-- **Confidence:** high — the story names the file and the function, and both were read
-- **Would collide with:** any unit touching `crates/llm-bedrock/src/converse.rs`, the two test files above, `spec/domains/bedrock.yaml`, the invariants table of `AGENTS.md`, the retry section of `docs/design.md`, or adding any scenario (`contracts/suite.json`, `contracts/baseline.json`)
-- **Safety fact:** a Converse answer that decodes to no item showed the caller no text, reasoning or tool event, so failing it retracts nothing: an empty text fragment emits no event (`converse.rs:749-751`) and leaves no item (1146), every other closed block leaves an item (1147-1161) — unproven
+| Path | Scoped | What the unit did |
+| --- | --- | --- |
+| `crates/llm-bedrock/src/converse.rs` | cited | `Header::outcome` takes whether the answer held a content block and fails an answer that stopped for an unmodelled reason with no content block and no kept event; `stopped_without_content` holds the rows; `StreamDecoder::read_a_content_block` |
+| `crates/llm-bedrock/src/client.rs` | inferred | `whole` drops the retriable mark of the Converse failure too; the struct doc of `BedrockClient` names the one retriable failure of a stream that ended |
+| `crates/llm-bedrock/tests/converse.rs`, `tests/client.rs` | inferred | the rows streamed and whole, usage, the fixed text, nothing shown, an empty text block, a start that names `text`, the advisory of a failed turn, both wires read alike; no new test binary |
+| `crates/llm-bedrock/tests/data/frames`, `tests/data/README.md` | inferred (the directory); the README not scoped | three whole Converse answers written by hand (`synthetic-converse_*.json`), named in the README |
+| `crates/llm-models/tests/relayed_failure.rs` | inferred | one case: the Converse client asks once a turn and routing takes it under no catalog target. Two cases that put a Converse client under routing's loop through a test adapter were written and removed (correction 1) |
+| `spec/domains/bedrock.yaml` | inferred | the "Failures" comment above `llm.bedrock.TurnObservation` states the rule |
+| `contracts/bedrock/scenarios`, `contracts/ess-inputs.yaml`, `contracts/suite.json`, `contracts/baseline.json` | inferred; `ess-inputs.yaml` not scoped | ten scenarios `turn-a-converse-stream-*stopped-*` and `turn-a-whole-converse-answer-stopped-*`; the suite regenerated; the floor 1080 → 1090 |
+| `docs/design.md` | cited | "Provider failures retried before output" names the Converse case and its one difference from the Messages wire |
+| `docs/bedrock.md` | inferred | "Retry classes" rewritten for who retries; the section "A Converse answer that stops without content" with its table of tests |
+| `website/docs/guides/call-a-model-on-bedrock.md` | not scoped | the failures and the no-retries bullets say what the client and routing do |
+| `AGENTS.md` | cited | the provider-failure row, the Bedrock retry row and the conformance floor row of the invariants table |
+| `CHANGELOG.md` | not scoped | six lines under `### Fixed`, the first marked breaking |
+
+Not touched: `crates/llm-messages`, `crates/llm-routing`, `crates/llm-cli`, `contracts/schema/`,
+`README.md` and `docs/implementation-status.md`.
