@@ -1,0 +1,518 @@
+//! An outgoing call against a local vLLM-compatible endpoint fixture.
+//!
+//! The server below replays pinned bytes over a loopback socket. It is a local fixture and
+//! establishes no live vLLM, provider or hosting qualification.
+use crate::common;
+
+use common::binding_at;
+use llm_chat::ChatClient;
+use llm_core::{
+    ADVISORY_OMITTED, CallId, Cancel, Capabilities, Dispatch, ErrorCode, Item, Model, PromptCache,
+    Protocol, ReasoningSummary, StopReason, StreamEvent, ToolCall, ToolName, ToolSpec, TurnRequest,
+    Usage, VecSink, Verbosity,
+};
+use llm_credentials::{AnonymousResolver, ResolvedSecret, SecretError, SecretRef, SecretResolver};
+use llm_http::{HttpClient, Limits};
+use std::sync::Arc;
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpListener,
+};
+
+const VLLM_TEXT: &[u8] = include_bytes!("../../fixtures/vllm-text-no-usage.sse");
+
+/// A complete, terminated stream whose reported counters contradict each other: the cached
+/// subset exceeds the input total. Every byte of it arrived from the endpoint.
+const CONTRADICTORY_COUNTERS: &[u8] = concat!(
+    "data: {\"id\":\"chatcmpl-c1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"hi\"}}]}\n\n",
+    "data: {\"id\":\"chatcmpl-c1\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+    "data: {\"choices\":[],\"usage\":{\"prompt_tokens\":2,\"prompt_tokens_details\":{\"cached_tokens\":9}}}\n\n",
+    "data: [DONE]\n\n"
+)
+.as_bytes();
+
+/// An anonymous binding must never reach a resolver; this one proves it by refusing.
+struct NoResolver;
+impl SecretResolver for NoResolver {
+    fn resolve<'a>(
+        &'a self,
+        _reference: &'a SecretRef,
+    ) -> llm_core::BoxFuture<'a, Result<ResolvedSecret, SecretError>> {
+        Box::pin(async { Err(SecretError::Missing) })
+    }
+}
+
+/// Accepts one request, returns the pinned stream, and hands back what the client sent.
+async fn serve_once(body: &'static [u8]) -> (String, tokio::task::JoinHandle<String>) {
+    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bound");
+    let port = listener.local_addr().expect("address").port();
+    let handle = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.expect("accepted");
+        let mut request = Vec::new();
+        let mut buffer = [0_u8; 4096];
+        loop {
+            let read = socket.read(&mut buffer).await.expect("read");
+            request.extend_from_slice(&buffer[..read]);
+            let text = String::from_utf8_lossy(&request).into_owned();
+            let complete = text.split_once("\r\n\r\n").is_some_and(|(head, rest)| {
+                head.to_ascii_lowercase()
+                    .split_once("content-length:")
+                    .and_then(|(_, tail)| tail.split(['\r', ';']).next())
+                    .and_then(|value| value.trim().parse::<usize>().ok())
+                    .is_some_and(|length| rest.len() >= length)
+            });
+            if complete || read == 0 {
+                break;
+            }
+        }
+        let mut response = Vec::from(
+            "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n",
+        );
+        response.extend_from_slice(body);
+        socket.write_all(&response).await.expect("written");
+        socket.shutdown().await.expect("closed");
+        String::from_utf8_lossy(&request).into_owned()
+    });
+    (format!("http://127.0.0.1:{port}/v1"), handle)
+}
+
+#[tokio::test]
+async fn a_local_vllm_compatible_endpoint_streams_through_the_neutral_port() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let binding = binding_at(
+        Protocol::ChatCompletions,
+        Capabilities::text(32_768, 4_096),
+        &base_url,
+    );
+    let client = ChatClient::new(
+        binding,
+        HttpClient::new(Limits::default()).expect("client"),
+        Arc::new(NoResolver),
+    );
+
+    let request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    let outcome = model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect("the local endpoint answered");
+
+    assert_eq!(sink.text(), "Guten Tag");
+    assert!(sink.events().iter().any(|event| matches!(
+        event,
+        StreamEvent::ReasoningDelta { text } if text == "The user greets me."
+    )));
+    assert_eq!(outcome.items, vec![Item::assistant("Guten Tag")]);
+    assert_eq!(outcome.stop_reason, StopReason::EndTurn);
+    assert_eq!(outcome.observation.usage, None);
+    assert!(outcome.observation.final_usage);
+    assert_eq!(
+        outcome
+            .observation
+            .upstream_model
+            .as_ref()
+            .map(ToString::to_string),
+        Some("Qwen/Qwen3-8B".to_owned())
+    );
+    outcome
+        .validate_for(&request, client.provenance())
+        .expect("the neutral outcome is valid for this request and binding");
+
+    let sent = server.await.expect("server finished");
+    let (head, body) = sent.split_once("\r\n\r\n").expect("a complete request");
+    assert!(head.starts_with("POST /v1/chat/completions "), "{head}");
+    // An explicitly anonymous binding sends no credential header at all.
+    assert!(
+        !head.to_ascii_lowercase().contains("authorization"),
+        "{head}"
+    );
+    let body: serde_json::Value = serde_json::from_str(body).expect("a JSON body");
+    assert_eq!(body["model"], serde_json::json!("Qwen/Qwen3-8B"));
+    assert_eq!(body["stream"], serde_json::json!(true));
+    assert_eq!(
+        body["stream_options"],
+        serde_json::json!({"include_usage": true})
+    );
+}
+
+/// A caller that builds the client itself, without the catalog, hands an anonymous binding the
+/// resolver llm exports for it. The turn is served, which a resolve reaching that resolver would
+/// have refused, and no credential header is sent.
+#[tokio::test]
+async fn a_client_built_with_the_exported_anonymous_resolver_runs_a_turn_and_sends_no_credential() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let client = ChatClient::new(
+        binding_at(
+            Protocol::ChatCompletions,
+            Capabilities::text(32_768, 4_096),
+            &base_url,
+        ),
+        HttpClient::new(Limits::default()).expect("client"),
+        Arc::new(AnonymousResolver),
+    );
+
+    let request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    let outcome = model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect("the local endpoint answered");
+    assert_eq!(sink.text(), "Guten Tag");
+    assert_eq!(outcome.items, vec![Item::assistant("Guten Tag")]);
+    assert_eq!(outcome.stop_reason, StopReason::EndTurn);
+
+    let sent = server.await.expect("server finished");
+    let (head, _) = sent.split_once("\r\n\r\n").expect("a complete request");
+    assert!(head.starts_with("POST /v1/chat/completions "), "{head}");
+    assert!(
+        !head.to_ascii_lowercase().contains("authorization"),
+        "{head}"
+    );
+}
+
+/// The snapshot a failure carries is re-validated by `Error::validate_for`, so an invalid one
+/// does not merely lose the counters — it makes the failure itself unreportable. When the
+/// evidence an attempt earned cannot pass that check, the dispatch travels alone.
+#[tokio::test]
+async fn a_snapshot_that_cannot_validate_does_not_travel_with_its_failure() {
+    let (base_url, server) = serve_once(CONTRADICTORY_COUNTERS).await;
+    let binding = binding_at(
+        Protocol::ChatCompletions,
+        Capabilities::text(32_768, 4_096),
+        &base_url,
+    );
+    let target = binding.provenance().clone();
+    let client = ChatClient::new(
+        binding,
+        HttpClient::new(Limits::default()).expect("client"),
+        Arc::new(NoResolver),
+    );
+    let request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    let error = model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect_err("the endpoint reported counters that contradict each other");
+    let _ = server.await;
+
+    // The request was served, and the refusal says so.
+    assert_eq!(error.dispatch, Dispatch::Accepted);
+    assert!(error.observation.is_none(), "{:?}", error.observation);
+    // The point of dropping it: the failure a caller receives is one the core will accept.
+    error
+        .validate_for(&target)
+        .expect("the failure is itself reportable");
+}
+
+// ---------------------------------------------------------------- advisory warnings
+
+fn client_at(base_url: &str) -> ChatClient {
+    ChatClient::new(
+        binding_at(
+            Protocol::ChatCompletions,
+            Capabilities::text(32_768, 4_096),
+            base_url,
+        ),
+        HttpClient::new(Limits::default()).expect("client"),
+        Arc::new(NoResolver),
+    )
+}
+
+fn advisory_warnings(events: &[StreamEvent]) -> Vec<&StreamEvent> {
+    events
+        .iter()
+        .filter(
+            |event| matches!(event, StreamEvent::Warning { code, .. } if code == ADVISORY_OMITTED),
+        )
+        .collect()
+}
+
+/// A request carrying a hint this wire has no field for, and one it sends.
+fn hinted_request() -> TurnRequest {
+    let mut request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+    request.controls.hints.prompt_cache = Some(PromptCache { ttl: None });
+    request.controls.hints.reasoning_summary = Some(ReasoningSummary::Auto);
+    request.controls.hints.prompt_cache_key = Some("session-7".to_owned());
+    request
+}
+
+#[tokio::test]
+async fn a_successful_turn_ends_with_one_warning_naming_the_omitted_hints() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let client = client_at(&base_url);
+    let request = hinted_request();
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect("the local endpoint answered");
+
+    let events = sink.events();
+    assert_eq!(advisory_warnings(events).len(), 1, "{events:?}");
+    // After the turn's own output, never before it.
+    let Some(StreamEvent::Warning { code, message }) = events.last() else {
+        panic!("the warning is not the last event: {events:?}");
+    };
+    assert_eq!(code, ADVISORY_OMITTED);
+    assert_eq!(
+        message,
+        "Chat Completions carries no prompt-cache, reasoning-summary; the advisory hint was not sent"
+    );
+
+    let sent = server.await.expect("server finished");
+    let (_, body) = sent.split_once("\r\n\r\n").expect("a complete request");
+    let body: serde_json::Value = serde_json::from_str(body).expect("a JSON body");
+    assert_eq!(body["prompt_cache_key"], serde_json::json!("session-7"));
+}
+
+#[tokio::test]
+async fn a_turn_that_omits_nothing_emits_no_warning() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let client = client_at(&base_url);
+    let mut request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+    request.controls.hints.prompt_cache_key = Some("session-7".to_owned());
+    request.controls.hints.verbosity = Some(Verbosity::Low);
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect("the local endpoint answered");
+    let _ = server.await;
+    assert!(
+        advisory_warnings(sink.events()).is_empty(),
+        "{:?}",
+        sink.events()
+    );
+}
+
+#[tokio::test]
+async fn a_failed_turn_emits_no_advisory_warning() {
+    let (base_url, server) = serve_once(CONTRADICTORY_COUNTERS).await;
+    let client = client_at(&base_url);
+    let request = hinted_request();
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client;
+    model
+        .turn(&request, &mut sink, &Cancel::new())
+        .await
+        .expect_err("the endpoint reported counters that contradict each other");
+    let _ = server.await;
+    assert!(
+        advisory_warnings(sink.events()).is_empty(),
+        "{:?}",
+        sink.events()
+    );
+}
+
+/// A sink with room for the turn's own output and nothing more refuses the warning, and the
+/// caller receives that refusal. The turn was served, so it carries dispatch evidence.
+#[tokio::test]
+async fn a_sink_refusing_the_warning_fails_the_turn_with_its_own_error() {
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let model: &dyn Model = &client_at(&base_url);
+    model
+        .turn(
+            &TurnRequest::new("small", vec![Item::user("Hallo")]),
+            &mut sink,
+            &Cancel::new(),
+        )
+        .await
+        .expect("the local endpoint answered");
+    let _ = server.await;
+    let output_events = sink.events().len();
+
+    let (base_url, server) = serve_once(VLLM_TEXT).await;
+    let mut sink = VecSink::new(output_events, 64 * 1024);
+    let model: &dyn Model = &client_at(&base_url);
+    let error = model
+        .turn(&hinted_request(), &mut sink, &Cancel::new())
+        .await
+        .expect_err("the sink refused the warning");
+    let _ = server.await;
+    assert_eq!(error.code, ErrorCode::TooLarge);
+    assert_eq!(error.message, "stream sink event bound reached");
+    assert_eq!(error.dispatch, Dispatch::Accepted);
+    assert_eq!(sink.events().len(), output_events);
+}
+
+// ---------------------------------------------------------------- llama-server
+
+const LLAMA_TEXT: &[u8] = include_bytes!("../../fixtures/llama-server-text-and-usage.sse");
+const LLAMA_TOOLS: &[u8] = include_bytes!("../../fixtures/llama-server-tool-call-and-usage.sse");
+const LLAMA_TIMINGS: &[u8] = include_bytes!("../../fixtures/llama-server-text-timings-only.sse");
+
+/// One llama-server stream and the turn it carries.
+struct LlamaServerStream {
+    fixture: &'static str,
+    bytes: &'static [u8],
+    events: Vec<StreamEvent>,
+    items: Vec<Item>,
+    stop_reason: StopReason,
+    usage: Usage,
+    upstream_model: &'static str,
+}
+
+fn llama_server_streams() -> Vec<LlamaServerStream> {
+    let text = |text: &str| StreamEvent::TextDelta {
+        text: text.to_owned(),
+    };
+    let call_id = CallId::new("ZbA6PzBpu91nN5WsfyZVwNFv4YLVVc51").expect("fixture call");
+    let arguments = |delta: &str| StreamEvent::ToolArgumentsDelta {
+        call_id: call_id.clone(),
+        delta: delta.to_owned(),
+    };
+    vec![
+        LlamaServerStream {
+            fixture: "llama-server-text-and-usage.sse",
+            bytes: LLAMA_TEXT,
+            events: vec![
+                StreamEvent::ReasoningDelta {
+                    text: "The user".to_owned(),
+                },
+                StreamEvent::ReasoningDelta {
+                    text: " wants a greeting.".to_owned(),
+                },
+                text("Hello"),
+                text(" there"),
+                text("."),
+            ],
+            items: vec![Item::assistant("Hello there.")],
+            stop_reason: StopReason::EndTurn,
+            // llama-server counts reasoning inside `completion_tokens` and names no part of it.
+            usage: Usage {
+                input_tokens: Some(23),
+                output_tokens: Some(14),
+                cached_input_tokens: Some(8),
+                cache_creation_input_tokens: None,
+                reasoning_output_tokens: None,
+            },
+            upstream_model: "qwen3-1.7b",
+        },
+        LlamaServerStream {
+            fixture: "llama-server-tool-call-and-usage.sse",
+            bytes: LLAMA_TOOLS,
+            events: vec![
+                text("Checking"),
+                text(" now"),
+                text(".\n"),
+                StreamEvent::ToolCallStarted {
+                    call_id: call_id.clone(),
+                    name: ToolName::new("lookup").expect("fixture tool"),
+                },
+                arguments("{"),
+                arguments("\""),
+                arguments("city"),
+                arguments("\":"),
+                arguments(" \""),
+                arguments("Lisbon"),
+                arguments("\"}"),
+            ],
+            items: vec![
+                Item::assistant("Checking now.\n"),
+                Item::ToolCall(ToolCall {
+                    call_id: call_id.clone(),
+                    name: ToolName::new("lookup").expect("fixture tool"),
+                    arguments: serde_json::json!({"city": "Lisbon"}),
+                }),
+            ],
+            stop_reason: StopReason::ToolCalls,
+            usage: Usage {
+                input_tokens: Some(212),
+                output_tokens: Some(24),
+                cached_input_tokens: Some(180),
+                cache_creation_input_tokens: None,
+                reasoning_output_tokens: None,
+            },
+            upstream_model: "qwen2.5-1.5b-instruct",
+        },
+        // The answer to a request without `stream_options.include_usage`, which this client
+        // never sends; served to it, it stands for a server that ignored the option. The
+        // counters come from `timings` alone.
+        LlamaServerStream {
+            fixture: "llama-server-text-timings-only.sse",
+            bytes: LLAMA_TIMINGS,
+            events: vec![
+                text("In"),
+                text(" short"),
+                text(":"),
+                text(" yes"),
+                text(","),
+            ],
+            items: vec![Item::assistant("In short: yes,")],
+            stop_reason: StopReason::MaxOutputTokens,
+            usage: Usage {
+                input_tokens: Some(2048),
+                output_tokens: Some(5),
+                cached_input_tokens: Some(0),
+                cache_creation_input_tokens: None,
+                reasoning_output_tokens: None,
+            },
+            upstream_model: "qwen2.5-1.5b-instruct",
+        },
+    ]
+}
+
+/// llama.cpp's `llama-server`, in the shape its source writes at release b11752: authored from
+/// that source, not captured (`docs/verification/chat.md`). Each stream is decoded by the client
+/// a caller holds. The events, the turn and its counters are the ones the bytes carry, and what
+/// the server adds — `reasoning_content`, `timings`, `system_fingerprint`, an SSE keep-alive —
+/// adds no event beyond them and takes nothing away.
+#[tokio::test]
+async fn each_llama_server_stream_decodes_through_the_chat_client() {
+    for stream in llama_server_streams() {
+        let fixture = stream.fixture;
+        let (base_url, server) = serve_once(stream.bytes).await;
+        let client = ChatClient::new(
+            binding_at(Protocol::ChatCompletions, common::capable(), &base_url),
+            HttpClient::new(Limits::default()).expect("client"),
+            Arc::new(NoResolver),
+        );
+        let mut request = TurnRequest::new("small", vec![Item::user("Hallo")]);
+        request.tools = vec![ToolSpec {
+            name: ToolName::new("lookup").expect("fixture tool"),
+            description: "Look a city up".to_owned(),
+            input_schema: serde_json::json!({"type": "object", "properties": {"city": {"type": "string"}}}),
+        }];
+        let mut sink = VecSink::new(64, 64 * 1024);
+        let model: &dyn Model = &client;
+        let outcome = model
+            .turn(&request, &mut sink, &Cancel::new())
+            .await
+            .unwrap_or_else(|error| panic!("{fixture}: {error:?}"));
+
+        assert_eq!(sink.events(), stream.events.as_slice(), "{fixture}");
+        assert_eq!(outcome.items, stream.items, "{fixture}");
+        assert_eq!(outcome.stop_reason, stream.stop_reason, "{fixture}");
+        assert_eq!(outcome.observation.usage, Some(stream.usage), "{fixture}");
+        assert!(outcome.observation.final_usage, "{fixture}");
+        assert_eq!(
+            outcome
+                .observation
+                .upstream_model
+                .as_ref()
+                .map(ToString::to_string)
+                .as_deref(),
+            Some(stream.upstream_model),
+            "{fixture}"
+        );
+        outcome
+            .validate_for(&request, client.provenance())
+            .unwrap_or_else(|error| panic!("{fixture}: {error:?}"));
+
+        // What makes llama-server send its usage chunk, `server-task.cpp:494-506`.
+        let sent = server.await.expect("server finished");
+        let (_, body) = sent.split_once("\r\n\r\n").expect("a complete request");
+        let body: serde_json::Value = serde_json::from_str(body).expect("a JSON body");
+        assert_eq!(
+            body["stream_options"],
+            serde_json::json!({"include_usage": true}),
+            "{fixture}"
+        );
+    }
+}
