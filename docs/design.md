@@ -934,7 +934,10 @@ classifier abstains `OffLabel` on it, both with the call's record written as suc
   reported incomplete is not taken, even when what arrived is valid;
 - the outcome holds exactly one assistant text item, and beside it only state the provider keeps
   (`Item::Opaque`): two text items are not joined, since `1` and `2` would read as `12`, and a
-  refusal beside the text refuses the answer;
+  refusal beside the text refuses the answer. An empty or whitespace-only text item counts as a
+  text item: a whole answer beside one is two texts and is not taken. The Messages decoder emits
+  one item for each text block, an empty block included, and the Responses decoder an empty item
+  for an output message with no parts;
 - the text is one JSON value with nothing but JSON whitespace around it;
 - it nests at most 128 levels, an array or object being one level and a scalar none: 128 arrays
   or objects one inside another are read, and the 129th is refused where it opens. The library

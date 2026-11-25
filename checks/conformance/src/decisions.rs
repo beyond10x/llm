@@ -309,11 +309,11 @@ struct Script {
     answers: Vec<String>,
     /// Arguments, as JSON text, of a call to the turn's first published tool.
     #[serde(default)]
-    tool_arguments: Option<String>,
+    tool_arguments: Option<Arguments>,
     /// Arguments of further calls to that tool, one call each, in order, after
     /// `tool_arguments`'s; the calls are `call-1`, `call-2` and so on.
     #[serde(default)]
-    tool_calls: Vec<String>,
+    tool_calls: Vec<Arguments>,
     /// The stop reason the turn reports. Absent: `tool-calls` for a turn with a call, `end-turn`
     /// for one without.
     #[serde(default)]
@@ -333,6 +333,25 @@ struct Script {
     usage: Option<Usage>,
     #[serde(default)]
     upstream_model: Option<String>,
+}
+
+/// The arguments of one scripted tool call: the JSON text a scenario authored and the value it
+/// reads as. Text that is not one JSON value is refused where the program is read, so a typo in
+/// a scenario is an invalid program and never a failed turn of the library.
+#[derive(Deserialize)]
+#[serde(try_from = "String")]
+struct Arguments {
+    text: String,
+    value: Value,
+}
+
+impl TryFrom<String> for Arguments {
+    type Error = serde_json::Error;
+
+    fn try_from(text: String) -> Result<Self, Self::Error> {
+        let value = serde_json::from_str(&text)?;
+        Ok(Self { text, value })
+    }
 }
 
 #[derive(Deserialize, Clone)]
@@ -386,7 +405,7 @@ impl Scripted {
         observation.final_usage = true;
         let script = &self.script;
         let mut texts: Vec<&String> = script.answer.iter().chain(&script.answers).collect();
-        let calls: Vec<&String> = script
+        let calls: Vec<&Arguments> = script
             .tool_arguments
             .iter()
             .chain(&script.tool_calls)
@@ -411,8 +430,7 @@ impl Scripted {
                 call_id: CallId::new(format!("call-{}", index + 1))
                     .map_err(|_| Error::invalid("invalid call id"))?,
                 name: tool.name.clone(),
-                arguments: serde_json::from_str(arguments)
-                    .map_err(|_| Error::invalid("scripted tool arguments are not JSON"))?,
+                arguments: arguments.value.clone(),
             };
             events.push(StreamEvent::ToolCallStarted {
                 call_id: call.call_id.clone(),
@@ -420,7 +438,7 @@ impl Scripted {
             });
             events.push(StreamEvent::ToolArgumentsDelta {
                 call_id: call.call_id.clone(),
-                delta: (*arguments).clone(),
+                delta: arguments.text.clone(),
             });
             items.push(Item::ToolCall(call));
         }
@@ -781,5 +799,103 @@ fn report(outcome: &ChainOutcome, facts: &mut Value) {
             facts["error_code"] = json!(abstention.cause.error_code());
         }
         None => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{classify, judge};
+    use serde_json::{Value, json};
+
+    const ARGUMENTS: &str =
+        r#"{"label":"negative","confidences":{"positive":200,"negative":9700,"neutral":100}}"#;
+
+    /// The example catalog with its route's fallback switched on, as the scenarios carry it: only
+    /// the route's second target, `remote-large`, takes tools.
+    fn catalog() -> String {
+        let example = include_str!("../../../examples/catalog.toml");
+        let switched = example.replacen("fallback_enabled = false", "fallback_enabled = true", 1);
+        assert_ne!(
+            switched, example,
+            "the example catalog switches no fallback off"
+        );
+        switched
+    }
+
+    /// What `llm.decisions.Classify` reports for a forced-tool classifier whose one scripted
+    /// model, `remote-large`, follows `script`.
+    fn classified(script: &Value) -> Value {
+        let program =
+            json!({"request_id": "req-1", "input_tokens": 100, "models": {"remote-large": script}});
+        let input = json!({
+            "catalog_toml": catalog(),
+            "label_set_json": r#"{"id":"sentiment","version":"v1","labels":["positive","negative","neutral"]}"#,
+            "chain_json": r#"{"id":"sentiment-chain","deadline_ms":30000,"classifiers":[{"id":"tool","path":"ForcedTool","route_alias":"code"}]}"#,
+            "input_text": "the film was dreadful",
+            "program_json": program.to_string(),
+        });
+        let Ok(observed) = classify(&input) else {
+            panic!("the command was not observed");
+        };
+        observed.facts
+    }
+
+    /// What `llm.decisions.Judge` reports for one run whose one scripted model follows `script`.
+    fn judged(script: &Value) -> Value {
+        let program =
+            json!({"runs": [{"request_id": "req-1", "models": {"remote-large": script}}]});
+        let input = json!({
+            "catalog_toml": catalog(),
+            "rubric_json": r#"{"id":"tone","version":"v1","text":"Is it polite?","schema":{"type":"boolean"},"route_alias":"code"}"#,
+            "subject_text": "thank you",
+            "program_json": program.to_string(),
+        });
+        let Ok(observed) = judge(&input) else {
+            panic!("the command was not observed");
+        };
+        observed.facts
+    }
+
+    /// A typo in a scenario is the scenario's fault: the program is refused where it is read, and
+    /// no call is made that could read as a provider error of the library.
+    #[test]
+    fn tool_arguments_that_are_not_json_are_refused_as_a_program() {
+        let taken = classified(&json!({"tool_calls": [ARGUMENTS]}));
+        assert_eq!(taken["valid_program"], json!(true), "{taken}");
+        assert_eq!(taken["results"], json!(["tool:decided"]), "{taken}");
+        for (name, script) in [
+            (
+                "the one entry of tool_calls",
+                json!({"tool_calls": ["{\"label\":"]}),
+            ),
+            (
+                "a later entry of tool_calls",
+                json!({"tool_calls": [ARGUMENTS, "not json"]}),
+            ),
+            ("an empty entry of tool_calls", json!({"tool_calls": [""]})),
+            (
+                "two values in one entry of tool_calls",
+                json!({"tool_calls": [format!("{ARGUMENTS}{ARGUMENTS}")]}),
+            ),
+            ("tool_arguments", json!({"tool_arguments": "{\"label\":"})),
+        ] {
+            for (command, facts) in [
+                ("Classify", classified(&script)),
+                ("Judge", judged(&script)),
+            ] {
+                assert_eq!(
+                    facts["valid_program"],
+                    json!(false),
+                    "{command}, {name}: {facts}"
+                );
+                assert_eq!(
+                    facts["error_code"],
+                    json!("invalid-request"),
+                    "{command}, {name}: {facts}"
+                );
+                assert_eq!(facts["records"], json!([]), "{command}, {name}: {facts}");
+            }
+            assert_eq!(classified(&script)["results"], json!([]), "{name}");
+        }
     }
 }

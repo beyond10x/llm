@@ -16,12 +16,14 @@ domain: llm.decisions
 # decode as the schema, and the call's record is written as succeeded. On JsonSchema the answer is
 # the one assistant text of a turn that ended normally, read as one JSON value. `OffLabel` are: a
 # turn that stopped at the output limit, a turn reported incomplete, an outcome with no assistant
-# text, an outcome with two assistant texts (they are not joined), a refusal beside the text, and
-# a text in which an object gives a key twice (`label`, `confidences`, or a label inside
-# `confidences`). State the provider keeps beside its answer is not part of the answer. On
-# ForcedTool the answer is the arguments of the one call to the forced tool of a turn that stopped
-# for its tool call. `OffLabel` are: a call of a turn that stopped at the output limit, a call of
-# a turn reported incomplete, two calls, and a refusal beside the call. Assistant text and
+# text, an outcome with two assistant texts (they are not joined; an empty or whitespace-only text
+# beside the answer counts as a second text), a refusal beside the text, and a text in which an
+# object gives a key twice (`label`, `confidences`, or a label inside `confidences`). State the
+# provider keeps beside its answer is not part of the answer.
+#
+# On ForcedTool the answer is the arguments of the one call to the forced tool of a turn that
+# stopped for its tool call. `OffLabel` are: a call of a turn that stopped at the output limit, a
+# call of a turn reported incomplete, two calls, and a refusal beside the call. Assistant text and
 # provider state beside the call are not part of the answer. A key given twice in a call's
 # arguments is not seen: the arguments reach the classifier already parsed. An outcome the routed
 # call itself refuses (a call to another tool, a call of a turn that says it ended normally, a
@@ -450,7 +452,8 @@ commands:
     # A model's answer is its assistant texts (`answer`, then each of `answers`, one item each)
     # followed by its calls to the turn's first tool (`tool_arguments`, then each of `tool_calls`)
     # under `stop_reason`; without one the turn stops for its tool call when it has a call and
-    # ends normally when it has none.
+    # ends normally when it has none. A call's arguments are JSON text: a program in which they
+    # are not one JSON value is not a valid program, and no call is made.
     input:
       - {name: catalog_toml, type: String}
       - {name: label_set_json, type: String}

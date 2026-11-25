@@ -18,7 +18,8 @@ use std::fmt;
 /// - the turn did not end normally (the output limit, an incomplete answer);
 /// - the outcome has no assistant text or more than one, or anything else beside it, such as a
 ///   refusal (state the provider keeps, [`Item::Opaque`], is not part of the answer; routing
-///   has already failed a call whose outcome holds a tool call the request did not publish);
+///   has already failed a call whose outcome holds a tool call the request did not publish). An
+///   empty or whitespace-only text item counts as one, so an answer beside it is not taken;
 /// - the text is not one JSON value with nothing but JSON whitespace around it, or nests
 ///   deeper than [`MAX_DEPTH`];
 /// - an object gives a key twice, at any depth;
@@ -201,30 +202,48 @@ mod tests {
         CallId, Id, Item, StopReason, ToolCall, ToolName, TurnObservation, TurnOutcome,
     };
     use llm_routing::Catalog;
-    use serde_json::json;
+    use serde_json::{Value, json};
+
+    fn arguments() -> Value {
+        json!({"label": "positive"})
+    }
+
+    /// A turn that stopped for its one call, `call-1`, to the tool `name`.
+    fn outcome_calling(name: &str) -> TurnOutcome {
+        let catalog = Catalog::parse(include_str!("../../../examples/catalog.toml")).unwrap();
+        let serving = Id::new("remote-large").unwrap();
+        let provenance = catalog.binding(&serving).unwrap().provenance().clone();
+        TurnOutcome {
+            stop_reason: StopReason::ToolCalls,
+            items: vec![Item::ToolCall(ToolCall {
+                call_id: CallId::new("call-1").unwrap(),
+                name: ToolName::new(name).unwrap(),
+                arguments: arguments(),
+            })],
+            observation: TurnObservation::new(provenance),
+        }
+    }
 
     /// The routed call fails a turn that calls a tool other than the one it forced, so no
     /// classifier is handed such an outcome; only a direct reading shows that [`call`] holds the
     /// name itself.
     #[test]
     fn a_call_to_another_tool_is_not_the_answer() {
-        let catalog = Catalog::parse(include_str!("../../../examples/catalog.toml")).unwrap();
-        let serving = Id::new("remote-large").unwrap();
-        let provenance = catalog.binding(&serving).unwrap().provenance();
-        let arguments = json!({"label": "positive"});
-        let outcome_calling = |name: &str| TurnOutcome {
-            stop_reason: StopReason::ToolCalls,
-            items: vec![Item::ToolCall(ToolCall {
-                call_id: CallId::new("call-1").unwrap(),
-                name: ToolName::new(name).unwrap(),
-                arguments: arguments.clone(),
-            })],
-            observation: TurnObservation::new(provenance.clone()),
-        };
         assert_eq!(
             call(&outcome_calling("classify"), "classify"),
-            Some(&arguments)
+            Some(&arguments())
         );
         assert_eq!(call(&outcome_calling("label"), "classify"), None);
+    }
+
+    /// The routed call fails a turn that holds a call and says it ended normally, so again only
+    /// a direct reading shows that [`call`] holds the stop reason itself.
+    #[test]
+    fn a_call_of_a_turn_that_says_it_ended_normally_is_not_the_answer() {
+        let ended = TurnOutcome {
+            stop_reason: StopReason::EndTurn,
+            ..outcome_calling("classify")
+        };
+        assert_eq!(call(&ended, "classify"), None);
     }
 }

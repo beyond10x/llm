@@ -702,7 +702,8 @@ impl ModelClassifier {
     /// Asks the route alias `route` for an answer held to the label set's strict schema. The
     /// answer is the one assistant text of a turn that ended normally, read as one JSON value
     /// that gives no key twice; a turn cut off at the output limit or reported incomplete, two
-    /// texts and a refusal beside the text abstain `OffLabel`.
+    /// texts and a refusal beside the text abstain `OffLabel`. An empty or whitespace-only text
+    /// item beside the answer counts as a second text.
     pub fn json_schema(id: Id, route: impl Into<String>) -> Self {
         Self::on(id, Path::JsonSchema, route.into())
     }

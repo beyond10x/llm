@@ -252,6 +252,14 @@ fn two_text_items_that_are_an_answer_only_when_joined_abstain_off_label() {
             "an empty text and then a whole answer",
             ["", whole.as_str()],
         ),
+        (
+            "a whole answer and then a text of whitespace",
+            [whole.as_str(), " \n"],
+        ),
+        (
+            "a text of whitespace and then a whole answer",
+            [" \n", whole.as_str()],
+        ),
     ] {
         let items = texts.into_iter().map(Item::assistant).collect();
         assert_off_label(&by_schema(StopReason::EndTurn, items), name);
