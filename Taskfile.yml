@@ -54,6 +54,10 @@ tasks:
     desc: 'Run the tests with cargo-nextest (a test over 60 s is killed and fails), fail over 120 s, print the ten slowest'
     cmds:
       - cargo xtask test
+  release-tag:
+    desc: '`task release-tag -- <version> <sha>` tags and pushes a release only when Gate, Shared source gates and Documentation validation ended success on that commit'
+    cmds:
+      - cargo xtask release-tag {{.CLI_ARGS}}
   rust:
     desc: Check the optional features, formatting and lints
     cmds:

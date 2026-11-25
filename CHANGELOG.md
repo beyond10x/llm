@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-11-25
+
 ### Fixed
 
 - **Breaking:** `llm-decide`: a model classifier takes an answer only whole; one it took before abstains `OffLabel`
@@ -14,6 +16,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - Forced-tool path: a call of a turn cut at the output limit or incomplete, and a refusal beside the call
 - `Routed::label` (replay): a classification answered cut, split or with a key given twice names no label and `differs`
 - ESS: 5 scenarios for the rule in `llm.decisions`; the floor is 1080 (was 1075)
+
+### Changed
+
+- `task release-tag -- <version> <sha>` (`llm-xtask`): no release tag while a required run is absent, pending or red
 
 ## [0.30.0] - 2026-11-25
 
@@ -695,7 +701,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.30.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.31.0...HEAD
+[0.31.0]: https://github.com/beyond10x/llm/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/beyond10x/llm/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/beyond10x/llm/compare/0.28.0...0.29.0
 [0.28.0]: https://github.com/beyond10x/llm/compare/0.27.0...0.28.0

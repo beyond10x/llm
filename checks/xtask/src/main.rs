@@ -14,6 +14,10 @@
 //! `report <JUnit report>...` does the last part alone, over reports already written.
 //! `list-check <test binary>...` runs each binary with `--list --format terse`, with and without
 //! `--ignored`, and fails unless every line it writes is `<name>: test` or `<name>: benchmark`.
+//!
+//! `release-tag <version> <sha>` is the one command that makes a release tag (`release`).
+
+mod release;
 
 use std::{
     fmt, fs, io,
@@ -47,7 +51,8 @@ const JUNIT: &str = "nextest/default/junit.xml";
 const LIST: [&str; 3] = ["--list", "--format", "terse"];
 
 const USAGE: &str = "usage: llm-xtask test\n       llm-xtask report <JUnit report>...\n       \
-                     llm-xtask list-check <test binary>...";
+                     llm-xtask list-check <test binary>...\n       \
+                     llm-xtask release-tag <version> <sha>";
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -61,6 +66,9 @@ fn main() -> ExitCode {
         Some((command, binaries)) if command == "list-check" && !binaries.is_empty() => binaries
             .iter()
             .try_for_each(|binary| list_check(Path::new(binary))),
+        Some((command, [version, sha])) if command == "release-tag" => {
+            return release::tag(version, sha);
+        }
         _ => {
             eprintln!("{USAGE}");
             return ExitCode::from(2);
