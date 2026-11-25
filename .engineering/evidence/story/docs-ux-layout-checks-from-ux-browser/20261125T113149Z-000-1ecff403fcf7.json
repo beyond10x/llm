@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T11:31:49Z",
+  "actor": "human:operator",
+  "artifact": "story:docs-ux-layout-checks-from-ux-browser",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "at 7536c2c89, after correction 3 (af878b306): task rust, task docs, ess specify validate, llm-conformance check (1080 of 1080 passed three times, failed 0, skipped 0) and aep plan artifact validate exit 0. task test exit 201 in the first run (1 of 2131 failed: llm-cli::command a_reader_that_closes_stdout_before_the_first_delta_stops_the_turn_with_0, a case the wave did not touch) and exit 0 in the second run at the same commit (2445 tests in 5 runs, 13.4 s of the 120 s bound); that case alone passed 38 of 40 times and is filed as a draft story. task ux-check exit 0 with the pinned ux-browser 0.8.1 and chrome_args --no-sandbox: 115 passed at 2 workers, 76.2 s of the 120 s bound, ratchet 32 scenarios, no value worse",
+    "reference": "docs/plan/wave-2026-11-25-docs-ux-browser.md"
+  }
+}

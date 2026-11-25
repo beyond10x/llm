@@ -50,7 +50,7 @@ each wave holds one story.
 | 4 | `story:messages-empty-turn-with-an-unmodelled-stop-reason` | O6 | a Messages turn that stops for an unmodelled reason without content is an error a caller can classify, with its usage; issue 83 closes with the release | delivered: [wave-2026-11-25-messages-empty-turn](wave-2026-11-25-messages-empty-turn.md) |
 | 5 | `story:classifier-takes-only-a-whole-answer` | O6 | the JSON-schema classifier decides only on a whole answer, read by the judge's reader | delivered: [wave-2026-11-25-classifier-whole-answer](wave-2026-11-25-classifier-whole-answer.md) |
 | 6 | `story:ess-pin-current-and-local-gate-finds-it` | O3 | the ESS pin is the current release and the local conformance step runs the pinned `ess` or refuses another | delivered: [wave-2026-11-25-ess-pin](wave-2026-11-25-ess-pin.md) |
-| 7 | `story:docs-ux-layout-checks-from-ux-browser` | O3 | the docs UX gate takes its five layout checks from a pinned `ux-browser` release | planned; the uxui repository published release 0.8.1 with `ux-browser` on 2026-11-25 |
+| 7 | `story:docs-ux-layout-checks-from-ux-browser` | O3 | the docs UX gate takes its five layout checks from a pinned `ux-browser` release | delivered: [wave-2026-11-25-docs-ux-browser](wave-2026-11-25-docs-ux-browser.md) |
 | 8 | `story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason` | O6 | a Bedrock Converse turn that stops for an unmodelled reason without content is an error a caller can classify, with its usage | planned; accepted on 2026-11-25 (`approval-record:backlog-2026-11-25-bedrock-converse-accepted`) |
 
 The verb's order was the docs UX story, the classifier, the ESS pin, the Messages story. The order
@@ -74,6 +74,8 @@ planted-defect test; the story asks for all three.
   its release is 0.31.0.
 - Wave 6 changes the gate and no library: the ESS pin is 0.99.1 and the local gate runs the pinned
   `ess`; its release is 0.32.0.
+- Wave 7 changes the docs UX gate and no library: its five page checks come from the pinned
+  `ux-browser` 0.8.1; its release is 0.33.0.
 - Still drafts: `story:the-neutral-turn-in-ess`, `story:responses-carries-refusal-text` and
   `story:cli-route-explain`.
 
@@ -111,3 +113,11 @@ Filed at the opening of wave 5 and still a draft:
 
 - `story:tool-arguments-with-a-repeated-key`: tool-call arguments that give a key twice reach a
   caller with the last value chosen.
+
+Filed by wave 7 and still a draft:
+
+- `story:xtask-list-check-cases-start-no-file-open-for-writing`: one case of the gate's test binary
+  failed once of 4 runs with `Text file busy`.
+- `story:llm-cli-closed-stdout-case-closes-the-pipe-before-the-answer`: one case of
+  `crates/llm-cli/tests/command.rs` failed once in the gate and 2 of 40 times alone on the build
+  node.

@@ -1,13 +1,15 @@
-// L1: the core's functions, the findings rule of § 5, and break-tests proving each layout check can fail.
+// L1: the core's functions, the findings rule of § 5, and break-tests of the scroll containers and the
+// screen-only user. The five page checks are ux-browser's; their break-tests through the pinned binary
+// are in `l1-page-checks.spec.ts`.
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, expect, type Page } from '@playwright/test';
 import { adapter } from '../adapter.ts';
 import { findingProblems, glob, parseFinding, waiverFor } from '../core/findings.ts';
-import { checkAlwaysVisible, keyboardWalk, measureOverflow } from '../core/layout.ts';
 import { compare, update, type Baseline } from '../core/ratchet.ts';
 import { runScreenOnly, score, wordMatches } from '../core/screen-only.ts';
+import { measureScrollContainers } from '../core/scroll-containers.ts';
 import { resolveFile } from '../core/site.ts';
 import { assetResults, specPattern } from '../core/specs.ts';
 import { scrollContainerPages, scrollContainerLines } from '../core/round.ts';
@@ -116,65 +118,23 @@ const shell = (main: string, extra = '') =>
   `<html><body style="margin:0"><a href="#m" class="skip">Skip to main content</a><nav aria-label="Main" style="position:fixed;top:0;left:0;right:0;height:40px;background:#eee">` +
   `<a href="/">Home</a> <button aria-label="Switch between dark and light mode">t</button></nav>${extra}<main id="m" tabindex="-1" style="margin-top:50px">${main}</main></body></html>`;
 
-test.describe('break-tests: each layout check can fail', () => {
+test.describe('break-tests: the scroll containers and the screen-only user', () => {
   test.use({ viewport: { width: 800, height: 600 } });
 
-  test('overflow past the viewport and past the parent fail; a scrolling code block is measured only', async ({ page }) => {
+  test('a scrolling code block is listed as an allowed scroll container, a scrolling div as one not allowed; a clean page has none', async ({ page }) => {
     const base = await fixture(page, {
-      '/': shell(
-        '<div style="width:300px;white-space:nowrap">' + 'word '.repeat(12) + '</div>' +
-          '<pre style="overflow-x:auto;width:200px"><code>' + 'x'.repeat(400) + '</code></pre>' +
-          '<p><svg width="1200" height="10"></svg></p>',
-      ),
+      '/': shell('<pre style="overflow-x:auto;width:200px"><code>' + 'x'.repeat(400) + '</code></pre><div class="wide" style="overflow-x:auto;width:200px"><div style="width:900px">y</div></div>'),
+      '/clean': shell('<p>hello</p>'),
     });
     await page.goto(base + '/');
-    const r = await measureOverflow(page, adapter.scrollContainersAllowed);
-    expect(r.docScroll).toBeGreaterThan(0);
-    expect(r.overflow.map((o) => o.against).sort()).toEqual(['parent', 'viewport']);
-    expect(r.scrollContainers.length).toBe(1);
-    expect(r.scrollContainers[0].allowed).toBe(true);
-  });
-
-  test('a clean page passes the overflow check', async ({ page }) => {
-    const base = await fixture(page, { '/': shell('<p>hello</p>') });
-    await page.goto(base + '/');
-    const r = await measureOverflow(page, adapter.scrollContainersAllowed);
-    expect(r).toEqual({ docScroll: 0, overflow: [], scrollContainers: [], clipped: [] });
-  });
-
-  test('always-visible: missing, covered and clipped are reported', async ({ page }) => {
-    const base = await fixture(page, {
-      '/': shell('<p>x</p>', '<div style="position:fixed;top:0;right:0;width:200px;height:40px;background:red"></div>'),
-    });
-    await page.goto(base + '/');
-    const r = await checkAlwaysVisible(page, adapter.alwaysVisible, '/llm/docs/x');
-    expect(Object.fromEntries(r.map((v) => [v.name, v.status]))).toEqual({
-      navbar: 'ok',
-      search: 'missing',
-      'theme toggle': 'ok',
-      sidebar: 'n/a',
-    });
-    await page.setViewportSize({ width: 1100, height: 600 });
-    expect((await checkAlwaysVisible(page, adapter.alwaysVisible, '/llm/docs/x')).find((v) => v.name === 'sidebar')?.status).toBe('missing');
-    await page.setViewportSize({ width: 800, height: 600 });
-    await page.addStyleTag({ content: 'button{position:fixed;top:10px;right:20px}' });
-    const covered = await checkAlwaysVisible(page, adapter.alwaysVisible, '/llm/');
-    expect(covered.find((v) => v.name === 'theme toggle')?.status).toBe('covered');
-    await page.addStyleTag({ content: 'button{position:fixed;top:-20px;right:auto;left:0}' });
-    const clipped = await checkAlwaysVisible(page, adapter.alwaysVisible, '/llm/');
-    expect(clipped.find((v) => v.name === 'theme toggle')?.status).toBe('clipped');
-  });
-
-  test('keyboard: a missing skip link and an unreachable target fail', async ({ page }) => {
-    const base = await fixture(page, {
-      '/': shell('<p>x</p>'),
-      '/noskip': shell('<p>x</p>').replace('<a href="#m" class="skip">Skip to main content</a>', ''),
-    });
-    const targets = adapter.alwaysVisible.filter((a) => ['search', 'navbar'].includes(a.name)).map((a) => ({ name: a.name, locate: a.locate }));
-    const ok = await keyboardWalk(page, base + '/', adapter.keyboard.skipLink, targets, 10);
-    expect(ok).toEqual({ skipLinkFirst: true, skipMovesFocus: true, reached: { search: false, navbar: true } });
-    const bad = await keyboardWalk(page, base + '/noskip', adapter.keyboard.skipLink, targets, 10);
-    expect(bad.skipLinkFirst).toBe(false);
+    const r = await measureScrollContainers(page, adapter.scrollContainersAllowed);
+    expect(r.map((c) => [c.desc.split(' ')[0], c.clientWidth, c.allowed])).toEqual([
+      ['pre', 200, true],
+      ['div.wide', 200, false],
+    ]);
+    expect(r.every((c) => c.scrollWidth > c.clientWidth)).toBe(true);
+    await page.goto(base + '/clean');
+    expect(await measureScrollContainers(page, adapter.scrollContainersAllowed)).toEqual([]);
   });
 
   test('screen-only user: follows a visible link, ignores a covered one, and fails when nothing matches', async ({ page }) => {
@@ -213,7 +173,7 @@ test.describe('break-tests: each layout check can fail', () => {
 // whether the last change set held.
 test.describe('round runs the regression assets', () => {
   test('a round runs the L1 specs and l2-findings beside the layout, screen-only and contact-sheet specs', () => {
-    for (const f of ['l1-core.spec.ts', 'l2-findings.spec.ts', 'l2-layout.spec.ts', 'l3-screen-only.spec.ts', 'round-shots.spec.ts'])
+    for (const f of ['l1-core.spec.ts', 'l1-page-checks.spec.ts', 'l2-findings.spec.ts', 'l2-layout.spec.ts', 'l3-screen-only.spec.ts', 'round-shots.spec.ts'])
       expect(specPattern('round').test(f), f).toBe(true);
     expect(specPattern('check').test('round-shots.spec.ts')).toBe(false);
   });
@@ -242,7 +202,7 @@ test.describe('round names the pages of its scroll containers', () => {
     path,
     viewport,
     theme,
-    overflow: { scrollContainers: widths.map(([scrollWidth, clientWidth]) => ({ desc: 'div.b10x-table-wrap', scrollWidth, clientWidth, allowed: false })) },
+    scrollContainers: widths.map(([scrollWidth, clientWidth]) => ({ desc: 'div.b10x-table-wrap', scrollWidth, clientWidth, allowed: false })),
   });
   const units = [
     unit('/llm/docs/a', '1366x768', 'light', [[900, 768]]),

@@ -76,6 +76,11 @@ enum Cmd {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         arguments: Vec<OsString>,
     },
+    /// Print the path of the `ux-browser` that `docs-ux.yml` pins, from the repository root: the
+    /// stored one under `target/ux-browser`, or the release fetched into the store and checked
+    /// against the pinned digest. `ux-browser` reports no version, so this command starts none
+    /// and never takes one from `PATH`. The path is the whole of standard output.
+    UxBrowser,
     /// Run one suite against a baseline and write its report.
     Run {
         suite: String,
@@ -105,6 +110,7 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
     match <Cli as clap::Parser>::parse().command {
         Cmd::Check => gate::check()?,
         Cmd::Ess { arguments } => return ess::run(&gate::root()?, &arguments),
+        Cmd::UxBrowser => println!("{}", ess::find(&ess::UX_BROWSER, &gate::root()?)?.display()),
         Cmd::Run {
             suite,
             baseline,

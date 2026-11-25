@@ -1,8 +1,11 @@
-// Per-run result files under the out dir, and their reduction to ratchet values and gate counts.
+// Per-run result files under the out dir, and their reduction to ratchet values and gate counts. A page
+// result holds what L2 measures itself: axe and the scroll containers. The five page checks' numbers
+// come from ux-browser's evidence (`evidence.ts`), its failures from its values file (`page-checks.ts`).
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { KeyboardResult, OverflowResult, VisibleResult } from './layout.ts';
+import type { PageValues } from './evidence.ts';
+import type { ScrollContainer } from './scroll-containers.ts';
 import type { ScreenOnlyResult } from './screen-only.ts';
 import type { Measured } from './ratchet.ts';
 
@@ -29,11 +32,8 @@ export interface PageResult {
   theme: string;
   gating: boolean;
   themeApplied: boolean;
-  overflow: OverflowResult;
-  visible: { top: VisibleResult[]; bottom: VisibleResult[] };
+  scrollContainers: ScrollContainer[];
   axe: { counts: Record<string, number>; rules: AxeRule[] };
-  keyboard: KeyboardResult | null;
-  shift: { load: number; afterReady: number };
   failures: Failure[];
   shot?: string;
   timings?: Record<string, number>;
@@ -68,9 +68,14 @@ export function readResults(outDir: string): Result[] {
 
 const IMPACTS = ['critical', 'serious', 'moderate', 'minor'];
 
-/** Ratchet values from the gating results. All lower is better. */
-export function toMeasured(results: Result[]): Measured {
+/**
+ * Ratchet values, all lower is better. A page scenario's five page-check numbers are `pageValues`,
+ * read from ux-browser's evidence, and nothing of a result file adds to them; its axe counts are
+ * summed over the gating page results. A task scenario's numbers are its result's.
+ */
+export function toMeasured(results: Result[], pageValues: PageValues): Measured {
   const m: Measured = {};
+  for (const [scenario, values] of Object.entries(pageValues)) m[scenario] = { ...values };
   for (const r of results) {
     if (r.kind === 'task') {
       m[r.scenario] = {
@@ -82,22 +87,8 @@ export function toMeasured(results: Result[]): Measured {
       continue;
     }
     if (!r.gating) continue;
-    const s = (m[r.scenario] ??= {
-      'layout.page_scroll': 0,
-      'layout.overflow': 0,
-      'always_visible.misses': 0,
-      'keyboard.misses': 0,
-      'layout_shift.after_ready': 0,
-      ...Object.fromEntries(IMPACTS.map((i) => [`axe.${i}`, 0])),
-    });
-    s['layout.page_scroll'] += r.overflow.docScroll > 0 ? 1 : 0;
-    s['layout.overflow'] += r.overflow.overflow.length;
-    s['always_visible.misses'] += [...r.visible.top, ...r.visible.bottom].filter((v) => v.status !== 'ok' && v.status !== 'n/a').length;
-    if (r.keyboard)
-      s['keyboard.misses'] +=
-        (r.keyboard.skipLinkFirst ? 0 : 1) + (r.keyboard.skipMovesFocus ? 0 : 1) + Object.values(r.keyboard.reached).filter((v) => !v).length;
-    s['layout_shift.after_ready'] = Math.max(s['layout_shift.after_ready'], r.shift.afterReady);
-    for (const i of IMPACTS) s[`axe.${i}`] += r.axe.counts[i] ?? 0;
+    const s = (m[r.scenario] ??= {});
+    for (const i of IMPACTS) s[`axe.${i}`] = (s[`axe.${i}`] ?? 0) + (r.axe.counts[i] ?? 0);
   }
   return m;
 }

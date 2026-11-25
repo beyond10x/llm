@@ -1,0 +1,49 @@
+format: ux-browser-checks/1
+chrome: {build: 1254}
+chrome_args: [--no-sandbox]
+base_path: /llm/
+pages: {sitemap: sitemap.xml}
+viewports:
+  - {name: 1440x900, width: 1440, height: 900}
+  - {name: 390x844, width: 390, height: 844}
+modes: [light, dark]
+mode_attribute: data-theme
+reduced_motion: true
+settle_ms: 250
+scroll_settle_ms: 200
+mode_settle_ms: 100
+always_visible:
+  - name: navbar
+    role: navigation
+    name_is: Main
+  - name: search
+    role: searchbox
+    name_contains: [search]
+    css: '.navbar__search-input, .navbar__search, .DocSearch-Button, [role="search"]'
+    scope: .navbar
+  - name: theme toggle
+    role: button
+    name_contains: [dark and light mode]
+  - name: sidebar
+    role: navigation
+    name_is: Docs sidebar
+    min_width: 997
+    path_prefix: /llm/docs
+keyboard:
+  skip_link_contains: [skip to content, skip to main content]
+  must_reach: [search, navbar]
+  max_tabs: 40
+  modes: [dark]
+  focus_settle_ms: 100
+values:
+  scenarios:
+    files: ux/scenarios/page-*/page.json
+    path_key: path
+  waivers:
+    files: ux/findings/UXF-*.md
+    closed: [closed]
+  gates:
+    layout.page_scroll@1: 1
+    layout.overflow@1: 1
+    always_visible.misses@1: 2
+    keyboard.misses@1: 5

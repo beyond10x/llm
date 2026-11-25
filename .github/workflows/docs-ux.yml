@@ -39,10 +39,26 @@ jobs:
       - name: Install the UX harness and Chromium
         working-directory: ux
         run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Install ux-browser
+        env:
+          UX_BROWSER_VERSION: "0.8.1"
+          UX_BROWSER_SHA256: 2080904f1e34dfab904a1d35dabf6b50b30b58bb0ee0b0340f2aec447ea2029e
+        run: |
+          set -euo pipefail
+          asset="ux-browser-$UX_BROWSER_VERSION-x86_64-unknown-linux-gnu.tar.gz"
+          release="https://github.com/beyond10x/uxui/releases/download/$UX_BROWSER_VERSION"
+          cd "$RUNNER_TEMP"
+          curl --fail --silent --show-error --location --output "$asset" "$release/$asset"
+          curl --fail --silent --show-error --location --output SHA256SUMS "$release/SHA256SUMS"
+          grep -Fx "$UX_BROWSER_SHA256  $asset" SHA256SUMS
+          grep -F "  $asset" SHA256SUMS | sha256sum --check --strict
+          tar -xzf "$asset"
+          echo "$RUNNER_TEMP/ux-browser-$UX_BROWSER_VERSION-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+          echo "UX_BROWSER=$RUNNER_TEMP/ux-browser-$UX_BROWSER_VERSION-x86_64-unknown-linux-gnu/ux-browser" >> "$GITHUB_ENV"
       - name: Typecheck and the findings rule
         working-directory: ux
         run: npx tsc --noEmit && node cli.ts findings
-      - name: L1 core, L2 layout contract, L3 screen-only user (120 s budget, one worker per runner CPU)
+      - name: L1 core, the five page checks of the pinned ux-browser, L2 axe, L3 screen-only user (120 s budget)
         working-directory: ux
         run: timeout 150 npx playwright test --workers=4
       - name: Ratchet against ux/baseline.json and main's

@@ -13,6 +13,7 @@ mod paths;
 #[cfg(unix)]
 mod release;
 mod report;
+mod ux_browser_pin;
 
 use std::path::{Path, PathBuf};
 
