@@ -66,6 +66,5 @@ tasks:
       - cargo check -p llm-bedrock --locked
       - cargo fmt --all --check
       - cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-      - cargo +1.98.0 clippy --workspace --all-targets --all-features --locked -- -D warnings
       - cargo clippy -p llm-models --all-targets --locked -- -D warnings
       - cargo clippy -p llm-bedrock --all-targets --locked -- -D warnings
