@@ -1,6 +1,6 @@
 # Wave 2026-11-25-docs-ux-browser
 
-Status: **delivered** at `218b38634` on `wave/2026-11-25-docs-ux-browser`; one story
+Status: **delivered** at `7536c2c89` on `wave/2026-11-25-docs-ux-browser`; one story
 `implemented`. Wave 7 of the [wave plan](trajectory.md). Approval:
 `approval-record:wave-2026-11-25-docs-ux-browser` (the owner's order of 2026-11-24 to run the next
 wave from the active stories, relayed by the operator session). Opened on the head of wave 6,
@@ -61,7 +61,7 @@ tests and the docs UX gate; the whole gate runs once on the integration branch.
 
 | Unit | Story | Branch | Tree | Build directory | Head | Stage |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `story:docs-ux-layout-checks-from-ux-browser` | `impl/docs-ux-browser` | `llm-1125-ux` | `llm-1125-ux/target` | `37cc90f42` | merged at `218b38634` after two adversary passes and two corrections |
+| 1 | `story:docs-ux-layout-checks-from-ux-browser` | `impl/docs-ux-browser` | `llm-1125-ux` | `llm-1125-ux/target` | `af878b306` | merged at `218b38634`, correction 3 (`af878b306`) at `7536c2c89`, after two adversary passes |
 
 Each tree is a managed worktree under the worktree tool's tree root (`llm/<tree>`). Scratch lives
 outside the repository in the coordinator's scratch directory, `w34/u1`.
@@ -176,8 +176,11 @@ Filed by this wave as a draft (accepting it is the owner's act):
 - `story:xtask-list-check-cases-start-no-file-open-for-writing`:
   `list::a_binary_listing_its_tests_as_libtest_does_passes` failed once in 4 runs with
   `Text file busy`; the wave did not touch its file.
+- `story:llm-cli-closed-stdout-case-closes-the-pipe-before-the-answer`:
+  `a_reader_that_closes_stdout_before_the_first_delta_stops_the_turn_with_0` failed once in the
+  gate after correction 3 and 2 of 40 times alone; the wave did not touch its file.
 
-Not filed, because each is a pin move by the rule this repository already has: `ux-browser` 0.9.0
+Not filed, because each is a pin move by the rule this repository already has: `ux-browser` 0.9.1
 (with `--version`) and ESS 0.99.2.
 
 ## Cost
@@ -192,3 +195,55 @@ As the harness reported each agent run (tokens, tool uses, seconds):
 | implementor | correction 1 | 255,882 | 36 | 396 |
 | adversary | pass 2 | 250,013 | 78 | 1,098 |
 | implementor | correction 2 | 87,462 | 46 | 399 |
+
+## After the forge's first run
+
+The pull request's first run at `587275343` (the close commit on `218b38634`) went red in the job
+"Docs UX gate" after the green local gate above: the step "Install ux-browser" passed, and both
+cases that start `ux-browser` failed with
+`ux-browser: Chromium exited before it listened: signal: 6 (SIGABRT) (core dumped)`, 111 of 113
+passed in 49.8 s at 4 workers. The six other checks passed. Read from the tool's source at 0.8.1:
+`ux-browser` starts Chromium with its sandbox and prints nothing of Chromium's output when it ends
+that early. That the runner's image refuses the sandbox is inferred and was not reproduced: on the
+build node Chromium starts with the sandbox and without it.
+
+Correction 3 (`af878b306`, merged at `7536c2c89`): both checks configurations carry
+`chrome_args: [--no-sandbox]`, so a run here and a run on the forge start the same command line.
+What makes the local gate fail on the same failure: `chromeArgs` of `ux/core/pin.ts` reads the one
+line, the case "every checks configuration starts Chromium with --no-sandbox and adds no other
+switch" holds each `*.checks.yaml` of `ux/`, and the planted-defect case holds its fixture's copy
+and the switches its own evidence names. Not chosen: a workflow step that changes the runner's
+kernel setting, and a switch given on the forge only. The uxui repository's session was told that
+the tool hides the cause.
+
+The gate again at `7536c2c89`, the same six steps and the docs UX gate:
+
+- `task rust` exit 0; `task docs` exit 0; `llm-conformance -- ess specify validate --path spec`
+  exit 0; `llm-conformance -- check` exit 0, 1080 of 1080 passed three times, failed 0, skipped 0;
+  `aep plan artifact validate` exit 0;
+- `task test`, first run: exit 201, `2131 tests run: 2130 passed (1 leaky), 1 failed, 1 skipped` in
+  the workspace run; the four other runs passed. The failed case is
+  `llm-cli::command a_reader_that_closes_stdout_before_the_first_delta_stops_the_turn_with_0`, with
+  the usage line of a finished turn on stderr where it expects the closed-stdout line;
+- `task test`, second run at the same commit: exit 0, 2445 tests in 5 runs
+  (2131, 129, 23, 80, 82), `the runs took 13.4 s of their bound of 120 s`, the slowest case 5.2 s
+  (`llm-bedrock::process_credentials an_expired_answer_makes_every_caller_wait_for_the_one_run`);
+- that one case 40 times on the build node (`cargo nextest run --locked -p llm-cli --test command`
+  with `--stress-count 40`): `40/40 stress run iterations: 38 passed, 2 failed`, the same stderr.
+  The wave changed no file of `crates/llm-cli`; the case is at the wave's base as it is here. It
+  is filed as the draft `story:llm-cli-closed-stdout-case-closes-the-pipe-before-the-answer`;
+- `task ux-check` exit 0, wall 80.1 s: `npx tsc --noEmit`, `node cli.ts findings`,
+  `npx playwright test --workers=2`, `node cli.ts ratchet`;
+- the Playwright step: `115 passed (1.3m)`, wall time 76.2 s of its 120 s bound at 2 workers, the
+  build node at load 17 to 29; the slowest case 9.7 s (the planted-defect case), the next 3.1 s;
+- `ratchet: 32 scenarios; main baseline compared` and
+  `ratchet: no value worse, no improvement left untaken`;
+- no `ux-browser` and no Chromium left running after the run.
+
+No adversary pass covers correction 3: the two passes the wave rules allow were spent before it.
+The coordinator read its diff (5 files, 78 lines added). The forge's run on this pull request is
+the check of the inferred cause.
+
+| Agent | Run | Tokens | Tool uses | Seconds |
+| --- | --- | --- | --- | --- |
+| implementor | correction 3 | 165,958 | 47 | 464 |

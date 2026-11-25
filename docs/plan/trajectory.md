@@ -118,3 +118,6 @@ Filed by wave 7 and still a draft:
 
 - `story:xtask-list-check-cases-start-no-file-open-for-writing`: one case of the gate's test binary
   failed once of 4 runs with `Text file busy`.
+- `story:llm-cli-closed-stdout-case-closes-the-pipe-before-the-answer`: one case of
+  `crates/llm-cli/tests/command.rs` failed once in the gate and 2 of 40 times alone on the build
+  node.
