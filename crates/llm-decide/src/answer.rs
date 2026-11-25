@@ -165,14 +165,11 @@ impl<'de> Visitor<'de> for Strict {
 /// outside a string a digit or a minus sign starts a number. It reads the text through the
 /// scanner it is handed and in no other way: it holds no other reference to the text.
 fn integers_are_exact(mut scanner: scan::Scanner<'_>) -> bool {
-    let starts_a_token = |each: char| each == '"' || each == '-' || each.is_ascii_digit();
     loop {
-        scanner.skip_while(|each: char| !starts_a_token(each));
-        // A number stands here when this skip passes anything: a string opens with a quote and
+        scanner.skip_to_token();
+        // A number stands here when its literal is not empty: a string opens with a quote and
         // the text ends on nothing, and neither is a char of a number.
-        let literal = scanner.skip_while(|each: char| {
-            matches!(each, '-' | '+' | '.' | 'e' | 'E') || each.is_ascii_digit()
-        });
+        let literal = scanner.number_literal();
         if literal.is_empty() {
             if scanner.next_char().is_none() {
                 return true;
@@ -208,14 +205,18 @@ fn integers_are_exact(mut scanner: scan::Scanner<'_>) -> bool {
 ///   passed and charged it.
 /// - `whole` builds the one scanner of an answer and hands it to `integers_are_exact`, which is
 ///   given no other reference to the text.
-/// - A slice a skip returns borrows from the scanner and not from the text, so the next call on
-///   the scanner ends it: its user cannot keep a slice for a later skip or a later turn of its
-///   loop and read it again there.
+/// - No method takes a predicate from its user: what a call passes is decided in this module.
+///   The skip to the next token returns nothing, and the one slice a method returns is the
+///   literal of one number, so no call hands its user more of the text than that.
+/// - That slice borrows from the scanner and not from the text, so the next call on the scanner
+///   ends it: its user cannot keep a literal for a later call or a later turn of its loop and
+///   read it again there.
 ///
-/// What stays a rule in prose: a slice was charged once, when it was skipped, and reading it
+/// What stays a rule in prose: a literal was charged once, when it was passed, and reading it
 /// again before the next call on the scanner is its user's cost and is not charged. That cost is
-/// of the same order as long as the user reads each slice a fixed number of times and copies
-/// none into a value of its own, which would outlive the borrow.
+/// of the same order as long as the user reads each literal a fixed number of times and copies
+/// neither a literal nor the chars it is handed one by one into a value of its own, which would
+/// outlive the borrow and could be read again without a charge.
 mod scan {
     /// The text of an answer from where the scan stands to its end.
     pub(super) struct Scanner<'a> {
@@ -228,19 +229,18 @@ mod scan {
             Self { rest: text }
         }
 
-        /// Passes the chars from here on that `holds` is true of and returns them. It charges
-        /// one unit for each byte it passes and one for the look that ends it, at the first
-        /// char `holds` is false of or at the end of the text. What it returns borrows from the
-        /// scanner, so it cannot be read after the next call on the scanner.
-        pub(super) fn skip_while(&mut self, holds: impl Fn(char) -> bool) -> &str {
-            let after = self.rest.trim_start_matches(holds);
-            // What was passed is cut off by its length, a subtraction: a skip costs what it
-            // passes and never the length of the text that follows.
-            let (skipped, _) = self.rest.split_at(self.rest.len() - after.len());
-            #[cfg(test)]
-            super::work::charge(skipped.len() + 1);
-            self.rest = after;
-            skipped
+        /// Passes the chars from here on that start no token: every char but a quote, a minus
+        /// sign and a digit. It returns nothing and charges as `pass` says.
+        pub(super) fn skip_to_token(&mut self) {
+            self.pass(|each| !matches!(each, '"' | '-') && !each.is_ascii_digit());
+        }
+
+        /// Passes the chars of the literal of a number from here on and returns them: digits,
+        /// signs, the point and the mark of an exponent, as many as stand here, which may be
+        /// none. It charges as `pass` says. What it returns borrows from the scanner, so it
+        /// cannot be read after the next call on the scanner.
+        pub(super) fn number_literal(&mut self) -> &str {
+            self.pass(|each| matches!(each, '-' | '+' | '.' | 'e' | 'E') || each.is_ascii_digit())
         }
 
         /// Passes one char and returns it, or `None` at the end of the text. It charges one
@@ -252,6 +252,21 @@ mod scan {
             let next = chars.next();
             self.rest = chars.as_str();
             next
+        }
+
+        /// Passes the chars from here on that `holds` is true of and returns them. It charges
+        /// one unit for each byte it passes and one for the look that ends it, at the first
+        /// char `holds` is false of or at the end of the text. It is private to this module:
+        /// what a call on the scanner passes is not for the scanner's user to choose.
+        fn pass(&mut self, holds: impl Fn(char) -> bool) -> &'a str {
+            let after = self.rest.trim_start_matches(holds);
+            // What was passed is cut off by its length, a subtraction: a call costs what it
+            // passes and never the length of the text that follows.
+            let (passed, _) = self.rest.split_at(self.rest.len() - after.len());
+            #[cfg(test)]
+            super::work::charge(passed.len() + 1);
+            self.rest = after;
+            passed
         }
     }
 }
@@ -270,9 +285,12 @@ mod scan {
 /// What the count sees: how often the visitor takes an element or a member, and every char the
 /// scanner passes. What it does not see: work inside one visit of the visitor that grows with
 /// what was read before (the array so far read again, a key compared with every key read so
-/// far), work inside the scanner's two methods, a slice read again after its skip, and what
-/// `serde_json` does between two calls of the visitor. A reader that is slow in one of these
-/// ways gives the two cases below the same counts as one that is not.
+/// far), work inside the visit of one string that grows faster than that string (the string
+/// read again inside its own visit, which charges nothing), work inside the scanner's methods,
+/// the literal of a number read again after the scanner passed it, a copy of the text that the
+/// scan builds from the chars it is handed and reads again, and what `serde_json` does between
+/// two calls of the visitor. A reader that is slow in one of these ways gives the two cases
+/// below the same counts as one that is not.
 #[cfg(test)]
 mod work {
     use std::cell::Cell;
