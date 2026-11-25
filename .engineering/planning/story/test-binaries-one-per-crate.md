@@ -84,7 +84,7 @@ scope:
   path: website/docs/guides/use-llm-from-a-synchronous-loop.md
 - confidence: inferred
   path: website/docs/guides/use-the-llm-command.md
-revision: 42
+revision: 44
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-25T14:06:39Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-25T14:06:39Z", actor: "human:operator", revision: 3}
@@ -106,7 +106,10 @@ from test builds; it left the consolidation to this story because it moves every
 ## Acceptance
 
 - Every crate with integration tests has exactly one test binary: `tests/main.rs` with modules
-  under `tests/main/` (or one directory per crate), and no other `tests/*.rs` file.
+  under `tests/main/` (or one directory per crate), and no other `tests/*.rs` file. Excepted are
+  the three test targets with `harness = false`, which stay binaries of their own (section Open):
+  `process_credentials` of `llm-bedrock`, `process_routes` of `llm-models` and `credential_process`
+  of `llm-cli`. Those three crates link two test binaries, every other crate one.
 - The number of tests `cargo nextest list --workspace` reports is unchanged, and every test name
   the invariants table of `AGENTS.md` cites is updated to its new path.
 - The test phase's build of the test binaries (`cargo nextest run --workspace --no-run`, cold
@@ -198,3 +201,29 @@ Derived 2026-11-25 by `story-scoper`, read at `main` 831c21d95. Every line is **
 - Part 5: `crates/llm-models/tests` (19, three re-run sites, `process_routes`) with `crates/llm-models/Cargo.toml`; `crates/llm-calls/tests` (7); `crates/llm-tool-call/tests` (4); `crates/llm-cli/tests` (3) with `crates/llm-cli/Cargo.toml`; `crates/llm-cost/tests` (3, one re-run site); `crates/llm-docs/tests` (2); `crates/llm-embed/tests` (2); the renames in `crates/llm-blocking/tests`, `crates/llm-openai-decisions/tests` and `checks/conformance/tests` if they are wanted; `crates/llm-decide/tests` (5) only if no other unit holds it — inferred
 - Part 6, after the other five are merged: `AGENTS.md`, the live documents above, `task docs-generate`, `CHANGELOG.md`, the total test count and the "after" build measurement; the "before" measurement and the per-run test counts are taken on the base commit before part 1 lands — inferred
 - Between the first merged part and part 6, `AGENTS.md` cites paths that no longer exist; the acceptance's second bullet closes with part 6 — inferred
+
+## Open
+
+Decided on 2026-11-25. The scoper found three test targets that cannot become modules of one test
+binary: `process_credentials` (`crates/llm-bedrock/Cargo.toml`), `process_routes`
+(`crates/llm-models/Cargo.toml`) and `credential_process` (`crates/llm-cli/Cargo.toml`), each
+declared with `harness = false`. Each is its own harness and also the command its cases start as a
+credential process. libtest writes `running N tests` to stdout before a test runs, and the stdout
+of a credential-process command must be its answer and nothing else
+(`crates/llm-bedrock/tests/process_credentials.rs`, the module comment).
+
+The question had three options: A, the three stay binaries of their own; B, each is split into a
+helper program without cases and cases inside the one binary; C, the three crates leave the story.
+The operator session that acts with the owner's permissions answered: "D36 = A. The 3
+`harness = false` targets stay their own binaries; every other test file becomes a module. Reason:
+B links the same number of targets per crate (helper plus test binary) and rewrites about 25 cases
+for no gain."
+
+What follows from it:
+
+- The first acceptance line names the exception; `llm-bedrock`, `llm-models` and `llm-cli` link two
+  test binaries, every other crate with integration tests one.
+- The three files keep their place, their `[[test]]` entries and their cases.
+- The layout of the one binary is the acceptance's second form, one directory per crate:
+  `tests/main/main.rs` with the modules beside it, as `checks/xtask/tests/gate/main.rs`. Cargo finds
+  it without a manifest entry, and no module needs a `#[path]`.

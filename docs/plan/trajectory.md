@@ -118,8 +118,8 @@ into the wave's proposal:
   goes into the list the story's third acceptance line asks for.
 - Wave 10: 247 `tests/*.rs` files in 20 crates, 17 crates with more than one. Three targets with
   `harness = false` (`llm-bedrock` `process_credentials`, `llm-models` `process_routes`, `llm-cli`
-  `credential_process`) are programs and cannot become modules: the first acceptance line needs a
-  word on them, asked with the wave's proposal. Nine tests start their own binary with
+  `credential_process`) are their own harness and cannot become modules: they stay binaries of their
+  own, decided on 2026-11-25 (the story's section Open). Nine tests start their own binary with
   `--exact <bare name>`; three of them would pass without running a test after the move, so each
   gets its module path and an assertion that the child ran one test. The unit is split by crate,
   two parts at a time, the documents last. `story:llm-calls-builds-one-integration-test-binary`
