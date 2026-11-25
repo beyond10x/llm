@@ -24,7 +24,7 @@ use std::{
     time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 const TEXT: &str = "Score the answer.";
 const SUBJECT: &str = "Question: what is the capital of France? Answer: Paris.";
 const REPORTED: &str = "example/Large-Model-2026-09";

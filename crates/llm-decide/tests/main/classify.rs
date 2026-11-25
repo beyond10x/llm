@@ -29,7 +29,7 @@ use std::{
     time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 const INPUT: &str = "the film was wonderful";
 
 fn id(value: &str) -> Id {
@@ -1032,14 +1032,10 @@ fn a_label_set_with_a_duplicate_or_a_single_label_is_refused() {
     );
 }
 
-#[path = "classify/endpoint.rs"]
 mod endpoint;
 
-#[path = "classify/adversary_w28_endpoint.rs"]
 mod adversary_w28_endpoint;
 
-#[path = "classify/replay.rs"]
 mod replay;
 
-#[path = "classify/whole_answer.rs"]
 mod whole_answer;

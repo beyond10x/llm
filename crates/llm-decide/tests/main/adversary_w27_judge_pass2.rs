@@ -1,7 +1,8 @@
-//! Adversary cases for the rubric judge, second pass (wave 27, unit 1): the cost of reading a
-//! long answer, the nesting an answer may have, and two properties over numbers with a fixed
-//! seed: a bound and a literal order every pair as their exact values do, and a number that is
-//! read and written comes back as itself.
+//! Adversary cases for the rubric judge, second pass (wave 27, unit 1): the nesting an answer
+//! may have, and two properties over numbers with a fixed seed: a bound and a literal order
+//! every pair as their exact values do, and a number that is read and written comes back as
+//! itself. The pass's case on the cost of reading a long answer counts the reader's work and
+//! stands beside the reader, in `src/answer.rs`.
 //!
 //! The scripted model replays the authored answer; nothing is chosen here.
 
@@ -18,10 +19,10 @@ use std::{
     collections::BTreeMap,
     future::Future,
     task::{Context, Poll, Waker},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 
 fn id(value: &str) -> Id {
     Id::new(value).unwrap()
@@ -140,38 +141,6 @@ fn judged(catalog: &Catalog, schema: &Value, answer: &str) -> Option<String> {
     .unwrap();
     assert_eq!(verdict.verdict_json.is_none(), verdict.error_code.is_some());
     verdict.verdict_json
-}
-
-/// An answer is read in time proportional to its length. The far side chooses the answer, and a
-/// stream may carry megabytes of it, so a cost that grows with the square of the length lets one
-/// answer hold the caller's thread: four times the numbers must not cost sixteen times as long.
-#[test]
-fn a_long_answer_of_numbers_is_read_in_time_proportional_to_its_length() {
-    let catalog = pinned();
-    let schema = json!({"type": "array", "items": {"type": "integer"}});
-    let numbers = |count: usize| format!("[{}1]", "1,".repeat(count - 1));
-    let fastest = |answer: &str| {
-        (0..3)
-            .map(|_| {
-                let started = Instant::now();
-                let verdict = judged(&catalog, &schema, answer);
-                let took = started.elapsed();
-                assert_eq!(verdict.as_deref(), Some(answer));
-                took
-            })
-            .min()
-            .unwrap()
-    };
-    let (small, large) = (numbers(20_000), numbers(80_000));
-    let (short, long) = (fastest(&small), fastest(&large));
-    // Added by the implementor in correction round 2, to report the pair on a passing run.
-    eprintln!("20000 numbers took {short:?}, 80000 numbers took {long:?}");
-    assert!(
-        long < short * 8,
-        "20000 numbers ({} bytes) took {short:?}, 80000 numbers ({} bytes) took {long:?}",
-        small.len(),
-        large.len()
-    );
 }
 
 /// `docs/design.md`, Verdict: the text is one JSON value "nested no deeper than the JSON reader
