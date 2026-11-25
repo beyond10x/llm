@@ -10,7 +10,7 @@ use llm_bedrock::{
 };
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol,
-    Provenance, StreamSink, TurnOutcome, TurnRequest, VecSink,
+    Provenance, TurnRequest, VecSink,
 };
 use llm_credentials::SecretResolver;
 use llm_http::{HttpClient, Limits};
@@ -355,16 +355,14 @@ async fn a_messages_stop_without_content_on_a_route_that_reports_a_cost_is_retri
 
 // ---------------------------------------------------------------------------------------------
 // story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason: a Bedrock Converse far side
-// whose every answer stops without content.
+// whose answer stops without content for a reason with no row of its own.
 //
-// What is real here and what is not. `BedrockClient` makes one attempt a turn and retries
-// nothing; a Bedrock route has no catalog entry, and no catalog can name `bedrock-converse`, so
-// routing's loop never holds a Converse client by itself
-// (`the_converse_client_asks_once_a_turn_and_routing_takes_it_under_no_catalog_target`). The
-// two tests before that one hand a real Converse client to the loop under a catalog target's
-// name, through `Rebound`, which changes the protocol in the client's provenance and nothing
-// else. They show what a caller gets that gives the failure to the retry policy: the policy's
-// attempts, then final.
+// `BedrockClient` asks once a turn and hands the retriable failure to its caller. No code in
+// this repository puts a Converse client under the retry policy: a Bedrock route has no catalog
+// entry, no catalog can name `bedrock-converse`, `Routes::port` hands out the bare client and
+// the `llm` command calls `turn` once. A caller that retries bounds the retry itself. The one
+// test here holds the two facts that can be held: one request a turn, and routing's loop
+// refusing the client under a catalog target.
 // ---------------------------------------------------------------------------------------------
 
 /// Fixed AWS keys for a far side that checks no signature.
@@ -383,42 +381,11 @@ impl CredentialSource for FixtureKeys {
     }
 }
 
-/// A real Converse client under the provenance of a catalog target. Only the protocol differs
-/// between the two provenances; the failure's observation is renamed the same way.
-struct Rebound {
-    client: BedrockClient,
-    binding: Provenance,
-}
+/// The bare Converse client as the one model a run is given, whatever serving model it asks
+/// for.
+struct Bare(BedrockClient);
 
-impl Model for Rebound {
-    fn provenance(&self) -> &Provenance {
-        &self.binding
-    }
-    fn capabilities(&self) -> &Capabilities {
-        self.client.capabilities()
-    }
-    fn turn<'a>(
-        &'a self,
-        request: &'a TurnRequest,
-        sink: &'a mut dyn StreamSink,
-        cancel: &'a Cancel,
-    ) -> BoxFuture<'a, Result<TurnOutcome, Error>> {
-        Box::pin(async move {
-            let returned = self.client.turn(request, sink, cancel).await;
-            returned.map_err(|mut error| {
-                if let Some(observation) = error.observation.as_mut() {
-                    observation.binding = self.binding.clone();
-                }
-                error
-            })
-        })
-    }
-}
-
-/// The one model a run is given, whatever serving model it asks for.
-struct Only<M>(M);
-
-impl<M: Model> Models for Only<M> {
+impl Models for Bare {
     fn model(&self, _: &Id) -> Option<&dyn Model> {
         Some(&self.0)
     }
@@ -458,10 +425,9 @@ fn converse_stop_without_content(reason: &str) -> Vec<u8> {
     answer
 }
 
-/// The catalog whose one target stands in for a Converse route, a streamed Converse client for
-/// the far side at `url` whose provenance is that target's with the Converse protocol, and the
-/// target's own provenance.
-fn converse_under_a_catalog_target(url: &str) -> (Catalog, BedrockClient, Provenance) {
+/// A catalog with one target, and a streamed Converse client for the far side at `url` whose
+/// provenance is that target's but for the protocol, which no catalog target can have.
+fn converse_beside_a_catalog_target(url: &str) -> (Catalog, BedrockClient) {
     let catalog = catalog("messages", url);
     let binding = catalog
         .bindings()
@@ -474,7 +440,7 @@ fn converse_under_a_catalog_target(url: &str) -> (Catalog, BedrockClient, Proven
     let target = BedrockTarget::new(
         Provenance {
             protocol: Protocol::BedrockConverse,
-            ..binding.clone()
+            ..binding
         },
         Capabilities::text(4096, 1024).with_output_streaming(true),
         "us-east-1",
@@ -491,131 +457,7 @@ fn converse_under_a_catalog_target(url: &str) -> (Catalog, BedrockClient, Proven
     })
     .expect("bounded transport");
     let client = BedrockClient::new(target, http, Arc::new(FixtureKeys)).expect("a client");
-    (catalog, client, binding)
-}
-
-/// One routed turn of `models` under `catalog`'s target; what `run_turn` returned and what the
-/// caller's sink was shown.
-async fn routed_with(
-    catalog: &Catalog,
-    models: &dyn Models,
-) -> (Result<FallbackRun, Error>, VecSink) {
-    let mut request = TurnRequest::new("code", vec![Item::user("Say hello")]);
-    request.max_output_tokens = Some(64);
-    let mut admit = |_: &Selection<'_>| -> Result<(), Error> { Ok(()) };
-    let mut sink = VecSink::new(64, 64 * 1024);
-    let cancel = Cancel::new();
-    let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(std::future::ready(())) };
-    let run = catalog
-        .run_turn(
-            &request,
-            Some(16),
-            FallbackPolicy::default(),
-            Ports {
-                models,
-                admit: &mut admit,
-                sink: &mut sink,
-                cancel: &cancel,
-                pause: &pause,
-            },
-        )
-        .await;
-    (run, sink)
-}
-
-/// One turn of a Converse client under routing's loop against a far side that answers every
-/// request with a stop for `reason` and no content: the run, the requests the far side saw and
-/// what the caller's sink was shown.
-async fn converse_routed(reason: &str) -> (FallbackRun, usize, VecSink) {
-    let (url, requests, server) = answering_bytes(converse_stop_without_content(reason)).await;
-    let (catalog, client, binding) = converse_under_a_catalog_target(&url);
-    let (run, sink) = routed_with(&catalog, &Only(Rebound { client, binding })).await;
-    // A further attempt would already have been answered: the run awaited it.
-    server.abort();
-    (run.expect("a run"), requests.load(Ordering::SeqCst), sink)
-}
-
-/// A reason in no row of the Converse table is the far side's failure to answer. Under the retry
-/// policy it is asked again until the policy is spent, then final: four requests under the
-/// default policy, and no more. Every attempt is recorded as accepted with the usage it reported.
-#[tokio::test]
-async fn a_converse_stop_without_content_for_a_reason_in_no_row_ends_after_the_policys_attempts() {
-    let attempts = usize::try_from(RetryPolicy::DEFAULT.max_attempts).expect("a small bound");
-    assert_eq!(attempts, 4);
-    for reason in ["stop_sequence", "a_reason_in_no_list"] {
-        let (run, requests, sink) = converse_routed(reason).await;
-        assert_eq!(requests, attempts, "`{reason}`");
-        assert_eq!(
-            run.attempts.len(),
-            attempts,
-            "`{reason}`: {:?}",
-            run.attempts
-        );
-        for attempt in &run.attempts {
-            let llm_routing::AttemptResult::Failed {
-                code,
-                dispatch,
-                observation: Some(observed),
-                ..
-            } = &attempt.result
-            else {
-                panic!("`{reason}`: a failed attempt with its observation: {attempt:?}");
-            };
-            assert_eq!(
-                (*code, *dispatch, observed.final_usage),
-                (ErrorCode::Unavailable, Dispatch::Accepted, true),
-                "`{reason}`"
-            );
-            let usage = observed.usage.as_ref().expect("the reported counters");
-            assert_eq!(
-                (usage.input_tokens, usage.output_tokens),
-                (Some(11), Some(0)),
-                "`{reason}`"
-            );
-        }
-        // Routing says each retry and the turn shows nothing else.
-        assert_eq!(sink.events().len(), attempts - 1, "{:?}", sink.events());
-        assert!(
-            sink.events().iter().all(|event| matches!(event,
-                llm_core::StreamEvent::Warning { code, .. } if code == "turn-retried")),
-            "`{reason}`: {:?}",
-            sink.events()
-        );
-        let error = run
-            .result
-            .expect_err("every attempt stopped without content");
-        assert_eq!(
-            (error.code, error.dispatch),
-            (ErrorCode::Unavailable, Dispatch::Accepted),
-            "`{reason}`"
-        );
-        assert!(
-            !error.may_retry(),
-            "`{reason}`: spent retries go up final: {error:?}"
-        );
-    }
-}
-
-/// The three reasons with a final row are asked once.
-#[tokio::test]
-async fn a_converse_stop_without_content_for_a_reason_with_a_final_row_is_asked_once() {
-    for (reason, code) in [
-        ("model_context_window_exceeded", ErrorCode::TooLarge),
-        ("guardrail_intervened", ErrorCode::Refused),
-        ("content_filtered", ErrorCode::Refused),
-    ] {
-        let (run, requests, sink) = converse_routed(reason).await;
-        assert_eq!(requests, 1, "`{reason}`: the far side was asked again");
-        assert_eq!(run.attempts.len(), 1, "`{reason}`: {:?}", run.attempts);
-        assert_eq!(sink.events().len(), 0, "`{reason}`: {:?}", sink.events());
-        let error = run.result.expect_err("the turn stopped without content");
-        assert_eq!(
-            (error.code, error.dispatch),
-            (code, Dispatch::Accepted),
-            "`{reason}`"
-        );
-        assert!(!error.may_retry(), "`{reason}`: {error:?}");
-    }
+    (catalog, client)
 }
 
 /// The client itself asks once a turn and hands the retriable failure up: the retry is the
@@ -625,7 +467,7 @@ async fn a_converse_stop_without_content_for_a_reason_with_a_final_row_is_asked_
 async fn the_converse_client_asks_once_a_turn_and_routing_takes_it_under_no_catalog_target() {
     let answer = converse_stop_without_content("a_reason_in_no_list");
     let (url, requests, server) = answering_bytes(answer.clone()).await;
-    let (_, client, _) = converse_under_a_catalog_target(&url);
+    let (_, client) = converse_beside_a_catalog_target(&url);
     let mut sink = VecSink::new(64, 64 * 1024);
     let request = TurnRequest::new("small", vec![Item::user("Say hello")]);
     let error = client
@@ -642,8 +484,27 @@ async fn the_converse_client_asks_once_a_turn_and_routing_takes_it_under_no_cata
     assert_eq!(sink.events().len(), 0, "{:?}", sink.events());
 
     let (url, requests, server) = answering_bytes(answer).await;
-    let (catalog, client, _) = converse_under_a_catalog_target(&url);
-    let (run, _) = routed_with(&catalog, &Only(client)).await;
+    let (catalog, client) = converse_beside_a_catalog_target(&url);
+    let mut request = TurnRequest::new("code", vec![Item::user("Say hello")]);
+    request.max_output_tokens = Some(64);
+    let mut admit = |_: &Selection<'_>| -> Result<(), Error> { Ok(()) };
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let cancel = Cancel::new();
+    let pause = |_: Duration| -> BoxFuture<'static, ()> { Box::pin(std::future::ready(())) };
+    let run = catalog
+        .run_turn(
+            &request,
+            Some(16),
+            FallbackPolicy::default(),
+            Ports {
+                models: &Bare(client),
+                admit: &mut admit,
+                sink: &mut sink,
+                cancel: &cancel,
+                pause: &pause,
+            },
+        )
+        .await;
     server.abort();
     let refused = run.expect_err("a Converse client serves no catalog target");
     assert_eq!(refused.code, ErrorCode::InvalidRequest, "{refused:?}");

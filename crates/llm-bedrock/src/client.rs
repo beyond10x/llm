@@ -261,9 +261,13 @@ fn region(name: &str) -> bool {
 /// resolves credentials under the turn deadline (a failure there is `not-sent`), signs the request
 /// with `SigV4` at the current time, sends it once and decodes the answer with the target's wire.
 ///
-/// A streamed answer that fails after it has answered is final, a cut included: another attempt
-/// would answer, and bill, again. A whole answer arrives only after the model generated it, so
-/// every failure while it is read is final. A 429 that Bedrock names
+/// A streamed answer that is cut, or that sends an exception, after any event but its opening
+/// (`messageStart`; on `InvokeModel` `message_start` and `ping`) is final: another attempt would
+/// answer, and bill, again. One failure of a stream that ended may be retried, on both wires: the
+/// answer held no content block and no kept event and stopped for a reason with no row of its
+/// own (`docs/bedrock.md`, "A Converse answer that stops without content", and `docs/messages.md`
+/// for `InvokeModel`). A whole answer arrives only after the model generated it, so every failure
+/// while it is read is final, that one included. A 429 that Bedrock names
 /// `ServiceQuotaExceededException` in `x-amzn-errortype` is a final `refused`; every other 429
 /// stays a retriable `rate-limited`.
 pub struct BedrockClient {

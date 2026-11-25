@@ -284,7 +284,7 @@ known 0 when the answer leaves it out.
 | Any other HTTP 429 | `rate-limited`, retriable | not applicable |
 | Any other HTTP error status | the transport's class for the status | not applicable |
 | A streamed `InvokeModel` answer that stops without content for a reason `llm-messages` does not model ([messages.md](messages.md#what-the-decoder-requires-of-a-stream)) | `unavailable`, retriable although its terminal `message_delta` answered: that delta follows no content and the caller was shown nothing, so this one failure after an answer may be retried. `too-large` for `model_context_window_exceeded` and `refused` for `refusal`, both final | not applicable: with content it is an incomplete turn |
-| A streamed Converse answer that stops with no item for a reason the Converse decoder does not model: any reason but `end_turn`, `tool_use` and `max_tokens` | `unavailable`, retriable although `messageStop` answered: no item precedes it and the caller was shown nothing, so this one failure after an answer may be retried. `too-large` for `model_context_window_exceeded`; `refused`, with no cause named, for `guardrail_intervened` and `content_filtered`. These three are final | not applicable: with an item it is an incomplete turn |
+| A streamed Converse answer that stops with no content block and no kept event for a reason the Converse decoder does not model: any reason but `end_turn`, `tool_use` and `max_tokens` | `unavailable`, retriable: only `messageStop` and `metadata` follow `messageStart`, so the model produced nothing and the caller was shown nothing. `too-large` for `model_context_window_exceeded`; `refused`, with no cause named, for `guardrail_intervened` and `content_filtered`. These three are final | not applicable: after a content block, an empty text block included, or a kept event it is an incomplete turn |
 | Any failure while a whole (unstreamed) answer is read or decoded, an `InvokeModel` or a Converse answer that stops without content included | final | not applicable |
 
 "Answered" means any event after the message header (`messageStart` on Converse,
@@ -298,34 +298,46 @@ diagnostic quotes Bedrock's own message.
 `end_turn`, `tool_use` and `max_tokens`. A stream and a whole answer end in one function
 (`Header::outcome` in `crates/llm-bedrock/src/converse.rs`), so the rule is the same for both:
 
-| Stop reason, no item | Error code | Retried |
+| Stop reason, no content block and no kept event | Error code | Retried |
 | --- | --- | --- |
 | `model_context_window_exceeded` | `too-large` | never |
 | `guardrail_intervened`, `content_filtered` | `refused`, no `RefusalCause` named | never |
 | every other reason not modelled (`stop_sequence`, a name in no list) | `unavailable`, marked retriable | a streamed answer only; a whole answer is final |
 
-An answer has no item when it holds no content block, only text blocks that carried no text, or,
-on the stream, a block that stops without having opened: the caller was shown no event. Every
-other closed block leaves an item: text, a tool call, a reasoning block even without text, and a
-block or an event kept whole as opaque state. With an item each of these reasons is still
-`StopReason::Incomplete` under its own name. `end_turn` and `max_tokens` with no item are the
-outcome they were, and `tool_use` with no call the final `protocol` refusal it was. A block left
-open at `messageStop`, and a reason that is not 1 to 64 visible ASCII bytes (a space is not
-one), stay the final `protocol` refusal.
+The rule counts as the Messages decoder counts ([messages.md](messages.md#what-the-decoder-requires-of-a-stream)):
+it applies only to an answer that held no content block and no kept event. On the stream that
+is `messageStart`, then `messageStop` and `metadata`, with no content block event and no event
+of an unknown type; on a whole answer it is an empty `content`. A content block ends the rule
+even when it leaves no item. A text block that carried no text is one: it opened by its start or
+by a delta without text, or it only stopped, which is how this wire may end a text block that
+took no delta. The attempt has started answering then, and the answer is the incomplete turn it
+was before this rule: `StopReason::Incomplete` under the reason's own name, with no item for
+that block and nothing shown. The Messages decoder keeps such a block as an empty text item and
+the Converse decoder keeps none; both return the incomplete turn. Every other closed block
+leaves an item: text, a tool call, a reasoning block even without text, and a block or an event
+kept whole as opaque state. `end_turn` and `max_tokens` without content are the outcome they
+were, and `tool_use` with no call the final `protocol` refusal it was. A block left open at
+`messageStop`, and a reason that is not 1 to 64 visible ASCII bytes (a space is not one), stay
+the final `protocol` refusal.
 
 The failure has dispatch `accepted` and carries the usage the answer reported as final, whether
-`metadata` came before `messageStop` or after it; a counter the answer left out stays unknown,
-never zero. Its text is fixed for each row and carries no byte of the reason and nothing of a
-guardrail trace. Any other failure after a `messageStop` that follows no content is final as the
-table above says.
+`metadata` came before `messageStop` or after it. A counter the answer left out stays unknown; a
+Converse cache counter the answer left out is the known 0 it is on every Converse answer
+([Usage](#usage)). An answer that reports no counter at all carries no usage. Its text is fixed
+for each row and carries no byte of the reason and nothing of a guardrail trace. Any other
+failure after a `messageStop` that follows no content is final as the table above says. A hint
+the wire omits adds no `advisory-omitted` warning to a turn that fails: the caller is shown
+nothing.
 
 | Sentence | Test |
 | --- | --- |
-| Each row on the stream, fed whole, in parts and one byte at a time; a reason of 1 and of 64 bytes | `tests/converse.rs::every_unmodelled_reason_without_an_item_fails_the_stream_as_its_row_however_it_is_fed` |
-| Each row on a whole answer, final | `tests/converse.rs::every_unmodelled_reason_without_an_item_fails_a_whole_answer_as_its_row_and_final` |
+| Each row on the stream, fed whole, in parts and one byte at a time; a reason of 1 and of 64 bytes | `tests/converse.rs::every_unmodelled_reason_without_a_content_block_fails_the_stream_as_its_row_however_it_is_fed` |
+| Each row on a whole answer, final | `tests/converse.rs::every_unmodelled_reason_without_a_content_block_fails_a_whole_answer_as_its_row_and_final` |
 | With an item, of every kind, it is the incomplete turn | `tests/converse.rs::every_unmodelled_reason_with_an_item_is_still_the_incomplete_turn` |
-| What leaves no item | `tests/converse.rs::an_empty_text_block_or_a_block_that_never_opened_leaves_no_item_and_shows_nothing` |
-| Unknown usage stays unknown | `tests/converse.rs::usage_the_answer_left_out_stays_unknown_on_the_failure_and_is_never_zero` |
+| After an empty text block it is the incomplete turn with no item | `tests/converse.rs::after_an_empty_text_block_the_turn_is_incomplete_with_no_item_and_shows_nothing` |
+| A recorded empty text block, then the stop, is not marked retriable | `tests/client.rs::an_unlisted_stop_after_a_recorded_silent_text_block_is_not_marked_retriable` |
+| The same answer reads alike on Converse and `InvokeModel` | `tests/client.rs::a_stop_after_an_empty_text_block_reads_alike_on_both_wires` |
+| Usage left out is unknown, a cache counter left out a known 0 | `tests/converse.rs::usage_on_the_failure_is_unknown_where_the_answer_left_it_out_and_a_cache_counter_a_known_zero` |
 | `metadata` before or after the stop | `tests/converse.rs::metadata_before_the_stop_gives_the_same_failure_as_metadata_after_it` |
 | The three modelled reasons | `tests/converse.rs::a_modelled_reason_without_an_item_is_what_it_was` |
 | What stays the `protocol` refusal | `tests/converse.rs::a_block_left_open_or_a_reason_that_is_no_bounded_name_is_still_the_protocol_refusal` |
@@ -333,20 +345,15 @@ table above says.
 | A whole answer is final through the client | `tests/client.rs::a_whole_converse_answer_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row` |
 | Any other failure after that stop is final | `tests/client.rs::any_other_failure_after_a_converse_stop_without_content_is_final` |
 | No cause named, nothing of the trace quoted | `tests/client.rs::a_guardrail_stop_without_content_names_no_cause_and_quotes_none_of_its_trace` |
+| A failed turn shows no advisory for a hint it omitted | `tests/client.rs::a_converse_turn_that_fails_shows_no_advisory_for_a_hint_it_omitted` |
 
-Who retries. `BedrockClient` asks once a turn and hands the retriable failure to its caller. A
-Bedrock route has no catalog entry and no catalog names `bedrock-converse`, so routing's loop
-(`Catalog::run_turn`) holds no Converse client by itself and refuses one given to it under a
-catalog target before any request
+Who retries. `BedrockClient` asks once a turn and hands the retriable failure to its caller
 (`crates/llm-models/tests/relayed_failure.rs::the_converse_client_asks_once_a_turn_and_routing_takes_it_under_no_catalog_target`).
-A caller that gives the failure to the retry policy gets the policy's bound: a far side that
-answers every attempt that way is asked `RetryPolicy::DEFAULT.max_attempts` times, four, and the
-run ends final
-(`crates/llm-models/tests/relayed_failure.rs::a_converse_stop_without_content_for_a_reason_in_no_row_ends_after_the_policys_attempts`);
-a reason with a final row is asked once
-(`crates/llm-models/tests/relayed_failure.rs::a_converse_stop_without_content_for_a_reason_with_a_final_row_is_asked_once`).
-Both tests put a real Converse client under the loop through a test adapter that renames the
-protocol in its provenance; no code outside the tests does that.
+No code in this repository puts a Converse client under the retry policy: a Bedrock route has no
+catalog entry, no catalog names `bedrock-converse`, `Routes::port` hands out the bare client and
+the `llm` command calls `turn` once. Routing's loop (`Catalog::run_turn`) refuses a Converse
+client given to it under a catalog target before any request (the same test). A caller that
+retries bounds the retry itself.
 
 A streamed `InvokeModel` answer holds a reported `usage.cost` as `llm-messages` does
 ([messages.md](messages.md#what-the-decoder-requires-of-a-stream)): a failure after the stream

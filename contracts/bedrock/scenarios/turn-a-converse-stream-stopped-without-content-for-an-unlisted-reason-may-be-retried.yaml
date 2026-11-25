@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.bedrock
 scenario: turn-a-converse-stream-stopped-without-content-for-an-unlisted-reason-may-be-retried
-summary: "a Converse stream that stops with no item for a reason with no row of its own is unavailable and may be retried, with its usage"
+summary: "a Converse stream that stops with no content block for a reason with no row of its own is unavailable and may be retried, with its usage"
 timeline:
 - at: '2026-11-25T12:00:00Z'
   command: llm.bedrock.RunTurn

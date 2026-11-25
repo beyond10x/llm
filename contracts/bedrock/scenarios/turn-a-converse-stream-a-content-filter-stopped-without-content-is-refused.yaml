@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.bedrock
 scenario: turn-a-converse-stream-a-content-filter-stopped-without-content-is-refused
-summary: "a Converse stream a content filter stopped with no item is refused and final; usage its metadata left out stays unknown"
+summary: "a Converse stream a content filter stopped with no content block is refused and final; usage its metadata left out stays unknown"
 timeline:
 - at: '2026-11-25T12:00:00Z'
   command: llm.bedrock.RunTurn

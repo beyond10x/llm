@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.bedrock
 scenario: turn-a-converse-stream-stopped-at-the-context-window-without-content-is-too-large
-summary: "a Converse stream that stops at the model context window with no item is too-large and final, with its usage"
+summary: "a Converse stream that stops at the model context window with no content block is too-large and final, with its usage"
 timeline:
 - at: '2026-11-25T12:00:00Z'
   command: llm.bedrock.RunTurn

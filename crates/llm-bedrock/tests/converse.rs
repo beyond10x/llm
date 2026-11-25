@@ -1355,9 +1355,9 @@ async fn the_pre_send_check_answers_exactly_what_the_turn_refuses() {
 // ---------------------------------------------------------------------------------------------
 // story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason. A Converse answer that stops
 // for a reason this projection does not model (any but `end_turn`, `tool_use` and `max_tokens`)
-// and decoded to no item is a classified failure with its final usage; with an item it is the
-// incomplete turn under the reason's own name. Every frame and every whole answer below is
-// synthetic.
+// and holds no content block and no kept event is a classified failure with its final usage; with
+// a content block, an empty text block included, it is the incomplete turn under the reason's own
+// name, as the Messages decoder counts it. Every frame and every whole answer below is synthetic.
 // ---------------------------------------------------------------------------------------------
 
 const STOPPED_AT_THE_CONTEXT_WINDOW: &str =
@@ -1367,10 +1367,11 @@ const STOPPED_FOR_NO_ROW: &str = "the Bedrock Converse turn stopped without cont
                                   this projection does not model";
 
 /// One row of the rule (`docs/bedrock.md`, "Retry classes"): the stop reason, the code a turn
-/// with no item fails as, whether another attempt at the stream may answer, the fixed diagnostic.
+/// without a content block fails as, whether another attempt at the stream may answer, the fixed
+/// diagnostic.
 type Stop = (String, ErrorCode, bool, &'static str);
 
-fn stops_without_an_item() -> Vec<Stop> {
+fn stops_without_content() -> Vec<Stop> {
     let row = |reason: &str, code, message| (reason.to_owned(), code, false, message);
     let no_row = |reason: &str| {
         (
@@ -1456,7 +1457,7 @@ async fn answered(
 }
 
 /// The answer failed as `stop`'s row says, kept `usage` as final and showed the caller nothing.
-fn assert_stopped_without_an_item(
+fn assert_stopped_without_content(
     (result, shown): (Result<TurnOutcome, Error>, Vec<StreamEvent>),
     case: &str,
     (reason, code, retriable, message): &Stop,
@@ -1465,7 +1466,7 @@ fn assert_stopped_without_an_item(
     let error = match result {
         Err(error) => error,
         Ok(outcome) => {
-            panic!("{case} `{reason}`: an answer with no item is no answer: {outcome:?}")
+            panic!("{case} `{reason}`: an answer without content is no answer: {outcome:?}")
         }
     };
     assert_eq!(
@@ -1496,15 +1497,16 @@ fn assert_stopped_without_an_item(
 
 /// Each row by its own reason name, the stream written whole, in parts and one byte at a time.
 #[tokio::test]
-async fn every_unmodelled_reason_without_an_item_fails_the_stream_as_its_row_however_it_is_fed() {
-    for (input, stop) in (10_u64..).zip(stops_without_an_item()) {
+async fn every_unmodelled_reason_without_a_content_block_fails_the_stream_as_its_row_however_it_is_fed()
+ {
+    for (input, stop) in (10_u64..).zip(stops_without_content()) {
         let body = stopped(&stop.0, &[], &json!({"usage": counted(input, 0)}));
         for (fed, part) in [
             ("in one write", body.len()),
             ("in parts of 61 bytes", 61),
             ("one byte at a time", 1),
         ] {
-            assert_stopped_without_an_item(
+            assert_stopped_without_content(
                 answered(true, part, body.clone()).await,
                 fed,
                 &stop,
@@ -1518,10 +1520,11 @@ async fn every_unmodelled_reason_without_an_item_fails_the_stream_as_its_row_how
 /// a whole answer final, so no row may be retried there (`tests/client.rs` holds the client's
 /// side of it).
 #[tokio::test]
-async fn every_unmodelled_reason_without_an_item_fails_a_whole_answer_as_its_row_and_final() {
-    for (input, (reason, code, _, message)) in (40_u64..).zip(stops_without_an_item()) {
+async fn every_unmodelled_reason_without_a_content_block_fails_a_whole_answer_as_its_row_and_final()
+{
+    for (input, (reason, code, _, message)) in (40_u64..).zip(stops_without_content()) {
         let body = whole(&reason, &json!([]), &counted(input, 0));
-        assert_stopped_without_an_item(
+        assert_stopped_without_content(
             answered(false, body.len(), body).await,
             "whole",
             &(reason, code, false, message),
@@ -1644,11 +1647,12 @@ fn assert_incomplete_with(
     );
 }
 
-/// With an item nothing changed: every reason of the table, after every kind of closed block,
-/// streamed and whole, is `StopReason::Incomplete` under its own name and keeps the item.
+/// With an item nothing changed from the base: every reason of the table, after every kind of
+/// closed block, streamed and whole, is `StopReason::Incomplete` under its own name and keeps
+/// the item.
 #[tokio::test]
 async fn every_unmodelled_reason_with_an_item_is_still_the_incomplete_turn() {
-    for (reason, ..) in stops_without_an_item() {
+    for (reason, ..) in stops_without_content() {
         for block in blocks_that_leave_an_item() {
             let (frames, item) = &block.streamed;
             let body = stopped(&reason, frames, &json!({"usage": counted(3, 2)}));
@@ -1674,11 +1678,16 @@ async fn every_unmodelled_reason_with_an_item_is_still_the_incomplete_turn() {
     }
 }
 
-/// The other side of "no item": a text block that carried no text leaves none and shows the
-/// caller no event, and neither does a block that stops without having opened. An answer of
-/// only such blocks fails as the answer without any block does.
+/// The edge of the rule: a content block that left no item. A text block that carried no text
+/// leaves none and shows the caller no event, yet the model opened a block, so the answer is
+/// not "without content": it is the incomplete turn it was before the rule, with no item, on
+/// every row. A `contentBlockStop` for a block that never opened is this wire's form of a text
+/// block that took no delta, and counts the same.
+///
+/// The Messages decoder counts an empty text block as content, and Converse counts as it does:
+/// a failure here would be marked for another attempt after the model had started answering.
 #[tokio::test]
-async fn an_empty_text_block_or_a_block_that_never_opened_leaves_no_item_and_shows_nothing() {
+async fn after_an_empty_text_block_the_turn_is_incomplete_with_no_item_and_shows_nothing() {
     let delta = |index: u64| {
         event(
             "contentBlockDelta",
@@ -1705,37 +1714,57 @@ async fn an_empty_text_block_or_a_block_that_never_opened_leaves_no_item_and_sho
             json!([{"text": ""}, {"text": ""}]),
         ),
     ];
-    for (reason, code, retriable, message) in stops_without_an_item().into_iter().take(5) {
+    let incomplete = |(result, shown): (Result<TurnOutcome, Error>, Vec<StreamEvent>),
+                      case: &str,
+                      reason: &str,
+                      input: u64| {
+        let outcome = result.unwrap_or_else(|error| panic!("{case} `{reason}`: {error:?}"));
+        assert_eq!(
+            outcome.stop_reason,
+            StopReason::Incomplete {
+                reason: reason.to_owned()
+            },
+            "{case}"
+        );
+        assert_eq!(outcome.items, [] as [Item; 0], "{case} `{reason}`");
+        assert_eq!(
+            (outcome.observation.usage, outcome.observation.final_usage),
+            (Some(uncached(input, 0)), true),
+            "{case} `{reason}`"
+        );
+        assert_eq!(shown, [] as [StreamEvent; 0], "{case} `{reason}`");
+    };
+    for (reason, ..) in stops_without_content() {
         for (input, (case, content)) in (60_u64..).zip(&streams) {
             let body = stopped(&reason, content, &json!({"usage": counted(input, 0)}));
-            assert_stopped_without_an_item(
-                answered(true, 61, body).await,
-                case,
-                &(reason.clone(), code, retriable, message),
-                Some(&uncached(input, 0)),
-            );
+            incomplete(answered(true, 61, body).await, case, &reason, input);
         }
         for (input, (case, content)) in (70_u64..).zip(&wholes) {
             let body = whole(&reason, content, &counted(input, 0));
-            assert_stopped_without_an_item(
-                answered(false, body.len(), body).await,
-                case,
-                &(reason.clone(), code, false, message),
-                Some(&uncached(input, 0)),
-            );
+            let read = answered(false, body.len(), body).await;
+            incomplete(read, case, &reason, input);
         }
     }
 }
 
-/// Usage the answer left out is unknown on the failure too, never zero: a `metadata` event or a
-/// whole answer without counters attaches no usage, and one without `inputTokens` leaves the
-/// input unknown.
+/// Usage on the failure is what `read_usage` makes of the answer, as on every Converse answer:
+/// a `metadata` event or a whole answer without counters attaches no usage, one without
+/// `inputTokens` leaves the input unknown, and a cache counter the answer left out beside
+/// another counter is the known 0 it is on this wire (`docs/bedrock.md`, "Usage").
 #[tokio::test]
-async fn usage_the_answer_left_out_stays_unknown_on_the_failure_and_is_never_zero() {
+async fn usage_on_the_failure_is_unknown_where_the_answer_left_it_out_and_a_cache_counter_a_known_zero()
+ {
     let without_input = Usage {
         input_tokens: None,
         output_tokens: Some(0),
         cached_input_tokens: Some(0),
+        cache_creation_input_tokens: Some(0),
+        reasoning_output_tokens: None,
+    };
+    let only_a_cache_read = Usage {
+        input_tokens: None,
+        output_tokens: None,
+        cached_input_tokens: Some(4),
         cache_creation_input_tokens: Some(0),
         reasoning_output_tokens: None,
     };
@@ -1748,8 +1777,13 @@ async fn usage_the_answer_left_out_stays_unknown_on_the_failure_and_is_never_zer
             Some(json!({"outputTokens": 0})),
             Some(&without_input),
         ),
+        (
+            "usage of a cache read count only",
+            Some(json!({"cacheReadInputTokens": 4})),
+            Some(&only_a_cache_read),
+        ),
     ];
-    let rows = stops_without_an_item();
+    let rows = stops_without_content();
     for (case, usage, expected) in reports {
         for (reason, code, retriable, message) in [&rows[0], &rows[1], &rows[3]] {
             let mut metadata = json!({"metrics": {"latencyMs": 5}});
@@ -1759,14 +1793,14 @@ async fn usage_the_answer_left_out_stays_unknown_on_the_failure_and_is_never_zer
                 metadata["usage"] = usage.clone();
                 answer["usage"] = usage.clone();
             }
-            assert_stopped_without_an_item(
+            assert_stopped_without_content(
                 answered(true, 61, stopped(reason, &[], &metadata)).await,
                 case,
                 &(reason.clone(), *code, *retriable, *message),
                 expected,
             );
             let body = answer.to_string().into_bytes();
-            assert_stopped_without_an_item(
+            assert_stopped_without_content(
                 answered(false, body.len(), body).await,
                 case,
                 &(reason.clone(), *code, false, *message),
@@ -1780,11 +1814,11 @@ async fn usage_the_answer_left_out_stays_unknown_on_the_failure_and_is_never_zer
 /// the same in both orders.
 #[tokio::test]
 async fn metadata_before_the_stop_gives_the_same_failure_as_metadata_after_it() {
-    for (input, stop) in (80_u64..).zip(stops_without_an_item().into_iter().take(5)) {
+    for (input, stop) in (80_u64..).zip(stops_without_content().into_iter().take(5)) {
         let mut body = event("messageStart", &json!({"role": "assistant"}));
         body.extend(event("metadata", &json!({"usage": counted(input, 0)})));
         body.extend(event("messageStop", &json!({"stopReason": &stop.0})));
-        assert_stopped_without_an_item(
+        assert_stopped_without_content(
             answered(true, 61, body).await,
             "metadata first",
             &stop,
@@ -1793,7 +1827,7 @@ async fn metadata_before_the_stop_gives_the_same_failure_as_metadata_after_it() 
     }
 }
 
-/// The three reasons this projection models are not in the rule: an answer with no item that
+/// The three reasons this projection models are not in the rule: an answer without content that
 /// stops for one of them is what it was, streamed and whole. `end_turn` and `max_tokens` are the
 /// outcome with no item; `tool_use` without a call is the `protocol` refusal of a stop that
 /// contradicts its tool obligations, final, and no row of the rule.

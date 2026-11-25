@@ -463,14 +463,20 @@ impl Header {
             .with_observation(self.observation(target, false))
     }
 
+    /// The turn of an answer that ended, or the failure of one that stopped without content:
+    /// for a reason this projection does not model, with no content block (`content` is false)
+    /// and no kept event. An empty text block is a content block that leaves no item, so an
+    /// answer that holds one is the incomplete turn, as it is on the Messages wire.
     fn outcome(
         &self,
         items: Vec<Item>,
+        content: bool,
         request: &TurnRequest,
         target: &Provenance,
     ) -> Result<TurnOutcome, Error> {
         let stop_reason = stop_reason(self.stop_reason.as_deref())?;
         if let StopReason::Incomplete { reason } = &stop_reason
+            && !content
             && items.is_empty()
         {
             // The answer ended, so its counters are as final as an outcome's would be.
@@ -503,7 +509,7 @@ impl Header {
 
 /// A reason this projection does not model (`stop_sequence`, `guardrail_intervened`,
 /// `content_filtered`, `model_context_window_exceeded`, …) is carried under its own name, never
-/// as completion. [`Header::outcome`] keeps it only for an answer that holds an item.
+/// as completion. [`Header::outcome`] keeps it only for an answer that holds a content block or a kept event.
 fn stop_reason(reported: Option<&str>) -> Result<StopReason, Error> {
     match reported {
         None => Err(Error::protocol(
@@ -519,7 +525,8 @@ fn stop_reason(reported: Option<&str>) -> Result<StopReason, Error> {
 }
 
 /// The failure of an answer that stopped for `reason`, one this projection does not model, and
-/// holds no item: the caller was shown nothing, so it is no turn. The same rows as
+/// holds no content block and no kept event: the model produced nothing, the caller was shown
+/// nothing, so it is no turn. The same rows as
 /// `stopped_without_content` of `llm-messages`, under Converse's names (`docs/bedrock.md`,
 /// "A Converse answer that stops without content").
 ///
@@ -844,7 +851,8 @@ pub(crate) struct StreamDecoder {
     /// Keyed by block index: the order the route numbered its content is the order the caller
     /// was streamed it.
     items: BTreeMap<u64, Item>,
-    /// The index after the highest that opened. A block index below it opened before.
+    /// The index after the highest that opened, or stopped without having opened. A block index
+    /// below it opened before. Zero until a content block event was read.
     next_index: u64,
     announced: Vec<CallId>,
     /// Events outside the declared subset, each with the block index that would have opened
@@ -886,10 +894,20 @@ impl StreamDecoder {
         matches!(self.phase, Phase::Stopped) && self.metadata
     }
 
-    /// Whether any event other than `messageStart` was read, shown to the caller or not. A
-    /// failure after it is final: another attempt would answer, and bill, again.
+    /// Whether any event other than `messageStart` was read, shown to the caller or not. A cut,
+    /// an exception or an early end after it is final: another attempt would answer, and bill,
+    /// again. `messageStop` and `metadata` set it too, so it is not the condition of a stop
+    /// without content: [`Self::finish`] decides that by [`Self::read_a_content_block`], and its
+    /// one retriable failure follows no content block.
     pub(crate) const fn has_answered(&self) -> bool {
         self.answered
+    }
+
+    /// Whether a content block event was read: a block opened, by its start or by its first
+    /// delta, or stopped without having opened, which is how this wire may end a text block that
+    /// took no delta. A text block that carried no text is one, though it leaves no item.
+    const fn read_a_content_block(&self) -> bool {
+        self.next_index > 0
     }
 
     /// Retains dispatch evidence and the last valid usage snapshot on a failure.
@@ -1239,6 +1257,7 @@ impl StreamDecoder {
     /// Refuses a stream that never reached both terminal events, retaining the last snapshot.
     pub(crate) fn finish(self, request: &TurnRequest) -> Result<TurnOutcome, Error> {
         let complete = self.is_complete();
+        let content = self.read_a_content_block();
         let Self {
             target,
             header,
@@ -1252,7 +1271,7 @@ impl StreamDecoder {
                     "the Bedrock Converse stream ended before its message stop and metadata",
                 ));
             }
-            header.outcome(merge(items, preserved), request, &target)
+            header.outcome(merge(items, preserved), content, request, &target)
         };
         decoded().map_err(|error| header.attach(error, &target))
     }
@@ -1384,7 +1403,9 @@ fn read_answer(
             items.push(item);
         }
     }
-    Ok((header.outcome(items, request, target)?, shown))
+    // Every block of `content` is a content block, a text block that carries no text included.
+    let held = !content.is_empty();
+    Ok((header.outcome(items, held, request, target)?, shown))
 }
 
 /// One content block of a whole answer, and the events that show it as the stream would have.

@@ -132,15 +132,16 @@ entities:
   #
   # A Converse answer, streamed or whole, names its stop reason as any bounded name; this
   # projection models `end_turn`, `tool_use` and `max_tokens`. An answer that stops for any other
-  # reason and holds an item is the incomplete turn under the reason's own name. One that holds
-  # no item is a failure, dispatch `accepted`, with the reported usage as final (a counter the
-  # answer left out stays unknown): `model_context_window_exceeded` is `too-large`;
-  # `guardrail_intervened` and `content_filtered` are `refused`, no cause named; every other
-  # reason (`stop_sequence`, a name in no list) is `unavailable`. Only that last row is
-  # retriable, and only on the stream; a whole answer is final on every row. An item is a text
-  # block that carried text, any other closed block, or an event kept whole; an empty text block
-  # leaves none. The caller was shown nothing for a turn that fails this way, and its diagnostic
-  # is fixed text without a byte of the reason.
+  # reason after a content block or a kept event is the incomplete turn under the reason's own
+  # name; a text block that carried no text is a content block, though it leaves no item. One
+  # that holds no content block and no kept event is a failure, dispatch `accepted`, with the
+  # reported usage as final (a counter the answer left out stays unknown; a Converse cache
+  # counter the answer left out is the known 0 it is on every Converse answer):
+  # `model_context_window_exceeded` is `too-large`; `guardrail_intervened` and `content_filtered`
+  # are `refused`, no cause named; every other reason (`stop_sequence`, a name in no list) is
+  # `unavailable`. Only that last row is retriable, and only on the stream; a whole answer is
+  # final on every row. The caller was shown nothing for a turn that fails this way, and its
+  # diagnostic is fixed text without a byte of the reason.
   - name: llm.bedrock.TurnObservation
     identity: {name: observation_id, type: String}
     fields: &turn_facts

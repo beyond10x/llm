@@ -1,7 +1,7 @@
 type: ess-scenario/1
 domain: llm.bedrock
 scenario: turn-a-whole-converse-answer-stopped-without-content-for-an-unlisted-reason-is-final
-summary: "a /converse answer that stops with only an empty text block for a reason in no list is unavailable and final, as every failure of a whole answer is"
+summary: "a /converse answer that stops with no content block for a reason in no list is unavailable and final, as every failure of a whole answer is"
 timeline:
 - at: '2026-11-25T12:00:00Z'
   command: llm.bedrock.RunTurn
