@@ -6,6 +6,10 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+### Changed
+
+- `rust-toolchain.toml` pins Rust 1.98.0 with Clippy and rustfmt; a local `cargo` and CI read it, `task rust` lints once
+
 ## [0.33.0] - 2026-11-25
 
 ### Fixed

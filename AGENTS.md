@@ -85,18 +85,22 @@ provider or hosting qualification; `docs/implementation-status.md` keeps that di
 
 ## Gate
 
-CI (`.github/workflows/gate.yml`) runs Rust 1.98.0 and the repository has no
-`rust-toolchain.toml`, so gate locally on the same toolchain; a newer Clippy adds lints CI lacks:
+`rust-toolchain.toml` pins the one Rust release, with Clippy and rustfmt. A local `cargo` and the
+workflows' `rustup toolchain install` both read it, so the local gate and CI compile and lint with
+the same toolchain. No workflow and no task names a toolchain of its own (`+<version>`,
+`RUSTUP_TOOLCHAIN`, a `toolchain:` input, a `rustup` command other than that install), and every
+job that runs `cargo` installs first: `checks/xtask/tests/gate/toolchain.rs` holds both. To move the
+release, change the file's `channel`.
 
 ```bash
-RUSTUP_TOOLCHAIN=1.98.0 task check
+task check
 ```
 
 `task check` runs, in order:
 
 | Step | Alone |
 | --- | --- |
-| `llm-credentials` and `llm-cost` checked with no features and `llm-bedrock` with its defaults; `cargo fmt --all --check`; Clippy on all targets and features with `-D warnings`, on the default toolchain and on 1.98.0, and on `llm-models` and `llm-bedrock` with no features, because workspace feature unification turns `process` on everywhere else | `task rust` |
+| `llm-credentials` and `llm-cost` checked with no features and `llm-bedrock` with its defaults; `cargo fmt --all --check`; Clippy on all targets and features with `-D warnings`, and on `llm-models` and `llm-bedrock` with no features, because workspace feature unification turns `process` on everywhere else | `task rust` |
 | The test phase: the workspace tests, then `llm-credentials`, `llm-cost` and `llm-calls` with all features and `llm-models` with none, each one `cargo nextest run` under `.config/nextest.toml` (a test over 60 s is killed and fails; one run ends at 120 s). The binaries are built first, and every `harness = false` test target must answer nextest's `--list --format terse` (with and without `--ignored`) in libtest's form, or the phase fails naming it (`cargo xtask list-check`); the runs together may then take 120 s by their own JUnit reports, and the ten slowest tests are printed | `task test` (`cargo xtask test`, `checks/xtask`) |
 | Generated pages and quoted guide programs are current | `task docs` (`cargo run --locked -p llm-docs -- generate --check`) |
 | The ESS specification validates, with the pinned `ess` | `cargo run --locked -p llm-conformance -- ess specify validate --path spec` |

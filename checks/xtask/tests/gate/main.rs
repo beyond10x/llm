@@ -13,6 +13,7 @@ mod paths;
 #[cfg(unix)]
 mod release;
 mod report;
+mod toolchain;
 
 use std::path::{Path, PathBuf};
 
