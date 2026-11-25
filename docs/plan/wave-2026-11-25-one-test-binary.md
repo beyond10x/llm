@@ -1,6 +1,6 @@
 # Wave 2026-11-25-one-test-binary
 
-Status: **open**. Wave 10 of the [wave plan](trajectory.md). Approval:
+Status: **parked** on 2026-11-25 (section Parked). Wave 10 of the [wave plan](trajectory.md). Approval:
 `approval-record:wave-2026-11-25-one-test-binary` (the owner's order of 2026-11-24 to run the next
 wave from the active stories, relayed by the operator session). Opened on `bdec455e0`, wave 9's
 integration branch with the plan commit `1130785f6` merged, while wave 9 waits for its builds; the
@@ -77,3 +77,23 @@ Parts 2 and 3 start first. Part 1 starts when wave 9's unit for
 - At most two part trees in work at a time, each with its own `target/`, removed when its part is
   merged.
 - No credential, no live call, no network request in any part.
+
+## Parked
+
+The owner stopped every wave of this repository on 2026-11-25 for another goal. The wave is not
+closed and nothing of it is merged. State at the stop, every branch pushed:
+
+| Part | State | Head |
+| --- | --- | --- |
+| 1 | phase 1 committed as work in progress, nothing built or run on it | `impl/one-binary-messages` at `e742c4d22` |
+| 2 | committed, its checks green | `impl/one-binary-responses` at `5e9e044db` |
+| 3 | committed, its checks green | `impl/one-binary-chat-bedrock` at `b5c0a63fb` |
+| 4 | committed, its checks green | `impl/one-binary-core` at `beb5e74f3` |
+| 5 | phase 1 committed as work in progress, nothing built or run on it | `impl/one-binary-models` at `9f614c174` |
+| 6 | not started | none |
+
+To go on: run phase 2 of parts 1 and 5 (the same tests before and after, by name), commit the result,
+merge the five part branches into this branch, take `main` (it holds wave 9, which moved
+`crates/llm-messages/tests/client.rs`, a file part 1 moves too), then part 6, one adversary for the
+story, the gate and the close. No adversary has read any part. The sentence above that part 1
+waits for wave 9 is settled: wave 9 is merged as `c7352c3f7`.
