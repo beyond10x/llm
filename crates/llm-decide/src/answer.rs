@@ -46,7 +46,7 @@ pub(crate) fn whole(outcome: &TurnOutcome) -> Option<Value> {
     reader.disable_recursion_limit();
     let value = Strict(MAX_DEPTH).deserialize(&mut reader).ok()?;
     reader.end().ok()?;
-    integers_are_exact(text).then_some(value)
+    integers_are_exact(scan::Scanner::new(text)).then_some(value)
 }
 
 /// The arguments of the outcome's one call to the tool `name`, as the protocol decoder parsed
@@ -139,6 +139,8 @@ impl<'de> Visitor<'de> for Strict {
         let inside = self.inside()?;
         let mut read = Vec::new();
         while let Some(item) = items.next_element_seed(inside)? {
+            #[cfg(test)]
+            work::charge(1);
             read.push(item);
         }
         Ok(Value::Array(read))
@@ -147,6 +149,8 @@ impl<'de> Visitor<'de> for Strict {
         let inside = self.inside()?;
         let mut read = Map::new();
         while let Some(name) = members.next_key::<String>()? {
+            #[cfg(test)]
+            work::charge(1);
             let member = members.next_value_seed(inside)?;
             if read.insert(name, member).is_some() {
                 return Err(A::Error::custom("an object gives a key twice"));
@@ -156,48 +160,161 @@ impl<'de> Visitor<'de> for Strict {
     }
 }
 
-/// Whether every number of `text` written without a fraction or an exponent is one `i64` or
-/// `u64` holds. `text` is JSON that was read, so outside a string a digit or a minus sign starts
-/// a number.
-fn integers_are_exact(text: &str) -> bool {
-    let starts_a_token = |each: char| each == '"' || each == '-' || each.is_ascii_digit();
-    let mut rest = text;
+/// Whether every number of the text `scanner` stands at the start of, written without a
+/// fraction or an exponent, is one `i64` or `u64` holds. The text is JSON that was read, so
+/// outside a string a digit or a minus sign starts a number. It reads the text through the
+/// scanner it is handed and in no other way: it holds no other reference to the text.
+fn integers_are_exact(mut scanner: scan::Scanner<'_>) -> bool {
     loop {
-        rest = rest.trim_start_matches(|each: char| !starts_a_token(each));
-        if rest.is_empty() {
-            return true;
-        }
-        if let Some(inside) = rest.strip_prefix('"') {
-            let mut string = inside.chars();
+        scanner.skip_to_token();
+        // A number stands here when its literal is not empty: a string opens with a quote and
+        // the text ends on nothing, and neither is a char of a number.
+        let literal = scanner.number_literal();
+        if literal.is_empty() {
+            if scanner.next_char().is_none() {
+                return true;
+            }
+            // Past the quote that opens a string: on to the quote that closes it.
             loop {
-                match string.next() {
+                match scanner.next_char() {
                     Some('\\') => {
-                        string.next();
+                        scanner.next_char();
                     }
                     Some('"') | None => break,
                     Some(_) => {}
                 }
             }
-            rest = string.as_str();
         } else {
-            let after = rest.trim_start_matches(|each: char| {
-                matches!(each, '-' | '+' | '.' | 'e' | 'E') || each.is_ascii_digit()
-            });
-            // The literal is what the trim took off: its length is a subtraction, so each
-            // number costs its own length and the scan the length of the text.
-            let (literal, _) = rest.split_at(rest.len() - after.len());
             let is_integer = !literal.contains(['.', 'e', 'E']);
             if is_integer && literal.parse::<i64>().is_err() && literal.parse::<u64>().is_err() {
                 return false;
             }
-            rest = after;
         }
+    }
+}
+
+/// The one way the scan of an answer's text reads it.
+///
+/// The rule: the text of an answer is read through a [`Scanner`] only, and the scanner charges
+/// every char it visits. The charge is made in test builds, to the counter `work`.
+///
+/// What the types hold:
+///
+/// - The scanner keeps the text it has not passed in a field private to this module and no
+///   method hands that text out, so its user sees a char or a slice only once the scanner has
+///   passed and charged it.
+/// - `whole` builds the one scanner of an answer and hands it to `integers_are_exact`, which is
+///   given no other reference to the text.
+/// - No method takes a predicate from its user: what a call passes is decided in this module.
+///   The skip to the next token returns nothing, and the one slice a method returns is the
+///   literal of one number, so no call hands its user more of the text than that.
+/// - That slice borrows from the scanner and not from the text, so the next call on the scanner
+///   ends it: its user cannot keep a literal for a later call or a later turn of its loop and
+///   read it again there.
+///
+/// What stays a rule in prose: a literal was charged once, when it was passed, and reading it
+/// again before the next call on the scanner is its user's cost and is not charged. That cost is
+/// of the same order as long as the user reads each literal a fixed number of times and copies
+/// neither a literal nor the chars it is handed one by one into a value of its own, which would
+/// outlive the borrow and could be read again without a charge.
+mod scan {
+    /// The text of an answer from where the scan stands to its end.
+    pub(super) struct Scanner<'a> {
+        rest: &'a str,
+    }
+
+    impl<'a> Scanner<'a> {
+        /// A scanner that stands at the start of `text`.
+        pub(super) fn new(text: &'a str) -> Self {
+            Self { rest: text }
+        }
+
+        /// Passes the chars from here on that start no token: every char but a quote, a minus
+        /// sign and a digit. It returns nothing and charges as `pass` says.
+        pub(super) fn skip_to_token(&mut self) {
+            self.pass(|each| !matches!(each, '"' | '-') && !each.is_ascii_digit());
+        }
+
+        /// Passes the chars of the literal of a number from here on and returns them: digits,
+        /// signs, the point and the mark of an exponent, as many as stand here, which may be
+        /// none. It charges as `pass` says. What it returns borrows from the scanner, so it
+        /// cannot be read after the next call on the scanner.
+        pub(super) fn number_literal(&mut self) -> &str {
+            self.pass(|each| matches!(each, '-' | '+' | '.' | 'e' | 'E') || each.is_ascii_digit())
+        }
+
+        /// Passes one char and returns it, or `None` at the end of the text. It charges one
+        /// unit either way.
+        pub(super) fn next_char(&mut self) -> Option<char> {
+            #[cfg(test)]
+            super::work::charge(1);
+            let mut chars = self.rest.chars();
+            let next = chars.next();
+            self.rest = chars.as_str();
+            next
+        }
+
+        /// Passes the chars from here on that `holds` is true of and returns them. It charges
+        /// one unit for each byte it passes and one for the look that ends it, at the first
+        /// char `holds` is false of or at the end of the text. It is private to this module:
+        /// what a call on the scanner passes is not for the scanner's user to choose.
+        fn pass(&mut self, holds: impl Fn(char) -> bool) -> &'a str {
+            let after = self.rest.trim_start_matches(holds);
+            // What was passed is cut off by its length, a subtraction: a call costs what it
+            // passes and never the length of the text that follows.
+            let (passed, _) = self.rest.split_at(self.rest.len() - after.len());
+            #[cfg(test)]
+            super::work::charge(passed.len() + 1);
+            self.rest = after;
+            passed
+        }
+    }
+}
+
+/// The work of the reader in units, counted in test builds only, so that a case holds the cost
+/// of reading an answer to its length without reading a clock. Two places charge it:
+///
+/// - the [`Strict`] visitor, one unit for each element and each member it takes;
+/// - [`scan::Scanner`], for every char it visits, as each of its methods says.
+///
+/// [`integers_are_exact`] charges nothing itself. It is handed the scanner [`whole`] builds and
+/// no other reference to the text (the rule is written at [`scan`]), so it sees no char the
+/// scanner has not charged. The count is kept per thread, so a case reads what its own calls
+/// were charged.
+///
+/// What the count sees: how often the visitor takes an element or a member, and every char the
+/// scanner passes. What it does not see: work inside one visit of the visitor that grows with
+/// what was read before (the array so far read again, a key compared with every key read so
+/// far), work inside the visit of one string that grows faster than that string (the string
+/// read again inside its own visit, which charges nothing), work inside the scanner's methods,
+/// the literal of a number read again after the scanner passed it, a copy of the text that the
+/// scan builds from the chars it is handed and reads again, and what `serde_json` does between
+/// two calls of the visitor. A reader that is slow in one of these ways gives the two cases
+/// below the same counts as one that is not.
+#[cfg(test)]
+mod work {
+    use std::cell::Cell;
+
+    thread_local! {
+        static DONE: Cell<usize> = const { Cell::new(0) };
+    }
+
+    /// Adds `units` to the work of this thread's reader.
+    pub(super) fn charge(units: usize) {
+        DONE.set(DONE.get() + units);
+    }
+
+    /// What `read` returns, and the units this thread's reader was charged while it ran.
+    pub(super) fn of<T>(read: impl FnOnce() -> T) -> (T, usize) {
+        DONE.set(0);
+        let returned = read();
+        (returned, DONE.get())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::call;
+    use super::{call, whole, work};
     use llm_core::{
         CallId, Id, Item, StopReason, ToolCall, ToolName, TurnObservation, TurnOutcome,
     };
@@ -245,5 +362,103 @@ mod tests {
             ..outcome_calling("classify")
         };
         assert_eq!(call(&ended, "classify"), None);
+    }
+
+    /// A turn that ended normally on the one assistant text `text`.
+    fn outcome_saying(text: &str) -> TurnOutcome {
+        TurnOutcome {
+            stop_reason: StopReason::EndTurn,
+            items: vec![Item::assistant(text)],
+            ..outcome_calling("classify")
+        }
+    }
+
+    /// The units of work [`whole`] is charged for reading the answer `text`, which it must read
+    /// as `value`.
+    fn work_to_read(text: &str, value: &Value) -> usize {
+        let outcome = outcome_saying(text);
+        let (read, units) = work::of(|| whole(&outcome));
+        // Not `assert_eq`: a failure would print both values, megabytes of them.
+        let read_as_written = read.as_ref() == Some(value);
+        assert!(
+            read_as_written,
+            "an answer of {} bytes is not read as the value it writes",
+            text.len()
+        );
+        units
+    }
+
+    /// An answer is read in time proportional to its length. The far side chooses the answer, and
+    /// a stream may carry megabytes of it, so a cost that grows with the square of the length
+    /// lets one answer hold the caller's thread: four times the numbers must cost less than
+    /// eight times the work. The work is counted ([`work`]) and no clock is read, so a loaded
+    /// host gets the same two counts.
+    #[test]
+    fn a_long_answer_of_numbers_is_read_in_time_proportional_to_its_length() {
+        let read = |count: usize| {
+            let numbers = format!("[{}1]", "1,".repeat(count - 1));
+            work_to_read(&numbers, &Value::Array(vec![json!(1); count]))
+        };
+        let (short, long) = (read(20_000), read(80_000));
+        eprintln!("20000 numbers took {short} units of work, 80000 numbers took {long}");
+        assert!(
+            long < short * 8,
+            "20000 numbers took {short} units of work, 80000 numbers took {long}"
+        );
+    }
+
+    /// An answer is read in time proportional to its length, whatever it is made of: four times
+    /// the answer must cost less than eight times the work, counted as in the case above.
+    #[test]
+    fn an_answer_of_any_make_is_read_in_time_proportional_to_its_length() {
+        // (what the answer is made of, one member as the answer writes it). The literal of an
+        // `enum` is no row: only a schema tells `{"b":4.0}` from the row "objects", and this
+        // case checks none.
+        let makes = [
+            ("integers", "-12345"),
+            ("doubles", "0.5"),
+            ("strings with escapes", r#""a\"b\\""#),
+            ("objects", r#"{"a":1.0}"#),
+            ("nested arrays", "[[[1]]]"),
+            ("whitespace", " \n\t 7 \r\n "),
+        ];
+        for (make, member) in makes {
+            let one: Value = serde_json::from_str(member).unwrap();
+            let read = |count: usize| {
+                let list = format!("[{}{member}]", format!("{member},").repeat(count - 1));
+                work_to_read(&list, &Value::Array(vec![one.clone(); count]))
+            };
+            let (short, long) = (read(25_000), read(100_000));
+            eprintln!("{make}: 25000 members took {short} units of work, 100000 members {long}");
+            assert!(
+                long < short * 8,
+                "{make}: 25000 members took {short} units of work, 100000 members took {long}"
+            );
+        }
+        // One long string and one object of many keys, the two answers that are not a list.
+        let string = |length: usize| {
+            let text = format!(r#""{}""#, r"a\n".repeat(length / 3));
+            work_to_read(&text, &Value::String("a\n".repeat(length / 3)))
+        };
+        let keys = |count: usize| {
+            let members: Vec<String> = (0..count)
+                .map(|index| format!(r#""k{index:07}":{index}"#))
+                .collect();
+            let object = (0..count)
+                .map(|index| (format!("k{index:07}"), Value::from(index)))
+                .collect();
+            let text = format!("{{{}}}", members.join(","));
+            work_to_read(&text, &Value::Object(object))
+        };
+        for (make, short, long) in [
+            ("one string", string(300_000), string(1_200_000)),
+            ("one object", keys(25_000), keys(100_000)),
+        ] {
+            eprintln!("{make}: {short} units of work, at four times the size {long}");
+            assert!(
+                long < short * 8,
+                "{make}: {short} units of work, at four times the size {long}"
+            );
+        }
     }
 }

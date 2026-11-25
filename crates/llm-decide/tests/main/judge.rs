@@ -21,10 +21,10 @@ use std::{
         atomic::{AtomicU64, Ordering},
     },
     task::{Context, Poll, Waker},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
-const EXAMPLE: &str = include_str!("../../../examples/catalog.toml");
+const EXAMPLE: &str = include_str!("../../../../examples/catalog.toml");
 const TEXT: &str =
     "Score from 1 to 5 how well the answer addresses the question, and say whether it passes.";
 const SUBJECT: &str = "Question: what is the capital of France? Answer: Paris.";
@@ -570,108 +570,6 @@ fn an_answer_nests_128_levels_whatever_opens_them_and_no_deeper() {
     // Far past the bound, the answer is refused at its 129th level and not walked to its end.
     for answer in [arrays(100_000), objects(100_000), "[".repeat(100_000)] {
         assert_eq!(held("{}", &Far::answers(&answer)), REFUSED);
-    }
-}
-
-/// Reading, checking and writing an answer take time proportional to its length, whatever it is
-/// made of: four times the answer must not cost eight times as long. The fastest of five runs
-/// stands for each size, so another test running beside this one does not decide it.
-#[test]
-fn an_answer_of_any_make_is_read_in_time_proportional_to_its_length() {
-    let catalog = pinned("remote-large");
-    // (what the answer is made of, its schema, one member, the canonical form of that member)
-    let makes: [(&str, &str, &str, &str); 7] = [
-        (
-            "integers",
-            r#"{"items":{"type":"integer"}}"#,
-            "-12345",
-            "-12345",
-        ),
-        ("doubles", r#"{"items":{"type":"number"}}"#, "0.5", "0.5"),
-        (
-            "strings with escapes",
-            r#"{"items":{"type":"string"}}"#,
-            r#""a\"b\\""#,
-            r#""a\"b\\""#,
-        ),
-        (
-            "objects",
-            r#"{"items":{"type":"object","required":["a"],"additionalProperties":false,"properties":{"a":{"const":1}}}}"#,
-            r#"{"a":1.0}"#,
-            r#"{"a":1.0}"#,
-        ),
-        ("nested arrays", "{}", "[[[1]]]", "[[[1]]]"),
-        ("whitespace", "{}", " \n\t 7 \r\n ", "7"),
-        (
-            "an enum of literals",
-            r#"{"items":{"enum":["a",2,[3],{"b":4}]}}"#,
-            r#"{"b":4.0}"#,
-            r#"{"b":4.0}"#,
-        ),
-    ];
-    for (make, schema, member, written) in makes {
-        let schema: Value = serde_json::from_str(schema).unwrap();
-        let rubric = Rubric::new(id("r"), "v1", TEXT, &schema, "code").unwrap();
-        let list = |count: usize, member: &str| {
-            format!("[{}{member}]", format!("{member},").repeat(count - 1))
-        };
-        let fastest = |count: usize| {
-            let far = Far::answers(&list(count, member));
-            let expected = list(count, written);
-            (0..5)
-                .map(|_| {
-                    let started = Instant::now();
-                    let ran = run_as(&catalog, &rubric, SUBJECT, "req-1", 0, &far);
-                    let took = started.elapsed();
-                    assert_eq!(
-                        ran.verdict().verdict_json.as_deref(),
-                        Some(expected.as_str())
-                    );
-                    took
-                })
-                .min()
-                .unwrap()
-        };
-        let (short, long) = (fastest(25_000), fastest(100_000));
-        assert!(
-            long < short * 8,
-            "{make}: 25000 members took {short:?}, 100000 members took {long:?}"
-        );
-    }
-    // One long string and one object of many keys, the two answers that are not a list.
-    let any: Value = json!({});
-    let rubric = Rubric::new(id("r"), "v1", TEXT, &any, "code").unwrap();
-    let string = |length: usize| format!(r#""{}""#, r"a\n".repeat(length / 3));
-    let keys = |count: usize| {
-        let members: Vec<String> = (0..count)
-            .map(|index| format!(r#""k{index:07}":{index}"#))
-            .collect();
-        format!("{{{}}}", members.join(","))
-    };
-    for (make, small, large) in [
-        ("one string", string(300_000), string(1_200_000)),
-        ("one object", keys(25_000), keys(100_000)),
-    ] {
-        let fastest = |answer: &str| {
-            let far = Far::answers(answer);
-            (0..5)
-                .map(|_| {
-                    let started = Instant::now();
-                    let ran = run_as(&catalog, &rubric, SUBJECT, "req-1", 0, &far);
-                    let took = started.elapsed();
-                    assert_eq!(ran.verdict().verdict_json.as_deref(), Some(answer));
-                    took
-                })
-                .min()
-                .unwrap()
-        };
-        let (short, long) = (fastest(&small), fastest(&large));
-        assert!(
-            long < short * 8,
-            "{make}: {} bytes took {short:?}, {} bytes took {long:?}",
-            small.len(),
-            large.len()
-        );
     }
 }
 
