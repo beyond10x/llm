@@ -5,9 +5,9 @@ model `claude-haiku-4-5` (served as `claude-haiku-4-5-20251001`), through `Messa
 `subscription-oauth` account. The token was the active Claude login's, read in the capture process
 only (approval-record:live-capture-claude-login-2026-10-21). The capture is the transport's
 response tap: status, response headers and the event stream. No request header was written, so no
-credential was recorded. `tests/live_capture.rs` replays all four files.
+credential was recorded. `tests/main/live_capture.rs` replays all four files.
 
-Both turns sent the same request: the 400-line prompt `tests/live_capture.rs` builds, no system
+Both turns sent the same request: the 400-line prompt `tests/main/live_capture.rs` builds, no system
 instruction, `max_tokens` 64. The first turn wrote the prompt prefix to the cache, and the second
 read it back.
 
