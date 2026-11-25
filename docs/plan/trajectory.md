@@ -78,7 +78,7 @@ later wave holds one story.
 
 | Wave | Story | Objective (the coordinator's reading) | Makes true | State |
 | --- | --- | --- | --- | --- |
-| 9 | `story:llm-decide-tests-read-no-clock-and-build-one-binary`, `story:messages-cancellation-case-waits-on-a-signal` | none: the organisation's test rule | no test of `llm-decide` reads the clock and the crate links one integration-test binary; the cancellation case of `llm-messages` waits on a signal and holds no `sleep` | planned |
+| 9 | `story:llm-decide-tests-read-no-clock-and-build-one-binary`, `story:messages-cancellation-case-waits-on-a-signal` | none: the organisation's test rule | no test of `llm-decide` reads the clock and the crate links one integration-test binary; the cancellation case of `llm-messages` waits on a signal and holds no `sleep` | open: [wave-2026-11-25-tests-without-a-clock](wave-2026-11-25-tests-without-a-clock.md) |
 | 10 | `story:test-binaries-one-per-crate` | none: the organisation's test rule | every crate with integration tests links one test binary, with the same number of tests | planned |
 | 11 | `story:replay-stops-at-the-last-case-have-scenarios` | O6 | two scenarios hold the stop of a replay at its last case; the conformance floor is 1092 | planned |
 | 12 | `story:tool-arguments-with-a-repeated-key` | O6 | tool-call arguments that give a key twice are a protocol error on every wire, and the classifier abstains on them | planned |
@@ -151,7 +151,8 @@ into the wave's proposal:
   `ess`; its release is 0.32.0.
 - Wave 8 makes a Bedrock Converse turn that stops for an unmodelled reason without content an error
   where it was a success before (one line marked breaking in the CHANGELOG); its release is 0.33.0.
-- Each wave after wave 8 is one minor release, numbered in the order the waves merge; wave 7 takes
+- Each wave after wave 8 that has a CHANGELOG entry is one minor release, numbered in the order the
+  waves merge; waves 9 and 10 change tests only and ship with the next such release. Wave 7 takes
   the next number when its gate is green. Wave 12 carries one line marked breaking; wave 13 names
   the answer that was an error and becomes a returned turn.
 - Still drafts: `story:the-neutral-turn-in-ess` and
