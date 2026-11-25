@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T19:02:33Z",
+  "actor": "human:operator",
+  "artifact": "story:rust-toolchain-file-pins-the-gate",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "at 209fafe80 on the host with Rust 1.98.0 read from rust-toolchain.toml: cargo test --locked -p llm-xtask --test gate 64 passed, the cases of toolchain.rs among them, each drift planted in a text of the test's own and found; cargo clippy -p llm-xtask --all-targets --all-features -- -D warnings exit 0; cargo fmt --all --check exit 0. The wave gate of wave 2026-11-25-tests-without-a-clock ran task rust on main with the pin merged, exit 0",
+    "reference": "checks/xtask/tests/gate/toolchain.rs"
+  }
+}

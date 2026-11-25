@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:rust-toolchain-file-pins-the-gate
 kind: story
-status: active
+status: implemented
 title: rust-toolchain.toml pins the one Rust release the local gate and CI both read
 relations:
 - serves: vision:portable-model-inference
@@ -23,10 +23,11 @@ scope:
   path: checks/xtask/tests/gate/toolchain.rs
 - confidence: cited
   path: rust-toolchain.toml
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-25T15:21:43Z", actor: "human:operator", revision: 3}
 - {from: "proposed", to: "active", at: "2026-11-25T15:21:43Z", actor: "human:operator", revision: 4}
+- {from: "active", to: "implemented", at: "2026-11-25T19:02:33Z", actor: "human:operator", revision: 5, decided_on: {"recorded":{"test_result":1,"verification":1}}}
 ---
 ## Context
 

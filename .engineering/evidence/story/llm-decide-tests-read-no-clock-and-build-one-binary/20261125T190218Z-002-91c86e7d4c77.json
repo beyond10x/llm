@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T19:02:18Z",
+  "actor": "human:operator",
+  "artifact": "story:llm-decide-tests-read-no-clock-and-build-one-binary",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "at becdb9a1d: task test: 2442 tests in 5 runs, all passed, 8.4 s of the 120 s bound. cargo test -p llm-decide executes 99 cases before and after the unit (97 integration and 2 unit cases became 95 and 4) and links one integration-test executable where it linked five. No test under crates/llm-decide/tests reads a clock. Each of the two cases fails on a reader whose work grows with the square of the length (25092504 and 400370004 units for 20000 and 80000 numbers against 100004 and 400004; 39303129 and 625962504 for the integer list) and passed 50 of 50 runs beside a Clippy build at the first two commits of the unit, and 50 of 50 at its last with no build beside them",
+    "reference": "crates/llm-decide/src/answer.rs"
+  }
+}
