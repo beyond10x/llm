@@ -271,7 +271,12 @@ is the model:
    `task release-tag -- <version> <sha>` (`cargo xtask release-tag`, `checks/xtask`; `<sha>` is
    the full commit id) makes and pushes the tag as the bot and refuses it while one of those runs
    is absent, pending or red. No other command makes a release tag. `b10x-gates` reads its policy
-   file from `B10X_GATES_POLICY`. Then publish the GitHub Release `LLM <version>` as the bot.
+   file from `B10X_GATES_POLICY`, so the command runs on the host that has that file. Where the
+   build pool compiles on another host, `task release-tag` is refused there ("the workflow runs
+   … were not read"): build the command in the pool and run the copied binary on the host with
+   the policy file, `slot --fetch target/debug/llm-xtask cargo build --locked -p llm-xtask`, then
+   `target/debug/llm-xtask release-tag <version> <sha>` (0.31.0 was tagged this way). Then publish
+   the GitHub Release `LLM <version>` as the bot.
 4. Verify the tag's commit, `Gate`, `Shared source gates` and `Documentation validation` on it, and
    the Release; only then report it released.
 5. Delete the remote `release/<version>` with
