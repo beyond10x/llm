@@ -506,7 +506,12 @@ reason and holds no content block and no kept event is a failure with its final 
 `too-large` for `model_context_window_exceeded`, `refused` with no cause named for
 `guardrail_intervened` and `content_filtered`, and `unavailable` for every other reason, marked
 retriable on a streamed answer because only `messageStop` and `metadata` follow `messageStart`:
-the model produced no content and the caller was shown nothing. After a content block, visible
+the answer held no content block and no kept event, so the caller was shown nothing. No row
+reads a counter: the failure carries the usage the answer reported as final, and that may name
+output tokens, so each attempt of a caller that retries may be billed, as on the Messages wire
+after a header that reported a cost
+(`crates/llm-messages/tests/retry_class.rs::adversary_w30_a_stop_without_content_after_a_costed_header_is_retried_as_an_overloaded_error_is`).
+After a content block, visible
 or silent, a text block that carried no text included, there is no failure to retry: the turn
 is the incomplete turn it was
 (`crates/llm-bedrock/tests/client.rs::an_unlisted_stop_after_a_recorded_silent_text_block_is_not_marked_retriable`).

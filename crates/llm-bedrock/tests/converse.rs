@@ -1928,3 +1928,77 @@ async fn a_block_left_open_or_a_reason_that_is_no_bounded_name_is_still_the_prot
         );
     }
 }
+
+/// Only a tool use opens by its `contentBlockStart`. A start that names `text`, an empty one
+/// included, is a block of a kind the decoder does not know: it is kept whole as opaque state
+/// and the caller is told. That is a content block with an item, so the answer is the incomplete
+/// turn under the reason's own name with that item, and never the stop without content. A text
+/// block that carried no text is one that took a delta without text or that only stopped
+/// (`after_an_empty_text_block_the_turn_is_incomplete_with_no_item_and_shows_nothing`).
+#[tokio::test]
+async fn a_start_that_names_text_opens_an_unknown_block_and_the_turn_is_incomplete_with_its_item() {
+    let start = json!({"contentBlockIndex": 0, "start": {"text": ""}});
+    let mut block = event("contentBlockStart", &start);
+    block.extend(event("contentBlockStop", &json!({"contentBlockIndex": 0})));
+    let body = stopped(
+        "a_reason_in_no_list",
+        &block,
+        &json!({"usage": counted(5, 0)}),
+    );
+    let (result, shown) = answered(true, body.len(), body).await;
+    let outcome = result.expect("a content block was read, so the turn is incomplete");
+    assert_eq!(
+        outcome.stop_reason,
+        StopReason::Incomplete {
+            reason: "a_reason_in_no_list".to_owned()
+        }
+    );
+    assert_eq!(outcome.items, [opaque(start)]);
+    assert_eq!(
+        (outcome.observation.usage, outcome.observation.final_usage),
+        (Some(uncached(5, 0)), true)
+    );
+    assert!(
+        matches!(shown.as_slice(),
+            [StreamEvent::Warning { code, .. }] if code == "unknown-output-item"),
+        "{shown:?}"
+    );
+}
+
+/// No row reads a counter. An answer that holds no content block and no kept event and stops for
+/// a reason with no row of its own fails as `unavailable`, marked for another attempt, whatever
+/// its `metadata` reports: the caller was shown nothing, and the failure carries that usage as
+/// final, output tokens included. A caller that retries may be billed for each attempt and
+/// bounds the retry itself (`docs/bedrock.md`, "Who retries"). The Messages decoder marks the
+/// same answer the same way after a header that reported a cost
+/// (`crates/llm-messages/tests/retry_class.rs`).
+#[tokio::test]
+async fn a_stop_without_content_is_retriable_whatever_output_it_reports_and_carries_it_as_final() {
+    let body = stopped(
+        "a_reason_in_no_list",
+        &[],
+        &json!({"usage": counted(9, 25)}),
+    );
+    let stop = (
+        "a_reason_in_no_list".to_owned(),
+        ErrorCode::Unavailable,
+        true,
+        STOPPED_FOR_NO_ROW,
+    );
+    let read = answered(true, body.len(), body).await;
+    let reported = read
+        .0
+        .as_ref()
+        .expect_err("no content block and no kept event")
+        .observation
+        .as_deref()
+        .and_then(|observed| observed.usage.as_ref())
+        .and_then(|usage| usage.output_tokens);
+    assert_eq!(reported, Some(25));
+    assert_stopped_without_content(
+        read,
+        "output tokens reported",
+        &stop,
+        Some(&uncached(9, 25)),
+    );
+}

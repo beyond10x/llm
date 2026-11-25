@@ -1043,5 +1043,7 @@ scenarios:
 - bedrock/scenarios/turn-a-converse-stream-stopped-without-content-for-an-unlisted-reason-may-be-retried.yaml
 - bedrock/scenarios/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-text-is-incomplete.yaml
 - bedrock/scenarios/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete.yaml
+- bedrock/scenarios/turn-a-whole-converse-answer-stopped-for-an-unmodelled-reason-after-an-empty-text-block-is-incomplete.yaml
+- bedrock/scenarios/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-a-kept-event-is-incomplete.yaml
 - bedrock/scenarios/turn-a-whole-converse-answer-stopped-at-the-context-window-without-content-is-too-large.yaml
 - bedrock/scenarios/turn-a-whole-converse-answer-stopped-without-content-for-an-unlisted-reason-is-final.yaml

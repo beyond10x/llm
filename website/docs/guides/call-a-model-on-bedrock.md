@@ -136,8 +136,14 @@ Bedrock page in the repository lists the AWS sources for these facts and marks t
   stop at the context window is a final `too-large`; a guardrail, a content filter or a refusal a
   final `refused`). The same answer read whole is final, like every failure while a whole answer
   is read. A 429 for an exhausted service quota is final.
-- **No retries inside the client.** `BedrockClient` makes one attempt; retry and fallback belong
-  to routing.
+- **No retries inside the client.** `BedrockClient` makes one attempt a turn and retries nothing
+  itself, and nothing else in llm retries a Bedrock turn or falls back from it: a Bedrock route
+  stays out of the catalog, `Routes::port` hands you the bare client and the `llm` command asks
+  once. Routing (`Catalog::run_turn`) refuses a Converse client, because no catalog names
+  `bedrock-converse`; it runs an `InvokeModel` client only under a `messages` target you declare
+  for it yourself. If you retry a failure marked retriable, bound the retry in your own loop.
+  Each attempt may be billed: a stop without content carries the usage its answer reported,
+  output tokens included when the answer names them.
 
 ## Next
 

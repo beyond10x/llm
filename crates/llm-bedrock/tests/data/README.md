@@ -1,8 +1,8 @@
 # Test data and where it comes from
 
 Every file here is copied unchanged from a public repository; none is written by hand except this
-page, `frames/uris.txt` and the two `frames/synthetic-*` answers. No file was recorded against an
-account of this project.
+page, `frames/uris.txt` and the three `frames/synthetic-*` answers. No file was recorded against
+an account of this project.
 
 | Directory | Source | Revision | Licence |
 | --- | --- | --- | --- |
@@ -32,6 +32,8 @@ cassette's request URIs in interaction order; they name the operation (`converse
 
 `synthetic-converse_context_window_without_content.json` and
 `synthetic-converse_unlisted_reason_without_content.json` are whole `/converse` answers written by
-hand: an answer without content that stops for a reason the decoder does not model. No recorded
-cassette holds one. The conformance scenarios
-`contracts/bedrock/scenarios/turn-a-whole-converse-answer-stopped-*.yaml` serve them.
+hand: an answer without content that stops for a reason the decoder does not model.
+`synthetic-converse_unlisted_reason_after_an_empty_text_block.json` is the same kind of answer
+whose `content` is one text block without text. No recorded cassette holds any of the three. The
+conformance scenarios `contracts/bedrock/scenarios/turn-a-whole-converse-answer-stopped-*.yaml`
+serve them.

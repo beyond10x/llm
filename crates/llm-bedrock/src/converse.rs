@@ -525,12 +525,13 @@ fn stop_reason(reported: Option<&str>) -> Result<StopReason, Error> {
 }
 
 /// The failure of an answer that stopped for `reason`, one this projection does not model, and
-/// holds no content block and no kept event: the model produced nothing, the caller was shown
-/// nothing, so it is no turn. The same rows as
-/// `stopped_without_content` of `llm-messages`, under Converse's names (`docs/bedrock.md`,
-/// "A Converse answer that stops without content").
+/// holds no content block and no kept event: the caller was shown nothing, so it is no turn.
+/// The same rows as `stopped_without_content` of `llm-messages`, under Converse's names
+/// (`docs/bedrock.md`, "A Converse answer that stops without content").
 ///
 /// Only the last row is marked retriable, and `BedrockClient` drops the mark for a whole answer.
+/// No row reads a counter: [`Header::outcome`] attaches the usage the answer reported as final,
+/// and that may name output tokens, so each attempt of a caller that retries may be billed.
 /// Each text is fixed and carries no byte of `reason`.
 fn stopped_without_content(reason: &str) -> Error {
     match reason {
@@ -903,9 +904,12 @@ impl StreamDecoder {
         self.answered
     }
 
-    /// Whether a content block event was read: a block opened, by its start or by its first
-    /// delta, or stopped without having opened, which is how this wire may end a text block that
-    /// took no delta. A text block that carried no text is one, though it leaves no item.
+    /// Whether a content block event was read: a block opened, or stopped without having opened,
+    /// which is how this wire may end a text block that took no delta. A tool use opens by its
+    /// start, a text or reasoning block by its first delta, a block of a kind this subset does
+    /// not model by either. A text block that carried no text (a delta without text, or only the
+    /// stop) is one, though it leaves no item. A start that names `text` opens no text block: it
+    /// is a block of an unknown kind and leaves an opaque item.
     const fn read_a_content_block(&self) -> bool {
         self.next_index > 0
     }
