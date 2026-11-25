@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T03:17:37Z",
+  "actor": "human:operator",
+  "artifact": "story:classifier-takes-only-a-whole-answer",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "the wave gate on wave/2026-11-25-classifier-whole-answer at 319cd2394, each step run alone: task rust, task test, task docs, ess specify validate, llm-conformance check, aep plan artifact validate, all exit 0",
+    "reference": "docs/plan/wave-2026-11-25-classifier-whole-answer.md"
+  }
+}

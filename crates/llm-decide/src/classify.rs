@@ -2,6 +2,7 @@
 //! through the routed, recorded call of `llm-calls`, one through a provider's decision endpoint
 //! behind the [`DecisionEndpoint`] port, and a lexical one the caller supplies.
 
+use crate::answer;
 use llm_calls::{CallIdentity, CallRecord, CallSink, Clock, Kind, Recording, record_turn};
 use llm_core::{
     BoxFuture, Cancel, Error, ErrorCode, Id, Item, OutputFormat, StreamEvent, StreamSink,
@@ -339,8 +340,9 @@ pub enum AbstentionCause {
     Timeout,
     /// The call failed with this llm error code.
     ProviderError(ErrorCode),
-    /// The answer named no label of the set, did not decode as the schema, or its label's
-    /// confidence was under the classifier's floor.
+    /// The answer named no label of the set, did not decode as the schema, was not the one whole
+    /// answer of its turn (cut off, split, a key given twice, a refusal beside it), or its
+    /// label's confidence was under the classifier's floor.
     OffLabel,
 }
 
@@ -697,12 +699,19 @@ pub struct ModelClassifier {
 }
 
 impl ModelClassifier {
-    /// Asks the route alias `route` for an answer held to the label set's strict schema.
+    /// Asks the route alias `route` for an answer held to the label set's strict schema. The
+    /// answer is the one assistant text of a turn that ended normally, read as one JSON value
+    /// that gives no key twice; a turn cut off at the output limit or reported incomplete, two
+    /// texts and a refusal beside the text abstain `OffLabel`. An empty or whitespace-only text
+    /// item beside the answer counts as a second text.
     pub fn json_schema(id: Id, route: impl Into<String>) -> Self {
         Self::on(id, Path::JsonSchema, route.into())
     }
 
-    /// Asks the route alias `route` for one call to the forced tool [`TOOL_NAME`].
+    /// Asks the route alias `route` for one call to the forced tool [`TOOL_NAME`]. The answer is
+    /// the arguments of the one such call of a turn that stopped for its tool call; a call of a
+    /// turn cut off at the output limit or reported incomplete, two calls and a refusal beside
+    /// the call abstain `OffLabel`.
     pub fn forced_tool(id: Id, route: impl Into<String>) -> Self {
         Self::on(id, Path::ForcedTool, route.into())
     }
@@ -766,27 +775,15 @@ impl ModelClassifier {
         Ok(request)
     }
 
-    /// The answer the outcome carries, held to the set's schema.
+    /// The answer the outcome carries, held to the set's schema: the one call to the forced tool
+    /// ([`answer::call`]) or the one whole JSON text ([`answer::whole`]). `None` for an outcome
+    /// that carries neither, whatever its parts would decode as.
     fn answer(&self, label_set: &LabelSet, outcome: &TurnOutcome) -> Option<Answer> {
-        let value = if self.path == Path::ForcedTool {
-            let mut calls = outcome.tool_calls();
-            let call = calls.next()?;
-            if calls.next().is_some() || call.name.as_str() != TOOL_NAME {
-                return None;
-            }
-            call.arguments.clone()
+        if self.path == Path::ForcedTool {
+            label_set.decode(answer::call(outcome, TOOL_NAME)?)
         } else {
-            let text: String = outcome
-                .items
-                .iter()
-                .filter_map(|item| match item {
-                    Item::AssistantText { text } => Some(text.as_str()),
-                    _ => None,
-                })
-                .collect();
-            serde_json::from_str(&text).ok()?
-        };
-        label_set.decode(&value)
+            label_set.decode(&answer::whole(outcome)?)
+        }
     }
 
     async fn ask(&self, ask: Ask<'_>) -> Classification {

@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T03:17:37Z",
+  "actor": "human:operator",
+  "artifact": "story:classifier-takes-only-a-whole-answer",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "llm-conformance check with ess 0.87.0 at 319cd2394: 1080 of 1080 passed, failed 0, skipped 0; the five scenarios of the rule are among them. llm-decide tests whole_answer::an_answer_that_repeats_label_abstains_off_label, whole_answer::an_answer_cut_at_the_output_limit_abstains_off_label, whole_answer::two_text_items_that_are_an_answer_only_when_joined_abstain_off_label, whole_answer::a_call_of_a_turn_cut_at_the_output_limit_abstains_off_label and whole_answer::two_calls_to_the_forced_tool_abstain_off_label passed in task test; 12 of the unit's new tests fail at the base (the adversary's base build). One reader, answer::whole, serves the classifier and the judge",
+    "reference": "contracts/baseline.json"
+  }
+}

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:classifier-takes-only-a-whole-answer
 kind: story
-status: active
+status: implemented
 title: A JSON-schema classifier decides only on a whole, unambiguous answer
 tags:
 - from-finding
@@ -37,10 +37,11 @@ scope:
   path: docs/implementation-status.md
 - confidence: inferred
   path: spec/domains/decisions.yaml
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-24T21:59:01Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-24T21:59:01Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-25T03:17:38Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":1,"verification":1}}}
 ---
 ## Context
 
@@ -72,21 +73,27 @@ Targeted: `-p llm-decide` named test targets and the conformance check. No live 
 
 ## Scope
 
-Derived 2026-11-25 by `story-scoper` at `87bc16f16`. Every line is **cited** (read from the story or the tree) or **inferred** (a reading that could be wrong).
+Read by the coordinator from `git diff --stat` of the unit branch `impl/classifier-whole-answer` (head
+`2106be960`) against its base `0fa28f936`, at the close of wave 2026-11-25-classifier-whole-answer.
+The `story-scoper`'s section of 2026-11-25 (read at `87bc16f16`) named the crate, `classify.rs` and
+`answer::whole`; every `inferred` line of the frontmatter held except
+`docs/implementation-status.md`, which the unit did not touch.
 
-- **Primary surface:** `crates/llm-decide` — cited
-- **Files:** `crates/llm-decide/src/classify.rs:770-790` — cited; `ModelClassifier::answer`: the JSON-schema arm (779-787) becomes a call to `answer::whole`, the forced-tool arm (771-777) gains a stop-reason check
-- **Files:** `crates/llm-decide/src/answer.rs:28-46` — cited; `whole` is the judge's reader (`judge.rs:312`), `pub(crate)`, and becomes the shared one; doc comment at most
-- **Files:** `crates/llm-decide/tests/classify.rs` — inferred; the fake's `Reply::Text` (171-178) fixes `EndTurn` and one item, so it needs a reply with a stop reason and several items; the new tests land here or as a module under `tests/classify/`
-- **Files:** `checks/conformance/src/decisions.rs` — inferred; `Script` (301-325) and `Scripted::answer` (370-411) fix `EndTurn` and one text item, so a scenario cannot script a cut or split answer without new members
-- **Files:** `spec/domains/decisions.yaml` — inferred; prose only (header 9-13, `OffLabel` comment 125-126, `Classify` program comment 430-432), no field change
-- **Files:** `contracts/decisions/scenarios/` — inferred; new scenarios beside `an-answer-that-does-not-decode-as-the-schema-abstains-off-label.yaml`
-- **Files:** `contracts/ess-inputs.yaml`, `contracts/suite.json`, `contracts/baseline.json` — inferred; scenario list near 997-1001, regenerated suite, floor 1068 rises
-- **Symbols:** `ModelClassifier::answer`, `answer::whole`, `LabelSet::decode`, `settle`, `StopReason` — cited
-- **Also likely:** `crates/llm-decide/src/replay.rs:115` — inferred; not edited, but `Routed::label` uses the JSON-schema classifier, so a cut or split recorded answer now reads `OffLabel`
-- **Documents:** `docs/design.md` section "Typed decisions" (811; classifier paragraph 824-832; whole-answer list 900-916 names only the verdict) — cited
-- **Documents:** `CHANGELOG.md` Unreleased, `AGENTS.md:80` (floor row) — inferred
-- **Documents:** `docs/implementation-status.md:159` and the generated `website/data/status.json`, `website/docs/status.mdx` — inferred; only if the row is reworded. No hand-written website page states the classifier's reading
-- **Confidence:** high for the JSON-schema path (the story names the site, the tree holds the reader); medium for the forced-tool path
-- **Would collide with:** any unit touching `crates/llm-decide/src/classify.rs`, `tests/classify.rs`, the `llm.decisions` specification, adapter or scenarios, and every unit that adds a scenario (`contracts/ess-inputs.yaml`, `suite.json`, `baseline.json`, `AGENTS.md:80`, `CHANGELOG.md` Unreleased) — cited
-- **Safety fact:** `whole` returns `None` for a superset of what the current arm rejects and `settle` turns `None` into `OffLabel` (`classify.rs:530-554`), so no answer that abstains today decides after the change; the reverse risk is a decoder that emits two `AssistantText` items for one answer — unproven — inferred
+| Path | Scoped | What the unit did |
+| --- | --- | --- |
+| `crates/llm-decide/src/classify.rs` | cited | `ModelClassifier::answer` is two calls: `answer::call` on the forced-tool path, `answer::whole` on the JSON-schema path; doc comments |
+| `crates/llm-decide/src/answer.rs` | cited, "doc comment at most" | also the new `pub(crate) fn call` and two unit tests for what only a direct reading reaches (the tool name, a turn that says it ended normally) |
+| `docs/design.md` | cited | "Typed decisions": the classifier's reading on both paths, the empty text item beside an answer |
+| `crates/llm-decide/tests/classify.rs` | inferred | the fake's `Reply::Outcome(StopReason, Vec<Item>)`; the cases are in the new module `tests/classify/whole_answer.rs` (18 tests), one more in `tests/classify/replay.rs` |
+| `checks/conformance/src/decisions.rs` | inferred | the script gained `answers`, `tool_calls` and `stop_reason`; `tool_arguments` and `tool_calls` are read as JSON where the program is read; one unit test |
+| `spec/domains/decisions.yaml` | inferred | prose only: the header, the `OffLabel` comment, the `Classify` program comment |
+| `contracts/decisions/scenarios` | inferred | 5 scenarios |
+| `contracts/ess-inputs.yaml`, `contracts/suite.json`, `contracts/baseline.json` | inferred | generated with ess 0.87.0; the floor is 1080 (was 1075, not the 1068 the scoper read before wave 4) |
+| `CHANGELOG.md`, `AGENTS.md` | inferred | six lines under `### Fixed`, the first marked breaking; the floor row |
+| `docs/implementation-status.md` | inferred | not touched: its row stays true |
+
+Not touched, as scoped: `crates/llm-decide/src/replay.rs` (its result for a cut or split classification
+changed through the classifier and is held by a test), `crates/llm-decide/src/judge.rs`, every protocol
+crate, `crates/llm-core/`, `crates/llm-openai-decisions/`. `contracts/schema/` regenerated to the same
+bytes. Not covered: a key given twice inside tool arguments
+(`story:tool-arguments-with-a-repeated-key`).
