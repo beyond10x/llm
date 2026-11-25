@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:messages-empty-turn-with-an-unmodelled-stop-reason
 kind: story
-status: active
+status: implemented
 title: A Messages turn that stops for an unmodelled reason without content is a classified failure (issue 83)
 tags:
 - from-issue
@@ -40,10 +40,11 @@ scope:
   path: docs/verification/messages-falsification.json
 - confidence: inferred
   path: spec/domains/messages.yaml
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-24T21:59:00Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-24T21:59:00Z", actor: "human:operator", revision: 3}
+- {from: "active", to: "implemented", at: "2026-11-25T01:56:23Z", actor: "human:operator", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2,"verification":1}}}
 ---
 ## Context
 
@@ -86,21 +87,31 @@ Targeted: `-p llm-messages` named test targets and the conformance check. No liv
 
 ## Scope
 
-Derived 2026-11-25 by `story-scoper` at `87bc16f16`. Every line is **cited** (read from the story or the tree) or **inferred** (a reading that could be wrong).
+Read by the coordinator from `git diff --stat` of the unit branch `impl/messages-empty-turn` (head
+`fa7f048ea`) against its base `8938c6085`, at the close of wave 2026-11-25-messages-empty-turn. The
+`story-scoper`'s section of 2026-11-25 (read at `87bc16f16`) named the crate, `decode.rs` and
+`Header::outcome`; every `inferred` line of the frontmatter held except
+`docs/implementation-status.md`, whose one changed row is about the usage extension, not the rule.
 
-- **Primary surface:** `crates/llm-messages` — cited
-- **Files:** `crates/llm-messages/src/decode.rs` — cited: the check goes where every decode finishes, `Header::outcome` (:166-180), beside `stop_reason` (:183-194)
-- **Files:** `crates/llm-messages/tests/streaming.rs` — cited: `an_accepted_field_in_its_documented_shape_is_carried_without_complaint` (:1216) decodes `stop_sequence` with no content block and expects `Incomplete`, so it changes; the new cases fit beside `an_unfinished_stop_reason_is_carried_under_its_own_name` (:956)
-- **Files:** `docs/verification/messages-falsification.json` — cited: `crates/llm-messages/tests/falsification.rs` (:119, :151) fails on a new fixed diagnostic in `decode.rs` that is neither claimed nor `unaimed`, and when a recorded `before` text (:744, the `Some(other)` arm) no longer occurs exactly once
-- **Files:** `contracts/messages/scenarios/` — inferred: new `llm.messages.DecodeStream` scenarios for the two failures and the two streams after text
-- **Files:** `contracts/ess-inputs.yaml`, `contracts/suite.json`, `contracts/baseline.json` — inferred: list the scenarios, regenerate the suite, raise the floor from 1068
-- **Symbols:** `Header::outcome`, `stop_reason`, `Header::attach`, `StreamDecoder::finish`, `decode_message` — cited
-- **Also likely:** `crates/llm-messages/src/ingress.rs` — inferred: `encode_ingress_message` (:64) and `reason` (:700) would still send an `Incomplete` answer without content, which the decoder would then refuse; the encoder's rule is to send only what reads back as the same outcome
-- **Also likely:** `crates/llm-messages/tests/retry_class.rs` — inferred: the retry class of the new failure through `MessagesClient`
-- **Also likely:** `spec/domains/messages.yaml` — inferred: only the rule comment above `llm.messages.DecodeStream` (:233-240); `error_code` and `usage_json` already exist
-- **Not expected:** `checks/conformance/src/messages.rs`, `crates/llm-core/src/turn.rs`, `crates/llm-core/src/error.rs` — inferred: `report_failure` (:337-351) already writes a failed decode's code and usage; the error codes and `with_retriable` exist
-- **Documents:** `docs/messages.md` "What the decoder requires of a stream" (:150-154) and "Reasons" (:452); `docs/design.md` "Provider failures retried before output" (:447-474) — cited
-- **Documents:** `CHANGELOG.md` Unreleased; `AGENTS.md` invariants rows (retry classes, scenario floor); `docs/implementation-status.md` then `task docs-generate` — inferred. No website page states the rule
-- **Confidence:** high for the crate and `decode.rs`; medium for contracts and documents; low for `ingress.rs`
-- **Would collide with:** any unit touching `crates/llm-messages/src/decode.rs`, `crates/llm-messages/tests/streaming.rs` or the Messages falsification record, and the shared files `contracts/ess-inputs.yaml`, `contracts/suite.json`, `contracts/baseline.json`, `CHANGELOG.md`, `AGENTS.md`
-- **Safety fact:** every `Err` out of `Header::outcome` already passes `Header::attach` (`decode.rs:216-217`, `:805`), which sets dispatch `accepted` and attaches the usage read so far with `final_usage` false; that one function finishes a stream, a complete message and Bedrock InvokeModel (`crates/llm-bedrock/src/invoke.rs:147`, `:350`) — unproven
+| Path | Scoped | What the unit did |
+| --- | --- | --- |
+| `crates/llm-messages/src/decode.rs` | cited | `stopped_without_content` in `Header::outcome`: the three rows, final usage, dispatch `accepted`; usage extensions held while a turn may stop without content; `StreamDecoder::fail` and `StreamDecoder::end` |
+| `crates/llm-messages/tests/streaming.rs` | cited | the rule's cases on a stream and a whole message, the held-cost cases, the adversary's (`adversary_w30_*`, `adversary_w30b_*`) |
+| `docs/verification/messages-falsification.json` | cited | the new fixed texts under `unaimed`, counts, notes; no recorded mutation changed |
+| `docs/messages.md`, `docs/design.md` | cited | the rule, what "no content" means, when a held cost is shown or dropped; the retry rule's amended count of output |
+| `contracts/messages/scenarios` | inferred | 7 scenarios |
+| `contracts/ess-inputs.yaml`, `contracts/suite.json`, `contracts/baseline.json` | inferred | generated with ess 0.87.0; the floor is 1075 |
+| `crates/llm-messages/src/ingress.rs` | inferred | the encoder refuses an `Incomplete` outcome with no items as `unsupported` |
+| `crates/llm-messages/tests/retry_class.rs` | inferred | the retry class through `MessagesClient`, also on a route that reports a cost |
+| `spec/domains/messages.yaml` | inferred | the rule comment above `llm.messages.DecodeStream` |
+| `CHANGELOG.md`, `AGENTS.md` | inferred | `### Changed` and `### Fixed` under Unreleased; the retry row and the floor row |
+| `docs/implementation-status.md`, `website/data/status.json` | inferred | one row on when a usage extension is shown; the generated copy |
+| `crates/llm-messages/src/client.rs` | no | the client ends a stream with `fail` and `end` |
+| `crates/llm-messages/tests/ingress.rs`, `tests/usage_reader.rs`, `tests/wire_names.rs` | no | the encoder rule, the reader against the decoder on the failure, the two reason names as confirmed wire names |
+| `crates/llm-bedrock/src/client.rs`, `src/invoke.rs`, `tests/client.rs` | no | a whole `InvokeModel` answer is final; the streamed path shows held costs before a final cut |
+| `crates/llm-models/tests/relayed_failure.rs` | no | the bounded retry through client and routing (4 requests), the priced failed attempt |
+| `docs/bedrock.md` | no | the retry table's rows for the streamed and the whole answer |
+
+Not touched, as scoped: `checks/conformance/src/messages.rs`, `crates/llm-core/`. Not covered:
+Bedrock Converse, which has its own copy of the reason mapping
+(`story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason`).

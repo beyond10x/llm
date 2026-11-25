@@ -198,6 +198,11 @@ Waves run as the AEP implementing skill describes: `plan: open wave <id> (story:
 `plan: close wave <id>`. Commit titles are semantic (`feat:`, `fix:`, `docs:`, `spec:`, `test:`,
 `plan:`, `release:`) with a body.
 
+An adversary's mutant or base copy builds in a managed worktree of this repository
+(`worktree create --repo <checkout> --base <commit>`), never in a copy under a cache or scratch
+directory: the build pool keeps a job whose directory or argument is under a cache directory on the
+workstation and does not hand it to a build node. Every adversary brief says so.
+
 ## Release
 
 Versions are workspace-wide (`[workspace.package] version`) and tags are bare (`0.2.0`); the
@@ -208,10 +213,15 @@ is the model:
    workspace version (and `Cargo.lock`), dates the CHANGELOG section, moves README.md's status line,
    the `## Status at` heading of `docs/implementation-status.md` and the `source` line of
    `website/docs/index.md`, then runs `task docs-generate`.
-2. Bot pull request; once its checks are green, `main` is fast-forwarded to the release commit by
-   a bot push, not merged through the pull request. Waves land on `main` the same way.
-3. Tag `<version>` on the release commit and publish the GitHub Release `LLM <version>`, both as the
-   bot.
+2. Bot pull request; once its checks are green and `main` is green, the operator session merges
+   the pull request through the bot (0.29.0: a merge commit on `main` whose tree is the release
+   commit's). The session that cuts the release sends the operator session the pull request's
+   number and full head sha and does not push to `main` itself. Up to 0.28.0 `main` was
+   fast-forwarded to the release commit by a bot push. A wave's pull request lands on `main` by
+   the same merge.
+3. Tag `<version>` on the commit of `main` that carries the release (since 0.29.0 the merge
+   commit, whose tree equals the release commit's) and publish the GitHub Release `LLM <version>`,
+   both as the bot.
 4. Verify the tag's commit, `Gate`, `Shared source gates` and `Documentation validation` on it, and
    the Release; only then report it released.
 5. Delete the remote `release/<version>` with

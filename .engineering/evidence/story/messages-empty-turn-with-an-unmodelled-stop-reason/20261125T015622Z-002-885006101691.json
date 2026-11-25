@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T01:56:22Z",
+  "actor": "human:operator",
+  "artifact": "story:messages-empty-turn-with-an-unmodelled-stop-reason",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "the wave gate on wave/2026-11-25-messages-empty-turn at 1f8f90b5f, each step run alone: task rust, task test, task docs, ess specify validate, llm-conformance check, aep plan artifact validate, all exit 0",
+    "reference": "docs/plan/wave-2026-11-25-messages-empty-turn.md"
+  }
+}

@@ -47,7 +47,7 @@ each wave holds one story.
 
 | Wave | Story | Objective (the coordinator's reading) | Makes true | State |
 | --- | --- | --- | --- | --- |
-| 4 | `story:messages-empty-turn-with-an-unmodelled-stop-reason` | O6 | a Messages turn that stops for an unmodelled reason without content is an error a caller can classify, with its usage; issue 83 closes | open: [wave-2026-11-25-messages-empty-turn](wave-2026-11-25-messages-empty-turn.md) |
+| 4 | `story:messages-empty-turn-with-an-unmodelled-stop-reason` | O6 | a Messages turn that stops for an unmodelled reason without content is an error a caller can classify, with its usage; issue 83 closes with the release | delivered: [wave-2026-11-25-messages-empty-turn](wave-2026-11-25-messages-empty-turn.md) |
 | 5 | `story:classifier-takes-only-a-whole-answer` | O6 | the JSON-schema classifier decides only on a whole answer, read by the judge's reader | planned |
 | 6 | `story:ess-pin-current-and-local-gate-finds-it` | O3 | the ESS pin is the current release and the local conformance step runs the pinned `ess` or refuses another | planned |
 | 7 | `story:docs-ux-layout-checks-from-ux-browser` | O3 | the docs UX gate takes its five layout checks from a pinned `ux-browser` release | planned; starts when the uxui repository's release tag that carries `ux-browser` is verified |
@@ -66,6 +66,8 @@ planted-defect test; the story asks for all three.
 ## Releases
 
 - 0.27.0 holds wave 1, 0.28.0 wave 2 and 0.29.0 wave 3. Each later wave is one minor release.
+- Wave 4 changes what a caller of `llm-messages` and of the Messages ingress gets for an answer
+  that was a success before (two lines marked breaking in the CHANGELOG); its release is 0.30.0.
 - Still drafts: `story:the-neutral-turn-in-ess`, `story:responses-carries-refusal-text` and
   `story:cli-route-explain`.
 
@@ -91,3 +93,10 @@ Filed by wave 3 and still drafts:
   by Rust tests only.
 - `story:llm-calls-builds-one-integration-test-binary`: the crate builds seven; the wave added the
   seventh.
+
+Filed by wave 4 and still drafts:
+
+- `story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason`: Bedrock Converse has its own
+  copy of the reason mapping and still decodes such a turn as a success.
+- `story:messages-cancellation-case-waits-on-a-signal`: one case of `llm-messages` cancels after a
+  fixed 100 ms and failed once of 42 runs under load.
