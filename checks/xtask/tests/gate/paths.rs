@@ -74,8 +74,6 @@ fn a_change_of_only_planning_or_prose_files_skips_the_gate() {
             "documents no gate step reads",
             &[
                 "CHANGELOG.md",
-                "AGENTS.md",
-                "README.md",
                 "docs/design.md",
                 "docs/plan/wave-3.md",
                 "crates/llm-bedrock/tests/fixtures/README.md",
@@ -110,6 +108,14 @@ fn any_other_change_runs_the_whole_gate() {
         (
             "the status source, which `llm-docs generate --check` reads",
             &["docs/implementation-status.md"],
+        ),
+        (
+            "the agents' rules, whose ESS version the test phase reads",
+            &["AGENTS.md"],
+        ),
+        (
+            "the README, whose ESS version the test phase reads",
+            &["docs/design.md", "README.md"],
         ),
         ("the workflow itself", &[".github/workflows/gate.yml"]),
         ("the manifest", &["Cargo.toml"]),

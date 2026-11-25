@@ -4,6 +4,7 @@ mod calls;
 mod chat;
 mod decisions;
 mod embeddings;
+mod ess;
 mod fallback;
 mod gate;
 mod inference;
@@ -24,8 +25,10 @@ use ess_primitives::time::Timestamp;
 use serde::Deserialize;
 use std::{
     error::Error,
+    ffi::OsString,
     fs,
     path::Path,
+    process::ExitCode,
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
@@ -64,6 +67,15 @@ struct Cli {
 enum Cmd {
     /// Check ESS projection drift and run the suite three times against the baseline.
     Check,
+    /// Run the `ess` that `gate.yml` pins with these arguments, from the repository root: the
+    /// stored one under `target/ess`, the one on `PATH` when it reports the pinned version, or
+    /// the release fetched into the store. Any other `ess` is refused and nothing is run. Every
+    /// argument after `ess` goes to it as written, `--help`, `--version` and `--` among them.
+    #[command(disable_help_flag = true)]
+    Ess {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        arguments: Vec<OsString>,
+    },
     /// Run one suite against a baseline and write its report.
     Run {
         suite: String,
@@ -82,15 +94,23 @@ enum Cmd {
     SecretsEnvironmentChild { input_json: String },
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<ExitCode, Box<dyn Error>> {
+    // Every argument after `ess` is the pinned ess's own, so the parser never sees them: it
+    // would answer `--help` and `-h` itself and take a leading `--` away.
+    let mut arguments = std::env::args_os().skip(1);
+    if arguments.next().is_some_and(|first| first == "ess") {
+        let arguments: Vec<OsString> = arguments.collect();
+        return ess::run(&gate::root()?, &arguments);
+    }
     match <Cli as clap::Parser>::parse().command {
-        Cmd::Check => gate::check(),
+        Cmd::Check => gate::check()?,
+        Cmd::Ess { arguments } => return ess::run(&gate::root()?, &arguments),
         Cmd::Run {
             suite,
             baseline,
             output_dir,
             source_identity,
-        } => execute(&suite, &baseline, &output_dir, &source_identity),
+        } => execute(&suite, &baseline, &output_dir, &source_identity)?,
         Cmd::TransportChild { program_json } => {
             // A child that did not receive every proxy variable proves nothing about the client
             // ignoring them, so it refuses rather than answering.
@@ -101,13 +121,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 return Err("transport-child started without its proxy environment".into());
             }
             println!("{}", transport::run_here(&program_json));
-            Ok(())
         }
         Cmd::SecretsEnvironmentChild { input_json } => {
             println!("{}", secrets::environment_here(&input_json)?);
-            Ok(())
         }
     }
+    Ok(ExitCode::SUCCESS)
 }
 
 fn execute(

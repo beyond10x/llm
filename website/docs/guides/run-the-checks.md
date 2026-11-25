@@ -56,8 +56,12 @@ differs. It also fails when a guide's quoted example differs from the file in
 ## 3. Specification
 
 ```bash
-ess specify validate --path spec
+cargo run --locked -p llm-conformance -- ess specify validate --path spec
 ```
+
+`llm-conformance ess` runs the ESS release CI pins: one stored under `target/ess/`, the `ess` on
+`PATH` when it reports that version, or the release fetched into `target/ess/` on x86_64 Linux.
+Another version is refused by name and nothing runs.
 
 The [ESS](https://beyond10x.github.io/ess/) ([GitHub](https://github.com/beyond10x/ess)) domains
 under `spec/domains/` give the repository's nouns typed homes. There are twelve: `accounting`,
