@@ -480,8 +480,8 @@ impl BedrockClient {
                 }
             }
         };
-        // Decoding it is reading it: a whole answer that fails to decode, a Messages answer that
-        // stopped without content included, is as final as one that failed in transit.
+        // Decoding it is reading it: a whole answer that fails to decode, a Messages or a Converse
+        // answer that stopped without content included, is as final as one that failed in transit.
         bounded(deadline, decode, Dispatch::Accepted)
             .await
             .map_err(|error| error.with_retriable(false))

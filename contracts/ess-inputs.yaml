@@ -1037,3 +1037,10 @@ scenarios:
 - messages/scenarios/an-unlisted-stop-after-text-is-an-incomplete-turn.yaml
 - messages/scenarios/a-complete-message-that-pauses-without-content-is-unavailable.yaml
 - messages/scenarios/an-unfinished-answer-without-content-is-refused.yaml
+- bedrock/scenarios/turn-a-converse-stream-stopped-at-the-context-window-without-content-is-too-large.yaml
+- bedrock/scenarios/turn-a-converse-stream-a-guardrail-stopped-without-content-is-refused.yaml
+- bedrock/scenarios/turn-a-converse-stream-a-content-filter-stopped-without-content-is-refused.yaml
+- bedrock/scenarios/turn-a-converse-stream-stopped-without-content-for-an-unlisted-reason-may-be-retried.yaml
+- bedrock/scenarios/turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-text-is-incomplete.yaml
+- bedrock/scenarios/turn-a-whole-converse-answer-stopped-at-the-context-window-without-content-is-too-large.yaml
+- bedrock/scenarios/turn-a-whole-converse-answer-stopped-without-content-for-an-unlisted-reason-is-final.yaml

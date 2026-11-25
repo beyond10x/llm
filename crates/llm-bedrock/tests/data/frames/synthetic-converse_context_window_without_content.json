@@ -1,0 +1,1 @@
+{"metrics":{"latencyMs":40},"output":{"message":{"content":[],"role":"assistant"}},"stopReason":"model_context_window_exceeded","usage":{"inputTokens":200000,"outputTokens":0,"totalTokens":200000}}

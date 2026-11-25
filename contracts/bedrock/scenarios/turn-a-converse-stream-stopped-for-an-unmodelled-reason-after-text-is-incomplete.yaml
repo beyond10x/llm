@@ -1,0 +1,34 @@
+type: ess-scenario/1
+domain: llm.bedrock
+scenario: turn-a-converse-stream-stopped-for-an-unmodelled-reason-after-text-is-incomplete
+summary: "the same stop at the model context window after a text block is the incomplete turn under the reason's own name"
+timeline:
+- at: '2026-11-25T12:00:00Z'
+  command: llm.bedrock.RunTurn
+  input:
+    api: "Converse"
+    stream: true
+    model_id: "us.amazon.nova-micro-v1:0"
+    request_json: "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"us.amazon.nova-micro-v1:0\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Hello\"}],\"tools\":[]}}"
+    recording: "pydantic-test_bedrock_model_stream.bin"
+    keep_frames: 1
+    frames_json: "[{\"event\":\"contentBlockDelta\",\"payload\":{\"contentBlockIndex\":0,\"delta\":{\"text\":\"Partial\"}}},{\"event\":\"contentBlockStop\",\"payload\":{\"contentBlockIndex\":0}},{\"event\":\"messageStop\",\"payload\":{\"stopReason\":\"model_context_window_exceeded\"}},{\"event\":\"metadata\",\"payload\":{\"usage\":{\"inputTokens\":199998,\"outputTokens\":2,\"totalTokens\":200000}}}]"
+    cut: false
+    session_token: false
+  outcome: observed
+assert:
+- view: llm.bedrock.LastTurn
+  counts:
+    at_least: 1
+    at_most: 1
+- view: llm.bedrock.LastTurn
+  contains:
+    accepted: true
+    error_code: null
+    requests: 1
+    items:
+    - "assistant-text:Partial"
+    text: "Partial"
+    stop_reason: "incomplete:model_context_window_exceeded"
+    final_usage: true
+    usage_json: "{\"input_tokens\":199998,\"output_tokens\":2,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"

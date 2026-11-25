@@ -1,7 +1,8 @@
 # Test data and where it comes from
 
 Every file here is copied unchanged from a public repository; none is written by hand except this
-page and `frames/uris.txt`. No file was recorded against an account of this project.
+page, `frames/uris.txt` and the two `frames/synthetic-*` answers. No file was recorded against an
+account of this project.
 
 | Directory | Source | Revision | Licence |
 | --- | --- | --- | --- |
@@ -9,6 +10,7 @@ page and `frames/uris.txt`. No file was recorded against an account of this proj
 | `eventstream/` | [smithy-lang/smithy-rs](https://github.com/smithy-lang/smithy-rs), `rust-runtime/aws-smithy-eventstream/test_data/` | `4d4380068a04858da53e9980e75ff4c8ba0f0de6` | Apache-2.0 (`eventstream/LICENSE`) |
 | `frames/pydantic-*` | [pydantic/pydantic-ai](https://github.com/pydantic/pydantic-ai), `tests/models/cassettes/test_bedrock/` | `f30a0b5699ed2f8a8c1a6ef7493fc641012a68b0` | MIT (`frames/LICENSE-pydantic-ai`) |
 | `frames/ddtrace-*` | [DataDog/dd-trace-py](https://github.com/DataDog/dd-trace-py), `tests/contrib/botocore/bedrock_cassettes/` | `1cb9f945a5d9550f9b1f72622780f747e1d810b7` | Apache-2.0 (`frames/LICENSE-dd-trace-py`) |
+| `frames/synthetic-*` | written for this repository, recorded from no service | none | this repository's |
 
 ## `sigv4/`
 
@@ -27,3 +29,9 @@ cassette's request URIs in interaction order; they name the operation (`converse
 `converse-stream`, `invoke`, `invoke-with-response-stream`) and the model each body belongs to.
 `pydantic-test_bedrock_streaming_error` was answered HTTP 400 with
 `{"message":"The provided model identifier is invalid."}` and has no response body file.
+
+`synthetic-converse_context_window_without_content.json` and
+`synthetic-converse_unlisted_reason_without_content.json` are whole `/converse` answers written by
+hand: an answer without content that stops for a reason the decoder does not model. No recorded
+cassette holds one. The conformance scenarios
+`contracts/bedrock/scenarios/turn-a-whole-converse-answer-stopped-*.yaml` serve them.
