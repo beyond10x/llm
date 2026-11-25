@@ -1012,3 +1012,93 @@ async fn an_empty_message_anywhere_in_the_turn_is_sent_after_the_streamed_blocks
         assert_eq!(shown, [text("Done.")], "{case}");
     }
 }
+
+// story:messages-empty-turn-with-an-unmodelled-stop-reason (issue 83). The decoder reads an
+// unfinished turn that carries no item as a failure, so the encoder, which sends only what reads
+// back as the same outcome, refuses to send one.
+
+const UNFINISHED_WITHOUT_CONTENT: &str =
+    "Messages cannot report an unfinished turn without content";
+
+/// A reason of every row the decoder fails an empty turn by, and one in no list.
+const UNFINISHED: [&str; 5] = [
+    "model_context_window_exceeded",
+    "refusal",
+    "pause_turn",
+    "stop_sequence",
+    "7",
+];
+
+#[test]
+fn an_unfinished_answer_without_content_is_refused_and_nothing_is_sent() {
+    for reason in UNFINISHED {
+        let answer = outcome(
+            StopReason::Incomplete {
+                reason: reason.to_owned(),
+            },
+            Vec::new(),
+        );
+        let error = encode_ingress_message(&answer, ID).expect_err("it would read back a failure");
+        assert_eq!(
+            (error.code, error.message.as_str()),
+            (ErrorCode::Unsupported, UNFINISHED_WITHOUT_CONTENT),
+            "`{reason}`"
+        );
+        let mut stream = IngressStream::new(ID, Some(MODEL)).unwrap();
+        let error = stream
+            .close(&answer)
+            .expect_err("it would read back a failure");
+        assert_eq!(
+            (error.code, error.message.as_str()),
+            (ErrorCode::Unsupported, UNFINISHED_WITHOUT_CONTENT),
+            "`{reason}`"
+        );
+        // The refusal sent nothing and left the stream open: `fail` still ends it, from its start.
+        assert_eq!(
+            kinds(&stream.fail(&error)),
+            ["message_start", "error"],
+            "`{reason}`"
+        );
+    }
+}
+
+/// The other side: with any item, an empty message included, the unfinished answer is sent and
+/// reads back as itself, complete and streamed.
+#[tokio::test]
+async fn an_unfinished_answer_with_any_item_reads_back_as_itself() {
+    for reason in UNFINISHED {
+        for items in [vec![Item::assistant("")], vec![Item::assistant("Partial")]] {
+            let answer = outcome(
+                StopReason::Incomplete {
+                    reason: reason.to_owned(),
+                },
+                items,
+            );
+            let message = encode_ingress_message(&answer, ID)
+                .unwrap_or_else(|error| panic!("`{reason}` {:?}: {error:?}", answer.items));
+            assert_eq!(
+                decode_message(&message, &request(), &target()).expect("it decodes"),
+                answer
+            );
+            let payloads = encode(&[], &answer, Some(MODEL))
+                .unwrap_or_else(|error| panic!("`{reason}` {:?}: {error:?}", answer.items));
+            let (decoded, _) = decode(&payloads).await;
+            assert_eq!(decoded.expect("it decodes"), answer);
+        }
+    }
+}
+
+/// A finished answer without content is not refused by this rule: the decoder reads `max_tokens`
+/// with no item as the outcome it is.
+#[tokio::test]
+async fn an_answer_that_ran_out_of_output_without_content_is_sent_as_before() {
+    let answer = outcome(StopReason::MaxOutputTokens, Vec::new());
+    let message = encode_ingress_message(&answer, ID).expect("the answer encodes");
+    assert_eq!(
+        decode_message(&message, &request(), &target()).expect("it decodes"),
+        answer
+    );
+    let payloads = encode(&[], &answer, Some(MODEL)).expect("the answer encodes");
+    let (decoded, _) = decode(&payloads).await;
+    assert_eq!(decoded.expect("it decodes"), answer);
+}

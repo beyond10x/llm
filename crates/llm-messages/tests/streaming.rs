@@ -5,7 +5,8 @@ use llm_core::{
     Cancel, Dispatch, Error, ErrorCode, Item, MAX_ITEMS, StopReason, StreamEvent, ToolName,
     ToolSpec, TurnOutcome, TurnRequest, Usage, VecSink,
 };
-use llm_messages::{IngressStream, decode_message, decode_stream};
+use llm_http::{Framing, SseDecoder};
+use llm_messages::{IngressStream, StreamDecoder, decode_message, decode_stream};
 use serde_json::{Value, json};
 use support::binding;
 
@@ -1219,7 +1220,17 @@ async fn an_accepted_field_in_its_documented_shape_is_carried_without_complaint(
     start["message"]["stop_sequence"] = json!("END");
     let mut delta = message_delta(json!("stop_sequence"), json!({"output_tokens":8}));
     delta["delta"]["stop_sequence"] = json!("END");
-    let events = vec![start, delta, json!({"type":"message_stop"})];
+    // The text the model wrote before the sequence stopped it: without content the turn would be
+    // a failure (`every_unmodelled_reason_without_content_fails_as_its_row_at_every_split`).
+    let events = vec![
+        start,
+        json!({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}),
+        json!({"type":"content_block_delta","index":0,
+            "delta":{"type":"text_delta","text":"Before the sequence"}}),
+        json!({"type":"content_block_stop","index":0}),
+        delta,
+        json!({"type":"message_stop"}),
+    ];
     let (outcome, _) = decode(&events).await;
     let outcome = outcome.expect("a message reporting its documented metadata");
     assert_eq!(
@@ -1228,6 +1239,7 @@ async fn an_accepted_field_in_its_documented_shape_is_carried_without_complaint(
             reason: "stop_sequence".to_owned()
         }
     );
+    assert_eq!(outcome.items, [Item::assistant("Before the sequence")]);
 }
 
 /// A value the producer could put in a field; a refusal must never carry it.
@@ -1622,4 +1634,1065 @@ async fn stop_details_are_accepted_only_as_null() {
     )
     .expect_err("a refusal's details");
     refused_by_its_shape(&error, &details);
+}
+
+// ---------------------------------------------------------------------------------------------
+// story:messages-empty-turn-with-an-unmodelled-stop-reason (issue 83). A turn that stops for a
+// reason this projection does not model and decodes to no item is a classified failure with its
+// usage; with any item it is the incomplete turn it always was.
+// ---------------------------------------------------------------------------------------------
+
+const WINDOW_WITHOUT_CONTENT: &str =
+    "the Messages turn stopped at the model context window without content";
+const REFUSAL_WITHOUT_CONTENT: &str = "the Messages turn was refused without content";
+const UNMODELLED_WITHOUT_CONTENT: &str =
+    "the Messages turn stopped without content for a reason this projection does not model";
+
+/// A reason in no list, as long as the decoder's bound on a reason name allows: 64 bytes.
+const LONGEST_REASON: &str = "a_reason_in_no_list_that_is_exactly_as_long_as_the_bound_permits";
+
+/// Every kind of stop reason this projection does not model, with what a turn that carried no
+/// content fails as: the code, whether another attempt may answer, and the fixed diagnostic.
+fn unmodelled_reasons() -> Vec<(&'static str, ErrorCode, bool, &'static str)> {
+    assert_eq!(LONGEST_REASON.len(), 64);
+    vec![
+        (
+            "model_context_window_exceeded",
+            ErrorCode::TooLarge,
+            false,
+            WINDOW_WITHOUT_CONTENT,
+        ),
+        (
+            "refusal",
+            ErrorCode::Refused,
+            false,
+            REFUSAL_WITHOUT_CONTENT,
+        ),
+        // The two reasons the route documents and this projection gives no row of their own.
+        (
+            "pause_turn",
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        ),
+        (
+            "stop_sequence",
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        ),
+        // In no list: one byte, and as many as a reason may have.
+        (
+            "7",
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        ),
+        (
+            LONGEST_REASON,
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        ),
+        // A row is its exact name: another case, a longer or a shorter name is in no list.
+        (
+            "REFUSAL",
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        ),
+        (
+            "model_context_window_exceeded_2",
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        ),
+        (
+            "model_context_window",
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        ),
+    ]
+}
+
+/// One closed content block of each kind a turn can carry, with the item it decodes to.
+fn contents() -> Vec<(&'static str, Vec<Value>, Item)> {
+    vec![
+        (
+            "a text block",
+            vec![
+                json!({"type":"content_block_start","index":0,
+                    "content_block":{"type":"text","text":""}}),
+                json!({"type":"content_block_delta","index":0,
+                    "delta":{"type":"text_delta","text":"Partial"}}),
+                json!({"type":"content_block_stop","index":0}),
+            ],
+            Item::assistant("Partial"),
+        ),
+        (
+            "an empty text block",
+            vec![
+                json!({"type":"content_block_start","index":0,
+                    "content_block":{"type":"text","text":""}}),
+                json!({"type":"content_block_stop","index":0}),
+            ],
+            Item::assistant(""),
+        ),
+        (
+            "a thinking block",
+            vec![
+                json!({"type":"content_block_start","index":0,
+                    "content_block":{"type":"thinking","thinking":"","signature":""}}),
+                json!({"type":"content_block_delta","index":0,
+                    "delta":{"type":"thinking_delta","thinking":"weighing"}}),
+                json!({"type":"content_block_delta","index":0,
+                    "delta":{"type":"signature_delta","signature":"sig-1"}}),
+                json!({"type":"content_block_stop","index":0}),
+            ],
+            Item::Opaque {
+                provenance: binding().provenance().clone(),
+                payload: json!({"type":"thinking","thinking":"weighing","signature":"sig-1"}),
+            },
+        ),
+        (
+            "a tool call",
+            vec![
+                json!({"type":"content_block_start","index":0,
+                    "content_block":{"type":"tool_use","id":"call-1","name":"lookup","input":{}}}),
+                json!({"type":"content_block_delta","index":0,
+                    "delta":{"type":"input_json_delta","partial_json":"{\"query\":\"errors\"}"}}),
+                json!({"type":"content_block_stop","index":0}),
+            ],
+            Item::ToolCall(llm_core::ToolCall {
+                call_id: llm_core::CallId::new("call-1").unwrap(),
+                name: ToolName::new("lookup").unwrap(),
+                arguments: json!({"query":"errors"}),
+            }),
+        ),
+    ]
+}
+
+/// A whole stream that stops for `reason` after `content`: the header with eleven fresh input
+/// tokens, the content, the reason with the final output count, and the terminal event.
+fn stopped(reason: &str, content: &[Value]) -> Vec<Value> {
+    let mut events = vec![message_start(json!({"input_tokens":11,
+        "cache_read_input_tokens":0,"cache_creation_input_tokens":0,"output_tokens":1}))];
+    events.extend_from_slice(content);
+    events.push(message_delta(json!(reason), json!({"output_tokens":2})));
+    events.push(json!({"type":"message_stop"}));
+    events
+}
+
+/// The usage `stopped` reports: the header's input, the delta's output.
+fn stopped_usage() -> Usage {
+    Usage {
+        input_tokens: Some(11),
+        output_tokens: Some(2),
+        cached_input_tokens: Some(0),
+        cache_creation_input_tokens: Some(0),
+        reasoning_output_tokens: None,
+    }
+}
+
+/// Decodes `bytes` through the production framing and decoder, handed over `size` bytes at a time.
+async fn decode_in_chunks(bytes: &[u8], size: usize) -> (Result<TurnOutcome, Error>, VecSink) {
+    let mut framing = SseDecoder::new(Framing::PayloadsOnly);
+    let mut decoder = StreamDecoder::new(binding().provenance().clone());
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let cancel = Cancel::new();
+    for chunk in bytes.chunks(size) {
+        for event in framing.push(chunk) {
+            let applied = match event {
+                Ok(event) => decoder.apply(&event, &mut sink, &cancel).await,
+                Err(error) => Err(error),
+            };
+            if let Err(error) = applied {
+                return (Err(decoder.attach(error)), sink);
+            }
+        }
+    }
+    if let Err(error) = framing.finish() {
+        return (Err(decoder.attach(error)), sink);
+    }
+    (decoder.finish(&request()), sink)
+}
+
+/// The failure of a turn that stopped for `reason` without content, checked against its row:
+/// the code, the retry class, dispatch `accepted`, no cause named, and the fixed text, which
+/// carries no byte of the reason.
+fn assert_row(error: &Error, reason: &str, code: ErrorCode, retriable: bool, message: &str) {
+    assert_eq!(
+        (error.code, error.dispatch, error.refusal),
+        (code, Dispatch::Accepted, None),
+        "`{reason}`: {error:?}"
+    );
+    assert_eq!(
+        (error.retriable, error.may_retry()),
+        (retriable, retriable),
+        "`{reason}`: {error:?}"
+    );
+    assert_eq!(error.message, message, "`{reason}`");
+    assert!(
+        !error.message.contains(reason) && !error.to_string().contains(reason),
+        "`{reason}` reached the diagnostic: {error}"
+    );
+}
+
+/// The story's first acceptance line.
+#[tokio::test]
+async fn a_stream_that_stops_at_the_context_window_without_content_is_too_large_with_its_usage() {
+    let (outcome, sink) = decode(&stopped("model_context_window_exceeded", &[])).await;
+    let error = outcome.expect_err("an answer without content is no answer");
+    assert_row(
+        &error,
+        "model_context_window_exceeded",
+        ErrorCode::TooLarge,
+        false,
+        WINDOW_WITHOUT_CONTENT,
+    );
+    let observation = error
+        .observation
+        .expect("the failure keeps what was reported");
+    assert_eq!(observation.usage, Some(stopped_usage()));
+    assert!(observation.final_usage);
+    assert_eq!(sink.events(), []);
+}
+
+/// The story's second acceptance line.
+#[tokio::test]
+async fn a_stream_that_stops_for_an_unlisted_reason_without_content_is_a_retriable_provider_failure_with_its_usage()
+ {
+    let (outcome, sink) = decode(&stopped("a_reason_in_no_list", &[])).await;
+    let error = outcome.expect_err("an answer without content is no answer");
+    assert_row(
+        &error,
+        "a_reason_in_no_list",
+        ErrorCode::Unavailable,
+        true,
+        UNMODELLED_WITHOUT_CONTENT,
+    );
+    let observation = error
+        .observation
+        .expect("the failure keeps what was reported");
+    assert_eq!(observation.usage, Some(stopped_usage()));
+    assert!(observation.final_usage);
+    assert_eq!(sink.events(), []);
+}
+
+/// The `refusal` row: refused, final, and no cause named, because a stop reason is not one of
+/// the structured codes a `RefusalCause` is read from.
+#[tokio::test]
+async fn a_stream_that_stops_as_a_refusal_without_content_is_refused_with_no_cause_named() {
+    let (outcome, sink) = decode(&stopped("refusal", &[])).await;
+    let error = outcome.expect_err("an answer without content is no answer");
+    assert_row(
+        &error,
+        "refusal",
+        ErrorCode::Refused,
+        false,
+        REFUSAL_WITHOUT_CONTENT,
+    );
+    assert_eq!(error.refusal, None);
+    let observation = error
+        .observation
+        .expect("the failure keeps what was reported");
+    assert_eq!(observation.usage, Some(stopped_usage()));
+    assert_eq!(sink.events(), []);
+}
+
+/// Every row by its own reason name, the stream handed over whole and one byte at a time: the
+/// same failure, with the response it names and its usage, and nothing shown.
+#[tokio::test]
+async fn every_unmodelled_reason_without_content_fails_as_its_row_at_every_split() {
+    for (reason, code, retriable, message) in unmodelled_reasons() {
+        let bytes = sse(&stopped(reason, &[]));
+        let (whole, shown_whole) = decode_in_chunks(&bytes, bytes.len()).await;
+        let (by_byte, shown_by_byte) = decode_in_chunks(&bytes, 1).await;
+        let (in_blocks, _) = decode_bytes(&bytes).await;
+        assert_eq!(whole, by_byte, "`{reason}`");
+        assert_eq!(whole, in_blocks, "`{reason}`");
+        assert_eq!(shown_whole.events(), [], "`{reason}`");
+        assert_eq!(shown_by_byte.events(), [], "`{reason}`");
+        let error = whole.expect_err("an answer without content is no answer");
+        assert_row(&error, reason, code, retriable, message);
+        let observation = error
+            .observation
+            .expect("the failure keeps what was reported");
+        assert_eq!(observation.usage, Some(stopped_usage()), "`{reason}`");
+        assert_eq!(
+            observation.response_id.as_ref().map(ToString::to_string),
+            Some("msg_014a".to_owned()),
+            "`{reason}`"
+        );
+        assert!(observation.final_usage, "`{reason}`");
+    }
+}
+
+/// The story's third acceptance line, for every reason and every kind of content: with an item
+/// the turn is the incomplete turn it was before, under the reason's own name, with final usage.
+#[tokio::test]
+async fn every_unmodelled_reason_after_content_is_still_an_incomplete_turn_under_its_own_name() {
+    for (reason, ..) in unmodelled_reasons() {
+        for (kind, content, item) in contents() {
+            let bytes = sse(&stopped(reason, &content));
+            let (whole, _) = decode_in_chunks(&bytes, bytes.len()).await;
+            let (by_byte, _) = decode_in_chunks(&bytes, 1).await;
+            assert_eq!(whole, by_byte, "`{reason}` after {kind}");
+            let outcome = whole.unwrap_or_else(|error| panic!("`{reason}` after {kind}: {error}"));
+            assert_eq!(
+                outcome.stop_reason,
+                StopReason::Incomplete {
+                    reason: reason.to_owned()
+                },
+                "after {kind}"
+            );
+            assert_eq!(outcome.items, [item], "`{reason}` after {kind}");
+            assert_eq!(outcome.observation.usage, Some(stopped_usage()));
+            assert!(outcome.observation.final_usage, "`{reason}` after {kind}");
+        }
+    }
+}
+
+/// The two streams the story names, after a text block.
+#[tokio::test]
+async fn the_context_window_and_an_unlisted_reason_after_a_text_block_stay_incomplete() {
+    for reason in ["model_context_window_exceeded", "a_reason_in_no_list"] {
+        let content = contents().remove(0).1;
+        let (outcome, sink) = decode(&stopped(reason, &content)).await;
+        let outcome = outcome.expect("a turn with content");
+        assert_eq!(
+            outcome.stop_reason,
+            StopReason::Incomplete {
+                reason: reason.to_owned()
+            }
+        );
+        assert_eq!(outcome.items, [Item::assistant("Partial")], "`{reason}`");
+        assert_eq!(sink.text(), "Partial", "`{reason}`");
+    }
+}
+
+/// "No content" is "no item was decoded". Both sides of that line, where it differs from "no
+/// content block arrived": an event outside the subset that the decoder keeps is an item, so a
+/// turn of nothing else is still an incomplete turn carrying it; a keep-alive is no item, so a
+/// turn of nothing else fails as its row.
+#[tokio::test]
+async fn no_content_means_no_item_was_decoded() {
+    for (reason, code, retriable, message) in unmodelled_reasons() {
+        let kept = json!({"type":"novel_event","detail":"kept"});
+        let (outcome, sink) = decode(&stopped(reason, std::slice::from_ref(&kept))).await;
+        let outcome = outcome.unwrap_or_else(|error| panic!("`{reason}`: {error}"));
+        assert_eq!(
+            outcome.stop_reason,
+            StopReason::Incomplete {
+                reason: reason.to_owned()
+            }
+        );
+        assert_eq!(
+            outcome.items,
+            [Item::Opaque {
+                provenance: binding().provenance().clone(),
+                payload: kept,
+            }],
+            "`{reason}`"
+        );
+        assert_eq!(sink.events().len(), 1, "`{reason}`: the kept event is said");
+
+        let (outcome, sink) = decode(&stopped(reason, &[json!({"type":"ping"})])).await;
+        let error = outcome.expect_err("a keep-alive is no content");
+        assert_row(&error, reason, code, retriable, message);
+        assert_eq!(sink.events(), [], "`{reason}`");
+    }
+}
+
+/// A block that opened and never closed is not this failure: the terminal event leaves it open,
+/// and that stays the final `protocol` refusal it was, whatever the reason.
+#[tokio::test]
+async fn a_block_left_open_before_an_unmodelled_reason_is_still_the_protocol_refusal() {
+    for (reason, ..) in unmodelled_reasons() {
+        let open = json!({"type":"content_block_start","index":0,
+            "content_block":{"type":"text","text":""}});
+        let (outcome, _) = decode(&stopped(reason, &[open])).await;
+        let error = outcome.expect_err("an open block at the terminal event");
+        assert_eq!(error.code, ErrorCode::Protocol, "`{reason}`");
+        assert_eq!(
+            error.message,
+            "Messages terminal event leaves a content block open"
+        );
+        assert!(!error.retriable && !error.may_retry(), "`{reason}`");
+    }
+}
+
+/// The failure carries exactly the counters the route reported, wherever it reported them: in
+/// the header only, in the terminal delta only, in both, or nowhere. Unknown stays unknown,
+/// never zero, on the error too.
+#[tokio::test]
+async fn a_stop_without_content_keeps_the_usage_wherever_the_route_reported_it() {
+    let header = json!({"input_tokens":11,"cache_read_input_tokens":4,
+        "cache_creation_input_tokens":6,"output_tokens":1});
+    let known = |output| Usage {
+        input_tokens: Some(21),
+        output_tokens: Some(output),
+        cached_input_tokens: Some(4),
+        cache_creation_input_tokens: Some(6),
+        reasoning_output_tokens: None,
+    };
+    let output_only = Usage {
+        input_tokens: None,
+        output_tokens: Some(3),
+        cached_input_tokens: None,
+        cache_creation_input_tokens: None,
+        reasoning_output_tokens: None,
+    };
+    for (reason, code, retriable, message) in unmodelled_reasons() {
+        for (place, start, end, usage) in [
+            (
+                "the header only",
+                header.clone(),
+                Value::Null,
+                Some(known(1)),
+            ),
+            (
+                "the terminal delta only",
+                Value::Null,
+                json!({"output_tokens":3}),
+                Some(output_only.clone()),
+            ),
+            (
+                "both",
+                header.clone(),
+                json!({"output_tokens":5}),
+                Some(known(5)),
+            ),
+            ("neither", Value::Null, Value::Null, None),
+        ] {
+            let events = vec![
+                message_start(start),
+                message_delta(json!(reason), end),
+                json!({"type":"message_stop"}),
+            ];
+            let (outcome, _) = decode(&events).await;
+            let error = outcome.expect_err("an answer without content is no answer");
+            assert_row(&error, reason, code, retriable, message);
+            let observation = error.observation.expect("the failure keeps its binding");
+            assert_eq!(observation.usage, usage, "`{reason}`, usage in {place}");
+            assert!(observation.final_usage, "`{reason}`, usage in {place}");
+        }
+    }
+}
+
+/// The header's counters with a cost, the usage extension a route reports beside them.
+fn costed_start() -> Value {
+    json!({"input_tokens":11,"output_tokens":1,"cost":{"total":0.5}})
+}
+
+/// A delta's output count with a cost of its own.
+fn costed_end() -> Value {
+    json!({"output_tokens":2,"cost":0.25})
+}
+
+/// The `usage-extension` warnings among `events`, in the order they were shown.
+fn extensions(events: &[StreamEvent]) -> Vec<String> {
+    events
+        .iter()
+        .filter_map(|event| match event {
+            StreamEvent::Warning { code, message } if code == "usage-extension" => {
+                Some(message.clone())
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// A turn that fails by this rule shows no usage extension: a cost the header reported, a cost
+/// the terminal delta reported, or both are dropped with the attempt, and each row keeps its
+/// code and its retry class.
+#[tokio::test]
+async fn a_stop_without_content_shows_no_usage_extension_and_keeps_its_row() {
+    let plain_start = json!({"input_tokens":11,"output_tokens":1});
+    let plain_end = json!({"output_tokens":2});
+    for (reason, code, retriable, message) in unmodelled_reasons() {
+        for (place, start, end) in [
+            ("the header", costed_start(), plain_end.clone()),
+            ("the terminal delta", plain_start.clone(), costed_end()),
+            ("both", costed_start(), costed_end()),
+        ] {
+            let events = vec![
+                message_start(start),
+                message_delta(json!(reason), end),
+                json!({"type":"message_stop"}),
+            ];
+            let (outcome, sink) = decode(&events).await;
+            let error = outcome.expect_err("an answer without content is no answer");
+            assert_row(&error, reason, code, retriable, message);
+            assert_eq!(sink.events(), [], "`{reason}`, cost in {place}");
+        }
+    }
+}
+
+/// No event can have been shown before a turn fails by this rule. A cost reported by a delta
+/// that names no reason yet, ahead of the terminal delta, is held like the header's: the turn
+/// may still stop without content, and when it does nothing was shown and the row is kept.
+#[tokio::test]
+async fn a_cost_reported_before_the_terminal_delta_is_not_shown_for_a_stop_without_content() {
+    for (reason, code, retriable, message) in unmodelled_reasons() {
+        let events = vec![
+            message_start(costed_start()),
+            json!({"type":"message_delta","delta":{},"usage":{"output_tokens":1,"cost":0.125}}),
+            message_delta(json!(reason), costed_end()),
+            json!({"type":"message_stop"}),
+        ];
+        let (outcome, sink) = decode(&events).await;
+        let error = outcome.expect_err("an answer without content is no answer");
+        assert_row(&error, reason, code, retriable, message);
+        assert_eq!(sink.events(), [], "`{reason}`");
+    }
+}
+
+/// The other side: a held cost is not lost by a turn that answers. Content after the terminal
+/// delta makes the turn the incomplete turn, and every cost held until then is shown before
+/// that content, in the order the route reported it.
+#[tokio::test]
+async fn a_cost_held_at_the_terminal_delta_is_shown_when_content_follows_it() {
+    for (reason, ..) in unmodelled_reasons() {
+        let mut events = vec![
+            message_start(costed_start()),
+            message_delta(json!(reason), costed_end()),
+        ];
+        events.extend([
+            json!({"type":"content_block_start","index":0,
+                "content_block":{"type":"text","text":""}}),
+            json!({"type":"content_block_delta","index":0,
+                "delta":{"type":"text_delta","text":"Late"}}),
+            json!({"type":"content_block_stop","index":0}),
+            json!({"type":"message_stop"}),
+        ]);
+        let (outcome, sink) = decode(&events).await;
+        let outcome = outcome.unwrap_or_else(|error| panic!("`{reason}`: {error}"));
+        assert_eq!(
+            outcome.stop_reason,
+            StopReason::Incomplete {
+                reason: reason.to_owned()
+            }
+        );
+        assert_eq!(outcome.items, [Item::assistant("Late")], "`{reason}`");
+        let shown = sink.events();
+        assert_eq!(
+            extensions(shown),
+            [
+                "message_start.message.usage.cost: {\"total\":0.5}",
+                "message_delta.usage.cost: 0.25"
+            ],
+            "`{reason}`"
+        );
+        assert!(
+            matches!(
+                shown,
+                [
+                    StreamEvent::Warning { .. },
+                    StreamEvent::Warning { .. },
+                    StreamEvent::TextDelta { .. }
+                ]
+            ),
+            "`{reason}`: {shown:?}"
+        );
+    }
+}
+
+/// A turn that ends for a modelled reason without content is an answer, so its costs are shown
+/// with the delta that settles it, as before; and a stream that names no reason at all shows
+/// them at its terminal event and is the `protocol` refusal it was.
+#[tokio::test]
+async fn a_cost_is_still_shown_when_the_turn_does_not_fail_by_this_rule() {
+    let both = [
+        "message_start.message.usage.cost: {\"total\":0.5}",
+        "message_delta.usage.cost: 0.25",
+    ];
+    for (reason, stop) in [
+        ("end_turn", StopReason::EndTurn),
+        ("max_tokens", StopReason::MaxOutputTokens),
+    ] {
+        let events = vec![
+            message_start(costed_start()),
+            message_delta(json!(reason), costed_end()),
+            json!({"type":"message_stop"}),
+        ];
+        let (outcome, sink) = decode(&events).await;
+        let outcome = outcome.unwrap_or_else(|error| panic!("`{reason}`: {error}"));
+        assert_eq!((outcome.stop_reason, outcome.items), (stop, vec![]));
+        assert_eq!(extensions(sink.events()), both, "`{reason}`");
+    }
+    // The third modelled reason settles it the same way, whatever the turn then decodes to.
+    let events = vec![
+        message_start(costed_start()),
+        message_delta(json!("tool_use"), costed_end()),
+        json!({"type":"message_stop"}),
+    ];
+    let (_, sink) = decode(&events).await;
+    assert_eq!(extensions(sink.events()), both, "`tool_use`");
+    let events = vec![
+        message_start(costed_start()),
+        json!({"type":"message_delta","delta":{},"usage":costed_end()}),
+        json!({"type":"message_stop"}),
+    ];
+    let (outcome, sink) = decode(&events).await;
+    let error = outcome.expect_err("a terminal message that names no reason");
+    assert_eq!(
+        (error.code, error.message.as_str(), error.may_retry()),
+        (
+            ErrorCode::Protocol,
+            "Messages terminal message names no reason",
+            false
+        )
+    );
+    assert_eq!(extensions(sink.events()), both);
+}
+
+/// A stream that held its costs at a `message_delta` after no content has answered. A failure
+/// after that delta is final, and it is not the stop without content, so what was held is shown
+/// before the failure is returned: the two costs, in the order the route reported them. The
+/// delta names a reason this projection does not model, or none yet.
+#[tokio::test]
+async fn a_failure_after_a_held_cost_answered_shows_what_was_held() {
+    let both = [
+        "message_start.message.usage.cost: {\"total\":0.5}",
+        "message_delta.usage.cost: 0.25",
+    ];
+    let endings = [
+        ("a body that ends", vec![]),
+        (
+            "an `overloaded_error`",
+            vec![json!({"type":"error","error":{"type":"overloaded_error","message":"busy"}})],
+        ),
+        (
+            "a keep-alive outside the subset",
+            vec![json!({"type":"ping","extra":1})],
+        ),
+        (
+            "a terminal event outside the subset",
+            vec![json!({"type":"message_stop","extra":1})],
+        ),
+        (
+            "a second header",
+            vec![message_start(json!({"input_tokens":11}))],
+        ),
+        (
+            "a payload after the terminal event",
+            vec![json!({"type":"message_stop"}), json!({"type":"ping"})],
+        ),
+    ];
+    for reason in [
+        json!("pause_turn"),
+        json!("refusal"),
+        json!("model_context_window_exceeded"),
+        Value::Null,
+    ] {
+        let held = [
+            message_start(costed_start()),
+            message_delta(reason.clone(), costed_end()),
+        ];
+        for (ending, after) in &endings {
+            let (outcome, sink) = decode(&[&held[..], &after[..]].concat()).await;
+            let error = outcome.expect_err("the stream fails");
+            assert!(!error.may_retry(), "{ending} after {reason}: {error:?}");
+            assert_eq!(
+                extensions(sink.events()),
+                both,
+                "{ending} after {reason}: {error:?}"
+            );
+        }
+        // The body ends inside an event. The framing's class is not changed here: the client
+        // makes a cut after an answer final (`tests/retry_class.rs`).
+        let mut cut = sse(&held);
+        cut.extend_from_slice(b"event: content_block_delta\ndata: {\"type\"");
+        let (outcome, sink) = decode_bytes(&cut).await;
+        let error = outcome.expect_err("the stream is cut");
+        assert_eq!(error.code, ErrorCode::Protocol, "a cut after {reason}");
+        assert_eq!(
+            extensions(sink.events()),
+            both,
+            "a cut after {reason}: {error:?}"
+        );
+    }
+}
+
+/// The other side: a stream that fails before it answered shows nothing, whatever the failure.
+/// The cost its header reported is dropped with the attempt.
+#[tokio::test]
+async fn a_failure_before_the_stream_answered_shows_no_held_cost() {
+    let header = [message_start(costed_start())];
+    let endings = [
+        ("a body that ends", vec![]),
+        (
+            "a keep-alive outside the subset",
+            vec![json!({"type":"ping","extra":1})],
+        ),
+        ("a second header", vec![message_start(costed_start())]),
+        (
+            "an `invalid_request_error`",
+            vec![json!({"type":"error","error":{"type":"invalid_request_error","message":"no"}})],
+        ),
+    ];
+    for (ending, after) in &endings {
+        let (outcome, sink) = decode(&[&header[..], &after[..]].concat()).await;
+        outcome.expect_err("the stream fails");
+        assert_eq!(sink.events(), [], "{ending}");
+    }
+    let mut cut = sse(&header);
+    cut.extend_from_slice(b"event: ping\ndata: {\"type\"");
+    let (outcome, sink) = decode_bytes(&cut).await;
+    outcome.expect_err("the stream is cut");
+    assert_eq!(sink.events(), [], "a cut");
+}
+
+/// A `message_delta` that is refused is the first payload that answers all the same: the cost
+/// the header reported is shown before the refusal, and the refused delta's own is not.
+#[tokio::test]
+async fn a_refused_delta_shows_the_cost_held_before_it_and_not_its_own() {
+    let events = [
+        message_start(costed_start()),
+        message_delta(json!(7), costed_end()),
+    ];
+    let (outcome, sink) = decode(&events).await;
+    let error = outcome.expect_err("a reason that is no name");
+    assert!(!error.may_retry(), "{error:?}");
+    assert_eq!(
+        extensions(sink.events()),
+        ["message_start.message.usage.cost: {\"total\":0.5}"]
+    );
+}
+
+/// What is held is shown through the caller's sink like any other event: a sink that refuses
+/// one, or a caller that cancelled, ends the turn with that failure and the rest stays unshown.
+#[tokio::test]
+async fn a_held_cost_the_caller_does_not_take_ends_the_turn_as_that_failure() {
+    let events = sse(&[
+        message_start(costed_start()),
+        message_delta(json!("pause_turn"), costed_end()),
+        json!({"type":"error","error":{"type":"overloaded_error","message":"busy"}}),
+    ]);
+    let mut sink = VecSink::new(1, 64 * 1024);
+    let outcome = decode_stream(
+        &events,
+        &request(),
+        binding().provenance(),
+        &mut sink,
+        &Cancel::new(),
+    )
+    .await;
+    let error = outcome.expect_err("the sink takes one event");
+    assert_eq!(
+        (error.code, error.message.as_str()),
+        (ErrorCode::TooLarge, "stream sink event bound reached")
+    );
+    assert_eq!(
+        extensions(sink.events()),
+        ["message_start.message.usage.cost: {\"total\":0.5}"]
+    );
+
+    let cancel = Cancel::new();
+    cancel.cancel();
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let outcome = decode_stream(
+        &events,
+        &request(),
+        binding().provenance(),
+        &mut sink,
+        &cancel,
+    )
+    .await;
+    let error = outcome.expect_err("the caller cancelled");
+    assert_eq!(error.code, ErrorCode::Cancelled);
+    assert_eq!(sink.events(), []);
+}
+
+/// Held reports are bounded like kept events. As many as a turn may carry items are held and
+/// dropped with a turn that then stops without content; one more is refused as `too-large`,
+/// which is not that stop, so the reports held until then are shown before it.
+#[tokio::test]
+async fn held_usage_extensions_are_bounded_by_the_content_bound() {
+    let costed = json!({"type":"message_delta","delta":{},
+        "usage":{"output_tokens":1,"cost":0.125}});
+    let mut events = vec![message_start(json!({"input_tokens":11,"output_tokens":1}))];
+    events.extend(std::iter::repeat_n(costed.clone(), llm_core::MAX_ITEMS));
+    let mut at_the_bound = events.clone();
+    at_the_bound.extend([
+        message_delta(json!("pause_turn"), json!({"output_tokens":2})),
+        json!({"type":"message_stop"}),
+    ]);
+    let (outcome, sink) = decode(&at_the_bound).await;
+    let error = outcome.expect_err("an answer without content is no answer");
+    assert_row(
+        &error,
+        "pause_turn",
+        ErrorCode::Unavailable,
+        true,
+        UNMODELLED_WITHOUT_CONTENT,
+    );
+    assert_eq!(sink.events(), []);
+
+    events.push(costed);
+    let mut sink = VecSink::new(llm_core::MAX_ITEMS, 1 << 20);
+    let outcome = decode_stream(
+        &sse(&events),
+        &request(),
+        binding().provenance(),
+        &mut sink,
+        &Cancel::new(),
+    )
+    .await;
+    let error = outcome.expect_err("one report past the bound");
+    assert_eq!(
+        (error.code, error.message.as_str(), error.may_retry()),
+        (
+            ErrorCode::TooLarge,
+            "Messages content exceeds its bound",
+            false
+        )
+    );
+    assert_eq!(
+        extensions(sink.events()),
+        vec!["message_delta.usage.cost: 0.125"; llm_core::MAX_ITEMS]
+    );
+    assert_eq!(sink.events().len(), llm_core::MAX_ITEMS);
+}
+
+/// A complete (non-streamed) message finishes through the same function: without content each
+/// reason fails as its row, with its usage; with a block it is the incomplete turn.
+#[test]
+fn a_complete_message_that_stops_for_an_unmodelled_reason_follows_the_same_rule() {
+    for (reason, code, retriable, message) in unmodelled_reasons() {
+        let mut answer = json!({
+            "id":"msg_014a","type":"message","role":"assistant","model":"example-model-20260201",
+            "content":[],"stop_reason":reason,"stop_sequence":null,
+            "usage":{"input_tokens":11,"cache_read_input_tokens":4,
+                "cache_creation_input_tokens":6,"output_tokens":0}});
+        let error = decode_message(&answer, &request(), binding().provenance())
+            .expect_err("an answer without content is no answer");
+        assert_row(&error, reason, code, retriable, message);
+        let observation = error
+            .observation
+            .expect("the failure keeps what was reported");
+        assert_eq!(
+            observation.usage,
+            Some(Usage {
+                input_tokens: Some(21),
+                output_tokens: Some(0),
+                cached_input_tokens: Some(4),
+                cache_creation_input_tokens: Some(6),
+                reasoning_output_tokens: None,
+            }),
+            "`{reason}`"
+        );
+        assert!(observation.final_usage, "`{reason}`");
+
+        for (kind, block, item) in [
+            (
+                "a text block",
+                json!({"type":"text","text":"Partial"}),
+                Item::assistant("Partial"),
+            ),
+            (
+                "an empty text block",
+                json!({"type":"text","text":""}),
+                Item::assistant(""),
+            ),
+        ] {
+            answer["content"] = json!([block]);
+            let outcome = decode_message(&answer, &request(), binding().provenance())
+                .unwrap_or_else(|error| panic!("`{reason}` with {kind}: {error}"));
+            assert_eq!(
+                outcome.stop_reason,
+                StopReason::Incomplete {
+                    reason: reason.to_owned()
+                }
+            );
+            assert_eq!(outcome.items, [item], "`{reason}` with {kind}");
+            assert!(outcome.observation.final_usage, "`{reason}` with {kind}");
+        }
+    }
+}
+
+/// A complete message that reports no usage fails with none: unknown, never zero.
+#[test]
+fn a_complete_message_without_content_or_usage_fails_with_unknown_usage() {
+    for (reason, code, retriable, message) in unmodelled_reasons() {
+        let answer = json!({"id":"msg_014a","type":"message","role":"assistant",
+            "model":"example-model-20260201","content":[],"stop_reason":reason});
+        let error = decode_message(&answer, &request(), binding().provenance())
+            .expect_err("an answer without content is no answer");
+        assert_row(&error, reason, code, retriable, message);
+        assert_eq!(
+            error
+                .observation
+                .expect("the failure keeps its binding")
+                .usage,
+            None,
+            "`{reason}`"
+        );
+    }
+}
+
+/// The modelled reasons are untouched: a turn that ends, or runs out of output, with no content
+/// is the outcome it was.
+#[tokio::test]
+async fn a_modelled_reason_without_content_is_not_this_failure() {
+    for (reason, stop) in [
+        ("end_turn", StopReason::EndTurn),
+        ("max_tokens", StopReason::MaxOutputTokens),
+    ] {
+        let (outcome, _) = decode(&stopped(reason, &[])).await;
+        let outcome = outcome.unwrap_or_else(|error| panic!("`{reason}`: {error}"));
+        assert_eq!(outcome.stop_reason, stop);
+        assert_eq!(outcome.items, []);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). A guard for two mutants of
+// `stopped_without_content` that every case above passes under: the `refusal` row matched by
+// prefix (`r if r.starts_with("refusal")`) and by a shorter name (`r if "refusal".starts_with(r)`).
+// `unmodelled_reasons` holds a longer and a shorter name only for the context-window row.
+// ---------------------------------------------------------------------------------------------
+
+/// `docs/messages.md`: "The row is chosen by the whole name". A longer name, a shorter one and
+/// another case of `refusal` are reasons in no list: `unavailable` and retriable, never `refused`.
+#[tokio::test]
+async fn adversary_w30_the_refusal_row_is_chosen_by_its_whole_name() {
+    for reason in ["refusal_2", "refusals", "refus", "Refusal"] {
+        let (outcome, sink) = decode(&stopped(reason, &[])).await;
+        let error = outcome.expect_err("an answer without content is no answer");
+        assert_row(
+            &error,
+            reason,
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        );
+        assert_eq!(sink.events(), [], "`{reason}`");
+        let answer = json!({"id":"msg_014a","type":"message","role":"assistant",
+            "model":"example-model-20260201","content":[],"stop_reason":reason});
+        let error = decode_message(&answer, &request(), binding().provenance())
+            .expect_err("an answer without content is no answer");
+        assert_row(
+            &error,
+            reason,
+            ErrorCode::Unavailable,
+            true,
+            UNMODELLED_WITHOUT_CONTENT,
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, second pass, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). Guards for when a held cost is
+// shown. Every case above reads the sink after the whole stream was decoded, and the order of
+// the warnings among the other events is the same whether a cost is shown at its delta or held
+// to the next content or to `message_stop`. So a decoder that holds every delta's cost, or holds
+// one although the turn has content or a modelled reason, passes them; it differs only for the
+// caller that watches the stream, and for the stream that is cut before `message_stop`.
+// `docs/messages.md`: a `message_delta`'s cost is "shown with that delta, once the whole delta
+// was accepted", and one held is shown "at the delta that names `end_turn`, `tool_use` or
+// `max_tokens`".
+// ---------------------------------------------------------------------------------------------
+
+/// How many `usage-extension` warnings the caller has been shown after each of `events`, applied
+/// one at a time.
+async fn adversary_w30b_costs_shown_after_each(events: &[Value]) -> Vec<usize> {
+    let mut decoder = StreamDecoder::new(binding().provenance().clone());
+    let mut sink = VecSink::new(64, 64 * 1024);
+    let cancel = Cancel::new();
+    let mut shown = Vec::new();
+    for event in events {
+        let payload = llm_http::SseEvent::Payload {
+            event: event["type"].as_str().map(str::to_owned),
+            data: event.clone(),
+        };
+        decoder
+            .apply(&payload, &mut sink, &cancel)
+            .await
+            .unwrap_or_else(|error| panic!("{event}: {error}"));
+        shown.push(extensions(sink.events()).len());
+    }
+    shown
+}
+
+/// A turn that holds content shows a delta's cost with that delta, whatever reason it names:
+/// after a closed block, while a block is open, and after a kept event.
+#[tokio::test]
+async fn adversary_w30b_a_delta_after_content_shows_its_cost_with_that_delta() {
+    let open = json!({"type":"content_block_start","index":0,
+        "content_block":{"type":"text","text":""}});
+    for reason in [
+        "end_turn",
+        "max_tokens",
+        "pause_turn",
+        "stop_sequence",
+        "refusal",
+        "model_context_window_exceeded",
+    ] {
+        let closed = [
+            message_start(costed_start()),
+            open.clone(),
+            json!({"type":"content_block_delta","index":0,
+                "delta":{"type":"text_delta","text":"Partial"}}),
+            json!({"type":"content_block_stop","index":0}),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&closed).await,
+            [0, 1, 1, 1, 2],
+            "`{reason}` after a closed block"
+        );
+        let still_open = [
+            message_start(costed_start()),
+            open.clone(),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&still_open).await,
+            [0, 1, 2],
+            "`{reason}` while a block is open"
+        );
+        let kept = [
+            message_start(costed_start()),
+            json!({"type":"an_event_in_no_list"}),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&kept).await,
+            [0, 1, 2],
+            "`{reason}` after a kept event"
+        );
+    }
+}
+
+/// A turn without content shows what it held at the delta that names a modelled reason, each
+/// of the three, and not later: the header's cost, a cost of an earlier delta that named no
+/// reason, and that delta's own.
+#[tokio::test]
+async fn adversary_w30b_a_modelled_reason_without_content_shows_the_held_costs_at_its_delta() {
+    for reason in ["end_turn", "tool_use", "max_tokens"] {
+        let settled = [
+            message_start(costed_start()),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&settled).await,
+            [0, 2],
+            "`{reason}`"
+        );
+        let after_an_earlier_report = [
+            message_start(costed_start()),
+            json!({"type":"message_delta","delta":{},"usage":{"output_tokens":1,"cost":0.125}}),
+            message_delta(json!(reason), costed_end()),
+        ];
+        assert_eq!(
+            adversary_w30b_costs_shown_after_each(&after_an_earlier_report).await,
+            [0, 0, 3],
+            "`{reason}` after a delta that named no reason"
+        );
+    }
 }

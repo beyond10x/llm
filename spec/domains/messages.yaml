@@ -236,7 +236,13 @@ commands:
   # (`transport`) permit another identical attempt only when no payload but `message_start` and
   # `ping` came before them; after any other payload, including a content block that opens
   # without showing anything, they are final. Every other error type is final,
-  # `rate_limit_error` included. Retriability is held by the crate's tests
+  # `rate_limit_error` included. A turn that stops without content (no item decoded) for a reason
+  # the projection does not model is a failure with accepted dispatch, its final usage and a fixed
+  # diagnostic that carries no byte of the reason
+  # (story:messages-empty-turn-with-an-unmodelled-stop-reason): `too-large` for
+  # `model_context_window_exceeded` and `refused` for `refusal`, both final, and `unavailable`
+  # for every other such reason, which permits another attempt because nothing answered. With
+  # content the same reasons are an incomplete turn. Retriability is held by the crate's tests
   # (`crates/llm-messages/tests/retry_class.rs`); this view does not carry it.
   - name: llm.messages.DecodeStream
     input:

@@ -473,6 +473,33 @@ attempt has started answering, and a second attempt would bill again. The decode
 `crates/llm-messages/src/decode.rs`. The client still makes one attempt; routing retries on the
 same target and falls back in the declared compatible order, as above.
 
+One Messages failure is counted by what the turn holds instead
+(`story:messages-empty-turn-with-an-unmodelled-stop-reason`). A turn that stops without content for
+a reason the projection does not model is `unavailable`, and its terminal `message_delta`, which
+follows no content block, is not output for it: the route produced no content, so the failure is
+marked retriable. `model_context_window_exceeded` and `refusal` without content are `too-large` and
+`refused`, and stay final. After a content block, visible or silent, there is no failure to
+retry: the turn is the incomplete turn it was, and a block left open stays the final `protocol`
+refusal (`crates/llm-messages/tests/streaming.rs::a_block_left_open_before_an_unmodelled_reason_is_still_the_protocol_refusal`).
+The turn that fails this way shows the caller nothing: a `usage-extension` warning the route's
+header or terminal delta would have caused is dropped with the attempt, as the header's is before
+`overloaded_error`, so a route that reports `usage.cost` is retried like any other
+([messages.md](messages.md#what-the-decoder-requires-of-a-stream)). Any other failure after that
+delta is final and shows the held warning first
+(`crates/llm-messages/tests/retry_class.rs::adversary_w30b_an_overload_after_a_delta_without_content_is_final_only_with_its_costs_shown`). The failure carries the
+reported usage as final, because the answer ended.
+`crates/llm-messages/tests/retry_class.rs` holds the other four sentences
+(`a_stop_without_content_for_a_reason_in_no_row_is_retriable_before_output`,
+`a_stop_at_the_context_window_or_as_a_refusal_without_content_is_final`,
+`the_same_stops_after_silent_or_visible_output_are_an_incomplete_turn`,
+`a_stop_without_content_on_a_route_that_reports_a_cost_shows_nothing_and_keeps_its_class`). The
+retry is bounded: a route that answers every attempt that way is asked
+`RetryPolicy::DEFAULT.max_attempts` times and the run ends
+(`crates/llm-models/tests/relayed_failure.rs::a_messages_stop_without_content_for_a_reason_in_no_row_ends_after_the_policys_attempts`).
+This is the rule of a streamed answer. A whole (unstreamed) Bedrock `InvokeModel` answer that
+stops this way keeps its code and its usage and is final, as every failure of a whole answer is
+([bedrock.md](bedrock.md#retry-classes)).
+
 A connection cut mid-stream follows the same count (`story:messages-cut-after-silent-output-is-final`).
 The transport marks a cut retriable: a body that ends inside an event, or fails in transit. Each
 client keeps that mark until its decoder has answered and drops it after, in its stream loop:

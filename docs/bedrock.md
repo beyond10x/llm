@@ -283,12 +283,20 @@ known 0 when the answer leaves it out.
 | HTTP 429 with `x-amzn-errortype: ServiceQuotaExceededException` | `refused`, dispatch `rejected`, final | not applicable |
 | Any other HTTP 429 | `rate-limited`, retriable | not applicable |
 | Any other HTTP error status | the transport's class for the status | not applicable |
-| Any failure while a whole (unstreamed) answer is read | final | not applicable |
+| A streamed `InvokeModel` answer that stops without content for a reason `llm-messages` does not model ([messages.md](messages.md#what-the-decoder-requires-of-a-stream)) | `unavailable`, retriable although its terminal `message_delta` answered: that delta follows no content and the caller was shown nothing, so this one failure after an answer may be retried. `too-large` for `model_context_window_exceeded` and `refused` for `refusal`, both final | not applicable: with content it is an incomplete turn |
+| Any failure while a whole (unstreamed) answer is read or decoded, an `InvokeModel` answer that stops without content included | final | not applicable |
 
 "Answered" means any event after the message header (`messageStart` on Converse,
 `message_start` on InvokeModel), shown to the caller or not. An exception frame has dispatch
 `accepted`. The class is read from `:exception-type` (or `:error-code`) and `x-amzn-errortype`; no
 diagnostic quotes Bedrock's own message.
+
+A streamed `InvokeModel` answer holds a reported `usage.cost` as `llm-messages` does
+([messages.md](messages.md#what-the-decoder-requires-of-a-stream)): a failure after the stream
+answered, other than the stop without content, shows what was held before it is returned
+(`tests/client.rs::an_invoke_stream_that_fails_after_a_held_cost_answered_shows_what_was_held`),
+and the stop without content shows nothing
+(`tests/client.rs::an_invoke_stream_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row`).
 
 ## Example target
 

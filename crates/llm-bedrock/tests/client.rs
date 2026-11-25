@@ -13,7 +13,7 @@ use llm_bedrock::{
 };
 use llm_core::{
     BoxFuture, Cancel, Capabilities, Dispatch, Error, ErrorCode, Id, Item, Model, Protocol,
-    Provenance, StreamEvent, TurnOutcome, TurnRequest, VecSink,
+    Provenance, StopReason, StreamEvent, TurnOutcome, TurnRequest, Usage, VecSink,
 };
 use llm_http::{HttpClient, Limits};
 use serde_json::{Value, json};
@@ -1026,4 +1026,307 @@ fn shows_text(events: &[StreamEvent]) -> bool {
     events
         .iter()
         .any(|event| matches!(event, StreamEvent::TextDelta { .. }))
+}
+
+// ---------------------------------------------------------------------------------------------
+// story:messages-empty-turn-with-an-unmodelled-stop-reason (issue 83) on InvokeModel, whose
+// stream and whole answer both finish through the Messages decoder: a turn that stops without
+// content for a reason that decoder does not model is a classified failure with its final
+// usage. The stream keeps the retriable row; a whole answer is final on every row.
+// ---------------------------------------------------------------------------------------------
+
+/// Each row of the rule (`docs/messages.md`, "What the decoder requires of a stream"): the stop
+/// reason, the code a turn without content fails as, whether another attempt may answer, and the
+/// fixed diagnostic.
+const STOPS_WITHOUT_CONTENT: [(&str, ErrorCode, bool, &str); 4] = [
+    (
+        "model_context_window_exceeded",
+        ErrorCode::TooLarge,
+        false,
+        "the Messages turn stopped at the model context window without content",
+    ),
+    (
+        "refusal",
+        ErrorCode::Refused,
+        false,
+        "the Messages turn was refused without content",
+    ),
+    (
+        "pause_turn",
+        ErrorCode::Unavailable,
+        true,
+        "the Messages turn stopped without content for a reason this projection does not model",
+    ),
+    (
+        "a_reason_in_no_list",
+        ErrorCode::Unavailable,
+        true,
+        "the Messages turn stopped without content for a reason this projection does not model",
+    ),
+];
+
+/// A whole JSON answer of exactly `body`.
+fn whole_answer(body: &[u8]) -> String {
+    format!(
+        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\n\
+         connection: close\r\n\r\n",
+        body.len()
+    )
+}
+
+/// One `InvokeModel` turn, streamed or whole, answered with `head` and `body`: its result and
+/// what the sink was shown.
+async fn invoked(
+    stream: bool,
+    head: String,
+    body: Vec<u8>,
+) -> (Result<TurnOutcome, Error>, Vec<StreamEvent>) {
+    let (origin, server) = serve(head, body).await;
+    let api = Api::AnthropicInvoke;
+    let target = target(api, stream, "us-east-1", model_of(api), origin.as_str());
+    let answered = attempt(&client(target, Keys::new(None))).await;
+    server.await.unwrap();
+    answered
+}
+
+/// Synthetic: a streamed `InvokeModel` answer that opens, carries `content` and stops for
+/// `reason`. Messages usage reports the input and output counts; Bedrock's invocation metrics
+/// add the two cache counters it left out.
+fn invoke_stream(reason: &str, content: &[Value]) -> Vec<u8> {
+    let mut body = opening_on(Api::AnthropicInvoke);
+    for event in content {
+        body.extend(chunk(event));
+    }
+    body.extend(chunk(&json!({"type": "message_delta",
+        "delta": {"stop_reason": reason, "stop_sequence": null},
+        "usage": {"output_tokens": 2}})));
+    body.extend(chunk(&json!({"type": "message_stop",
+        "amazon-bedrock-invocationMetrics": {"inputTokenCount": 1, "outputTokenCount": 2,
+            "cacheReadInputTokenCount": 3, "cacheWriteInputTokenCount": 4}})));
+    body
+}
+
+/// Synthetic: one closed text block.
+fn invoke_text() -> Vec<Value> {
+    vec![
+        json!({"type": "content_block_start", "index": 0,
+            "content_block": {"type": "text", "text": ""}}),
+        json!({"type": "content_block_delta", "index": 0,
+            "delta": {"type": "text_delta", "text": "Partial"}}),
+        json!({"type": "content_block_stop", "index": 0}),
+    ]
+}
+
+/// Synthetic: a whole `InvokeModel` answer with `content` that stops for `reason`.
+fn invoke_message(reason: &str, content: &Value) -> Vec<u8> {
+    json!({"id": "msg_fixture", "type": "message", "role": "assistant",
+        "model": "claude-fixture", "content": content, "stop_reason": reason,
+        "stop_sequence": null,
+        "usage": {"input_tokens": 1, "cache_read_input_tokens": 3,
+            "cache_creation_input_tokens": 4, "output_tokens": 2}})
+    .to_string()
+    .into_bytes()
+}
+
+/// What both fixtures report: one fresh input token, three read and four written, two out.
+fn invoke_usage() -> Usage {
+    Usage {
+        input_tokens: Some(8),
+        output_tokens: Some(2),
+        cached_input_tokens: Some(3),
+        cache_creation_input_tokens: Some(4),
+        reasoning_output_tokens: None,
+    }
+}
+
+fn assert_stop_without_content(
+    error: &Error,
+    wire: &str,
+    (reason, code, retriable, message): (&str, ErrorCode, bool, &str),
+) {
+    assert_eq!(
+        (error.code, error.dispatch, error.refusal),
+        (code, Dispatch::Accepted, None),
+        "{wire} `{reason}`: {error:?}"
+    );
+    assert_eq!(
+        (error.retriable, error.may_retry()),
+        (retriable, retriable),
+        "{wire} `{reason}`: {error:?}"
+    );
+    assert_eq!(error.message, message, "{wire} `{reason}`");
+    let observation = error
+        .observation
+        .as_ref()
+        .unwrap_or_else(|| panic!("{wire} `{reason}`: the failure keeps what was reported"));
+    assert_eq!(observation.usage, Some(invoke_usage()), "{wire} `{reason}`");
+    assert!(observation.final_usage, "{wire} `{reason}`");
+}
+
+#[tokio::test]
+async fn an_invoke_stream_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row() {
+    for row in STOPS_WITHOUT_CONTENT {
+        let (result, events) = invoked(true, streamed(), invoke_stream(row.0, &[])).await;
+        let error = result.expect_err("an answer without content is no answer");
+        assert_stop_without_content(&error, "stream", row);
+        assert_eq!(events, [] as [StreamEvent; 0], "`{}`", row.0);
+    }
+}
+
+/// The whole answer keeps each row's code, text and final usage, and is never retried
+/// (`docs/bedrock.md`, "Retry classes": any failure while a whole answer is read is final).
+#[tokio::test]
+async fn a_whole_invoke_answer_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row()
+ {
+    for row in STOPS_WITHOUT_CONTENT {
+        let body = invoke_message(row.0, &json!([]));
+        let (result, events) = invoked(false, whole_answer(&body), body).await;
+        let error = result.expect_err("an answer without content is no answer");
+        // A whole answer was generated, and billed, before its first byte: every row is final.
+        assert_stop_without_content(&error, "whole", (row.0, row.1, false, row.3));
+        assert_eq!(events, [] as [StreamEvent; 0], "`{}`", row.0);
+    }
+}
+
+/// With a text block the same answers are the incomplete turn under the reason's own name, on
+/// the stream and whole.
+#[tokio::test]
+async fn an_invoke_answer_that_stops_after_content_for_an_unmodelled_reason_is_incomplete() {
+    for (reason, ..) in STOPS_WITHOUT_CONTENT {
+        let whole = invoke_message(reason, &json!([{"type": "text", "text": "Partial"}]));
+        for (wire, answered) in [
+            (
+                "stream",
+                invoked(true, streamed(), invoke_stream(reason, &invoke_text())).await,
+            ),
+            (
+                "whole",
+                invoked(false, whole_answer(&whole), whole.clone()).await,
+            ),
+        ] {
+            let (result, events) = answered;
+            let outcome = result.unwrap_or_else(|error| panic!("{wire} `{reason}`: {error:?}"));
+            assert_eq!(
+                outcome.stop_reason,
+                StopReason::Incomplete {
+                    reason: reason.to_owned()
+                },
+                "{wire}"
+            );
+            assert_eq!(
+                outcome.items,
+                [Item::assistant("Partial")],
+                "{wire} `{reason}`"
+            );
+            assert_eq!(
+                outcome.observation.usage,
+                Some(invoke_usage()),
+                "{wire} `{reason}`"
+            );
+            assert!(shows_text(&events), "{wire} `{reason}`");
+        }
+    }
+}
+
+/// A streamed `InvokeModel` answer holds a reported cost as the Messages wire does. After a
+/// `message_delta` that followed no content the stream has answered, so a failure is final, and
+/// one that is not the stop without content shows what was held before it is returned.
+#[tokio::test]
+async fn an_invoke_stream_that_fails_after_a_held_cost_answered_shows_what_was_held() {
+    let mut held = chunk(&json!({
+        "type": "message_start",
+        "message": {"id": "msg_fixture", "type": "message", "role": "assistant",
+            "content": [], "model": "claude-fixture", "stop_reason": null,
+            "stop_sequence": null,
+            "usage": {"input_tokens": 1, "output_tokens": 0, "cost": {"total": 0.5}}}
+    }));
+    held.extend(chunk(&json!({"type": "message_delta",
+        "delta": {"stop_reason": "pause_turn", "stop_sequence": null},
+        "usage": {"output_tokens": 2, "cost": 0.25}})));
+    let half = chunk(&json!({"type": "message_stop"}));
+    let failures = [
+        ("a cut", cut_short(EVENT_STREAM, &held), held.clone()),
+        (
+            "an exception",
+            streamed(),
+            [held.clone(), exception("throttlingException")].concat(),
+        ),
+        ("a body that ends", streamed(), held.clone()),
+        (
+            "a frame left half read",
+            streamed(),
+            [&held[..], &half[..7]].concat(),
+        ),
+        (
+            "metrics outside the subset",
+            streamed(),
+            [
+                held.clone(),
+                chunk(&json!({"type": "message_stop",
+                    "amazon-bedrock-invocationMetrics": {"undeclared": 1}})),
+            ]
+            .concat(),
+        ),
+    ];
+    for (failure, head, body) in failures {
+        let (error, events, _) = failed_on(Api::AnthropicInvoke, head, body).await;
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "{failure}: {error:?}"
+        );
+        let costs: Vec<&str> = events
+            .iter()
+            .filter_map(|event| match event {
+                StreamEvent::Warning { code, message } if code == "usage-extension" => {
+                    Some(message.as_str())
+                }
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            costs,
+            [
+                "message_start.message.usage.cost: {\"total\":0.5}",
+                "message_delta.usage.cost: 0.25"
+            ],
+            "{failure}: {error:?}"
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). `docs/bedrock.md`, "Retry classes",
+// which the unit did not change, still says: "Any failure while a whole (unstreamed) answer is
+// read | final", and `BedrockClient::whole` gives the reason: "The answer was generated, and
+// billed, before its first byte: a failure reading it is final". The table has no row for a stop
+// without content.
+// ---------------------------------------------------------------------------------------------
+
+/// The retry table of `docs/bedrock.md` read as the specification: a whole answer that stops
+/// without content for a reason with no row of its own reports its billed counters and fails,
+/// and that failure is final like every other failure of an unstreamed answer.
+#[tokio::test]
+async fn adversary_w30_a_whole_invoke_answer_that_stops_without_content_is_final_as_the_retry_table_says()
+ {
+    for reason in ["pause_turn", "a_reason_in_no_list"] {
+        let body = invoke_message(reason, &json!([]));
+        let (result, _) = invoked(false, whole_answer(&body), body).await;
+        let error = result.expect_err("an answer without content is no answer");
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Unavailable, Dispatch::Accepted),
+            "`{reason}`"
+        );
+        let billed = error
+            .observation
+            .as_ref()
+            .and_then(|observation| observation.usage.clone());
+        assert_eq!(billed, Some(invoke_usage()), "`{reason}`");
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "`{reason}`: a whole answer was generated and billed before its first byte, and \
+             the retry table makes every failure of one final: {error:?}"
+        );
+    }
 }
