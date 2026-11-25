@@ -71,6 +71,7 @@ enum Cmd {
     /// stored one under `target/ess`, the one on `PATH` when it reports the pinned version, or
     /// the release fetched into the store. Any other `ess` is refused and nothing is run. Every
     /// argument after `ess` goes to it as written, `--help`, `--version` and `--` among them.
+    #[command(disable_help_flag = true)]
     Ess {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         arguments: Vec<OsString>,

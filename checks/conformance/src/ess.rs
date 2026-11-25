@@ -243,9 +243,10 @@ fn download(url: &str, file: &Path) -> Result<(), String> {
 /// when the fetch returns, whatever it returns; only an unpacked release whose asset has the
 /// pinned digest and whose `ess` reports the pinned version is moved to its place. A run that
 /// a signal ends during the fetch does not return and leaves its `.fetch-*` directory. No run
-/// reads a `.fetch-*` directory as stored or starts anything in one, and no fetch removes
-/// another's, so two runs may fetch into one store at once. Removing the store is safe: the next
-/// run fetches again.
+/// reads a `.fetch-*` directory as stored, and no run starts anything in a `.fetch-*` directory
+/// another run left: a fetch starts the `ess` it unpacked into its own, to ask its version, and
+/// that one only. No fetch removes another's, so two runs may fetch into one store at once.
+/// Removing the store is safe: the next run fetches again.
 fn fetch(pin: &Pin, host: &Host) -> Result<PathBuf, String> {
     let directory = pin.directory();
     let asset = format!("{directory}.tar.gz");
@@ -348,9 +349,9 @@ pub fn resolve(pin: &Pin, host: &Host) -> Result<PathBuf, Refusal> {
                 Err(why) => tried.push(format!("fetch: {why}")),
             }
         } else if fs::symlink_metadata(&stored).is_err() {
-            // A fetch moves a whole release to its place and never into something that is
-            // there: what is there without an `ess` is not a fetch's, and nothing is downloaded
-            // only to find that the move fails.
+            // A fetch moves a whole release to its place, so what is there without an `ess` is
+            // not a fetch's. The move would take the place of an empty directory and fail on
+            // anything else, both after the download; it is refused before one and stays.
             tried.push(format!(
                 "fetch: {}: is there and holds no `ess`; remove it and the release is fetched again",
                 place.display()
@@ -1184,6 +1185,58 @@ mod tests {
         assert_eq!(
             fixture.calls(),
             ["path --version", "fetched --version", "fetched --version"]
+        );
+    }
+
+    /// The fetch's own words, and those of `AGENTS.md`: no run starts anything in a `.fetch-*`
+    /// directory another run left. A fetch starts the `ess` of its own `.fetch-*` directory, to
+    /// ask its version, and of no other one that is in the store. The release's `ess` notes the
+    /// place it is started from each time it is started; another run's leftover holds an `ess`
+    /// wherever a release has one.
+    #[test]
+    fn adversary_w32b_a_fetch_starts_only_the_ess_of_its_own_fetch_directory() {
+        let fixture = Fixture::new();
+        fixture.on_path("ess 0.98.0\n");
+        let leftover = fixture.at("store").join(".fetch-left");
+        fixture.stand_in(&leftover.join("ess"), "leftover", "ess 7.8.9\n", 0);
+        fixture.stand_in(
+            &leftover.join(DIRECTORY).join("ess"),
+            "leftover",
+            "ess 7.8.9\n",
+            0,
+        );
+        let noted = fixture.at("started");
+        let digest = adversary_w32_release_that_first_runs(
+            &fixture,
+            &format!("printf '%s\\n' \"$0\" >> '{}'", noted.display()),
+        );
+        fixture.sums(&format!("{digest}  {ASSET}"));
+        let stored = fixture.at("store").join(DIRECTORY).join("ess");
+        assert_eq!(resolve(&pin(&digest), &fixture.host()).ok(), Some(stored));
+        let started = fs::read_to_string(&noted).expect("the release's `ess` was started");
+        let started: Vec<&Path> = started.lines().map(Path::new).collect();
+        let [own] = started[..] else {
+            panic!("the fetch starts the release's `ess` once: {started:?}")
+        };
+        let staging = own
+            .parent()
+            .and_then(Path::parent)
+            .expect("the directory the release was unpacked in");
+        assert_eq!(own, staging.join(DIRECTORY).join("ess"));
+        assert_eq!(staging.parent(), Some(fixture.at("store").as_path()));
+        let name = staging.file_name().expect("a name").to_string_lossy();
+        assert!(
+            name.starts_with(".fetch-") && name != ".fetch-left",
+            "started in the fetch's own `.fetch-*` directory: {name}"
+        );
+        assert!(
+            !staging.exists(),
+            "which the fetch removed when it returned"
+        );
+        assert_eq!(
+            fixture.calls(),
+            ["path --version", "fetched --version"],
+            "nothing of another run's `.fetch-*` directory was started"
         );
     }
 }
