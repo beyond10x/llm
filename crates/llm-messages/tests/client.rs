@@ -719,3 +719,68 @@ async fn a_sink_that_refuses_the_warning_fails_the_turn_with_its_own_error() {
     assert_eq!(error.code, ErrorCode::TooLarge);
     assert_eq!(error.message, "stream sink event bound reached");
 }
+
+/// Adversary, wave 36. A waker that counts how often it was woken.
+struct AdversaryW36Woken(AtomicUsize);
+
+impl std::task::Wake for AdversaryW36Woken {
+    fn wake(self: Arc<Self>) {
+        self.0.fetch_add(1, Ordering::SeqCst);
+    }
+}
+
+/// Adversary, wave 36. The cancel has to wake a turn that is parked in the sink, not only be
+/// seen by a turn somebody polls again. `cancellation_reaches_a_caller_whose_sink_never_accepts`
+/// awaits the turn after the cancel, and that poll is one the caller of a parked turn does not
+/// give: a client that reads the token only when it is polled passes it. Here the turn is polled
+/// with a waker that counts, the cancel follows with no poll between, and the case asserts the
+/// wake before it lets the turn finish. No clock is read.
+#[tokio::test]
+async fn adversary_w36_a_cancel_wakes_a_turn_parked_in_the_sink() {
+    let (listener, url) = listener().await;
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = accept(&listener).await;
+        read_request(&mut socket).await;
+        socket
+            .write_all(
+                b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n",
+            )
+            .await
+            .unwrap();
+        socket.write_all(STREAM).await.unwrap();
+        tokio::time::sleep(Duration::from_secs(30)).await;
+    });
+    let client = client(&url, StaticResolver::new("fixture-key"));
+    let cancel = Cancel::new();
+    let (mut sink, mut offered) = BlockedSink::new();
+    let request = request();
+    let turn = client.turn(&request, &mut sink, &cancel);
+    tokio::pin!(turn);
+    tokio::select! {
+        biased;
+        result = &mut turn => panic!(
+            "the turn ended before its sink was offered an event: {:?}",
+            result.err()
+        ),
+        signal = &mut offered => signal.expect("the sink was offered an event"),
+    }
+    let woken = Arc::new(AdversaryW36Woken(AtomicUsize::new(0)));
+    let waker = std::task::Waker::from(Arc::clone(&woken));
+    let mut context = std::task::Context::from_waker(&waker);
+    assert!(
+        turn.as_mut().poll(&mut context).is_pending(),
+        "the turn is parked in the sink"
+    );
+    let before = woken.0.load(Ordering::SeqCst);
+    cancel.cancel();
+    let after = woken.0.load(Ordering::SeqCst);
+    assert!(
+        after > before,
+        "the cancel did not wake the turn parked in the sink"
+    );
+    let error = turn.await.expect_err("the blocked sink was cancelled");
+    server.abort();
+    assert_eq!(error.code, ErrorCode::Cancelled);
+    assert_eq!(error.dispatch, Dispatch::Accepted);
+    assert!(error.observation.is_some(), "the snapshot is retained");
+}
