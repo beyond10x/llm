@@ -612,3 +612,24 @@ test('a run ended by SIGKILL ends nothing: the ux-browser it started and what th
     }
   }
 });
+
+// Two refusals the documents state: an exit status is `{code, signal}`, so a document without one of the
+// two and one that is no object are not the end of a run; and `UX_BROWSER` is a regular file, so a device
+// is refused as a directory is.
+
+test('an exit document without "signal" or without "code", null, a list, a number and a text are each refused at the deadline', async () => {
+  const dir = join(OUT, 'l1-exit-forms');
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  const files = pageCheckFiles(dir);
+  for (const text of ['{"code":0}\n', '{"signal":null,"error":"spawn ENOENT"}\n', 'null\n', '[]\n', '0\n', '"0"\n']) {
+    writeFileSync(files.exit, text);
+    expect(await pageChecksEnded(files, 0).catch((e: Error) => e.message), text).toBe(
+      `${files.exit}: holds ${JSON.stringify(text)} after 0 ms, which is no exit status; needed is {"code", "signal"} as a run writes it when it ends`,
+    );
+  }
+});
+
+test('UX_BROWSER that names a device is refused: it is no regular file', () => {
+  expect(message(() => uxBrowser({ UX_BROWSER: '/dev/null' }))).toMatch(/^UX_BROWSER is "\/dev\/null", which is no absolute path to a file/);
+});

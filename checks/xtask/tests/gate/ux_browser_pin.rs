@@ -2,7 +2,15 @@
 //! "Install ux-browser" step in `docs-ux.yml`. The conformance runner reads it there to find or
 //! fetch the `ux-browser` the local docs UX gate runs (`checks/conformance/src/ess.rs`), and the
 //! harness in `ux/` reads the version there to compare it with what a run's evidence names. The
-//! step's form, the documents and the places that may start a `ux-browser` are held to it here.
+//! step's form, the documents and the texts that may name a `ux-browser` are held to it here.
+//!
+//! What this file holds of the workflows is what a search of their text holds: the install step
+//! is read whole; no other text of a workflow names a `ux-browser`, a release of it, the uxui
+//! repository or `UX_BROWSER`; no step uses an action of this repository; and in `docs-ux.yml` no
+//! other step names the files a step writes the runner's environment and path to, and nothing
+//! names a shell or a file read before a script. A step that hides the name (a name built from
+//! parts, a script file the step runs, an action of another repository) is not found: what holds
+//! then is the version check of the evidence and the digest the install step checks.
 
 use super::{read, repository};
 use serde_yaml::Value;
@@ -654,9 +662,10 @@ fn names(text: &str, name: &str) -> bool {
     })
 }
 
-/// What a string outside the install step does that the install step alone may: each way to a
-/// `ux-browser` that step did not hand over. It errs on the side of reading too much: a string
-/// that only mentions one of the names is found, and a rewording mends it.
+/// What a string outside the install step names that the install step alone may: a `ux-browser`
+/// to start, a release of it or the uxui repository, the variable `UX_BROWSER`. It errs on the
+/// side of reading too much: a string that only mentions one of the names is found, and a
+/// rewording mends it. A string that builds a name from parts is not found.
 fn foreign(text: &str) -> Vec<&'static str> {
     let lower = text.to_ascii_lowercase();
     let mut found = Vec::new();
@@ -672,28 +681,83 @@ fn foreign(text: &str) -> Vec<&'static str> {
     found
 }
 
-/// The place of every mapping member named `UX_BROWSER` in `value`, at any depth: in an `env` of
-/// the workflow, of a job, of a step or of a container.
-fn members(value: &Value, place: &str, found: &mut Vec<String>) {
+/// The place of every mapping member named `name` in `value`, at any depth: in an `env` of the
+/// workflow, of a job, of a step or of a container.
+fn members(value: &Value, name: &str, place: &str, found: &mut Vec<String>) {
     match value {
         Value::Mapping(entries) => {
             for (key, entry) in entries {
                 let key = key.as_str().unwrap_or("?");
                 let place = format!("{place}.{key}");
-                if key == "UX_BROWSER" {
+                if key == name {
                     found.push(place.clone());
                 }
-                members(entry, &place, found);
+                members(entry, name, &place, found);
             }
         }
         Value::Sequence(items) => {
             for (at, item) in items.iter().enumerate() {
-                members(item, &format!("{place}[{at}]"), found);
+                members(item, name, &format!("{place}[{at}]"), found);
             }
         }
-        Value::Tagged(tagged) => members(&tagged.value, place, found),
+        Value::Tagged(tagged) => members(&tagged.value, name, place, found),
         Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
     }
+}
+
+/// What `docs-ux.yml` may not hold because it runs something before or around a step's script
+/// that this guard does not read: a member `defaults` of the workflow or of a job, which can name
+/// the shell of every `run`, and a member `BASH_ENV` at any depth, a file bash reads first.
+fn shell_wrong(workflow: &Value) -> Vec<String> {
+    let mut found = Vec::new();
+    let mut holders = Vec::new();
+    if workflow.get("defaults").is_some() {
+        holders.push("the workflow".to_owned());
+    }
+    for (job, body) in workflow["jobs"].as_mapping().into_iter().flatten() {
+        if body.get("defaults").is_some() {
+            holders.push(format!("job `{}`", job.as_str().unwrap_or("?")));
+        }
+    }
+    for holder in holders {
+        found.push(format!(
+            "docs-ux.yml: {holder} has a member `defaults`, which can name the shell a script runs in; this guard reads no shell but the runner's own"
+        ));
+    }
+    let mut set = Vec::new();
+    members(workflow, "BASH_ENV", "", &mut set);
+    for place in set {
+        found.push(format!(
+            "docs-ux.yml: `{}` is a member `BASH_ENV`; bash reads the file it names before a script, and this guard does not read that file",
+            place.trim_start_matches('.')
+        ));
+    }
+    found
+}
+
+/// What a step other than the install step does, beside what [`foreign`] finds, that this guard
+/// does not pass: it uses an action of this repository, in any workflow file, or it names
+/// `GITHUB_ENV` or `GITHUB_PATH` in `docs-ux.yml`, the files a step writes the environment and
+/// the path of the steps after it to.
+fn step_wrong(file: &str, place: &str, step: &Value) -> Vec<String> {
+    let mut found = Vec::new();
+    if let Some(action) = step["uses"].as_str().filter(|uses| uses.starts_with("./")) {
+        found.push(format!(
+            "{file}: {place} uses `{action}`, an action of this repository; this guard reads no action file, so the step belongs in the workflow"
+        ));
+    }
+    if file == "docs-ux.yml" {
+        for text in rest(step, &["name"]) {
+            for name in ["GITHUB_ENV", "GITHUB_PATH"] {
+                if names(&text, name) {
+                    found.push(format!(
+                        "{file}: {place} names `{name}`; in this workflow the install step alone writes the runner's environment and path files: {text}"
+                    ));
+                }
+            }
+        }
+    }
+    found
 }
 
 /// Every string of `value` but the ones under its members `left`.
@@ -719,28 +783,37 @@ fn note(found: &mut Vec<String>, file: &str, place: &str, texts: Vec<String>) {
     }
 }
 
-/// How many steps of the workflow `file` have the install step's name, and everything in it that
-/// gets the harness a `ux-browser` the install step did not hand over.
+/// How many steps of the workflow `file` have the install step's name, and everything in its
+/// text outside the install step that names what the install step alone may.
 ///
 /// The install step of job `ux` of `docs-ux.yml` is read by [`pin`]. Everything else is read
 /// here: every string of every other step, of every job and of the workflow outside its jobs,
 /// but a `name`, is found when it names a `ux-browser` to start, a release of it or the uxui
 /// repository, or the variable `UX_BROWSER` ([`foreign`]); a member `UX_BROWSER` is found at any
-/// depth, the install step included ([`members`]). A workflow without a mapping `jobs`, a job
-/// with neither a list `steps` nor a `uses`, and a step that is no mapping are found too: this
-/// guard does not read them, and it does not pass what it does not read.
+/// depth, the install step included ([`members`]); a step that uses an action of this repository
+/// is found, and in `docs-ux.yml` a step that names `GITHUB_ENV` or `GITHUB_PATH`
+/// ([`step_wrong`]), a member `defaults` and a member `BASH_ENV` ([`shell_wrong`]). A workflow
+/// without a mapping `jobs`, a job with neither a list `steps` nor a `uses`, and a step that is
+/// no mapping are found too: this guard does not read them.
+///
+/// A job-level `uses` of a workflow file of this repository is passed: [`steps`] reads that file
+/// as a workflow. What a text search cannot see is not found: a name built from parts, a script
+/// file a step runs, an action of another repository that names none of the above.
 fn steps(file: &str, text: &str) -> (usize, Vec<String>) {
     let workflow: Value =
         serde_yaml::from_str(text).unwrap_or_else(|error| panic!("{file}: {error}"));
     let mut installs = 0;
     let mut found = Vec::new();
     let mut set = Vec::new();
-    members(&workflow, "", &mut set);
+    members(&workflow, "UX_BROWSER", "", &mut set);
     for place in set {
         found.push(format!(
             "{file}: `{}` is a member `UX_BROWSER`; the install step alone hands the binary over, by its line to `GITHUB_ENV`",
             place.trim_start_matches('.')
         ));
+    }
+    if file == "docs-ux.yml" {
+        found.extend(shell_wrong(&workflow));
     }
     let outside = rest(&workflow, &["jobs", "name"]);
     note(&mut found, file, "the workflow outside its jobs", outside);
@@ -784,6 +857,7 @@ fn steps(file: &str, text: &str) -> (usize, Vec<String>) {
             let name = name.unwrap_or("without a name");
             let place = format!("step `{name}` of job `{job}`");
             note(&mut found, file, &place, rest(step, &["name"]));
+            found.extend(step_wrong(file, &place, step));
         }
     }
     found.extend(unread);
@@ -808,9 +882,11 @@ jobs:
     assert_eq!((installs, bare.len()), (1, 1), "{bare:?}");
 }
 
-/// No workflow gets the harness a `ux-browser` the install step did not hand over: nothing but
-/// that step names one to start, a release of it or the variable `UX_BROWSER`, and the UX step
-/// starts the one that step handed it. There is one install step.
+/// The workflows of this repository as [`steps`] reads them: no text but the install step names
+/// a `ux-browser` to start, a release of it, the uxui repository or the variable `UX_BROWSER`, no
+/// step uses an action of this repository, and no other step of `docs-ux.yml` names the runner's
+/// environment or path file. There is one install step. A step that hides the name is not found
+/// here ([`steps`]).
 #[test]
 fn no_workflow_step_starts_a_ux_browser_the_install_step_did_not_hand_over() {
     let directory = repository().join(".github/workflows");
@@ -1000,10 +1076,11 @@ fn another_workflow_file_is_read_as_well_and_a_form_the_guard_does_not_read_is_f
     );
 }
 
-/// The invariant of `AGENTS.md` says that no workflow step starts or fetches a `ux-browser`
-/// of its own, and names this file's guards for it. Three workflows that hand the harness
-/// another binary than the pinned one, each read by the guards as they read `docs-ux.yml`:
-/// [`pin`] for the install step, [`steps`] for every other step.
+/// The invariant of `AGENTS.md` says that no workflow text outside the install step names a
+/// `ux-browser`, a release of it or `UX_BROWSER`, and names this file's guards for it. Three
+/// workflows that hand the harness another binary than the pinned one by name, each read by the
+/// guards as they read `docs-ux.yml`: [`pin`] for the install step, [`steps`] for every other
+/// step.
 #[test]
 fn a_workflow_that_fetches_or_hands_over_another_ux_browser_is_found() {
     let digest = "00000000000000000000000000000000000000000000000000000000000000aa";
@@ -1041,5 +1118,144 @@ fn a_workflow_that_fetches_or_hands_over_another_ux_browser_is_found() {
     assert!(
         missed.is_empty(),
         "neither `pin` nor `steps` finds: {missed:#?}"
+    );
+}
+
+/// A step that uses an action of this repository runs the steps of that action's `action.yml`, a
+/// file no guard of this file opens. The workflow's own text names no `ux-browser`, and the
+/// action can fetch one and hand it over: so the step is found, in every workflow file, and a
+/// job that uses a workflow file of this repository is not, since [`steps`] reads that file.
+#[test]
+fn a_step_that_uses_an_action_of_this_repository_is_found() {
+    let text = format!(
+        "{}      - name: Page checks\n        uses: ./.github/actions/page-checks\n",
+        install_step()
+    );
+    assert_eq!(pin(&text), Ok(("7.8.9".to_owned(), DIGEST.to_owned())));
+    let (installs, found) = steps("docs-ux.yml", &text);
+    assert_eq!(installs, 1);
+    assert!(
+        !found.is_empty(),
+        "`steps` finds nothing in a step that runs `./.github/actions/page-checks`, an action whose steps no guard reads"
+    );
+    assert_eq!(
+        found,
+        vec![
+            "docs-ux.yml: step `Page checks` of job `ux` uses `./.github/actions/page-checks`, an action of this repository; this guard reads no action file, so the step belongs in the workflow"
+                .to_owned()
+        ]
+    );
+    assert_eq!(
+        steps(
+            "gate.yml",
+            "jobs:\n  check:\n    steps:\n      - uses: ./tools/setup\n"
+        ),
+        (
+            0,
+            vec![
+                "gate.yml: step `without a name` of job `check` uses `./tools/setup`, an action of this repository; this guard reads no action file, so the step belongs in the workflow"
+                    .to_owned()
+            ]
+        )
+    );
+    assert_eq!(
+        steps(
+            "gate.yml",
+            "jobs:\n  check:\n    uses: ./.github/workflows/docs-ux.yml\n  other:\n    steps:\n      - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567\n"
+        ),
+        (0, Vec::new())
+    );
+}
+
+/// What `docs-ux.yml` alone is held to, each on a text with what the guard says: a step other
+/// than the install step that names the runner's environment or path file, a member `defaults`
+/// of the workflow or of a job, and a member `BASH_ENV` at each level. Another workflow file
+/// holds the same forms and is passed.
+#[test]
+fn in_docs_ux_another_writer_of_the_runners_files_a_defaults_and_a_bash_env_are_found() {
+    let good = install_step();
+    assert_eq!(steps("docs-ux.yml", &good), (1, Vec::new()));
+    let files =
+        "in this workflow the install step alone writes the runner's environment and path files";
+    let defaults = "has a member `defaults`, which can name the shell a script runs in; this guard reads no shell but the runner's own";
+    let bash = "is a member `BASH_ENV`; bash reads the file it names before a script, and this guard does not read that file";
+    for (text, found) in [
+        (
+            format!("{good}      - name: Append\n        run: cat ux/ci.env >> \"$GITHUB_ENV\"\n"),
+            format!(
+                "docs-ux.yml: step `Append` of job `ux` names `GITHUB_ENV`; {files}: cat ux/ci.env >> \"$GITHUB_ENV\""
+            ),
+        ),
+        (
+            format!(
+                "{good}      - name: A path\n        run: echo \"$PWD/ux/bin\" >> \"${{GITHUB_PATH}}\"\n"
+            ),
+            format!(
+                "docs-ux.yml: step `A path` of job `ux` names `GITHUB_PATH`; {files}: echo \"$PWD/ux/bin\" >> \"${{GITHUB_PATH}}\""
+            ),
+        ),
+        (
+            format!("defaults:\n  run:\n    shell: ux/ci-shell.sh {{0}}\n{good}"),
+            format!("docs-ux.yml: the workflow {defaults}"),
+        ),
+        (
+            good.replace(
+                "  ux:\n",
+                "  ux:\n    defaults:\n      run:\n        shell: ux/ci-shell.sh {0}\n",
+            ),
+            format!("docs-ux.yml: job `ux` {defaults}"),
+        ),
+        (
+            format!("env:\n  BASH_ENV: ux/ci.env\n{good}"),
+            format!("docs-ux.yml: `env.BASH_ENV` {bash}"),
+        ),
+        (
+            good.replace("  ux:\n", "  ux:\n    env:\n      BASH_ENV: ux/ci.env\n"),
+            format!("docs-ux.yml: `jobs.ux.env.BASH_ENV` {bash}"),
+        ),
+        (
+            format!(
+                "{good}      - name: The UX step\n        env:\n          BASH_ENV: ux/ci.env\n        run: npx playwright test\n"
+            ),
+            format!("docs-ux.yml: `jobs.ux.steps[1].env.BASH_ENV` {bash}"),
+        ),
+    ] {
+        assert_eq!(steps("docs-ux.yml", &text), (1, vec![found]), "{text}");
+    }
+    let other = "defaults:\n  run:\n    shell: bash\nenv:\n  BASH_ENV: ci.env\njobs:\n  check:\n    defaults:\n      run:\n        working-directory: ux\n    steps:\n      - run: echo \"$RUNNER_TEMP/bin\" >> \"$GITHUB_PATH\"\n      - run: echo \"A=1\" >> \"$GITHUB_ENV\"\n";
+    assert_eq!(steps("gate.yml", other), (0, Vec::new()));
+}
+
+/// Two reads of [`steps`]: a string of the workflow outside its jobs (a workflow-level `env` that
+/// holds the release address under another name), and the uxui repository written in another
+/// case, which the forge takes as the same repository.
+#[test]
+fn a_release_address_outside_the_jobs_or_in_another_case_is_found() {
+    let good = install_step();
+    assert_eq!(steps("docs-ux.yml", &good), (1, Vec::new()));
+    let release = "names a release of `ux-browser` or the uxui repository";
+    let outside = format!(
+        "env:\n  CHECKS_RELEASE: https://github.com/beyond10x/uxui/releases/download/7.9.0\n{good}"
+    );
+    assert_eq!(
+        steps("docs-ux.yml", &outside),
+        (
+            1,
+            vec![format!(
+                "docs-ux.yml: the workflow outside its jobs {release}: https://github.com/beyond10x/uxui/releases/download/7.9.0"
+            )]
+        )
+    );
+    let cased = format!(
+        "{good}      - name: Another release\n        run: gh release download 7.9.0 --repo Beyond10x/UXUI\n"
+    );
+    assert_eq!(
+        steps("docs-ux.yml", &cased),
+        (
+            1,
+            vec![format!(
+                "docs-ux.yml: step `Another release` of job `ux` {release}: gh release download 7.9.0 --repo Beyond10x/UXUI"
+            )]
+        )
     );
 }
