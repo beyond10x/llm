@@ -25,8 +25,8 @@ use tokio::{
     net::{TcpListener, TcpStream},
 };
 
-const HEAD: &str = include_str!("fixtures/live/codex-text-turn-head.txt");
-const EVENTS: &[u8] = include_bytes!("fixtures/live/codex-text-turn.sse");
+const HEAD: &str = include_str!("../fixtures/live/codex-text-turn-head.txt");
+const EVENTS: &[u8] = include_bytes!("../fixtures/live/codex-text-turn.sse");
 
 const UPSTREAM_MODEL: &str = "gpt-6-astra";
 const RESPONSE_ID: &str = "resp_00000000000000000000000000000000000000000000000001";

@@ -3,7 +3,7 @@
 //! `encode_request` is the one encoder: the client sends what it returns. Each case compares the
 //! bytes a local server received with what `encode_request` returns for the same turn.
 
-mod wire_support;
+use crate::wire_support;
 
 use llm_core::{Cancel, ErrorCode, Item, Model, TurnRequest, VecSink};
 use llm_responses::{Conversation, encode_request, project_request};

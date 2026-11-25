@@ -1,0 +1,47 @@
+//! The integration tests of `llm-responses`, linked as one test binary: one module per test file,
+//! and `wire_support`, the helper the wire-parity modules share.
+
+mod adversary;
+mod adversary2_client;
+mod adversary_client;
+mod adversary_codex_stream;
+mod adversary_pass2;
+mod adversary_toolname;
+mod adversary_toolname_2;
+mod adversary_w07_ingress;
+mod adversary_w07_ingress_pass2;
+mod adversary_w08_fields;
+mod adversary_w09_pass2;
+mod adversary_w09_retry;
+mod adversary_w09_retry_http_quota;
+mod adversary_w09_retry_pass2;
+mod adversary_w09_shown_text;
+mod adversary_w09_tool_result_depth;
+mod adversary_w10_quota_type;
+mod adversary_w10_quota_type_pass2;
+mod adversary_w2026_11_09_block_boundaries;
+mod adversary_w2026_11_09_block_boundaries_pass2;
+mod adversary_w21_metadata;
+mod adversary_w21_unpublished;
+mod adversary_w22_saved_metadata;
+mod adversary_w23_context_length;
+mod adversary_w25_structured_output;
+mod adversary_w27_retry;
+mod adversary_w31_live;
+mod adversary_wave3_opaque;
+mod client;
+mod client_fields;
+mod codex_stream;
+mod conversation_identity;
+mod image_input;
+mod ingress;
+mod live_capture;
+mod live_stream;
+mod projection;
+mod request_bytes;
+mod retry_class;
+mod saved_codex_metadata;
+mod structured_output;
+mod usage_reader;
+mod wire_parity;
+mod wire_support;

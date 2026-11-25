@@ -3,7 +3,7 @@
 //!
 //! A client without a conversation sends neither (`wire_parity.rs`).
 
-mod wire_support;
+use crate::wire_support;
 
 use llm_core::{Cancel, Item, Model, TurnRequest, VecSink};
 use llm_responses::{Conversation, request_headers};

@@ -415,8 +415,8 @@ async fn a_forced_tool_answered_with_another_tool_is_refused() {
 
 /// The server sends a complete answer and keeps the connection open. `client.rs` stops reading
 /// at the first final event "so a server that keeps the connection open after its terminal object
-/// does not hold the turn until the idle limit". No test in `tests/client.rs` holds a connection
-/// open, so the `break` that makes this true is not covered there.
+/// does not hold the turn until the idle limit". No test in `tests/main/client.rs` holds a
+/// connection open, so the `break` that makes this true is not covered there.
 #[tokio::test]
 async fn a_completed_response_on_a_connection_left_open_returns_without_waiting() {
     let (listener, url) = listener().await;

@@ -2,7 +2,7 @@
 //! `controls.output_format` is `text.format` in both directions (`docs/responses.md`,
 //! `docs/design.md` "Structured output").
 
-mod wire_support;
+use crate::wire_support;
 
 use llm_core::{
     Cancel, Dispatch, ErrorCode, Item, Model, OutputFormat, TurnRequest, VecSink, Verbosity,

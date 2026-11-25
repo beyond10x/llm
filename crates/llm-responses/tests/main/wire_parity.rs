@@ -4,7 +4,7 @@
 //! Each case here describes what `spec/domains/responses.yaml` states. They were written before
 //! any change to the crate and pass on its base, so each one names the mutation that turns it red.
 
-mod wire_support;
+use crate::wire_support;
 
 use llm_core::{
     CallId, Cancel, Dispatch, ErrorCode, Item, Model, StopReason, StreamEvent, ToolCall, ToolName,

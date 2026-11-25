@@ -1,7 +1,7 @@
 //! Adversary pass 1, wave 2026-11-04-w25, story:structured-output, Responses wire: the name
 //! bounds on ingress, and a format missing a member is refused rather than read without it.
 
-mod wire_support;
+use crate::wire_support;
 
 use llm_core::{Dispatch, ErrorCode, MAX_OUTPUT_FORMAT_NAME_BYTES};
 use llm_responses::{Binding, ingest_request, project_request};

@@ -4,7 +4,7 @@
 //! The two captured requests are `tests/fixtures/codex/`, described in that directory's
 //! `README.md`. Every other body here is authored.
 
-mod wire_support;
+use crate::wire_support;
 
 use std::collections::BTreeSet;
 

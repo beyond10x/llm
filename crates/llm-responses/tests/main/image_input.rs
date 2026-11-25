@@ -3,7 +3,7 @@
 //! in item order. Ingress reads such parts back into image items; an image anywhere but a user
 //! message stays refused by its path (`docs/responses.md`).
 
-mod wire_support;
+use crate::wire_support;
 
 use llm_core::{
     Cancel, Dispatch, ErrorCode, Id, ImageMediaType, ImageSource, Item, Model, StopReason,

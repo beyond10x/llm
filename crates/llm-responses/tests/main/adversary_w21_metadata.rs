@@ -10,9 +10,9 @@ use llm_core::{ErrorCode, Id, Item, Protocol, Provenance, StopReason, StreamEven
 use llm_responses::{Binding, decode_stream, ingest_request, project_request};
 use serde_json::{Value, json};
 
-const RECORDED: &str = include_str!("fixtures/live/codex-text-turn.sse");
+const RECORDED: &str = include_str!("../fixtures/live/codex-text-turn.sse");
 const SCENARIO: &str = include_str!(
-    "../../../contracts/responses/scenarios/a-metadata-event-is-not-conversation-state.yaml"
+    "../../../../contracts/responses/scenarios/a-metadata-event-is-not-conversation-state.yaml"
 );
 
 fn id(value: &str) -> Id {

@@ -12,7 +12,7 @@ use llm_core::{ErrorCode, Id, Item, Protocol, Provenance, TurnRequest};
 use llm_responses::{Binding, encode_request, project_request};
 use serde_json::{Value, json};
 
-const SAVED: &str = include_str!("fixtures/live/codex-text-turn-saved-0.16.0.json");
+const SAVED: &str = include_str!("../fixtures/live/codex-text-turn-saved-0.16.0.json");
 
 fn id(value: &str) -> Id {
     Id::new(value).expect("fixture identifier")

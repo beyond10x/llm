@@ -8,7 +8,7 @@ use llm_responses::{Binding, UsageReader, decode_stream, read_usage};
 use serde_json::Value;
 
 /// The recorded live Codex text turn (`fixtures/live/README.md`).
-const RECORDED: &[u8] = include_bytes!("fixtures/live/codex-text-turn.sse");
+const RECORDED: &[u8] = include_bytes!("../fixtures/live/codex-text-turn.sse");
 
 /// A Responses answer that was not streamed: the response object itself.
 const BODY: &str = r#"{"id":"resp_1","object":"response","status":"completed","model":"gpt-5.1-2025-11-13",
