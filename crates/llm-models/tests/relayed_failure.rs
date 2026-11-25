@@ -113,6 +113,20 @@ async fn read_request(socket: &mut TcpStream) {
 /// Answers every request with the gateway's 502, with or without the do-not-retry signal, and
 /// counts the requests.
 async fn gateway(signal: bool) -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
+    let signal = if signal {
+        "x-should-retry: false\r\n"
+    } else {
+        ""
+    };
+    answering(format!(
+        "HTTP/1.1 502 Bad Gateway\r\ncontent-type: application/json\r\n{signal}content-length: {}\r\nconnection: close\r\n\r\n{GATEWAY_BODY}",
+        GATEWAY_BODY.len()
+    ))
+    .await
+}
+
+/// Answers every request with `answer`, head and body, closes, and counts the requests.
+async fn answering(answer: String) -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0")
         .await
         .expect("a local port");
@@ -124,15 +138,6 @@ async fn gateway(signal: bool) -> (String, Arc<AtomicUsize>, tokio::task::JoinHa
             let (mut socket, _) = listener.accept().await.expect("an accepted connection");
             read_request(&mut socket).await;
             seen.fetch_add(1, Ordering::SeqCst);
-            let signal = if signal {
-                "x-should-retry: false\r\n"
-            } else {
-                ""
-            };
-            let answer = format!(
-                "HTTP/1.1 502 Bad Gateway\r\ncontent-type: application/json\r\n{signal}content-length: {}\r\nconnection: close\r\n\r\n{GATEWAY_BODY}",
-                GATEWAY_BODY.len()
-            );
             socket
                 .write_all(answer.as_bytes())
                 .await
@@ -145,7 +150,16 @@ async fn gateway(signal: bool) -> (String, Arc<AtomicUsize>, tokio::task::JoinHa
 
 /// One routed turn over `protocol` against the gateway; the run and the requests it saw.
 async fn routed(protocol: &str, signal: bool) -> (FallbackRun, usize) {
-    let (url, requests, server) = gateway(signal).await;
+    let (run, requests, _) = routed_against(protocol, gateway(signal).await).await;
+    (run, requests)
+}
+
+/// One routed turn over `protocol` against `server`; the run, the requests the server saw and
+/// what the caller's sink was shown.
+async fn routed_against(
+    protocol: &str,
+    (url, requests, server): (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>),
+) -> (FallbackRun, usize, VecSink) {
     let catalog = catalog(protocol, &url);
     let http = HttpClient::new(Limits {
         response_headers: Duration::from_secs(20),
@@ -178,7 +192,7 @@ async fn routed(protocol: &str, signal: bool) -> (FallbackRun, usize) {
         .expect("a run");
     // A second attempt would already have been answered: the run awaited it.
     server.abort();
-    (run, requests.load(Ordering::SeqCst))
+    (run, requests.load(Ordering::SeqCst), sink)
 }
 
 #[tokio::test]
@@ -219,6 +233,213 @@ async fn the_same_502_without_the_signal_is_retried_on_its_target() {
         assert!(
             !error.may_retry(),
             "{protocol}: spent retries go up final: {error:?}"
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// story:messages-empty-turn-with-an-unmodelled-stop-reason (issue 83), end to end: a Messages
+// far side whose every answer stops without content. The retry is bounded by the policy that
+// bounds every other retried failure.
+// ---------------------------------------------------------------------------------------------
+
+/// A whole Messages stream answered with status 200: the header with `usage`, no content
+/// block, the stop `reason`, the terminal event.
+fn stop_without_content(reason: &str, usage: &str) -> String {
+    format!(
+        "HTTP/1.1 200 OK\r\ncontent-type: text/event-stream\r\nconnection: close\r\n\r\n\
+event: message_start\n\
+data: {{\"type\":\"message_start\",\"message\":{{\"id\":\"msg_014a\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"example-model-20260201\",\"content\":[],\"usage\":{usage}}}}}\n\n\
+event: message_delta\n\
+data: {{\"type\":\"message_delta\",\"delta\":{{\"stop_reason\":\"{reason}\",\"stop_sequence\":null}},\"usage\":{{\"output_tokens\":1}}}}\n\n\
+event: message_stop\n\
+data: {{\"type\":\"message_stop\"}}\n\n"
+    )
+}
+
+const PLAIN_USAGE: &str = "{\"input_tokens\":11,\"output_tokens\":1}";
+
+/// A reason in no row is the far side's failure to answer: asked again on its target until the
+/// retry policy is spent, then final. Four requests under the default policy, and no more.
+#[tokio::test]
+async fn a_messages_stop_without_content_for_a_reason_in_no_row_ends_after_the_policys_attempts() {
+    let attempts = usize::try_from(RetryPolicy::DEFAULT.max_attempts).expect("a small bound");
+    assert_eq!(attempts, 4);
+    for reason in ["pause_turn", "stop_sequence", "a_reason_in_no_list"] {
+        let server = answering(stop_without_content(reason, PLAIN_USAGE)).await;
+        let (run, requests, _) = routed_against("messages", server).await;
+        assert_eq!(requests, attempts, "`{reason}`");
+        assert_eq!(
+            run.attempts.len(),
+            attempts,
+            "`{reason}`: {:?}",
+            run.attempts
+        );
+        let error = run
+            .result
+            .expect_err("every attempt stopped without content");
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Unavailable, Dispatch::Accepted),
+            "`{reason}`"
+        );
+        assert!(
+            !error.may_retry(),
+            "`{reason}`: spent retries go up final: {error:?}"
+        );
+    }
+}
+
+/// The two reasons with a final row are asked once.
+#[tokio::test]
+async fn a_messages_stop_at_the_context_window_or_as_a_refusal_without_content_is_asked_once() {
+    for (reason, code) in [
+        ("model_context_window_exceeded", ErrorCode::TooLarge),
+        ("refusal", ErrorCode::Refused),
+    ] {
+        let server = answering(stop_without_content(reason, PLAIN_USAGE)).await;
+        let (run, requests, _) = routed_against("messages", server).await;
+        assert_eq!(requests, 1, "`{reason}`: the far side was asked again");
+        assert_eq!(run.attempts.len(), 1, "`{reason}`: {:?}", run.attempts);
+        let error = run.result.expect_err("the turn stopped without content");
+        assert_eq!(
+            (error.code, error.dispatch),
+            (code, Dispatch::Accepted),
+            "`{reason}`"
+        );
+        assert!(!error.may_retry(), "`{reason}`: {error:?}");
+    }
+}
+
+/// A route that reports a cost with its usage is retried the same way: the turn that stops
+/// without content shows the caller no warning, so the run never halts on visible output and
+/// ends after the policy's attempts.
+#[tokio::test]
+async fn a_messages_stop_without_content_on_a_route_that_reports_a_cost_is_retried_the_same_way() {
+    let attempts = usize::try_from(RetryPolicy::DEFAULT.max_attempts).expect("a small bound");
+    let usage = "{\"input_tokens\":11,\"output_tokens\":1,\"cost\":{\"total\":0.5}}";
+    let server = answering(stop_without_content("pause_turn", usage)).await;
+    let (run, requests, sink) = routed_against("messages", server).await;
+    assert_eq!(
+        requests, attempts,
+        "the far side was asked {requests} times"
+    );
+    assert_eq!(run.attempts.len(), attempts, "{:?}", run.attempts);
+    assert_ne!(run.halt, Halt::VisibleOutput);
+    // Routing says each retry; the route's cost is never shown.
+    assert_eq!(sink.events().len(), attempts - 1, "{:?}", sink.events());
+    assert!(
+        sink.events().iter().all(|event| matches!(event,
+            llm_core::StreamEvent::Warning { code, .. } if code == "turn-retried")),
+        "{:?}",
+        sink.events()
+    );
+    let error = run
+        .result
+        .expect_err("every attempt stopped without content");
+    assert_eq!(error.code, ErrorCode::Unavailable);
+    assert!(!error.may_retry(), "{error:?}");
+}
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). The story's acceptance: the failure
+// is returned "with its usage". What that usage is worth is what `llm-cost` makes of the attempt
+// routing recorded, handed over as `llm-calls` hands it (`crates/llm-calls/src/lib.rs`,
+// `attempt_usage`): the finality is transferred from the observation, never inferred
+// (`docs/pricing.md`: "A failed attempt can have final usage").
+// ---------------------------------------------------------------------------------------------
+
+/// Every input counter, so the uncached input is known: 4000 fresh tokens, none cached.
+const ADVERSARY_W30_FULL_USAGE: &str = "{\"input_tokens\":4000,\"cache_read_input_tokens\":0,\"cache_creation_input_tokens\":0,\"output_tokens\":1}";
+
+/// The cost record `llm-cost` writes for the one attempt of a routed turn whose answer stopped
+/// for `reason` without content, priced at 1 per thousand input and 2 per thousand output tokens.
+async fn adversary_w30_cost_of_the_one_attempt(reason: &str) -> llm_cost::Record {
+    use llm_cost::{
+        AccountingInput, Amount, AttemptUsage, Currency, ModelPrice, Observation, PriceBook,
+        PriceDocument, Rate,
+    };
+    let server = answering(stop_without_content(reason, ADVERSARY_W30_FULL_USAGE)).await;
+    let (run, requests, _) = routed_against("messages", server).await;
+    assert_eq!(requests, 1, "`{reason}`");
+    let attempt = run.attempts.first().expect("one attempt");
+    let llm_routing::AttemptResult::Failed {
+        dispatch,
+        observation: Some(observed),
+        ..
+    } = &attempt.result
+    else {
+        panic!("`{reason}`: a failed attempt with its observation: {attempt:?}");
+    };
+    let id = |value: &str| Id::new(value).expect("an identifier");
+    let rate = |amount: &str| {
+        Some(Rate {
+            amount: Amount::parse(amount).expect("an amount"),
+            per_units: 1000,
+        })
+    };
+    let prices = PriceBook::from_document(PriceDocument::new(
+        id("prices-r1"),
+        "fixture price list",
+        1,
+        Currency::new("USD").expect("a currency"),
+        vec![ModelPrice {
+            id: id("price-1"),
+            serving_model_id: attempt.serving_model_id.clone(),
+            binding_revision: attempt.provenance.binding_revision.clone(),
+            upstream_model: id("example-model-20260201"),
+            input: rate("1"),
+            cached_input: rate("1"),
+            cache_creation_input: rate("1"),
+            output: rate("2"),
+        }],
+    ))
+    .expect("a price book");
+    let usage = AttemptUsage {
+        id: id("call-1"),
+        usage_record_id: id("call-1"),
+        request_id: id("call-1"),
+        route_target_id: attempt.target_id.clone(),
+        serving_model_id: attempt.serving_model_id.clone(),
+        price_id: id("price-1"),
+        binding: attempt.provenance.clone(),
+        upstream_model: observed.upstream_model.clone(),
+        billing: attempt.billing_kind,
+        dispatch: *dispatch,
+        failed: true,
+        final_usage: observed.final_usage,
+        usage: observed.usage.clone().expect("the reported counters"),
+    };
+    let report = prices
+        .quote(&AccountingInput::new(vec![Observation::Attempt(usage)]))
+        .expect("a quote");
+    report.records.into_iter().next().expect("one record")
+}
+
+/// A turn that stops at the context window is the turn with the largest input a route bills.
+/// Its stream ended with `message_stop` and reported every counter, so the 4000 input tokens are
+/// priced and the attempt's cost is complete: 4 for the input, 0.002 for the one output token.
+#[tokio::test]
+async fn adversary_w30_a_stop_at_the_context_window_without_content_is_priced_from_its_terminal_counters()
+ {
+    use llm_cost::{Amount, Unit};
+    for reason in ["model_context_window_exceeded", "refusal"] {
+        let record = adversary_w30_cost_of_the_one_attempt(reason).await;
+        let input = record
+            .lines
+            .iter()
+            .find(|line| line.unit == Unit::InputToken)
+            .expect("an input line");
+        assert_eq!(
+            (input.amount, input.unknown),
+            (Some(Amount::parse("4").expect("an amount")), None),
+            "`{reason}`: the 4000 input tokens the route reported and billed: {record:?}"
+        );
+        assert_eq!(
+            record.total.complete_total,
+            Some(Amount::parse("4.002").expect("an amount")),
+            "`{reason}`: every counter was reported before `message_stop`: {record:?}"
         );
     }
 }

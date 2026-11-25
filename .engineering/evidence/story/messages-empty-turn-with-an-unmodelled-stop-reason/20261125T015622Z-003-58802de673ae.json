@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-25T01:56:22Z",
+  "actor": "human:operator",
+  "artifact": "story:messages-empty-turn-with-an-unmodelled-stop-reason",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "llm-conformance check with ess 0.87.0 at 1f8f90b5f: 1075 of 1075 passed, failed 0, skipped 0; the seven scenarios of the rule are among them; llm-messages tests a_stream_that_stops_at_the_context_window_without_content_is_too_large_with_its_usage, a_stream_that_stops_for_an_unlisted_reason_without_content_is_a_retriable_provider_failure_with_its_usage and the_context_window_and_an_unlisted_reason_after_a_text_block_stay_incomplete passed in task test. Acceptance line 4 (issue 83 closed with the release that carries the change) is open until that release",
+    "reference": "contracts/baseline.json"
+  }
+}

@@ -417,16 +417,22 @@ impl BedrockClient {
                 // End of body: a frame left half read is a cut, and `finish` refuses a stream
                 // whose terminal events never arrived.
                 Ok(None) => {
-                    frames
-                        .finish()
-                        .map_err(|error| decoder.cut(error.with_dispatch(Dispatch::Accepted)))?;
+                    if let Err(error) = frames.finish() {
+                        let error = error.with_dispatch(Dispatch::Accepted);
+                        return Err(decoder.cut(error, sink, cancel).await);
+                    }
                     break;
                 }
-                Err(error) => return Err(decoder.cut(error)),
+                Err(error) => return Err(decoder.cut(error, sink, cancel).await),
             };
             for frame in frames.push(&chunk) {
-                let frame =
-                    frame.map_err(|error| decoder.cut(error.with_dispatch(Dispatch::Accepted)))?;
+                let frame = match frame {
+                    Ok(frame) => frame,
+                    Err(error) => {
+                        let error = error.with_dispatch(Dispatch::Accepted);
+                        return Err(decoder.cut(error, sink, cancel).await);
+                    }
+                };
                 decoder
                     .apply(&frame, sink, cancel)
                     .await
@@ -437,7 +443,7 @@ impl BedrockClient {
                 }
             }
         }
-        decoder.finish(request)
+        decoder.finish(request, sink, cancel).await
     }
 
     async fn whole(
@@ -474,7 +480,11 @@ impl BedrockClient {
                 }
             }
         };
-        bounded(deadline, decode, Dispatch::Accepted).await
+        // Decoding it is reading it: a whole answer that fails to decode, a Messages answer that
+        // stopped without content included, is as final as one that failed in transit.
+        bounded(deadline, decode, Dispatch::Accepted)
+            .await
+            .map_err(|error| error.with_retriable(false))
     }
 }
 
@@ -527,14 +537,18 @@ impl Decoder {
     }
 
     /// A body that broke off. Once the turn has answered, shown to the caller or not, it is
-    /// final: another attempt would answer, and bill, again. Before, it keeps its class.
-    fn cut(&self, error: Error) -> Error {
+    /// final: another attempt would answer, and bill, again. Before, it keeps its class. A
+    /// usage extension `InvokeModel`'s decoder still holds is shown ahead of a final cut.
+    async fn cut(&mut self, error: Error, sink: &mut dyn StreamSink, cancel: &Cancel) -> Error {
         let error = if self.has_answered() {
             error.with_retriable(false)
         } else {
             error
         };
-        self.attach(error)
+        match self {
+            Self::Converse(decoder) => decoder.attach(error),
+            Self::Invoke(decoder) => decoder.fail(error, sink, cancel).await,
+        }
     }
 
     async fn apply(
@@ -549,10 +563,15 @@ impl Decoder {
         }
     }
 
-    fn finish(self, request: &TurnRequest) -> Result<TurnOutcome, Error> {
+    async fn finish(
+        self,
+        request: &TurnRequest,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<TurnOutcome, Error> {
         match self {
             Self::Converse(decoder) => decoder.finish(request),
-            Self::Invoke(decoder) => decoder.finish(request),
+            Self::Invoke(decoder) => decoder.end(request, sink, cancel).await,
         }
     }
 }

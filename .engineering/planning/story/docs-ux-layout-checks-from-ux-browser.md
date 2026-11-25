@@ -9,7 +9,18 @@ tags:
 relations:
 - decomposes: epic:contracts
 - serves: vision:portable-model-inference
-revision: 3
+scope:
+- confidence: cited
+  path: .github/workflows/docs-ux.yml
+- confidence: cited
+  path: AGENTS.md
+- confidence: inferred
+  path: CHANGELOG.md
+- confidence: cited
+  path: Taskfile.yml
+- confidence: cited
+  path: ux
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-24T21:59:01Z", actor: "human:operator", revision: 2}
 - {from: "proposed", to: "active", at: "2026-11-24T21:59:02Z", actor: "human:operator", revision: 3}
@@ -54,3 +65,27 @@ Whether a uxui release that carries `ux-browser` exists; this story waits for it
 ## Verification
 
 `task ux-check` on a local build and the "Docs UX gate" job. No network beyond the pinned download.
+
+## Scope
+
+Derived 2026-11-25 by `story-scoper` at `87bc16f16`. Every line is **cited** (read from the story or the tree) or **inferred** (a reading that could be wrong).
+
+- **Primary surface:** `ux/` (the docs UX harness) — cited
+- **Files:** `ux/core/layout.ts` — cited, high: the five checks are removed (story names the file)
+- **Files:** `ux/tests/l2-layout.spec.ts:14` — cited, high: drops the five checks, keeps axe; imports `layout.ts`
+- **Files:** `ux/tests/l1-core.spec.ts:8` — cited, high: the break-tests of `checkAlwaysVisible`, `keyboardWalk`, `measureOverflow` go
+- **Files:** `ux/core/results.ts:5` — cited, high: `toMeasured` takes the five values from ux-browser's output, not from `layout.ts` types
+- **Files:** `ux/cli.ts` (`ratchet()`) — cited, high: the ratchet reads what ux-browser wrote
+- **Files:** `ux/baseline.json` — cited, high: layout-shift values re-measured (lines 494, 570, 646 hold 0.0006, 0.0006, 0.0013)
+- **Files:** `Taskfile.yml:20-48` — cited, high: `ux-install`, `ux-check` gain the pinned download and the ux-browser step
+- **Files:** `.github/workflows/docs-ux.yml` — cited, high: the "Docs UX gate" job installs the pinned binary and runs the step
+- **Files:** `AGENTS.md:173-181` — cited, high: the paragraph that describes the gate and the L2 layout contract
+- **Also likely:** a new pin file under `ux/` (tag and SHA-256) and a new ux-browser checks config under `ux/` — inferred, medium: the story asks for a pin, names no file
+- **Also likely:** `ux/adapter.ts:26,41` and `ux/core/types.ts:36,50` — inferred, medium: `alwaysVisible` and `keyboard` declarations serve only the removed code
+- **Also likely:** `ux/core/round.ts:33-41,142,168` — inferred, medium: reads `overflow.scrollContainers` and the five values from L2 results
+- **Also likely:** `ux/findings/UXF-001.md`, `UXF-002.md`, `UXF-004.md`, `UXF-005.md` line 12 — inferred, low: `regression_asset` names an L2 layout case
+- **Documents:** `CHANGELOG.md` (Unreleased) — inferred, medium
+- **Symbols:** `measureOverflow`, `checkAlwaysVisible`, `keyboardWalk`, `readShift`, `CLS_INIT`, `readyTime` — cited
+- **Confidence:** high — the story names `ux/core/layout.ts`, `task ux-check`, `ux/baseline.json` and the CI job; file names of pin and config are guessed
+- **Would collide with:** any unit touching `ux/`, the `ux-*` tasks or a top-level `vars:` of `Taskfile.yml`, `docs-ux.yml`, the docs paragraph of `AGENTS.md`, `CHANGELOG.md` Unreleased
+- **Safety fact:** `layout.ts` is imported only by `results.ts:5`, `l1-core.spec.ts:8`, `l2-layout.spec.ts:14`, but `round.ts` reads its scroll containers through `PageResult`, and the ratchet compares the key names of `ux/baseline.json` with main's, so both must survive the swap — unproven

@@ -150,8 +150,64 @@ This route has **no `[DONE]` sentinel**: the terminal marker is a `message_stop`
 input is the absence of an answer rather than the end of one, and a truncated stream is refused with
 its last valid snapshot attached. A terminal message that names no stop reason is refused as well;
 absence is not `end_turn`. A reason this projection does not model — `refusal`, `pause_turn`,
-`stop_sequence` — is carried under its own name as an incomplete turn, never flattened into
-completion.
+`stop_sequence`, `model_context_window_exceeded`, a name in no list — is carried under its own name
+as an incomplete turn when the turn has content, never flattened into completion.
+
+**A turn that stops for such a reason without content is a failure, not an answer.** A turn has no
+content when the decoder assembled no item, because the items are all a caller receives: a closed
+block is an item even when its text is empty, a kept event is an item, a `ping` is not.
+
+| Stop reason, no content | Error code | Retried |
+| --- | --- | --- |
+| `model_context_window_exceeded` | `too-large` | never |
+| `refusal` | `refused`, with no `RefusalCause` | never |
+| any other reason not modelled | `unavailable`, marked retriable | before output only |
+
+The row is chosen by the whole name: `REFUSAL`, `refusals` and `model_context_window` are other
+reasons. Each text is fixed and carries no byte of the reason. The failure carries the usage the
+route reported, with dispatch `accepted`, and a counter the route did not report stays unknown. The
+answer ended, so that usage is final (`final_usage` true), as the usage reader reports it for the
+same bytes (`tests/usage_reader.rs`). With no item, the stream held only `message_start`, `ping`,
+`message_delta` and `message_stop`, so the route produced no content and the third row is retried
+as `overloaded_error` is ([design.md](design.md#provider-failures-retried-before-output)).
+
+**A turn that fails by this rule shows the caller nothing**, so a route that reports `usage.cost`
+keeps the third row retriable. A `usage-extension` warning is held while the turn holds no content
+and names no modelled reason, and is dropped with the attempt when the turn ends that way, as the
+header's is before `overloaded_error`. A turn that succeeds loses none: what was held is shown
+before the first content that follows it, at the delta that names `end_turn`, `tool_use` or
+`max_tokens`, or at the terminal event of a stream that names no reason
+(`tests/streaming.rs::a_cost_held_at_the_terminal_delta_is_shown_when_content_follows_it`,
+`a_cost_is_still_shown_when_the_turn_does_not_fail_by_this_rule`). Of the failures, every one
+raised once a payload of a type other than `ping`, `message_start` and `error` was read shows what
+was held before it is returned (a refusal of that payload, a body that ends before `message_stop`,
+`overloaded_error`, and a cut, which the client makes final), and only two drop it: the failure of
+this rule, and any failure before such a payload
+(`tests/streaming.rs::a_failure_after_a_held_cost_answered_shows_what_was_held`,
+`a_refused_delta_shows_the_cost_held_before_it_and_not_its_own` and
+`tests/retry_class.rs::adversary_w30b_a_cut_after_a_delta_without_content_is_final_only_with_its_costs_shown`
+for the first side;
+`tests/streaming.rs::a_stop_without_content_shows_no_usage_extension_and_keeps_its_row` and
+`a_failure_before_the_stream_answered_shows_no_held_cost` for the second). A caller that
+cancelled or a sink that refuses a held warning ends the turn with that failure, and the rest stays
+unshown (`tests/streaming.rs::a_held_cost_the_caller_does_not_take_ends_the_turn_as_that_failure`).
+Held reports count against the content bound: one more than 4096 is refused as
+`too-large`, after the 4096 are shown
+(`tests/streaming.rs::held_usage_extensions_are_bounded_by_the_content_bound`). A caller that
+drives `StreamDecoder` itself reports a cut through `StreamDecoder::fail` and ends with
+`StreamDecoder::end`; `finish` has no sink and shows nothing.
+
+`end_turn` and `max_tokens` without content decode as before, and a block still open at the
+terminal event stays the `protocol` refusal.
+
+A stream, a complete message (`decode_message`) and Bedrock `InvokeModel` finish through one
+function and share the codes, the texts and the final usage (`tests/streaming.rs`,
+`tests/retry_class.rs`, `crates/llm-bedrock/tests/client.rs`). The retry class is the stream's:
+a streamed `InvokeModel` answer keeps the third row retriable, and a whole (unstreamed)
+`InvokeModel` answer is final on every row, like every other failure of a whole answer
+([bedrock.md](bedrock.md#retry-classes)). `decode_message` itself marks the third row as the
+stream does; its one caller under a retry policy in this workspace is that Bedrock path, which
+drops the mark, and `MessagesClient` reads only streams.
 
 The decoder refuses an event whose framed name contradicts its payload type, a `message_start`
 whose message does not announce itself as an assistant message, a second `message_start`, content
@@ -262,9 +318,9 @@ this projection was written against declares the field, so its shape is unknown.
 
 | Where | What happens |
 | --- | --- |
-| `message_start.message.usage` and `message_delta.usage` of a stream (`StreamDecoder`, `decode_stream`) | Admitted as any JSON value. Each non-null `cost` is reported once as `StreamEvent::Warning` with code `usage-extension` (`llm_messages::USAGE_EXTENSION`) and message `<path>: <compact JSON>`, e.g. `message_delta.usage.cost: 0.00042`: the same value, a number as its nearest double in shortest form and an object with its keys sorted, not the same bytes. `null` is absent and reports nothing |
-| `message_start` | Held until the stream answers (the first payload other than `ping` and `message_start`), because a warning is visible output to fallback; a stream that fails before answering drops it and stays as retriable as it was |
-| `message_delta` | Shown with that delta, once the whole delta was accepted |
+| `message_start.message.usage` and `message_delta.usage` of a stream (`StreamDecoder`, `decode_stream`) | Admitted as any JSON value. Each non-null `cost` is reported at most once (once when it is shown, never when it is dropped, the two rows below) as `StreamEvent::Warning` with code `usage-extension` (`llm_messages::USAGE_EXTENSION`) and message `<path>: <compact JSON>`, e.g. `message_delta.usage.cost: 0.00042`: the same value, a number as its nearest double in shortest form and an object with its keys sorted, not the same bytes. `null` is absent and reports nothing |
+| `message_start` | Held, because a warning is visible output to fallback. Shown before the first event of a content block or kept event; with a `message_delta` that follows no content and names `end_turn`, `tool_use` or `max_tokens`; at the `message_stop` of a stream without content that named no reason; and before a failure after the stream answered (the first payload other than `ping` and `message_start`). Dropped with a stream that fails before it answered, and with a turn that stops without content for a reason not modelled ([above](#what-the-decoder-requires-of-a-stream)): both stay as retriable as they were (`tests/usage_extension.rs::a_cost_on_message_start_is_held_until_the_stream_answers`, `a_held_cost_is_dropped_with_a_stream_that_fails_before_answering`) |
+| `message_delta` | Shown with that delta, once the whole delta was accepted, when the turn holds content (a block, open or closed, or a kept event) or the delta names `end_turn`, `tool_use` or `max_tokens`. A delta that follows no content and names another reason, or none, is held, and then shown or dropped as the header's is (`tests/streaming.rs::adversary_w30b_a_delta_after_content_shows_its_cost_with_that_delta`, `adversary_w30b_a_modelled_reason_without_content_shows_the_held_costs_at_its_delta`) |
 | a complete, non-streamed message (`decode_message`, Bedrock's invoke path) | Refused by its path, `Messages field is outside the declared subset: usage.cost`: there is no stream to carry it on, and the neutral outcome has no place for it |
 | a value whose compact JSON exceeds 1 KiB | Refused as `too-large`, `Messages usage extension exceeds its bound: <path>`, rather than copied into a warning |
 
@@ -450,7 +506,10 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
   it: `llm_core::ShownText` decides which messages the stream showed, a streamed block's index is
   fixed, and shown text is final.
 - **Reasons.** `end_turn`, `tool_use`, `max_tokens`, and an `Incomplete` reason under its own name;
-  a reason the decoder would read as another one is refused.
+  a reason the decoder would read as another one is refused. An `Incomplete` answer with no item is
+  refused as `unsupported` and nothing is sent, by `encode_ingress_message` and by `close`: the
+  decoder would read it as a failure
+  (`tests/ingress.rs::an_unfinished_answer_without_content_is_refused_and_nothing_is_sent`).
 - **Usage.** Only reported counters, in `message_delta`; an unknown counter is left out, never zero.
   Fresh input is sent only when the total and both cache counters are known, never derived from a
   part.

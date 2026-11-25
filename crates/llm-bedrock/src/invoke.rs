@@ -179,11 +179,35 @@ impl StreamDecoder {
         self.inner.attach(error)
     }
 
+    /// A failure the Messages decoder did not raise (a cut, an exception frame, a refused
+    /// envelope), with its evidence. Once the stream has answered, the usage extensions that
+    /// decoder still holds are shown before it ([`llm_messages::StreamDecoder::fail`]).
+    pub(crate) async fn fail(
+        &mut self,
+        error: Error,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Error {
+        self.inner.fail(error, sink, cancel).await
+    }
+
     /// Apply one event-stream frame, emitting the neutral deltas a caller watches.
     ///
     /// An exception frame ends the turn with the class [`errors::exception`] gives it, retriable
     /// only while nothing has answered.
     pub(crate) async fn apply(
+        &mut self,
+        message: &Message,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<(), Error> {
+        match self.read(message, sink, cancel).await {
+            Ok(()) => Ok(()),
+            Err(error) => Err(self.fail(error, sink, cancel).await),
+        }
+    }
+
+    async fn read(
         &mut self,
         message: &Message,
         sink: &mut dyn StreamSink,
@@ -287,12 +311,19 @@ impl StreamDecoder {
         }
     }
 
-    /// The terminal outcome.
+    /// The terminal outcome, after the usage extensions still held by a stream that answered
+    /// and then ended before its terminal event were shown
+    /// ([`llm_messages::StreamDecoder::end`]).
     ///
     /// # Errors
     /// Refuses a stream that never reached its terminal event, retaining the last snapshot.
-    pub(crate) fn finish(self, request: &TurnRequest) -> Result<TurnOutcome, Error> {
-        self.inner.finish(request)
+    pub(crate) async fn end(
+        self,
+        request: &TurnRequest,
+        sink: &mut dyn StreamSink,
+        cancel: &Cancel,
+    ) -> Result<TurnOutcome, Error> {
+        self.inner.end(request, sink, cancel).await
     }
 }
 
@@ -508,7 +539,8 @@ mod tests {
             return (Err(decoder.attach(error)), sink);
         }
         assert!(decoder.is_complete());
-        (decoder.finish(&request()), sink)
+        let outcome = decoder.end(&request(), &mut sink, &cancel).await;
+        (outcome, sink)
     }
 
     fn frame(headers: &[(&str, &str)], payload: Vec<u8>) -> Message {
