@@ -48,7 +48,7 @@ each wave holds one story.
 | Wave | Story | Objective (the coordinator's reading) | Makes true | State |
 | --- | --- | --- | --- | --- |
 | 4 | `story:messages-empty-turn-with-an-unmodelled-stop-reason` | O6 | a Messages turn that stops for an unmodelled reason without content is an error a caller can classify, with its usage; issue 83 closes with the release | delivered: [wave-2026-11-25-messages-empty-turn](wave-2026-11-25-messages-empty-turn.md) |
-| 5 | `story:classifier-takes-only-a-whole-answer` | O6 | the JSON-schema classifier decides only on a whole answer, read by the judge's reader | planned |
+| 5 | `story:classifier-takes-only-a-whole-answer` | O6 | the JSON-schema classifier decides only on a whole answer, read by the judge's reader | open: [wave-2026-11-25-classifier-whole-answer](wave-2026-11-25-classifier-whole-answer.md) |
 | 6 | `story:ess-pin-current-and-local-gate-finds-it` | O3 | the ESS pin is the current release and the local conformance step runs the pinned `ess` or refuses another | planned |
 | 7 | `story:docs-ux-layout-checks-from-ux-browser` | O3 | the docs UX gate takes its five layout checks from a pinned `ux-browser` release | planned; starts when the uxui repository's release tag that carries `ux-browser` is verified |
 
@@ -58,8 +58,9 @@ stories that add scenarios, so the suite and the 314 schema files are regenerate
 `ess`; the docs UX story last, because it waits on another repository's release. No `depends_on` is
 crossed. `story:anthropic-access` stays out of the plan under its credential blocker.
 
-Open before wave 5: a repeated key in a forced tool call's arguments is not visible to `llm-decide`
-(the three protocol decoders keep the last value). Open before wave 7: the patch offered by the
+Settled at the opening of wave 5: a repeated key in a forced tool call's arguments is not visible to
+`llm-decide` (the three protocol decoders keep the last value) and is the draft
+`story:tool-arguments-with-a-repeated-key`. Open before wave 7: the patch offered by the
 uxui repository leaves `ux/baseline.json` and `ux/core/layout.ts` as they are and commits no
 planted-defect test; the story asks for all three.
 
@@ -100,3 +101,8 @@ Filed by wave 4 and still drafts:
   copy of the reason mapping and still decodes such a turn as a success.
 - `story:messages-cancellation-case-waits-on-a-signal`: one case of `llm-messages` cancels after a
   fixed 100 ms and failed once of 42 runs under load.
+
+Filed at the opening of wave 5 and still a draft:
+
+- `story:tool-arguments-with-a-repeated-key`: tool-call arguments that give a key twice reach a
+  caller with the last value chosen.
