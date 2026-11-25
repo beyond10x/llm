@@ -51,7 +51,7 @@ each wave holds one story.
 | 5 | `story:classifier-takes-only-a-whole-answer` | O6 | the JSON-schema classifier decides only on a whole answer, read by the judge's reader | delivered: [wave-2026-11-25-classifier-whole-answer](wave-2026-11-25-classifier-whole-answer.md) |
 | 6 | `story:ess-pin-current-and-local-gate-finds-it` | O3 | the ESS pin is the current release and the local conformance step runs the pinned `ess` or refuses another | delivered: [wave-2026-11-25-ess-pin](wave-2026-11-25-ess-pin.md) |
 | 7 | `story:docs-ux-layout-checks-from-ux-browser` | O3 | the docs UX gate takes its five layout checks from a pinned `ux-browser` release | planned; the uxui repository published release 0.8.1 with `ux-browser` on 2026-11-25 |
-| 8 | `story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason` | O6 | a Bedrock Converse turn that stops for an unmodelled reason without content is an error a caller can classify, with its usage | planned; accepted on 2026-11-25 (`approval-record:backlog-2026-11-25-bedrock-converse-accepted`) |
+| 8 | `story:bedrock-converse-empty-turn-with-an-unmodelled-stop-reason` | O6 | a Bedrock Converse turn that stops for an unmodelled reason without content is an error a caller can classify, with its usage | open: [wave-2026-11-25-converse-empty-turn](wave-2026-11-25-converse-empty-turn.md) |
 
 The verb's order was the docs UX story, the classifier, the ESS pin, the Messages story. The order
 above is the coordinator's: issue 83 first, because a caller reported it; the ESS pin after the two
