@@ -80,7 +80,7 @@ later wave holds one story.
 | --- | --- | --- | --- | --- |
 | 9 | `story:llm-decide-tests-read-no-clock-and-build-one-binary`, `story:messages-cancellation-case-waits-on-a-signal` | none: the organisation's test rule | no test of `llm-decide` reads the clock and the crate links one integration-test binary; the cancellation case of `llm-messages` waits on a signal and holds no `sleep` | open: [wave-2026-11-25-tests-without-a-clock](wave-2026-11-25-tests-without-a-clock.md) |
 | 10 | `story:test-binaries-one-per-crate` | none: the organisation's test rule | every crate with integration tests links one test binary, with the same number of tests | open: [wave-2026-11-25-one-test-binary](wave-2026-11-25-one-test-binary.md) |
-| 11 | `story:replay-stops-at-the-last-case-have-scenarios` | O6 | two scenarios hold the stop of a replay at its last case; the conformance floor is 1092 | planned |
+| 11 | `story:replay-stops-at-the-last-case-have-scenarios` | O6 | two scenarios hold the stop of a replay at its last case; the conformance floor is 1092 | open: [wave-2026-11-25-replay-last-case-scenarios](wave-2026-11-25-replay-last-case-scenarios.md) |
 | 12 | `story:tool-arguments-with-a-repeated-key` | O6 | tool-call arguments that give a key twice are a protocol error on every wire, and the classifier abstains on them | planned |
 | 13 | `story:responses-carries-refusal-text` | O3 | a Responses answer, request and ingress carry refusal text as its own item, and selection admits a Responses target for it | planned |
 | 14 | `story:cli-route-explain` | O1 | `llm route explain <route>` prints each target with its rejection names and the chosen target, without a network call | planned |
