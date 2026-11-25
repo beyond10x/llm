@@ -6,6 +6,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-11-25
+
 ### Changed
 
 - ESS 0.99.1 (was 0.87.0) in CI and `llm-conformance`; the suite is byte-identical, 314 schema files lose `source_digest`
@@ -708,7 +710,8 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 - `b10x-llm-cost`: the spending ledger's directory synchronization compiles only on Unix
 - Bound inference observations and partial usage costs are preserved
 
-[Unreleased]: https://github.com/beyond10x/llm/compare/0.31.0...HEAD
+[Unreleased]: https://github.com/beyond10x/llm/compare/0.32.0...HEAD
+[0.32.0]: https://github.com/beyond10x/llm/compare/0.31.0...0.32.0
 [0.31.0]: https://github.com/beyond10x/llm/compare/0.30.0...0.31.0
 [0.30.0]: https://github.com/beyond10x/llm/compare/0.29.0...0.30.0
 [0.29.0]: https://github.com/beyond10x/llm/compare/0.28.0...0.29.0
