@@ -311,18 +311,135 @@ async fn a_messages_stop_at_the_context_window_or_as_a_refusal_without_content_i
     }
 }
 
-/// Once the caller was shown anything, here the usage extension the terminal delta released,
-/// the same stop is asked once: the run halts on visible output.
+/// A route that reports a cost with its usage is retried the same way: the turn that stops
+/// without content shows the caller no warning, so the run never halts on visible output and
+/// ends after the policy's attempts.
 #[tokio::test]
-async fn a_messages_stop_without_content_after_a_shown_usage_extension_is_asked_once() {
+async fn a_messages_stop_without_content_on_a_route_that_reports_a_cost_is_retried_the_same_way() {
+    let attempts = usize::try_from(RetryPolicy::DEFAULT.max_attempts).expect("a small bound");
     let usage = "{\"input_tokens\":11,\"output_tokens\":1,\"cost\":{\"total\":0.5}}";
     let server = answering(stop_without_content("pause_turn", usage)).await;
     let (run, requests, sink) = routed_against("messages", server).await;
-    assert_eq!(requests, 1, "the far side was asked again");
-    assert_eq!(run.attempts.len(), 1, "{:?}", run.attempts);
-    assert_eq!(run.halt, Halt::VisibleOutput);
-    assert_eq!(sink.events().len(), 1, "{:?}", sink.events());
-    let error = run.result.expect_err("the turn stopped without content");
+    assert_eq!(
+        requests, attempts,
+        "the far side was asked {requests} times"
+    );
+    assert_eq!(run.attempts.len(), attempts, "{:?}", run.attempts);
+    assert_ne!(run.halt, Halt::VisibleOutput);
+    // Routing says each retry; the route's cost is never shown.
+    assert_eq!(sink.events().len(), attempts - 1, "{:?}", sink.events());
+    assert!(
+        sink.events().iter().all(|event| matches!(event,
+            llm_core::StreamEvent::Warning { code, .. } if code == "turn-retried")),
+        "{:?}",
+        sink.events()
+    );
+    let error = run
+        .result
+        .expect_err("every attempt stopped without content");
     assert_eq!(error.code, ErrorCode::Unavailable);
     assert!(!error.may_retry(), "{error:?}");
+}
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). The story's acceptance: the failure
+// is returned "with its usage". What that usage is worth is what `llm-cost` makes of the attempt
+// routing recorded, handed over as `llm-calls` hands it (`crates/llm-calls/src/lib.rs`,
+// `attempt_usage`): the finality is transferred from the observation, never inferred
+// (`docs/pricing.md`: "A failed attempt can have final usage").
+// ---------------------------------------------------------------------------------------------
+
+/// Every input counter, so the uncached input is known: 4000 fresh tokens, none cached.
+const ADVERSARY_W30_FULL_USAGE: &str = "{\"input_tokens\":4000,\"cache_read_input_tokens\":0,\"cache_creation_input_tokens\":0,\"output_tokens\":1}";
+
+/// The cost record `llm-cost` writes for the one attempt of a routed turn whose answer stopped
+/// for `reason` without content, priced at 1 per thousand input and 2 per thousand output tokens.
+async fn adversary_w30_cost_of_the_one_attempt(reason: &str) -> llm_cost::Record {
+    use llm_cost::{
+        AccountingInput, Amount, AttemptUsage, Currency, ModelPrice, Observation, PriceBook,
+        PriceDocument, Rate,
+    };
+    let server = answering(stop_without_content(reason, ADVERSARY_W30_FULL_USAGE)).await;
+    let (run, requests, _) = routed_against("messages", server).await;
+    assert_eq!(requests, 1, "`{reason}`");
+    let attempt = run.attempts.first().expect("one attempt");
+    let llm_routing::AttemptResult::Failed {
+        dispatch,
+        observation: Some(observed),
+        ..
+    } = &attempt.result
+    else {
+        panic!("`{reason}`: a failed attempt with its observation: {attempt:?}");
+    };
+    let id = |value: &str| Id::new(value).expect("an identifier");
+    let rate = |amount: &str| {
+        Some(Rate {
+            amount: Amount::parse(amount).expect("an amount"),
+            per_units: 1000,
+        })
+    };
+    let prices = PriceBook::from_document(PriceDocument::new(
+        id("prices-r1"),
+        "fixture price list",
+        1,
+        Currency::new("USD").expect("a currency"),
+        vec![ModelPrice {
+            id: id("price-1"),
+            serving_model_id: attempt.serving_model_id.clone(),
+            binding_revision: attempt.provenance.binding_revision.clone(),
+            upstream_model: id("example-model-20260201"),
+            input: rate("1"),
+            cached_input: rate("1"),
+            cache_creation_input: rate("1"),
+            output: rate("2"),
+        }],
+    ))
+    .expect("a price book");
+    let usage = AttemptUsage {
+        id: id("call-1"),
+        usage_record_id: id("call-1"),
+        request_id: id("call-1"),
+        route_target_id: attempt.target_id.clone(),
+        serving_model_id: attempt.serving_model_id.clone(),
+        price_id: id("price-1"),
+        binding: attempt.provenance.clone(),
+        upstream_model: observed.upstream_model.clone(),
+        billing: attempt.billing_kind,
+        dispatch: *dispatch,
+        failed: true,
+        final_usage: observed.final_usage,
+        usage: observed.usage.clone().expect("the reported counters"),
+    };
+    let report = prices
+        .quote(&AccountingInput::new(vec![Observation::Attempt(usage)]))
+        .expect("a quote");
+    report.records.into_iter().next().expect("one record")
+}
+
+/// A turn that stops at the context window is the turn with the largest input a route bills.
+/// Its stream ended with `message_stop` and reported every counter, so the 4000 input tokens are
+/// priced and the attempt's cost is complete: 4 for the input, 0.002 for the one output token.
+#[tokio::test]
+async fn adversary_w30_a_stop_at_the_context_window_without_content_is_priced_from_its_terminal_counters()
+ {
+    use llm_cost::{Amount, Unit};
+    for reason in ["model_context_window_exceeded", "refusal"] {
+        let record = adversary_w30_cost_of_the_one_attempt(reason).await;
+        let input = record
+            .lines
+            .iter()
+            .find(|line| line.unit == Unit::InputToken)
+            .expect("an input line");
+        assert_eq!(
+            (input.amount, input.unknown),
+            (Some(Amount::parse("4").expect("an amount")), None),
+            "`{reason}`: the 4000 input tokens the route reported and billed: {record:?}"
+        );
+        assert_eq!(
+            record.total.complete_total,
+            Some(Amount::parse("4.002").expect("an amount")),
+            "`{reason}`: every counter was reported before `message_stop`: {record:?}"
+        );
+    }
 }

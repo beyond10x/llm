@@ -1031,7 +1031,8 @@ fn shows_text(events: &[StreamEvent]) -> bool {
 // ---------------------------------------------------------------------------------------------
 // story:messages-empty-turn-with-an-unmodelled-stop-reason (issue 83) on InvokeModel, whose
 // stream and whole answer both finish through the Messages decoder: a turn that stops without
-// content for a reason that decoder does not model is a classified failure with its usage.
+// content for a reason that decoder does not model is a classified failure with its final
+// usage. The stream keeps the retriable row; a whole answer is final on every row.
 // ---------------------------------------------------------------------------------------------
 
 /// Each row of the rule (`docs/messages.md`, "What the decoder requires of a stream"): the stop
@@ -1159,7 +1160,7 @@ fn assert_stop_without_content(
         .as_ref()
         .unwrap_or_else(|| panic!("{wire} `{reason}`: the failure keeps what was reported"));
     assert_eq!(observation.usage, Some(invoke_usage()), "{wire} `{reason}`");
-    assert!(!observation.final_usage, "{wire} `{reason}`");
+    assert!(observation.final_usage, "{wire} `{reason}`");
 }
 
 #[tokio::test]
@@ -1172,6 +1173,8 @@ async fn an_invoke_stream_that_stops_without_content_for_an_unmodelled_reason_fa
     }
 }
 
+/// The whole answer keeps each row's code, text and final usage, and is never retried
+/// (`docs/bedrock.md`, "Retry classes": any failure while a whole answer is read is final).
 #[tokio::test]
 async fn a_whole_invoke_answer_that_stops_without_content_for_an_unmodelled_reason_fails_as_its_row()
  {
@@ -1179,7 +1182,8 @@ async fn a_whole_invoke_answer_that_stops_without_content_for_an_unmodelled_reas
         let body = invoke_message(row.0, &json!([]));
         let (result, events) = invoked(false, whole_answer(&body), body).await;
         let error = result.expect_err("an answer without content is no answer");
-        assert_stop_without_content(&error, "whole", row);
+        // A whole answer was generated, and billed, before its first byte: every row is final.
+        assert_stop_without_content(&error, "whole", (row.0, row.1, false, row.3));
         assert_eq!(events, [] as [StreamEvent; 0], "`{}`", row.0);
     }
 }
@@ -1221,5 +1225,42 @@ async fn an_invoke_answer_that_stops_after_content_for_an_unmodelled_reason_is_i
             );
             assert!(shows_text(&events), "{wire} `{reason}`");
         }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). `docs/bedrock.md`, "Retry classes",
+// which the unit did not change, still says: "Any failure while a whole (unstreamed) answer is
+// read | final", and `BedrockClient::whole` gives the reason: "The answer was generated, and
+// billed, before its first byte: a failure reading it is final". The table has no row for a stop
+// without content.
+// ---------------------------------------------------------------------------------------------
+
+/// The retry table of `docs/bedrock.md` read as the specification: a whole answer that stops
+/// without content for a reason with no row of its own reports its billed counters and fails,
+/// and that failure is final like every other failure of an unstreamed answer.
+#[tokio::test]
+async fn adversary_w30_a_whole_invoke_answer_that_stops_without_content_is_final_as_the_retry_table_says()
+ {
+    for reason in ["pause_turn", "a_reason_in_no_list"] {
+        let body = invoke_message(reason, &json!([]));
+        let (result, _) = invoked(false, whole_answer(&body), body).await;
+        let error = result.expect_err("an answer without content is no answer");
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Unavailable, Dispatch::Accepted),
+            "`{reason}`"
+        );
+        let billed = error
+            .observation
+            .as_ref()
+            .and_then(|observation| observation.usage.clone());
+        assert_eq!(billed, Some(invoke_usage()), "`{reason}`");
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "`{reason}`: a whole answer was generated and billed before its first byte, and \
+             the retry table makes every failure of one final: {error:?}"
+        );
     }
 }

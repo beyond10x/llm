@@ -173,7 +173,10 @@ impl Header {
         if let StopReason::Incomplete { reason } = &stop_reason
             && items.is_empty()
         {
-            return Err(stopped_without_content(reason));
+            // The answer ended, so the counters are as final as an outcome's would be.
+            return Err(stopped_without_content(reason)
+                .with_dispatch(Dispatch::Accepted)
+                .with_observation(self.observation(target, true)));
         }
         let outcome = TurnOutcome {
             stop_reason,
@@ -190,8 +193,8 @@ impl Header {
 /// on what the decoder requires of a stream). The text is fixed and carries no byte of the reason.
 ///
 /// A reason with no row of its own is the route's failure to answer, marked retriable: no item
-/// means no content block closed and no event was kept, so nothing answered the turn. A stream
-/// that showed the caller a usage extension drops the mark ([`StreamDecoder::finish`]).
+/// means no content block closed and no event was kept, so nothing answered the turn, and the
+/// stream showed the caller nothing ([`StreamDecoder::may_stop_without_content`]).
 fn stopped_without_content(reason: &str) -> Error {
     match reason {
         "model_context_window_exceeded" => Error::too_large(
@@ -301,12 +304,7 @@ pub const USAGE_EXTENSION: &str = "usage-extension";
 /// retry eligibility for a stream error after it.
 const LIFECYCLE_EVENTS: [&str; 2] = ["ping", "message_start"];
 
-/// What a stream that decodes to no item has shown the caller.
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Warned {
-    Nothing,
-    UsageExtension,
-}
+const CONTENT_BOUND: &str = "Messages content exceeds its bound";
 
 /// Accumulates one Messages event stream into a bound neutral outcome.
 ///
@@ -329,16 +327,15 @@ pub struct StreamDecoder {
     /// Events outside the declared subset, kept whole, each with the block index that would
     /// have started next when it arrived: it sits after every block that had already started.
     preserved: Vec<(u64, Item)>,
-    /// The usage extension `message_start` reported, held until the stream answers. A warning
-    /// is output to fallback, so showing it earlier would make a stream that fails before
-    /// answering final; held, it is dropped with that attempt.
-    held: Option<String>,
+    /// The usage extensions reported and not yet shown, in the order the route reported them:
+    /// `message_start`'s until the stream answers, and a `message_delta`'s while the turn may
+    /// still stop without content. A warning is output to fallback, so showing one earlier
+    /// would make a stream that fails before answering final; held, it is dropped with that
+    /// attempt.
+    held: Vec<String>,
     /// The index of the text block whose text the caller was last shown. Text of another block
     /// after it is a new message, preceded by [`StreamEvent::MessageBoundary`].
     shown_text: Option<u64>,
-    /// A usage extension is the one output a stream that decodes to no item can have shown. A
-    /// stop without content after it is final.
-    warned: Warned,
     started: bool,
     /// Whether any payload outside [`LIFECYCLE_EVENTS`] was read, shown to the caller or not.
     answered: bool,
@@ -356,9 +353,8 @@ impl StreamDecoder {
             next_index: 0,
             announced: Vec::new(),
             preserved: Vec::new(),
-            held: None,
+            held: Vec::new(),
             shown_text: None,
-            warned: Warned::Nothing,
             started: false,
             answered: false,
             complete: false,
@@ -413,17 +409,18 @@ impl StreamDecoder {
                 "Messages event name contradicts its payload type",
             ));
         }
-        // The first payload that answers shows what `message_start` reported first. An `error`
-        // answers nothing: the stream fails, and what was held is dropped with the attempt.
-        if !LIFECYCLE_EVENTS.contains(&kind)
-            && kind != "error"
-            && let Some(held) = self.held.take()
-        {
-            self.warned = Warned::UsageExtension;
-            if let Err(error) = emit(sink, extension(held), cancel, self.deadline).await {
-                self.answered = true;
-                return Err(error);
-            }
+        // The first payload that answers shows what was held first. An `error` answers nothing:
+        // the stream fails, and what was held is dropped with the attempt. A `message_delta`
+        // shows it once it is read, and the terminal event of a turn that stops without content
+        // shows nothing: that turn fails too.
+        let shows_held = match kind {
+            "error" | "message_delta" => false,
+            "message_stop" => !self.stops_without_content(),
+            _ => !LIFECYCLE_EVENTS.contains(&kind),
+        };
+        if shows_held && let Err(error) = self.show_held(sink, cancel).await {
+            self.answered = true;
+            return Err(error);
         }
         let applied = match kind {
             // A keep-alive. Its irrelevance to this subset is the route's own documentation.
@@ -455,7 +452,42 @@ impl StreamDecoder {
     /// Refuses one more item past the content bound, counting what is open and what was kept.
     fn bound(&self) -> Result<(), Error> {
         if self.items.len() + self.blocks.len() + self.preserved.len() >= MAX_ITEMS {
-            return Err(Error::too_large("Messages content exceeds its bound"));
+            return Err(Error::too_large(CONTENT_BOUND));
+        }
+        Ok(())
+    }
+
+    /// Whether nothing was decoded, nothing kept and no block is open.
+    fn is_empty(&self) -> bool {
+        self.items.is_empty() && self.blocks.is_empty() && self.preserved.is_empty()
+    }
+
+    /// Whether the turn, as read so far, fails as a stop without content: it holds nothing and
+    /// names a reason this projection does not model.
+    fn stops_without_content(&self) -> bool {
+        self.is_empty()
+            && matches!(
+                stop_reason(self.header.stop_reason.as_deref()),
+                Ok(StopReason::Incomplete { .. })
+            )
+    }
+
+    /// Whether the turn may still fail as a stop without content: it holds nothing, and names
+    /// such a reason or none yet. A usage extension is held while this is so, which is why no
+    /// event was shown to the caller of a turn that fails that way: every other event belongs
+    /// to a block or to a kept event.
+    fn may_stop_without_content(&self) -> bool {
+        self.is_empty()
+            && !matches!(
+                stop_reason(self.header.stop_reason.as_deref()),
+                Ok(StopReason::EndTurn | StopReason::ToolCalls | StopReason::MaxOutputTokens)
+            )
+    }
+
+    /// Shows every held usage extension, in the order the route reported them.
+    async fn show_held(&mut self, sink: &mut dyn StreamSink, cancel: &Cancel) -> Result<(), Error> {
+        for held in std::mem::take(&mut self.held) {
+            emit(sink, extension(held), cancel, self.deadline).await?;
         }
         Ok(())
     }
@@ -516,7 +548,7 @@ impl StreamDecoder {
         {
             return Err(Error::protocol("Messages start carries content"));
         }
-        self.held = self.header.read(message, START, true)?;
+        self.held.extend(self.header.read(message, START, true)?);
         self.started = true;
         Ok(())
     }
@@ -805,14 +837,20 @@ impl StreamDecoder {
         // Cumulative, not incremental: the reported counters replace the previous ones.
         let reported = self.header.read_delta(data)?;
         self.header.reason(text(delta, "stop_reason")?)?;
-        // Shown with the delta that reported it, once the whole delta was accepted.
-        match reported {
-            Some(reported) => {
-                self.warned = Warned::UsageExtension;
-                emit(sink, extension(reported), cancel, self.deadline).await
+        if let Some(reported) = reported {
+            // Held reports are bounded like kept events: a stream of them is not an answer.
+            if self.held.len() >= MAX_ITEMS {
+                return Err(Error::too_large(CONTENT_BOUND));
             }
-            None => Ok(()),
+            self.held.push(reported);
         }
+        // Shown with the delta that reported it, once the whole delta was accepted, unless the
+        // turn may still stop without content: then it stays held until content or the
+        // terminal event settles that.
+        if self.may_stop_without_content() {
+            return Ok(());
+        }
+        self.show_held(sink, cancel).await
     }
 
     fn stop_message(&mut self, data: &Value) -> Result<(), Error> {
@@ -837,7 +875,6 @@ impl StreamDecoder {
             header,
             items,
             preserved,
-            warned,
             complete,
             ..
         } = self;
@@ -849,11 +886,7 @@ impl StreamDecoder {
             }
             header.outcome(merge(items, preserved), request, &target)
         };
-        // A warning the caller was shown is output: nothing that follows it may be retried.
-        decoded().map_err(|error| {
-            let retriable = error.retriable && warned == Warned::Nothing;
-            header.attach(error.with_retriable(retriable), &target)
-        })
+        decoded().map_err(|error| header.attach(error, &target))
     }
 }
 

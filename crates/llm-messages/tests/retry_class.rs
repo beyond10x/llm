@@ -9,8 +9,7 @@
 mod support;
 
 use llm_core::{
-    Cancel, Dispatch, Error, ErrorCode, Item, Model, StopReason, StreamEvent, TurnOutcome,
-    TurnRequest, VecSink,
+    Cancel, Dispatch, Error, ErrorCode, Item, Model, StopReason, TurnOutcome, TurnRequest, VecSink,
 };
 use llm_http::{HttpClient, Limits};
 use llm_messages::MessagesClient;
@@ -587,6 +586,7 @@ fn stop_events(reason: &str) -> String {
 
 /// What every failure of this kind keeps: the accepted dispatch, the fixed text with no byte of
 /// the reason, and the counters the route reported, the last of them from the terminal delta.
+/// The stream reached its terminal event, so those counters are final.
 fn assert_stop_without_content(error: &Error, reason: &str, code: ErrorCode, message: &str) {
     assert_eq!(
         (error.code, error.dispatch, error.refusal),
@@ -599,7 +599,7 @@ fn assert_stop_without_content(error: &Error, reason: &str, code: ErrorCode, mes
         .observation
         .as_ref()
         .unwrap_or_else(|| panic!("`{reason}`: the failure keeps what the route reported"));
-    assert!(!observation.final_usage, "`{reason}`");
+    assert!(observation.final_usage, "`{reason}`");
     let usage = observation.usage.as_ref().expect("reported counters");
     // The header's fresh count with no cache counters leaves the total unknown, never eleven.
     assert_eq!(
@@ -679,17 +679,112 @@ async fn the_same_stops_after_silent_or_visible_output_are_an_incomplete_turn() 
     }
 }
 
-/// A usage extension shown with the terminal delta is output the caller saw, so the same stop
-/// is final after it: nothing this client returns is retriable once it showed anything.
+/// A route that reports a cost in its header and in its terminal delta, the usage extension,
+/// fails the same way: the turn that stops without content shows no warning, so a reason in no
+/// row stays retriable and the two rows of their own stay final.
 #[tokio::test]
-async fn a_stop_without_content_after_a_shown_usage_extension_is_final() {
+async fn a_stop_without_content_on_a_route_that_reports_a_cost_shows_nothing_and_keeps_its_class() {
     let header = serde_json::json!({"type": "message_start", "message": {"id": "msg_014a",
         "type": "message", "role": "assistant", "model": "example-model-20260201",
         "content": [], "usage": {"input_tokens": 11, "output_tokens": 1, "cost": {"total": 0.5}}}});
-    for reason in UNLISTED {
+    let rows = UNLISTED
+        .map(|reason| {
+            (
+                reason,
+                ErrorCode::Unavailable,
+                UNMODELLED_WITHOUT_CONTENT,
+                true,
+            )
+        })
+        .into_iter()
+        .chain(FINAL_ROWS.map(|(reason, code, message)| (reason, code, message, false)));
+    for (reason, code, message, retriable) in rows {
+        let delta = serde_json::json!({"type": "message_delta",
+            "delta": {"stop_reason": reason, "stop_sequence": null},
+            "usage": {"output_tokens": 3, "cost": 0.25}});
         let body = format!(
-            "event: message_start\ndata: {header}\n\n{}",
-            stop_events(reason)
+            "event: message_start\ndata: {header}\n\nevent: message_delta\ndata: {delta}\n\nevent: message_stop\ndata: {{\"type\":\"message_stop\"}}\n\n"
+        );
+        let (error, sink) = stream_turn(body).await;
+        assert_stop_without_content(&error, reason, code, message);
+        assert_eq!(
+            (error.retriable, error.may_retry()),
+            (retriable, retriable),
+            "`{reason}`: {error:?}"
+        );
+        assert_eq!(sink.events(), [], "`{reason}`");
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). The story's second acceptance line:
+// "A stream ending in an unlisted reason with no content block returns a provider failure that
+// is retriable, with its usage." `docs/messages.md` on the same turn: "the route answered nothing
+// and the third row is retried as `overloaded_error` is". Both read here on a route that reports
+// a `cost` in its streamed usage, the one usage extension this decoder admits because a live
+// Anthropic-compatible route sent it (`docs/messages.md`, "`cost` is the one usage extension").
+// ---------------------------------------------------------------------------------------------
+
+/// The message header of a route that reports a `cost` with its first counters.
+fn adversary_w30_costed_header() -> String {
+    let header = serde_json::json!({"type": "message_start", "message": {"id": "msg_014a",
+        "type": "message", "role": "assistant", "model": "example-model-20260201",
+        "content": [], "usage": {"input_tokens": 11, "output_tokens": 1, "cost": {"total": 0.5}}}});
+    format!("event: message_start\ndata: {header}\n\n")
+}
+
+/// The cost came with the header. Before an `overloaded_error` the decoder drops what it held and
+/// the failure is retriable with nothing shown; a stop without content after the same header is
+/// retried the same way, as the document says.
+#[tokio::test]
+async fn adversary_w30_a_stop_without_content_after_a_costed_header_is_retried_as_an_overloaded_error_is()
+ {
+    let opening = adversary_w30_costed_header();
+    let (overloaded, shown) =
+        stream_turn(format!("{opening}{}", error_event("overloaded_error"))).await;
+    assert_eq!(
+        (
+            overloaded.code,
+            overloaded.retriable,
+            overloaded.may_retry()
+        ),
+        (ErrorCode::Unavailable, true, true),
+        "{overloaded:?}"
+    );
+    assert_eq!(
+        shown.events(),
+        [],
+        "the held cost is dropped with the attempt"
+    );
+    for reason in UNLISTED {
+        let (error, sink) = stream_turn(format!("{opening}{}", stop_events(reason))).await;
+        assert_eq!(error.message, UNMODELLED_WITHOUT_CONTENT, "`{reason}`");
+        assert_eq!(
+            (
+                error.code,
+                error.retriable,
+                error.may_retry(),
+                sink.events().len()
+            ),
+            (ErrorCode::Unavailable, true, true, 0),
+            "`{reason}`: retried as `overloaded_error` is, with nothing shown: {error:?}, shown {:?}",
+            sink.events()
+        );
+    }
+}
+
+/// The cost came with the terminal delta, where the live route was observed to send it
+/// (`message_delta.usage.cost`). The story's second acceptance line, read on that stream.
+#[tokio::test]
+async fn adversary_w30_a_stop_without_content_whose_terminal_delta_reports_a_cost_is_retriable() {
+    for reason in UNLISTED {
+        let delta = serde_json::json!({"type": "message_delta",
+            "delta": {"stop_reason": reason, "stop_sequence": null},
+            "usage": {"output_tokens": 3, "cost": 0.00042}});
+        let body = format!(
+            "{}event: message_delta\ndata: {delta}\n\nevent: message_stop\ndata: {{\"type\":\"message_stop\"}}\n\n",
+            header_alone()
         );
         let (error, sink) = stream_turn(body).await;
         assert_stop_without_content(
@@ -699,12 +794,9 @@ async fn a_stop_without_content_after_a_shown_usage_extension_is_final() {
             UNMODELLED_WITHOUT_CONTENT,
         );
         assert!(
-            !error.retriable && !error.may_retry(),
-            "`{reason}` after a shown warning: {error:?}"
-        );
-        assert!(
-            matches!(sink.events(), [StreamEvent::Warning { code, .. }] if code == "usage-extension"),
-            "`{reason}`: {:?}",
+            error.retriable && error.may_retry(),
+            "`{reason}`: no content block, so a provider failure that is retriable: {error:?}, \
+             shown {:?}",
             sink.events()
         );
     }

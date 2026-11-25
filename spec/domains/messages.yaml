@@ -237,7 +237,7 @@ commands:
   # `ping` came before them; after any other payload, including a content block that opens
   # without showing anything, they are final. Every other error type is final,
   # `rate_limit_error` included. A turn that stops without content (no item decoded) for a reason
-  # the projection does not model is a failure with accepted dispatch, its usage and a fixed
+  # the projection does not model is a failure with accepted dispatch, its final usage and a fixed
   # diagnostic that carries no byte of the reason
   # (story:messages-empty-turn-with-an-unmodelled-stop-reason): `too-large` for
   # `model_context_window_exceeded` and `refused` for `refusal`, both final, and `unavailable`

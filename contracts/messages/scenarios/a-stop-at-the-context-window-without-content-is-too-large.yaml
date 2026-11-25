@@ -29,6 +29,6 @@ assert:
     tool_arguments: []
     upstream_model: "example-model-20260201"
     response_id: "msg_014a"
-    final_usage: false
+    final_usage: true
     usage_json: "{\"input_tokens\":11,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
     stop_reason: null

@@ -8,11 +8,12 @@ Versions are workspace-wide source releases at bare tags such as `0.8.3`; the wo
 
 ### Fixed
 
-- **Breaking:** `llm-messages`: a turn that stops unmodelled without content is an error with its usage, no longer `Ok`
+- **Breaking:** `llm-messages`: a turn that stops unmodelled without content is an error with its final usage, not `Ok`
 - Without content `model_context_window_exceeded` is `too-large`, `refusal` is `refused`; both are final
-- Without content any other reason not modelled is `unavailable`, retried before output and bounded by the retry policy
+- Without content any other reason not modelled is `unavailable`; a streamed answer is retried, within the retry policy
 - With content each such reason is still `StopReason::Incomplete` under its own name
-- The rule holds for a stream, `decode_message` and Bedrock `InvokeModel`; the error text carries no byte of the reason
+- The rule holds for a stream, `decode_message` and Bedrock `InvokeModel`; a whole `InvokeModel` answer is never retried
+- The error text carries no byte of the reason; no `usage-extension` warning is shown for a turn that fails this way
 - **Breaking:** Messages ingress refuses an `Incomplete` answer with no item as `unsupported`; nothing is sent
 - ESS: 7 scenarios for the rule in `llm.messages`; the floor is 1075 (was 1068)
 

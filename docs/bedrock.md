@@ -283,7 +283,8 @@ known 0 when the answer leaves it out.
 | HTTP 429 with `x-amzn-errortype: ServiceQuotaExceededException` | `refused`, dispatch `rejected`, final | not applicable |
 | Any other HTTP 429 | `rate-limited`, retriable | not applicable |
 | Any other HTTP error status | the transport's class for the status | not applicable |
-| Any failure while a whole (unstreamed) answer is read | final | not applicable |
+| A streamed `InvokeModel` answer that stops without content for a reason `llm-messages` does not model ([messages.md](messages.md#what-the-decoder-requires-of-a-stream)) | `unavailable`, retriable: its terminal `message_delta` follows no content, so nothing answered. `too-large` for `model_context_window_exceeded` and `refused` for `refusal`, both final | not applicable: with content it is an incomplete turn |
+| Any failure while a whole (unstreamed) answer is read or decoded, an `InvokeModel` answer that stops without content included | final | not applicable |
 
 "Answered" means any event after the message header (`messageStart` on Converse,
 `message_start` on InvokeModel), shown to the caller or not. An exception frame has dispatch

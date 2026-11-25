@@ -2795,7 +2795,7 @@
         "scenario": "llm.messages/authored/a-complete-message-in-the-user-role-is-refused"
       },
       "messages/scenarios/a-complete-message-that-pauses-without-content-is-unavailable.yaml": {
-        "digest": "sha256:c77bef2f97ccc68375b16e478ce00e3daaddc382fe68f9a3211b3ea600f8aa00",
+        "digest": "sha256:e5b7988b138e0d8d884125fdf3fa5d511a4f282b3480445bebff159d481f9979",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-complete-message-that-pauses-without-content-is-unavailable"
       },
@@ -2820,7 +2820,7 @@
         "scenario": "llm.messages/authored/a-one-hour-cache-lifetime-marks-every-breakpoint"
       },
       "messages/scenarios/a-refusal-stop-without-content-is-refused.yaml": {
-        "digest": "sha256:2c36b60ad7dbcc1bec3ddbc77ea4d63a29d421f8fae3c9671d1ea2d81162f23e",
+        "digest": "sha256:b91df05a18550298fdd25a16bc77cd70102f932370759a74fbc1a98b5096ac5e",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-refusal-stop-without-content-is-refused"
       },
@@ -2840,7 +2840,7 @@
         "scenario": "llm.messages/authored/a-stop-at-the-context-window-after-text-is-an-incomplete-turn"
       },
       "messages/scenarios/a-stop-at-the-context-window-without-content-is-too-large.yaml": {
-        "digest": "sha256:e63fc6dd530bd6e58a5b97d784c2a43fa65f6b4e10540e7002a499f5efb720ec",
+        "digest": "sha256:2f6832ba46487cd9ac48ba5a08b091e92f2e67f9a22b099b194ee31d788de33b",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-stop-at-the-context-window-without-content-is-too-large"
       },
@@ -2960,7 +2960,7 @@
         "scenario": "llm.messages/authored/an-unlisted-stop-after-text-is-an-incomplete-turn"
       },
       "messages/scenarios/an-unlisted-stop-without-content-is-unavailable.yaml": {
-        "digest": "sha256:4ff41162ed78de3a4f3a18643d057841fe9f9eb72832e85e5071813cfc89da7b",
+        "digest": "sha256:2c2d0da101ababd5a7072be859d19cbe891192969b19cb5481d6f253fe60368d",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/an-unlisted-stop-without-content-is-unavailable"
       },
@@ -58472,7 +58472,7 @@
               },
               "final_usage": {
                 "kind": "literal",
-                "value": false
+                "value": true
               },
               "items": {
                 "kind": "literal",
@@ -59201,7 +59201,7 @@
               },
               "final_usage": {
                 "kind": "literal",
-                "value": false
+                "value": true
               },
               "items": {
                 "kind": "literal",
@@ -59833,7 +59833,7 @@
               },
               "final_usage": {
                 "kind": "literal",
-                "value": false
+                "value": true
               },
               "items": {
                 "kind": "literal",
@@ -63290,7 +63290,7 @@
               },
               "final_usage": {
                 "kind": "literal",
-                "value": false
+                "value": true
               },
               "items": {
                 "kind": "literal",

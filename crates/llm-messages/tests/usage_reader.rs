@@ -178,3 +178,99 @@ fn a_stream_cut_before_message_stop_keeps_what_it_reported_and_is_not_final() {
     assert_eq!(report.usage.output_tokens, Some(4));
     assert!(!report.final_usage);
 }
+
+// ---------------------------------------------------------------------------------------------
+// Adversary, wave 2026-11-25-messages-empty-turn, unit 1
+// (story:messages-empty-turn-with-an-unmodelled-stop-reason). This file's first paragraph: the
+// reader "must report what the turn decoder reports". Before the story a turn that stopped for
+// an unmodelled reason without content decoded with `final_usage` true, as the reader says of
+// the same bytes. `docs/design.md` (usage readers): the counters are final at `message_stop` or
+// once the whole JSON body was read. `docs/pricing.md`: "A failed attempt can have final usage",
+// and without finality the uncached input line is not priced.
+// ---------------------------------------------------------------------------------------------
+
+/// The reasons of the three rows of `docs/messages.md`, "What the decoder requires of a stream".
+const ADVERSARY_W30_REASONS: [&str; 3] = ["model_context_window_exceeded", "refusal", "pause_turn"];
+
+/// A whole stream that stops for `reason` with no content block: every input counter in the
+/// header, the output count with the reason, then the terminal event.
+fn adversary_w30_stream_without_content(reason: &str) -> String {
+    format!(
+        "event: message_start\n\
+data: {{\"type\":\"message_start\",\"message\":{{\"id\":\"msg_014a\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"example-model-20260201\",\"content\":[],\"usage\":{{\"input_tokens\":4000,\"cache_read_input_tokens\":0,\"cache_creation_input_tokens\":0,\"output_tokens\":1}}}}}}\n\n\
+event: message_delta\n\
+data: {{\"type\":\"message_delta\",\"delta\":{{\"stop_reason\":\"{reason}\",\"stop_sequence\":null}},\"usage\":{{\"output_tokens\":2}}}}\n\n\
+event: message_stop\n\
+data: {{\"type\":\"message_stop\"}}\n\n"
+    )
+}
+
+#[tokio::test]
+async fn adversary_w30_a_stream_that_stops_without_content_fails_with_the_terminal_counters_the_reader_reports()
+ {
+    for reason in ADVERSARY_W30_REASONS {
+        let stream = adversary_w30_stream_without_content(reason);
+        let report = read_usage(stream.as_bytes());
+        assert!(
+            report.final_usage,
+            "`{reason}`: the reader saw `message_stop`"
+        );
+        assert_eq!(
+            (report.usage.input_tokens, report.usage.output_tokens),
+            (Some(4000), Some(2)),
+            "`{reason}`"
+        );
+        let mut sink = VecSink::new(64, 64 * 1024);
+        let error = decode_stream(
+            stream.as_bytes(),
+            &request(),
+            binding().provenance(),
+            &mut sink,
+            &Cancel::new(),
+        )
+        .await
+        .expect_err("a stop without content is a failure");
+        let observation = error.observation.expect("the failure keeps its usage");
+        assert_eq!(report.model, observation.upstream_model, "`{reason}`");
+        assert_eq!(
+            Some(&report.usage),
+            observation.usage.as_ref(),
+            "`{reason}`"
+        );
+        assert_eq!(
+            report.final_usage, observation.final_usage,
+            "`{reason}`: the stream reached `message_stop`, so its counters are terminal; the \
+             reader says so and the decoder's failure does not"
+        );
+    }
+}
+
+#[test]
+fn adversary_w30_a_complete_message_that_stops_without_content_fails_with_the_terminal_counters_the_reader_reports()
+ {
+    for reason in ADVERSARY_W30_REASONS {
+        let message = serde_json::json!({"id": "msg_014a", "type": "message",
+            "role": "assistant", "model": "example-model-20260201", "content": [],
+            "stop_reason": reason, "stop_sequence": null,
+            "usage": {"input_tokens": 4000, "cache_read_input_tokens": 0,
+                "cache_creation_input_tokens": 0, "output_tokens": 2}});
+        let report = read_usage(message.to_string().as_bytes());
+        assert!(
+            report.final_usage,
+            "`{reason}`: the reader read the whole body"
+        );
+        let error = decode_message(&message, &request(), binding().provenance())
+            .expect_err("a stop without content is a failure");
+        let observation = error.observation.expect("the failure keeps its usage");
+        assert_eq!(
+            Some(&report.usage),
+            observation.usage.as_ref(),
+            "`{reason}`"
+        );
+        assert_eq!(
+            report.final_usage, observation.final_usage,
+            "`{reason}`: one whole message reports terminal counters; the reader says so and \
+             the decoder's failure does not"
+        );
+    }
+}

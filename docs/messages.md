@@ -163,17 +163,33 @@ block is an item even when its text is empty, a kept event is an item, a `ping` 
 | `refusal` | `refused`, with no `RefusalCause` | never |
 | any other reason not modelled | `unavailable`, marked retriable | before output only |
 
-The row is chosen by the whole name: `REFUSAL` and `model_context_window` are other reasons. Each
-text is fixed and carries no byte of the reason. The failure carries the usage the route reported,
-with dispatch `accepted`, and a counter the route did not report stays unknown. With no item, the
-stream held only `message_start`, `ping`, `message_delta` and `message_stop`, so the route answered
-nothing and the third row is retried as `overloaded_error` is
-([design.md](design.md#provider-failures-retried-before-output)). A `usage-extension` warning shown
-to the caller is output: after one the code is the same and the failure is final. `end_turn` and
-`max_tokens` without content decode as before, and a block still open at the terminal event stays
-the `protocol` refusal. A stream, a complete message (`decode_message`) and Bedrock `InvokeModel`
-finish through one function and share the rule (`tests/streaming.rs`, `tests/retry_class.rs`,
-`crates/llm-bedrock/tests/client.rs`).
+The row is chosen by the whole name: `REFUSAL`, `refusals` and `model_context_window` are other
+reasons. Each text is fixed and carries no byte of the reason. The failure carries the usage the
+route reported, with dispatch `accepted`, and a counter the route did not report stays unknown. The
+answer ended, so that usage is final (`final_usage` true), as the usage reader reports it for the
+same bytes (`tests/usage_reader.rs`). With no item, the stream held only `message_start`, `ping`,
+`message_delta` and `message_stop`, so the route answered nothing and the third row is retried as
+`overloaded_error` is ([design.md](design.md#provider-failures-retried-before-output)).
+
+**A turn that fails by this rule shows the caller nothing**, so a route that reports `usage.cost`
+keeps the third row retriable. A `usage-extension` warning is held while the turn holds no content
+and names no modelled reason, and is dropped with the attempt when the turn ends that way, as the
+header's is before `overloaded_error`. A turn that answers loses none: what was held is shown
+before the first content that follows it, at the delta that names `end_turn`, `tool_use` or
+`max_tokens`, or at the terminal event of a stream that names no reason. Held reports count
+against the content bound: one more than 4096 is refused as `too-large`.
+
+`end_turn` and `max_tokens` without content decode as before, and a block still open at the
+terminal event stays the `protocol` refusal.
+
+A stream, a complete message (`decode_message`) and Bedrock `InvokeModel` finish through one
+function and share the codes, the texts and the final usage (`tests/streaming.rs`,
+`tests/retry_class.rs`, `crates/llm-bedrock/tests/client.rs`). The retry class is the stream's:
+a streamed `InvokeModel` answer keeps the third row retriable, and a whole (unstreamed)
+`InvokeModel` answer is final on every row, like every other failure of a whole answer
+([bedrock.md](bedrock.md#retry-classes)). `decode_message` itself marks the third row as the
+stream does; its one caller under a retry policy in this workspace is that Bedrock path, which
+drops the mark, and `MessagesClient` reads only streams.
 
 The decoder refuses an event whose framed name contradicts its payload type, a `message_start`
 whose message does not announce itself as an assistant message, a second `message_start`, content
