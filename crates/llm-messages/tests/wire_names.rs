@@ -80,6 +80,14 @@ const CONFIRMED: &[&str] = &[
     "media_type",
     "source",
     "url",
+    // Read 2026-11-25 for story:messages-empty-turn-with-an-unmodelled-stop-reason in Anthropic's
+    // API reference (`https://platform.claude.com/docs/en/api/messages.md`, lines 4120-4149 of
+    // the file fetched that day): `stop_reason` is one of `end_turn`, `max_tokens`,
+    // `stop_sequence`, `tool_use`, `pause_turn`, `refusal` ("when streaming classifiers intervene
+    // to handle potential policy violations") and `model_context_window_exceeded` ("we exceeded
+    // the model's context window").
+    "model_context_window_exceeded",
+    "refusal",
     "unknown-output-item",
     "unknown-stream-event",
     "any",

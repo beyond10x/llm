@@ -47,6 +47,7 @@ const CALLER_OWNED: &str = "Messages answer carries caller-owned content";
 const UNREADABLE: &str = "Messages answer content would not read back as itself";
 const CONTRADICTION: &str = "Messages answer contradicts what was already streamed";
 const UNREPORTABLE: &str = "Messages cannot report this terminal reason";
+const UNFINISHED_EMPTY: &str = "Messages cannot report an unfinished turn without content";
 const ENDED: &str = "Messages answer has already ended";
 // Where an encoded block sits, as a refusal from the shared block reader names it.
 const CONTENT: &str = "content[]";
@@ -60,11 +61,11 @@ const BLOCK: &str = "content_block_start.content_block";
 /// # Errors
 /// Refuses an identifier the decoder cannot read, caller-owned items, unattributed or foreign
 /// opaque state, content the shared block reader would read back as anything else, a terminal
-/// reason it would read as another, and usage it would refuse.
+/// reason it would read as another, an unfinished turn with no item, and usage it would refuse.
 pub fn encode_ingress_message(outcome: &TurnOutcome, id: &str) -> Result<Value, Error> {
     let id = response_id(id)?;
     let content = content(outcome)?;
-    let reason = reason(&outcome.stop_reason)?;
+    let reason = terminal(outcome)?;
     let usage = usage(outcome.observation.usage.as_ref())?;
     let mut message = header(&id, outcome.observation.upstream_model.as_ref());
     message.insert("content".to_owned(), Value::Array(content));
@@ -250,7 +251,7 @@ impl IngressStream {
             return Err(Error::protocol(ENDED));
         }
         let content = content(outcome)?;
-        let reason = reason(&outcome.stop_reason)?;
+        let reason = terminal(outcome)?;
         let usage = usage(outcome.observation.usage.as_ref())?;
         // The items the streamed blocks finish, in the outcome's order, and the content sent
         // after them: a message no text block showed, an empty one included, and every item past
@@ -695,6 +696,17 @@ fn content(outcome: &TurnOutcome) -> Result<Vec<Value>, Error> {
         blocks.push(value);
     }
     Ok(blocks)
+}
+
+/// The terminal reason of `outcome` as it is sent. An unfinished turn with no item is refused:
+/// it would be sent with no content block, and the decoder reads that answer as a turn that
+/// stopped without content, a failure and never this outcome.
+fn terminal(outcome: &TurnOutcome) -> Result<&str, Error> {
+    let name = reason(&outcome.stop_reason)?;
+    if outcome.items.is_empty() && matches!(outcome.stop_reason, StopReason::Incomplete { .. }) {
+        return Err(Error::unsupported(UNFINISHED_EMPTY));
+    }
+    Ok(name)
 }
 
 /// The terminal reason under the name the decoder reads back as the same reason.

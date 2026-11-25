@@ -169,13 +169,43 @@ impl Header {
         request: &TurnRequest,
         target: &Provenance,
     ) -> Result<TurnOutcome, Error> {
+        let stop_reason = stop_reason(self.stop_reason.as_deref())?;
+        if let StopReason::Incomplete { reason } = &stop_reason
+            && items.is_empty()
+        {
+            return Err(stopped_without_content(reason));
+        }
         let outcome = TurnOutcome {
-            stop_reason: stop_reason(self.stop_reason.as_deref())?,
+            stop_reason,
             items,
             observation: self.observation(target, true),
         };
         outcome.validate_for(request, target)?;
         Ok(outcome)
+    }
+}
+
+/// The failure of a turn that stopped for a reason this projection does not model and decoded
+/// to no item: an answer a caller could neither use nor classify (`docs/messages.md`, the section
+/// on what the decoder requires of a stream). The text is fixed and carries no byte of the reason.
+///
+/// A reason with no row of its own is the route's failure to answer, marked retriable: no item
+/// means no content block closed and no event was kept, so nothing answered the turn. A stream
+/// that showed the caller a usage extension drops the mark ([`StreamDecoder::finish`]).
+fn stopped_without_content(reason: &str) -> Error {
+    match reason {
+        "model_context_window_exceeded" => Error::too_large(
+            "the Messages turn stopped at the model context window without content",
+        ),
+        "refusal" => Error::new(
+            ErrorCode::Refused,
+            "the Messages turn was refused without content",
+        ),
+        _ => Error::new(
+            ErrorCode::Unavailable,
+            "the Messages turn stopped without content for a reason this projection does not model",
+        )
+        .with_retriable(true),
     }
 }
 
@@ -271,6 +301,13 @@ pub const USAGE_EXTENSION: &str = "usage-extension";
 /// retry eligibility for a stream error after it.
 const LIFECYCLE_EVENTS: [&str; 2] = ["ping", "message_start"];
 
+/// What a stream that decodes to no item has shown the caller.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Warned {
+    Nothing,
+    UsageExtension,
+}
+
 /// Accumulates one Messages event stream into a bound neutral outcome.
 ///
 /// A terminal `message_stop` payload is required: this route has no `[DONE]` sentinel, so
@@ -299,6 +336,9 @@ pub struct StreamDecoder {
     /// The index of the text block whose text the caller was last shown. Text of another block
     /// after it is a new message, preceded by [`StreamEvent::MessageBoundary`].
     shown_text: Option<u64>,
+    /// A usage extension is the one output a stream that decodes to no item can have shown. A
+    /// stop without content after it is final.
+    warned: Warned,
     started: bool,
     /// Whether any payload outside [`LIFECYCLE_EVENTS`] was read, shown to the caller or not.
     answered: bool,
@@ -318,6 +358,7 @@ impl StreamDecoder {
             preserved: Vec::new(),
             held: None,
             shown_text: None,
+            warned: Warned::Nothing,
             started: false,
             answered: false,
             complete: false,
@@ -377,10 +418,12 @@ impl StreamDecoder {
         if !LIFECYCLE_EVENTS.contains(&kind)
             && kind != "error"
             && let Some(held) = self.held.take()
-            && let Err(error) = emit(sink, extension(held), cancel, self.deadline).await
         {
-            self.answered = true;
-            return Err(error);
+            self.warned = Warned::UsageExtension;
+            if let Err(error) = emit(sink, extension(held), cancel, self.deadline).await {
+                self.answered = true;
+                return Err(error);
+            }
         }
         let applied = match kind {
             // A keep-alive. Its irrelevance to this subset is the route's own documentation.
@@ -764,7 +807,10 @@ impl StreamDecoder {
         self.header.reason(text(delta, "stop_reason")?)?;
         // Shown with the delta that reported it, once the whole delta was accepted.
         match reported {
-            Some(reported) => emit(sink, extension(reported), cancel, self.deadline).await,
+            Some(reported) => {
+                self.warned = Warned::UsageExtension;
+                emit(sink, extension(reported), cancel, self.deadline).await
+            }
             None => Ok(()),
         }
     }
@@ -791,6 +837,7 @@ impl StreamDecoder {
             header,
             items,
             preserved,
+            warned,
             complete,
             ..
         } = self;
@@ -802,7 +849,11 @@ impl StreamDecoder {
             }
             header.outcome(merge(items, preserved), request, &target)
         };
-        decoded().map_err(|error| header.attach(error, &target))
+        // A warning the caller was shown is output: nothing that follows it may be retried.
+        decoded().map_err(|error| {
+            let retriable = error.retriable && warned == Warned::Nothing;
+            header.attach(error.with_retriable(retriable), &target)
+        })
     }
 }
 

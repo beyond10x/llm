@@ -8,7 +8,10 @@
 //! Local sockets only; no provider is contacted.
 mod support;
 
-use llm_core::{Cancel, Dispatch, Error, ErrorCode, Item, Model, TurnRequest, VecSink};
+use llm_core::{
+    Cancel, Dispatch, Error, ErrorCode, Item, Model, StopReason, StreamEvent, TurnOutcome,
+    TurnRequest, VecSink,
+};
 use llm_http::{HttpClient, Limits};
 use llm_messages::MessagesClient;
 use std::{sync::Arc, time::Duration};
@@ -82,6 +85,13 @@ fn client(url: &str) -> MessagesClient {
 /// Answers one request with `head` and `body`, closes, and returns the turn's refusal and what
 /// the caller was shown.
 async fn failed_turn(head: Vec<u8>, body: String) -> (Error, VecSink) {
+    let (result, sink) = served_turn(head, body).await;
+    (result.expect_err("the turn failed"), sink)
+}
+
+/// Answers one request with `head` and `body`, closes, and returns the turn's result and what
+/// the caller was shown.
+async fn served_turn(head: Vec<u8>, body: String) -> (Result<TurnOutcome, Error>, VecSink) {
     let listener = TcpListener::bind("127.0.0.1:0")
         .await
         .expect("a local port");
@@ -105,12 +115,9 @@ async fn failed_turn(head: Vec<u8>, body: String) -> (Error, VecSink) {
     let mut request = TurnRequest::new("internal-model", vec![Item::user("Summarise the log")]);
     request.max_output_tokens = Some(512);
     let mut sink = VecSink::new(64, 64 * 1024);
-    let error = client(&url)
-        .turn(&request, &mut sink, &Cancel::new())
-        .await
-        .expect_err("the turn failed");
+    let result = client(&url).turn(&request, &mut sink, &Cancel::new()).await;
     server.await.expect("the fixture server");
-    (error, sink)
+    (result, sink)
 }
 
 async fn stream_turn(body: String) -> (Error, VecSink) {
@@ -520,5 +527,185 @@ async fn a_cut_after_silent_or_visible_output_is_final() {
             );
             assert!(error.observation.is_some(), "{cut:?} after {label}");
         }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// story:messages-empty-turn-with-an-unmodelled-stop-reason (issue 83): the retry class of a turn
+// that stops, without content, for a reason this projection does not model. A terminal
+// `message_delta` that follows no content block is not output for this failure.
+// ---------------------------------------------------------------------------------------------
+
+const PING: &str = "event: ping\ndata: {\"type\":\"ping\"}\n\n";
+
+/// The close of the block the output fixtures open at index 0.
+const BLOCK_STOP: &str = "event: content_block_stop\n\
+data: {\"type\":\"content_block_stop\",\"index\":0}\n\n";
+
+const WINDOW_WITHOUT_CONTENT: &str =
+    "the Messages turn stopped at the model context window without content";
+const REFUSAL_WITHOUT_CONTENT: &str = "the Messages turn was refused without content";
+const UNMODELLED_WITHOUT_CONTENT: &str =
+    "the Messages turn stopped without content for a reason this projection does not model";
+
+/// The reasons that take the `unavailable` row: the two the route documents and this projection
+/// gives no row of their own, and two in no list, of one byte and of the 64 a reason may have.
+const UNLISTED: [&str; 4] = [
+    "pause_turn",
+    "stop_sequence",
+    "7",
+    "a_reason_in_no_list_that_is_exactly_as_long_as_the_bound_permits",
+];
+
+/// The two reasons with a final row of their own: the code and the fixed diagnostic.
+const FINAL_ROWS: [(&str, ErrorCode, &str); 2] = [
+    (
+        "model_context_window_exceeded",
+        ErrorCode::TooLarge,
+        WINDOW_WITHOUT_CONTENT,
+    ),
+    ("refusal", ErrorCode::Refused, REFUSAL_WITHOUT_CONTENT),
+];
+
+/// The message header with no keep-alive after it.
+fn header_alone() -> &'static str {
+    STARTED
+        .strip_suffix(PING)
+        .expect("the header fixture ends in a keep-alive")
+}
+
+/// The end of a turn that stops for `reason`: the reason with three output tokens, then the
+/// terminal event.
+fn stop_events(reason: &str) -> String {
+    let delta = serde_json::json!({"type": "message_delta",
+        "delta": {"stop_reason": reason, "stop_sequence": null},
+        "usage": {"output_tokens": 3}});
+    format!(
+        "event: message_delta\ndata: {delta}\n\nevent: message_stop\ndata: {{\"type\":\"message_stop\"}}\n\n"
+    )
+}
+
+/// What every failure of this kind keeps: the accepted dispatch, the fixed text with no byte of
+/// the reason, and the counters the route reported, the last of them from the terminal delta.
+fn assert_stop_without_content(error: &Error, reason: &str, code: ErrorCode, message: &str) {
+    assert_eq!(
+        (error.code, error.dispatch, error.refusal),
+        (code, Dispatch::Accepted, None),
+        "`{reason}`: {error:?}"
+    );
+    assert_eq!(error.message, message, "`{reason}`");
+    assert!(!error.to_string().contains(reason), "`{reason}`: {error}");
+    let observation = error
+        .observation
+        .as_ref()
+        .unwrap_or_else(|| panic!("`{reason}`: the failure keeps what the route reported"));
+    assert!(!observation.final_usage, "`{reason}`");
+    let usage = observation.usage.as_ref().expect("reported counters");
+    // The header's fresh count with no cache counters leaves the total unknown, never eleven.
+    assert_eq!(
+        (usage.input_tokens, usage.output_tokens),
+        (None, Some(3)),
+        "`{reason}`"
+    );
+}
+
+#[tokio::test]
+async fn a_stop_without_content_for_a_reason_in_no_row_is_retriable_before_output() {
+    for reason in UNLISTED {
+        // With and without a keep-alive between the header and the terminal delta.
+        for opening in [STARTED, header_alone()] {
+            let (error, sink) = stream_turn(format!("{opening}{}", stop_events(reason))).await;
+            assert_stop_without_content(
+                &error,
+                reason,
+                ErrorCode::Unavailable,
+                UNMODELLED_WITHOUT_CONTENT,
+            );
+            assert!(
+                error.retriable && error.may_retry(),
+                "`{reason}` with no content: {error:?}"
+            );
+            assert_eq!(sink.events(), [], "`{reason}`");
+        }
+    }
+}
+
+#[tokio::test]
+async fn a_stop_at_the_context_window_or_as_a_refusal_without_content_is_final() {
+    for (reason, code, message) in FINAL_ROWS {
+        for opening in [STARTED, header_alone()] {
+            let (error, sink) = stream_turn(format!("{opening}{}", stop_events(reason))).await;
+            assert_stop_without_content(&error, reason, code, message);
+            assert!(
+                !error.retriable && !error.may_retry(),
+                "`{reason}` never answers on another attempt: {error:?}"
+            );
+            assert_eq!(sink.events(), [], "`{reason}`");
+        }
+    }
+}
+
+/// After a content block, shown or not, the same stops are no failure at all: the turn is the
+/// incomplete turn under the reason's own name, so nothing is there to retry.
+#[tokio::test]
+async fn the_same_stops_after_silent_or_visible_output_are_an_incomplete_turn() {
+    let reasons = UNLISTED
+        .into_iter()
+        .chain(FINAL_ROWS.map(|(reason, ..)| reason));
+    for reason in reasons {
+        for (label, output, text) in [
+            ("an empty text block", SILENT_TEXT, ""),
+            ("a text delta", VISIBLE_TEXT, "Hel"),
+        ] {
+            let body = format!("{STARTED}{output}{BLOCK_STOP}{}", stop_events(reason));
+            let (result, sink) = served_turn(SSE_HEAD.to_vec(), body).await;
+            let outcome =
+                result.unwrap_or_else(|error| panic!("`{reason}` after {label}: {error:?}"));
+            assert_eq!(
+                outcome.stop_reason,
+                StopReason::Incomplete {
+                    reason: reason.to_owned()
+                },
+                "after {label}"
+            );
+            assert_eq!(
+                outcome.items,
+                [Item::assistant(text)],
+                "`{reason}` after {label}"
+            );
+            assert_eq!(sink.text(), text, "`{reason}` after {label}");
+            assert!(outcome.observation.final_usage, "`{reason}` after {label}");
+        }
+    }
+}
+
+/// A usage extension shown with the terminal delta is output the caller saw, so the same stop
+/// is final after it: nothing this client returns is retriable once it showed anything.
+#[tokio::test]
+async fn a_stop_without_content_after_a_shown_usage_extension_is_final() {
+    let header = serde_json::json!({"type": "message_start", "message": {"id": "msg_014a",
+        "type": "message", "role": "assistant", "model": "example-model-20260201",
+        "content": [], "usage": {"input_tokens": 11, "output_tokens": 1, "cost": {"total": 0.5}}}});
+    for reason in UNLISTED {
+        let body = format!(
+            "event: message_start\ndata: {header}\n\n{}",
+            stop_events(reason)
+        );
+        let (error, sink) = stream_turn(body).await;
+        assert_stop_without_content(
+            &error,
+            reason,
+            ErrorCode::Unavailable,
+            UNMODELLED_WITHOUT_CONTENT,
+        );
+        assert!(
+            !error.retriable && !error.may_retry(),
+            "`{reason}` after a shown warning: {error:?}"
+        );
+        assert!(
+            matches!(sink.events(), [StreamEvent::Warning { code, .. }] if code == "usage-extension"),
+            "`{reason}`: {:?}",
+            sink.events()
+        );
     }
 }

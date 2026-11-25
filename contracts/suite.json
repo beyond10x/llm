@@ -386,14 +386,18 @@
       "llm.messages/authored/a-block-before-its-message-start-is-refused",
       "llm.messages/authored/a-complete-answer-reads-back-whole",
       "llm.messages/authored/a-complete-message-in-the-user-role-is-refused",
+      "llm.messages/authored/a-complete-message-that-pauses-without-content-is-unavailable",
       "llm.messages/authored/a-conversation-that-opens-with-the-model-is-refused-before-projection",
       "llm.messages/authored/a-failed-answer-ends-with-an-error-event-read-as-its-code",
       "llm.messages/authored/a-message-start-carrying-content-is-refused",
       "llm.messages/authored/a-named-session-is-sent-as-given",
       "llm.messages/authored/a-one-hour-cache-lifetime-marks-every-breakpoint",
+      "llm.messages/authored/a-refusal-stop-without-content-is-refused",
       "llm.messages/authored/a-restarted-content-block-index-is-refused",
       "llm.messages/authored/a-rotated-subscription-token-is-presented-on-the-next-turn",
       "llm.messages/authored/a-single-one-hour-cache-creation-token-is-refused",
+      "llm.messages/authored/a-stop-at-the-context-window-after-text-is-an-incomplete-turn",
+      "llm.messages/authored/a-stop-at-the-context-window-without-content-is-too-large",
       "llm.messages/authored/a-stop-for-a-block-that-never-started-is-refused",
       "llm.messages/authored/a-streamed-answer-with-reasoning-text-and-two-calls-reads-back-whole",
       "llm.messages/authored/a-streamed-end-turn-answer-reads-back-whole",
@@ -419,7 +423,10 @@
       "llm.messages/authored/an-answer-with-no-reported-model-names-none",
       "llm.messages/authored/an-api-key-request-carries-neither-the-oauth-beta-nor-the-client-preamble",
       "llm.messages/authored/an-opencode-go-endpoint-sends-one-session-per-client",
+      "llm.messages/authored/an-unfinished-answer-without-content-is-refused",
       "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name",
+      "llm.messages/authored/an-unlisted-stop-after-text-is-an-incomplete-turn",
+      "llm.messages/authored/an-unlisted-stop-without-content-is-unavailable",
       "llm.messages/authored/another-endpoint-sends-no-opencode-session",
       "llm.messages/authored/cache-breakpoints-mark-the-system-prompt-and-the-conversation-tail",
       "llm.messages/authored/charged-server-tool-use-refused",
@@ -2787,6 +2794,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-complete-message-in-the-user-role-is-refused"
       },
+      "messages/scenarios/a-complete-message-that-pauses-without-content-is-unavailable.yaml": {
+        "digest": "sha256:c77bef2f97ccc68375b16e478ce00e3daaddc382fe68f9a3211b3ea600f8aa00",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-complete-message-that-pauses-without-content-is-unavailable"
+      },
       "messages/scenarios/a-conversation-that-opens-with-the-model-is-refused-before-projection.yaml": {
         "digest": "sha256:6e53732ff7e754a779c2c25dbcd7201bca57ffffd7f2f9cb58e73854c4316339",
         "disposition": "accepted",
@@ -2807,6 +2819,11 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-one-hour-cache-lifetime-marks-every-breakpoint"
       },
+      "messages/scenarios/a-refusal-stop-without-content-is-refused.yaml": {
+        "digest": "sha256:2c36b60ad7dbcc1bec3ddbc77ea4d63a29d421f8fae3c9671d1ea2d81162f23e",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-refusal-stop-without-content-is-refused"
+      },
       "messages/scenarios/a-restarted-content-block-index-is-refused.yaml": {
         "digest": "sha256:468b18674faa60b3dcec76e2604cdd5caa3ec50be7bbb7d7a06de26bf3aeece9",
         "disposition": "accepted",
@@ -2816,6 +2833,16 @@
         "digest": "sha256:9227b65ef44919ea57cef752884ac3a67dee87114b71e3dcdce06d7ae5c2fc52",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/a-single-one-hour-cache-creation-token-is-refused"
+      },
+      "messages/scenarios/a-stop-at-the-context-window-after-text-is-an-incomplete-turn.yaml": {
+        "digest": "sha256:c9fd384d3cd76de00634a3d4463374370ffa9b4e5ad4c8a203b626114f6b2fd9",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-stop-at-the-context-window-after-text-is-an-incomplete-turn"
+      },
+      "messages/scenarios/a-stop-at-the-context-window-without-content-is-too-large.yaml": {
+        "digest": "sha256:e63fc6dd530bd6e58a5b97d784c2a43fa65f6b4e10540e7002a499f5efb720ec",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/a-stop-at-the-context-window-without-content-is-too-large"
       },
       "messages/scenarios/a-stop-for-a-block-that-never-started-is-refused.yaml": {
         "digest": "sha256:3bef42c146db481ba6cfd65f6aab7a68b1c1643f9141aa3a49dcb2f338d2467b",
@@ -2917,10 +2944,25 @@
         "disposition": "accepted",
         "scenario": "llm.messages/authored/an-answer-with-no-reported-model-names-none"
       },
+      "messages/scenarios/an-unfinished-answer-without-content-is-refused.yaml": {
+        "digest": "sha256:e82e7be40e9ff92332522559d10b09475117d34e37f6176a1e148223ea7fa658",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/an-unfinished-answer-without-content-is-refused"
+      },
       "messages/scenarios/an-unfinished-reason-is-carried-under-its-own-name.yaml": {
         "digest": "sha256:54cb0928fbbf144f55418febbfce41015bcf25169d83a7fcdba2dd85b4cf130c",
         "disposition": "accepted",
         "scenario": "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name"
+      },
+      "messages/scenarios/an-unlisted-stop-after-text-is-an-incomplete-turn.yaml": {
+        "digest": "sha256:750d32b45a7868dd19431e3f3e4135096f841e07415f8263a353d1a1e9f34c35",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/an-unlisted-stop-after-text-is-an-incomplete-turn"
+      },
+      "messages/scenarios/an-unlisted-stop-without-content-is-unavailable.yaml": {
+        "digest": "sha256:4ff41162ed78de3a4f3a18643d057841fe9f9eb72832e85e5071813cfc89da7b",
+        "disposition": "accepted",
+        "scenario": "llm.messages/authored/an-unlisted-stop-without-content-is-unavailable"
       },
       "messages/scenarios/cache-breakpoints-mark-the-system-prompt-and-the-conversation-tail.yaml": {
         "digest": "sha256:84837ed70beeceb566afaafaa17aa0697b02f8c2d4e7c0ca43dce6100d04ddc5",
@@ -6149,7 +6191,7 @@
       }
     },
     "counts": {
-      "authored": 1024,
+      "authored": 1031,
       "generated": 44,
       "outside": 0,
       "refused": 0
@@ -58343,6 +58385,146 @@
         }
       ]
     },
+    "llm.messages/authored/a-complete-message-that-pauses-without-content-is-unavailable": {
+      "purpose": "a complete response that stops as pause_turn with no content block is a provider failure, with its usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeMessage"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeMessage",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeMessage",
+          "input": {
+            "message_json": {
+              "kind": "literal",
+              "value": "{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":\"pause_turn\",\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":6,\"cache_read_input_tokens\":4,\"input_tokens\":11,\"output_tokens\":0}}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeMessage",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the Messages turn stopped without content for a reason this projection does not model"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": false
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":21,\"output_tokens\":0,\"cached_input_tokens\":4,\"cache_creation_input_tokens\":6}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/a-conversation-that-opens-with-the-model-is-refused-before-projection": {
       "purpose": "a conversation whose first item is the model's is refused by name before anything is sent",
       "source": [
@@ -58932,6 +59114,146 @@
         }
       ]
     },
+    "llm.messages/authored/a-refusal-stop-without-content-is-refused": {
+      "purpose": "a stream that stops as a refusal with no content is refused, with its usage and without the route's reason in the text",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: ping\ndata: {\"type\":\"ping\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"refusal\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":2}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "refused"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the Messages turn was refused without content"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": false
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":2,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
     "llm.messages/authored/a-restarted-content-block-index-is-refused": {
       "purpose": "a content block index that already closed is not reopened (decode.rs)",
       "source": [
@@ -59274,6 +59596,284 @@
               "usage_json": {
                 "kind": "literal",
                 "value": "{\"input_tokens\":17,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":6}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/a-stop-at-the-context-window-after-text-is-an-incomplete-turn": {
+      "purpose": "a stream that stops at the model context window after a text block is an incomplete turn under the reason's own name",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"text\":\"The log\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"model_context_window_exceeded\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":4}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "assistant-text:The log"
+                ]
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "incomplete:model_context_window_exceeded"
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": "The log"
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":4,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/a-stop-at-the-context-window-without-content-is-too-large": {
+      "purpose": "a stream that stops at the model context window with no content is too large, with its usage",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"model_context_window_exceeded\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":1}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "too-large"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the Messages turn stopped at the model context window without content"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": false
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":1,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
               },
               "wire_request": {
                 "kind": "literal",
@@ -62223,6 +62823,110 @@
         }
       ]
     },
+    "llm.messages/authored/an-unfinished-answer-without-content-is-refused": {
+      "purpose": "an unfinished answer with no content would read back as a failure, so it is refused and nothing is sent",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.EncodeIngress"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.EncodeIngress",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastIngressEncoding"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.EncodeIngress",
+          "input": {
+            "outcome_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.outcome/4\",\"outcome\":{\"stop_reason\":{\"kind\":\"incomplete\",\"reason\":\"pause_turn\"},\"items\":[],\"observation\":{\"binding\":{\"protocol\":\"messages\",\"provider\":\"lab\",\"account\":\"account\",\"endpoint\":\"endpoint\",\"model\":\"internal-model\",\"binding_revision\":\"6161a641b63d57ad0a5a44e5f5004e292e932f82b1cb8cad55d191a3ba3f4260\"},\"final_usage\":true}}}"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"model\":\"messages-route\",\"max_tokens\":512,\"messages\":[{\"role\":\"user\",\"content\":\"Summarise the log\"}]}"
+            },
+            "streamed": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.EncodeIngress",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastIngressEncoding"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastIngressEncoding"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "decoded_accepted": {
+                "kind": "literal",
+                "value": null
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "not-sent"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unsupported"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "Messages cannot report an unfinished turn without content"
+              },
+              "wire": {
+                "kind": "literal",
+                "value": []
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastIngressEncoding"
+        }
+      ]
+    },
     "llm.messages/authored/an-unfinished-reason-is-carried-under-its-own-name": {
       "purpose": "a refusal is carried as an incomplete turn under the route's own name",
       "source": [
@@ -62349,6 +63053,284 @@
               "usage_json": {
                 "kind": "literal",
                 "value": "{\"input_tokens\":11,\"output_tokens\":8,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/an-unlisted-stop-after-text-is-an-incomplete-turn": {
+      "purpose": "a stream that stops for a reason in no list after a text block is an incomplete turn under the reason's own name",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: content_block_start\ndata: {\"content_block\":{\"text\":\"\",\"type\":\"text\"},\"index\":0,\"type\":\"content_block_start\"}\n\nevent: content_block_delta\ndata: {\"delta\":{\"text\":\"Half an\",\"type\":\"text_delta\"},\"index\":0,\"type\":\"content_block_delta\"}\n\nevent: content_block_stop\ndata: {\"index\":0,\"type\":\"content_block_stop\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"a_reason_in_no_list\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":5}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": true
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": null
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": null
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": true
+              },
+              "items": {
+                "kind": "literal",
+                "value": [
+                  "assistant-text:Half an"
+                ]
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": "incomplete:a_reason_in_no_list"
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": "Half an"
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":5,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
+              },
+              "wire_request": {
+                "kind": "literal",
+                "value": null
+              }
+            }
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        }
+      ]
+    },
+    "llm.messages/authored/an-unlisted-stop-without-content-is-unavailable": {
+      "purpose": "a stream that stops for a reason in no list with no content is a provider failure, with its usage and without the reason in the text",
+      "source": [
+        {
+          "kind": "domain",
+          "name": "llm.messages"
+        },
+        {
+          "kind": "command",
+          "name": "llm.messages.DecodeStream"
+        },
+        {
+          "kind": "outcome",
+          "name": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          }
+        },
+        {
+          "kind": "view",
+          "name": "llm.messages.LastInspection"
+        }
+      ],
+      "steps": [
+        {
+          "command": "llm.messages.DecodeStream",
+          "input": {
+            "events_sse": {
+              "kind": "literal",
+              "value": "event: message_start\ndata: {\"message\":{\"content\":[],\"id\":\"msg_014a\",\"model\":\"example-model-20260201\",\"role\":\"assistant\",\"stop_reason\":null,\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":11,\"output_tokens\":1}},\"type\":\"message_start\"}\n\nevent: message_delta\ndata: {\"delta\":{\"stop_reason\":\"a_reason_in_no_list\",\"stop_sequence\":null},\"type\":\"message_delta\",\"usage\":{\"output_tokens\":3}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+            },
+            "request_json": {
+              "kind": "literal",
+              "value": "{\"format\":\"llm.turn/3\",\"request\":{\"model\":\"internal-model\",\"instructions\":\"\",\"items\":[{\"kind\":\"user-text\",\"text\":\"Summarise the log\"}],\"tools\":[{\"name\":\"lookup\",\"description\":\"Look up a record\",\"input_schema\":{\"type\":\"object\"}}]}}"
+            }
+          },
+          "step": "execute_command"
+        },
+        {
+          "outcome": {
+            "command": "llm.messages.DecodeStream",
+            "outcome": "observed"
+          },
+          "step": "expect_outcome"
+        },
+        {
+          "step": "expect_no_error"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "at_least": 1,
+            "at_most": 1,
+            "expect": "counts"
+          },
+          "step": "expect_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "step": "query_view",
+          "view": "llm.messages.LastInspection"
+        },
+        {
+          "expectation": {
+            "expect": "contains",
+            "fields": {
+              "accepted": {
+                "kind": "literal",
+                "value": false
+              },
+              "dispatch": {
+                "kind": "literal",
+                "value": "accepted"
+              },
+              "error_code": {
+                "kind": "literal",
+                "value": "unavailable"
+              },
+              "error_message": {
+                "kind": "literal",
+                "value": "the Messages turn stopped without content for a reason this projection does not model"
+              },
+              "final_usage": {
+                "kind": "literal",
+                "value": false
+              },
+              "items": {
+                "kind": "literal",
+                "value": []
+              },
+              "neutral_request": {
+                "kind": "literal",
+                "value": null
+              },
+              "reasoning": {
+                "kind": "literal",
+                "value": ""
+              },
+              "response_id": {
+                "kind": "literal",
+                "value": "msg_014a"
+              },
+              "stop_reason": {
+                "kind": "literal",
+                "value": null
+              },
+              "stream": {
+                "kind": "literal",
+                "value": null
+              },
+              "text": {
+                "kind": "literal",
+                "value": ""
+              },
+              "tool_arguments": {
+                "kind": "literal",
+                "value": []
+              },
+              "upstream_model": {
+                "kind": "literal",
+                "value": "example-model-20260201"
+              },
+              "usage_json": {
+                "kind": "literal",
+                "value": "{\"input_tokens\":11,\"output_tokens\":3,\"cached_input_tokens\":0,\"cache_creation_input_tokens\":0}"
               },
               "wire_request": {
                 "kind": "literal",

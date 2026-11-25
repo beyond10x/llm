@@ -1025,3 +1025,10 @@ scenarios:
 - embeddings/scenarios/an-embed-request-to-a-turn-route-is-refused-before-io.yaml
 - embeddings/scenarios/a-catalog-without-route-kind-keeps-its-digest.yaml
 - embeddings/scenarios/each-batch-yields-a-call-record-of-kind-embed-batch.yaml
+- messages/scenarios/a-stop-at-the-context-window-without-content-is-too-large.yaml
+- messages/scenarios/a-refusal-stop-without-content-is-refused.yaml
+- messages/scenarios/an-unlisted-stop-without-content-is-unavailable.yaml
+- messages/scenarios/a-stop-at-the-context-window-after-text-is-an-incomplete-turn.yaml
+- messages/scenarios/an-unlisted-stop-after-text-is-an-incomplete-turn.yaml
+- messages/scenarios/a-complete-message-that-pauses-without-content-is-unavailable.yaml
+- messages/scenarios/an-unfinished-answer-without-content-is-refused.yaml

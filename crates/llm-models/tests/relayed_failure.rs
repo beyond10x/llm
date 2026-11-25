@@ -113,6 +113,20 @@ async fn read_request(socket: &mut TcpStream) {
 /// Answers every request with the gateway's 502, with or without the do-not-retry signal, and
 /// counts the requests.
 async fn gateway(signal: bool) -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
+    let signal = if signal {
+        "x-should-retry: false\r\n"
+    } else {
+        ""
+    };
+    answering(format!(
+        "HTTP/1.1 502 Bad Gateway\r\ncontent-type: application/json\r\n{signal}content-length: {}\r\nconnection: close\r\n\r\n{GATEWAY_BODY}",
+        GATEWAY_BODY.len()
+    ))
+    .await
+}
+
+/// Answers every request with `answer`, head and body, closes, and counts the requests.
+async fn answering(answer: String) -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0")
         .await
         .expect("a local port");
@@ -124,15 +138,6 @@ async fn gateway(signal: bool) -> (String, Arc<AtomicUsize>, tokio::task::JoinHa
             let (mut socket, _) = listener.accept().await.expect("an accepted connection");
             read_request(&mut socket).await;
             seen.fetch_add(1, Ordering::SeqCst);
-            let signal = if signal {
-                "x-should-retry: false\r\n"
-            } else {
-                ""
-            };
-            let answer = format!(
-                "HTTP/1.1 502 Bad Gateway\r\ncontent-type: application/json\r\n{signal}content-length: {}\r\nconnection: close\r\n\r\n{GATEWAY_BODY}",
-                GATEWAY_BODY.len()
-            );
             socket
                 .write_all(answer.as_bytes())
                 .await
@@ -145,7 +150,16 @@ async fn gateway(signal: bool) -> (String, Arc<AtomicUsize>, tokio::task::JoinHa
 
 /// One routed turn over `protocol` against the gateway; the run and the requests it saw.
 async fn routed(protocol: &str, signal: bool) -> (FallbackRun, usize) {
-    let (url, requests, server) = gateway(signal).await;
+    let (run, requests, _) = routed_against(protocol, gateway(signal).await).await;
+    (run, requests)
+}
+
+/// One routed turn over `protocol` against `server`; the run, the requests the server saw and
+/// what the caller's sink was shown.
+async fn routed_against(
+    protocol: &str,
+    (url, requests, server): (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>),
+) -> (FallbackRun, usize, VecSink) {
     let catalog = catalog(protocol, &url);
     let http = HttpClient::new(Limits {
         response_headers: Duration::from_secs(20),
@@ -178,7 +192,7 @@ async fn routed(protocol: &str, signal: bool) -> (FallbackRun, usize) {
         .expect("a run");
     // A second attempt would already have been answered: the run awaited it.
     server.abort();
-    (run, requests.load(Ordering::SeqCst))
+    (run, requests.load(Ordering::SeqCst), sink)
 }
 
 #[tokio::test]
@@ -221,4 +235,94 @@ async fn the_same_502_without_the_signal_is_retried_on_its_target() {
             "{protocol}: spent retries go up final: {error:?}"
         );
     }
+}
+
+// ---------------------------------------------------------------------------------------------
+// story:messages-empty-turn-with-an-unmodelled-stop-reason (issue 83), end to end: a Messages
+// far side whose every answer stops without content. The retry is bounded by the policy that
+// bounds every other retried failure.
+// ---------------------------------------------------------------------------------------------
+
+/// A whole Messages stream answered with status 200: the header with `usage`, no content
+/// block, the stop `reason`, the terminal event.
+fn stop_without_content(reason: &str, usage: &str) -> String {
+    format!(
+        "HTTP/1.1 200 OK\r\ncontent-type: text/event-stream\r\nconnection: close\r\n\r\n\
+event: message_start\n\
+data: {{\"type\":\"message_start\",\"message\":{{\"id\":\"msg_014a\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"example-model-20260201\",\"content\":[],\"usage\":{usage}}}}}\n\n\
+event: message_delta\n\
+data: {{\"type\":\"message_delta\",\"delta\":{{\"stop_reason\":\"{reason}\",\"stop_sequence\":null}},\"usage\":{{\"output_tokens\":1}}}}\n\n\
+event: message_stop\n\
+data: {{\"type\":\"message_stop\"}}\n\n"
+    )
+}
+
+const PLAIN_USAGE: &str = "{\"input_tokens\":11,\"output_tokens\":1}";
+
+/// A reason in no row is the far side's failure to answer: asked again on its target until the
+/// retry policy is spent, then final. Four requests under the default policy, and no more.
+#[tokio::test]
+async fn a_messages_stop_without_content_for_a_reason_in_no_row_ends_after_the_policys_attempts() {
+    let attempts = usize::try_from(RetryPolicy::DEFAULT.max_attempts).expect("a small bound");
+    assert_eq!(attempts, 4);
+    for reason in ["pause_turn", "stop_sequence", "a_reason_in_no_list"] {
+        let server = answering(stop_without_content(reason, PLAIN_USAGE)).await;
+        let (run, requests, _) = routed_against("messages", server).await;
+        assert_eq!(requests, attempts, "`{reason}`");
+        assert_eq!(
+            run.attempts.len(),
+            attempts,
+            "`{reason}`: {:?}",
+            run.attempts
+        );
+        let error = run
+            .result
+            .expect_err("every attempt stopped without content");
+        assert_eq!(
+            (error.code, error.dispatch),
+            (ErrorCode::Unavailable, Dispatch::Accepted),
+            "`{reason}`"
+        );
+        assert!(
+            !error.may_retry(),
+            "`{reason}`: spent retries go up final: {error:?}"
+        );
+    }
+}
+
+/// The two reasons with a final row are asked once.
+#[tokio::test]
+async fn a_messages_stop_at_the_context_window_or_as_a_refusal_without_content_is_asked_once() {
+    for (reason, code) in [
+        ("model_context_window_exceeded", ErrorCode::TooLarge),
+        ("refusal", ErrorCode::Refused),
+    ] {
+        let server = answering(stop_without_content(reason, PLAIN_USAGE)).await;
+        let (run, requests, _) = routed_against("messages", server).await;
+        assert_eq!(requests, 1, "`{reason}`: the far side was asked again");
+        assert_eq!(run.attempts.len(), 1, "`{reason}`: {:?}", run.attempts);
+        let error = run.result.expect_err("the turn stopped without content");
+        assert_eq!(
+            (error.code, error.dispatch),
+            (code, Dispatch::Accepted),
+            "`{reason}`"
+        );
+        assert!(!error.may_retry(), "`{reason}`: {error:?}");
+    }
+}
+
+/// Once the caller was shown anything, here the usage extension the terminal delta released,
+/// the same stop is asked once: the run halts on visible output.
+#[tokio::test]
+async fn a_messages_stop_without_content_after_a_shown_usage_extension_is_asked_once() {
+    let usage = "{\"input_tokens\":11,\"output_tokens\":1,\"cost\":{\"total\":0.5}}";
+    let server = answering(stop_without_content("pause_turn", usage)).await;
+    let (run, requests, sink) = routed_against("messages", server).await;
+    assert_eq!(requests, 1, "the far side was asked again");
+    assert_eq!(run.attempts.len(), 1, "{:?}", run.attempts);
+    assert_eq!(run.halt, Halt::VisibleOutput);
+    assert_eq!(sink.events().len(), 1, "{:?}", sink.events());
+    let error = run.result.expect_err("the turn stopped without content");
+    assert_eq!(error.code, ErrorCode::Unavailable);
+    assert!(!error.may_retry(), "{error:?}");
 }

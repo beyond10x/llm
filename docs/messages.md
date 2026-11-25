@@ -150,8 +150,30 @@ This route has **no `[DONE]` sentinel**: the terminal marker is a `message_stop`
 input is the absence of an answer rather than the end of one, and a truncated stream is refused with
 its last valid snapshot attached. A terminal message that names no stop reason is refused as well;
 absence is not `end_turn`. A reason this projection does not model — `refusal`, `pause_turn`,
-`stop_sequence` — is carried under its own name as an incomplete turn, never flattened into
-completion.
+`stop_sequence`, `model_context_window_exceeded`, a name in no list — is carried under its own name
+as an incomplete turn when the turn has content, never flattened into completion.
+
+**A turn that stops for such a reason without content is a failure, not an answer.** A turn has no
+content when the decoder assembled no item, because the items are all a caller receives: a closed
+block is an item even when its text is empty, a kept event is an item, a `ping` is not.
+
+| Stop reason, no content | Error code | Retried |
+| --- | --- | --- |
+| `model_context_window_exceeded` | `too-large` | never |
+| `refusal` | `refused`, with no `RefusalCause` | never |
+| any other reason not modelled | `unavailable`, marked retriable | before output only |
+
+The row is chosen by the whole name: `REFUSAL` and `model_context_window` are other reasons. Each
+text is fixed and carries no byte of the reason. The failure carries the usage the route reported,
+with dispatch `accepted`, and a counter the route did not report stays unknown. With no item, the
+stream held only `message_start`, `ping`, `message_delta` and `message_stop`, so the route answered
+nothing and the third row is retried as `overloaded_error` is
+([design.md](design.md#provider-failures-retried-before-output)). A `usage-extension` warning shown
+to the caller is output: after one the code is the same and the failure is final. `end_turn` and
+`max_tokens` without content decode as before, and a block still open at the terminal event stays
+the `protocol` refusal. A stream, a complete message (`decode_message`) and Bedrock `InvokeModel`
+finish through one function and share the rule (`tests/streaming.rs`, `tests/retry_class.rs`,
+`crates/llm-bedrock/tests/client.rs`).
 
 The decoder refuses an event whose framed name contradicts its payload type, a `message_start`
 whose message does not announce itself as an assistant message, a second `message_start`, content
@@ -450,7 +472,10 @@ every answer and compare it with the encoded `TurnOutcome` for every stop reason
   it: `llm_core::ShownText` decides which messages the stream showed, a streamed block's index is
   fixed, and shown text is final.
 - **Reasons.** `end_turn`, `tool_use`, `max_tokens`, and an `Incomplete` reason under its own name;
-  a reason the decoder would read as another one is refused.
+  a reason the decoder would read as another one is refused. An `Incomplete` answer with no item is
+  refused as `unsupported` and nothing is sent, by `encode_ingress_message` and by `close`: the
+  decoder would read it as a failure
+  (`tests/ingress.rs::an_unfinished_answer_without_content_is_refused_and_nothing_is_sent`).
 - **Usage.** Only reported counters, in `message_delta`; an unknown counter is left out, never zero.
   Fresh input is sent only when the total and both cache counters are known, never derived from a
   part.
